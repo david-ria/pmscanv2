@@ -23,7 +23,7 @@ export function ContextSelectors({
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <MapPin className="h-4 w-4" />
-          <span>Localisation (optionnel)</span>
+          <span>Localisation</span>
         </div>
         <Select value={selectedLocation} onValueChange={onLocationChange}>
           <SelectTrigger>
@@ -42,7 +42,7 @@ export function ContextSelectors({
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Activity className="h-4 w-4" />
-          <span>Activité (optionnel)</span>
+          <span>Activité</span>
           {isRecording && selectedActivity && (
             <Badge variant="outline" className="text-xs">
               {selectedActivity}

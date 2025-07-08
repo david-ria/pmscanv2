@@ -34,7 +34,7 @@ export function StatusButtons({
             "w-2 h-2 rounded-full",
             isConnected ? "bg-green-500" : "bg-red-500"
           )} />
-          PMScan {isConnected ? "Connecté" : "Déconnecté"}
+          PMScan
         </button>
 
         {/* GPS Status Button */}
@@ -51,7 +51,7 @@ export function StatusButtons({
             "w-2 h-2 rounded-full",
             locationEnabled ? "bg-green-500" : "bg-red-500"
           )} />
-          GPS {locationEnabled ? "Activé" : "Désactivé"}
+          GPS
         </button>
       </div>
 
