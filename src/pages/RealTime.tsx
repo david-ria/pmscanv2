@@ -19,8 +19,12 @@ export default function RealTime() {
 
   // Add data to recording when new data comes in
   useEffect(() => {
+    console.log("🔍 RealTime effect triggered - isRecording:", isRecording, "currentData PM2.5:", currentData?.pm25);
     if (isRecording && currentData) {
+      console.log("🎯 About to call addDataPoint with:", currentData.pm25);
       addDataPoint(currentData, latestLocation || undefined);
+    } else {
+      console.log("❌ Not adding data - isRecording:", isRecording, "hasCurrentData:", !!currentData);
     }
   }, [isRecording, currentData, latestLocation, addDataPoint]);
 
