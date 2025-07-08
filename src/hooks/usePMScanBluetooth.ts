@@ -43,9 +43,24 @@ export function usePMScanBluetooth() {
   const [currentData, setCurrentData] = useState<PMScanData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const deviceRef = useRef<BluetoothDevice | null>(null);
-  const serviceRef = useRef<BluetoothRemoteGATTService | null>(null);
-  const shouldConnectRef = useRef(false);
+  // Match working version variable names exactly
+  const PMScanDeviceRef = useRef<BluetoothDevice | null>(null);
+  const PMScanServerRef = useRef<BluetoothRemoteGATTServer | null>(null);
+  const PMScanServiceRef = useRef<BluetoothRemoteGATTService | null>(null);
+  const PMScanInitedRef = useRef(false);
+  const PMScanShouldConnectRef = useRef(false);
+
+  const PMScanObjRef = useRef({
+    name: "PMScanXXXXXX",
+    version: 0,
+    mode: 0,
+    interval: 0,
+    display: new Uint8Array(10),
+    battery: 0,
+    charging: 0,
+    dataLogger: false,
+    externalMemory: 0,
+  });
 
   const parsePMScanDataPayload = useCallback((charValue: DataView): PMScanData => {
     const rawData = new Uint8Array(charValue.buffer);
@@ -57,50 +72,54 @@ export function usePMScanBluetooth() {
       pm10: (((rawData[13] & 0xFF) << 8) | (rawData[12] & 0xFF)) / 10,
       temp: (((rawData[15] & 0xFF) << 8) | (rawData[14] & 0xFF)) / 10,
       humidity: (((rawData[17] & 0xFF) << 8) | (rawData[16] & 0xFF)) / 10,
-      battery: device?.battery || 0,
-      charging: device?.charging || false,
+      battery: PMScanObjRef.current.battery,
+      charging: PMScanObjRef.current.charging === 1,
       timestamp: new Date((ts2000 + dt2000) * 1000),
       location: "PMScan Device"
     };
     
-    // Safe logging to avoid slice error
-    console.log('PMScan Data - PM2.5:', data.pm25, 'PM1:', data.pm1, 'PM10:', data.pm10, 'Temp:', data.temp, 'Humidity:', data.humidity);
+    console.log('📊 PMScan Data - PM2.5:', data.pm25, 'PM1:', data.pm1, 'PM10:', data.pm10, 'Temp:', data.temp, 'Humidity:', data.humidity);
     return data;
-  }, [device]);
+  }, []);
 
-  const handleRTData = useCallback((event: Event) => {
-    console.log('handleRTData called');
+  // Exact copy of working version handlers
+  const PMScanRTDataHandler = useCallback((event: Event) => {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target.value) {
-      console.log('Raw characteristic received, buffer length:', target.value.byteLength);
-      try {
-        const data = parsePMScanDataPayload(target.value);
-        console.log('Setting current data with PM2.5:', data.pm25);
-        setCurrentData(data);
-        console.log('Current data state updated successfully');
-      } catch (error) {
-        console.error('Error parsing PMScan data:', error);
-      }
-    } else {
-      console.log('No value in characteristic');
+      const data = parsePMScanDataPayload(target.value);
+      console.log('🔄 RT Data received:', data);
+      setCurrentData(data);
     }
   }, [parsePMScanDataPayload]);
 
-  const handleBatteryData = useCallback((event: Event) => {
+  const PMScanIMDataHandler = useCallback((event: Event) => {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
-    if (target.value && device) {
+    if (target.value) {
+      const data = parsePMScanDataPayload(target.value);
+      console.log('🔄 IM Data received:', data);
+      setCurrentData(data);
+    }
+  }, [parsePMScanDataPayload]);
+
+  const PMScanBatteryDataHandler = useCallback((event: Event) => {
+    const target = event.target as BluetoothRemoteGATTCharacteristic;
+    if (target.value) {
       const batteryLevel = target.value.getUint8(0);
+      console.log(`🔋 Battery event: ${batteryLevel}%`);
+      PMScanObjRef.current.battery = batteryLevel;
       setDevice(prev => prev ? { ...prev, battery: batteryLevel } : null);
     }
-  }, [device]);
+  }, []);
 
-  const handleChargingData = useCallback((event: Event) => {
+  const PMScanChargingDataHandler = useCallback((event: Event) => {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
-    if (target.value && device) {
-      const chargingStatus = target.value.getUint8(0) === 1;
-      setDevice(prev => prev ? { ...prev, charging: chargingStatus } : null);
+    if (target.value) {
+      const chargingStatus = target.value.getUint8(0);
+      console.log(`⚡ Charging event: ${chargingStatus}`);
+      PMScanObjRef.current.charging = chargingStatus;
+      setDevice(prev => prev ? { ...prev, charging: chargingStatus === 1 } : null);
     }
-  }, [device]);
+  }, []);
 
   const exponentialBackoff = useCallback((
     max: number,
@@ -115,58 +134,57 @@ export function usePMScanBluetooth() {
         if (max === 0) {
           return fail();
         }
+        console.log(`🔄 Retrying in ${delay}s... (${max} tries left)`);
         setTimeout(() => {
           exponentialBackoff(--max, Math.floor(5 + delay), toTry, success, fail);
         }, delay * 1000);
       });
   }, []);
 
-  const initializeDevice = useCallback(async (server: BluetoothRemoteGATTServer) => {
+  const onPMScanConnected = useCallback(async (server: BluetoothRemoteGATTServer) => {
     try {
+      console.log('✅ PMScan Device Connected');
+      PMScanServerRef.current = server;
+      PMScanInitedRef.current = false;
+      console.log('🔍 Discovering services...');
+      
       const service = await server.getPrimaryService(PMScanServiceUUID);
-      serviceRef.current = service;
+      PMScanServiceRef.current = service;
 
-      // Read initial battery level
+      // Read battery level
       const batteryChar = await service.getCharacteristic(PMScanBatteryUUID);
       const batteryValue = await batteryChar.readValue();
       const battery = batteryValue.getUint8(0);
+      console.log(`🔋 Battery: ${battery}%`);
+      PMScanObjRef.current.battery = battery;
 
-      // Read charging status
-      const chargingChar = await service.getCharacteristic(PMScanChargingUUID);
-      const chargingValue = await chargingChar.readValue();
-      const charging = chargingValue.getUint8(0) === 1;
-
-      // Read device info
-      const versionChar = await service.getCharacteristic(PMScanOTHUUID);
-      const versionValue = await versionChar.readValue();
-      const version = versionValue.getUint8(0) >> 2;
-
-      // Set up real-time data notifications
+      // Start RT data notifications
       const rtDataChar = await service.getCharacteristic(PMScanRTDataUUID);
       await rtDataChar.startNotifications();
-      rtDataChar.addEventListener('characteristicvaluechanged', handleRTData);
-      console.log('RT Data notifications started');
+      rtDataChar.addEventListener('characteristicvaluechanged', PMScanRTDataHandler);
 
-      // Set up immediate data notifications
+      // Start IM data notifications
       const imDataChar = await service.getCharacteristic(PMScanIMDataUUID);
       await imDataChar.startNotifications();
-      imDataChar.addEventListener('characteristicvaluechanged', handleRTData);
-      console.log('IM Data notifications started');
+      imDataChar.addEventListener('characteristicvaluechanged', PMScanIMDataHandler);
 
-      // Set up battery notifications
+      // Start battery notifications
       await batteryChar.startNotifications();
-      batteryChar.addEventListener('characteristicvaluechanged', handleBatteryData);
+      batteryChar.addEventListener('characteristicvaluechanged', PMScanBatteryDataHandler);
 
-      // Set up charging notifications
+      // Start charging notifications
+      const chargingChar = await service.getCharacteristic(PMScanChargingUUID);
       await chargingChar.startNotifications();
-      chargingChar.addEventListener('characteristicvaluechanged', handleChargingData);
+      chargingChar.addEventListener('characteristicvaluechanged', PMScanChargingDataHandler);
 
-      // Sync time if needed
+      // Read and sync time if needed
       const timeChar = await service.getCharacteristic(PMScanTimeUUID);
       const timeValue = await timeChar.readValue();
       const deviceTime = timeValue.getUint32(0);
+      console.log(`⏰ Time is ${deviceTime}`);
       
       if (deviceTime === 0) {
+        console.log('⏰ Time not sync, writing current time...');
         const timeDt2000 = Math.floor((new Date().getTime() / 1000) - dt2000);
         const time = new Uint8Array(4);
         time[0] = timeDt2000 & 0xFF;
@@ -174,53 +192,89 @@ export function usePMScanBluetooth() {
         time[2] = (timeDt2000 >> 16) & 0xFF;
         time[3] = (timeDt2000 >> 24) & 0xFF;
         await timeChar.writeValueWithResponse(time);
+      } else {
+        console.log('⏰ Time already sync');
       }
 
+      // Read charging status
+      const chargingValue = await chargingChar.readValue();
+      const charging = chargingValue.getUint8(0);
+      console.log(`⚡ Charging: ${charging}`);
+      PMScanObjRef.current.charging = charging;
+
+      // Read version
+      const versionChar = await service.getCharacteristic(PMScanOTHUUID);
+      const versionValue = await versionChar.readValue();
+      const version = versionValue.getUint8(0) >> 2;
+      console.log(`📋 Version: ${version}`);
+      PMScanObjRef.current.version = version;
+
+      // Read interval
+      const intervalChar = await service.getCharacteristic(PMScanIntervalUUID);
+      const intervalValue = await intervalChar.readValue();
+      const interval = intervalValue.getUint8(0);
+      console.log(`⏱️ Interval: ${interval}`);
+      PMScanObjRef.current.interval = interval;
+
+      // Read mode
+      const modeChar = await service.getCharacteristic(PMScanModeUUID);
+      const modeValue = await modeChar.readValue();
+      const mode = modeValue.getUint8(0);
+      console.log(`⚙️ Mode: ${mode}`);
+      PMScanObjRef.current.mode = mode;
+
+      // Read display settings
+      const displayChar = await service.getCharacteristic(PMScanDisplayUUID);
+      const displayValue = await displayChar.readValue();
+      console.log(`🖥️ Display: ${displayValue.getUint8(0)}`);
+      PMScanObjRef.current.display = new Uint8Array(displayValue.buffer);
+
+      PMScanInitedRef.current = true;
       setDevice({
-        name: deviceRef.current?.name || "PMScan Device",
+        name: PMScanDeviceRef.current?.name || "PMScan Device",
         version,
-        mode: 0,
-        interval: 0,
+        mode,
+        interval,
         battery,
-        charging,
+        charging: charging === 1,
         connected: true
       });
-
       setIsConnected(true);
       setError(null);
-      console.log('Device initialization complete');
-    } catch (err) {
-      console.error('Failed to initialize device:', err);
+      console.log('🎉 Init finished');
+    } catch (error) {
+      console.error('❌ Error initializing device:', error);
       setError('Failed to initialize device');
-      throw err;
     }
-  }, [handleRTData, handleBatteryData, handleChargingData]);
+  }, [PMScanRTDataHandler, PMScanIMDataHandler, PMScanBatteryDataHandler, PMScanChargingDataHandler]);
 
-  const connectToDevice = useCallback(() => {
-    console.log('🔄 connect() called, shouldConnect:', shouldConnectRef.current);
-    if (!deviceRef.current || !shouldConnectRef.current) {
-      console.log('❌ Not connecting - no device or shouldConnect is false');
-      return;
-    }
+  const onPMScanDisconnected = useCallback(() => {
+    console.log('🔌 PMScan Device disconnected');
+    PMScanInitedRef.current = false;
+    setIsConnected(false);
+    setDevice(prev => prev ? { ...prev, connected: false } : null);
+  }, []);
 
-    console.log('📡 Starting exponential backoff connection...');
+  const connect = useCallback(() => {
+    console.log('🔄 connect() called, shouldConnect:', PMScanShouldConnectRef.current);
+    if (!PMScanShouldConnectRef.current) return;
+    
     exponentialBackoff(
       10,
       1.2,
       () => {
-        console.log('🔌 Attempting GATT connection...');
-        return deviceRef.current!.gatt!.connect();
+        console.log('🔌 Connecting to Bluetooth Device...');
+        return PMScanDeviceRef.current!.gatt!.connect();
       },
       (server) => {
-        console.log('✅ GATT connection successful');
-        initializeDevice(server);
+        onPMScanConnected(server);
       },
       () => {
-        console.log('❌ Failed to reconnect after all retries');
-        setError('Failed to reconnect to device');
+        console.log('❌ Failed to reconnect.');
+        setError('Failed to reconnect');
       }
     );
-  }, [exponentialBackoff, initializeDevice]);
+  }, [exponentialBackoff, onPMScanConnected]);
 
   const requestDevice = useCallback(async () => {
     try {
@@ -230,54 +284,52 @@ export function usePMScanBluetooth() {
         throw new Error('Bluetooth not available in this browser');
       }
 
-      console.log('🔍 Requesting PMScan device...');
+      console.log('🔍 Requesting any Bluetooth device...');
       const device = await navigator.bluetooth.requestDevice({
         filters: [{ namePrefix: "PMScan" }],
         optionalServices: [PMScanServiceUUID]
       });
 
-      console.log('📱 Device selected:', device.name);
-      deviceRef.current = device;
-      shouldConnectRef.current = true; // Enable auto-reconnection
+      console.log('📱 Requested ' + device.name);
+      PMScanDeviceRef.current = device;
+      PMScanInitedRef.current = false;
+      PMScanShouldConnectRef.current = true;
       
       device.addEventListener('gattserverdisconnected', () => {
-        console.log('🔌 Device disconnected! Calling reconnect...');
+        console.log('🔌 PMScan Device disconnected');
+        PMScanInitedRef.current = false;
         setIsConnected(false);
         setDevice(prev => prev ? { ...prev, connected: false } : null);
-        
-        // Direct reconnection call like working version
-        connectToDevice();
+        connect();
       });
-
-      // Start initial connection
-      connectToDevice();
-    } catch (err) {
-      console.error('Failed to request device:', err);
-      setError(err instanceof Error ? err.message : 'Failed to connect to device');
+      
+      connect();
+    } catch (error) {
+      console.error('❌ Error requesting device:', error);
+      setError(error instanceof Error ? error.message : 'Failed to connect to device');
     }
-  }, [connectToDevice]);
+  }, [connect, onPMScanDisconnected]);
 
   const disconnect = useCallback(async () => {
-    shouldConnectRef.current = false;
+    PMScanShouldConnectRef.current = false;
     
-    if (deviceRef.current?.gatt?.connected && serviceRef.current) {
+    if (PMScanDeviceRef.current?.gatt?.connected && PMScanServiceRef.current) {
       try {
-        const modeChar = await serviceRef.current.getCharacteristic(PMScanModeUUID);
-        const currentMode = device?.mode || 0;
+        console.log('🔌 Requesting disconnect...');
+        const modeChar = await PMScanServiceRef.current.getCharacteristic(PMScanModeUUID);
         const modeToWrite = new Uint8Array(1);
-        modeToWrite[0] = currentMode | 0x40;
+        modeToWrite[0] = PMScanObjRef.current.mode | 0x40;
         await modeChar.writeValueWithResponse(modeToWrite);
+        PMScanDeviceRef.current.gatt.disconnect();
       } catch (err) {
-        console.error('Failed to send disconnect command:', err);
+        console.error('❌ Failed to send disconnect command:', err);
       }
-      
-      deviceRef.current.gatt.disconnect();
     }
     
     setIsConnected(false);
     setDevice(null);
     setCurrentData(null);
-  }, [device?.mode]);
+  }, []);
 
   return {
     isConnected,
