@@ -84,8 +84,14 @@ export default function Analysis() {
       const filtered = filteredMissions();
       
       if (filtered.length === 0) {
-        setAiAnalysis("Aucune donnée disponible pour cette période. Effectuez des mesures pour obtenir une analyse personnalisée.");
-        setDataPoints(null);
+        setAiAnalysis("Aucune donnée disponible pour cette période.\n\nPour obtenir une analyse personnalisée :\n1. Allez sur la page 'Temps réel'\n2. Connectez votre capteur PMScan\n3. Démarrez un enregistrement de quelques minutes\n4. Revenez ici pour voir votre analyse IA !");
+        setDataPoints({
+          totalMissions: 0,
+          totalExposureMinutes: 0,
+          averagePM25: 0,
+          maxPM25: 0,
+          timeAboveWHO: 0
+        });
         setAnalysisGenerated(true);
         return;
       }
@@ -94,6 +100,8 @@ export default function Analysis() {
                            selectedPeriod === "week" ? "la semaine" : 
                            selectedPeriod === "month" ? "le mois" : "l'année";
 
+      console.log("Calling edge function with data:", { missionsCount: filtered.length, timeframe: timeframeText });
+
       const response = await supabase.functions.invoke('analyze-air-quality', {
         body: {
           missions: filtered,
@@ -101,11 +109,19 @@ export default function Analysis() {
         }
       });
 
+      console.log("Edge function response:", response);
+
       if (response.error) {
-        throw new Error(response.error.message);
+        console.error("Edge function error:", response.error);
+        throw new Error(response.error.message || 'Failed to generate analysis');
       }
 
-      setAiAnalysis(response.data.analysis);
+      if (!response.data) {
+        console.error("No data in response:", response);
+        throw new Error('No data received from analysis function');
+      }
+
+      setAiAnalysis(response.data.analysis || "Analyse non disponible");
       setDataPoints(response.data.dataPoints);
       setAnalysisGenerated(true);
 
@@ -116,10 +132,11 @@ export default function Analysis() {
 
     } catch (error) {
       console.error('Error generating analysis:', error);
-      setAiAnalysis("Erreur lors de la génération de l'analyse. Veuillez réessayer.");
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'analyse";
+      setAiAnalysis(`Erreur lors de la génération de l'analyse: ${errorMessage}. Veuillez réessayer.`);
       toast({
         title: "Erreur",
-        description: "Impossible de générer l'analyse AI",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

@@ -29,14 +29,43 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting analyze-air-quality function');
     const { missions, timeframe } = await req.json();
+    console.log('Received data:', { 
+      missionsCount: missions?.length, 
+      timeframe,
+      firstMission: missions?.[0]
+    });
 
     if (!openAIApiKey) {
+      console.error('OpenAI API key not configured');
       throw new Error('OpenAI API key not configured');
+    }
+
+    if (!missions || !Array.isArray(missions)) {
+      console.error('Invalid missions data:', missions);
+      throw new Error('Invalid missions data provided');
+    }
+
+    if (missions.length === 0) {
+      console.log('No missions provided, returning empty state message');
+      return new Response(JSON.stringify({ 
+        analysis: `Aucune donnée disponible pour ${timeframe}. Effectuez des mesures pour obtenir une analyse personnalisée.`,
+        dataPoints: {
+          totalMissions: 0,
+          totalExposureMinutes: 0,
+          averagePM25: 0,
+          maxPM25: 0,
+          timeAboveWHO: 0
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Prepare data summary for AI analysis
     const dataSummary = analyzeMissionsData(missions, timeframe);
+    console.log('Data summary prepared:', dataSummary.substring(0, 200) + '...');
     
     const systemPrompt = `Tu es un expert en qualité de l'air et santé publique. Analyse les données d'exposition aux particules fines et fournis des insights personnalisés en français.
 
