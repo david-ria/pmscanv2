@@ -1,10 +1,11 @@
-import { User, Settings, Users, Smartphone, Globe, AlertTriangle, LogOut } from "lucide-react";
+import { User, Settings, Users, Smartphone, Globe, AlertTriangle, LogOut, Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useGoogleFit } from "@/hooks/useGoogleFit";
 
 interface MenuSection {
   title: string;
@@ -23,6 +24,7 @@ interface MobileNavigationProps {
 export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { isAuthenticated, connectGoogleFit, syncActivities, isLoading } = useGoogleFit();
 
   const handleProfileClick = () => {
     navigate('/profile');
@@ -33,6 +35,22 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
     await signOut();
     navigate('/auth');
     onNavigate();
+  };
+
+  const handleGoogleFitConnect = async () => {
+    try {
+      await connectGoogleFit();
+    } catch (error) {
+      console.error('Error connecting to Google Fit:', error);
+    }
+  };
+
+  const handleGoogleFitSync = async () => {
+    try {
+      await syncActivities();
+    } catch (error) {
+      console.error('Error syncing Google Fit:', error);
+    }
   };
 
   const menuSections: MenuSection[] = [
@@ -62,7 +80,13 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
       title: "Capteurs",
       items: [
         { icon: Smartphone, label: "Capteur PMSCAN", badge: "Connecté" },
-        { icon: Smartphone, label: "Capteurs natifs", badge: null }
+        { icon: Smartphone, label: "Capteurs natifs", badge: null },
+        { 
+          icon: Activity, 
+          label: "Google Fit", 
+          badge: isAuthenticated ? "Connecté" : null,
+          action: isAuthenticated ? handleGoogleFitSync : handleGoogleFitConnect
+        }
       ]
     }
   ];

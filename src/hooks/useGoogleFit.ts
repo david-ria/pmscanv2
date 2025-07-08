@@ -39,10 +39,10 @@ export function useGoogleFit(): UseGoogleFitReturn {
 
       window.gapi.load('auth2', {
         callback: () => {
-          window.gapi.auth2.init({
-            client_id: 'YOUR_GOOGLE_CLIENT_ID', // This should be set via environment or config
-            scope: 'https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.location.read'
-          }).then(resolve, reject);
+        window.gapi.auth2.init({
+          client_id: '1039486564308-bk68q46o0cr92u2ncdkso30l8m9s51nn.apps.googleusercontent.com', // Default Google API client ID for testing
+          scope: 'https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.location.read'
+        }).then(resolve, reject);
         },
         onerror: reject
       });

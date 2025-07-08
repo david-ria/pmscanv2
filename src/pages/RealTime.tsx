@@ -4,7 +4,6 @@ import { AirQualityCards } from "@/components/RealTime/AirQualityCards";
 import { MapGraphToggle } from "@/components/RealTime/MapGraphToggle";
 import { ContextSelectors } from "@/components/RecordingControls/ContextSelectors";
 import { DataLogger } from "@/components/DataLogger";
-import { GoogleFitIntegration } from "@/components/GoogleFitIntegration";
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { useGPS } from "@/hooks/useGPS";
 import { useRecordingContext } from "@/contexts/RecordingContext";
@@ -102,12 +101,6 @@ export default function RealTime() {
           isRecording={isRecording}
         />
       </div>
-
-      {/* Google Fit Integration */}
-      <GoogleFitIntegration 
-        onActivityDetected={(activity) => setSelectedActivity(activity)}
-        className="mb-4"
-      />
 
       {/* Data Logger */}
       <DataLogger 
