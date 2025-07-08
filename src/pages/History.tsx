@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Calendar, Download, Share, Trash2, RotateCcw, WifiOff } from "lucide-react";
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatsCard } from "@/components/StatsCard";
+import { DateFilter } from "@/components/DateFilter";
 import { useToast } from "@/hooks/use-toast";
 import { dataStorage, MissionData } from "@/lib/dataStorage";
 
@@ -11,6 +13,8 @@ export default function History() {
   const [missions, setMissions] = useState<MissionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedPeriod, setSelectedPeriod] = useState<"day" | "week" | "month" | "year">("day");
   const { toast } = useToast();
 
   // Load missions on component mount
@@ -114,15 +118,41 @@ export default function History() {
     }
   };
 
-  // Calculate today's stats from missions
-  const todayStats = useMemo(() => {
-    const today = new Date();
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const todayMissions = missions.filter(m => 
-      new Date(m.startTime).getTime() >= todayStart.getTime()
-    );
+  // Filter missions based on selected date and period
+  const filteredMissions = useMemo(() => {
+    let startDate: Date;
+    let endDate: Date;
 
-    if (todayMissions.length === 0) {
+    switch (selectedPeriod) {
+      case "day":
+        startDate = startOfDay(selectedDate);
+        endDate = endOfDay(selectedDate);
+        break;
+      case "week":
+        startDate = startOfWeek(selectedDate, { weekStartsOn: 1 });
+        endDate = endOfWeek(selectedDate, { weekStartsOn: 1 });
+        break;
+      case "month":
+        startDate = startOfMonth(selectedDate);
+        endDate = endOfMonth(selectedDate);
+        break;
+      case "year":
+        startDate = startOfYear(selectedDate);
+        endDate = endOfYear(selectedDate);
+        break;
+      default:
+        return missions;
+    }
+
+    return missions.filter(mission => {
+      const missionDate = new Date(mission.startTime);
+      return isWithinInterval(missionDate, { start: startDate, end: endDate });
+    });
+  }, [missions, selectedDate, selectedPeriod]);
+
+  // Calculate stats from filtered missions
+  const periodStats = useMemo(() => {
+    if (filteredMissions.length === 0) {
       return [
         { label: "Exposition totale", value: "0 min", color: "default" as const },
         { label: "Moyenne PM2.5", value: 0, unit: "µg/m³", color: "default" as const },
@@ -131,9 +161,9 @@ export default function History() {
       ];
     }
 
-    const totalDuration = todayMissions.reduce((sum, m) => sum + m.durationMinutes, 0);
-    const avgPm25 = todayMissions.reduce((sum, m) => sum + m.avgPm25, 0) / todayMissions.length;
-    const maxPm25 = Math.max(...todayMissions.map(m => m.maxPm25));
+    const totalDuration = filteredMissions.reduce((sum, m) => sum + m.durationMinutes, 0);
+    const avgPm25 = filteredMissions.reduce((sum, m) => sum + m.avgPm25, 0) / filteredMissions.length;
+    const maxPm25 = Math.max(...filteredMissions.map(m => m.maxPm25));
 
     const getColorFromPm25 = (pm25: number) => {
       if (pm25 <= 12) return "good" as const;
@@ -146,20 +176,16 @@ export default function History() {
       { label: "Exposition totale", value: formatDuration(totalDuration), color: "default" as const },
       { label: "Moyenne PM2.5", value: Math.round(avgPm25), unit: "µg/m³", color: getColorFromPm25(avgPm25) },
       { label: "Pic maximum", value: Math.round(maxPm25), unit: "µg/m³", color: getColorFromPm25(maxPm25) },
-      { label: "Missions", value: todayMissions.length, color: "default" as const }
+      { label: "Missions", value: filteredMissions.length, color: "default" as const }
     ];
-  }, [missions]);
+  }, [filteredMissions]);
 
   const unsyncedCount = missions.filter(m => !m.synced).length;
 
   return (
     <div className="min-h-screen bg-background px-4 py-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Historique</h1>
-          <p className="text-sm text-muted-foreground">Vos mesures passées</p>
-        </div>
+      {/* Sync Status */}
+      <div className="flex items-center justify-end mb-6">
         <div className="flex items-center gap-2">
           {unsyncedCount > 0 && (
             <Button 
@@ -179,15 +205,24 @@ export default function History() {
               Sync ({unsyncedCount})
             </Button>
           )}
-          <Button variant="outline" size="sm">
-            <Calendar className="h-4 w-4 mr-2" />
-            Calendrier
-          </Button>
         </div>
       </div>
 
-      {/* Today's Stats */}
-      <StatsCard title="Résumé d'aujourd'hui" stats={todayStats} className="mb-6" />
+      {/* Date Filter */}
+      <DateFilter
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        selectedPeriod={selectedPeriod}
+        onPeriodChange={setSelectedPeriod}
+        className="mb-6"
+      />
+
+      {/* Period Stats */}
+      <StatsCard 
+        title={`Résumé - ${selectedPeriod === "day" ? "Jour" : selectedPeriod === "week" ? "Semaine" : selectedPeriod === "month" ? "Mois" : "Année"}`} 
+        stats={periodStats} 
+        className="mb-6" 
+      />
 
       {/* Missions List */}
       <div className="space-y-4">
@@ -198,16 +233,18 @@ export default function History() {
             <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
             <p className="text-sm">Chargement des missions...</p>
           </div>
-        ) : missions.length === 0 ? (
+        ) : filteredMissions.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="h-16 w-16 mx-auto text-muted-foreground opacity-50 mb-4" />
-            <p className="text-muted-foreground">Aucune mission enregistrée</p>
+            <p className="text-muted-foreground">
+              Aucune mission pour cette période
+            </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Commencez votre première mesure depuis l'écran Temps réel
+              Sélectionnez une autre date ou période pour voir vos données
             </p>
           </div>
         ) : (
-          missions.map((mission) => (
+          filteredMissions.map((mission) => (
             <Card key={mission.id} className="relative">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
