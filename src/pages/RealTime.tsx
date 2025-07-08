@@ -16,7 +16,7 @@ export default function RealTime() {
   
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
-  const { isRecording, addDataPoint, missionContext, recordingData } = useRecordingContext();
+  const { isRecording, addDataPoint, missionContext, recordingData, updateMissionContext } = useRecordingContext();
 
   // Add data to recording when new data comes in - with deduplication
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
@@ -41,6 +41,11 @@ export default function RealTime() {
       console.log("❌ Not adding data - isRecording:", isRecording, "hasCurrentData:", !!currentData);
     }
   }, [isRecording, currentData, latestLocation, addDataPoint]);
+
+  // Update mission context when location or activity changes
+  useEffect(() => {
+    updateMissionContext(selectedLocation, selectedActivity);
+  }, [selectedLocation, selectedActivity, updateMissionContext]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);

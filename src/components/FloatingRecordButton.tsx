@@ -19,7 +19,7 @@ export function FloatingRecordButton({ device, className }: FloatingRecordButton
   const [missionName, setMissionName] = useState<string>("");
   const [shareData, setShareData] = useState<boolean>(false);
   const { toast } = useToast();
-  const { startRecording, stopRecording, saveMission, isRecording, clearRecordingData } = useRecordingContext();
+  const { startRecording, stopRecording, saveMission, isRecording, clearRecordingData, missionContext } = useRecordingContext();
 
   const handleStartRecording = () => {
     setShowFrequencyDialog(true);
@@ -49,8 +49,8 @@ export function FloatingRecordButton({ device, className }: FloatingRecordButton
     try {
       saveMission(
         finalMissionName,
-        undefined,
-        undefined,
+        missionContext?.location,
+        missionContext?.activity,
         recordingFrequency,
         shareData,
         device?.id || device?.gatt?.device?.id,
