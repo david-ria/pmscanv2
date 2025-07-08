@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Wifi, WifiOff, Map, TrendingUp } from "lucide-react";
 import { MapboxMap } from "@/components/MapboxMap";
 import { PMLineGraph } from "@/components/PMLineGraph";
-import { RecordingControls } from "@/components/RecordingControls";
+import { FloatingRecordButton } from "@/components/FloatingRecordButton";
 
 import { PMScanConnectionStatus } from "@/components/PMScanConnectionStatus";
 import { DataLogger } from "@/components/DataLogger";
@@ -55,13 +55,6 @@ export default function RealTime() {
 
   return (
     <div className="min-h-screen bg-background px-4 py-6">
-      {/* Status Badge */}
-      <div className="flex items-center justify-end mb-4">
-        <Badge variant={isOnline ? "default" : "destructive"} className="text-xs">
-          {isOnline ? <Wifi className="h-3 w-3 mr-1" /> : <WifiOff className="h-3 w-3 mr-1" />}
-          {isOnline ? "En ligne" : "Hors ligne"}
-        </Badge>
-      </div>
 
       {/* Map/Graph Toggle Section */}
       <div className="mb-4">
@@ -90,7 +83,7 @@ export default function RealTime() {
         </div>
 
         {/* Content Area */}
-        <div className="h-[45vh]">
+        <div className="h-[45vh] relative">
           {showGraph ? (
             <PMLineGraph 
               data={recordingData}
@@ -118,6 +111,14 @@ export default function RealTime() {
                     <p>Connexion requise pour la vue carte</p>
                   </div>
                 </div>
+              )}
+              
+              {/* Floating Record Button */}
+              {!showGraph && (
+                <FloatingRecordButton
+                  device={device}
+                  className="absolute bottom-4 right-4 z-10"
+                />
               )}
             </>
           )}
@@ -241,13 +242,6 @@ export default function RealTime() {
         className="mb-4" 
       />
 
-      {/* Recording Controls */}
-      <RecordingControls
-        isRecording={isRecording}
-        onToggleRecording={() => {}} // Not needed anymore, managed by context
-        device={device}
-        className="mb-4"
-      />
 
       {/* Data Logger */}
       <DataLogger 
