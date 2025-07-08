@@ -69,7 +69,7 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
       
       toast({
         title: "Mission sauvegardée",
-        description: `"${finalMissionName}" ${shareData ? "sera partagée" : "stockée localement"}`,
+        description: `"${finalMissionName}" exportée en CSV et stockage vidé`,
       });
 
       // Reset form

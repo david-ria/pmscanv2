@@ -101,13 +101,19 @@ export function useRecordingData() {
       shared
     );
 
-    // Save locally
+    // Save locally first
     dataStorage.saveMissionLocally(mission);
 
-    // Try to sync immediately if online
+    // Export to CSV immediately
+    dataStorage.exportMissionToCSV(mission);
+
+    // Try to sync to database if online
     if (navigator.onLine) {
       dataStorage.syncPendingMissions().catch(console.error);
     }
+
+    // Clear local storage after successful CSV export
+    dataStorage.clearLocalStorage();
 
     // Clear recording data
     setRecordingData([]);
