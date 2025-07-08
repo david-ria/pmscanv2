@@ -118,9 +118,12 @@ export function DataLogger({
           <div className="space-y-1 font-mono text-xs">
             {dataLog.map((entry) => (
               <div key={entry.id} className="text-muted-foreground">
-                [{entry.timestamp.toLocaleTimeString('fr-FR')}] New reading: PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, Temp={entry.pmData.temp.toFixed(1)}°C
+                [{entry.timestamp.toLocaleTimeString('fr-FR')}] New reading: PM1={entry.pmData.pm1.toFixed(1)}ug/m³, PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, PM10={entry.pmData.pm10.toFixed(1)}ug/m³, Temp={entry.pmData.temp.toFixed(1)}°C
                 {entry.location && (
                   <span> | GPS: {entry.location.latitude.toFixed(6)}, {entry.location.longitude.toFixed(6)} (+{Math.round(entry.location.accuracy || 0)}m)</span>
+                )}
+                {entry.missionContext && (entry.missionContext.location || entry.missionContext.activity) && (
+                  <span> | Tags: {[entry.missionContext.location, entry.missionContext.activity].filter(Boolean).join(', ')}</span>
                 )}
               </div>
             ))}
