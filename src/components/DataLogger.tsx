@@ -117,53 +117,7 @@ export function DataLogger({
 
   return (
     <div className={className}>
-      {/* Current Status Section */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {/* Location Status */}
-        <Card className="bg-card/50">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Localisation</span>
-            </div>
-            {currentLocation ? (
-              <div className="space-y-1">
-                <div className="text-xs text-muted-foreground">
-                  {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Précision: ±{Math.round(currentLocation.accuracy || 0)}m
-                </div>
-                {missionContext?.location && (
-                  <div className="text-xs font-medium text-foreground">
-                    Contexte: {missionContext.location}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-xs text-muted-foreground">
-                {missionContext?.location || "Non disponible"}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Activity Status */}
-        <Card className="bg-card/50">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Activité</span>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {missionContext?.activity || "Non définie"}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Data Logger Section */}
-      <div>
+      {/* Header */}
       <div className="flex items-center justify-between p-3 bg-card/50 border rounded-t-lg text-sm">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -248,7 +202,6 @@ export function DataLogger({
       {isMinimized && (
         <div className="border-x border-b rounded-b-lg h-1"></div>
       )}
-      </div>
     </div>
   );
 }
