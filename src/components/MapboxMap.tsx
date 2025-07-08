@@ -76,26 +76,30 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
         }));
 
         map.current.on('load', () => {
-          // Add data sources for track visualization
-          map.current!.addSource('track-line', {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              properties: {},
-              geometry: {
-                type: 'LineString',
-                coordinates: []
+          // Add data sources for track visualization only if they don't exist
+          if (!map.current!.getSource('track-line')) {
+            map.current!.addSource('track-line', {
+              type: 'geojson',
+              data: {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: []
+                }
               }
-            }
-          });
+            });
+          }
 
-          map.current!.addSource('track-points', {
-            type: 'geojson',
-            data: {
-              type: 'FeatureCollection',
-              features: []
-            }
-          });
+          if (!map.current!.getSource('track-points')) {
+            map.current!.addSource('track-points', {
+              type: 'geojson',
+              data: {
+                type: 'FeatureCollection',
+                features: []
+              }
+            });
+          }
 
           // Add track line layer
           map.current!.addLayer({

@@ -16,7 +16,7 @@ export function parsePMScanDataPayload(
     humidity: (((rawData[17] & 0xFF) << 8) | (rawData[16] & 0xFF)) / 10,
     battery: pmScanState.battery,
     charging: pmScanState.charging === 1,
-    timestamp: new Date((ts2000 + DT_2000) * 1000),
+    timestamp: new Date(), // Use smartphone time instead of device time
     location: "PMScan Device"
   };
   
