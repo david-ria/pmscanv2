@@ -102,6 +102,13 @@ export default function RealTime() {
                 <MapboxMap 
                   currentLocation={latestLocation}
                   pmData={currentData}
+                  trackPoints={recordingData.map(entry => ({
+                    longitude: entry.location?.longitude || 0,
+                    latitude: entry.location?.latitude || 0,
+                    pm25: entry.pmData.pm25,
+                    timestamp: entry.pmData.timestamp
+                  })).filter(point => point.longitude !== 0 && point.latitude !== 0)}
+                  isRecording={isRecording}
                   className="h-full w-full"
                 />
               ) : (

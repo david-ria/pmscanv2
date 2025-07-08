@@ -15,10 +15,17 @@ interface MapboxMapProps {
     pm10: number;
     timestamp: Date;
   } | null;
+  trackPoints?: Array<{
+    longitude: number;
+    latitude: number;
+    pm25: number;
+    timestamp: Date;
+  }>;
+  isRecording?: boolean;
   className?: string;
 }
 
-export const MapboxMap = ({ currentLocation, pmData, className }: MapboxMapProps) => {
+export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecording = false, className }: MapboxMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
@@ -67,6 +74,121 @@ export const MapboxMap = ({ currentLocation, pmData, className }: MapboxMapProps
         }));
 
         map.current.on('load', () => {
+          // Add data sources for track visualization
+          map.current!.addSource('track-line', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: []
+              }
+            }
+          });
+
+          map.current!.addSource('track-points', {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: []
+            }
+          });
+
+          // Add track line layer
+          map.current!.addLayer({
+            id: 'track-line',
+            type: 'line',
+            source: 'track-line',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#3b82f6',
+              'line-width': 3,
+              'line-opacity': 0.8
+            }
+          });
+
+          // Add track points layer
+          map.current!.addLayer({
+            id: 'track-points',
+            type: 'circle',
+            source: 'track-points',
+            paint: {
+              'circle-radius': [
+                'case',
+                ['boolean', ['feature-state', 'hovered'], false],
+                8,
+                6
+              ],
+              'circle-color': [
+                'case',
+                ['<=', ['get', 'pm25'], 12],
+                '#22c55e', // Good - Green
+                ['<=', ['get', 'pm25'], 35],
+                '#eab308', // Moderate - Yellow  
+                ['<=', ['get', 'pm25'], 55],
+                '#f97316', // Poor - Orange
+                '#ef4444'  // Very Poor - Red
+              ],
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#ffffff',
+              'circle-opacity': 0.8
+            }
+          });
+
+          // Add hover effects for track points
+          map.current!.on('mouseenter', 'track-points', (e) => {
+            map.current!.getCanvas().style.cursor = 'pointer';
+            
+            if (e.features && e.features[0]) {
+              const feature = e.features[0];
+              map.current!.setFeatureState(
+                { source: 'track-points', id: feature.id },
+                { hovered: true }
+              );
+
+              // Show popup with PM data
+              const properties = feature.properties;
+              if (properties) {
+                const popup = new mapboxgl.Popup({
+                  offset: 25,
+                  closeButton: false
+                })
+                  .setLngLat(e.lngLat)
+                  .setHTML(`
+                    <div style="font-family: system-ui; padding: 6px; font-size: 12px;">
+                      <div style="font-weight: bold; margin-bottom: 4px;">PM2.5: ${Math.round(properties.pm25)} µg/m³</div>
+                      <div style="color: #666; font-size: 10px;">${new Date(properties.timestamp).toLocaleTimeString()}</div>
+                    </div>
+                  `)
+                  .addTo(map.current!);
+                
+                // Store popup reference for cleanup
+                (e.target as any)._tempPopup = popup;
+              }
+            }
+          });
+
+          map.current!.on('mouseleave', 'track-points', (e) => {
+            map.current!.getCanvas().style.cursor = '';
+            
+            if (e.features && e.features[0]) {
+              map.current!.setFeatureState(
+                { source: 'track-points', id: e.features[0].id },
+                { hovered: false }
+              );
+            }
+
+            // Remove temporary popup
+            if ((e.target as any)._tempPopup) {
+              (e.target as any)._tempPopup.remove();
+              delete (e.target as any)._tempPopup;
+            }
+          });
+
           setLoading(false);
         });
 
@@ -169,6 +291,59 @@ export const MapboxMap = ({ currentLocation, pmData, className }: MapboxMapProps
     });
 
   }, [currentLocation, pmData]);
+
+  // Update track visualization when trackPoints change
+  useEffect(() => {
+    if (!map.current || !map.current.getSource('track-points')) return;
+
+    // Create features for track points
+    const features = trackPoints.map((point, index) => ({
+      type: 'Feature' as const,
+      id: index,
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [point.longitude, point.latitude]
+      },
+      properties: {
+        pm25: point.pm25,
+        timestamp: point.timestamp.toISOString()
+      }
+    }));
+
+    // Update track points
+    (map.current.getSource('track-points') as mapboxgl.GeoJSONSource).setData({
+      type: 'FeatureCollection',
+      features
+    });
+
+    // Update track line
+    if (trackPoints.length > 1) {
+      const coordinates = trackPoints.map(point => [point.longitude, point.latitude]);
+      (map.current.getSource('track-line') as mapboxgl.GeoJSONSource).setData({
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates
+        }
+      });
+    }
+
+    // Auto-fit map to show entire track when not recording
+    if (!isRecording && trackPoints.length > 1) {
+      const coordinates = trackPoints.map(point => [point.longitude, point.latitude]);
+      const bounds = new mapboxgl.LngLatBounds();
+      
+      coordinates.forEach(coord => {
+        bounds.extend(coord as [number, number]);
+      });
+
+      map.current.fitBounds(bounds, {
+        padding: 50,
+        duration: 1000
+      });
+    }
+  }, [trackPoints, isRecording]);
 
   if (error) {
     return (
