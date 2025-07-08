@@ -1,119 +1,256 @@
-import { Brain, MessageSquare, Download, Trophy } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Brain, MessageSquare, Download, Trophy, RefreshCw, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { DateFilter } from "@/components/DateFilter";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { dataStorage, MissionData } from "@/lib/dataStorage";
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 
 export default function Analysis() {
-  const aiAnalysis = `Votre exposition aux particules fines cette semaine montre des pics récurrents lors de vos trajets matinaux vers l'école (entre 8h00 et 8h30). 
+  const [missions, setMissions] = useState<MissionData[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedPeriod, setSelectedPeriod] = useState<"day" | "week" | "month" | "year">("week");
+  const [aiAnalysis, setAiAnalysis] = useState<string>("");
+  const [dataPoints, setDataPoints] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [analysisGenerated, setAnalysisGenerated] = useState(false);
+  const { toast } = useToast();
 
-Les mesures indiquent une concentration moyenne de PM2.5 de 28µg/m³ pendant ces trajets, soit 2,3 fois supérieure aux recommandations OMS.
+  // Load missions on component mount
+  useEffect(() => {
+    loadMissions();
+  }, []);
 
-Recommandations :
-• Privilégier l'itinéraire par la rue du Parc (-35% d'exposition)
-• Éviter les heures de pointe (7h45-8h15)
-• Considérer le transport scolaire collectif
+  // Generate analysis when missions or date filter changes
+  useEffect(() => {
+    if (missions.length > 0 && !loading) {
+      generateAnalysis();
+    }
+  }, [missions, selectedDate, selectedPeriod]);
 
-Impact positif observé : vos sorties au parc le weekend maintiennent une excellente qualité d'air (8µg/m³ en moyenne).`;
+  const loadMissions = async () => {
+    try {
+      const missionData = await dataStorage.getAllMissions();
+      setMissions(missionData);
+    } catch (error) {
+      console.error('Error loading missions:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les missions",
+        variant: "destructive"
+      });
+    }
+  };
 
-  const groupRanking = {
-    position: 12,
-    total: 23,
-    percentile: 48
+  // Filter missions based on selected date and period
+  const filteredMissions = () => {
+    let startDate: Date;
+    let endDate: Date;
+
+    switch (selectedPeriod) {
+      case "day":
+        startDate = startOfDay(selectedDate);
+        endDate = endOfDay(selectedDate);
+        break;
+      case "week":
+        startDate = startOfWeek(selectedDate, { weekStartsOn: 1 });
+        endDate = endOfWeek(selectedDate, { weekStartsOn: 1 });
+        break;
+      case "month":
+        startDate = startOfMonth(selectedDate);
+        endDate = endOfMonth(selectedDate);
+        break;
+      case "year":
+        startDate = startOfYear(selectedDate);
+        endDate = endOfYear(selectedDate);
+        break;
+      default:
+        return missions;
+    }
+
+    return missions.filter(mission => {
+      const missionDate = new Date(mission.startTime);
+      return isWithinInterval(missionDate, { start: startDate, end: endDate });
+    });
+  };
+
+  const generateAnalysis = async () => {
+    setLoading(true);
+    try {
+      const filtered = filteredMissions();
+      
+      if (filtered.length === 0) {
+        setAiAnalysis("Aucune donnée disponible pour cette période. Effectuez des mesures pour obtenir une analyse personnalisée.");
+        setDataPoints(null);
+        setAnalysisGenerated(true);
+        return;
+      }
+
+      const timeframeText = selectedPeriod === "day" ? "la journée" : 
+                           selectedPeriod === "week" ? "la semaine" : 
+                           selectedPeriod === "month" ? "le mois" : "l'année";
+
+      const response = await supabase.functions.invoke('analyze-air-quality', {
+        body: {
+          missions: filtered,
+          timeframe: timeframeText
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      setAiAnalysis(response.data.analysis);
+      setDataPoints(response.data.dataPoints);
+      setAnalysisGenerated(true);
+
+      toast({
+        title: "Analyse générée",
+        description: "Votre analyse personnalisée est prête"
+      });
+
+    } catch (error) {
+      console.error('Error generating analysis:', error);
+      setAiAnalysis("Erreur lors de la génération de l'analyse. Veuillez réessayer.");
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer l'analyse AI",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const regenerateAnalysis = () => {
+    setAnalysisGenerated(false);
+    generateAnalysis();
   };
 
   return (
     <div className="min-h-screen bg-background px-4 py-6">
-      {/* Status Badge */}
-      <div className="flex items-center justify-end mb-6">
-        <Badge variant="secondary" className="bg-primary/10 text-primary">
-          <Brain className="h-3 w-3 mr-1" />
-          Nouvelle analyse
-        </Badge>
-      </div>
+      {/* Date Filter */}
+      <DateFilter
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        selectedPeriod={selectedPeriod}
+        onPeriodChange={setSelectedPeriod}
+        className="mb-6"
+      />
 
       {/* AI Analysis Card */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            Analyse hebdomadaire
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              Analyse IA personnalisée
+            </CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={regenerateAnalysis}
+              disabled={loading}
+            >
+              {loading ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              {loading ? "Analyse..." : "Actualiser"}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="whitespace-pre-line text-sm text-foreground leading-relaxed">
-            {aiAnalysis}
-          </div>
-          <div className="flex gap-2 mt-4">
-            <Button variant="outline" size="sm" className="flex-1">
-              <MessageSquare className="h-3 w-3 mr-2" />
-              Poser une question
-            </Button>
-            <Button variant="outline" size="sm" className="flex-1">
-              <Download className="h-3 w-3 mr-2" />
-              Exporter rapport
-            </Button>
-          </div>
+          {loading ? (
+            <div className="text-center py-8">
+              <RefreshCw className="h-8 w-8 mx-auto text-primary animate-spin mb-4" />
+              <p className="text-muted-foreground">Analyse en cours...</p>
+            </div>
+          ) : (
+            <>
+              <div className="whitespace-pre-line text-sm text-foreground leading-relaxed">
+                {aiAnalysis}
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button variant="outline" size="sm" className="flex-1">
+                  <MessageSquare className="h-3 w-3 mr-2" />
+                  Poser une question
+                </Button>
+                <Button variant="outline" size="sm" className="flex-1">
+                  <Download className="h-3 w-3 mr-2" />
+                  Exporter rapport
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
-      {/* Group Ranking */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-primary" />
-            Classement groupe
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center mb-4">
-            <div className="text-3xl font-bold text-foreground">
-              #{groupRanking.position}
+      {/* Data Points Summary */}
+      {dataPoints && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-primary" />
+              Résumé des données
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 bg-primary/10 rounded-lg">
+                <div className="text-2xl font-bold text-primary">{dataPoints.totalMissions}</div>
+                <div className="text-xs text-muted-foreground">Missions</div>
+              </div>
+              <div className="text-center p-3 bg-accent rounded-lg">
+                <div className="text-2xl font-bold text-foreground">{Math.round(dataPoints.totalExposureMinutes / 60)}h</div>
+                <div className="text-xs text-muted-foreground">Temps d'exposition</div>
+              </div>
+              <div className="text-center p-3 bg-air-moderate/10 rounded-lg">
+                <div className="text-2xl font-bold text-air-moderate">{Math.round(dataPoints.averagePM25)}</div>
+                <div className="text-xs text-muted-foreground">PM2.5 moyen (μg/m³)</div>
+              </div>
+              <div className="text-center p-3 bg-air-poor/10 rounded-lg">
+                <div className="text-2xl font-bold text-air-poor">{Math.round(dataPoints.timeAboveWHO)}</div>
+                <div className="text-xs text-muted-foreground">Min {'>'}= seuil OMS</div>
+              </div>
             </div>
-            <div className="text-sm text-muted-foreground">
-              sur {groupRanking.total} membres
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Exposition relative</span>
-              <span className="font-medium">{groupRanking.percentile}e percentile</span>
-            </div>
-            <Progress value={groupRanking.percentile} className="h-2" />
-            <p className="text-xs text-muted-foreground text-center">
-              Vous êtes exposé à un niveau modéré par rapport aux autres membres du groupe
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Weekly Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Tendances cette semaine</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-3 bg-air-good/10 rounded-lg">
-              <div className="text-2xl font-bold text-air-good">-15%</div>
-              <div className="text-xs text-muted-foreground">Exposition vs semaine dernière</div>
+      {/* WHO Threshold Progress */}
+      {dataPoints && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Respect des seuils OMS</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Temps sous seuil OMS (15 μg/m³)</span>
+                  <span className="font-medium">
+                    {Math.round(((dataPoints.totalExposureMinutes - dataPoints.timeAboveWHO) / dataPoints.totalExposureMinutes) * 100)}%
+                  </span>
+                </div>
+                <Progress 
+                  value={((dataPoints.totalExposureMinutes - dataPoints.timeAboveWHO) / dataPoints.totalExposureMinutes) * 100} 
+                  className="h-3" 
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                L'OMS recommande de maintenir l'exposition PM2.5 sous 15 μg/m³ pour protéger la santé.
+              </p>
             </div>
-            <div className="text-center p-3 bg-air-moderate/10 rounded-lg">
-              <div className="text-2xl font-bold text-air-moderate">3</div>
-              <div className="text-xs text-muted-foreground">Alertes déclenchées</div>
-            </div>
-            <div className="text-center p-3 bg-primary/10 rounded-lg">
-              <div className="text-2xl font-bold text-primary">85%</div>
-              <div className="text-xs text-muted-foreground">Temps en zone verte</div>
-            </div>
-            <div className="text-center p-3 bg-accent rounded-lg">
-              <div className="text-2xl font-bold text-foreground">12h</div>
-              <div className="text-xs text-muted-foreground">Temps d'exposition total</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
