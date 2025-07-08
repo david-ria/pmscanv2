@@ -11,28 +11,33 @@ interface RecordingButtonProps {
 }
 
 export function RecordingButton({ isRecording, onClick, recordingFrequency }: RecordingButtonProps) {
+  const handleClick = () => {
+    console.log("🚨 BUTTON CLICKED - RecordingButton");
+    console.log("Current isRecording state:", isRecording);
+    onClick();
+  };
+
   return (
     <div className="space-y-4">
       {/* Recording Control */}
       <div className="flex items-center justify-center">
-        <Button
-          onClick={() => {
-            console.log("🎯 RecordingButton clicked!");
-            onClick();
-          }}
-          size="lg"
-          variant={isRecording ? "destructive" : "default"}
+        <button
+          onClick={handleClick}
           className={cn(
-            "h-16 w-16 rounded-full",
-            isRecording && "animate-pulse"
+            "h-16 w-16 rounded-full flex items-center justify-center transition-all duration-200",
+            "hover:scale-105 active:scale-95",
+            isRecording 
+              ? "bg-destructive text-destructive-foreground animate-pulse shadow-lg" 
+              : "bg-primary text-primary-foreground shadow-md hover:shadow-lg"
           )}
+          type="button"
         >
           {isRecording ? (
             <Square className="h-6 w-6" />
           ) : (
             <Play className="h-6 w-6" />
           )}
-        </Button>
+        </button>
       </div>
 
       {/* Status */}
