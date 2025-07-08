@@ -83,10 +83,22 @@ export default function Analysis() {
     try {
       const filtered = filteredMissions();
       
+      console.log('Total missions available:', missions.length);
+      console.log('Filtered missions for analysis:', filtered.length);
+      console.log('Selected period:', selectedPeriod);
+      console.log('Selected date:', selectedDate);
+      
       if (filtered.length === 0) {
-        setAiAnalysis("Aucune donnée disponible pour cette période.\n\nPour obtenir une analyse personnalisée :\n1. Allez sur la page 'Temps réel'\n2. Connectez votre capteur PMScan\n3. Démarrez un enregistrement de quelques minutes\n4. Revenez ici pour voir votre analyse IA !");
+        const hasAnyMissions = missions.length > 0;
+        if (hasAnyMissions) {
+          setAiAnalysis(`Aucune donnée trouvée pour ${selectedPeriod === "day" ? "cette journée" : 
+                                                    selectedPeriod === "week" ? "cette semaine" : 
+                                                    selectedPeriod === "month" ? "ce mois" : "cette année"}.\n\nVous avez ${missions.length} mission(s) enregistrée(s), mais elles ne correspondent pas à la période sélectionnée.\n\n💡 Essayez de :\n• Changer la période (jour/semaine/mois/année)\n• Sélectionner une date différente\n• Ou allez sur 'Historique' pour voir toutes vos données`);
+        } else {
+          setAiAnalysis("Aucune donnée disponible.\n\nPour obtenir une analyse personnalisée :\n1. Allez sur la page 'Temps réel'\n2. Connectez votre capteur PMScan\n3. Démarrez un enregistrement de quelques minutes\n4. Revenez ici pour voir votre analyse IA !");
+        }
         setDataPoints({
-          totalMissions: 0,
+          totalMissions: missions.length,
           totalExposureMinutes: 0,
           averagePM25: 0,
           maxPM25: 0,
