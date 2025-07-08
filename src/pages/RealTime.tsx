@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Wifi, WifiOff } from "lucide-react";
+import { Wifi, WifiOff, Map, TrendingUp } from "lucide-react";
 import { MapboxMap } from "@/components/MapboxMap";
+import { PMLineGraph } from "@/components/PMLineGraph";
 import { RecordingControls } from "@/components/RecordingControls";
 import { StatsCard } from "@/components/StatsCard";
 import { PMScanConnectionStatus } from "@/components/PMScanConnectionStatus";
 import { DataLogger } from "@/components/DataLogger";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { useGPS } from "@/hooks/useGPS";
@@ -13,9 +15,10 @@ import { useRecordingContext } from "@/contexts/RecordingContext";
 
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [showGraph, setShowGraph] = useState(false); // Toggle state for map/graph
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
-  const { isRecording, addDataPoint, missionContext } = useRecordingContext();
+  const { isRecording, addDataPoint, missionContext, recordingData } = useRecordingContext();
 
   // Add data to recording when new data comes in
   useEffect(() => {
@@ -71,22 +74,58 @@ export default function RealTime() {
         </div>
       </div>
 
-      {/* Map - Top Half of Screen */}
-      <div className="h-[45vh] mb-4">
-        {isOnline ? (
-          <MapboxMap 
-            currentLocation={latestLocation}
-            pmData={currentData}
-            className="h-full w-full"
-          />
-        ) : (
-          <div className="h-full bg-card border border-border rounded-lg flex items-center justify-center">
-            <div className="text-muted-foreground text-center">
-              <WifiOff className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Connexion requise pour la vue carte</p>
-            </div>
+      {/* Map/Graph Toggle Section */}
+      <div className="mb-4">
+        {/* Toggle Controls */}
+        <div className="flex items-center justify-center mb-3">
+          <div className="flex bg-muted p-1 rounded-lg">
+            <Button
+              variant={!showGraph ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setShowGraph(false)}
+              className="flex items-center gap-2"
+            >
+              <Map className="h-4 w-4" />
+              Carte
+            </Button>
+            <Button
+              variant={showGraph ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setShowGraph(true)}
+              className="flex items-center gap-2"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Graphique
+            </Button>
           </div>
-        )}
+        </div>
+
+        {/* Content Area */}
+        <div className="h-[45vh]">
+          {showGraph ? (
+            <PMLineGraph 
+              data={recordingData}
+              className="h-full"
+            />
+          ) : (
+            <>
+              {isOnline ? (
+                <MapboxMap 
+                  currentLocation={latestLocation}
+                  pmData={currentData}
+                  className="h-full w-full"
+                />
+              ) : (
+                <div className="h-full bg-card border border-border rounded-lg flex items-center justify-center">
+                  <div className="text-muted-foreground text-center">
+                    <WifiOff className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>Connexion requise pour la vue carte</p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Real-time Readings - Three Cards */}
