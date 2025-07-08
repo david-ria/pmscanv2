@@ -14,7 +14,7 @@ export default function RealTime() {
   const [isRecording, setIsRecording] = useState(false);
   const [showDebugLog, setShowDebugLog] = useState(false);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
-  const { currentData, isConnected, device, error } = usePMScanBluetooth();
+  const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const logEndRef = useRef<HTMLDivElement>(null);
 
   // Add debug log function
@@ -207,7 +207,28 @@ export default function RealTime() {
       )}
 
       {/* Connection Status */}
-      <PMScanConnectionStatus className="mb-4" />
+      <PMScanConnectionStatus 
+        connectionStatus={{
+          connected: isConnected,
+          connecting: false,
+          error: error
+        }}
+        deviceInfo={device || {
+          name: "PMScan Device",
+          version: 0,
+          mode: 0,
+          interval: 0,
+          battery: 0,
+          charging: false,
+          connected: false
+        }}
+        locationEnabled={false}
+        latestLocation={null}
+        onConnect={() => requestDevice()}
+        onDisconnect={() => disconnect()}
+        onRequestLocationPermission={async () => false}
+        className="mb-4" 
+      />
 
       {/* Recording Controls */}
       <RecordingControls
