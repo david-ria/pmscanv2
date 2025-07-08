@@ -20,6 +20,6 @@ export function parsePMScanDataPayload(
     location: "PMScan Device"
   };
   
-  console.log('📊 PMScan Data - PM2.5:', data.pm25, 'PM1:', data.pm1, 'PM10:', data.pm10, 'Temp:', data.temp, 'Humidity:', data.humidity);
+  // Note: Logging moved to handlers to avoid duplicate logs
   return data;
 }
