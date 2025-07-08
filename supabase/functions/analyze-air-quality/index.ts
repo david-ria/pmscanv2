@@ -159,7 +159,7 @@ function analyzeMissionsData(missions: MissionData[], timeframe: string): string
 📊 RÉSUMÉ GÉNÉRAL:
 - Nombre de missions: ${missions.length}
 - Temps d'exposition total: ${Math.round(totalExposure)} minutes (${(totalExposure/60).toFixed(1)} heures)
-- PM2.5 moyen: ${avgPm25.toFixed(1)} μg/m³
+- PM2.5 moyen: ${avgPM25.toFixed(1)} μg/m³
 - PM2.5 maximum: ${maxPM25.toFixed(1)} μg/m³
 - Temps au-dessus seuil OMS (15 μg/m³): ${timeAboveWHO.toFixed(0)} minutes
 
@@ -171,7 +171,7 @@ ${activityStats}
 
 📈 DÉTAIL DES MISSIONS:
 ${missions.slice(0, 5).map(m => 
-  `- ${m.name}: ${m.avgPm25.toFixed(1)} μg/m³ pendant ${m.durationMinutes}min ${m.locationContext ? `(${m.locationContext})` : ''}`
+  `- ${m.name}: ${(m.avgPm25 || 0).toFixed(1)} μg/m³ pendant ${m.durationMinutes || 0}min ${m.locationContext ? `(${m.locationContext})` : ''}`
 ).join('\n')}${missions.length > 5 ? `\n... et ${missions.length - 5} autres missions` : ''}`;
 }
 
