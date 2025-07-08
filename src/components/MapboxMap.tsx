@@ -101,49 +101,53 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
             });
           }
 
-          // Add track line layer
-          map.current!.addLayer({
-            id: 'track-line',
-            type: 'line',
-            source: 'track-line',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round'
-            },
-            paint: {
-              'line-color': '#3b82f6',
-              'line-width': 3,
-              'line-opacity': 0.8
-            }
-          });
+          // Add track line layer only if it doesn't exist
+          if (!map.current!.getLayer('track-line')) {
+            map.current!.addLayer({
+              id: 'track-line',
+              type: 'line',
+              source: 'track-line',
+              layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+              },
+              paint: {
+                'line-color': '#3b82f6',
+                'line-width': 3,
+                'line-opacity': 0.8
+              }
+            });
+          }
 
-          // Add track points layer
-          map.current!.addLayer({
-            id: 'track-points',
-            type: 'circle',
-            source: 'track-points',
-            paint: {
-              'circle-radius': [
-                'case',
-                ['boolean', ['feature-state', 'hovered'], false],
-                8,
-                6
-              ],
-              'circle-color': [
-                'case',
-                ['<=', ['get', 'pm25'], 12],
-                '#22c55e', // Good - Green
-                ['<=', ['get', 'pm25'], 35],
-                '#eab308', // Moderate - Yellow  
-                ['<=', ['get', 'pm25'], 55],
-                '#f97316', // Poor - Orange
-                '#ef4444'  // Very Poor - Red
-              ],
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#ffffff',
-              'circle-opacity': 0.8
-            }
-          });
+          // Add track points layer only if it doesn't exist
+          if (!map.current!.getLayer('track-points')) {
+            map.current!.addLayer({
+              id: 'track-points',
+              type: 'circle',
+              source: 'track-points',
+              paint: {
+                'circle-radius': [
+                  'case',
+                  ['boolean', ['feature-state', 'hovered'], false],
+                  8,
+                  6
+                ],
+                'circle-color': [
+                  'case',
+                  ['<=', ['get', 'pm25'], 12],
+                  '#22c55e', // Good - Green
+                  ['<=', ['get', 'pm25'], 35],
+                  '#eab308', // Moderate - Yellow  
+                  ['<=', ['get', 'pm25'], 55],
+                  '#f97316', // Poor - Orange
+                  '#ef4444'  // Very Poor - Red
+                ],
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#ffffff',
+                'circle-opacity': 0.8
+              }
+            });
+          }
 
           // Add hover effects for track points
           map.current!.on('mouseenter', 'track-points', (e) => {
