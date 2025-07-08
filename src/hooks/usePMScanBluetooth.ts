@@ -259,6 +259,7 @@ export function usePMScanBluetooth() {
         connected: true
       });
       setIsConnected(true);
+      setIsConnecting(false);
       setError(null);
       console.log('🎉 Init finished');
       
@@ -267,6 +268,7 @@ export function usePMScanBluetooth() {
     } catch (error) {
       console.error('❌ Error initializing device:', error);
       setError('Failed to initialize device');
+      setIsConnecting(false);
     }
   }, [PMScanRTDataHandler, PMScanIMDataHandler, PMScanBatteryDataHandler, PMScanChargingDataHandler, updateConnectionState]);
 
@@ -294,6 +296,7 @@ export function usePMScanBluetooth() {
       () => {
         console.log('❌ Failed to reconnect.');
         setError('Failed to reconnect');
+        setIsConnecting(false);
       }
     );
   }, [exponentialBackoff, onPMScanConnected]);
@@ -301,6 +304,7 @@ export function usePMScanBluetooth() {
   const requestDevice = useCallback(async () => {
     try {
       setError(null);
+      setIsConnecting(true);
       
       if (!navigator.bluetooth) {
         throw new Error('Bluetooth not available in this browser');
@@ -330,6 +334,7 @@ export function usePMScanBluetooth() {
     } catch (error) {
       console.error('❌ Error requesting device:', error);
       setError(error instanceof Error ? error.message : 'Failed to connect to device');
+      setIsConnecting(false);
     }
   }, [connect, updateConnectionState]);
 
