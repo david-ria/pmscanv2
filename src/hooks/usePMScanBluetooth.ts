@@ -238,21 +238,14 @@ export function usePMScanBluetooth() {
       deviceRef.current = device;
       
       device.addEventListener('gattserverdisconnected', () => {
-        console.log('🔌 Device disconnected! Reason unknown - checking reconnection...');
-        console.log('📋 shouldConnectRef.current:', shouldConnectRef.current);
-        console.log('🔗 Device GATT connected:', device.gatt?.connected);
-        
+        console.log('🔌 Device disconnected! Auto-reconnecting...');
         setIsConnected(false);
         setDevice(prev => prev ? { ...prev, connected: false } : null);
         
+        // Simple reconnection like the working version
         if (shouldConnectRef.current) {
-          console.log('🔄 Auto-reconnecting in 1 second...');
-          setTimeout(() => {
-            console.log('⏰ Attempting auto-reconnection now...');
-            connectToDevice();
-          }, 1000);
-        } else {
-          console.log('❌ Auto-reconnection disabled');
+          console.log('🔄 Reconnecting immediately...');
+          connectToDevice();
         }
       });
 
