@@ -199,17 +199,23 @@ export function usePMScanBluetooth() {
   const connectToDevice = useCallback(() => {
     if (!deviceRef.current || isConnecting) return;
 
+    console.log('🔄 Starting connection attempt...');
     setIsConnecting(true);
     shouldConnectRef.current = true;
 
     exponentialBackoff(
       10,
       1.2,
-      () => deviceRef.current!.gatt!.connect(),
+      () => {
+        console.log('📡 Attempting GATT connection...');
+        return deviceRef.current!.gatt!.connect();
+      },
       (server) => {
+        console.log('✅ GATT connection successful, initializing device...');
         initializeDevice(server).finally(() => setIsConnecting(false));
       },
       () => {
+        console.log('❌ Connection failed after all retries');
         setError('Failed to connect to device');
         setIsConnecting(false);
       }
@@ -232,11 +238,21 @@ export function usePMScanBluetooth() {
       deviceRef.current = device;
       
       device.addEventListener('gattserverdisconnected', () => {
+        console.log('🔌 Device disconnected! Reason unknown - checking reconnection...');
+        console.log('📋 shouldConnectRef.current:', shouldConnectRef.current);
+        console.log('🔗 Device GATT connected:', device.gatt?.connected);
+        
         setIsConnected(false);
         setDevice(prev => prev ? { ...prev, connected: false } : null);
         
         if (shouldConnectRef.current) {
-          connectToDevice();
+          console.log('🔄 Auto-reconnecting in 1 second...');
+          setTimeout(() => {
+            console.log('⏰ Attempting auto-reconnection now...');
+            connectToDevice();
+          }, 1000);
+        } else {
+          console.log('❌ Auto-reconnection disabled');
         }
       });
 
