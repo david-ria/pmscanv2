@@ -3,7 +3,7 @@ import { Wifi, WifiOff, Map, TrendingUp } from "lucide-react";
 import { MapboxMap } from "@/components/MapboxMap";
 import { PMLineGraph } from "@/components/PMLineGraph";
 import { RecordingControls } from "@/components/RecordingControls";
-import { StatsCard } from "@/components/StatsCard";
+
 import { PMScanConnectionStatus } from "@/components/PMScanConnectionStatus";
 import { DataLogger } from "@/components/DataLogger";
 import { Badge } from "@/components/ui/badge";
@@ -51,12 +51,6 @@ export default function RealTime() {
     return { level: "very-poor", label: "Très mauvais", color: "air-very-poor" };
   };
 
-  const todayStats = [
-    { label: "Moyenne PM2.5", value: 18, unit: "µg/m³", color: "moderate" as const },
-    { label: "Pic max", value: 34, unit: "µg/m³", color: "moderate" as const },
-    { label: "Exposition", value: "3h 24m", color: "default" as const },
-    { label: "Mesures", value: 1247, color: "default" as const }
-  ];
 
   return (
     <div className="min-h-screen bg-background pb-20 px-4 pt-6">
@@ -260,8 +254,6 @@ export default function RealTime() {
         className="mb-4"
       />
 
-      {/* Today's Stats */}
-      <StatsCard title="Statistiques du jour" stats={todayStats} />
     </div>
   );
 }
