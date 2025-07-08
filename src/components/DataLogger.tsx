@@ -41,6 +41,7 @@ export function DataLogger({
   // Add new data entry when recording and data is available
   useEffect(() => {
     if (isRecording && currentData) {
+      console.log("📝 Adding data to logger:", { pm25: currentData.pm25, timestamp: currentData.timestamp });
       const newEntry: DataLogEntry = {
         id: Date.now().toString(),
         timestamp: currentData.timestamp,
@@ -49,7 +50,11 @@ export function DataLogger({
         missionContext
       };
       
-      setDataLog(prev => [newEntry, ...prev.slice(0, 99)]); // Keep last 100 entries
+      setDataLog(prev => {
+        const updated = [newEntry, ...prev.slice(0, 99)];
+        console.log("📊 DataLog updated, total entries:", updated.length);
+        return updated;
+      });
     }
   }, [isRecording, currentData, currentLocation, missionContext]);
 
