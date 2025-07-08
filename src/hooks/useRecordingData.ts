@@ -17,6 +17,11 @@ export function useRecordingData() {
   }>({ location: "", activity: "" });
   const recordingStartTime = useRef<Date | null>(null);
 
+  // Debug: Log when isRecording changes
+  useEffect(() => {
+    console.log("🚨 isRecording state changed to:", isRecording);
+  }, [isRecording]);
+
   // Auto-sync when coming online
   useEffect(() => {
     const handleOnline = () => {
@@ -36,10 +41,11 @@ export function useRecordingData() {
 
   const startRecording = () => {
     console.log("🎬 Starting recording...");
+    console.log("🔄 Setting isRecording to true");
     setIsRecording(true);
     setRecordingData([]);
     recordingStartTime.current = new Date();
-    console.log("✅ Recording started!");
+    console.log("✅ Recording started! isRecording should now be:", true);
   };
 
   const stopRecording = () => {
@@ -47,14 +53,23 @@ export function useRecordingData() {
   };
 
   const addDataPoint = (pmData: PMScanData, location?: LocationData) => {
-    if (!isRecording) return;
+    console.log("🎯 addDataPoint called - isRecording:", isRecording, "pmData:", pmData?.pm25);
+    if (!isRecording) {
+      console.log("❌ Not recording, skipping data point");
+      return;
+    }
 
+    console.log("✅ Adding data point to recording!");
     const entry: RecordingEntry = {
       pmData,
       location
     };
 
-    setRecordingData(prev => [...prev, entry]);
+    setRecordingData(prev => {
+      const updated = [...prev, entry];
+      console.log("📊 Recording data updated, total points:", updated.length);
+      return updated;
+    });
   };
 
   const saveMission = (
