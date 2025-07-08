@@ -62,6 +62,25 @@ export function usePMScanBluetooth() {
     externalMemory: 0,
   });
 
+  // Add connection state update function like working version
+  const updateConnectionState = useCallback(() => {
+    const actuallyConnected = PMScanDeviceRef.current?.gatt?.connected || false;
+    const shouldConnect = PMScanShouldConnectRef.current;
+    const isInited = PMScanInitedRef.current;
+    
+    console.log('🔄 Connection state check:', {
+      actuallyConnected,
+      shouldConnect,
+      isInited,
+      currentUIState: isConnected
+    });
+    
+    // Update UI state to match actual connection
+    setIsConnected(actuallyConnected && isInited);
+    setDevice(prev => prev ? { ...prev, connected: actuallyConnected && isInited } : null);
+  }, [isConnected]);
+
+
   const parsePMScanDataPayload = useCallback((charValue: DataView): PMScanData => {
     const rawData = new Uint8Array(charValue.buffer);
     const ts2000 = ((rawData[3] & 0xFF) << 24) | ((rawData[2] & 0xFF) << 16) | ((rawData[1] & 0xFF) << 8) | (rawData[0] & 0xFF);
@@ -242,11 +261,14 @@ export function usePMScanBluetooth() {
       setIsConnected(true);
       setError(null);
       console.log('🎉 Init finished');
+      
+      // Call updateConnectionState to ensure UI reflects actual state
+      updateConnectionState();
     } catch (error) {
       console.error('❌ Error initializing device:', error);
       setError('Failed to initialize device');
     }
-  }, [PMScanRTDataHandler, PMScanIMDataHandler, PMScanBatteryDataHandler, PMScanChargingDataHandler]);
+  }, [PMScanRTDataHandler, PMScanIMDataHandler, PMScanBatteryDataHandler, PMScanChargingDataHandler, updateConnectionState]);
 
   const onPMScanDisconnected = useCallback(() => {
     console.log('🔌 PMScan Device disconnected');
@@ -298,8 +320,9 @@ export function usePMScanBluetooth() {
       device.addEventListener('gattserverdisconnected', () => {
         console.log('🔌 PMScan Device disconnected');
         PMScanInitedRef.current = false;
-        setIsConnected(false);
-        setDevice(prev => prev ? { ...prev, connected: false } : null);
+        // Update UI to reflect actual connection state
+        updateConnectionState();
+        // Auto-reconnect if we should
         connect();
       });
       
@@ -308,7 +331,7 @@ export function usePMScanBluetooth() {
       console.error('❌ Error requesting device:', error);
       setError(error instanceof Error ? error.message : 'Failed to connect to device');
     }
-  }, [connect, onPMScanDisconnected]);
+  }, [connect, updateConnectionState]);
 
   const disconnect = useCallback(async () => {
     PMScanShouldConnectRef.current = false;
