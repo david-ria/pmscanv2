@@ -3,6 +3,7 @@ import { Wifi, WifiOff, Map, TrendingUp } from "lucide-react";
 import { MapboxMap } from "@/components/MapboxMap";
 import { PMLineGraph } from "@/components/PMLineGraph";
 import { FloatingRecordButton } from "@/components/FloatingRecordButton";
+import { DataLogger } from "@/components/DataLogger";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
@@ -261,6 +262,14 @@ export default function RealTime() {
         </div>
       )}
 
+      {/* Data Logger */}
+      <DataLogger 
+        isRecording={isRecording}
+        currentData={currentData}
+        currentLocation={latestLocation}
+        missionContext={missionContext}
+        className="mb-4"
+      />
 
     </div>
   );
