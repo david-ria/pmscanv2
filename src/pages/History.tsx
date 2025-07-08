@@ -153,7 +153,7 @@ export default function History() {
   const unsyncedCount = missions.filter(m => !m.synced).length;
 
   return (
-    <div className="min-h-screen bg-background pb-20 px-4 pt-6">
+    <div className="min-h-screen bg-background px-4 py-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

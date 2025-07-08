@@ -23,13 +23,9 @@ Impact positif observé : vos sorties au parc le weekend maintiennent une excell
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 px-4 pt-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Analyse IA</h1>
-          <p className="text-sm text-muted-foreground">Insights personnalisés</p>
-        </div>
+    <div className="min-h-screen bg-background px-4 py-6">
+      {/* Status Badge */}
+      <div className="flex items-center justify-end mb-6">
         <Badge variant="secondary" className="bg-primary/10 text-primary">
           <Brain className="h-3 w-3 mr-1" />
           Nouvelle analyse

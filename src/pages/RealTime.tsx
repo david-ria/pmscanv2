@@ -54,19 +54,13 @@ export default function RealTime() {
 
 
   return (
-    <div className="min-h-screen bg-background pb-20 px-4 pt-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">PMSCAN</h1>
-          <p className="text-sm text-muted-foreground">Temps réel</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={isOnline ? "default" : "destructive"} className="text-xs">
-            {isOnline ? <Wifi className="h-3 w-3 mr-1" /> : <WifiOff className="h-3 w-3 mr-1" />}
-            {isOnline ? "En ligne" : "Hors ligne"}
-          </Badge>
-        </div>
+    <div className="min-h-screen bg-background px-4 py-6">
+      {/* Status Badge */}
+      <div className="flex items-center justify-end mb-4">
+        <Badge variant={isOnline ? "default" : "destructive"} className="text-xs">
+          {isOnline ? <Wifi className="h-3 w-3 mr-1" /> : <WifiOff className="h-3 w-3 mr-1" />}
+          {isOnline ? "En ligne" : "Hors ligne"}
+        </Badge>
       </div>
 
       {/* Map/Graph Toggle Section */}
