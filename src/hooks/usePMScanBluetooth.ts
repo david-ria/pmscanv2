@@ -13,22 +13,7 @@ export function usePMScanBluetooth() {
 
   const connectionManagerRef = useRef(new PMScanConnectionManager());
 
-  // Connection state update function
-  const updateConnectionState = useCallback(() => {
-    const manager = connectionManagerRef.current;
-    const actuallyConnected = manager.isConnected();
-    const shouldConnect = manager.shouldAutoConnect();
-    
-    console.log('🔄 Connection state check:', {
-      actuallyConnected,
-      shouldConnect,
-      currentUIState: isConnected
-    });
-    
-    // Update UI state to match actual connection
-    setIsConnected(actuallyConnected);
-    setDevice(prev => prev ? { ...prev, connected: actuallyConnected } : null);
-  }, [isConnected]);
+  // Connection state update function - removed to prevent interference
 
   // Event handlers
   const handleRTData = useCallback((event: Event) => {
@@ -83,14 +68,12 @@ export function usePMScanBluetooth() {
       setIsConnected(true);
       setIsConnecting(false);
       setError(null);
-      
-      updateConnectionState();
     } catch (error) {
       console.error('❌ Error initializing device:', error);
       setError('Failed to initialize device');
       setIsConnecting(false);
     }
-  }, [handleRTData, handleIMData, handleBatteryData, handleChargingData, updateConnectionState]);
+  }, [handleRTData, handleIMData, handleBatteryData, handleChargingData]);
 
   const onDeviceDisconnected = useCallback(() => {
     connectionManagerRef.current.onDisconnected();
@@ -127,8 +110,7 @@ export function usePMScanBluetooth() {
       
       device.addEventListener('gattserverdisconnected', () => {
         console.log('🔌 PMScan Device disconnected');
-        manager.onDisconnected();
-        updateConnectionState();
+        onDeviceDisconnected();
         connect();
       });
       
@@ -138,7 +120,7 @@ export function usePMScanBluetooth() {
       setError(error instanceof Error ? error.message : 'Failed to connect to device');
       setIsConnecting(false);
     }
-  }, [connect, updateConnectionState]);
+  }, [connect, onDeviceDisconnected]);
 
   const disconnect = useCallback(async () => {
     await connectionManagerRef.current.disconnect();
