@@ -274,12 +274,14 @@ class DataStorageService {
       .map(row => row.map(field => `"${field}"`).join(','))
       .join('\n');
 
-    // Add UTF-8 BOM for proper encoding
+    // Add UTF-8 BOM for proper encoding in Excel and other applications
     const BOM = '\uFEFF';
     const csvWithBOM = BOM + csvContent;
 
     // Create and download CSV file with proper UTF-8 encoding
-    const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvWithBOM], { 
+      type: 'text/csv;charset=utf-8' 
+    });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     

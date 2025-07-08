@@ -23,11 +23,13 @@ export function usePMScanBluetooth() {
       
       // Only update and log if data is significantly different to avoid duplicates
       setCurrentData(prevData => {
-        if (!prevData || 
-            Math.abs(prevData.pm25 - data.pm25) > 0.05 || 
-            Math.abs(prevData.pm1 - data.pm1) > 0.05 || 
-            Math.abs(prevData.pm10 - data.pm10) > 0.05 ||
-            data.timestamp.getTime() - prevData.timestamp.getTime() > 500) {
+        const isDifferent = !prevData || 
+          Math.abs(prevData.pm25 - data.pm25) >= 0.1 || 
+          Math.abs(prevData.pm1 - data.pm1) >= 0.1 || 
+          Math.abs(prevData.pm10 - data.pm10) >= 0.1 ||
+          (data.timestamp.getTime() - prevData.timestamp.getTime()) >= 1000; // 1 second minimum
+        
+        if (isDifferent) {
           console.log('🔄 RT Data received:', data);
           return data;
         }
@@ -42,19 +44,9 @@ export function usePMScanBluetooth() {
     if (target.value) {
       const data = parsePMScanDataPayload(target.value, connectionManagerRef.current.state);
       
-      // Only update and log if data is significantly different to avoid duplicates
-      setCurrentData(prevData => {
-        if (!prevData || 
-            Math.abs(prevData.pm25 - data.pm25) > 0.05 || 
-            Math.abs(prevData.pm1 - data.pm1) > 0.05 || 
-            Math.abs(prevData.pm10 - data.pm10) > 0.05 ||
-            data.timestamp.getTime() - prevData.timestamp.getTime() > 500) {
-          console.log('🔄 IM Data received:', data);
-          return data;
-        }
-        // Skip logging and updating if data is too similar
-        return prevData;
-      });
+      // Skip IM data entirely to avoid duplicates - RT data is sufficient for real-time display
+      // IM data is typically the same as RT data but sent more frequently
+      console.log('📄 IM Data received (skipped to avoid duplicates)');
     }
   }, []);
 
