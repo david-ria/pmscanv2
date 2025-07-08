@@ -47,7 +47,7 @@ export function exportMissionToCSV(mission: MissionData): void {
 
   // Create and download CSV file with proper UTF-8 encoding
   const blob = new Blob([csvWithBOM], { 
-    type: 'text/csv;charset=utf-8;' 
+    type: 'text/csv;charset=utf-8' 
   });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);

@@ -52,15 +52,15 @@ const App = () => {
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <RecordingProvider>
-        <div className="relative min-h-screen">
-          <Routes>
-            <Route 
-              path="/auth" 
-              element={!user ? <Auth /> : <Navigate to="/" replace />} 
-            />
-            <Route path="/*" element={
-              <ProtectedRoute>
+      <div className="relative min-h-screen">
+        <Routes>
+          <Route 
+            path="/auth" 
+            element={!user ? <Auth /> : <Navigate to="/" replace />} 
+          />
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <RecordingProvider>
                 <Header />
                 <main className="pt-14 pb-16">
                   <Routes>
@@ -72,11 +72,11 @@ const App = () => {
                   </Routes>
                 </main>
                 <BottomNavigation />
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </div>
-      </RecordingProvider>
+              </RecordingProvider>
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </div>
     </TooltipProvider>
   );
 };
