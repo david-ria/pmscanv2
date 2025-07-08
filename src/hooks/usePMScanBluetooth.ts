@@ -21,7 +21,18 @@ export function usePMScanBluetooth() {
     if (target.value) {
       const data = parsePMScanDataPayload(target.value, connectionManagerRef.current.state);
       console.log('🔄 RT Data received:', data);
-      setCurrentData(data);
+      
+      // Only update if data is significantly different to avoid duplicates
+      setCurrentData(prevData => {
+        if (!prevData || 
+            Math.abs(prevData.pm25 - data.pm25) > 0.05 || 
+            Math.abs(prevData.pm1 - data.pm1) > 0.05 || 
+            Math.abs(prevData.pm10 - data.pm10) > 0.05 ||
+            data.timestamp.getTime() - prevData.timestamp.getTime() > 500) {
+          return data;
+        }
+        return prevData;
+      });
     }
   }, []);
 
@@ -30,7 +41,18 @@ export function usePMScanBluetooth() {
     if (target.value) {
       const data = parsePMScanDataPayload(target.value, connectionManagerRef.current.state);
       console.log('🔄 IM Data received:', data);
-      setCurrentData(data);
+      
+      // Only update if data is significantly different to avoid duplicates
+      setCurrentData(prevData => {
+        if (!prevData || 
+            Math.abs(prevData.pm25 - data.pm25) > 0.05 || 
+            Math.abs(prevData.pm1 - data.pm1) > 0.05 || 
+            Math.abs(prevData.pm10 - data.pm10) > 0.05 ||
+            data.timestamp.getTime() - prevData.timestamp.getTime() > 500) {
+          return data;
+        }
+        return prevData;
+      });
     }
   }, []);
 
