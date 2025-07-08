@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Wifi, WifiOff, Map, Bug } from "lucide-react";
+import { MapboxMap } from "@/components/MapboxMap";
 import { RecordingControls } from "@/components/RecordingControls";
 import { StatsCard } from "@/components/StatsCard";
 import { PMScanConnectionStatus } from "@/components/PMScanConnectionStatus";
@@ -100,20 +101,21 @@ export default function RealTime() {
       </div>
 
       {/* Map - Top Half of Screen */}
-      <div className="h-[45vh] bg-card border border-border rounded-lg mb-4 flex items-center justify-center">
-        <div className="text-muted-foreground text-center">
-          {isOnline ? (
-            <div>
-              <Map className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Vue carte - {currentData?.location || "PMScan"}</p>
-            </div>
-          ) : (
-            <div>
+      <div className="h-[45vh] mb-4">
+        {isOnline ? (
+          <MapboxMap 
+            currentLocation={latestLocation}
+            pmData={currentData}
+            className="h-full w-full"
+          />
+        ) : (
+          <div className="h-full bg-card border border-border rounded-lg flex items-center justify-center">
+            <div className="text-muted-foreground text-center">
               <WifiOff className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>Connexion requise pour la vue carte</p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Real-time Readings - Three Cards */}
