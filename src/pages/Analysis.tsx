@@ -132,11 +132,10 @@ export default function Analysis() {
 
     } catch (error) {
       console.error('Error generating analysis:', error);
-      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'analyse";
-      setAiAnalysis(`Erreur lors de la génération de l'analyse: ${errorMessage}. Veuillez réessayer.`);
+      setAiAnalysis("Impossible de générer votre analyse pour le moment.\n\nPour obtenir votre rapport personnalisé :\n1. Vérifiez que vous avez des données enregistrées\n2. Allez sur 'Temps réel' pour effectuer de nouvelles mesures\n3. Revenez ici dans quelques instants\n\nSi le problème persiste, essayez de changer la période de temps sélectionnée.");
       toast({
-        title: "Erreur",
-        description: errorMessage,
+        title: "Analyse indisponible",
+        description: "Vérifiez vos données et réessayez",
         variant: "destructive"
       });
     } finally {
