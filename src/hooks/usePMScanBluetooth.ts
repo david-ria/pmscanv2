@@ -71,10 +71,14 @@ export function usePMScanBluetooth() {
     console.log('handleRTData called');
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target.value) {
-      console.log('Raw characteristic value:', target.value);
-      const data = parsePMScanDataPayload(target.value);
-      console.log('Setting currentData to:', data);
-      setCurrentData(data);
+      console.log('Raw characteristic value received, buffer length:', target.value.byteLength);
+      try {
+        const data = parsePMScanDataPayload(target.value);
+        console.log('Parsed PM data - PM2.5:', data.pm25, 'PM1:', data.pm1, 'PM10:', data.pm10);
+        setCurrentData(data);
+      } catch (error) {
+        console.error('Error parsing PMScan data:', error);
+      }
     } else {
       console.log('No value in characteristic');
     }
