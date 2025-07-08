@@ -26,6 +26,7 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
   const { startRecording, stopRecording, saveMission, updateMissionContext } = useRecordingData();
 
   const handleStartRecording = () => {
+    console.log("🎯 handleStartRecording called");
     setShowFrequencyDialog(true);
   };
 
@@ -87,9 +88,12 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
   };
 
   const handleRecordingClick = () => {
+    console.log("🔴 Recording button clicked! isRecording:", isRecording);
     if (isRecording) {
+      console.log("⏹️ Stopping recording...");
       handleStopRecording();
     } else {
+      console.log("▶️ Starting recording...");
       handleStartRecording();
     }
   };

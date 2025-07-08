@@ -16,7 +16,10 @@ export function RecordingButton({ isRecording, onClick, recordingFrequency }: Re
       {/* Recording Control */}
       <div className="flex items-center justify-center">
         <Button
-          onClick={onClick}
+          onClick={() => {
+            console.log("🎯 RecordingButton clicked!");
+            onClick();
+          }}
           size="lg"
           variant={isRecording ? "destructive" : "default"}
           className={cn(
