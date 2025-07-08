@@ -2,6 +2,8 @@ import { User, Settings, Users, Smartphone, Globe, AlertTriangle, LogOut } from 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface MenuSection {
@@ -10,47 +12,61 @@ interface MenuSection {
     icon: React.ComponentType<any>;
     label: string;
     badge?: string | null;
-    to?: string;
+    action?: () => void;
   }[];
 }
-
-const menuSections: MenuSection[] = [
-  {
-    title: "Compte",
-    items: [
-      { icon: User, label: "Mon profil", badge: null },
-      { icon: LogOut, label: "Déconnexion", badge: null }
-    ]
-  },
-  {
-    title: "Paramètres",
-    items: [
-      { icon: Settings, label: "Seuils personnalisés", badge: null },
-      { icon: AlertTriangle, label: "Alertes & alarmes", badge: "3" },
-      { icon: Globe, label: "Langue", badge: "FR" }
-    ]
-  },
-  {
-    title: "Communauté",
-    items: [
-      { icon: Users, label: "Rejoindre un groupe", badge: null },
-      { icon: Users, label: "Quartier Santé Respire", badge: "23 membres" }
-    ]
-  },
-  {
-    title: "Capteurs",
-    items: [
-      { icon: Smartphone, label: "Capteur PMSCAN", badge: "Connecté" },
-      { icon: Smartphone, label: "Capteurs natifs", badge: null }
-    ]
-  }
-];
 
 interface MobileNavigationProps {
   onNavigate: () => void;
 }
 
 export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+    onNavigate();
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+    onNavigate();
+  };
+
+  const menuSections: MenuSection[] = [
+    {
+      title: "Compte",
+      items: [
+        { icon: User, label: "Mon profil", badge: null, action: handleProfileClick },
+        { icon: LogOut, label: "Déconnexion", badge: null, action: handleSignOut }
+      ]
+    },
+    {
+      title: "Paramètres",
+      items: [
+        { icon: Settings, label: "Seuils personnalisés", badge: null },
+        { icon: AlertTriangle, label: "Alertes & alarmes", badge: "3" },
+        { icon: Globe, label: "Langue", badge: "FR" }
+      ]
+    },
+    {
+      title: "Communauté",
+      items: [
+        { icon: Users, label: "Rejoindre un groupe", badge: null },
+        { icon: Users, label: "Quartier Santé Respire", badge: "23 membres" }
+      ]
+    },
+    {
+      title: "Capteurs",
+      items: [
+        { icon: Smartphone, label: "Capteur PMSCAN", badge: "Connecté" },
+        { icon: Smartphone, label: "Capteurs natifs", badge: null }
+      ]
+    }
+  ];
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -68,10 +84,14 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
                 <User className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-foreground text-sm">Claire Martin</div>
-                <div className="text-xs text-muted-foreground truncate">claire.martin@email.com</div>
+                <div className="font-medium text-foreground text-sm">
+                  {user?.email || 'Utilisateur'}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {user?.email}
+                </div>
                 <Badge variant="secondary" className="text-xs mt-1">
-                  Coordinatrice
+                  Connecté
                 </Badge>
               </div>
             </div>
@@ -80,7 +100,6 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-
         {/* Menu Sections */}
         <div className="p-4 space-y-6">
           {menuSections.map((section, sectionIndex) => (
@@ -93,6 +112,7 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
                     <div
                       key={itemIndex}
                       className="flex items-center justify-between px-3 py-3 hover:bg-accent/50 transition-colors cursor-pointer rounded-lg min-h-[44px]"
+                      onClick={item.action}
                     >
                       <div className="flex items-center gap-3">
                         <Icon className="h-4 w-4 text-muted-foreground" />
