@@ -79,9 +79,10 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
       setSelectedActivity("");
     } catch (error) {
       console.error('Error saving mission:', error);
+      const errorMessage = error instanceof Error ? error.message : "Impossible de sauvegarder la mission";
       toast({
         title: "Erreur",
-        description: "Impossible de sauvegarder la mission",
+        description: errorMessage,
         variant: "destructive"
       });
     }

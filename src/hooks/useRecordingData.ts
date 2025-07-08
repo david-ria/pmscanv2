@@ -79,8 +79,14 @@ export function useRecordingData() {
     recordingFrequency?: string,
     shared?: boolean
   ) => {
-    if (!recordingStartTime.current || recordingData.length === 0) {
-      throw new Error("No recording data to save");
+    console.log("🎯 saveMission called - recordingData length:", recordingData.length, "recordingStartTime:", recordingStartTime.current);
+    
+    if (!recordingStartTime.current) {
+      throw new Error("Aucun enregistrement en cours à sauvegarder");
+    }
+    
+    if (recordingData.length === 0) {
+      throw new Error("Aucune donnée enregistrée pour créer la mission");
     }
 
     const endTime = new Date();
