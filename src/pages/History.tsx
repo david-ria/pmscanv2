@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Calendar, Download, Share, Trash2, RotateCcw, WifiOff } from "lucide-react";
+import { Calendar, Download, Share, Trash2, RotateCcw, WifiOff, Mail, MessageSquare, ExternalLink } from "lucide-react";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { StatsCard } from "@/components/StatsCard";
 import { DateFilter } from "@/components/DateFilter";
 import { useToast } from "@/hooks/use-toast";
 import { dataStorage, MissionData } from "@/lib/dataStorage";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function History() {
   const [missions, setMissions] = useState<MissionData[]>([]);
@@ -84,6 +85,75 @@ export default function History() {
         description: "Impossible de supprimer la mission",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleExport = (mission: MissionData) => {
+    try {
+      dataStorage.exportMissionToCSV(mission);
+      toast({
+        title: "Export réussi",
+        description: `"${mission.name}" exporté en CSV`
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Erreur d'export",
+        description: "Impossible d'exporter la mission",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleShare = async (mission: MissionData, shareType: 'email' | 'sms' | 'native') => {
+    const shareText = `Mission PMScan: ${mission.name}
+Date: ${formatDate(new Date(mission.startTime))}
+Durée: ${formatDuration(mission.durationMinutes)}
+PM2.5 moyenne: ${Math.round(mission.avgPm25)} µg/m³
+${mission.locationContext ? `Lieu: ${mission.locationContext}` : ''}
+${mission.activityContext ? `Activité: ${mission.activityContext}` : ''}`;
+
+    try {
+      if (shareType === 'native' && navigator.share) {
+        await navigator.share({
+          title: `Mission PMScan: ${mission.name}`,
+          text: shareText,
+        });
+        toast({
+          title: "Partagé",
+          description: "Mission partagée avec succès"
+        });
+      } else if (shareType === 'email') {
+        const emailSubject = encodeURIComponent(`Mission PMScan: ${mission.name}`);
+        const emailBody = encodeURIComponent(shareText);
+        window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
+      } else if (shareType === 'sms') {
+        const smsBody = encodeURIComponent(shareText);
+        window.open(`sms:?body=${smsBody}`);
+      } else {
+        // Fallback to clipboard
+        await navigator.clipboard.writeText(shareText);
+        toast({
+          title: "Copié",
+          description: "Données copiées dans le presse-papiers"
+        });
+      }
+    } catch (error) {
+      console.error('Share error:', error);
+      // Fallback to clipboard
+      try {
+        await navigator.clipboard.writeText(shareText);
+        toast({
+          title: "Copié",
+          description: "Données copiées dans le presse-papiers"
+        });
+      } catch (clipboardError) {
+        toast({
+          title: "Erreur de partage",
+          description: "Impossible de partager la mission",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -302,11 +372,53 @@ export default function History() {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Share className="h-3 w-3 mr-2" />
-                    Partager
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex-1">
+                        <Share className="h-3 w-3 mr-2" />
+                        Partager
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Partager la mission</DialogTitle>
+                      </DialogHeader>
+                      <div className="flex flex-col gap-3 pt-4">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handleShare(mission, 'email')}
+                          className="justify-start"
+                        >
+                          <Mail className="h-4 w-4 mr-2" />
+                          Partager par email
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handleShare(mission, 'sms')}
+                          className="justify-start"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Partager par SMS
+                        </Button>
+                        {navigator.share && (
+                          <Button 
+                            variant="outline" 
+                            onClick={() => handleShare(mission, 'native')}
+                            className="justify-start"
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Partager (options du téléphone)
+                          </Button>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleExport(mission)}
+                  >
                     <Download className="h-3 w-3 mr-2" />
                     Export
                   </Button>
