@@ -9,13 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { useGPS } from "@/hooks/useGPS";
-import { useRecordingData } from "@/hooks/useRecordingData";
+import { useRecordingContext } from "@/contexts/RecordingContext";
 
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
-  const { isRecording, addDataPoint, missionContext } = useRecordingData();
+  const { isRecording, addDataPoint, missionContext } = useRecordingContext();
 
   // Add data to recording when new data comes in
   useEffect(() => {
@@ -208,7 +208,7 @@ export default function RealTime() {
       {/* Recording Controls */}
       <RecordingControls
         isRecording={isRecording}
-        onToggleRecording={() => {}} // Not needed anymore, managed by the hook
+        onToggleRecording={() => {}} // Not needed anymore, managed by context
         className="mb-4"
       />
 

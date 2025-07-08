@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { NavigationBar } from "@/components/NavigationBar";
+import { RecordingProvider } from "@/contexts/RecordingContext";
 import RealTime from "./pages/RealTime";
 import History from "./pages/History";
 import Analysis from "./pages/Analysis";
@@ -18,16 +19,18 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <div className="relative">
-          <Routes>
-            <Route path="/" element={<RealTime />} />
-            <Route path="/history" element={<History />} />
-            <Route path="/analysis" element={<Analysis />} />
-            <Route path="/menu" element={<Menu />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <NavigationBar />
-        </div>
+        <RecordingProvider>
+          <div className="relative">
+            <Routes>
+              <Route path="/" element={<RealTime />} />
+              <Route path="/history" element={<History />} />
+              <Route path="/analysis" element={<Analysis />} />
+              <Route path="/menu" element={<Menu />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <NavigationBar />
+          </div>
+        </RecordingProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

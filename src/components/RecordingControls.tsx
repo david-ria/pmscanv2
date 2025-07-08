@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useRecordingData } from "@/hooks/useRecordingData";
+import { useRecordingContext } from "@/contexts/RecordingContext";
 import { cn } from "@/lib/utils";
 import { frequencyOptions } from "@/lib/recordingConstants";
 import { RecordingButton } from "./RecordingControls/RecordingButton";
@@ -23,7 +23,7 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
   const [missionName, setMissionName] = useState<string>("");
   const [shareData, setShareData] = useState<boolean>(false);
   const { toast } = useToast();
-  const { startRecording, stopRecording, saveMission, updateMissionContext } = useRecordingData();
+  const { startRecording, stopRecording, saveMission, updateMissionContext, isRecording: contextIsRecording } = useRecordingContext();
 
   const handleStartRecording = () => {
     console.log("🎯 handleStartRecording called");
@@ -88,8 +88,8 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
   };
 
   const handleRecordingClick = () => {
-    console.log("🔴 Recording button clicked! isRecording:", isRecording);
-    if (isRecording) {
+    console.log("🔴 Recording button clicked! contextIsRecording:", contextIsRecording);
+    if (contextIsRecording) {
       console.log("⏹️ Stopping recording...");
       handleStopRecording();
     } else {
@@ -101,7 +101,7 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
   return (
     <div className={cn("space-y-4", className)}>
       <RecordingButton 
-        isRecording={isRecording}
+        isRecording={contextIsRecording}
         onClick={handleRecordingClick}
         recordingFrequency={recordingFrequency}
       />
@@ -117,7 +117,7 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
           setSelectedActivity(activity);
           updateMissionContext(selectedLocation, activity);
         }}
-        isRecording={isRecording}
+        isRecording={contextIsRecording}
       />
 
       <RecordingFrequencyDialog 
