@@ -3,6 +3,7 @@ import { Wifi, WifiOff, Map, TrendingUp } from "lucide-react";
 import { MapboxMap } from "@/components/MapboxMap";
 import { PMLineGraph } from "@/components/PMLineGraph";
 import { RecordingControls } from "@/components/RecordingControls";
+import { ContextSelectors } from "@/components/RecordingControls/ContextSelectors";
 
 import { PMScanConnectionStatus } from "@/components/PMScanConnectionStatus";
 import { DataLogger } from "@/components/DataLogger";
@@ -16,9 +17,11 @@ import { useRecordingContext } from "@/contexts/RecordingContext";
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false); // Toggle state for map/graph
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [selectedActivity, setSelectedActivity] = useState<string>("");
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
-  const { isRecording, addDataPoint, missionContext, recordingData } = useRecordingContext();
+  const { isRecording, addDataPoint, missionContext, recordingData, updateMissionContext } = useRecordingContext();
 
   // Add data to recording when new data comes in
   useEffect(() => {
@@ -30,6 +33,11 @@ export default function RealTime() {
       console.log("❌ Not adding data - isRecording:", isRecording, "hasCurrentData:", !!currentData);
     }
   }, [isRecording, currentData, latestLocation, addDataPoint]);
+
+  // Update mission context when location/activity changes
+  useEffect(() => {
+    updateMissionContext(selectedLocation, selectedActivity);
+  }, [selectedLocation, selectedActivity, updateMissionContext]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -200,6 +208,15 @@ export default function RealTime() {
           </Card>
         </div>
       )}
+
+      {/* Context Selectors */}
+      <ContextSelectors
+        selectedLocation={selectedLocation}
+        onLocationChange={setSelectedLocation}
+        selectedActivity={selectedActivity}
+        onActivityChange={setSelectedActivity}
+        isRecording={isRecording}
+      />
 
       {/* Real-time Status */}
       {isConnected && currentData && (
