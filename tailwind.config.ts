@@ -52,6 +52,16 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				air: {
+					good: 'hsl(var(--air-good))',
+					'good-foreground': 'hsl(var(--air-good-foreground))',
+					moderate: 'hsl(var(--air-moderate))',
+					'moderate-foreground': 'hsl(var(--air-moderate-foreground))',
+					poor: 'hsl(var(--air-poor))',
+					'poor-foreground': 'hsl(var(--air-poor-foreground))',
+					'very-poor': 'hsl(var(--air-very-poor))',
+					'very-poor-foreground': 'hsl(var(--air-very-poor-foreground))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

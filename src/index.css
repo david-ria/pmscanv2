@@ -8,35 +8,57 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Environmental color scheme */
+    --background: 0 0% 99%;
+    --foreground: 215 25% 27%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 25% 27%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 25% 27%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Clean, environmental primary */
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 142 30% 96%;
+    --secondary-foreground: 142 76% 36%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 142 30% 94%;
+    --accent-foreground: 142 76% 36%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 142 76% 36%;
 
-    --radius: 0.5rem;
+    /* Air Quality Colors */
+    --air-good: 142 76% 36%;
+    --air-good-foreground: 0 0% 98%;
+    --air-moderate: 38 92% 50%;
+    --air-moderate-foreground: 0 0% 98%;
+    --air-poor: 0 84% 60%;
+    --air-poor-foreground: 0 0% 98%;
+    --air-very-poor: 262 52% 47%;
+    --air-very-poor-foreground: 0 0% 98%;
+
+    /* Environmental gradients */
+    --gradient-air-quality: linear-gradient(135deg, hsl(var(--air-good)), hsl(var(--primary)));
+    --gradient-header: linear-gradient(135deg, hsl(var(--primary)), hsl(142 60% 45%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(142 30% 98%));
+
+    /* Shadows */
+    --shadow-soft: 0 2px 8px hsl(142 76% 36% / 0.08);
+    --shadow-medium: 0 4px 16px hsl(142 76% 36% / 0.12);
+    --shadow-strong: 0 8px 32px hsl(142 76% 36% / 0.16);
+
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
 
