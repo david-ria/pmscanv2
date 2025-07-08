@@ -112,13 +112,16 @@ Sois précis, bienveillant et actionnable dans tes recommandations.`;
     const data = await response.json();
     const analysis = data.choices[0].message.content;
 
+    // Calculate valid missions for data points
+    const validMissions = missions.filter(m => m.avgPm25 != null && !isNaN(m.avgPm25));
+    
     return new Response(JSON.stringify({ 
       analysis,
       dataPoints: {
         totalMissions: missions.length,
-        totalExposureMinutes: missions.reduce((sum: number, m: MissionData) => sum + m.durationMinutes, 0),
-        averagePM25: missions.length > 0 ? missions.reduce((sum: number, m: MissionData) => sum + m.avgPm25, 0) / missions.length : 0,
-        maxPM25: missions.length > 0 ? Math.max(...missions.map((m: MissionData) => m.maxPm25)) : 0,
+        totalExposureMinutes: missions.reduce((sum: number, m: MissionData) => sum + (m.durationMinutes || 0), 0),
+        averagePM25: validMissions.length > 0 ? validMissions.reduce((sum: number, m: MissionData) => sum + m.avgPm25, 0) / validMissions.length : 0,
+        maxPM25: validMissions.length > 0 ? Math.max(...validMissions.map((m: MissionData) => m.maxPm25 || 0)) : 0,
         timeAboveWHO: calculateTimeAboveWHO(missions)
       }
     }), {
@@ -141,9 +144,10 @@ function analyzeMissionsData(missions: MissionData[], timeframe: string): string
     return `Aucune donnée disponible pour ${timeframe}.`;
   }
 
-  const totalExposure = missions.reduce((sum, m) => sum + m.durationMinutes, 0);
-  const avgPM25 = missions.reduce((sum, m) => sum + m.avgPm25, 0) / missions.length;
-  const maxPM25 = Math.max(...missions.map(m => m.maxPm25));
+  const totalExposure = missions.reduce((sum, m) => sum + (m.durationMinutes || 0), 0);
+  const validMissions = missions.filter(m => m.avgPm25 != null && !isNaN(m.avgPm25));
+  const avgPM25 = validMissions.length > 0 ? validMissions.reduce((sum, m) => sum + m.avgPm25, 0) / validMissions.length : 0;
+  const maxPM25 = validMissions.length > 0 ? Math.max(...validMissions.map(m => m.maxPm25 || 0)) : 0;
   const timeAboveWHO = calculateTimeAboveWHO(missions);
 
   // Group by location and activity
@@ -173,8 +177,8 @@ ${missions.slice(0, 5).map(m =>
 
 function calculateTimeAboveWHO(missions: MissionData[]): number {
   return missions.reduce((total, mission) => {
-    if (mission.avgPm25 > 15) { // WHO threshold for PM2.5
-      return total + mission.durationMinutes;
+    if (mission.avgPm25 != null && !isNaN(mission.avgPm25) && mission.avgPm25 > 15) { // WHO threshold for PM2.5
+      return total + (mission.durationMinutes || 0);
     }
     return total;
   }, 0);
@@ -187,8 +191,8 @@ function groupByContext(missions: MissionData[], contextType: 'locationContext' 
       acc[context] = { missions: 0, totalTime: 0, totalPM25: 0 };
     }
     acc[context].missions++;
-    acc[context].totalTime += mission.durationMinutes;
-    acc[context].totalPM25 += mission.avgPm25;
+    acc[context].totalTime += (mission.durationMinutes || 0);
+    acc[context].totalPM25 += (mission.avgPm25 || 0);
     return acc;
   }, {} as Record<string, { missions: number; totalTime: number; totalPM25: number }>);
 
