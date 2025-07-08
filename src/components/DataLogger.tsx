@@ -70,35 +70,62 @@ export function DataLogger({
   };
 
   return (
-    <div className={`flex items-center justify-between p-3 bg-card/50 border rounded-lg text-sm ${className}`}>
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Database className="h-4 w-4" />
-          <span className="font-medium">Journal des données</span>
-          <Badge variant={isRecording ? "default" : "secondary"} className="text-xs">
-            {isRecording ? "Enregistrement" : "Arrêté"}
-          </Badge>
-        </div>
-        <span className="text-muted-foreground">
-          {dataLog.length} entrées
-        </span>
-      </div>
-      
-      <div className="flex items-center gap-3">
-        {dataLog.length > 0 && (
-          <span className="text-muted-foreground text-xs">
-            Dernière: {dataLog[0]?.timestamp.toLocaleTimeString('fr-FR')}
+    <div className={className}>
+      {/* Header */}
+      <div className="flex items-center justify-between p-3 bg-card/50 border rounded-t-lg text-sm">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            <span className="font-medium">Journal des données</span>
+            <Badge variant={isRecording ? "default" : "secondary"} className="text-xs">
+              {isRecording ? "Enregistrement" : "Arrêté"}
+            </Badge>
+          </div>
+          <span className="text-muted-foreground">
+            {dataLog.length} entrées
           </span>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {dataLog.length > 0 && (
+            <span className="text-muted-foreground text-xs">
+              Dernière: {dataLog[0]?.timestamp.toLocaleTimeString('fr-FR')}
+            </span>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearLog}
+            disabled={dataLog.length === 0}
+            className="h-8"
+          >
+            Effacer
+          </Button>
+        </div>
+      </div>
+
+      {/* Console Log Display */}
+      <div className="bg-background border-x border-b rounded-b-lg p-4 h-48 overflow-auto">
+        {dataLog.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Aucune donnée enregistrée</p>
+            <p className="text-xs mt-1">
+              {isRecording ? "En attente de données..." : "Démarrez un enregistrement pour voir les données"}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1 font-mono text-xs">
+            {dataLog.map((entry) => (
+              <div key={entry.id} className="text-muted-foreground">
+                [{entry.timestamp.toLocaleTimeString('fr-FR')}] New reading: PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, Temp={entry.pmData.temp.toFixed(1)}°C
+                {entry.location && (
+                  <span> | GPS: {entry.location.latitude.toFixed(6)}, {entry.location.longitude.toFixed(6)} (+{Math.round(entry.location.accuracy || 0)}m)</span>
+                )}
+              </div>
+            ))}
+          </div>
         )}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={clearLog}
-          disabled={dataLog.length === 0}
-          className="h-8"
-        >
-          Effacer
-        </Button>
       </div>
     </div>
   );
