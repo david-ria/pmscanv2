@@ -104,17 +104,6 @@ export default function RealTime() {
         )}
       </div>
 
-      {/* Context Selectors */}
-      <div className="mb-4">
-        <ContextSelectors
-          selectedLocation={selectedLocation}
-          onLocationChange={setSelectedLocation}
-          selectedActivity={selectedActivity}
-          onActivityChange={setSelectedActivity}
-          isRecording={isRecording}
-        />
-      </div>
-
       {/* Map/Graph Toggle Section */}
       <div className="mb-4">
         {/* Toggle Controls */}
@@ -276,6 +265,17 @@ export default function RealTime() {
           Connectez votre capteur PMScan pour voir les données en temps réel
         </div>
       )}
+
+      {/* Context Selectors */}
+      <div className="mb-4">
+        <ContextSelectors
+          selectedLocation={selectedLocation}
+          onLocationChange={setSelectedLocation}
+          selectedActivity={selectedActivity}
+          onActivityChange={setSelectedActivity}
+          isRecording={isRecording}
+        />
+      </div>
 
       {/* Data Logger */}
       <DataLogger 
