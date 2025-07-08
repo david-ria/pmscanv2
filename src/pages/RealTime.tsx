@@ -62,7 +62,7 @@ export default function RealTime() {
           {isOnline ? (
             <div>
               <Map className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Vue carte - {currentData.location}</p>
+              <p>Vue carte - {currentData?.location || "PMScan"}</p>
             </div>
           ) : (
             <div>
