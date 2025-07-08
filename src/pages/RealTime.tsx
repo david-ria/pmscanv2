@@ -23,6 +23,7 @@ export default function RealTime() {
   
   useEffect(() => {
     console.log("🔍 RealTime effect triggered - isRecording:", isRecording, "currentData PM2.5:", currentData?.pm25);
+    console.log("📍 Latest GPS location:", latestLocation);
     if (isRecording && currentData) {
       // Prevent duplicate data points by checking if this is actually new data
       const currentTimestamp = currentData.timestamp.getTime();
@@ -31,7 +32,7 @@ export default function RealTime() {
         Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
       
       if (!isDuplicate) {
-        console.log("🎯 Adding new data point with PM2.5:", currentData.pm25);
+        console.log("🎯 Adding new data point with PM2.5:", currentData.pm25, "and GPS:", latestLocation);
         addDataPoint(currentData, latestLocation || undefined);
         lastDataRef.current = { pm25: currentData.pm25, timestamp: currentTimestamp };
       } else {

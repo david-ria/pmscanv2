@@ -68,7 +68,7 @@ export function useRecordingData() {
   };
 
   const addDataPoint = (pmData: PMScanData, location?: LocationData) => {
-    console.log("🎯 addDataPoint called - isRecording:", isRecording, "pmData:", pmData?.pm25);
+    console.log("🎯 addDataPoint called - isRecording:", isRecording, "pmData:", pmData?.pm25, "location:", location);
     if (!isRecording) {
       console.log("❌ Not recording, skipping data point");
       return;
