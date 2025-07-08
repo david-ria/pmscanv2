@@ -197,30 +197,30 @@ export function usePMScanBluetooth() {
   }, [handleRTData, handleBatteryData, handleChargingData]);
 
   const connectToDevice = useCallback(() => {
-    if (!deviceRef.current || isConnecting) return;
+    console.log('🔄 connect() called, shouldConnect:', shouldConnectRef.current);
+    if (!deviceRef.current || !shouldConnectRef.current) {
+      console.log('❌ Not connecting - no device or shouldConnect is false');
+      return;
+    }
 
-    console.log('🔄 Starting connection attempt...');
-    setIsConnecting(true);
-    shouldConnectRef.current = true;
-
+    console.log('📡 Starting exponential backoff connection...');
     exponentialBackoff(
       10,
       1.2,
       () => {
-        console.log('📡 Attempting GATT connection...');
+        console.log('🔌 Attempting GATT connection...');
         return deviceRef.current!.gatt!.connect();
       },
       (server) => {
-        console.log('✅ GATT connection successful, initializing device...');
-        initializeDevice(server).finally(() => setIsConnecting(false));
+        console.log('✅ GATT connection successful');
+        initializeDevice(server);
       },
       () => {
-        console.log('❌ Connection failed after all retries');
-        setError('Failed to connect to device');
-        setIsConnecting(false);
+        console.log('❌ Failed to reconnect after all retries');
+        setError('Failed to reconnect to device');
       }
     );
-  }, [isConnecting, exponentialBackoff, initializeDevice]);
+  }, [exponentialBackoff, initializeDevice]);
 
   const requestDevice = useCallback(async () => {
     try {
@@ -230,25 +230,26 @@ export function usePMScanBluetooth() {
         throw new Error('Bluetooth not available in this browser');
       }
 
+      console.log('🔍 Requesting PMScan device...');
       const device = await navigator.bluetooth.requestDevice({
         filters: [{ namePrefix: "PMScan" }],
         optionalServices: [PMScanServiceUUID]
       });
 
+      console.log('📱 Device selected:', device.name);
       deviceRef.current = device;
+      shouldConnectRef.current = true; // Enable auto-reconnection
       
       device.addEventListener('gattserverdisconnected', () => {
-        console.log('🔌 Device disconnected! Auto-reconnecting...');
+        console.log('🔌 Device disconnected! Calling reconnect...');
         setIsConnected(false);
         setDevice(prev => prev ? { ...prev, connected: false } : null);
         
-        // Simple reconnection like the working version
-        if (shouldConnectRef.current) {
-          console.log('🔄 Reconnecting immediately...');
-          connectToDevice();
-        }
+        // Direct reconnection call like working version
+        connectToDevice();
       });
 
+      // Start initial connection
       connectToDevice();
     } catch (err) {
       console.error('Failed to request device:', err);
