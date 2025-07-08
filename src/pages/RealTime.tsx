@@ -1,61 +1,20 @@
-import { useState, useEffect, useRef } from "react";
-import { Wifi, WifiOff, Map, Bug } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Wifi, WifiOff } from "lucide-react";
 import { MapboxMap } from "@/components/MapboxMap";
 import { RecordingControls } from "@/components/RecordingControls";
 import { StatsCard } from "@/components/StatsCard";
 import { PMScanConnectionStatus } from "@/components/PMScanConnectionStatus";
+import { DataLogger } from "@/components/DataLogger";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { useGPS } from "@/hooks/useGPS";
-import { cn } from "@/lib/utils";
 
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isRecording, setIsRecording] = useState(false);
-  const [showDebugLog, setShowDebugLog] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
-  const logEndRef = useRef<HTMLDivElement>(null);
-
-  // Add debug log function
-  const addDebugLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString('fr-FR');
-    setDebugLogs(prev => [...prev.slice(-50), `[${timestamp}] ${message}`]); // Keep last 50 logs
-  };
-
-  // Debug logging for data reception
-  useEffect(() => {
-    if (currentData) {
-      addDebugLog(`✅ Data received: PM1=${currentData.pm1} PM2.5=${currentData.pm25} PM10=${currentData.pm10}`);
-    } else {
-      addDebugLog('❌ No current data available');
-    }
-    addDebugLog(`🔗 Connection status: ${isConnected ? 'Connected' : 'Disconnected'}`);
-  }, [currentData, isConnected]);
-
-  // Log device status changes
-  useEffect(() => {
-    if (device) {
-      addDebugLog(`📱 Device: ${device.name} (Battery: ${device.battery}%)`);
-    }
-  }, [device]);
-
-  // Log errors
-  useEffect(() => {
-    if (error) {
-      addDebugLog(`⚠️ Error: ${error}`);
-    }
-  }, [error]);
-
-  // Auto-scroll debug log
-  useEffect(() => {
-    if (showDebugLog && logEndRef.current) {
-      logEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [debugLogs, showDebugLog]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -241,51 +200,13 @@ export default function RealTime() {
         className="mb-4"
       />
 
-      {/* Debug Log Section */}
-      <Card className="mb-4">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              <Bug className="h-4 w-4" />
-              Debug Log
-            </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDebugLog(!showDebugLog)}
-            >
-              {showDebugLog ? 'Masquer' : 'Afficher'}
-            </Button>
-          </div>
-        </CardHeader>
-        {showDebugLog && (
-          <CardContent className="pt-0">
-            <div className="bg-muted/30 p-3 rounded-lg h-48 overflow-y-auto font-mono text-xs">
-              {debugLogs.length === 0 ? (
-                <div className="text-muted-foreground">Aucun log disponible...</div>
-              ) : (
-                debugLogs.map((log, index) => (
-                  <div key={index} className="mb-1">
-                    {log}
-                  </div>
-                ))
-              )}
-              <div ref={logEndRef} />
-            </div>
-            <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-              <span>{debugLogs.length} entrées</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setDebugLogs([])}
-                className="h-auto p-0"
-              >
-                Effacer
-              </Button>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+      {/* Data Logger */}
+      <DataLogger 
+        isRecording={isRecording}
+        currentData={currentData}
+        currentLocation={latestLocation}
+        className="mb-4"
+      />
 
       {/* Today's Stats */}
       <StatsCard title="Statistiques du jour" stats={todayStats} />
