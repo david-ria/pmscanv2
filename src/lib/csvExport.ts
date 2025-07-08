@@ -32,8 +32,8 @@ export function exportMissionToCSV(mission: MissionData): void {
     mission.deviceId || '',
     mission.deviceName || '',
     mission.name,
-    mission.locationContext || '',
-    mission.activityContext || '',
+    m.locationContext || mission.locationContext || '',
+    m.activityContext || mission.activityContext || '',
     mission.recordingFrequency
   ]);
 

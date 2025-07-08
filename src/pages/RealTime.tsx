@@ -33,7 +33,7 @@ export default function RealTime() {
       
       if (!isDuplicate) {
         console.log("🎯 Adding new data point with PM2.5:", currentData.pm25, "and GPS:", latestLocation);
-        addDataPoint(currentData, latestLocation || undefined);
+        addDataPoint(currentData, latestLocation || undefined, missionContext);
         lastDataRef.current = { pm25: currentData.pm25, timestamp: currentTimestamp };
       } else {
         console.log("⏭️ Skipping duplicate data point");

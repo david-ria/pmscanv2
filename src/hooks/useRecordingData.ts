@@ -6,6 +6,10 @@ import { LocationData } from "@/types/PMScan";
 interface RecordingEntry {
   pmData: PMScanData;
   location?: LocationData;
+  context?: {
+    location: string;
+    activity: string;
+  };
 }
 
 export function useRecordingData() {
@@ -67,8 +71,8 @@ export function useRecordingData() {
     setIsRecording(false);
   };
 
-  const addDataPoint = (pmData: PMScanData, location?: LocationData) => {
-    console.log("🎯 addDataPoint called - isRecording:", isRecording, "pmData:", pmData?.pm25, "location:", location);
+  const addDataPoint = (pmData: PMScanData, location?: LocationData, context?: { location: string; activity: string }) => {
+    console.log("🎯 addDataPoint called - isRecording:", isRecording, "pmData:", pmData?.pm25, "location:", location, "context:", context);
     if (!isRecording) {
       console.log("❌ Not recording, skipping data point");
       return;
@@ -84,7 +88,7 @@ export function useRecordingData() {
       return;
     }
 
-    console.log("✅ Adding data point to recording!");
+    console.log("✅ Adding data point to recording with context:", context);
     lastRecordedTime.current = currentTime;
     
     // Use a unique timestamp for each data point (current time with milliseconds)
@@ -98,7 +102,8 @@ export function useRecordingData() {
     
     const entry: RecordingEntry = {
       pmData: pmDataWithUniqueTimestamp,
-      location
+      location,
+      context
     };
 
     setRecordingData(prev => {

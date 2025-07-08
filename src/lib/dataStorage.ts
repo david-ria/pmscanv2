@@ -38,6 +38,8 @@ export interface MeasurementData {
   latitude?: number;
   longitude?: number;
   accuracy?: number;
+  locationContext?: string;
+  activityContext?: string;
 }
 
 class DataStorageService {

@@ -8,6 +8,10 @@ export function createMissionFromRecording(
   measurements: Array<{
     pmData: PMScanData;
     location?: LocationData;
+    context?: {
+      location: string;
+      activity: string;
+    };
   }>,
   missionName: string,
   startTime: Date,
@@ -29,7 +33,9 @@ export function createMissionFromRecording(
     humidity: m.pmData.humidity,
     latitude: m.location?.latitude,
     longitude: m.location?.longitude,
-    accuracy: m.location?.accuracy
+    accuracy: m.location?.accuracy,
+    locationContext: m.context?.location,
+    activityContext: m.context?.activity
   }));
 
   const pm25Values = measurementData.map(m => m.pm25);
