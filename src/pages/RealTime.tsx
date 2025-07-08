@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Wifi, WifiOff, Map, Bug } from "lucide-react";
 import { RecordingControls } from "@/components/RecordingControls";
 import { StatsCard } from "@/components/StatsCard";
-import { BluetoothConnection } from "@/components/BluetoothConnection";
+import { PMScanConnectionStatus } from "@/components/PMScanConnectionStatus";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -206,8 +206,8 @@ export default function RealTime() {
         </div>
       )}
 
-      {/* Bluetooth Connection */}
-      <BluetoothConnection className="mb-4" />
+      {/* Connection Status */}
+      <PMScanConnectionStatus className="mb-4" />
 
       {/* Recording Controls */}
       <RecordingControls
