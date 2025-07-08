@@ -11,10 +11,11 @@ import { MissionDetailsDialog } from "./RecordingControls/MissionDetailsDialog";
 interface RecordingControlsProps {
   isRecording: boolean;
   onToggleRecording: () => void;
+  device?: any; // PMScanDevice
   className?: string;
 }
 
-export function RecordingControls({ isRecording, onToggleRecording, className }: RecordingControlsProps) {
+export function RecordingControls({ isRecording, onToggleRecording, device, className }: RecordingControlsProps) {
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [selectedActivity, setSelectedActivity] = useState<string>("");
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
@@ -55,13 +56,15 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
     }
 
     try {
-      // Save the mission with all context
+      // Save the mission with all context including device info
       saveMission(
         finalMissionName,
         selectedLocation || undefined,
         selectedActivity || undefined,
         recordingFrequency,
-        shareData
+        shareData,
+        device?.id || device?.gatt?.device?.id,
+        device?.name
       );
 
       stopRecording();

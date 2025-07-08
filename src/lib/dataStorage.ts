@@ -19,6 +19,8 @@ export interface MissionData {
   shared: boolean;
   measurements: MeasurementData[];
   synced: boolean; // For local storage tracking
+  deviceId?: string;
+  deviceName?: string;
 }
 
 export interface MeasurementData {
@@ -183,7 +185,9 @@ class DataStorageService {
     locationContext?: string,
     activityContext?: string,
     recordingFrequency?: string,
-    shared?: boolean
+    shared?: boolean,
+    deviceId?: string,
+    deviceName?: string
   ): MissionData {
     const measurementData: MeasurementData[] = measurements.map(m => ({
       id: crypto.randomUUID(),
@@ -220,7 +224,9 @@ class DataStorageService {
       recordingFrequency: recordingFrequency || '30s',
       shared: shared || false,
       measurements: measurementData,
-      synced: false
+      synced: false,
+      deviceId,
+      deviceName
     };
 
     return mission;
@@ -238,6 +244,8 @@ class DataStorageService {
       'Latitude',
       'Longitude',
       'GPS Accuracy (m)',
+      'Device ID',
+      'Device Name',
       'Mission Name',
       'Location Context',
       'Activity Context',
@@ -254,6 +262,8 @@ class DataStorageService {
       m.latitude?.toFixed(6) || '',
       m.longitude?.toFixed(6) || '',
       m.accuracy?.toFixed(0) || '',
+      mission.deviceId || '',
+      mission.deviceName || '',
       mission.name,
       mission.locationContext || '',
       mission.activityContext || '',

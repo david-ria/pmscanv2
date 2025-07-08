@@ -242,6 +242,7 @@ export default function RealTime() {
       <RecordingControls
         isRecording={isRecording}
         onToggleRecording={() => {}} // Not needed anymore, managed by context
+        device={device}
         className="mb-4"
       />
 

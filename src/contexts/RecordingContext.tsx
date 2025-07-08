@@ -10,7 +10,7 @@ interface RecordingContextType {
   startRecording: () => void;
   stopRecording: () => void;
   addDataPoint: (pmData: any, location?: any) => void;
-  saveMission: (name: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean) => any;
+  saveMission: (name: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, deviceId?: string, deviceName?: string) => any;
   updateMissionContext: (location: string, activity: string) => void;
   recordingStartTime: Date | null;
   recordingData: any[];

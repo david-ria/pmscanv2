@@ -77,7 +77,9 @@ export function useRecordingData() {
     locationContext?: string,
     activityContext?: string,
     recordingFrequency?: string,
-    shared?: boolean
+    shared?: boolean,
+    deviceId?: string,
+    deviceName?: string
   ) => {
     console.log("🎯 saveMission called - recordingData length:", recordingData.length, "recordingStartTime:", recordingStartTime.current);
     
@@ -98,7 +100,9 @@ export function useRecordingData() {
       locationContext,
       activityContext,
       recordingFrequency,
-      shared
+      shared,
+      deviceId,
+      deviceName
     );
 
     // Save locally first
