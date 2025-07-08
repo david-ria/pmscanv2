@@ -24,7 +24,7 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
   const [missionName, setMissionName] = useState<string>("");
   const [shareData, setShareData] = useState<boolean>(false);
   const { toast } = useToast();
-  const { startRecording, stopRecording, saveMission, updateMissionContext, isRecording: contextIsRecording } = useRecordingContext();
+  const { startRecording, stopRecording, saveMission, updateMissionContext, isRecording: contextIsRecording, clearRecordingData } = useRecordingContext();
 
   const handleStartRecording = () => {
     console.log("🎯 handleStartRecording called");
@@ -91,6 +91,24 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
     }
   };
 
+  const handleDiscardMission = () => {
+    // Discard the mission without saving
+    stopRecording();
+    clearRecordingData();
+    setShowMissionDialog(false);
+    
+    // Reset form
+    setMissionName("");
+    setShareData(false);
+    setSelectedLocation("");
+    setSelectedActivity("");
+    
+    toast({
+      title: "Mission supprimée",
+      description: "Les données ont été supprimées sans sauvegarde",
+    });
+  };
+
   const handleRecordingClick = () => {
     console.log("🔴 Recording button clicked! contextIsRecording:", contextIsRecording);
     if (contextIsRecording) {
@@ -140,6 +158,7 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
         shareData={shareData}
         onShareDataChange={setShareData}
         onConfirm={confirmStopRecording}
+        onDiscard={handleDiscardMission}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { Save, Share2 } from "lucide-react";
+import { Save, Share2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ interface MissionDetailsDialogProps {
   shareData: boolean;
   onShareDataChange: (share: boolean) => void;
   onConfirm: () => void;
+  onDiscard: () => void;
 }
 
 export function MissionDetailsDialog({
@@ -22,7 +23,8 @@ export function MissionDetailsDialog({
   onMissionNameChange,
   shareData,
   onShareDataChange,
-  onConfirm
+  onConfirm,
+  onDiscard
 }: MissionDetailsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -71,6 +73,14 @@ export function MissionDetailsDialog({
               className="flex-1"
             >
               Annuler
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={onDiscard}
+              className="flex-1 flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Supprimer
             </Button>
             <Button 
               onClick={onConfirm}
