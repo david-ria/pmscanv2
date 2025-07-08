@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
-import { Wifi, WifiOff, Map, BarChart } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { AirQualityCard } from "@/components/AirQualityCard";
+import { Wifi, WifiOff, Map } from "lucide-react";
 import { RecordingControls } from "@/components/RecordingControls";
 import { StatsCard } from "@/components/StatsCard";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isRecording, setIsRecording] = useState(false);
-  const [viewMode, setViewMode] = useState<"graph" | "map">("graph");
   const [currentData, setCurrentData] = useState({
     pm1: 8,
     pm25: 15,
@@ -44,6 +42,13 @@ export default function RealTime() {
     };
   }, []);
 
+  const getAirQualityLevel = (pm25: number) => {
+    if (pm25 <= 12) return { level: "good", label: "Bon", color: "air-good" };
+    if (pm25 <= 35) return { level: "moderate", label: "Modéré", color: "air-moderate" };
+    if (pm25 <= 55) return { level: "poor", label: "Mauvais", color: "air-poor" };
+    return { level: "very-poor", label: "Très mauvais", color: "air-very-poor" };
+  };
+
   const todayStats = [
     { label: "Moyenne PM2.5", value: 18, unit: "µg/m³", color: "moderate" as const },
     { label: "Pic max", value: 34, unit: "µg/m³", color: "moderate" as const },
@@ -54,7 +59,7 @@ export default function RealTime() {
   return (
     <div className="min-h-screen bg-background pb-20 px-4 pt-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">PMSCAN</h1>
           <p className="text-sm text-muted-foreground">Temps réel</p>
@@ -67,65 +72,80 @@ export default function RealTime() {
         </div>
       </div>
 
-      {/* Air Quality Card */}
-      <AirQualityCard data={currentData} className="mb-6" />
+      {/* Map - Top Half of Screen */}
+      <div className="h-[45vh] bg-card border border-border rounded-lg mb-4 flex items-center justify-center">
+        <div className="text-muted-foreground text-center">
+          {isOnline ? (
+            <div>
+              <Map className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>Vue carte - {currentData.location}</p>
+            </div>
+          ) : (
+            <div>
+              <WifiOff className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>Connexion requise pour la vue carte</p>
+            </div>
+          )}
+        </div>
+      </div>
 
-      {/* View Toggle */}
-      <div className="flex items-center justify-center gap-2 mb-6">
-        <Button
-          variant={viewMode === "graph" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setViewMode("graph")}
-          className="flex items-center gap-2"
-        >
-          <BarChart className="h-4 w-4" />
-          Graphique
-        </Button>
-        <Button
-          variant={viewMode === "map" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setViewMode("map")}
-          disabled={!isOnline}
-          className="flex items-center gap-2"
-        >
-          <Map className="h-4 w-4" />
-          Carte
-        </Button>
+      {/* Real-time Readings - Three Squares */}
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        {/* PM1 */}
+        <Card className="text-center">
+          <CardContent className="p-4">
+            <div className="text-3xl font-bold text-foreground mb-1">
+              {Math.round(currentData.pm1)}
+            </div>
+            <div className="text-xs text-muted-foreground">PM1</div>
+            <div className="text-xs text-muted-foreground">µg/m³</div>
+          </CardContent>
+        </Card>
+
+        {/* PM2.5 */}
+        <Card className="text-center relative overflow-hidden">
+          <div 
+            className={cn(
+              "absolute inset-0 opacity-10",
+              `bg-${getAirQualityLevel(currentData.pm25).color}`
+            )}
+          />
+          <CardContent className="p-4 relative">
+            <div className={cn(
+              "text-3xl font-bold mb-1",
+              `text-${getAirQualityLevel(currentData.pm25).color}`
+            )}>
+              {Math.round(currentData.pm25)}
+            </div>
+            <div className="text-xs text-muted-foreground">PM2.5</div>
+            <div className="text-xs text-muted-foreground">µg/m³</div>
+            <div className="text-xs mt-1 font-medium">
+              {getAirQualityLevel(currentData.pm25).label}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* PM10 */}
+        <Card className="text-center">
+          <CardContent className="p-4">
+            <div className="text-3xl font-bold text-foreground mb-1">
+              {Math.round(currentData.pm10)}
+            </div>
+            <div className="text-xs text-muted-foreground">PM10</div>
+            <div className="text-xs text-muted-foreground">µg/m³</div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recording Controls */}
       <RecordingControls
         isRecording={isRecording}
         onToggleRecording={() => setIsRecording(!isRecording)}
-        className="mb-6"
+        className="mb-4"
       />
 
       {/* Today's Stats */}
-      <StatsCard title="Statistiques du jour" stats={todayStats} className="mb-6" />
-
-      {/* Graph/Map Placeholder */}
-      <div className="bg-card border border-border rounded-lg p-6 text-center">
-        <div className="text-muted-foreground">
-          {viewMode === "map" ? (
-            isOnline ? (
-              <div>
-                <Map className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Vue carte en cours de développement</p>
-              </div>
-            ) : (
-              <div>
-                <WifiOff className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Connexion requise pour la vue carte</p>
-              </div>
-            )
-          ) : (
-            <div>
-              <BarChart className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Graphique temps réel en cours de développement</p>
-            </div>
-          )}
-        </div>
-      </div>
+      <StatsCard title="Statistiques du jour" stats={todayStats} />
     </div>
   );
 }
