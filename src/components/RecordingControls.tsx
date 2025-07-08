@@ -1,8 +1,13 @@
 import { useState } from "react";
-import { Play, Square, MapPin, Activity } from "lucide-react";
+import { Play, Square, MapPin, Activity, Clock, Share2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 interface RecordingControlsProps {
@@ -32,13 +37,84 @@ const activities = [
 export function RecordingControls({ isRecording, onToggleRecording, className }: RecordingControlsProps) {
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [selectedActivity, setSelectedActivity] = useState<string>("");
+  const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
+  const [showMissionDialog, setShowMissionDialog] = useState(false);
+  const [recordingFrequency, setRecordingFrequency] = useState<string>("30s");
+  const [missionName, setMissionName] = useState<string>("");
+  const [shareData, setShareData] = useState<boolean>(false);
+  const { toast } = useToast();
+
+  const frequencyOptions = [
+    { value: "10s", label: "Toutes les 10 secondes" },
+    { value: "30s", label: "Toutes les 30 secondes" },
+    { value: "1m", label: "Toutes les minutes" },
+    { value: "5m", label: "Toutes les 5 minutes" },
+    { value: "10m", label: "Toutes les 10 minutes" },
+    { value: "continuous", label: "Continu" }
+  ];
+
+  const handleStartRecording = () => {
+    if (!selectedLocation || !selectedActivity) {
+      toast({
+        title: "Informations manquantes",
+        description: "Veuillez sélectionner une localisation et une activité",
+        variant: "destructive"
+      });
+      return;
+    }
+    setShowFrequencyDialog(true);
+  };
+
+  const confirmStartRecording = () => {
+    setShowFrequencyDialog(false);
+    onToggleRecording();
+    toast({
+      title: "Enregistrement démarré",
+      description: `Fréquence: ${frequencyOptions.find(f => f.value === recordingFrequency)?.label}`,
+    });
+  };
+
+  const handleStopRecording = () => {
+    setShowMissionDialog(true);
+  };
+
+  const confirmStopRecording = () => {
+    if (!missionName.trim()) {
+      toast({
+        title: "Nom de mission requis",
+        description: "Veuillez saisir un nom pour cette mission",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setShowMissionDialog(false);
+    onToggleRecording();
+    
+    toast({
+      title: "Mission sauvegardée",
+      description: `"${missionName}" ${shareData ? "sera partagée" : "stockée localement"}`,
+    });
+
+    // Reset form
+    setMissionName("");
+    setShareData(false);
+  };
+
+  const handleRecordingClick = () => {
+    if (isRecording) {
+      handleStopRecording();
+    } else {
+      handleStartRecording();
+    }
+  };
 
   return (
     <div className={cn("space-y-4", className)}>
       {/* Recording Control */}
       <div className="flex items-center justify-center">
         <Button
-          onClick={onToggleRecording}
+          onClick={handleRecordingClick}
           size="lg"
           variant={isRecording ? "destructive" : "default"}
           className={cn(
@@ -57,7 +133,15 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
       {/* Status */}
       <div className="text-center">
         <Badge variant={isRecording ? "destructive" : "secondary"} className="text-sm">
-          {isRecording ? "Enregistrement en cours..." : "Prêt à enregistrer"}
+          {isRecording ? (
+            <div className="flex items-center gap-2">
+              <span>Enregistrement en cours</span>
+              <Clock className="h-3 w-3" />
+              <span>{frequencyOptions.find(f => f.value === recordingFrequency)?.label}</span>
+            </div>
+          ) : (
+            "Prêt à enregistrer"
+          )}
         </Badge>
       </div>
 
@@ -101,6 +185,104 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
           </Select>
         </div>
       </div>
+
+      {/* Frequency Selection Dialog */}
+      <Dialog open={showFrequencyDialog} onOpenChange={setShowFrequencyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Fréquence d'enregistrement
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Label>Choisissez la fréquence de mesure :</Label>
+            <Select value={recordingFrequency} onValueChange={setRecordingFrequency}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {frequencyOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-2 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowFrequencyDialog(false)}
+                className="flex-1"
+              >
+                Annuler
+              </Button>
+              <Button 
+                onClick={confirmStartRecording}
+                className="flex-1"
+              >
+                Démarrer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mission Details Dialog */}
+      <Dialog open={showMissionDialog} onOpenChange={setShowMissionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Save className="h-5 w-5" />
+              Finaliser la mission
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mission-name">Nom de la mission</Label>
+              <Input
+                id="mission-name"
+                placeholder="Ex: Mesure qualité air bureau"
+                value={missionName}
+                onChange={(e) => setMissionName(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="share-data" className="flex items-center gap-2">
+                  <Share2 className="h-4 w-4" />
+                  Partager les données
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Contribuer à la base de données communautaire
+                </p>
+              </div>
+              <Switch
+                id="share-data"
+                checked={shareData}
+                onCheckedChange={setShareData}
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowMissionDialog(false)}
+                className="flex-1"
+              >
+                Annuler
+              </Button>
+              <Button 
+                onClick={confirmStopRecording}
+                className="flex-1"
+              >
+                {shareData ? "Sauvegarder et partager" : "Sauvegarder"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
