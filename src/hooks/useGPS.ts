@@ -41,7 +41,7 @@ export function useGPS() {
     };
 
     const handleError = (error: GeolocationPositionError) => {
-      console.error('❌ GPS error:', error);
+      console.error('❌ GPS error:', error.message, 'Code:', error.code);
       switch (error.code) {
         case error.PERMISSION_DENIED:
           setError('Location access denied');
