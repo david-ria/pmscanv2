@@ -105,25 +105,25 @@ export default function RealTime() {
           {/* PM2.5 - Main indicator with quality status */}
           <Card className="text-center relative overflow-hidden">
             <div 
-              className={cn(
-                "absolute inset-0 opacity-20",
-                `bg-${getAirQualityLevel(currentData.pm25).color}`
-              )}
+              className="absolute inset-0 opacity-20"
+              style={{backgroundColor: `hsl(var(--${getAirQualityLevel(currentData.pm25).color}))`}}
             />
             <CardContent className="p-4 relative">
-              <div className={cn(
-                "text-3xl font-bold mb-1",
-                `text-${getAirQualityLevel(currentData.pm25).color}`
-              )}>
+              <div 
+                className="text-3xl font-bold mb-1"
+                style={{color: `hsl(var(--${getAirQualityLevel(currentData.pm25).color}))`}}
+              >
                 {Math.round(currentData.pm25)}
               </div>
               <div className="text-sm font-medium text-muted-foreground">PM2.5</div>
               <div className="text-xs text-muted-foreground mb-2">μg/m³</div>
-              <div className={cn(
-                "text-xs font-medium px-2 py-1 rounded-full",
-                `bg-${getAirQualityLevel(currentData.pm25).color}/20`,
-                `text-${getAirQualityLevel(currentData.pm25).color}`
-              )}>
+              <div 
+                className="text-xs font-medium px-2 py-1 rounded-full"
+                style={{
+                  backgroundColor: `hsl(var(--${getAirQualityLevel(currentData.pm25).color}) / 0.2)`,
+                  color: `hsl(var(--${getAirQualityLevel(currentData.pm25).color}))`
+                }}
+              >
                 {getAirQualityLevel(currentData.pm25).label}
               </div>
             </CardContent>
