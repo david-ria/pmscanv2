@@ -32,19 +32,55 @@ export function useGoogleFit(): UseGoogleFitReturn {
   // Initialize Google API client
   const initGoogleAPI = useCallback(async () => {
     return new Promise<void>((resolve, reject) => {
-      if (typeof window === 'undefined' || !window.gapi) {
-        reject(new Error('Google API not loaded'));
+      // Check if gapi is available
+      if (typeof window === 'undefined') {
+        reject(new Error('Window object not available'));
         return;
       }
 
+      // Load Google API script if not available
+      if (!window.gapi) {
+        const script = document.createElement('script');
+        script.src = 'https://apis.google.com/js/api.js';
+        script.async = true;
+        script.defer = true;
+        
+        script.onload = () => {
+          console.log('Google API script loaded');
+          initGapiAuth().then(resolve).catch(reject);
+        };
+        
+        script.onerror = () => {
+          reject(new Error('Failed to load Google API script'));
+        };
+        
+        document.head.appendChild(script);
+      } else {
+        initGapiAuth().then(resolve).catch(reject);
+      }
+    });
+  }, []);
+
+  const initGapiAuth = useCallback(async () => {
+    return new Promise<void>((resolve, reject) => {
       window.gapi.load('auth2', {
         callback: () => {
-        window.gapi.auth2.init({
-          client_id: '1039486564308-bk68q46o0cr92u2ncdkso30l8m9s51nn.apps.googleusercontent.com', // Default Google API client ID for testing
-          scope: 'https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.location.read'
-        }).then(resolve, reject);
+          console.log('Google Auth2 library loaded');
+          // Note: This is a demo client ID - users need to set up their own
+          window.gapi.auth2.init({
+            client_id: '1039486564308-bk68q46o0cr92u2ncdkso30l8m9s51nn.apps.googleusercontent.com',
+            scope: 'https://www.googleapis.com/auth/fitness.activity.read'
+          }).then(() => {
+            console.log('Google Auth2 initialized');
+            resolve();
+          }).catch((error: any) => {
+            console.error('Auth2 init error:', error);
+            reject(error);
+          });
         },
-        onerror: reject
+        onerror: () => {
+          reject(new Error('Failed to load Google Auth2 library'));
+        }
       });
     });
   }, []);

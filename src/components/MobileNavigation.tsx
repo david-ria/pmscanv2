@@ -39,17 +39,24 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
 
   const handleGoogleFitConnect = async () => {
     try {
+      console.log('Attempting to connect to Google Fit...');
       await connectGoogleFit();
+      console.log('Google Fit connection successful');
     } catch (error) {
       console.error('Error connecting to Google Fit:', error);
+      // Show more detailed error information
+      alert(`Google Fit connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   const handleGoogleFitSync = async () => {
     try {
+      console.log('Attempting to sync Google Fit activities...');
       await syncActivities();
+      console.log('Google Fit sync successful');
     } catch (error) {
       console.error('Error syncing Google Fit:', error);
+      alert(`Google Fit sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
