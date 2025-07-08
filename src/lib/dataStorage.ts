@@ -274,8 +274,12 @@ class DataStorageService {
       .map(row => row.map(field => `"${field}"`).join(','))
       .join('\n');
 
-    // Create and download CSV file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // Add UTF-8 BOM for proper encoding
+    const BOM = '\uFEFF';
+    const csvWithBOM = BOM + csvContent;
+
+    // Create and download CSV file with proper UTF-8 encoding
+    const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     

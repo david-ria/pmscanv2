@@ -87,14 +87,17 @@ export function useRecordingData() {
     console.log("✅ Adding data point to recording!");
     lastRecordedTime.current = currentTime;
     
-    // Use current system time instead of device timestamp to ensure unique timestamps
-    const pmDataWithCurrentTimestamp = {
+    // Use a unique timestamp for each data point (current time with milliseconds)
+    // This ensures each measurement has a unique, chronological timestamp
+    const uniqueTimestamp = new Date();
+    
+    const pmDataWithUniqueTimestamp = {
       ...pmData,
-      timestamp: currentTime
+      timestamp: uniqueTimestamp
     };
     
     const entry: RecordingEntry = {
-      pmData: pmDataWithCurrentTimestamp,
+      pmData: pmDataWithUniqueTimestamp,
       location
     };
 
