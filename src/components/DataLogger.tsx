@@ -39,22 +39,39 @@ export function DataLogger({
   const [dataLog, setDataLog] = useState<DataLogEntry[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // Add new data entry when recording and data is available
+  // Add new data entry when recording and data is available - max 1 per second
   useEffect(() => {
     if (isRecording && currentData) {
-      console.log("📝 Adding data to logger:", { pm25: currentData.pm25, timestamp: currentData.timestamp });
-      const newEntry: DataLogEntry = {
-        id: Date.now().toString(),
-        timestamp: currentData.timestamp,
-        pmData: currentData,
-        location: currentLocation,
-        missionContext
-      };
-      
       setDataLog(prev => {
-        const updated = [newEntry, ...prev.slice(0, 99)];
-        console.log("📊 DataLog updated, total entries:", updated.length);
-        return updated;
+        // Check if we already have an entry within the last second
+        const currentTime = currentData.timestamp.getTime();
+        const hasRecentEntry = prev.length > 0 && 
+          (currentTime - prev[0].timestamp.getTime()) < 1000; // Less than 1 second
+        
+        // Check if data is significantly different from last entry
+        const isDataDifferent = prev.length === 0 || 
+          Math.abs(prev[0].pmData.pm25 - currentData.pm25) >= 0.1 ||
+          Math.abs(prev[0].pmData.pm1 - currentData.pm1) >= 0.1 ||
+          Math.abs(prev[0].pmData.pm10 - currentData.pm10) >= 0.1;
+        
+        // Only add if enough time passed OR data is significantly different
+        if (!hasRecentEntry || isDataDifferent) {
+          console.log("📝 Adding data to logger:", { pm25: currentData.pm25, timestamp: currentData.timestamp });
+          const newEntry: DataLogEntry = {
+            id: Date.now().toString(),
+            timestamp: currentData.timestamp,
+            pmData: currentData,
+            location: currentLocation,
+            missionContext
+          };
+          
+          const updated = [newEntry, ...prev.slice(0, 99)];
+          console.log("📊 DataLog updated, total entries:", updated.length);
+          return updated;
+        }
+        
+        // Skip adding duplicate/too frequent entries
+        return prev;
       });
     }
   }, [isRecording, currentData, currentLocation, missionContext]);
