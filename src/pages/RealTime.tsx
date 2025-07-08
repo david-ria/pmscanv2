@@ -13,6 +13,21 @@ export default function RealTime() {
   const [isRecording, setIsRecording] = useState(false);
   const { currentData, isConnected } = usePMScanBluetooth();
 
+  // Debug logging for data reception
+  useEffect(() => {
+    if (currentData) {
+      console.log('RealTime component received data:', {
+        pm1: currentData.pm1,
+        pm25: currentData.pm25,
+        pm10: currentData.pm10,
+        timestamp: currentData.timestamp.toISOString()
+      });
+    } else {
+      console.log('RealTime component: currentData is null');
+    }
+    console.log('RealTime component: isConnected =', isConnected);
+  }, [currentData, isConnected]);
+
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);

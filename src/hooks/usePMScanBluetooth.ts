@@ -63,7 +63,8 @@ export function usePMScanBluetooth() {
       location: "PMScan Device"
     };
     
-    console.log('PMScan Data Received:', data);
+    // Safe logging to avoid slice error
+    console.log('PMScan Data - PM2.5:', data.pm25, 'PM1:', data.pm1, 'PM10:', data.pm10, 'Temp:', data.temp, 'Humidity:', data.humidity);
     return data;
   }, [device]);
 
@@ -71,11 +72,12 @@ export function usePMScanBluetooth() {
     console.log('handleRTData called');
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target.value) {
-      console.log('Raw characteristic value received, buffer length:', target.value.byteLength);
+      console.log('Raw characteristic received, buffer length:', target.value.byteLength);
       try {
         const data = parsePMScanDataPayload(target.value);
-        console.log('Parsed PM data - PM2.5:', data.pm25, 'PM1:', data.pm1, 'PM10:', data.pm10);
+        console.log('Setting current data with PM2.5:', data.pm25);
         setCurrentData(data);
+        console.log('Current data state updated successfully');
       } catch (error) {
         console.error('Error parsing PMScan data:', error);
       }
@@ -143,11 +145,13 @@ export function usePMScanBluetooth() {
       const rtDataChar = await service.getCharacteristic(PMScanRTDataUUID);
       await rtDataChar.startNotifications();
       rtDataChar.addEventListener('characteristicvaluechanged', handleRTData);
+      console.log('RT Data notifications started');
 
       // Set up immediate data notifications
       const imDataChar = await service.getCharacteristic(PMScanIMDataUUID);
       await imDataChar.startNotifications();
       imDataChar.addEventListener('characteristicvaluechanged', handleRTData);
+      console.log('IM Data notifications started');
 
       // Set up battery notifications
       await batteryChar.startNotifications();
@@ -184,6 +188,7 @@ export function usePMScanBluetooth() {
 
       setIsConnected(true);
       setError(null);
+      console.log('Device initialization complete');
     } catch (err) {
       console.error('Failed to initialize device:', err);
       setError('Failed to initialize device');
