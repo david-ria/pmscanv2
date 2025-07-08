@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
+import { useGPS } from "@/hooks/useGPS";
 import { cn } from "@/lib/utils";
 
 export default function RealTime() {
@@ -15,6 +16,7 @@ export default function RealTime() {
   const [showDebugLog, setShowDebugLog] = useState(false);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
+  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
   const logEndRef = useRef<HTMLDivElement>(null);
 
   // Add debug log function
@@ -222,11 +224,11 @@ export default function RealTime() {
           charging: false,
           connected: false
         }}
-        locationEnabled={false}
-        latestLocation={null}
+        locationEnabled={locationEnabled}
+        latestLocation={latestLocation}
         onConnect={() => requestDevice()}
         onDisconnect={() => disconnect()}
-        onRequestLocationPermission={async () => false}
+        onRequestLocationPermission={requestLocationPermission}
         className="mb-4" 
       />
 
