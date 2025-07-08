@@ -34,8 +34,8 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
   const confirmStartRecording = () => {
     console.log("⚡ Confirming start recording...");
     setShowFrequencyDialog(false);
-    startRecording(); // Use the hook's startRecording
-    console.log("📞 Called startRecording function");
+    startRecording(recordingFrequency); // Pass the frequency here
+    console.log("📞 Called startRecording function with frequency:", recordingFrequency);
     toast({
       title: "Enregistrement démarré",
       description: `Fréquence: ${frequencyOptions.find(f => f.value === recordingFrequency)?.label}`,

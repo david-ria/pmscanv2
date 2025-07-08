@@ -11,11 +11,13 @@ interface RecordingEntry {
 export function useRecordingData() {
   const [recordingData, setRecordingData] = useState<RecordingEntry[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingFrequency, setRecordingFrequency] = useState<string>("30s");
   const [missionContext, setMissionContext] = useState<{
     location: string;
     activity: string;
   }>({ location: "", activity: "" });
   const recordingStartTime = useRef<Date | null>(null);
+  const lastRecordedTime = useRef<Date | null>(null);
 
   // Debug: Log when isRecording changes
   useEffect(() => {
@@ -39,12 +41,25 @@ export function useRecordingData() {
     }
   }, []);
 
-  const startRecording = () => {
-    console.log("🎬 Starting recording...");
+  // Helper function to parse frequency string to milliseconds
+  const parseFrequencyToMs = (frequency: string): number => {
+    const number = parseInt(frequency);
+    if (frequency.includes('s')) {
+      return number * 1000; // seconds to milliseconds
+    } else if (frequency.includes('m')) {
+      return number * 60 * 1000; // minutes to milliseconds
+    }
+    return 30000; // default 30 seconds
+  };
+
+  const startRecording = (frequency: string = "30s") => {
+    console.log("🎬 Starting recording with frequency:", frequency);
     console.log("🔄 Setting isRecording to true");
     setIsRecording(true);
     setRecordingData([]);
+    setRecordingFrequency(frequency);
     recordingStartTime.current = new Date();
+    lastRecordedTime.current = null; // Reset for new recording
     console.log("✅ Recording started! isRecording should now be:", true);
   };
 
@@ -59,7 +74,19 @@ export function useRecordingData() {
       return;
     }
 
+    // Check if enough time has passed based on recording frequency
+    const currentTime = new Date();
+    const frequencyMs = parseFrequencyToMs(recordingFrequency);
+    
+    if (lastRecordedTime.current && 
+        (currentTime.getTime() - lastRecordedTime.current.getTime()) < frequencyMs) {
+      console.log(`⏳ Throttling: only ${currentTime.getTime() - lastRecordedTime.current.getTime()}ms passed, need ${frequencyMs}ms`);
+      return;
+    }
+
     console.log("✅ Adding data point to recording!");
+    lastRecordedTime.current = currentTime;
+    
     const entry: RecordingEntry = {
       pmData,
       location
