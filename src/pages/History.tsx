@@ -1,192 +1,32 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Calendar, Download, Share, Trash2, RotateCcw, WifiOff, Mail, MessageSquare, ExternalLink } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { StatsCard } from "@/components/StatsCard";
 import { DateFilter } from "@/components/DateFilter";
-import { useToast } from "@/hooks/use-toast";
-import { dataStorage, MissionData } from "@/lib/dataStorage";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { MissionCard } from "@/components/History/MissionCard";
+import { SyncButton } from "@/components/History/SyncButton";
+import { useMissionManagement } from "@/hooks/useMissionManagement";
+import { useHistoryStats } from "@/hooks/useHistoryStats";
 
 export default function History() {
-  const [missions, setMissions] = useState<MissionData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<"day" | "week" | "month" | "year">("day");
-  const { toast } = useToast();
+  
+  const {
+    missions,
+    loading,
+    syncing,
+    loadMissions,
+    handleSync,
+    handleDelete,
+    handleExport,
+    handleShare
+  } = useMissionManagement();
 
   // Load missions on component mount
   useEffect(() => {
     loadMissions();
-  }, []);
-
-  const loadMissions = async () => {
-    try {
-      setLoading(true);
-      const missionData = await dataStorage.getAllMissions();
-      setMissions(missionData);
-    } catch (error) {
-      console.error('Error loading missions:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les missions",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSync = async () => {
-    if (!navigator.onLine) {
-      toast({
-        title: "Hors ligne",
-        description: "Connexion internet requise pour synchroniser",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      setSyncing(true);
-      await dataStorage.syncPendingMissions();
-      await loadMissions(); // Reload to show updated sync status
-      toast({
-        title: "Synchronisation réussie",
-        description: "Toutes les données ont été synchronisées"
-      });
-    } catch (error) {
-      console.error('Sync error:', error);
-      toast({
-        title: "Erreur de synchronisation",
-        description: "Impossible de synchroniser les données",
-        variant: "destructive"
-      });
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const handleDelete = async (missionId: string) => {
-    try {
-      await dataStorage.deleteMission(missionId);
-      setMissions(prev => prev.filter(m => m.id !== missionId));
-      toast({
-        title: "Mission supprimée",
-        description: "La mission a été supprimée avec succès"
-      });
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer la mission",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleExport = (mission: MissionData) => {
-    try {
-      dataStorage.exportMissionToCSV(mission);
-      toast({
-        title: "Export réussi",
-        description: `"${mission.name}" exporté en CSV`
-      });
-    } catch (error) {
-      console.error('Export error:', error);
-      toast({
-        title: "Erreur d'export",
-        description: "Impossible d'exporter la mission",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleShare = async (mission: MissionData, shareType: 'email' | 'sms' | 'native') => {
-    const shareText = `Mission PMScan: ${mission.name}
-Date: ${formatDate(new Date(mission.startTime))}
-Durée: ${formatDuration(mission.durationMinutes)}
-PM2.5 moyenne: ${Math.round(mission.avgPm25)} µg/m³
-${mission.locationContext ? `Lieu: ${mission.locationContext}` : ''}
-${mission.activityContext ? `Activité: ${mission.activityContext}` : ''}`;
-
-    try {
-      if (shareType === 'native' && navigator.share) {
-        await navigator.share({
-          title: `Mission PMScan: ${mission.name}`,
-          text: shareText,
-        });
-        toast({
-          title: "Partagé",
-          description: "Mission partagée avec succès"
-        });
-      } else if (shareType === 'email') {
-        const emailSubject = encodeURIComponent(`Mission PMScan: ${mission.name}`);
-        const emailBody = encodeURIComponent(shareText);
-        window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
-      } else if (shareType === 'sms') {
-        const smsBody = encodeURIComponent(shareText);
-        window.open(`sms:?body=${smsBody}`);
-      } else {
-        // Fallback to clipboard
-        await navigator.clipboard.writeText(shareText);
-        toast({
-          title: "Copié",
-          description: "Données copiées dans le presse-papiers"
-        });
-      }
-    } catch (error) {
-      console.error('Share error:', error);
-      // Fallback to clipboard
-      try {
-        await navigator.clipboard.writeText(shareText);
-        toast({
-          title: "Copié",
-          description: "Données copiées dans le presse-papiers"
-        });
-      } catch (clipboardError) {
-        toast({
-          title: "Erreur de partage",
-          description: "Impossible de partager la mission",
-          variant: "destructive"
-        });
-      }
-    }
-  };
-
-  const getQualityColor = (pm25: number) => {
-    if (pm25 <= 12) return "text-air-good";
-    if (pm25 <= 35) return "text-air-moderate";
-    if (pm25 <= 55) return "text-air-poor";
-    return "text-air-very-poor";
-  };
-
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${mins}min`;
-    }
-    return `${mins} min`;
-  };
-
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-    const missionDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-    if (missionDate.getTime() === today.getTime()) {
-      return "Aujourd'hui";
-    } else if (missionDate.getTime() === yesterday.getTime()) {
-      return "Hier";
-    } else {
-      return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    }
-  };
+  }, [loadMissions]);
 
   // Filter missions based on selected date and period
   const filteredMissions = useMemo(() => {
@@ -220,84 +60,29 @@ ${mission.activityContext ? `Activité: ${mission.activityContext}` : ''}`;
     });
   }, [missions, selectedDate, selectedPeriod]);
 
-  // Calculate stats from filtered missions
-  const periodStats = useMemo(() => {
-    if (filteredMissions.length === 0) {
-      return [
-        { label: "Exposition totale", value: "0 min", color: "default" as const },
-        { label: "Moyenne PM2.5", value: 0, unit: "µg/m³", color: "default" as const },
-        { label: "PM2.5 > OMS (15)", value: "0 min", color: "default" as const },
-        { label: "PM10 > OMS (45)", value: "0 min", color: "default" as const }
-      ];
-    }
-
-    const totalDuration = filteredMissions.reduce((sum, m) => sum + m.durationMinutes, 0);
-    const avgPm25 = filteredMissions.reduce((sum, m) => sum + m.avgPm25, 0) / filteredMissions.length;
-    
-    // Calculate time above WHO thresholds
-    const timeAboveWHO_PM25 = filteredMissions.reduce((sum, m) => {
-      return m.avgPm25 > 15 ? sum + m.durationMinutes : sum;
-    }, 0);
-    
-    const timeAboveWHO_PM10 = filteredMissions.reduce((sum, m) => {
-      return m.avgPm10 > 45 ? sum + m.durationMinutes : sum;
-    }, 0);
-
-    const getColorFromPm25 = (pm25: number) => {
-      if (pm25 <= 12) return "good" as const;
-      if (pm25 <= 35) return "moderate" as const;
-      if (pm25 <= 55) return "poor" as const;
-      return "poor" as const;
-    };
-
-    const getColorFromTime = (timeAbove: number, totalTime: number) => {
-      const percentage = (timeAbove / totalTime) * 100;
-      if (percentage <= 10) return "good" as const;
-      if (percentage <= 30) return "moderate" as const;
-      return "poor" as const;
-    };
-
-    return [
-      { label: "Exposition totale", value: formatDuration(totalDuration), color: "default" as const },
-      { label: "Moyenne PM2.5", value: Math.round(avgPm25), unit: "µg/m³", color: getColorFromPm25(avgPm25) },
-      { 
-        label: "PM2.5 > OMS (15)", 
-        value: formatDuration(timeAboveWHO_PM25), 
-        color: getColorFromTime(timeAboveWHO_PM25, totalDuration) 
-      },
-      { 
-        label: "PM10 > OMS (45)", 
-        value: formatDuration(timeAboveWHO_PM10), 
-        color: getColorFromTime(timeAboveWHO_PM10, totalDuration) 
-      }
-    ];
-  }, [filteredMissions]);
-
+  const periodStats = useHistoryStats(filteredMissions);
   const unsyncedCount = missions.filter(m => !m.synced).length;
+
+  const getPeriodLabel = () => {
+    switch (selectedPeriod) {
+      case "day": return "Jour";
+      case "week": return "Semaine";
+      case "month": return "Mois";
+      case "year": return "Année";
+      default: return "Période";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background px-4 py-6">
       {/* Sync Status */}
       <div className="flex items-center justify-end mb-6">
         <div className="flex items-center gap-2">
-          {unsyncedCount > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleSync}
-              disabled={syncing || !navigator.onLine}
-              className="flex items-center gap-2"
-            >
-              {syncing ? (
-                <RotateCcw className="h-4 w-4 animate-spin" />
-              ) : navigator.onLine ? (
-                <RotateCcw className="h-4 w-4" />
-              ) : (
-                <WifiOff className="h-4 w-4" />
-              )}
-              Sync ({unsyncedCount})
-            </Button>
-          )}
+          <SyncButton 
+            unsyncedCount={unsyncedCount}
+            syncing={syncing}
+            onSync={handleSync}
+          />
         </div>
       </div>
 
@@ -312,7 +97,7 @@ ${mission.activityContext ? `Activité: ${mission.activityContext}` : ''}`;
 
       {/* Period Stats */}
       <StatsCard 
-        title={`Résumé - ${selectedPeriod === "day" ? "Jour" : selectedPeriod === "week" ? "Semaine" : selectedPeriod === "month" ? "Mois" : "Année"}`} 
+        title={`Résumé - ${getPeriodLabel()}`} 
         stats={periodStats} 
         className="mb-6" 
       />
@@ -338,100 +123,13 @@ ${mission.activityContext ? `Activité: ${mission.activityContext}` : ''}`;
           </div>
         ) : (
           filteredMissions.map((mission) => (
-            <Card key={mission.id} className="relative">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CardTitle className="text-base">{mission.name}</CardTitle>
-                      {!mission.synced && (
-                        <Badge variant="outline" className="text-xs">
-                          Local
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(new Date(mission.startTime))} • {formatDuration(mission.durationMinutes)}
-                    </p>
-                    {mission.locationContext && mission.activityContext && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {mission.locationContext} • {mission.activityContext}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-xl font-bold ${getQualityColor(mission.avgPm25)}`}>
-                      {Math.round(mission.avgPm25)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">µg/m³ (moy.)</div>
-                    <div className="text-xs text-muted-foreground">
-                      {mission.measurementsCount} mesures
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex items-center gap-2">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Share className="h-3 w-3 mr-2" />
-                        Partager
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Partager la mission</DialogTitle>
-                      </DialogHeader>
-                      <div className="flex flex-col gap-3 pt-4">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => handleShare(mission, 'email')}
-                          className="justify-start"
-                        >
-                          <Mail className="h-4 w-4 mr-2" />
-                          Partager par email
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => handleShare(mission, 'sms')}
-                          className="justify-start"
-                        >
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Partager par SMS
-                        </Button>
-                        {navigator.share && (
-                          <Button 
-                            variant="outline" 
-                            onClick={() => handleShare(mission, 'native')}
-                            className="justify-start"
-                          >
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Partager (options du téléphone)
-                          </Button>
-                        )}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => handleExport(mission)}
-                  >
-                    <Download className="h-3 w-3 mr-2" />
-                    Export
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleDelete(mission.id)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <MissionCard
+              key={mission.id}
+              mission={mission}
+              onExport={handleExport}
+              onDelete={handleDelete}
+              onShare={handleShare}
+            />
           ))
         )}
       </div>
