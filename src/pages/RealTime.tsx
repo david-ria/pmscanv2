@@ -100,24 +100,24 @@ export default function RealTime() {
         </div>
       </div>
 
-      {/* Real-time Readings - Three Squares */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
+      {/* Real-time Readings - Three Cards */}
+      <div className="grid grid-cols-3 gap-3 mb-4">
         {/* PM1 */}
-        <Card className="text-center">
+        <Card className="text-center bg-card/50">
           <CardContent className="p-4">
             <div className="text-3xl font-bold text-foreground mb-1">
               {Math.round(currentData.pm1)}
             </div>
-            <div className="text-xs text-muted-foreground">PM1</div>
-            <div className="text-xs text-muted-foreground">µg/m³</div>
+            <div className="text-sm font-medium text-muted-foreground">PM1</div>
+            <div className="text-xs text-muted-foreground">μg/m³</div>
           </CardContent>
         </Card>
 
-        {/* PM2.5 */}
+        {/* PM2.5 - Main indicator with quality status */}
         <Card className="text-center relative overflow-hidden">
           <div 
             className={cn(
-              "absolute inset-0 opacity-10",
+              "absolute inset-0 opacity-20",
               `bg-${getAirQualityLevel(currentData.pm25).color}`
             )}
           />
@@ -128,25 +128,36 @@ export default function RealTime() {
             )}>
               {Math.round(currentData.pm25)}
             </div>
-            <div className="text-xs text-muted-foreground">PM2.5</div>
-            <div className="text-xs text-muted-foreground">µg/m³</div>
-            <div className="text-xs mt-1 font-medium">
+            <div className="text-sm font-medium text-muted-foreground">PM2.5</div>
+            <div className="text-xs text-muted-foreground mb-2">μg/m³</div>
+            <div className={cn(
+              "text-xs font-medium px-2 py-1 rounded-full",
+              `bg-${getAirQualityLevel(currentData.pm25).color}/20`,
+              `text-${getAirQualityLevel(currentData.pm25).color}`
+            )}>
               {getAirQualityLevel(currentData.pm25).label}
             </div>
           </CardContent>
         </Card>
 
         {/* PM10 */}
-        <Card className="text-center">
+        <Card className="text-center bg-card/50">
           <CardContent className="p-4">
             <div className="text-3xl font-bold text-foreground mb-1">
               {Math.round(currentData.pm10)}
             </div>
-            <div className="text-xs text-muted-foreground">PM10</div>
-            <div className="text-xs text-muted-foreground">µg/m³</div>
+            <div className="text-sm font-medium text-muted-foreground">PM10</div>
+            <div className="text-xs text-muted-foreground">μg/m³</div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Real-time Status */}
+      {isConnected && (
+        <div className="text-center text-xs text-muted-foreground mb-4">
+          Dernière mesure : {currentData.timestamp.toLocaleTimeString('fr-FR')}
+        </div>
+      )}
 
       {/* Bluetooth Connection */}
       <BluetoothConnection className="mb-4" />
