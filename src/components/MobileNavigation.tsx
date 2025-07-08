@@ -1,15 +1,8 @@
-import { Home, History, BarChart3, User, Settings, Users, Smartphone, Globe, AlertTriangle, LogOut } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { User, Settings, Users, Smartphone, Globe, AlertTriangle, LogOut } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-
-interface NavigationItem {
-  to: string;
-  icon: React.ComponentType<any>;
-  label: string;
-}
 
 interface MenuSection {
   title: string;
@@ -20,12 +13,6 @@ interface MenuSection {
     to?: string;
   }[];
 }
-
-const navigationItems: NavigationItem[] = [
-  { to: "/", icon: Home, label: "Temps réel" },
-  { to: "/history", icon: History, label: "Historique" },
-  { to: "/analysis", icon: BarChart3, label: "Analyse" },
-];
 
 const menuSections: MenuSection[] = [
   {
@@ -64,14 +51,12 @@ interface MobileNavigationProps {
 }
 
 export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
-  const location = useLocation();
-
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-6 border-b border-border">
-        <h2 className="text-xl font-bold text-foreground">Menu</h2>
-        <p className="text-sm text-muted-foreground mt-1">Navigation et paramètres</p>
+        <h2 className="text-xl font-bold text-foreground">Paramètres</h2>
+        <p className="text-sm text-muted-foreground mt-1">Configuration et compte</p>
       </div>
 
       {/* User Info Card */}
@@ -95,34 +80,6 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* Main Navigation */}
-        <div className="p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Navigation</h3>
-          <div className="space-y-1">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.to;
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={onNavigate}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-sm min-h-[44px]", // Increased touch target
-                    isActive
-                      ? "bg-primary text-primary-foreground font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  )}
-                >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">{item.label}</span>
-                </NavLink>
-              );
-            })}
-          </div>
-        </div>
-
-        <Separator className="mx-4" />
 
         {/* Menu Sections */}
         <div className="p-4 space-y-6">

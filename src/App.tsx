@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Header } from "@/components/Header";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { RecordingProvider } from "@/contexts/RecordingContext";
 import RealTime from "./pages/RealTime";
 import History from "./pages/History";
@@ -21,7 +22,7 @@ const App = () => (
         <RecordingProvider>
           <div className="relative min-h-screen">
             <Header />
-            <main className="pt-14">
+            <main className="pt-14 pb-16">
               <Routes>
                 <Route path="/" element={<RealTime />} />
                 <Route path="/history" element={<History />} />
@@ -29,6 +30,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
+            <BottomNavigation />
           </div>
         </RecordingProvider>
       </BrowserRouter>
