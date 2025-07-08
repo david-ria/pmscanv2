@@ -15,7 +15,7 @@ export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
-  const { isRecording, addDataPoint } = useRecordingData();
+  const { isRecording, addDataPoint, missionContext } = useRecordingData();
 
   // Add data to recording when new data comes in
   useEffect(() => {
@@ -204,7 +204,7 @@ export default function RealTime() {
       {/* Recording Controls */}
       <RecordingControls
         isRecording={isRecording}
-        onToggleRecording={() => {}} // Handled internally by the recording hook
+        onToggleRecording={() => {}} // Not needed anymore, managed by the hook
         className="mb-4"
       />
 
@@ -213,6 +213,7 @@ export default function RealTime() {
         isRecording={isRecording}
         currentData={currentData}
         currentLocation={latestLocation}
+        missionContext={missionContext}
         className="mb-4"
       />
 

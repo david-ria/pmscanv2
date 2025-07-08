@@ -11,6 +11,10 @@ interface RecordingEntry {
 export function useRecordingData() {
   const [recordingData, setRecordingData] = useState<RecordingEntry[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [missionContext, setMissionContext] = useState<{
+    location: string;
+    activity: string;
+  }>({ location: "", activity: "" });
   const recordingStartTime = useRef<Date | null>(null);
 
   // Auto-sync when coming online
@@ -31,9 +35,11 @@ export function useRecordingData() {
   }, []);
 
   const startRecording = () => {
+    console.log("🎬 Starting recording...");
     setIsRecording(true);
     setRecordingData([]);
     recordingStartTime.current = new Date();
+    console.log("✅ Recording started!");
   };
 
   const stopRecording = () => {
@@ -94,14 +100,20 @@ export function useRecordingData() {
     recordingStartTime.current = null;
   };
 
+  const updateMissionContext = (location: string, activity: string) => {
+    setMissionContext({ location, activity });
+  };
+
   return {
     recordingData,
     isRecording,
+    missionContext,
     startRecording,
     stopRecording,
     addDataPoint,
     saveMission,
     clearRecordingData,
+    updateMissionContext,
     recordingStartTime: recordingStartTime.current
   };
 }

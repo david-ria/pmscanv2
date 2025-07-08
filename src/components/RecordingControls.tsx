@@ -23,16 +23,17 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
   const [missionName, setMissionName] = useState<string>("");
   const [shareData, setShareData] = useState<boolean>(false);
   const { toast } = useToast();
-  const { startRecording, stopRecording, saveMission } = useRecordingData();
+  const { startRecording, stopRecording, saveMission, updateMissionContext } = useRecordingData();
 
   const handleStartRecording = () => {
     setShowFrequencyDialog(true);
   };
 
   const confirmStartRecording = () => {
+    console.log("⚡ Confirming start recording...");
     setShowFrequencyDialog(false);
-    startRecording();
-    onToggleRecording();
+    startRecording(); // Use the hook's startRecording
+    console.log("📞 Called startRecording function");
     toast({
       title: "Enregistrement démarré",
       description: `Fréquence: ${frequencyOptions.find(f => f.value === recordingFrequency)?.label}`,
@@ -64,7 +65,6 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
 
       stopRecording();
       setShowMissionDialog(false);
-      onToggleRecording();
       
       toast({
         title: "Mission sauvegardée",
@@ -104,9 +104,15 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
 
       <ContextSelectors 
         selectedLocation={selectedLocation}
-        onLocationChange={setSelectedLocation}
+        onLocationChange={(location) => {
+          setSelectedLocation(location);
+          updateMissionContext(location, selectedActivity);
+        }}
         selectedActivity={selectedActivity}
-        onActivityChange={setSelectedActivity}
+        onActivityChange={(activity) => {
+          setSelectedActivity(activity);
+          updateMissionContext(selectedLocation, activity);
+        }}
         isRecording={isRecording}
       />
 
