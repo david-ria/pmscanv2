@@ -68,20 +68,37 @@ class DataStorageService {
 
   // Save mission locally
   saveMissionLocally(mission: MissionData): void {
-    const missions = this.getLocalMissions();
-    const existingIndex = missions.findIndex(m => m.id === mission.id);
-    
-    if (existingIndex >= 0) {
-      missions[existingIndex] = mission;
-    } else {
-      missions.push(mission);
-    }
-    
-    localStorage.setItem(this.MISSIONS_KEY, JSON.stringify(missions));
-    
-    // Add to pending sync if not already synced
-    if (!mission.synced) {
-      this.addToPendingSync(mission.id);
+    try {
+      const missions = this.getLocalMissions();
+      const existingIndex = missions.findIndex(m => m.id === mission.id);
+      
+      if (existingIndex >= 0) {
+        missions[existingIndex] = mission;
+      } else {
+        missions.push(mission);
+      }
+      
+      // Try to save, if quota exceeded, clean up old data
+      try {
+        localStorage.setItem(this.MISSIONS_KEY, JSON.stringify(missions));
+      } catch (quotaError) {
+        if (quotaError instanceof DOMException && quotaError.name === 'QuotaExceededError') {
+          console.warn('LocalStorage quota exceeded, cleaning up old missions...');
+          this.cleanupOldMissions(missions);
+          // Try again after cleanup
+          localStorage.setItem(this.MISSIONS_KEY, JSON.stringify(missions));
+        } else {
+          throw quotaError;
+        }
+      }
+      
+      // Add to pending sync if not already synced
+      if (!mission.synced) {
+        this.addToPendingSync(mission.id);
+      }
+    } catch (error) {
+      console.error('Failed to save mission locally:', error);
+      throw new Error("Impossible de sauvegarder la mission localement. Mémoire insuffisante.");
     }
   }
 
@@ -300,6 +317,20 @@ class DataStorageService {
   private removeFromPendingSync(missionId: string): void {
     const pending = this.getPendingSyncIds().filter(id => id !== missionId);
     localStorage.setItem(this.PENDING_SYNC_KEY, JSON.stringify(pending));
+  }
+
+  private cleanupOldMissions(missions: MissionData[]): void {
+    // Keep only the most recent 10 missions to free up space
+    const sortedMissions = missions.sort((a, b) => b.endTime.getTime() - a.endTime.getTime());
+    const recentMissions = sortedMissions.slice(0, 10);
+    
+    console.log(`Cleaning up old missions, keeping ${recentMissions.length} most recent ones`);
+    localStorage.setItem(this.MISSIONS_KEY, JSON.stringify(recentMissions));
+    
+    // Update pending sync list to only include kept missions
+    const keptMissionIds = recentMissions.map(m => m.id);
+    const updatedPending = this.getPendingSyncIds().filter(id => keptMissionIds.includes(id));
+    localStorage.setItem(this.PENDING_SYNC_KEY, JSON.stringify(updatedPending));
   }
 }
 
