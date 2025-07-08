@@ -4,7 +4,8 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, MapPin, AlertTriangle, Map, Satellite } from "lucide-react";
 import { LocationData } from "@/types/PMScan";
 
 interface MapboxMapProps {
@@ -31,6 +32,7 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSatellite, setIsSatellite] = useState(false);
 
   // Initialize map
   useEffect(() => {
@@ -345,6 +347,145 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
     }
   }, [trackPoints, isRecording]);
 
+  // Toggle between satellite and map view
+  const toggleMapStyle = () => {
+    if (!map.current) return;
+    
+    const newStyle = isSatellite 
+      ? 'mapbox://styles/mapbox/light-v11' 
+      : 'mapbox://styles/mapbox/satellite-streets-v12';
+    
+    map.current.setStyle(newStyle);
+    setIsSatellite(!isSatellite);
+    
+    // Re-add layers after style change
+    map.current.once('styledata', () => {
+      if (!map.current) return;
+      
+      // Re-add track data sources and layers
+      map.current.addSource('track-line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: trackPoints.length > 1 ? trackPoints.map(point => [point.longitude, point.latitude]) : []
+          }
+        }
+      });
+
+      map.current.addSource('track-points', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: trackPoints.map((point, index) => ({
+            type: 'Feature' as const,
+            id: index,
+            geometry: {
+              type: 'Point' as const,
+              coordinates: [point.longitude, point.latitude]
+            },
+            properties: {
+              pm25: point.pm25,
+              timestamp: point.timestamp.toISOString()
+            }
+          }))
+        }
+      });
+
+      // Re-add layers
+      map.current.addLayer({
+        id: 'track-line',
+        type: 'line',
+        source: 'track-line',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#3b82f6',
+          'line-width': 3,
+          'line-opacity': 0.8
+        }
+      });
+
+      map.current.addLayer({
+        id: 'track-points',
+        type: 'circle',
+        source: 'track-points',
+        paint: {
+          'circle-radius': [
+            'case',
+            ['boolean', ['feature-state', 'hovered'], false],
+            8,
+            6
+          ],
+          'circle-color': [
+            'case',
+            ['<=', ['get', 'pm25'], 12],
+            '#22c55e', // Good - Green
+            ['<=', ['get', 'pm25'], 35],
+            '#eab308', // Moderate - Yellow  
+            ['<=', ['get', 'pm25'], 55],
+            '#f97316', // Poor - Orange
+            '#ef4444'  // Very Poor - Red
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+          'circle-opacity': 0.8
+        }
+      });
+
+      // Re-add event listeners
+      map.current.on('mouseenter', 'track-points', (e) => {
+        map.current!.getCanvas().style.cursor = 'pointer';
+        
+        if (e.features && e.features[0]) {
+          const feature = e.features[0];
+          map.current!.setFeatureState(
+            { source: 'track-points', id: feature.id },
+            { hovered: true }
+          );
+
+          const properties = feature.properties;
+          if (properties) {
+            const popup = new mapboxgl.Popup({
+              offset: 25,
+              closeButton: false
+            })
+              .setLngLat(e.lngLat)
+              .setHTML(`
+                <div style="font-family: system-ui; padding: 6px; font-size: 12px;">
+                  <div style="font-weight: bold; margin-bottom: 4px;">PM2.5: ${Math.round(properties.pm25)} µg/m³</div>
+                  <div style="color: #666; font-size: 10px;">${new Date(properties.timestamp).toLocaleTimeString()}</div>
+                </div>
+              `)
+              .addTo(map.current!);
+            
+            (e.target as any)._tempPopup = popup;
+          }
+        }
+      });
+
+      map.current.on('mouseleave', 'track-points', (e) => {
+        map.current!.getCanvas().style.cursor = '';
+        
+        if (e.features && e.features[0]) {
+          map.current!.setFeatureState(
+            { source: 'track-points', id: e.features[0].id },
+            { hovered: false }
+          );
+        }
+
+        if ((e.target as any)._tempPopup) {
+          (e.target as any)._tempPopup.remove();
+          delete (e.target as any)._tempPopup;
+        }
+      });
+    });
+  };
+
   if (error) {
     return (
       <Card className={`p-6 ${className || ''}`}>
@@ -371,6 +512,28 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
       )}
       
       <div ref={mapContainer} className="w-full h-full rounded-lg overflow-hidden" />
+      
+      {/* Satellite/Map Toggle Button */}
+      <div className="absolute top-3 left-3 z-10">
+        <Button
+          onClick={toggleMapStyle}
+          size="sm"
+          variant="secondary"
+          className="bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background"
+        >
+          {isSatellite ? (
+            <>
+              <Map className="h-4 w-4 mr-2" />
+              Carte
+            </>
+          ) : (
+            <>
+              <Satellite className="h-4 w-4 mr-2" />
+              Satellite
+            </>
+          )}
+        </Button>
+      </div>
       
       {currentLocation && (
         <div className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm p-2 rounded-md border border-border">
