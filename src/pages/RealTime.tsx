@@ -3,15 +3,12 @@ import { Wifi, WifiOff, Map, TrendingUp } from "lucide-react";
 import { MapboxMap } from "@/components/MapboxMap";
 import { PMLineGraph } from "@/components/PMLineGraph";
 import { FloatingRecordButton } from "@/components/FloatingRecordButton";
-
-import { PMScanConnectionStatus } from "@/components/PMScanConnectionStatus";
-import { DataLogger } from "@/components/DataLogger";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { useGPS } from "@/hooks/useGPS";
 import { useRecordingContext } from "@/contexts/RecordingContext";
+import { cn } from "@/lib/utils";
 
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -55,6 +52,52 @@ export default function RealTime() {
 
   return (
     <div className="min-h-screen bg-background px-4 py-6">
+      {/* Status Buttons Bar */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          {/* PMScan Status Button */}
+          <button
+            onClick={() => isConnected ? disconnect() : requestDevice()}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+              isConnected 
+                ? "bg-green-500/20 text-green-700 border border-green-500/30" 
+                : "bg-red-500/20 text-red-700 border border-red-500/30"
+            )}
+          >
+            <div className={cn(
+              "w-2 h-2 rounded-full",
+              isConnected ? "bg-green-500" : "bg-red-500"
+            )} />
+            PMScan {isConnected ? "Connecté" : "Déconnecté"}
+          </button>
+
+          {/* GPS Status Button */}
+          <button
+            onClick={requestLocationPermission}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+              locationEnabled 
+                ? "bg-green-500/20 text-green-700 border border-green-500/30" 
+                : "bg-red-500/20 text-red-700 border border-red-500/30"
+            )}
+          >
+            <div className={cn(
+              "w-2 h-2 rounded-full",
+              locationEnabled ? "bg-green-500" : "bg-red-500"
+            )} />
+            GPS {locationEnabled ? "Activé" : "Désactivé"}
+          </button>
+        </div>
+
+        {/* Recording Status */}
+        {isRecording && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/20 text-red-700 border border-red-500/30 text-xs font-medium">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            Enregistrement...
+          </div>
+        )}
+      </div>
 
       {/* Map/Graph Toggle Section */}
       <div className="mb-4">
@@ -218,39 +261,6 @@ export default function RealTime() {
         </div>
       )}
 
-      {/* Connection Status */}
-      <PMScanConnectionStatus 
-        connectionStatus={{
-          connected: isConnected,
-          connecting: false,
-          error: error
-        }}
-        deviceInfo={device || {
-          name: "PMScan Device",
-          version: 0,
-          mode: 0,
-          interval: 0,
-          battery: 0,
-          charging: false,
-          connected: false
-        }}
-        locationEnabled={locationEnabled}
-        latestLocation={latestLocation}
-        onConnect={() => requestDevice()}
-        onDisconnect={() => disconnect()}
-        onRequestLocationPermission={requestLocationPermission}
-        className="mb-4" 
-      />
-
-
-      {/* Data Logger */}
-      <DataLogger 
-        isRecording={isRecording}
-        currentData={currentData}
-        currentLocation={latestLocation}
-        missionContext={missionContext}
-        className="mb-4"
-      />
 
     </div>
   );
