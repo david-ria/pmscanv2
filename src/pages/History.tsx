@@ -156,14 +156,22 @@ export default function History() {
       return [
         { label: "Exposition totale", value: "0 min", color: "default" as const },
         { label: "Moyenne PM2.5", value: 0, unit: "µg/m³", color: "default" as const },
-        { label: "Pic maximum", value: 0, unit: "µg/m³", color: "default" as const },
-        { label: "Missions", value: 0, color: "default" as const }
+        { label: "PM2.5 > OMS (15)", value: "0 min", color: "default" as const },
+        { label: "PM10 > OMS (45)", value: "0 min", color: "default" as const }
       ];
     }
 
     const totalDuration = filteredMissions.reduce((sum, m) => sum + m.durationMinutes, 0);
     const avgPm25 = filteredMissions.reduce((sum, m) => sum + m.avgPm25, 0) / filteredMissions.length;
-    const maxPm25 = Math.max(...filteredMissions.map(m => m.maxPm25));
+    
+    // Calculate time above WHO thresholds
+    const timeAboveWHO_PM25 = filteredMissions.reduce((sum, m) => {
+      return m.avgPm25 > 15 ? sum + m.durationMinutes : sum;
+    }, 0);
+    
+    const timeAboveWHO_PM10 = filteredMissions.reduce((sum, m) => {
+      return m.avgPm10 > 45 ? sum + m.durationMinutes : sum;
+    }, 0);
 
     const getColorFromPm25 = (pm25: number) => {
       if (pm25 <= 12) return "good" as const;
@@ -172,11 +180,26 @@ export default function History() {
       return "poor" as const;
     };
 
+    const getColorFromTime = (timeAbove: number, totalTime: number) => {
+      const percentage = (timeAbove / totalTime) * 100;
+      if (percentage <= 10) return "good" as const;
+      if (percentage <= 30) return "moderate" as const;
+      return "poor" as const;
+    };
+
     return [
       { label: "Exposition totale", value: formatDuration(totalDuration), color: "default" as const },
       { label: "Moyenne PM2.5", value: Math.round(avgPm25), unit: "µg/m³", color: getColorFromPm25(avgPm25) },
-      { label: "Pic maximum", value: Math.round(maxPm25), unit: "µg/m³", color: getColorFromPm25(maxPm25) },
-      { label: "Missions", value: filteredMissions.length, color: "default" as const }
+      { 
+        label: "PM2.5 > OMS (15)", 
+        value: formatDuration(timeAboveWHO_PM25), 
+        color: getColorFromTime(timeAboveWHO_PM25, totalDuration) 
+      },
+      { 
+        label: "PM10 > OMS (45)", 
+        value: formatDuration(timeAboveWHO_PM10), 
+        color: getColorFromTime(timeAboveWHO_PM10, totalDuration) 
+      }
     ];
   }, [filteredMissions]);
 
