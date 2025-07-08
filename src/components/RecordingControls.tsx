@@ -57,7 +57,7 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
 
     try {
       // Save the mission with all context including device info
-      saveMission(
+      const savedMission = saveMission(
         finalMissionName,
         selectedLocation || undefined,
         selectedActivity || undefined,
@@ -72,7 +72,7 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
       
       toast({
         title: "Mission sauvegardée",
-        description: `"${finalMissionName}" exportée en CSV et stockage vidé`,
+        description: `"${finalMissionName}" exportée en CSV`,
       });
 
       // Reset form
@@ -82,7 +82,7 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
       setSelectedActivity("");
     } catch (error) {
       console.error('Error saving mission:', error);
-      const errorMessage = error instanceof Error ? error.message : "Impossible de sauvegarder la mission";
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'export CSV";
       toast({
         title: "Erreur",
         description: errorMessage,

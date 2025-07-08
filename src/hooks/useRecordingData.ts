@@ -105,19 +105,21 @@ export function useRecordingData() {
       deviceName
     );
 
-    // Save locally first
-    dataStorage.saveMissionLocally(mission);
-
-    // Export to CSV immediately
+    // Export to CSV immediately without storing locally first
     dataStorage.exportMissionToCSV(mission);
 
-    // Try to sync to database if online
+    // Try to sync to database if online (but don't store locally)
     if (navigator.onLine) {
-      dataStorage.syncPendingMissions().catch(console.error);
+      // Create a temporary mission for database sync only
+      try {
+        dataStorage.saveMissionLocally(mission);
+        dataStorage.syncPendingMissions().catch(console.error);
+        // Clear storage immediately after sync attempt
+        dataStorage.clearLocalStorage();
+      } catch (storageError) {
+        console.warn('Local storage failed, but CSV exported successfully');
+      }
     }
-
-    // Clear local storage after successful CSV export
-    dataStorage.clearLocalStorage();
 
     // Clear recording data
     setRecordingData([]);
