@@ -3,6 +3,7 @@ import { Wifi, WifiOff, Map, TrendingUp } from "lucide-react";
 import { MapboxMap } from "@/components/MapboxMap";
 import { PMLineGraph } from "@/components/PMLineGraph";
 import { FloatingRecordButton } from "@/components/FloatingRecordButton";
+import { ContextSelectors } from "@/components/RecordingControls/ContextSelectors";
 import { DataLogger } from "@/components/DataLogger";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,9 @@ import { cn } from "@/lib/utils";
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false); // Toggle state for map/graph
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedActivity, setSelectedActivity] = useState("");
+  
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
   const { isRecording, addDataPoint, missionContext, recordingData } = useRecordingContext();
@@ -98,6 +102,17 @@ export default function RealTime() {
             Enregistrement...
           </div>
         )}
+      </div>
+
+      {/* Context Selectors */}
+      <div className="mb-4">
+        <ContextSelectors
+          selectedLocation={selectedLocation}
+          onLocationChange={setSelectedLocation}
+          selectedActivity={selectedActivity}
+          onActivityChange={setSelectedActivity}
+          isRecording={isRecording}
+        />
       </div>
 
       {/* Map/Graph Toggle Section */}
@@ -267,7 +282,10 @@ export default function RealTime() {
         isRecording={isRecording}
         currentData={currentData}
         currentLocation={latestLocation}
-        missionContext={missionContext}
+        missionContext={{
+          location: selectedLocation,
+          activity: selectedActivity
+        }}
         className="mb-4"
       />
 
