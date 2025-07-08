@@ -51,7 +51,7 @@ export function usePMScanBluetooth() {
     const rawData = new Uint8Array(charValue.buffer);
     const ts2000 = ((rawData[3] & 0xFF) << 24) | ((rawData[2] & 0xFF) << 16) | ((rawData[1] & 0xFF) << 8) | (rawData[0] & 0xFF);
     
-    return {
+    const data = {
       pm1: (((rawData[9] & 0xFF) << 8) | (rawData[8] & 0xFF)) / 10,
       pm25: (((rawData[11] & 0xFF) << 8) | (rawData[10] & 0xFF)) / 10,
       pm10: (((rawData[13] & 0xFF) << 8) | (rawData[12] & 0xFF)) / 10,
@@ -62,13 +62,21 @@ export function usePMScanBluetooth() {
       timestamp: new Date((ts2000 + dt2000) * 1000),
       location: "PMScan Device"
     };
+    
+    console.log('PMScan Data Received:', data);
+    return data;
   }, [device]);
 
   const handleRTData = useCallback((event: Event) => {
+    console.log('handleRTData called');
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target.value) {
+      console.log('Raw characteristic value:', target.value);
       const data = parsePMScanDataPayload(target.value);
+      console.log('Setting currentData to:', data);
       setCurrentData(data);
+    } else {
+      console.log('No value in characteristic');
     }
   }, [parsePMScanDataPayload]);
 

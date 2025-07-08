@@ -11,19 +11,7 @@ import { cn } from "@/lib/utils";
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isRecording, setIsRecording] = useState(false);
-  const { currentData: bluetoothData, isConnected } = usePMScanBluetooth();
-  
-  // Fallback data when not connected to Bluetooth
-  const [fallbackData, setFallbackData] = useState({
-    pm1: 8,
-    pm25: 15,
-    pm10: 22,
-    location: "Quartier Santé Respire",
-    timestamp: new Date()
-  });
-
-  // Use Bluetooth data if available, otherwise use fallback
-  const currentData = bluetoothData || fallbackData;
+  const { currentData, isConnected } = usePMScanBluetooth();
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -32,26 +20,11 @@ export default function RealTime() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Only simulate data when not connected to Bluetooth
-    let interval: NodeJS.Timeout | null = null;
-    if (!isConnected) {
-      interval = setInterval(() => {
-        setFallbackData(prev => ({
-          ...prev,
-          pm1: Math.max(0, prev.pm1 + (Math.random() - 0.5) * 4),
-          pm25: Math.max(0, prev.pm25 + (Math.random() - 0.5) * 6),
-          pm10: Math.max(0, prev.pm10 + (Math.random() - 0.5) * 8),
-          timestamp: new Date()
-        }));
-      }, 3000);
-    }
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      if (interval) clearInterval(interval);
     };
-  }, [isConnected]);
+  }, []);
 
   const getAirQualityLevel = (pm25: number) => {
     if (pm25 <= 12) return { level: "good", label: "Bon", color: "air-good" };
@@ -101,61 +74,94 @@ export default function RealTime() {
       </div>
 
       {/* Real-time Readings - Three Cards */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        {/* PM1 */}
-        <Card className="text-center bg-card/50">
-          <CardContent className="p-4">
-            <div className="text-3xl font-bold text-foreground mb-1">
-              {Math.round(currentData.pm1)}
-            </div>
-            <div className="text-sm font-medium text-muted-foreground">PM1</div>
-            <div className="text-xs text-muted-foreground">μg/m³</div>
-          </CardContent>
-        </Card>
+      {isConnected && currentData ? (
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {/* PM1 */}
+          <Card className="text-center bg-card/50">
+            <CardContent className="p-4">
+              <div className="text-3xl font-bold text-foreground mb-1">
+                {Math.round(currentData.pm1)}
+              </div>
+              <div className="text-sm font-medium text-muted-foreground">PM1</div>
+              <div className="text-xs text-muted-foreground">μg/m³</div>
+            </CardContent>
+          </Card>
 
-        {/* PM2.5 - Main indicator with quality status */}
-        <Card className="text-center relative overflow-hidden">
-          <div 
-            className={cn(
-              "absolute inset-0 opacity-20",
-              `bg-${getAirQualityLevel(currentData.pm25).color}`
-            )}
-          />
-          <CardContent className="p-4 relative">
-            <div className={cn(
-              "text-3xl font-bold mb-1",
-              `text-${getAirQualityLevel(currentData.pm25).color}`
-            )}>
-              {Math.round(currentData.pm25)}
-            </div>
-            <div className="text-sm font-medium text-muted-foreground">PM2.5</div>
-            <div className="text-xs text-muted-foreground mb-2">μg/m³</div>
-            <div className={cn(
-              "text-xs font-medium px-2 py-1 rounded-full",
-              `bg-${getAirQualityLevel(currentData.pm25).color}/20`,
-              `text-${getAirQualityLevel(currentData.pm25).color}`
-            )}>
-              {getAirQualityLevel(currentData.pm25).label}
-            </div>
-          </CardContent>
-        </Card>
+          {/* PM2.5 - Main indicator with quality status */}
+          <Card className="text-center relative overflow-hidden">
+            <div 
+              className={cn(
+                "absolute inset-0 opacity-20",
+                `bg-${getAirQualityLevel(currentData.pm25).color}`
+              )}
+            />
+            <CardContent className="p-4 relative">
+              <div className={cn(
+                "text-3xl font-bold mb-1",
+                `text-${getAirQualityLevel(currentData.pm25).color}`
+              )}>
+                {Math.round(currentData.pm25)}
+              </div>
+              <div className="text-sm font-medium text-muted-foreground">PM2.5</div>
+              <div className="text-xs text-muted-foreground mb-2">μg/m³</div>
+              <div className={cn(
+                "text-xs font-medium px-2 py-1 rounded-full",
+                `bg-${getAirQualityLevel(currentData.pm25).color}/20`,
+                `text-${getAirQualityLevel(currentData.pm25).color}`
+              )}>
+                {getAirQualityLevel(currentData.pm25).label}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* PM10 */}
-        <Card className="text-center bg-card/50">
-          <CardContent className="p-4">
-            <div className="text-3xl font-bold text-foreground mb-1">
-              {Math.round(currentData.pm10)}
-            </div>
-            <div className="text-sm font-medium text-muted-foreground">PM10</div>
-            <div className="text-xs text-muted-foreground">μg/m³</div>
-          </CardContent>
-        </Card>
-      </div>
+          {/* PM10 */}
+          <Card className="text-center bg-card/50">
+            <CardContent className="p-4">
+              <div className="text-3xl font-bold text-foreground mb-1">
+                {Math.round(currentData.pm10)}
+              </div>
+              <div className="text-sm font-medium text-muted-foreground">PM10</div>
+              <div className="text-xs text-muted-foreground">μg/m³</div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {/* No Data Cards */}
+          <Card className="text-center bg-muted/30">
+            <CardContent className="p-4">
+              <div className="text-3xl font-bold text-muted-foreground mb-1">--</div>
+              <div className="text-sm font-medium text-muted-foreground">PM1</div>
+              <div className="text-xs text-muted-foreground">μg/m³</div>
+            </CardContent>
+          </Card>
+          <Card className="text-center bg-muted/30">
+            <CardContent className="p-4">
+              <div className="text-3xl font-bold text-muted-foreground mb-1">--</div>
+              <div className="text-sm font-medium text-muted-foreground">PM2.5</div>
+              <div className="text-xs text-muted-foreground">μg/m³</div>
+            </CardContent>
+          </Card>
+          <Card className="text-center bg-muted/30">
+            <CardContent className="p-4">
+              <div className="text-3xl font-bold text-muted-foreground mb-1">--</div>
+              <div className="text-sm font-medium text-muted-foreground">PM10</div>
+              <div className="text-xs text-muted-foreground">μg/m³</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Real-time Status */}
-      {isConnected && (
+      {isConnected && currentData && (
         <div className="text-center text-xs text-muted-foreground mb-4">
           Dernière mesure : {currentData.timestamp.toLocaleTimeString('fr-FR')}
+        </div>
+      )}
+
+      {!isConnected && (
+        <div className="text-center text-sm text-muted-foreground mb-4 p-4 bg-muted/20 rounded-lg">
+          Connectez votre capteur PMScan pour voir les données en temps réel
         </div>
       )}
 
