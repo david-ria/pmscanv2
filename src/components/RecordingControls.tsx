@@ -54,14 +54,6 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
   ];
 
   const handleStartRecording = () => {
-    if (!selectedLocation || !selectedActivity) {
-      toast({
-        title: "Informations manquantes",
-        description: "Veuillez sélectionner une localisation et une activité",
-        variant: "destructive"
-      });
-      return;
-    }
     setShowFrequencyDialog(true);
   };
 
@@ -79,13 +71,12 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
   };
 
   const confirmStopRecording = () => {
-    if (!missionName.trim()) {
-      toast({
-        title: "Nom de mission requis",
-        description: "Veuillez saisir un nom pour cette mission",
-        variant: "destructive"
-      });
-      return;
+    let finalMissionName = missionName.trim();
+    
+    // If no mission name provided, use current date and time
+    if (!finalMissionName) {
+      const now = new Date();
+      finalMissionName = `Mission ${now.toLocaleDateString('fr-FR')} ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
     }
 
     setShowMissionDialog(false);
@@ -93,7 +84,7 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
     
     toast({
       title: "Mission sauvegardée",
-      description: `"${missionName}" ${shareData ? "sera partagée" : "stockée localement"}`,
+      description: `"${finalMissionName}" ${shareData ? "sera partagée" : "stockée localement"}`,
     });
 
     // Reset form
@@ -150,11 +141,11 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <MapPin className="h-4 w-4" />
-            <span>Localisation</span>
+            <span>Localisation (optionnel)</span>
           </div>
           <Select value={selectedLocation} onValueChange={setSelectedLocation}>
             <SelectTrigger>
-              <SelectValue placeholder="Choisir un lieu" />
+              <SelectValue placeholder="Aucune localisation" />
             </SelectTrigger>
             <SelectContent>
               {locations.map((location) => (
@@ -169,11 +160,16 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Activity className="h-4 w-4" />
-            <span>Activité</span>
+            <span>Activité (optionnel)</span>
+            {isRecording && selectedActivity && (
+              <Badge variant="outline" className="text-xs">
+                {selectedActivity}
+              </Badge>
+            )}
           </div>
           <Select value={selectedActivity} onValueChange={setSelectedActivity}>
             <SelectTrigger>
-              <SelectValue placeholder="Choisir activité" />
+              <SelectValue placeholder="Aucune activité" />
             </SelectTrigger>
             <SelectContent>
               {activities.map((activity) => (
@@ -246,6 +242,9 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
                 value={missionName}
                 onChange={(e) => setMissionName(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                Si vide, utilisera la date et l'heure actuelles
+              </p>
             </div>
             
             <div className="flex items-center justify-between">
