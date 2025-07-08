@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Wifi, WifiOff, Map, TrendingUp } from "lucide-react";
 import { MapboxMap } from "@/components/MapboxMap";
 import { PMLineGraph } from "@/components/PMLineGraph";
@@ -22,12 +22,25 @@ export default function RealTime() {
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
   const { isRecording, addDataPoint, missionContext, recordingData } = useRecordingContext();
 
-  // Add data to recording when new data comes in
+  // Add data to recording when new data comes in - with deduplication
+  const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
+  
   useEffect(() => {
     console.log("🔍 RealTime effect triggered - isRecording:", isRecording, "currentData PM2.5:", currentData?.pm25);
     if (isRecording && currentData) {
-      console.log("🎯 About to call addDataPoint with:", currentData.pm25);
-      addDataPoint(currentData, latestLocation || undefined);
+      // Prevent duplicate data points by checking if this is actually new data
+      const currentTimestamp = currentData.timestamp.getTime();
+      const isDuplicate = lastDataRef.current && 
+        lastDataRef.current.pm25 === currentData.pm25 && 
+        Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
+      
+      if (!isDuplicate) {
+        console.log("🎯 Adding new data point with PM2.5:", currentData.pm25);
+        addDataPoint(currentData, latestLocation || undefined);
+        lastDataRef.current = { pm25: currentData.pm25, timestamp: currentTimestamp };
+      } else {
+        console.log("⏭️ Skipping duplicate data point");
+      }
     } else {
       console.log("❌ Not adding data - isRecording:", isRecording, "hasCurrentData:", !!currentData);
     }
