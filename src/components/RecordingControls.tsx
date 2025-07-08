@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useRecordingData } from "@/hooks/useRecordingData";
 import { cn } from "@/lib/utils";
 import { frequencyOptions } from "@/lib/recordingConstants";
 import { RecordingButton } from "./RecordingControls/RecordingButton";
@@ -22,7 +23,7 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
   const [missionName, setMissionName] = useState<string>("");
   const [shareData, setShareData] = useState<boolean>(false);
   const { toast } = useToast();
-
+  const { startRecording, stopRecording, saveMission } = useRecordingData();
 
   const handleStartRecording = () => {
     setShowFrequencyDialog(true);
@@ -30,6 +31,7 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
 
   const confirmStartRecording = () => {
     setShowFrequencyDialog(false);
+    startRecording();
     onToggleRecording();
     toast({
       title: "Enregistrement démarré",
@@ -50,17 +52,38 @@ export function RecordingControls({ isRecording, onToggleRecording, className }:
       finalMissionName = `Mission ${now.toLocaleDateString('fr-FR')} ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
     }
 
-    setShowMissionDialog(false);
-    onToggleRecording();
-    
-    toast({
-      title: "Mission sauvegardée",
-      description: `"${finalMissionName}" ${shareData ? "sera partagée" : "stockée localement"}`,
-    });
+    try {
+      // Save the mission with all context
+      saveMission(
+        finalMissionName,
+        selectedLocation || undefined,
+        selectedActivity || undefined,
+        recordingFrequency,
+        shareData
+      );
 
-    // Reset form
-    setMissionName("");
-    setShareData(false);
+      stopRecording();
+      setShowMissionDialog(false);
+      onToggleRecording();
+      
+      toast({
+        title: "Mission sauvegardée",
+        description: `"${finalMissionName}" ${shareData ? "sera partagée" : "stockée localement"}`,
+      });
+
+      // Reset form
+      setMissionName("");
+      setShareData(false);
+      setSelectedLocation("");
+      setSelectedActivity("");
+    } catch (error) {
+      console.error('Error saving mission:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder la mission",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleRecordingClick = () => {

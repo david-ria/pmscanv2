@@ -14,7 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      measurements: {
+        Row: {
+          accuracy: number | null
+          created_at: string
+          humidity: number | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          mission_id: string
+          pm1: number
+          pm10: number
+          pm25: number
+          temperature: number | null
+          timestamp: string
+        }
+        Insert: {
+          accuracy?: number | null
+          created_at?: string
+          humidity?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          mission_id: string
+          pm1: number
+          pm10: number
+          pm25: number
+          temperature?: number | null
+          timestamp: string
+        }
+        Update: {
+          accuracy?: number | null
+          created_at?: string
+          humidity?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          mission_id?: string
+          pm1?: number
+          pm10?: number
+          pm25?: number
+          temperature?: number | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "measurements_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      missions: {
+        Row: {
+          activity_context: string | null
+          avg_pm1: number
+          avg_pm10: number
+          avg_pm25: number
+          created_at: string
+          duration_minutes: number
+          end_time: string
+          id: string
+          location_context: string | null
+          max_pm25: number
+          measurements_count: number
+          name: string
+          recording_frequency: string | null
+          shared: boolean | null
+          start_time: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          activity_context?: string | null
+          avg_pm1: number
+          avg_pm10: number
+          avg_pm25: number
+          created_at?: string
+          duration_minutes: number
+          end_time: string
+          id?: string
+          location_context?: string | null
+          max_pm25: number
+          measurements_count?: number
+          name: string
+          recording_frequency?: string | null
+          shared?: boolean | null
+          start_time: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          activity_context?: string | null
+          avg_pm1?: number
+          avg_pm10?: number
+          avg_pm25?: number
+          created_at?: string
+          duration_minutes?: number
+          end_time?: string
+          id?: string
+          location_context?: string | null
+          max_pm25?: number
+          measurements_count?: number
+          name?: string
+          recording_frequency?: string | null
+          shared?: boolean | null
+          start_time?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
