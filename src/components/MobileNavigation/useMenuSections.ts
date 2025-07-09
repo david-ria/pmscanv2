@@ -99,19 +99,19 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
         { icon: Languages, label: t('settingsMenu.language'), badge: getCurrentLanguageDisplay() }
       ]
     },
-    // Show Groups section for all users, but add admin functions for super admins  
-    {
-      title: t('groups.title'),
-      items: [
-        { icon: Users, label: t('groups.myGroups'), badge: null, action: handleGroups },
-        ...(userRole === 'super_admin' ? [
-          { icon: Settings, label: t('groups.adminPanel'), badge: null, action: () => {
-            navigate('/groups?tab=admin');
-            onNavigate();
-          }}
-        ] : [])
-      ]
-    },
+    // Groups section temporarily hidden
+    // {
+    //   title: t('groups.title'),
+    //   items: [
+    //     { icon: Users, label: t('groups.myGroups'), badge: null, action: handleGroups },
+    //     ...(userRole === 'super_admin' ? [
+    //       { icon: Settings, label: t('groups.adminPanel'), badge: null, action: () => {
+    //         navigate('/groups?tab=admin');
+    //         onNavigate();
+    //       }}
+    //     ] : [])
+    //   ]
+    // },
     {
       title: t('sensors.title'),
       items: [
