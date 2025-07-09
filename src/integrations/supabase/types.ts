@@ -62,6 +62,54 @@ export type Database = {
         }
         Relationships: []
       }
+      group_custom_thresholds: {
+        Row: {
+          color: string | null
+          created_at: string
+          enabled: boolean | null
+          group_id: string
+          id: string
+          name: string
+          pm1_max: number | null
+          pm1_min: number | null
+          pm10_max: number | null
+          pm10_min: number | null
+          pm25_max: number | null
+          pm25_min: number | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          enabled?: boolean | null
+          group_id: string
+          id?: string
+          name: string
+          pm1_max?: number | null
+          pm1_min?: number | null
+          pm10_max?: number | null
+          pm10_min?: number | null
+          pm25_max?: number | null
+          pm25_min?: number | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          enabled?: boolean | null
+          group_id?: string
+          id?: string
+          name?: string
+          pm1_max?: number | null
+          pm1_min?: number | null
+          pm10_max?: number | null
+          pm10_min?: number | null
+          pm25_max?: number | null
+          pm25_min?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       group_invitations: {
         Row: {
           created_at: string

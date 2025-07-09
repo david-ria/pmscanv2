@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Settings, UserPlus, MoreVertical, Trash2, Edit, LogOut, Cog } from 'lucide-react';
+import { Users, Settings, UserPlus, MoreVertical, Trash2, Edit, LogOut, Cog, Target } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,7 @@ import {
 import { useGroups, Group } from '@/hooks/useGroups';
 import { EditGroupDialog } from './EditGroupDialog';
 import { GroupSettingsDialog } from './GroupSettingsDialog';
+import { GroupCustomThresholdsDialog } from './GroupCustomThresholdsDialog';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -38,6 +39,7 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [thresholdsOpen, setThresholdsOpen] = useState(false);
 
   const isAdmin = group.role === 'admin';
   // In admin view, super admins can manage any group
@@ -97,6 +99,10 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
                   <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                     <Cog className="h-4 w-4 mr-2" />
                     Group Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setThresholdsOpen(true)}>
+                    <Target className="h-4 w-4 mr-2" />
+                    Seuils Personnalisés
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={onInviteUser}>
                     <UserPlus className="h-4 w-4 mr-2" />
@@ -183,6 +189,12 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
         group={group}
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
+      />
+
+      <GroupCustomThresholdsDialog
+        group={group}
+        open={thresholdsOpen}
+        onOpenChange={setThresholdsOpen}
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
