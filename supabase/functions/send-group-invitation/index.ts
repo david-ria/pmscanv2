@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -113,11 +114,47 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    // TODO: Send email notification here
-    // For now, we'll just log the invitation details
+    // Send email notification
+    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+    const inviterName = inviterProfile?.pseudo || `${inviterProfile?.first_name} ${inviterProfile?.last_name}`.trim() || 'Unknown';
+    
+    try {
+      const emailResponse = await resend.emails.send({
+        from: 'Air Quality Monitor <onboarding@resend.dev>',
+        to: [email],
+        subject: `Invitation to join "${groupData?.name}" group`,
+        html: `
+          <h1>You're invited to join a group!</h1>
+          <p><strong>${inviterName}</strong> has invited you to join the <strong>"${groupData?.name}"</strong> group in the Air Quality Monitor app.</p>
+          ${groupData?.description ? `<p><em>${groupData.description}</em></p>` : ''}
+          
+          <h2>What's next?</h2>
+          <p>To accept this invitation:</p>
+          <ol>
+            <li>Sign up or log in to the Air Quality Monitor app</li>
+            <li>Go to the Groups section</li>
+            <li>Check your pending invitations</li>
+            <li>Accept the invitation from ${inviterName}</li>
+          </ol>
+          
+          <p><strong>Note:</strong> This invitation will expire on ${new Date(expiresAt).toLocaleDateString()}.</p>
+          
+          <p>If you didn't expect this invitation, you can safely ignore this email.</p>
+          
+          <p>Best regards,<br>
+          The Air Quality Monitor Team</p>
+        `,
+      });
+
+      console.log('Email sent successfully:', emailResponse);
+    } catch (emailError) {
+      console.error('Failed to send email:', emailError);
+      // Don't fail the whole request if email fails - invitation is still created
+    }
+    
     console.log('Invitation created:', {
       groupName: groupData?.name,
-      inviterName: inviterProfile?.pseudo || `${inviterProfile?.first_name} ${inviterProfile?.last_name}`.trim() || 'Unknown',
+      inviterName,
       inviteeEmail: email,
       token,
       expiresAt: expiresAt.toISOString()
