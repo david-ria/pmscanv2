@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import { MissionData } from "@/lib/dataStorage";
+import { useTranslation } from "react-i18next";
 
 export function useHistoryStats(filteredMissions: MissionData[]) {
+  const { t } = useTranslation();
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -14,10 +16,10 @@ export function useHistoryStats(filteredMissions: MissionData[]) {
   const periodStats = useMemo(() => {
     if (filteredMissions.length === 0) {
       return [
-        { label: "Exposition totale", value: "0 min", color: "default" as const },
-        { label: "Moyenne PM2.5", value: 0, unit: "µg/m³", color: "default" as const },
-        { label: "PM2.5 > OMS (15)", value: "0 min", color: "default" as const },
-        { label: "PM10 > OMS (45)", value: "0 min", color: "default" as const }
+        { label: t('history.stats.totalExposure'), value: "0 min", color: "default" as const },
+        { label: t('history.stats.averagePM25'), value: 0, unit: "µg/m³", color: "default" as const },
+        { label: t('history.stats.pm25AboveWHO'), value: "0 min", color: "default" as const },
+        { label: t('history.stats.pm10AboveWHO'), value: "0 min", color: "default" as const }
       ];
     }
 
@@ -48,20 +50,20 @@ export function useHistoryStats(filteredMissions: MissionData[]) {
     };
 
     return [
-      { label: "Exposition totale", value: formatDuration(totalDuration), color: "default" as const },
-      { label: "Moyenne PM2.5", value: Math.round(avgPm25), unit: "µg/m³", color: getColorFromPm25(avgPm25) },
+      { label: t('history.stats.totalExposure'), value: formatDuration(totalDuration), color: "default" as const },
+      { label: t('history.stats.averagePM25'), value: Math.round(avgPm25), unit: "µg/m³", color: getColorFromPm25(avgPm25) },
       { 
-        label: "PM2.5 > OMS (15)", 
+        label: t('history.stats.pm25AboveWHO'), 
         value: formatDuration(timeAboveWHO_PM25), 
         color: getColorFromTime(timeAboveWHO_PM25, totalDuration) 
       },
       { 
-        label: "PM10 > OMS (45)", 
+        label: t('history.stats.pm10AboveWHO'), 
         value: formatDuration(timeAboveWHO_PM10), 
         color: getColorFromTime(timeAboveWHO_PM10, totalDuration) 
       }
     ];
-  }, [filteredMissions]);
+  }, [filteredMissions, t]);
 
   return periodStats;
 }

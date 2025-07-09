@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MissionData } from "@/lib/dataStorage";
 import { ShareDialog } from "./ShareDialog";
+import { useTranslation } from "react-i18next";
 
 interface MissionCardProps {
   mission: MissionData;
@@ -13,6 +14,7 @@ interface MissionCardProps {
 }
 
 export function MissionCard({ mission, onExport, onDelete, onShare }: MissionCardProps) {
+  const { t } = useTranslation();
   const getQualityColor = (pm25: number) => {
     if (pm25 <= 12) return "text-air-good";
     if (pm25 <= 35) return "text-air-moderate";
@@ -36,11 +38,11 @@ export function MissionCard({ mission, onExport, onDelete, onShare }: MissionCar
     const missionDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
     if (missionDate.getTime() === today.getTime()) {
-      return "Aujourd'hui";
+      return t('history.today');
     } else if (missionDate.getTime() === yesterday.getTime()) {
-      return "Hier";
+      return t('history.yesterday');
     } else {
-      return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
     }
   };
 
@@ -53,7 +55,7 @@ export function MissionCard({ mission, onExport, onDelete, onShare }: MissionCar
               <CardTitle className="text-base">{mission.name}</CardTitle>
               {!mission.synced && (
                 <Badge variant="outline" className="text-xs">
-                  Local
+                  {t('history.local')}
                 </Badge>
               )}
             </div>
@@ -70,9 +72,9 @@ export function MissionCard({ mission, onExport, onDelete, onShare }: MissionCar
             <div className={`text-xl font-bold ${getQualityColor(mission.avgPm25)}`}>
               {Math.round(mission.avgPm25)}
             </div>
-            <div className="text-xs text-muted-foreground">µg/m³ (moy.)</div>
+            <div className="text-xs text-muted-foreground">µg/m³ ({t('history.avg')})</div>
             <div className="text-xs text-muted-foreground">
-              {mission.measurementsCount} mesures
+              {mission.measurementsCount} {t('history.measurements')}
             </div>
           </div>
         </div>
@@ -82,7 +84,7 @@ export function MissionCard({ mission, onExport, onDelete, onShare }: MissionCar
           <ShareDialog mission={mission} onShare={onShare}>
             <Button variant="outline" size="sm" className="flex-1">
               <Share className="h-3 w-3 mr-2" />
-              Partager
+              {t('history.share')}
             </Button>
           </ShareDialog>
           <Button 
@@ -92,7 +94,7 @@ export function MissionCard({ mission, onExport, onDelete, onShare }: MissionCar
             onClick={() => onExport(mission)}
           >
             <Download className="h-3 w-3 mr-2" />
-            Export
+            {t('history.export')}
           </Button>
           <Button 
             variant="outline" 

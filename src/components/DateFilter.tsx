@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isSameDay } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, enUS } from "date-fns/locale";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 type TimePeriod = "day" | "week" | "month" | "year";
 
@@ -25,27 +26,30 @@ export function DateFilter({
   onPeriodChange,
   className 
 }: DateFilterProps) {
+  const { t, i18n } = useTranslation();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const periodLabels = {
-    day: "Jour",
-    week: "Semaine", 
-    month: "Mois",
-    year: "Année"
+    day: t('history.periods.day'),
+    week: t('history.periods.week'), 
+    month: t('history.periods.month'),
+    year: t('history.periods.year')
   };
+
+  const locale = i18n.language === 'fr' ? fr : enUS;
 
   const getDateRangeText = () => {
     switch (selectedPeriod) {
       case "day":
-        return format(selectedDate, "EEEE d MMMM yyyy", { locale: fr });
+        return format(selectedDate, "EEEE d MMMM yyyy", { locale });
       case "week":
         const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
         const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
-        return `${format(weekStart, "d MMM", { locale: fr })} - ${format(weekEnd, "d MMM yyyy", { locale: fr })}`;
+        return `${format(weekStart, "d MMM", { locale })} - ${format(weekEnd, "d MMM yyyy", { locale })}`;
       case "month":
-        return format(selectedDate, "MMMM yyyy", { locale: fr });
+        return format(selectedDate, "MMMM yyyy", { locale });
       case "year":
-        return format(selectedDate, "yyyy", { locale: fr });
+        return format(selectedDate, "yyyy", { locale });
       default:
         return "";
     }
@@ -124,7 +128,7 @@ export function DateFilter({
                 }}
                 initialFocus
                 className={cn("p-3 pointer-events-auto")}
-                locale={fr}
+                locale={locale}
               />
             </PopoverContent>
           </Popover>

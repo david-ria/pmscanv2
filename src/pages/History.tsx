@@ -7,8 +7,10 @@ import { MissionCard } from "@/components/History/MissionCard";
 import { SyncButton } from "@/components/History/SyncButton";
 import { useMissionManagement } from "@/hooks/useMissionManagement";
 import { useHistoryStats } from "@/hooks/useHistoryStats";
+import { useTranslation } from "react-i18next";
 
 export default function History() {
+  const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<"day" | "week" | "month" | "year">("day");
   
@@ -65,10 +67,10 @@ export default function History() {
 
   const getPeriodLabel = () => {
     switch (selectedPeriod) {
-      case "day": return "Jour";
-      case "week": return "Semaine";
-      case "month": return "Mois";
-      case "year": return "Année";
+      case "day": return t('history.periods.day');
+      case "week": return t('history.periods.week');
+      case "month": return t('history.periods.month');
+      case "year": return t('history.periods.year');
       default: return "Période";
     }
   };
@@ -97,28 +99,28 @@ export default function History() {
 
       {/* Period Stats */}
       <StatsCard 
-        title={`Résumé - ${getPeriodLabel()}`} 
+        title={`${t('history.summary')} - ${getPeriodLabel()}`} 
         stats={periodStats} 
         className="mb-6" 
       />
 
       {/* Missions List */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Missions récentes</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('history.recentMissions')}</h2>
         
         {loading ? (
           <div className="text-center py-8 text-muted-foreground">
             <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-            <p className="text-sm">Chargement des missions...</p>
+            <p className="text-sm">{t('history.loadingMissions')}</p>
           </div>
         ) : filteredMissions.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="h-16 w-16 mx-auto text-muted-foreground opacity-50 mb-4" />
             <p className="text-muted-foreground">
-              Aucune mission pour cette période
+              {t('history.noMissionsForPeriod')}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Sélectionnez une autre date ou période pour voir vos données
+              {t('history.selectAnotherDate')}
             </p>
           </div>
         ) : (

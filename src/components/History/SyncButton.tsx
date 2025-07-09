@@ -1,5 +1,6 @@
 import { RotateCcw, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 interface SyncButtonProps {
   unsyncedCount: number;
@@ -8,6 +9,7 @@ interface SyncButtonProps {
 }
 
 export function SyncButton({ unsyncedCount, syncing, onSync }: SyncButtonProps) {
+  const { t } = useTranslation();
   if (unsyncedCount === 0) return null;
 
   return (
@@ -25,7 +27,7 @@ export function SyncButton({ unsyncedCount, syncing, onSync }: SyncButtonProps) 
       ) : (
         <WifiOff className="h-4 w-4" />
       )}
-      Sync ({unsyncedCount})
+      {t('history.sync')} ({unsyncedCount})
     </Button>
   );
 }

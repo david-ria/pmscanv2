@@ -186,5 +186,32 @@
     "sport": "Sport",
     "rest": "Repos",
     "work": "Travail"
+  },
+  "history": {
+    "loadingMissions": "Chargement des missions...",
+    "noMissionsForPeriod": "Aucune mission pour cette période",
+    "selectAnotherDate": "Sélectionnez une autre date ou période pour voir vos données",
+    "recentMissions": "Missions récentes",
+    "summary": "Résumé",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "measurements": "mesures",
+    "avg": "moy",
+    "share": "Partager",
+    "export": "Export",
+    "sync": "Sync",
+    "local": "Local",
+    "periods": {
+      "day": "Jour",
+      "week": "Semaine",
+      "month": "Mois",
+      "year": "Année"
+    },
+    "stats": {
+      "totalExposure": "Exposition totale",
+      "averagePM25": "Moyenne PM2.5",
+      "pm25AboveWHO": "PM2.5 > OMS (15)",
+      "pm10AboveWHO": "PM10 > OMS (45)"
+    }
   }
 }
