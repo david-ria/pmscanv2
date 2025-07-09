@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { frequencyOptions } from "@/lib/recordingConstants";
+import { frequencyOptionKeys } from "@/lib/recordingConstants";
+import { useTranslation } from "react-i18next";
 
 interface RecordingFrequencyDialogProps {
   open: boolean;
@@ -20,25 +21,26 @@ export function RecordingFrequencyDialog({
   onFrequencyChange,
   onConfirm
 }: RecordingFrequencyDialogProps) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Fréquence d'enregistrement
+            {t('modals.recordingFrequency.title')}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <Label>Choisissez la fréquence de mesure :</Label>
+          <Label>{t('modals.recordingFrequency.chooseMeasureFrequency')}</Label>
           <Select value={recordingFrequency} onValueChange={onFrequencyChange}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {frequencyOptions.map((option) => (
+              {frequencyOptionKeys.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(`modals.frequency.${option.key}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -49,13 +51,13 @@ export function RecordingFrequencyDialog({
               onClick={() => onOpenChange(false)}
               className="flex-1"
             >
-              Annuler
+              {t('modals.recordingFrequency.cancel')}
             </Button>
             <Button 
               onClick={onConfirm}
               className="flex-1"
             >
-              Démarrer
+              {t('modals.recordingFrequency.start')}
             </Button>
           </div>
         </div>

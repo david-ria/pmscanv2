@@ -16,11 +16,11 @@ export const activityKeys = [
   "work"
 ];
 
-export const frequencyOptions = [
-  { value: "10s", label: "Toutes les 10 secondes" },
-  { value: "30s", label: "Toutes les 30 secondes" },
-  { value: "1m", label: "Toutes les minutes" },
-  { value: "5m", label: "Toutes les 5 minutes" },
-  { value: "10m", label: "Toutes les 10 minutes" },
-  { value: "continuous", label: "Continu" }
+export const frequencyOptionKeys = [
+  { value: "10s", key: "every10s" },
+  { value: "30s", key: "every30s" },
+  { value: "1m", key: "every1m" },
+  { value: "5m", key: "every5m" },
+  { value: "10m", key: "every10m" },
+  { value: "continuous", key: "continuous" }
 ];

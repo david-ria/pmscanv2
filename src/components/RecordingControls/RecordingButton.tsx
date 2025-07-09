@@ -2,7 +2,8 @@ import { Play, Square, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { frequencyOptions } from "@/lib/recordingConstants";
+import { frequencyOptionKeys } from "@/lib/recordingConstants";
+import { useTranslation } from "react-i18next";
 
 interface RecordingButtonProps {
   isRecording: boolean;
@@ -11,6 +12,13 @@ interface RecordingButtonProps {
 }
 
 export function RecordingButton({ isRecording, onClick, recordingFrequency }: RecordingButtonProps) {
+  const { t } = useTranslation();
+  
+  const getFrequencyLabel = (frequency: string) => {
+    const option = frequencyOptionKeys.find(f => f.value === frequency);
+    return option ? t(`modals.frequency.${option.key}`) : frequency;
+  };
+  
   const handleClick = () => {
     console.log("🚨 BUTTON CLICKED - RecordingButton");
     console.log("Current isRecording state:", isRecording);
@@ -45,12 +53,12 @@ export function RecordingButton({ isRecording, onClick, recordingFrequency }: Re
         <Badge variant={isRecording ? "destructive" : "secondary"} className="text-sm">
           {isRecording ? (
             <div className="flex items-center gap-2">
-              <span>Enregistrement en cours</span>
+              <span>{t('realTime.recording')}</span>
               <Clock className="h-3 w-3" />
-              <span>{frequencyOptions.find(f => f.value === recordingFrequency)?.label}</span>
+              <span>{getFrequencyLabel(recordingFrequency)}</span>
             </div>
           ) : (
-            "Prêt à enregistrer"
+            t('realTime.stopped')
           )}
         </Badge>
       </div>

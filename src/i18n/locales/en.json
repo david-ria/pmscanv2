@@ -160,7 +160,7 @@
     "noActivity": "No activity",
     "dataLogger": "Data Log",
     "recording": "Recording",
-    "stopped": "Stopped",
+    "stopped": "Ready to record",
     "entries": "entries",
     "last": "Last",
     "export": "Export raw data",
@@ -258,5 +258,32 @@
     "goToRealTimeForMeasures": "2. Go to 'Real Time' to take new measurements",
     "comeBackInMoments": "3. Come back here in a few moments",
     "changePeriodIfPersists": "If the problem persists, try changing the selected time period."
+  },
+  "modals": {
+    "recordingFrequency": {
+      "title": "Recording Frequency",
+      "chooseMeasureFrequency": "Choose the measurement frequency:",
+      "cancel": "Cancel",
+      "start": "Start"
+    },
+    "missionDetails": {
+      "title": "Finish Mission",
+      "missionName": "Mission Name",
+      "placeholder": "Ex: Office air quality measurement",
+      "emptyWillUseDateTime": "If empty, will use current date and time",
+      "shareData": "Share Data",
+      "contributeToDatabase": "Contribute to the community database",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "save": "Save"
+    },
+    "frequency": {
+      "every10s": "Every 10 seconds",
+      "every30s": "Every 30 seconds", 
+      "every1m": "Every minute",
+      "every5m": "Every 5 minutes",
+      "every10m": "Every 10 minutes",
+      "continuous": "Continuous"
+    }
   }
 }

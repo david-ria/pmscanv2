@@ -3,7 +3,8 @@ import { cn } from "@/lib/utils";
 import { useRecordingContext } from "@/contexts/RecordingContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { frequencyOptions } from "@/lib/recordingConstants";
+import { frequencyOptionKeys } from "@/lib/recordingConstants";
+import { useTranslation } from "react-i18next";
 import { RecordingFrequencyDialog } from "./RecordingControls/RecordingFrequencyDialog";
 import { MissionDetailsDialog } from "./RecordingControls/MissionDetailsDialog";
 
@@ -13,6 +14,7 @@ interface FloatingRecordButtonProps {
 }
 
 export function FloatingRecordButton({ device, className }: FloatingRecordButtonProps) {
+  const { t } = useTranslation();
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
   const [showMissionDialog, setShowMissionDialog] = useState(false);
   const [recordingFrequency, setRecordingFrequency] = useState<string>("30s");
@@ -20,6 +22,11 @@ export function FloatingRecordButton({ device, className }: FloatingRecordButton
   const [shareData, setShareData] = useState<boolean>(false);
   const { toast } = useToast();
   const { startRecording, stopRecording, saveMission, isRecording, clearRecordingData, missionContext } = useRecordingContext();
+
+  const getFrequencyLabel = (frequency: string) => {
+    const option = frequencyOptionKeys.find(f => f.value === frequency);
+    return option ? t(`modals.frequency.${option.key}`) : frequency;
+  };
 
   const handleStartRecording = () => {
     setShowFrequencyDialog(true);
@@ -29,8 +36,8 @@ export function FloatingRecordButton({ device, className }: FloatingRecordButton
     setShowFrequencyDialog(false);
     startRecording(recordingFrequency);
     toast({
-      title: "Enregistrement démarré",
-      description: `Fréquence: ${frequencyOptions.find(f => f.value === recordingFrequency)?.label}`,
+      title: t('realTime.recording'),
+      description: `${t('modals.recordingFrequency.chooseMeasureFrequency')} ${getFrequencyLabel(recordingFrequency)}`,
     });
   };
 
@@ -61,17 +68,17 @@ export function FloatingRecordButton({ device, className }: FloatingRecordButton
       setShowMissionDialog(false);
       
       toast({
-        title: "Mission sauvegardée",
-        description: `"${finalMissionName}" exportée en CSV`,
+        title: t('history.export'),
+        description: `"${finalMissionName}" ${t('history.export')}`,
       });
 
       setMissionName("");
       setShareData(false);
     } catch (error) {
       console.error('Error saving mission:', error);
-      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'export CSV";
+      const errorMessage = error instanceof Error ? error.message : t('analysis.error');
       toast({
-        title: "Erreur",
+        title: t('analysis.error'),
         description: errorMessage,
         variant: "destructive"
       });
@@ -87,8 +94,8 @@ export function FloatingRecordButton({ device, className }: FloatingRecordButton
     setShareData(false);
     
     toast({
-      title: "Mission supprimée",
-      description: "Les données ont été supprimées sans sauvegarde",
+      title: t('modals.missionDetails.delete'),
+      description: t('analysis.error'), // TODO: Add proper translation
     });
   };
 

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRecordingContext } from "@/contexts/RecordingContext";
 import { cn } from "@/lib/utils";
-import { frequencyOptions } from "@/lib/recordingConstants";
+import { frequencyOptionKeys } from "@/lib/recordingConstants";
+import { useTranslation } from "react-i18next";
 import { RecordingButton } from "./RecordingControls/RecordingButton";
 import { ContextSelectors } from "./RecordingControls/ContextSelectors";
 import { RecordingFrequencyDialog } from "./RecordingControls/RecordingFrequencyDialog";
@@ -16,6 +17,7 @@ interface RecordingControlsProps {
 }
 
 export function RecordingControls({ isRecording, onToggleRecording, device, className }: RecordingControlsProps) {
+  const { t } = useTranslation();
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [selectedActivity, setSelectedActivity] = useState<string>("");
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
@@ -25,6 +27,11 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
   const [shareData, setShareData] = useState<boolean>(false);
   const { toast } = useToast();
   const { startRecording, stopRecording, saveMission, updateMissionContext, isRecording: contextIsRecording, clearRecordingData } = useRecordingContext();
+
+  const getFrequencyLabel = (frequency: string) => {
+    const option = frequencyOptionKeys.find(f => f.value === frequency);
+    return option ? t(`modals.frequency.${option.key}`) : frequency;
+  };
 
   const handleStartRecording = () => {
     console.log("🎯 handleStartRecording called");
@@ -37,8 +44,8 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
     startRecording(recordingFrequency); // Pass the frequency here
     console.log("📞 Called startRecording function with frequency:", recordingFrequency);
     toast({
-      title: "Enregistrement démarré",
-      description: `Fréquence: ${frequencyOptions.find(f => f.value === recordingFrequency)?.label}`,
+      title: t('realTime.recording'),
+      description: `${t('modals.recordingFrequency.chooseMeasureFrequency')} ${getFrequencyLabel(recordingFrequency)}`,
     });
   };
 

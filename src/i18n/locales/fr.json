@@ -159,8 +159,9 @@
     "noLocation": "Aucune localisation",
     "noActivity": "Aucune activité",
     "dataLogger": "Journal des données",
-    "recording": "Enregistrement",
-    "stopped": "Arrêté",
+    "recording": "Enregistrement en cours",
+    "stopped": "Prêt à enregistrer",
+    "dataLogger": "Journal des données",
     "entries": "entrées",
     "last": "Dernière",
     "export": "Exporter les données brutes",
@@ -258,5 +259,32 @@
     "goToRealTimeForMeasures": "2. Allez sur 'Temps réel' pour effectuer de nouvelles mesures",
     "comeBackInMoments": "3. Revenez ici dans quelques instants",
     "changePeriodIfPersists": "Si le problème persiste, essayez de changer la période de temps sélectionnée."
+  },
+  "modals": {
+    "recordingFrequency": {
+      "title": "Fréquence d'enregistrement",
+      "chooseMeasureFrequency": "Choisissez la fréquence de mesure :",
+      "cancel": "Annuler",
+      "start": "Démarrer"
+    },
+    "missionDetails": {
+      "title": "Finaliser la mission",
+      "missionName": "Nom de la mission",
+      "placeholder": "Ex: Mesure qualité air bureau",
+      "emptyWillUseDateTime": "Si vide, utilisera la date et l'heure actuelles",
+      "shareData": "Partager les données",
+      "contributeToDatabase": "Contribuer à la base de données communautaire",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "save": "Sauver"
+    },
+    "frequency": {
+      "every10s": "Toutes les 10 secondes",
+      "every30s": "Toutes les 30 secondes", 
+      "every1m": "Toutes les minutes",
+      "every5m": "Toutes les 5 minutes",
+      "every10m": "Toutes les 10 minutes",
+      "continuous": "Continu"
+    }
   }
 }
