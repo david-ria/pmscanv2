@@ -9,8 +9,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { dataStorage, MissionData } from "@/lib/dataStorage";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 export default function Analysis() {
+  const { t } = useTranslation();
   const [missions, setMissions] = useState<MissionData[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<"day" | "week" | "month" | "year">("week");
@@ -39,8 +41,8 @@ export default function Analysis() {
     } catch (error) {
       console.error('Error loading missions:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les missions",
+        title: t('analysis.error'),
+        description: t('analysis.errorLoadingMissions'),
         variant: "destructive"
       });
     }
@@ -91,11 +93,9 @@ export default function Analysis() {
       if (filtered.length === 0) {
         const hasAnyMissions = missions.length > 0;
         if (hasAnyMissions) {
-          setAiAnalysis(`Aucune donnée trouvée pour ${selectedPeriod === "day" ? "cette journée" : 
-                                                    selectedPeriod === "week" ? "cette semaine" : 
-                                                    selectedPeriod === "month" ? "ce mois" : "cette année"}.\n\nVous avez ${missions.length} mission(s) enregistrée(s), mais elles ne correspondent pas à la période sélectionnée.\n\n💡 Essayez de :\n• Changer la période (jour/semaine/mois/année)\n• Sélectionner une date différente\n• Ou allez sur 'Historique' pour voir toutes vos données`);
+          setAiAnalysis(`${t(`analysis.noDataForPeriod.${selectedPeriod}`)}\n\n${t('analysis.youHaveMissions', { count: missions.length })}\n\n${t('analysis.tryTo')}\n${t('analysis.changePeriod')}\n${t('analysis.selectDifferentDate')}\n${t('analysis.goToHistory')}`);
         } else {
-          setAiAnalysis("Aucune donnée disponible.\n\nPour obtenir une analyse personnalisée :\n1. Allez sur la page 'Temps réel'\n2. Connectez votre capteur PMScan\n3. Démarrez un enregistrement de quelques minutes\n4. Revenez ici pour voir votre analyse IA !");
+          setAiAnalysis(`${t('analysis.noDataAvailable')}\n\n${t('analysis.forPersonalizedAnalysis')}\n${t('analysis.goToRealTime')}\n${t('analysis.connectSensor')}\n${t('analysis.startRecording')}\n${t('analysis.comeBackHere')}`);
         }
         setDataPoints({
           totalMissions: missions.length,
@@ -108,9 +108,9 @@ export default function Analysis() {
         return;
       }
 
-      const timeframeText = selectedPeriod === "day" ? "la journée" : 
-                           selectedPeriod === "week" ? "la semaine" : 
-                           selectedPeriod === "month" ? "le mois" : "l'année";
+      const timeframeText = selectedPeriod === "day" ? t('history.periods.day') : 
+                           selectedPeriod === "week" ? t('history.periods.week') : 
+                           selectedPeriod === "month" ? t('history.periods.month') : t('history.periods.year');
 
       console.log("Calling edge function with data:", { missionsCount: filtered.length, timeframe: timeframeText });
 
@@ -133,21 +133,21 @@ export default function Analysis() {
         throw new Error('No data received from analysis function');
       }
 
-      setAiAnalysis(response.data.analysis || "Analyse non disponible");
+      setAiAnalysis(response.data.analysis || t('analysis.analysisUnavailable'));
       setDataPoints(response.data.dataPoints);
       setAnalysisGenerated(true);
 
       toast({
-        title: "Analyse générée",
-        description: "Votre analyse personnalisée est prête"
+        title: t('analysis.analysisGenerated'),
+        description: t('analysis.analysisReady')
       });
 
     } catch (error) {
       console.error('Error generating analysis:', error);
-      setAiAnalysis("Impossible de générer votre analyse pour le moment.\n\nPour obtenir votre rapport personnalisé :\n1. Vérifiez que vous avez des données enregistrées\n2. Allez sur 'Temps réel' pour effectuer de nouvelles mesures\n3. Revenez ici dans quelques instants\n\nSi le problème persiste, essayez de changer la période de temps sélectionnée.");
+      setAiAnalysis(`${t('analysis.unableToGenerate')}\n\n${t('analysis.forPersonalizedReport')}\n${t('analysis.checkRecordedData')}\n${t('analysis.goToRealTimeForMeasures')}\n${t('analysis.comeBackInMoments')}\n\n${t('analysis.changePeriodIfPersists')}`);
       toast({
-        title: "Analyse indisponible",
-        description: "Vérifiez vos données et réessayez",
+        title: t('analysis.analysisUnavailable'),
+        description: t('analysis.checkDataAndRetry'),
         variant: "destructive"
       });
     } finally {
@@ -177,7 +177,7 @@ export default function Analysis() {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-primary" />
-              Analyse IA personnalisée
+              {t('analysis.title')}
             </CardTitle>
             <Button 
               variant="outline" 
@@ -190,7 +190,7 @@ export default function Analysis() {
               ) : (
                 <RefreshCw className="h-4 w-4 mr-2" />
               )}
-              {loading ? "Analyse..." : "Actualiser"}
+              {loading ? t('analysis.analyzing') : t('analysis.refresh')}
             </Button>
           </div>
         </CardHeader>
@@ -198,7 +198,7 @@ export default function Analysis() {
           {loading ? (
             <div className="text-center py-8">
               <RefreshCw className="h-8 w-8 mx-auto text-primary animate-spin mb-4" />
-              <p className="text-muted-foreground">Analyse en cours...</p>
+              <p className="text-muted-foreground">{t('analysis.analysisInProgress')}</p>
             </div>
           ) : (
             <>
@@ -208,11 +208,11 @@ export default function Analysis() {
               <div className="flex gap-2 mt-4">
                 <Button variant="outline" size="sm" className="flex-1">
                   <MessageSquare className="h-3 w-3 mr-2" />
-                  Poser une question
+                  {t('analysis.askQuestion')}
                 </Button>
                 <Button variant="outline" size="sm" className="flex-1">
                   <Download className="h-3 w-3 mr-2" />
-                  Exporter rapport
+                  {t('analysis.exportReport')}
                 </Button>
               </div>
             </>
@@ -226,26 +226,26 @@ export default function Analysis() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
-              Résumé des données
+              {t('analysis.dataSummary')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-primary/10 rounded-lg">
                 <div className="text-2xl font-bold text-primary">{dataPoints.totalMissions}</div>
-                <div className="text-xs text-muted-foreground">Missions</div>
+                <div className="text-xs text-muted-foreground">{t('analysis.missions')}</div>
               </div>
               <div className="text-center p-3 bg-accent rounded-lg">
                 <div className="text-2xl font-bold text-foreground">{Math.round(dataPoints.totalExposureMinutes / 60)}h</div>
-                <div className="text-xs text-muted-foreground">Temps d'exposition</div>
+                <div className="text-xs text-muted-foreground">{t('analysis.exposureTime')}</div>
               </div>
               <div className="text-center p-3 bg-air-moderate/10 rounded-lg">
                 <div className="text-2xl font-bold text-air-moderate">{Math.round(dataPoints.averagePM25)}</div>
-                <div className="text-xs text-muted-foreground">PM2.5 moyen (μg/m³)</div>
+                <div className="text-xs text-muted-foreground">{t('analysis.averagePM25')}</div>
               </div>
               <div className="text-center p-3 bg-air-poor/10 rounded-lg">
                 <div className="text-2xl font-bold text-air-poor">{Math.round(dataPoints.timeAboveWHO)}</div>
-                <div className="text-xs text-muted-foreground">Min {'>'}= seuil OMS</div>
+                <div className="text-xs text-muted-foreground">{t('analysis.minutesAboveWHO')}</div>
               </div>
             </div>
           </CardContent>
@@ -256,13 +256,13 @@ export default function Analysis() {
       {dataPoints && (
         <Card>
           <CardHeader>
-            <CardTitle>Respect des seuils OMS</CardTitle>
+            <CardTitle>{t('analysis.whoComplianceTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Temps sous seuil OMS (15 μg/m³)</span>
+                  <span className="text-muted-foreground">{t('analysis.timeBelowWHO')}</span>
                   <span className="font-medium">
                     {Math.round(((dataPoints.totalExposureMinutes - dataPoints.timeAboveWHO) / dataPoints.totalExposureMinutes) * 100)}%
                   </span>
@@ -273,7 +273,7 @@ export default function Analysis() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                L'OMS recommande de maintenir l'exposition PM2.5 sous 15 μg/m³ pour protéger la santé.
+                {t('analysis.whoRecommendation')}
               </p>
             </div>
           </CardContent>
