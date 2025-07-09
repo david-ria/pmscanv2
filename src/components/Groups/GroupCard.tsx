@@ -38,7 +38,6 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
   const [leaveOpen, setLeaveOpen] = useState(false);
 
   const isAdmin = group.role === 'admin';
-  const showAdminActions = isAdminView || isAdmin;
 
   const handleDelete = async () => {
     try {
@@ -75,14 +74,18 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {/* View Details - Always available */}
               <DropdownMenuItem asChild>
-                <Link to={`/groups/${group.id}`}>
+                <Link to={`/groups/${group.id}`} className="flex items-center w-full">
                   <Settings className="h-4 w-4 mr-2" />
                   View Details
                 </Link>
               </DropdownMenuItem>
-              {showAdminActions && isAdmin && (
+              
+              {/* Admin functions - Only in admin view */}
+              {isAdminView && isAdmin && (
                 <>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setEditOpen(true)}>
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Group
@@ -91,7 +94,6 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
                     <UserPlus className="h-4 w-4 mr-2" />
                     Invite Members
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setDeleteOpen(true)}
                     className="text-destructive focus:text-destructive"
@@ -101,7 +103,9 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
                   </DropdownMenuItem>
                 </>
               )}
-              {!showAdminActions && !isAdmin && (
+              
+              {/* Leave option - Only for non-admins in regular view */}
+              {!isAdminView && !isAdmin && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -133,17 +137,25 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
             Created {formatDistanceToNow(new Date(group.created_at), { addSuffix: true })}
           </div>
 
+          {/* Action buttons - Only show admin buttons in admin view */}
           <div className="flex gap-2">
-            <Button asChild variant="outline" size="sm" className="flex-1">
-              <Link to={`/groups/${group.id}`}>
-                <Settings className="h-4 w-4 mr-2" />
-                Manage
-              </Link>
-            </Button>
-            {showAdminActions && isAdmin && (
-              <Button onClick={onInviteUser} size="sm" className="flex-1">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Invite
+            {isAdminView && isAdmin ? (
+              <>
+                <Button onClick={onInviteUser} size="sm" className="flex-1">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Invite
+                </Button>
+                <Button variant="outline" onClick={() => setEditOpen(true)} size="sm">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              // In regular view, just show view details button
+              <Button asChild variant="outline" size="sm" className="flex-1">
+                <Link to={`/groups/${group.id}`}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  View Details
+                </Link>
               </Button>
             )}
           </div>
