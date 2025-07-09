@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import App from "./App.tsx";
 import "./index.css";
+import "./i18n/config";
 
 const queryClient = new QueryClient();
 

@@ -1,0 +1,55 @@
+{
+  "navigation": {
+    "realTime": "Temps réel",
+    "history": "Historique", 
+    "analysis": "Analyse",
+    "groups": "Groupes"
+  },
+  "header": {
+    "title": "PMSCAN",
+    "realTime": "Temps réel"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Configuration et compte",
+    "appVersion": "PMSCAN v1.0.0",
+    "dataSync": "Données sync. 2 min"
+  },
+  "account": {
+    "title": "Compte",
+    "profile": "Mon profil",
+    "logout": "Déconnexion",
+    "connected": "Connecté",
+    "user": "Utilisateur"
+  },
+  "settingsMenu": {
+    "title": "Paramètres",
+    "customThresholds": "Seuils personnalisés",
+    "alertsAlarms": "Alertes & alarmes",
+    "language": "Langue"
+  },
+  "community": {
+    "title": "Communauté",
+    "joinGroup": "Rejoindre un groupe",
+    "healthNeighborhood": "Quartier Santé Respire",
+    "members": "membres"
+  },
+  "sensors": {
+    "title": "Capteurs",
+    "pmscan": "Capteur PMSCAN",
+    "native": "Capteurs natifs",
+    "googleFit": "Google Fit",
+    "connected": "Connecté"
+  },
+  "loading": {
+    "app": "Chargement de l'application...",
+    "default": "Chargement..."
+  },
+  "auth": {
+    "signOut": "Se déconnecter"
+  },
+  "language": {
+    "french": "Français",
+    "english": "English"
+  }
+}

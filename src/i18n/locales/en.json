@@ -1,0 +1,55 @@
+{
+  "navigation": {
+    "realTime": "Real Time",
+    "history": "History",
+    "analysis": "Analysis", 
+    "groups": "Groups"
+  },
+  "header": {
+    "title": "PMSCAN",
+    "realTime": "Real Time"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Configuration and account",
+    "appVersion": "PMSCAN v1.0.0",
+    "dataSync": "Data sync. 2 min"
+  },
+  "account": {
+    "title": "Account",
+    "profile": "My profile",
+    "logout": "Logout",
+    "connected": "Connected",
+    "user": "User"
+  },
+  "settingsMenu": {
+    "title": "Settings",
+    "customThresholds": "Custom thresholds",
+    "alertsAlarms": "Alerts & alarms",
+    "language": "Language"
+  },
+  "community": {
+    "title": "Community",
+    "joinGroup": "Join a group",
+    "healthNeighborhood": "Health Breathe Neighborhood",
+    "members": "members"
+  },
+  "sensors": {
+    "title": "Sensors",
+    "pmscan": "PMSCAN Sensor",
+    "native": "Native sensors",
+    "googleFit": "Google Fit",
+    "connected": "Connected"
+  },
+  "loading": {
+    "app": "Loading application...",
+    "default": "Loading..."
+  },
+  "auth": {
+    "signOut": "Sign out"
+  },
+  "language": {
+    "french": "Français",
+    "english": "English"
+  }
+}

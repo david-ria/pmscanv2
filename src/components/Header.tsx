@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Menu, User, LogOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -13,6 +14,7 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -47,9 +49,9 @@ export function Header() {
 
           {/* App Title */}
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-foreground">PMSCAN</h1>
+            <h1 className="text-lg font-bold text-foreground">{t('header.title')}</h1>
             <Badge variant="outline" className="text-xs hidden sm:inline-flex">
-              Temps réel
+              {t('header.realTime')}
             </Badge>
           </div>
         </div>
@@ -74,12 +76,12 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <User className="h-4 w-4 mr-2" />
-                  Mon profil
+                  {t('account.profile')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
-                  Se déconnecter
+                  {t('auth.signOut')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
