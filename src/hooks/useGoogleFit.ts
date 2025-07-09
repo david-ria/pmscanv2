@@ -129,11 +129,20 @@ export function useGoogleFit(): UseGoogleFitReturn {
       
     } catch (error) {
       console.error('Error connecting to Google Fit:', error);
+      // More detailed error logging
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      }
       toast({
         title: "Connection Failed", 
-        description: "Failed to connect to Google Fit",
+        description: `Failed to connect to Google Fit: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
+      throw error;
     } finally {
       setIsLoading(false);
     }
