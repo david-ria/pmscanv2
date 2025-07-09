@@ -46,6 +46,18 @@ export function useUnifiedDeviceConnection(): DeviceConnectionState & DeviceConn
   }, [selectedDeviceType, manualDeviceType, pmScanConnection, airBeamConnection]);
 
   const activeConnection = getActiveConnection();
+  
+  // Add debugging for connection state
+  useEffect(() => {
+    console.log('🔧 Unified Device Connection State:', {
+      selectedDeviceType,
+      manualDeviceType,
+      pmScanConnected: pmScanConnection.isConnected,
+      airBeamConnected: airBeamConnection.isConnected,
+      activeConnectionType: selectedDeviceType || manualDeviceType || 'auto-detected',
+      currentData: activeConnection.currentData ? 'has data' : 'no data'
+    });
+  }, [selectedDeviceType, manualDeviceType, pmScanConnection.isConnected, airBeamConnection.isConnected, activeConnection.currentData]);
 
   const requestDevice = useCallback(async (deviceType?: DeviceType) => {
     try {
