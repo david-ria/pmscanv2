@@ -62,6 +62,209 @@ export type Database = {
         }
         Relationships: []
       }
+      group_invitations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          group_id: string
+          id: string
+          invitee_email: string
+          invitee_id: string | null
+          inviter_id: string
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          group_id: string
+          id?: string
+          invitee_email: string
+          invitee_id?: string | null
+          inviter_id: string
+          status?: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          group_id?: string
+          id?: string
+          invitee_email?: string
+          invitee_id?: string | null
+          inviter_id?: string
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_invitations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_memberships: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_memberships_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_settings: {
+        Row: {
+          alarm_enabled: boolean | null
+          auto_share_stats: boolean | null
+          created_at: string
+          group_id: string
+          id: string
+          notification_frequency: string | null
+          pm1_threshold: number | null
+          pm10_threshold: number | null
+          pm25_threshold: number | null
+          updated_at: string
+        }
+        Insert: {
+          alarm_enabled?: boolean | null
+          auto_share_stats?: boolean | null
+          created_at?: string
+          group_id: string
+          id?: string
+          notification_frequency?: string | null
+          pm1_threshold?: number | null
+          pm10_threshold?: number | null
+          pm25_threshold?: number | null
+          updated_at?: string
+        }
+        Update: {
+          alarm_enabled?: boolean | null
+          auto_share_stats?: boolean | null
+          created_at?: string
+          group_id?: string
+          id?: string
+          notification_frequency?: string | null
+          pm1_threshold?: number | null
+          pm10_threshold?: number | null
+          pm25_threshold?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_settings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_shared_statistics: {
+        Row: {
+          avg_pm1: number
+          avg_pm10: number
+          avg_pm25: number
+          created_at: string
+          date: string
+          group_id: string
+          id: string
+          max_pm25: number
+          total_duration_minutes: number
+          total_measurements: number
+          user_id: string
+        }
+        Insert: {
+          avg_pm1: number
+          avg_pm10: number
+          avg_pm25: number
+          created_at?: string
+          date: string
+          group_id: string
+          id?: string
+          max_pm25: number
+          total_duration_minutes?: number
+          total_measurements?: number
+          user_id: string
+        }
+        Update: {
+          avg_pm1?: number
+          avg_pm10?: number
+          avg_pm25?: number
+          created_at?: string
+          date?: string
+          group_id?: string
+          id?: string
+          max_pm25?: number
+          total_duration_minutes?: number
+          total_measurements?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_shared_statistics_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       measurements: {
         Row: {
           accuracy: number | null

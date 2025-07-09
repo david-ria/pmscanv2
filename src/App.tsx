@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import RealTime from "./pages/RealTime";
 import History from "./pages/History";
 import Analysis from "./pages/Analysis";
+import Groups from "./pages/Groups";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -67,6 +68,7 @@ const App = () => {
                     <Route path="/" element={<RealTime />} />
                     <Route path="/history" element={<History />} />
                     <Route path="/analysis" element={<Analysis />} />
+                    <Route path="/groups" element={<Groups />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
