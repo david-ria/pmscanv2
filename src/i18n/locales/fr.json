@@ -259,7 +259,9 @@
     "checkRecordedData": "1. Vérifiez que vous avez des données enregistrées",
     "goToRealTimeForMeasures": "2. Allez sur 'Temps réel' pour effectuer de nouvelles mesures",
     "comeBackInMoments": "3. Revenez ici dans quelques instants",
-    "changePeriodIfPersists": "Si le problème persiste, essayez de changer la période de temps sélectionnée."
+    "changePeriodIfPersists": "Si le problème persiste, essayez de changer la période de temps sélectionnée.",
+    "mapTitle": "Lieux de mesure",
+    "points": "points"
   },
   "modals": {
     "recordingFrequency": {

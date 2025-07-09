@@ -258,7 +258,9 @@
     "checkRecordedData": "1. Check that you have recorded data",
     "goToRealTimeForMeasures": "2. Go to 'Real Time' to take new measurements",
     "comeBackInMoments": "3. Come back here in a few moments",
-    "changePeriodIfPersists": "If the problem persists, try changing the selected time period."
+    "changePeriodIfPersists": "If the problem persists, try changing the selected time period.",
+    "mapTitle": "Measurement Locations",
+    "points": "points"
   },
   "modals": {
     "recordingFrequency": {
