@@ -285,5 +285,24 @@
       "every10m": "Every 10 minutes",
       "continuous": "Continuous"
     }
+  },
+  "thresholds": {
+    "title": "Custom Thresholds",
+    "subtitle": "Define your own air quality thresholds for color coding",
+    "whoInfo": {
+      "title": "WHO Standards",
+      "description": "World Health Organization recommends PM2.5 ≤ 12 μg/m³ and PM10 ≤ 20 μg/m³ for good air quality"
+    },
+    "levels": {
+      "good": "Good (Green)",
+      "moderate": "Moderate (Orange)", 
+      "poor": "Poor (Red)",
+      "veryPoor": "Very Poor (Dark Red)"
+    },
+    "validation": {
+      "increasingOrder": "Thresholds must be in increasing order: Good < Moderate < Poor"
+    },
+    "saved": "Custom thresholds saved successfully",
+    "resetToWHO": "Reset to WHO Standards"
   }
 }

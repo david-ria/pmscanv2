@@ -286,5 +286,24 @@
       "every10m": "Toutes les 10 minutes",
       "continuous": "Continu"
     }
+  },
+  "thresholds": {
+    "title": "Seuils personnalisés",
+    "subtitle": "Définissez vos propres seuils de qualité de l'air pour le codage couleur",
+    "whoInfo": {
+      "title": "Standards OMS",
+      "description": "L'Organisation mondiale de la santé recommande PM2.5 ≤ 12 μg/m³ et PM10 ≤ 20 μg/m³ pour une bonne qualité de l'air"
+    },
+    "levels": {
+      "good": "Bon (Vert)",
+      "moderate": "Modéré (Orange)", 
+      "poor": "Mauvais (Rouge)",
+      "veryPoor": "Très mauvais (Rouge foncé)"
+    },
+    "validation": {
+      "increasingOrder": "Les seuils doivent être dans l'ordre croissant : Bon < Modéré < Mauvais"
+    },
+    "saved": "Seuils personnalisés sauvegardés avec succès",
+    "resetToWHO": "Réinitialiser aux standards OMS"
   }
 }
