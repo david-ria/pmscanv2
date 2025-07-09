@@ -33,13 +33,17 @@ export function useAirBeamBluetooth() {
       const dataString = decoder.decode(target.value);
       
       console.log('📡 Raw AirBeam data received:', dataString);
+      console.log('📡 Raw data length:', dataString.length);
+      console.log('📡 Raw data bytes:', Array.from(new Uint8Array(target.value.buffer)).map(b => b.toString(16)).join(' '));
       
       // Try parsing with full AirBeam format first
       let data = parseAirBeamDataPayload(dataString, connectionManager.state);
+      console.log('🔍 Parsed AirBeam data (full format):', data);
       
       // Fallback to simple format
       if (!data) {
         data = parseSimpleAirBeamData(dataString);
+        console.log('🔍 Parsed AirBeam data (simple format):', data);
       }
       
       if (data) {
