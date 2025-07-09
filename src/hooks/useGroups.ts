@@ -340,27 +340,32 @@ export const useGroupInvitations = () => {
 
   const fetchInvitations = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch invitations without complex joins to avoid relationship errors
+      const { data: invitationsData, error } = await supabase
         .from('group_invitations')
-        .select(`
-          id,
-          group_id,
-          inviter_id,
-          invitee_email,
-          invitee_id,
-          status,
-          token,
-          expires_at,
-          created_at,
-          groups!group_invitations_group_id_fkey(name, description),
-          profiles!group_invitations_inviter_id_fkey(first_name, last_name, pseudo)
-        `)
+        .select('*')
         .eq('status', 'pending')
         .gt('expires_at', new Date().toISOString());
 
       if (error) throw error;
 
-      const invitationsWithDetails = data?.map(invitation => ({
+      // Fetch related data separately
+      const groupIds = [...new Set(invitationsData?.map(i => i.group_id) || [])];
+      const inviterIds = [...new Set(invitationsData?.map(i => i.inviter_id) || [])];
+
+      const [groupsData, profilesData] = await Promise.all([
+        groupIds.length > 0 ? supabase
+          .from('groups')
+          .select('id, name, description')
+          .in('id', groupIds) : Promise.resolve({ data: [] }),
+        inviterIds.length > 0 ? supabase
+          .from('profiles')
+          .select('id, first_name, last_name, pseudo')
+          .in('id', inviterIds) : Promise.resolve({ data: [] })
+      ]);
+
+      // Combine the data
+      const invitationsWithDetails = invitationsData?.map(invitation => ({
         id: invitation.id,
         group_id: invitation.group_id,
         inviter_id: invitation.inviter_id,
@@ -370,8 +375,8 @@ export const useGroupInvitations = () => {
         token: invitation.token,
         expires_at: invitation.expires_at,
         created_at: invitation.created_at,
-        group: Array.isArray(invitation.groups) ? invitation.groups[0] : invitation.groups,
-        inviter_profile: Array.isArray(invitation.profiles) ? invitation.profiles[0] : invitation.profiles
+        group: groupsData.data?.find(g => g.id === invitation.group_id) || null,
+        inviter_profile: profilesData.data?.find(p => p.id === invitation.inviter_id) || null
       })) || [];
 
       setInvitations(invitationsWithDetails);
