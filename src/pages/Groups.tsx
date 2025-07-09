@@ -27,8 +27,18 @@ export default function Groups() {
   const initialTab = searchParams.get('tab') === 'admin' && isSuperAdmin ? 'admin' : 'my-groups';
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  // Update active tab when URL or role changes
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab === 'admin' && isSuperAdmin) {
+      setActiveTab('admin');
+    } else {
+      setActiveTab('my-groups');
+    }
+  }, [searchParams, isSuperAdmin]);
+
   // Log user role for debugging
-  console.log('Groups page - User role:', userRole, 'Is super admin:', isSuperAdmin);
+  console.log('Groups page - User role:', userRole, 'Is super admin:', isSuperAdmin, 'Active tab:', activeTab);
 
   const handleInviteUser = (groupId: string) => {
     setSelectedGroupId(groupId);
