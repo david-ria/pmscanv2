@@ -38,7 +38,7 @@ export default function Groups() {
   }, [searchParams, isSuperAdmin]);
 
   // Log user role for debugging
-  console.log('Groups page - User role:', userRole, 'Is super admin:', isSuperAdmin, 'Active tab:', activeTab);
+  console.log('Groups page - User role:', userRole, 'Is super admin:', isSuperAdmin, 'Active tab:', activeTab, 'URL tab:', searchParams.get('tab'));
 
   const handleInviteUser = (groupId: string) => {
     setSelectedGroupId(groupId);
@@ -136,6 +136,9 @@ export default function Groups() {
 
         {isSuperAdmin && (
           <TabsContent value="admin" className="space-y-4">
+            <div className="bg-red-100 p-2 text-red-800 rounded mb-4">
+              DEBUG: Admin panel is rendering! isSuperAdmin={String(isSuperAdmin)} activeTab={activeTab}
+            </div>
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-semibold">Admin Panel</h2>
