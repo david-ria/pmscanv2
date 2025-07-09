@@ -150,40 +150,58 @@ export type Database = {
       }
       group_settings: {
         Row: {
+          activity_auto_suggest: boolean | null
           alarm_enabled: boolean | null
           auto_share_stats: boolean | null
           created_at: string
+          default_activity: string | null
+          default_location: string | null
+          event_notifications: boolean | null
           group_id: string
           id: string
+          location_auto_detect: boolean | null
           notification_frequency: string | null
           pm1_threshold: number | null
           pm10_threshold: number | null
           pm25_threshold: number | null
           updated_at: string
+          weekly_reports: boolean | null
         }
         Insert: {
+          activity_auto_suggest?: boolean | null
           alarm_enabled?: boolean | null
           auto_share_stats?: boolean | null
           created_at?: string
+          default_activity?: string | null
+          default_location?: string | null
+          event_notifications?: boolean | null
           group_id: string
           id?: string
+          location_auto_detect?: boolean | null
           notification_frequency?: string | null
           pm1_threshold?: number | null
           pm10_threshold?: number | null
           pm25_threshold?: number | null
           updated_at?: string
+          weekly_reports?: boolean | null
         }
         Update: {
+          activity_auto_suggest?: boolean | null
           alarm_enabled?: boolean | null
           auto_share_stats?: boolean | null
           created_at?: string
+          default_activity?: string | null
+          default_location?: string | null
+          event_notifications?: boolean | null
           group_id?: string
           id?: string
+          location_auto_detect?: boolean | null
           notification_frequency?: string | null
           pm1_threshold?: number | null
           pm10_threshold?: number | null
           pm25_threshold?: number | null
           updated_at?: string
+          weekly_reports?: boolean | null
         }
         Relationships: [
           {

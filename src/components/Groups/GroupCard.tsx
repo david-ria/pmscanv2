@@ -33,7 +33,6 @@ interface GroupCardProps {
 }
 
 export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCardProps) {
-  console.log('GroupCard rendered with isAdminView:', isAdminView, 'for group:', group.name);
   const { deleteGroup, leaveGroup } = useGroups();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);

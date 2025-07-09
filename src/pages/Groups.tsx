@@ -75,10 +75,6 @@ export default function Groups() {
       {activeTab === 'admin' && isSuperAdmin ? (
         // ADMIN ONLY INTERFACE - No tabs, just admin content
         <div className="space-y-6">
-          <div className="bg-red-100 p-2 text-red-800 rounded mb-4">
-            DEBUG: Admin panel is rendering! isSuperAdmin={String(isSuperAdmin)} activeTab={activeTab}
-          </div>
-          
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Admin Panel</h2>
