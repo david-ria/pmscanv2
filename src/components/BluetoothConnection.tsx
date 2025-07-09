@@ -72,38 +72,63 @@ export function BluetoothConnection({ className, preferredDeviceType }: Bluetoot
             </div>
           )}
           
-          <div className="flex gap-2">
-            {!isConnected ? (
-              <Button 
-                onClick={() => requestDevice(preferredDeviceType)} 
-                disabled={isConnecting}
-                className="flex-1"
-                size="sm"
-              >
-                {isConnecting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Connexion...
-                  </>
-                ) : (
-                  <>
-                    <Bluetooth className="h-4 w-4 mr-2" />
-                    Connecter
-                  </>
-                )}
-              </Button>
-            ) : (
-              <Button 
-                onClick={disconnect} 
-                variant="outline"
-                className="flex-1"
-                size="sm"
-              >
-                <BluetoothOff className="h-4 w-4 mr-2" />
-                Déconnecter
-              </Button>
-            )}
-          </div>
+          {!isConnected && (
+            <div className="space-y-3">
+              <div className="text-xs text-muted-foreground">Select device type:</div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => requestDevice('pmscan')} 
+                  disabled={isConnecting}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                >
+                  {isConnecting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <Bluetooth className="h-4 w-4 mr-2" />
+                      PMScan
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => requestDevice('airbeam')} 
+                  disabled={isConnecting}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                >
+                  {isConnecting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <Bluetooth className="h-4 w-4 mr-2" />
+                      AirBeam
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {isConnected && (
+            <Button 
+              onClick={disconnect} 
+              variant="outline"
+              className="flex-1"
+              size="sm"
+            >
+              <BluetoothOff className="h-4 w-4 mr-2" />
+              Déconnecter
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
