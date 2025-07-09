@@ -13,6 +13,7 @@ import Groups from "./pages/Groups";
 import Profile from "./pages/Profile";
 import CustomThresholds from "./pages/CustomThresholds";
 import CustomAlerts from "./pages/CustomAlerts";
+import MySettings from "./pages/MySettings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -74,6 +75,7 @@ const App = () => {
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/custom-thresholds" element={<CustomThresholds />} />
                     <Route path="/custom-alerts" element={<CustomAlerts />} />
+                    <Route path="/my-settings" element={<MySettings />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
