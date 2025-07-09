@@ -1,8 +1,8 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { PMScanData, PMScanDevice } from '@/lib/pmscan/types';
-import { PMScanConnectionManager } from '@/lib/pmscan/connectionManager';
 import { parsePMScanDataPayload } from '@/lib/pmscan/dataParser';
 import { exponentialBackoff } from '@/lib/pmscan/utils';
+import { globalConnectionManager } from '@/lib/pmscan/globalConnectionManager';
 
 export function usePMScanBluetooth() {
   const [isConnected, setIsConnected] = useState(false);
@@ -11,15 +11,14 @@ export function usePMScanBluetooth() {
   const [currentData, setCurrentData] = useState<PMScanData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const connectionManagerRef = useRef(new PMScanConnectionManager());
-
-  // Connection state update function - removed to prevent interference
+  // Use global connection manager to persist across component unmounts
+  const connectionManager = globalConnectionManager;
 
   // Event handlers
   const handleRTData = useCallback((event: Event) => {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target.value) {
-      const data = parsePMScanDataPayload(target.value, connectionManagerRef.current.state);
+      const data = parsePMScanDataPayload(target.value, connectionManager.state);
       
       // Only update and log if data is significantly different to avoid duplicates
       setCurrentData(prevData => {
@@ -42,7 +41,7 @@ export function usePMScanBluetooth() {
   const handleIMData = useCallback((event: Event) => {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target.value) {
-      const data = parsePMScanDataPayload(target.value, connectionManagerRef.current.state);
+      const data = parsePMScanDataPayload(target.value, connectionManager.state);
       
       // Skip IM data entirely to avoid duplicates - RT data is sufficient for real-time display
       // IM data is typically the same as RT data but sent more frequently
@@ -55,7 +54,7 @@ export function usePMScanBluetooth() {
     if (target.value) {
       const batteryLevel = target.value.getUint8(0);
       console.log(`🔋 Battery event: ${batteryLevel}%`);
-      connectionManagerRef.current.updateBattery(batteryLevel);
+      connectionManager.updateBattery(batteryLevel);
       setDevice(prev => prev ? { ...prev, battery: batteryLevel } : null);
     }
   }, []);
@@ -65,14 +64,14 @@ export function usePMScanBluetooth() {
     if (target.value) {
       const chargingStatus = target.value.getUint8(0);
       console.log(`⚡ Charging event: ${chargingStatus}`);
-      connectionManagerRef.current.updateCharging(chargingStatus);
+      connectionManager.updateCharging(chargingStatus);
       setDevice(prev => prev ? { ...prev, charging: chargingStatus === 1 } : null);
     }
   }, []);
 
   const onDeviceConnected = useCallback(async (server: BluetoothRemoteGATTServer) => {
     try {
-      const manager = connectionManagerRef.current;
+      const manager = connectionManager;
       const deviceInfo = await manager.initializeDevice(
         handleRTData,
         handleIMData,
@@ -92,13 +91,13 @@ export function usePMScanBluetooth() {
   }, [handleRTData, handleIMData, handleBatteryData, handleChargingData]);
 
   const onDeviceDisconnected = useCallback(() => {
-    connectionManagerRef.current.onDisconnected();
+    connectionManager.onDisconnected();
     setIsConnected(false);
     setDevice(prev => prev ? { ...prev, connected: false } : null);
   }, []);
 
   const connect = useCallback(() => {
-    const manager = connectionManagerRef.current;
+    const manager = connectionManager;
     console.log('🔄 connect() called, shouldConnect:', manager.shouldAutoConnect());
     
     if (!manager.shouldAutoConnect()) return;
@@ -121,7 +120,7 @@ export function usePMScanBluetooth() {
       setError(null);
       setIsConnecting(true);
       
-      const manager = connectionManagerRef.current;
+      const manager = connectionManager;
       const device = await manager.requestDevice();
       
       device.addEventListener('gattserverdisconnected', () => {
@@ -139,11 +138,35 @@ export function usePMScanBluetooth() {
   }, [connect, onDeviceDisconnected]);
 
   const disconnect = useCallback(async () => {
-    await connectionManagerRef.current.disconnect();
+    await connectionManager.disconnect();
     setIsConnected(false);
     setDevice(null);
     setCurrentData(null);
   }, []);
+
+  // Check for existing connection on component mount and re-establish event listeners
+  useEffect(() => {
+    const manager = connectionManager;
+    if (manager.isConnected()) {
+      setIsConnected(true);
+      
+      // Re-establish event listeners for the existing connection
+      manager.reestablishEventListeners(
+        handleRTData,
+        handleIMData,
+        handleBatteryData,
+        handleChargingData
+      ).then((deviceInfo) => {
+        if (deviceInfo) {
+          setDevice(deviceInfo);
+          console.log('🔄 Restored existing PMScan connection with event listeners');
+        }
+      }).catch(error => {
+        console.error('❌ Failed to restore connection:', error);
+        setError('Failed to restore connection');
+      });
+    }
+  }, [handleRTData, handleIMData, handleBatteryData, handleChargingData]);
 
   return {
     isConnected,

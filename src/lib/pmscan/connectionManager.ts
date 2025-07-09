@@ -180,6 +180,13 @@ export class PMScanConnectionManager {
   }
 
   public async disconnect(): Promise<void> {
+    // Check if we're recording globally before allowing disconnection
+    const { getGlobalRecording } = require('./globalConnectionManager');
+    if (getGlobalRecording()) {
+      console.log('🚫 Cannot disconnect PMScan while recording is active');
+      return;
+    }
+    
     this.shouldConnect = false;
     
     if (this.device?.gatt?.connected && this.service) {
@@ -200,7 +207,64 @@ export class PMScanConnectionManager {
 
   public onDisconnected(): void {
     console.log('🔌 PMScan Device disconnected');
-    this.isInited = false;
+    
+    // Check if we should automatically reconnect (when recording)
+    const { getGlobalRecording } = require('./globalConnectionManager');
+    if (getGlobalRecording()) {
+      console.log('🔄 Auto-reconnecting PMScan due to active recording...');
+      // Reset init state but keep shouldConnect true for reconnection
+      this.isInited = false;
+      // Don't set shouldConnect to false as we want to reconnect
+    } else {
+      this.isInited = false;
+      this.shouldConnect = false;
+    }
+  }
+
+  public async reestablishEventListeners(
+    onRTData: (event: Event) => void,
+    onIMData: (event: Event) => void,
+    onBatteryData: (event: Event) => void,
+    onChargingData: (event: Event) => void
+  ): Promise<PMScanDevice | null> {
+    if (!this.isConnected() || !this.service) {
+      return null;
+    }
+
+    try {
+      // Re-establish event listeners for existing connection
+      const rtDataChar = await this.service.getCharacteristic(PMScan_RT_DATA_UUID);
+      const imDataChar = await this.service.getCharacteristic(PMScan_IM_DATA_UUID);
+      const batteryChar = await this.service.getCharacteristic(PMScan_BATTERY_UUID);
+      const chargingChar = await this.service.getCharacteristic(PMScan_CHARGING_UUID);
+
+      // Remove any existing listeners to prevent duplicates
+      rtDataChar.removeEventListener('characteristicvaluechanged', onRTData);
+      imDataChar.removeEventListener('characteristicvaluechanged', onIMData);
+      batteryChar.removeEventListener('characteristicvaluechanged', onBatteryData);
+      chargingChar.removeEventListener('characteristicvaluechanged', onChargingData);
+
+      // Add new listeners
+      rtDataChar.addEventListener('characteristicvaluechanged', onRTData);
+      imDataChar.addEventListener('characteristicvaluechanged', onIMData);
+      batteryChar.addEventListener('characteristicvaluechanged', onBatteryData);
+      chargingChar.addEventListener('characteristicvaluechanged', onChargingData);
+
+      console.log('🔄 Event listeners re-established');
+
+      return {
+        name: this.device?.name || "PMScan Device",
+        version: this.state.version,
+        mode: this.state.mode,
+        interval: this.state.interval,
+        battery: this.state.battery,
+        charging: this.state.charging === 1,
+        connected: true
+      };
+    } catch (error) {
+      console.error('❌ Failed to re-establish event listeners:', error);
+      return null;
+    }
   }
 
   public updateBattery(level: number): void {

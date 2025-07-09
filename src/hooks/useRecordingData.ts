@@ -3,6 +3,7 @@ import { dataStorage, MissionData } from "@/lib/dataStorage";
 import { PMScanData } from "@/lib/pmscan/types";
 import { LocationData } from "@/types/PMScan";
 import { useBackgroundRecording } from "./useBackgroundRecording";
+import { setGlobalRecording } from "@/lib/pmscan/globalConnectionManager";
 
 interface RecordingEntry {
   pmData: PMScanData;
@@ -74,6 +75,9 @@ export function useRecordingData() {
     recordingStartTime.current = new Date();
     lastRecordedTime.current = null; // Reset for new recording
     
+    // Set global recording state to prevent disconnection during navigation
+    setGlobalRecording(true);
+    
     // Enable background recording capabilities
     try {
       await enableBackgroundRecording({
@@ -91,6 +95,9 @@ export function useRecordingData() {
 
   const stopRecording = async () => {
     setIsRecording(false);
+    
+    // Clear global recording state to allow disconnection
+    setGlobalRecording(false);
     
     // Disable background recording capabilities
     try {
