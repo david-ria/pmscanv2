@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useGoogleFit } from "@/hooks/useGoogleFit";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface MenuSection {
   title: string;
@@ -30,6 +31,7 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
   const { isAuthenticated, connectGoogleFit, syncActivities, isLoading } = useGoogleFit();
   const { t } = useTranslation();
   const { currentLanguage, changeLanguage, languages } = useLanguage();
+  const { isSuperAdmin } = useUserRole();
 
   const handleProfileClick = () => {
     navigate('/profile');
@@ -75,6 +77,11 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
     onNavigate();
   };
 
+  const handleGroups = () => {
+    navigate('/groups');
+    onNavigate();
+  };
+
   const getCurrentLanguageDisplay = () => {
     const lang = languages.find(l => l.code === currentLanguage);
     return lang ? lang.name : currentLanguage.toUpperCase();
@@ -96,13 +103,13 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
         { icon: Languages, label: t('settingsMenu.language'), badge: getCurrentLanguageDisplay() }
       ]
     },
-    {
-      title: t('community.title'),
+    // Only show Groups section for super admins
+    ...(isSuperAdmin ? [{
+      title: t('groups.title'),
       items: [
-        { icon: Users, label: t('community.joinGroup'), badge: null },
-        { icon: Users, label: t('community.healthNeighborhood'), badge: `23 ${t('community.members')}` }
+        { icon: Users, label: t('groups.myGroups'), badge: null, action: handleGroups },
       ]
-    },
+    }] : []),
     {
       title: t('sensors.title'),
       items: [
