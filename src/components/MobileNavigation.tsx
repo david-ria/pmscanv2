@@ -31,7 +31,7 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
   const { isAuthenticated, connectGoogleFit, syncActivities, isLoading } = useGoogleFit();
   const { t } = useTranslation();
   const { currentLanguage, changeLanguage, languages } = useLanguage();
-  const { isSuperAdmin } = useUserRole();
+  const { userRole } = useUserRole();
 
   const handleProfileClick = () => {
     navigate('/profile');
@@ -103,13 +103,13 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
         { icon: Languages, label: t('settingsMenu.language'), badge: getCurrentLanguageDisplay() }
       ]
     },
-    // Only show Groups section for super admins
-    ...(isSuperAdmin ? [{
+    // Show Groups section for all users, but only allow admin functions for super admins
+    {
       title: t('groups.title'),
       items: [
         { icon: Users, label: t('groups.myGroups'), badge: null, action: handleGroups },
       ]
-    }] : []),
+    },
     {
       title: t('sensors.title'),
       items: [

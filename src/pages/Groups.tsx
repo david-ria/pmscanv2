@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGroups, useGroupInvitations } from '@/hooks/useGroups';
+import { useUserRole } from '@/hooks/useUserRole';
 import { CreateGroupDialog } from '@/components/Groups/CreateGroupDialog';
 import { InviteUserDialog } from '@/components/Groups/InviteUserDialog';
 import { GroupCard } from '@/components/Groups/GroupCard';
@@ -14,6 +15,7 @@ import { InvitationCard } from '@/components/Groups/InvitationCard';
 export default function Groups() {
   const { groups, loading: groupsLoading } = useGroups();
   const { invitations, loading: invitationsLoading } = useGroupInvitations();
+  const { isSuperAdmin } = useUserRole();
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [inviteUserOpen, setInviteUserOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
@@ -48,10 +50,12 @@ export default function Groups() {
             {t('groups.subtitle')}
           </p>
         </div>
-        <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          {t('groups.createGroup')}
-        </Button>
+        {isSuperAdmin && (
+          <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            {t('groups.createGroup')}
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="my-groups" className="w-full">
@@ -73,12 +77,14 @@ export default function Groups() {
                 <Users className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">{t('groups.noGroupsYet')}</h3>
                 <p className="text-muted-foreground text-center mb-4">
-                  {t('groups.createFirstGroup')}
+                  {isSuperAdmin ? t('groups.createFirstGroup') : t('groups.invitationsDescription')}
                 </p>
-                <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  {t('groups.createYourFirstGroup')}
-                </Button>
+                {isSuperAdmin && (
+                  <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    {t('groups.createYourFirstGroup')}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (

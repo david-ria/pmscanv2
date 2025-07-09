@@ -1,4 +1,4 @@
-import { Home, History, BarChart3, Users } from "lucide-react";
+import { Home, History, BarChart3 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,6 @@ const navigationItems: NavigationItem[] = [
   { to: "/", icon: Home, labelKey: "navigation.realTime" },
   { to: "/history", icon: History, labelKey: "navigation.history" },
   { to: "/analysis", icon: BarChart3, labelKey: "navigation.analysis" },
-  { to: "/groups", icon: Users, labelKey: "navigation.groups" },
 ];
 
 export function BottomNavigation() {
