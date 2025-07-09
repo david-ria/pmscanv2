@@ -71,33 +71,37 @@ export default function Groups() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
-          <TabsTrigger value="my-groups" className="gap-2">
-            <Users className="h-4 w-4" />
-            {t('groups.myGroups')} ({groups.length})
-          </TabsTrigger>
-          <TabsTrigger value="invitations" className="gap-2">
-            <Mail className="h-4 w-4" />
-            {t('groups.invitations')} ({invitations.length})
-          </TabsTrigger>
-          {isSuperAdmin && (
-            <TabsTrigger value="admin" className="gap-2">
-              <Shield className="h-4 w-4" />
-              {t('groups.adminPanel')}
-            </TabsTrigger>
-          )}
-        </TabsList>
+      {/* Show different interfaces based on whether we're in admin mode */}
+      {activeTab === 'admin' && isSuperAdmin ? (
+        // ADMIN ONLY INTERFACE - No tabs, just admin content
+        <div className="space-y-6">
+          <div className="bg-red-100 p-2 text-red-800 rounded mb-4">
+            DEBUG: Admin panel is rendering! isSuperAdmin={String(isSuperAdmin)} activeTab={activeTab}
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Admin Panel</h2>
+              <p className="text-muted-foreground">Manage all groups, create new groups, and handle administrative tasks</p>
+            </div>
+            <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              {t('groups.createGroup')}
+            </Button>
+          </div>
 
-        <TabsContent value="my-groups" className="space-y-4">
           {groups.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Users className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">{t('groups.noGroupsYet')}</h3>
+                <Shield className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No groups created yet</h3>
                 <p className="text-muted-foreground text-center mb-4">
-                  {t('groups.invitationsDescription')}
+                  Create your first group to start managing air quality monitoring groups
                 </p>
+                <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  {t('groups.createGroup')}
+                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -107,61 +111,35 @@ export default function Groups() {
                   key={group.id}
                   group={group}
                   onInviteUser={() => handleInviteUser(group.id)}
-                  isAdminView={false}
+                  isAdminView={true}
                 />
               ))}
             </div>
           )}
-        </TabsContent>
+        </div>
+      ) : (
+        // REGULAR USER INTERFACE - With tabs for My Groups and Invitations
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="my-groups" className="gap-2">
+              <Users className="h-4 w-4" />
+              {t('groups.myGroups')} ({groups.length})
+            </TabsTrigger>
+            <TabsTrigger value="invitations" className="gap-2">
+              <Mail className="h-4 w-4" />
+              {t('groups.invitations')} ({invitations.length})
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="invitations" className="space-y-4">
-          {invitations.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Mail className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">{t('groups.noPendingInvitations')}</h3>
-                <p className="text-muted-foreground text-center">
-                  {t('groups.invitationsDescription')}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {invitations.map((invitation) => (
-                <InvitationCard key={invitation.id} invitation={invitation} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        {isSuperAdmin && (
-          <TabsContent value="admin" className="space-y-4">
-            <div className="bg-red-100 p-2 text-red-800 rounded mb-4">
-              DEBUG: Admin panel is rendering! isSuperAdmin={String(isSuperAdmin)} activeTab={activeTab}
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">Admin Panel</h2>
-                <p className="text-muted-foreground">Manage all groups, create new groups, and handle administrative tasks</p>
-              </div>
-              <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                {t('groups.createGroup')}
-              </Button>
-            </div>
-
+          <TabsContent value="my-groups" className="space-y-4">
             {groups.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Shield className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No groups created yet</h3>
+                  <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">{t('groups.noGroupsYet')}</h3>
                   <p className="text-muted-foreground text-center mb-4">
-                    Create your first group to start managing air quality monitoring groups
+                    {t('groups.invitationsDescription')}
                   </p>
-                  <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    {t('groups.createGroup')}
-                  </Button>
                 </CardContent>
               </Card>
             ) : (
@@ -171,14 +149,34 @@ export default function Groups() {
                     key={group.id}
                     group={group}
                     onInviteUser={() => handleInviteUser(group.id)}
-                    isAdminView={true}
+                    isAdminView={false}
                   />
                 ))}
               </div>
             )}
           </TabsContent>
-        )}
-      </Tabs>
+
+          <TabsContent value="invitations" className="space-y-4">
+            {invitations.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Mail className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">{t('groups.noPendingInvitations')}</h3>
+                  <p className="text-muted-foreground text-center">
+                    {t('groups.invitationsDescription')}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {invitations.map((invitation) => (
+                  <InvitationCard key={invitation.id} invitation={invitation} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
 
       <CreateGroupDialog
         open={createGroupOpen}

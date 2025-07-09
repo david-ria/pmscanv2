@@ -99,7 +99,7 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
         { icon: Languages, label: t('settingsMenu.language'), badge: getCurrentLanguageDisplay() }
       ]
     },
-    // Show Groups section for all users, but add admin functions for super admins
+    // Show Groups section for all users, but add admin functions for super admins  
     {
       title: t('groups.title'),
       items: [
