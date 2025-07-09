@@ -39,6 +39,8 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
   const [leaveOpen, setLeaveOpen] = useState(false);
 
   const isAdmin = group.role === 'admin';
+  // In admin view, super admins can manage any group
+  const canManageGroup = isAdminView || isAdmin;
 
   const handleDelete = async () => {
     try {
@@ -83,8 +85,8 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
                 </Link>
               </DropdownMenuItem>
               
-              {/* Admin functions - Only in admin view */}
-              {isAdminView && isAdmin && (
+              {/* Admin functions - Show in admin view OR if user is group admin */}
+              {canManageGroup && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setEditOpen(true)}>
@@ -138,9 +140,9 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
             Created {formatDistanceToNow(new Date(group.created_at), { addSuffix: true })}
           </div>
 
-          {/* Action buttons - Only show admin buttons in admin view */}
+          {/* Action buttons - Show admin buttons when user can manage the group */}
           <div className="flex gap-2">
-            {isAdminView && isAdmin ? (
+            {canManageGroup ? (
               <>
                 <Button onClick={onInviteUser} size="sm" className="flex-1">
                   <UserPlus className="h-4 w-4 mr-2" />
