@@ -26,8 +26,12 @@ export default function RealTime() {
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
   
   useEffect(() => {
-    console.log("🔍 RealTime effect triggered - isRecording:", isRecording, "currentData PM2.5:", currentData?.pm25);
-    console.log("📍 Latest GPS location:", latestLocation);
+    // Only log occasionally to prevent spam
+    const shouldLog = Math.random() < 0.05; // 5% chance
+    if (shouldLog) {
+      console.log('🔍 RealTime effect - isRecording:', isRecording, 'currentData:', currentData ? 'HAS DATA' : 'NO DATA');
+    }
+    
     if (isRecording && currentData) {
       // Prevent duplicate data points by checking if this is actually new data
       const currentTimestamp = currentData.timestamp.getTime();
@@ -41,13 +45,9 @@ export default function RealTime() {
         const pmScanData = toPMScanData(currentData);
         addDataPoint(pmScanData, latestLocation || undefined, missionContext);
         lastDataRef.current = { pm25: currentData.pm25, timestamp: currentTimestamp };
-      } else {
-        console.log("⏭️ Skipping duplicate data point");
       }
-    } else {
-      console.log("❌ Not adding data - isRecording:", isRecording, "hasCurrentData:", !!currentData);
     }
-  }, [isRecording, currentData, latestLocation, addDataPoint]);
+  }, [isRecording, currentData, addDataPoint, missionContext]);
 
   // Check alerts whenever new data comes in
   useEffect(() => {
