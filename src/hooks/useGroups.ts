@@ -54,21 +54,37 @@ export const useGroups = () => {
 
   const fetchGroups = async () => {
     try {
-      const { data, error } = await supabase
+      // Get current user first
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // First fetch groups
+      const { data: groupsData, error: groupsError } = await supabase
         .from('groups')
-        .select(`
-          *,
-          group_memberships!inner(role),
-          group_memberships(count)
-        `);
+        .select('*');
 
-      if (error) throw error;
+      if (groupsError) throw groupsError;
 
-      const groupsWithRole = data?.map(group => ({
-        ...group,
-        role: group.group_memberships[0]?.role,
-        member_count: group.group_memberships?.length || 0
-      })) || [];
+      // Then fetch memberships separately to avoid aggregate issues
+      const { data: membershipsData, error: membershipsError } = await supabase
+        .from('group_memberships')
+        .select('group_id, role, user_id');
+
+      if (membershipsError) throw membershipsError;
+
+      // Combine the data
+      const groupsWithRole = groupsData?.map(group => {
+        const userMembership = membershipsData?.find(
+          m => m.group_id === group.id && m.user_id === user.id
+        );
+        const memberCount = membershipsData?.filter(m => m.group_id === group.id).length || 0;
+        
+        return {
+          ...group,
+          role: userMembership?.role,
+          member_count: memberCount
+        };
+      }) || [];
 
       setGroups(groupsWithRole);
     } catch (error: any) {
