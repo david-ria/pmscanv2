@@ -4,6 +4,7 @@ import { AirQualityCards } from "@/components/RealTime/AirQualityCards";
 import { MapGraphToggle } from "@/components/RealTime/MapGraphToggle";
 import { ContextSelectors } from "@/components/RecordingControls/ContextSelectors";
 import { DataLogger } from "@/components/DataLogger";
+import { BackgroundRecordingStatus } from "@/components/BackgroundRecordingStatus";
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { useGPS } from "@/hooks/useGPS";
 import { useRecordingContext } from "@/contexts/RecordingContext";
@@ -93,6 +94,9 @@ export default function RealTime() {
         isRecording={isRecording}
         device={device}
       />
+
+      {/* Background Recording Status */}
+      <BackgroundRecordingStatus />
 
       {/* Real-time Readings - Air Quality Cards */}
       <AirQualityCards

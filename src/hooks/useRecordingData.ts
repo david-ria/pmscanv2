@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { dataStorage, MissionData } from "@/lib/dataStorage";
 import { PMScanData } from "@/lib/pmscan/types";
 import { LocationData } from "@/types/PMScan";
+import { useBackgroundRecording } from "./useBackgroundRecording";
 
 interface RecordingEntry {
   pmData: PMScanData;
@@ -22,6 +23,14 @@ export function useRecordingData() {
   }>({ location: "", activity: "" });
   const recordingStartTime = useRef<Date | null>(null);
   const lastRecordedTime = useRef<Date | null>(null);
+  
+  // Initialize background recording capabilities
+  const { 
+    isBackgroundEnabled, 
+    enableBackgroundRecording, 
+    disableBackgroundRecording,
+    storeDataForBackground 
+  } = useBackgroundRecording();
 
   // Debug: Log when isRecording changes
   useEffect(() => {
@@ -56,7 +65,7 @@ export function useRecordingData() {
     return 30000; // default 30 seconds
   };
 
-  const startRecording = (frequency: string = "30s") => {
+  const startRecording = async (frequency: string = "30s") => {
     console.log("🎬 Starting recording with frequency:", frequency);
     console.log("🔄 Setting isRecording to true");
     setIsRecording(true);
@@ -64,11 +73,32 @@ export function useRecordingData() {
     setRecordingFrequency(frequency);
     recordingStartTime.current = new Date();
     lastRecordedTime.current = null; // Reset for new recording
+    
+    // Enable background recording capabilities
+    try {
+      await enableBackgroundRecording({
+        enableWakeLock: true,
+        enableNotifications: true,
+        syncInterval: parseFrequencyToMs(frequency) // Use recording frequency for sync
+      });
+      console.log("🎯 Background recording enabled");
+    } catch (error) {
+      console.warn("⚠️ Background recording failed to enable:", error);
+    }
+    
     console.log("✅ Recording started! isRecording should now be:", true);
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     setIsRecording(false);
+    
+    // Disable background recording capabilities
+    try {
+      await disableBackgroundRecording();
+      console.log("🛑 Background recording disabled");
+    } catch (error) {
+      console.warn("⚠️ Background recording failed to disable:", error);
+    }
   };
 
   const addDataPoint = (pmData: PMScanData, location?: LocationData, context?: { location: string; activity: string }) => {
@@ -105,6 +135,11 @@ export function useRecordingData() {
       location,
       context
     };
+
+    // Store data for background processing if enabled
+    if (isBackgroundEnabled) {
+      storeDataForBackground(pmDataWithUniqueTimestamp, location, context);
+    }
 
     setRecordingData(prev => {
       const updated = [...prev, entry];
