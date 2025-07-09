@@ -261,7 +261,12 @@
     "comeBackInMoments": "3. Revenez ici dans quelques instants",
     "changePeriodIfPersists": "Si le problème persiste, essayez de changer la période de temps sélectionnée.",
     "mapTitle": "Lieux de mesure",
-    "points": "points"
+    "points": "points",
+    "activityAnalysisTitle": "Analyse des activités",
+    "timeSpent": "Temps passé",
+    "exposure": "Exposition",
+    "measurements": "mesures",
+    "unknownActivity": "Activité inconnue"
   },
   "modals": {
     "recordingFrequency": {
