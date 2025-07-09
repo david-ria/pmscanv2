@@ -2,22 +2,25 @@ import { Bluetooth, BluetoothOff, Battery, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
+import { useUnifiedDeviceConnection } from "@/hooks/useUnifiedDeviceConnection";
+import { getDeviceTypeDisplayName } from "@/lib/device/deviceDetection";
 import { cn } from "@/lib/utils";
 
 interface BluetoothConnectionProps {
   className?: string;
+  preferredDeviceType?: 'pmscan' | 'airbeam';
 }
 
-export function BluetoothConnection({ className }: BluetoothConnectionProps) {
+export function BluetoothConnection({ className, preferredDeviceType }: BluetoothConnectionProps) {
   const { 
     isConnected, 
     isConnecting, 
     device, 
-    error, 
+    error,
+    deviceType,
     requestDevice, 
     disconnect 
-  } = usePMScanBluetooth();
+  } = useUnifiedDeviceConnection();
 
   return (
     <Card className={cn("", className)}>
@@ -28,7 +31,7 @@ export function BluetoothConnection({ className }: BluetoothConnectionProps) {
           ) : (
             <BluetoothOff className="h-4 w-4 text-muted-foreground" />
           )}
-          Connexion PMScan
+          Connexion {deviceType ? getDeviceTypeDisplayName(deviceType) : 'Air Quality Device'}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -62,14 +65,17 @@ export function BluetoothConnection({ className }: BluetoothConnectionProps) {
             </div>
           ) : (
             <div className="text-sm text-muted-foreground text-center py-2">
-              Aucun appareil connecté
+              {preferredDeviceType 
+                ? `Aucun ${getDeviceTypeDisplayName(preferredDeviceType)} connecté`
+                : "Aucun appareil connecté"
+              }
             </div>
           )}
           
           <div className="flex gap-2">
             {!isConnected ? (
               <Button 
-                onClick={requestDevice} 
+                onClick={() => requestDevice(preferredDeviceType)} 
                 disabled={isConnecting}
                 className="flex-1"
                 size="sm"
