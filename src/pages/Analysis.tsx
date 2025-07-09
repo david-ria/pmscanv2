@@ -171,8 +171,8 @@ export default function Analysis() {
         className="mb-6"
       />
 
-      {/* AI Analysis Card */}
-      <Card className="mb-6">
+      {/* AI Analysis Card - temporarily hidden */}
+      {/* <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -218,7 +218,7 @@ export default function Analysis() {
             </>
           )}
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Data Points Summary */}
       {dataPoints && (
