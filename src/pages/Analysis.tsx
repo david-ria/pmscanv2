@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { Brain, MessageSquare, Download, Trophy, RefreshCw, Calendar, Map } from "lucide-react";
+import { Brain, MessageSquare, Download, Trophy, RefreshCw, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { DateFilter } from "@/components/DateFilter";
-import { MapboxMap } from "@/components/MapboxMap";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { dataStorage, MissionData } from "@/lib/dataStorage";
@@ -21,12 +20,6 @@ export default function Analysis() {
   const [dataPoints, setDataPoints] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [analysisGenerated, setAnalysisGenerated] = useState(false);
-  const [trackPoints, setTrackPoints] = useState<Array<{
-    longitude: number;
-    latitude: number;
-    pm25: number;
-    timestamp: Date;
-  }>>([]);
   const { toast } = useToast();
 
   // Load missions on component mount
@@ -38,7 +31,6 @@ export default function Analysis() {
   useEffect(() => {
     if (missions.length > 0 && !loading) {
       generateAnalysis();
-      loadTrackPoints();
     }
   }, [missions, selectedDate, selectedPeriod]);
 
@@ -56,45 +48,6 @@ export default function Analysis() {
     }
   };
 
-  const loadTrackPoints = async () => {
-    try {
-      const filtered = filteredMissions();
-      if (filtered.length === 0) {
-        setTrackPoints([]);
-        return;
-      }
-
-      // Get all measurements for the filtered missions
-      const allPoints: Array<{
-        longitude: number;
-        latitude: number;
-        pm25: number;
-        timestamp: Date;
-      }> = [];
-
-      for (const mission of filtered) {
-        if (mission.measurements) {
-          mission.measurements.forEach(measurement => {
-            if (measurement.latitude && measurement.longitude) {
-              allPoints.push({
-                longitude: measurement.longitude,
-                latitude: measurement.latitude,
-                pm25: measurement.pm25,
-                timestamp: measurement.timestamp
-              });
-            }
-          });
-        }
-      }
-
-      // Sort by timestamp
-      allPoints.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-      setTrackPoints(allPoints);
-    } catch (error) {
-      console.error('Error loading track points:', error);
-      setTrackPoints([]);
-    }
-  };
 
   // Filter missions based on selected date and period
   const filteredMissions = () => {
@@ -300,26 +253,6 @@ export default function Analysis() {
         </Card>
       )}
 
-      {/* Map showing collected points */}
-      {trackPoints.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Map className="h-5 w-5 text-primary" />
-              {t('analysis.mapTitle')} ({trackPoints.length} {t('analysis.points')})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="h-96 w-full">
-              <MapboxMap
-                trackPoints={trackPoints}
-                isRecording={false}
-                className="h-full w-full rounded-b-lg"
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* WHO Threshold Progress */}
       {dataPoints && (
