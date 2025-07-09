@@ -1,37 +1,33 @@
-import { useState, useEffect, useRef } from "react";
-import { dataStorage, MissionData } from "@/lib/dataStorage";
+import { useEffect } from "react";
+import { dataStorage } from "@/lib/dataStorage";
 import { PMScanData } from "@/lib/pmscan/types";
 import { LocationData } from "@/types/PMScan";
-import { useBackgroundRecording } from "./useBackgroundRecording";
-import { setGlobalRecording } from "@/lib/pmscan/globalConnectionManager";
-
-interface RecordingEntry {
-  pmData: PMScanData;
-  location?: LocationData;
-  context?: {
-    location: string;
-    activity: string;
-  };
-}
+import { RecordingEntry } from "@/types/recording";
+import { useRecordingState } from "./useRecordingState";
+import { useBackgroundRecordingIntegration } from "./useBackgroundRecordingIntegration";
+import { parseFrequencyToMs, shouldRecordData } from "@/lib/recordingUtils";
 
 export function useRecordingData() {
-  const [recordingData, setRecordingData] = useState<RecordingEntry[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingFrequency, setRecordingFrequency] = useState<string>("30s");
-  const [missionContext, setMissionContext] = useState<{
-    location: string;
-    activity: string;
-  }>({ location: "", activity: "" });
-  const recordingStartTime = useRef<Date | null>(null);
-  const lastRecordedTime = useRef<Date | null>(null);
-  
-  // Initialize background recording capabilities
-  const { 
-    isBackgroundEnabled, 
-    enableBackgroundRecording, 
-    disableBackgroundRecording,
-    storeDataForBackground 
-  } = useBackgroundRecording();
+  const {
+    recordingData,
+    isRecording,
+    recordingFrequency,
+    missionContext,
+    recordingStartTime,
+    lastRecordedTime,
+    startRecording: startRecordingState,
+    stopRecording: stopRecordingState,
+    addDataPoint: addDataPointToState,
+    clearRecordingData,
+    updateMissionContext,
+    updateLastRecordedTime,
+  } = useRecordingState();
+
+  const {
+    enableRecordingBackground,
+    disableRecordingBackground,
+    storeBackgroundData,
+  } = useBackgroundRecordingIntegration();
 
   // Debug: Log when isRecording changes
   useEffect(() => {
@@ -55,83 +51,45 @@ export function useRecordingData() {
     }
   }, []);
 
-  // Helper function to parse frequency string to milliseconds
-  const parseFrequencyToMs = (frequency: string): number => {
-    const number = parseInt(frequency);
-    if (frequency.includes('s')) {
-      return number * 1000; // seconds to milliseconds
-    } else if (frequency.includes('m')) {
-      return number * 60 * 1000; // minutes to milliseconds
-    }
-    return 30000; // default 30 seconds
-  };
-
   const startRecording = async (frequency: string = "30s") => {
-    console.log("🎬 Starting recording with frequency:", frequency);
-    console.log("🔄 Setting isRecording to true");
-    setIsRecording(true);
-    setRecordingData([]);
-    setRecordingFrequency(frequency);
-    recordingStartTime.current = new Date();
-    lastRecordedTime.current = null; // Reset for new recording
-    
-    // Set global recording state to prevent disconnection during navigation
-    setGlobalRecording(true);
-    
-    // Enable background recording capabilities
-    try {
-      await enableBackgroundRecording({
-        enableWakeLock: true,
-        enableNotifications: true,
-        syncInterval: parseFrequencyToMs(frequency) // Use recording frequency for sync
-      });
-      console.log("🎯 Background recording enabled");
-    } catch (error) {
-      console.warn("⚠️ Background recording failed to enable:", error);
-    }
-    
-    console.log("✅ Recording started! isRecording should now be:", true);
+    startRecordingState(frequency);
+    await enableRecordingBackground(frequency);
   };
 
   const stopRecording = async () => {
-    setIsRecording(false);
-    
-    // Clear global recording state to allow disconnection
-    setGlobalRecording(false);
-    
-    // Disable background recording capabilities
-    try {
-      await disableBackgroundRecording();
-      console.log("🛑 Background recording disabled");
-    } catch (error) {
-      console.warn("⚠️ Background recording failed to disable:", error);
-    }
+    stopRecordingState();
+    await disableRecordingBackground();
   };
 
-  const addDataPoint = (pmData: PMScanData, location?: LocationData, context?: { location: string; activity: string }) => {
+  const addDataPoint = (
+    pmData: PMScanData, 
+    location?: LocationData, 
+    context?: { location: string; activity: string }
+  ) => {
     console.log("🎯 addDataPoint called - isRecording:", isRecording, "pmData:", pmData?.pm25, "location:", location, "context:", context);
+    
     if (!isRecording) {
       console.log("❌ Not recording, skipping data point");
       return;
     }
 
     // Check if enough time has passed based on recording frequency
-    const currentTime = new Date();
     const frequencyMs = parseFrequencyToMs(recordingFrequency);
     
-    if (lastRecordedTime.current && 
-        (currentTime.getTime() - lastRecordedTime.current.getTime()) < frequencyMs) {
-      console.log(`⏳ Throttling: only ${currentTime.getTime() - lastRecordedTime.current.getTime()}ms passed, need ${frequencyMs}ms`);
+    if (!shouldRecordData(lastRecordedTime, frequencyMs)) {
+      const timePassed = lastRecordedTime ? new Date().getTime() - lastRecordedTime.getTime() : 0;
+      console.log(`⏳ Throttling: only ${timePassed}ms passed, need ${frequencyMs}ms`);
       return;
     }
 
     console.log("✅ Adding data point to recording with context:", context);
-    lastRecordedTime.current = currentTime;
     
-    // Use a unique timestamp for each data point (current time with milliseconds)
-    // This ensures each measurement has a unique, chronological timestamp
+    // Update last recorded time
+    const currentTime = new Date();
+    updateLastRecordedTime(currentTime);
+    
+    // Use a unique timestamp for each data point
     const uniqueTimestamp = new Date();
-    
     const pmDataWithUniqueTimestamp = {
       ...pmData,
       timestamp: uniqueTimestamp
@@ -144,15 +102,10 @@ export function useRecordingData() {
     };
 
     // Store data for background processing if enabled
-    if (isBackgroundEnabled) {
-      storeDataForBackground(pmDataWithUniqueTimestamp, location, context);
-    }
+    storeBackgroundData(pmDataWithUniqueTimestamp, location, context);
 
-    setRecordingData(prev => {
-      const updated = [...prev, entry];
-      console.log("📊 Recording data updated, total points:", updated.length);
-      return updated;
-    });
+    // Add to recording data
+    addDataPointToState(entry);
   };
 
   const saveMission = (
@@ -164,9 +117,9 @@ export function useRecordingData() {
     deviceId?: string,
     deviceName?: string
   ) => {
-    console.log("🎯 saveMission called - recordingData length:", recordingData.length, "recordingStartTime:", recordingStartTime.current);
+    console.log("🎯 saveMission called - recordingData length:", recordingData.length, "recordingStartTime:", recordingStartTime);
     
-    if (!recordingStartTime.current) {
+    if (!recordingStartTime) {
       throw new Error("Aucun enregistrement en cours à sauvegarder");
     }
     
@@ -178,7 +131,7 @@ export function useRecordingData() {
     const mission = dataStorage.createMissionFromRecording(
       recordingData,
       missionName,
-      recordingStartTime.current,
+      recordingStartTime,
       endTime,
       locationContext,
       activityContext,
@@ -205,19 +158,9 @@ export function useRecordingData() {
     }
 
     // Clear recording data
-    setRecordingData([]);
-    recordingStartTime.current = null;
+    clearRecordingData();
 
     return mission;
-  };
-
-  const clearRecordingData = () => {
-    setRecordingData([]);
-    recordingStartTime.current = null;
-  };
-
-  const updateMissionContext = (location: string, activity: string) => {
-    setMissionContext({ location, activity });
   };
 
   return {
@@ -230,6 +173,6 @@ export function useRecordingData() {
     saveMission,
     clearRecordingData,
     updateMissionContext,
-    recordingStartTime: recordingStartTime.current
+    recordingStartTime
   };
 }
