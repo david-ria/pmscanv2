@@ -28,15 +28,17 @@ import { formatDistanceToNow } from 'date-fns';
 interface GroupCardProps {
   group: Group;
   onInviteUser: () => void;
+  isAdminView?: boolean;
 }
 
-export function GroupCard({ group, onInviteUser }: GroupCardProps) {
+export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCardProps) {
   const { deleteGroup, leaveGroup } = useGroups();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
 
   const isAdmin = group.role === 'admin';
+  const showAdminActions = isAdminView || isAdmin;
 
   const handleDelete = async () => {
     try {
@@ -79,7 +81,7 @@ export function GroupCard({ group, onInviteUser }: GroupCardProps) {
                   View Details
                 </Link>
               </DropdownMenuItem>
-              {isAdmin && (
+              {showAdminActions && isAdmin && (
                 <>
                   <DropdownMenuItem onClick={() => setEditOpen(true)}>
                     <Edit className="h-4 w-4 mr-2" />
@@ -99,7 +101,7 @@ export function GroupCard({ group, onInviteUser }: GroupCardProps) {
                   </DropdownMenuItem>
                 </>
               )}
-              {!isAdmin && (
+              {!showAdminActions && !isAdmin && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -138,7 +140,7 @@ export function GroupCard({ group, onInviteUser }: GroupCardProps) {
                 Manage
               </Link>
             </Button>
-            {isAdmin && (
+            {showAdminActions && isAdmin && (
               <Button onClick={onInviteUser} size="sm" className="flex-1">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Invite

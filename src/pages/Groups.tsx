@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Users, Settings, UserPlus, Mail } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Plus, Users, Settings, UserPlus, Mail, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,13 +14,21 @@ import { GroupCard } from '@/components/Groups/GroupCard';
 import { InvitationCard } from '@/components/Groups/InvitationCard';
 
 export default function Groups() {
+  const [searchParams] = useSearchParams();
   const { groups, loading: groupsLoading } = useGroups();
   const { invitations, loading: invitationsLoading } = useGroupInvitations();
-  const { isSuperAdmin } = useUserRole();
+  const { isSuperAdmin, userRole } = useUserRole();
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [inviteUserOpen, setInviteUserOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const { t } = useTranslation();
+
+  // Get initial tab from URL params
+  const initialTab = searchParams.get('tab') === 'admin' && isSuperAdmin ? 'admin' : 'my-groups';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Log user role for debugging
+  console.log('Groups page - User role:', userRole, 'Is super admin:', isSuperAdmin);
 
   const handleInviteUser = (groupId: string) => {
     setSelectedGroupId(groupId);
@@ -50,16 +59,10 @@ export default function Groups() {
             {t('groups.subtitle')}
           </p>
         </div>
-        {isSuperAdmin && (
-          <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            {t('groups.createGroup')}
-          </Button>
-        )}
       </div>
 
-      <Tabs defaultValue="my-groups" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <TabsTrigger value="my-groups" className="gap-2">
             <Users className="h-4 w-4" />
             {t('groups.myGroups')} ({groups.length})
@@ -68,6 +71,12 @@ export default function Groups() {
             <Mail className="h-4 w-4" />
             {t('groups.invitations')} ({invitations.length})
           </TabsTrigger>
+          {isSuperAdmin && (
+            <TabsTrigger value="admin" className="gap-2">
+              <Shield className="h-4 w-4" />
+              {t('groups.adminPanel')}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="my-groups" className="space-y-4">
@@ -94,6 +103,7 @@ export default function Groups() {
                   key={group.id}
                   group={group}
                   onInviteUser={() => handleInviteUser(group.id)}
+                  isAdminView={false}
                 />
               ))}
             </div>
@@ -119,6 +129,48 @@ export default function Groups() {
             </div>
           )}
         </TabsContent>
+
+        {isSuperAdmin && (
+          <TabsContent value="admin" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Admin Panel</h2>
+                <p className="text-muted-foreground">Manage all groups, create new groups, and handle administrative tasks</p>
+              </div>
+              <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                {t('groups.createGroup')}
+              </Button>
+            </div>
+
+            {groups.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Shield className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No groups created yet</h3>
+                  <p className="text-muted-foreground text-center mb-4">
+                    Create your first group to start managing air quality monitoring groups
+                  </p>
+                  <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    {t('groups.createGroup')}
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {groups.map((group) => (
+                  <GroupCard
+                    key={group.id}
+                    group={group}
+                    onInviteUser={() => handleInviteUser(group.id)}
+                    isAdminView={true}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        )}
       </Tabs>
 
       <CreateGroupDialog

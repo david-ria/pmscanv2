@@ -81,6 +81,8 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
     return lang ? lang.name : currentLanguage.toUpperCase();
   };
 
+  
+
   return [
     {
       title: t('account.title'),
