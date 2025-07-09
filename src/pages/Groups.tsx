@@ -86,14 +86,8 @@ export default function Groups() {
                 <Users className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">{t('groups.noGroupsYet')}</h3>
                 <p className="text-muted-foreground text-center mb-4">
-                  {isSuperAdmin ? t('groups.createFirstGroup') : t('groups.invitationsDescription')}
+                  {t('groups.invitationsDescription')}
                 </p>
-                {isSuperAdmin && (
-                  <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    {t('groups.createYourFirstGroup')}
-                  </Button>
-                )}
               </CardContent>
             </Card>
           ) : (
