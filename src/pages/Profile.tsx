@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Calendar, Lock, Save } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
 
 interface Profile {
   id: string;
@@ -23,6 +24,7 @@ interface Profile {
 export default function Profile() {
   const { user, updatePassword } = useAuth();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,8 +54,8 @@ export default function Profile() {
       if (error) {
         console.error('Error fetching profile:', error);
         toast({
-          title: "Erreur",
-          description: "Impossible de charger le profil",
+          title: t('common.error'),
+          description: t('profile.profileUpdateError'),
           variant: "destructive"
         });
       } else {
@@ -85,21 +87,21 @@ export default function Profile() {
 
       if (error) {
         toast({
-          title: "Erreur",
+          title: t('common.error'),
           description: error.message,
           variant: "destructive"
         });
       } else {
         toast({
-          title: "Profil mis à jour",
-          description: "Vos informations ont été sauvegardées"
+          title: t('profile.profileUpdated'),
+          description: t('profile.infoSaved')
         });
         fetchProfile(); // Refresh profile data
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Une erreur inattendue s'est produite",
+        title: t('common.error'),
+        description: t('auth.unexpectedError'),
         variant: "destructive"
       });
     } finally {
@@ -112,8 +114,8 @@ export default function Profile() {
     
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Erreur",
-        description: "Les mots de passe ne correspondent pas",
+        title: t('common.error'),
+        description: t('profile.passwordsNoMatch'),
         variant: "destructive"
       });
       return;
@@ -121,8 +123,8 @@ export default function Profile() {
 
     if (newPassword.length < 6) {
       toast({
-        title: "Erreur",
-        description: "Le mot de passe doit contenir au moins 6 caractères",
+        title: t('common.error'),
+        description: t('profile.passwordTooShort'),
         variant: "destructive"
       });
       return;
@@ -135,22 +137,22 @@ export default function Profile() {
       
       if (error) {
         toast({
-          title: "Erreur",
+          title: t('common.error'),
           description: error.message,
           variant: "destructive"
         });
       } else {
         toast({
-          title: "Mot de passe modifié",
-          description: "Votre mot de passe a été mis à jour"
+          title: t('profile.passwordChanged'),
+          description: t('profile.passwordUpdated')
         });
         setNewPassword('');
         setConfirmPassword('');
       }
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Une erreur inattendue s'est produite",
+        title: t('common.error'),
+        description: t('auth.unexpectedError'),
         variant: "destructive"
       });
     } finally {
@@ -163,7 +165,7 @@ export default function Profile() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Chargement du profil...</p>
+          <p className="text-muted-foreground">{t('profile.loadingProfile')}</p>
         </div>
       </div>
     );
@@ -174,8 +176,8 @@ export default function Profile() {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Mon Profil</h1>
-          <p className="text-muted-foreground">Gérez vos informations personnelles</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('profile.title')}</h1>
+          <p className="text-muted-foreground">{t('profile.subtitle')}</p>
         </div>
 
         {/* Profile Information */}
@@ -183,16 +185,16 @@ export default function Profile() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Informations personnelles
+              {t('profile.personalInfo')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="pseudo">Pseudo</Label>
+                <Label htmlFor="pseudo">{t('profile.pseudo')}</Label>
                 <Input
                   id="pseudo"
-                  placeholder="Votre pseudonyme"
+                  placeholder={t('profile.pseudoPlaceholder')}
                   value={pseudo}
                   onChange={(e) => setPseudo(e.target.value)}
                 />
@@ -200,19 +202,19 @@ export default function Profile() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Prénom</Label>
+                  <Label htmlFor="firstName">{t('profile.firstName')}</Label>
                   <Input
                     id="firstName"
-                    placeholder="Votre prénom"
+                    placeholder={t('profile.firstNamePlaceholder')}
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Nom</Label>
+                  <Label htmlFor="lastName">{t('profile.lastName')}</Label>
                   <Input
                     id="lastName"
-                    placeholder="Votre nom"
+                    placeholder={t('profile.lastNamePlaceholder')}
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                   />
@@ -220,20 +222,20 @@ export default function Profile() {
               </div>
 
               <div className="space-y-2">
-                <Label>Email</Label>
+                <Label>{t('profile.email')}</Label>
                 <Input
                   value={user?.email || ''}
                   disabled
                   className="bg-muted"
                 />
                 <p className="text-xs text-muted-foreground">
-                  L'email ne peut pas être modifié
+                  {t('profile.emailNotEditable')}
                 </p>
               </div>
 
               <Button type="submit" disabled={saving}>
                 <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+                {saving ? t('profile.saving') : t('profile.save')}
               </Button>
             </form>
           </CardContent>
@@ -244,27 +246,27 @@ export default function Profile() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Informations du compte
+              {t('profile.accountInfo')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
-                <Label className="text-sm font-medium">Connecté depuis</Label>
+                <Label className="text-sm font-medium">{t('profile.connectedSince')}</Label>
                 <p className="text-muted-foreground">
                   {profile?.created_at ? 
-                    format(new Date(profile.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })
-                    : 'Non disponible'
+                    format(new Date(profile.created_at), 'dd MMMM yyyy à HH:mm', { locale: i18n.language === 'fr' ? fr : enUS })
+                    : t('profile.notAvailable')
                   }
                 </p>
               </div>
               
               <div>
-                <Label className="text-sm font-medium">Dernière mise à jour</Label>
+                <Label className="text-sm font-medium">{t('profile.lastUpdate')}</Label>
                 <p className="text-muted-foreground">
                   {profile?.updated_at ? 
-                    format(new Date(profile.updated_at), 'dd MMMM yyyy à HH:mm', { locale: fr })
-                    : 'Non disponible'
+                    format(new Date(profile.updated_at), 'dd MMMM yyyy à HH:mm', { locale: i18n.language === 'fr' ? fr : enUS })
+                    : t('profile.notAvailable')
                   }
                 </p>
               </div>
@@ -277,28 +279,28 @@ export default function Profile() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lock className="h-5 w-5" />
-              Changer le mot de passe
+              {t('profile.changePassword')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                <Label htmlFor="newPassword">{t('profile.newPassword')}</Label>
                 <Input
                   id="newPassword"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder={t('auth.passwordPlaceholder')}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                <Label htmlFor="confirmPassword">{t('profile.confirmPassword')}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder={t('auth.passwordPlaceholder')}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
@@ -309,7 +311,7 @@ export default function Profile() {
                 disabled={changingPassword || !newPassword || !confirmPassword}
               >
                 <Lock className="h-4 w-4 mr-2" />
-                {changingPassword ? 'Modification...' : 'Changer le mot de passe'}
+                {changingPassword ? t('profile.changing') : t('profile.changePassword')}
               </Button>
             </form>
           </CardContent>

@@ -1,8 +1,8 @@
 {
   "navigation": {
     "realTime": "Real Time",
-    "history": "History",
-    "analysis": "Analysis", 
+    "history": "History", 
+    "analysis": "Analysis",
     "groups": "Groups"
   },
   "header": {
@@ -46,10 +46,99 @@
     "default": "Loading..."
   },
   "auth": {
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "connecting": "Connecting...",
+    "signingUp": "Signing up...",
+    "authentication": "Authentication",
+    "connectionError": "Connection error",
+    "connectionSuccess": "Connection successful",
+    "youAreConnected": "You are now connected",
+    "unexpectedError": "An unexpected error occurred",
+    "registrationError": "Registration error", 
+    "registrationSuccess": "Registration successful",
+    "checkEmailConfirm": "Check your email to confirm your account",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "••••••••",
+    "firstNamePlaceholder": "First name",
+    "lastNamePlaceholder": "Last name"
   },
   "language": {
     "french": "Français",
     "english": "English"
+  },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Manage your personal information",
+    "loadingProfile": "Loading profile...",
+    "personalInfo": "Personal information",
+    "pseudo": "Username",
+    "pseudoPlaceholder": "Your username",
+    "firstName": "First name",
+    "firstNamePlaceholder": "Your first name",
+    "lastName": "Last name", 
+    "lastNamePlaceholder": "Your last name",
+    "email": "Email",
+    "emailNotEditable": "Email cannot be modified",
+    "save": "Save",
+    "saving": "Saving...",
+    "accountInfo": "Account information",
+    "connectedSince": "Connected since",
+    "lastUpdate": "Last update",
+    "notAvailable": "Not available",
+    "changePassword": "Change password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "changing": "Changing...",
+    "error": "Error",
+    "profileUpdateError": "Unable to load profile",
+    "profileUpdated": "Profile updated",
+    "infoSaved": "Your information has been saved",
+    "passwordsNoMatch": "Passwords do not match",
+    "passwordTooShort": "Password must contain at least 6 characters",
+    "passwordChanged": "Password changed",
+    "passwordUpdated": "Your password has been updated"
+  },
+  "groups": {
+    "title": "Groups",
+    "subtitle": "Manage your air quality monitoring groups and collaborate with others",
+    "createGroup": "Create Group",
+    "myGroups": "My Groups",
+    "invitations": "Invitations",
+    "noGroupsYet": "No groups yet",
+    "createFirstGroup": "Create your first group to start collaborating with others on air quality monitoring",
+    "createYourFirstGroup": "Create Your First Group",
+    "noPendingInvitations": "No pending invitations",
+    "invitationsDescription": "When others invite you to join their groups, you'll see the invitations here"
+  },
+  "common": {
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "loading": "Loading...",
+    "notConnected": "Not connected",
+    "connecting": "Connecting...",
+    "good": "Good",
+    "moderate": "Moderate", 
+    "poor": "Poor",
+    "admin": "Admin",
+    "member": "Member",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
+  },
+  "welcome": {
+    "title": "Welcome to Your Blank App",
+    "subtitle": "Start building your amazing project here!"
   }
 }
