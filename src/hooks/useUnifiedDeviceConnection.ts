@@ -4,9 +4,19 @@ import { detectDeviceType } from '@/lib/device/deviceDetection';
 import { usePMScanBluetooth } from './usePMScanBluetooth';
 import { useAirBeamBluetooth } from './useAirBeamBluetooth';
 
-export function useUnifiedDeviceConnection(): DeviceConnectionState & DeviceConnectionMethods {
+interface AvailableDevice {
+  name: string;
+  type: DeviceType;
+  device: BluetoothDevice;
+}
+
+export function useUnifiedDeviceConnection(): DeviceConnectionState & DeviceConnectionMethods & {
+  scanForDevices: () => Promise<AvailableDevice[]>;
+  connectToDevice: (device: AvailableDevice) => Promise<void>;
+} {
   const [selectedDeviceType, setSelectedDeviceType] = useState<DeviceType | null>(null);
   const [manualDeviceType, setManualDeviceType] = useState<DeviceType | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
 
   // PMScan hook
   const pmScanConnection = usePMScanBluetooth();
@@ -70,6 +80,48 @@ export function useUnifiedDeviceConnection(): DeviceConnectionState & DeviceConn
     }
   }, [pmScanConnection, airBeamConnection]);
 
+  const scanForDevices = useCallback(async (): Promise<AvailableDevice[]> => {
+    setIsScanning(true);
+    const devices: AvailableDevice[] = [];
+    
+    try {
+      // Use a general filter to show most Bluetooth LE devices
+      const bluetoothDevice = await navigator.bluetooth.requestDevice({
+        optionalServices: [
+          '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // PMScan service
+          '0000180f-0000-1000-8000-00805f9b34fb'  // Battery service (common)
+        ],
+        acceptAllDevices: true
+      } as any); // TypeScript workaround for acceptAllDevices
+      
+      if (bluetoothDevice && bluetoothDevice.name) {
+        const detectedType = detectDeviceType(bluetoothDevice.name);
+        devices.push({
+          name: bluetoothDevice.name,
+          type: detectedType || 'pmscan',
+          device: bluetoothDevice
+        });
+      }
+    } catch (error) {
+      console.log('No devices found or user cancelled');
+    } finally {
+      setIsScanning(false);
+    }
+    
+    return devices;
+  }, []);
+
+  const connectToDevice = useCallback(async (deviceInfo: AvailableDevice) => {
+    setSelectedDeviceType(deviceInfo.type);
+    setManualDeviceType(deviceInfo.type);
+    
+    if (deviceInfo.type === 'pmscan') {
+      await pmScanConnection.requestDevice();
+    } else if (deviceInfo.type === 'airbeam') {
+      await airBeamConnection.requestDevice();
+    }
+  }, [pmScanConnection, airBeamConnection]);
+
   const disconnect = useCallback(async () => {
     if (selectedDeviceType === 'pmscan') {
       await pmScanConnection.disconnect();
@@ -99,13 +151,15 @@ export function useUnifiedDeviceConnection(): DeviceConnectionState & DeviceConn
 
   return {
     isConnected: activeConnection.isConnected,
-    isConnecting: activeConnection.isConnecting,
+    isConnecting: activeConnection.isConnecting || isScanning,
     device: activeConnection.device,
     currentData: activeConnection.currentData,
     error: activeConnection.error,
     deviceType: selectedDeviceType,
     requestDevice,
     disconnect,
-    detectDeviceType
+    detectDeviceType,
+    scanForDevices,
+    connectToDevice
   };
 }
