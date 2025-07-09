@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Settings, UserPlus, MoreVertical, Trash2, Edit, LogOut } from 'lucide-react';
+import { Users, Settings, UserPlus, MoreVertical, Trash2, Edit, LogOut, Cog } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useGroups, Group } from '@/hooks/useGroups';
 import { EditGroupDialog } from './EditGroupDialog';
+import { GroupSettingsDialog } from './GroupSettingsDialog';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -37,6 +38,7 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const isAdmin = group.role === 'admin';
   // In admin view, super admins can manage any group
@@ -93,6 +95,10 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Group
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+                    <Cog className="h-4 w-4 mr-2" />
+                    Group Settings
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={onInviteUser}>
                     <UserPlus className="h-4 w-4 mr-2" />
                     Invite Members
@@ -148,6 +154,9 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
                   <UserPlus className="h-4 w-4 mr-2" />
                   Invite
                 </Button>
+                <Button variant="outline" onClick={() => setSettingsOpen(true)} size="sm">
+                  <Cog className="h-4 w-4" />
+                </Button>
                 <Button variant="outline" onClick={() => setEditOpen(true)} size="sm">
                   <Settings className="h-4 w-4" />
                 </Button>
@@ -169,6 +178,12 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
         group={group}
         open={editOpen}
         onOpenChange={setEditOpen}
+      />
+
+      <GroupSettingsDialog
+        group={group}
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
