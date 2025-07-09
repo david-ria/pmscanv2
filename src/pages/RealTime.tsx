@@ -7,6 +7,7 @@ import { DataLogger } from "@/components/DataLogger";
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { useGPS } from "@/hooks/useGPS";
 import { useRecordingContext } from "@/contexts/RecordingContext";
+import { useAlerts } from "@/contexts/AlertContext";
 
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -17,6 +18,7 @@ export default function RealTime() {
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
   const { isRecording, addDataPoint, missionContext, recordingData, updateMissionContext } = useRecordingContext();
+  const { checkAlerts } = useAlerts();
 
   // Add data to recording when new data comes in - with deduplication
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
@@ -42,6 +44,13 @@ export default function RealTime() {
       console.log("❌ Not adding data - isRecording:", isRecording, "hasCurrentData:", !!currentData);
     }
   }, [isRecording, currentData, latestLocation, addDataPoint]);
+
+  // Check alerts whenever new data comes in
+  useEffect(() => {
+    if (currentData) {
+      checkAlerts(currentData.pm1, currentData.pm25, currentData.pm10);
+    }
+  }, [currentData, checkAlerts]);
 
   // Update mission context when location or activity changes
   useEffect(() => {

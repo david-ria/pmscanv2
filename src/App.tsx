@@ -12,6 +12,7 @@ import Analysis from "./pages/Analysis";
 import Groups from "./pages/Groups";
 import Profile from "./pages/Profile";
 import CustomThresholds from "./pages/CustomThresholds";
+import CustomAlerts from "./pages/CustomAlerts";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -72,6 +73,7 @@ const App = () => {
                     <Route path="/groups" element={<Groups />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/custom-thresholds" element={<CustomThresholds />} />
+                    <Route path="/custom-alerts" element={<CustomAlerts />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>

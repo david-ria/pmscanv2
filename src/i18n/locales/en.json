@@ -304,5 +304,28 @@
     },
     "saved": "Custom thresholds saved successfully",
     "resetToWHO": "Reset to WHO Standards"
+  },
+  "alerts": {
+    "title": "Alerts & Alarms",
+    "subtitle": "Set up alerts based on exposure time above thresholds",
+    "description": "Configure alerts that trigger when you're exposed to pollution levels above specific thresholds for a certain duration",
+    "enabled": "Alerts enabled",
+    "disabled": "Alerts disabled",
+    "toggleDescription": "Enable or disable all alert notifications",
+    "thresholdLevel": "Threshold (μg/m³)",
+    "exposureDuration": "Exposure duration (minutes)",
+    "minimumDuration": "Minimum duration: 1 minute",
+    "validation": {
+      "thresholdRequired": "Threshold value is required",
+      "durationRequired": "Duration is required",
+      "minimumDuration": "Duration must be at least 1 minute"
+    },
+    "saved": "Alert settings saved successfully",
+    "resetToDefaults": "Reset to Defaults",
+    "pm1Alert": "PM1 Alert",
+    "pm25Alert": "PM2.5 Alert", 
+    "pm10Alert": "PM10 Alert",
+    "alertWhen": "Alert when above {threshold} μg/m³ for {duration} minutes",
+    "noAlertSet": "No alert threshold set"
   }
 }

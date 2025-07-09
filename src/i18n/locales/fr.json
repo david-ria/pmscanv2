@@ -305,5 +305,28 @@
     },
     "saved": "Seuils personnalisés sauvegardés avec succès",
     "resetToWHO": "Réinitialiser aux standards OMS"
+  },
+  "alerts": {
+    "title": "Alertes & Alarmes",
+    "subtitle": "Configurez des alertes basées sur le temps d'exposition au-dessus des seuils",
+    "description": "Configurez des alertes qui se déclenchent lorsque vous êtes exposé à des niveaux de pollution au-dessus de seuils spécifiques pendant une certaine durée",
+    "enabled": "Alertes activées",
+    "disabled": "Alertes désactivées",
+    "toggleDescription": "Activer ou désactiver toutes les notifications d'alerte",
+    "thresholdLevel": "Seuil (μg/m³)",
+    "exposureDuration": "Durée d'exposition (minutes)",
+    "minimumDuration": "Durée minimum : 1 minute",
+    "validation": {
+      "thresholdRequired": "La valeur du seuil est requise",
+      "durationRequired": "La durée est requise",
+      "minimumDuration": "La durée doit être d'au moins 1 minute"
+    },
+    "saved": "Paramètres d'alerte sauvegardés avec succès",
+    "resetToDefaults": "Réinitialiser aux valeurs par défaut",
+    "pm1Alert": "Alerte PM1",
+    "pm25Alert": "Alerte PM2.5", 
+    "pm10Alert": "Alerte PM10",
+    "alertWhen": "Alerter au-dessus de {threshold} μg/m³ pendant {duration} minutes",
+    "noAlertSet": "Aucun seuil d'alerte défini"
   }
 }

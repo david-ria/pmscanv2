@@ -70,6 +70,11 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
     onNavigate();
   };
 
+  const handleCustomAlerts = () => {
+    navigate('/custom-alerts');
+    onNavigate();
+  };
+
   const getCurrentLanguageDisplay = () => {
     const lang = languages.find(l => l.code === currentLanguage);
     return lang ? lang.name : currentLanguage.toUpperCase();
@@ -87,7 +92,7 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
       title: t('settingsMenu.title'),
       items: [
         { icon: Settings, label: t('settingsMenu.customThresholds'), badge: null, action: handleCustomThresholds },
-        { icon: AlertTriangle, label: t('settingsMenu.alertsAlarms'), badge: "3" },
+        { icon: AlertTriangle, label: t('settingsMenu.alertsAlarms'), badge: null, action: handleCustomAlerts },
         { icon: Languages, label: t('settingsMenu.language'), badge: getCurrentLanguageDisplay() }
       ]
     },
