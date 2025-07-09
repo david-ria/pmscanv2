@@ -64,19 +64,31 @@ export function useGoogleFit(): UseGoogleFitReturn {
   const initGapiAuth = useCallback(async () => {
     return new Promise<void>((resolve, reject) => {
       window.gapi.load('auth2', {
-        callback: () => {
-          console.log('Google Auth2 library loaded');
-          // Note: This is a demo client ID - users need to set up their own
-          window.gapi.auth2.init({
-            client_id: '1039486564308-bk68q46o0cr92u2ncdkso30l8m9s51nn.apps.googleusercontent.com',
-            scope: 'https://www.googleapis.com/auth/fitness.activity.read'
-          }).then(() => {
-            console.log('Google Auth2 initialized');
-            resolve();
-          }).catch((error: any) => {
-            console.error('Auth2 init error:', error);
+        callback: async () => {
+          try {
+            console.log('Google Auth2 library loaded');
+            // Get the Google Client ID from Supabase secrets
+            const { data: clientIdResponse } = await supabase.functions.invoke('get-google-client-id');
+            const clientId = clientIdResponse?.client_id;
+            
+            if (!clientId) {
+              throw new Error('Google Client ID not configured');
+            }
+            
+            window.gapi.auth2.init({
+              client_id: clientId,
+              scope: 'https://www.googleapis.com/auth/fitness.activity.read'
+            }).then(() => {
+              console.log('Google Auth2 initialized');
+              resolve();
+            }).catch((error: any) => {
+              console.error('Auth2 init error:', error);
+              reject(error);
+            });
+          } catch (error) {
+            console.error('Error getting Google Client ID:', error);
             reject(error);
-          });
+          }
         },
         onerror: () => {
           reject(new Error('Failed to load Google Auth2 library'));
