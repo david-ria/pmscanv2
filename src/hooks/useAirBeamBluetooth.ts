@@ -32,18 +32,19 @@ export function useAirBeamBluetooth() {
       const decoder = new TextDecoder();
       const dataString = decoder.decode(target.value);
       
-      console.log('📡 Raw AirBeam data received:', dataString);
-      console.log('📡 Raw data length:', dataString.length);
-      console.log('📡 Raw data bytes:', Array.from(new Uint8Array(target.value.buffer)).map(b => b.toString(16)).join(' '));
+      // Reduce logging frequency - only log every 10th message or when significant
+      const shouldLogVerbose = Math.random() < 0.1; // 10% chance
+      
+      if (shouldLogVerbose) {
+        console.log('📡 AirBeam sample data:', dataString.substring(0, 100) + '...');
+      }
       
       // Try parsing with full AirBeam format first
       let data = parseAirBeamDataPayload(dataString, connectionManager.state);
-      console.log('🔍 Parsed AirBeam data (full format):', data);
       
       // Fallback to simple format
       if (!data) {
         data = parseSimpleAirBeamData(dataString);
-        console.log('🔍 Parsed AirBeam data (simple format):', data);
       }
       
       if (data) {
@@ -56,11 +57,21 @@ export function useAirBeamBluetooth() {
             (data!.timestamp.getTime() - prevData.timestamp.getTime()) >= 1000; // 1 second minimum
           
           if (isDifferent) {
-            console.log('🔄 AirBeam data received:', data);
+            console.log('✅ NEW AirBeam Data:', {
+              PM1: data!.pm1,
+              PM25: data!.pm25, 
+              PM10: data!.pm10,
+              timestamp: data!.timestamp.toLocaleTimeString()
+            });
             return data!;
           }
           return prevData;
         });
+      } else {
+        // Log parsing failures less frequently
+        if (shouldLogVerbose) {
+          console.log('⚠️ Failed to parse AirBeam data:', dataString.substring(0, 50));
+        }
       }
     }
   }, []);
