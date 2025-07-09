@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, MapPin, AlertTriangle, Map, Satellite } from "lucide-react";
 import { LocationData } from "@/types/PMScan";
+import { useThresholds } from "@/contexts/ThresholdContext";
 
 interface MapboxMapProps {
   currentLocation?: LocationData | null;
@@ -33,6 +34,33 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
+  const { thresholds, getAirQualityLevel } = useThresholds();
+
+  // Helper function to get color for PM2.5 values
+  const getQualityColor = (pm25: number): string => {
+    const quality = getAirQualityLevel(pm25, 'pm25');
+    switch (quality.level) {
+      case 'good': return '#22c55e';
+      case 'moderate': return '#eab308';
+      case 'poor': return '#f97316';
+      case 'very-poor': return '#ef4444';
+      default: return '#6b7280';
+    }
+  };
+
+  // Function to create map styling expressions based on current thresholds
+  const createMapStyleExpression = (): any => {
+    return [
+      'case',
+      ['<=', ['get', 'pm25'], thresholds.pm25.good],
+      '#22c55e', // Good - Green
+      ['<=', ['get', 'pm25'], thresholds.pm25.moderate],
+      '#eab308', // Moderate - Yellow  
+      ['<=', ['get', 'pm25'], thresholds.pm25.poor],
+      '#f97316', // Poor - Orange
+      '#ef4444'  // Very Poor - Red
+    ] as any;
+  };
 
   // Initialize map
   useEffect(() => {
@@ -132,16 +160,7 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
                   8,
                   6
                 ],
-                'circle-color': [
-                  'case',
-                  ['<=', ['get', 'pm25'], 12],
-                  '#22c55e', // Good - Green
-                  ['<=', ['get', 'pm25'], 35],
-                  '#eab308', // Moderate - Yellow  
-                  ['<=', ['get', 'pm25'], 55],
-                  '#f97316', // Poor - Orange
-                  '#ef4444'  // Very Poor - Red
-                ],
+                'circle-color': createMapStyleExpression(),
                 'circle-stroke-width': 2,
                 'circle-stroke-color': '#ffffff',
                 'circle-opacity': 0.8
@@ -252,28 +271,25 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
         </div>`;
 
     if (pmData) {
-      const getQualityColor = (pm25: number) => {
-        if (pm25 <= 12) return '#22c55e'; // green
-        if (pm25 <= 35) return '#eab308'; // yellow
-        if (pm25 <= 55) return '#f97316'; // orange
-        return '#ef4444'; // red
-      };
+      const pm25Quality = getAirQualityLevel(pmData.pm25, 'pm25');
+      const pm1Quality = getAirQualityLevel(pmData.pm1, 'pm1');
+      const pm10Quality = getAirQualityLevel(pmData.pm10, 'pm10');
 
       popupContent += `
         <div style="border-top: 1px solid #e5e7eb; padding-top: 8px;">
           <div style="font-weight: bold; margin-bottom: 4px;">Air Quality</div>
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 11px;">
-            <div style="text-align: center;">
+            <div style="text-align: center; color: ${getQualityColor(pmData.pm1)};">
               <div style="font-weight: bold;">${Math.round(pmData.pm1)}</div>
-              <div style="color: #666;">PM1</div>
+              <div>PM1</div>
             </div>
             <div style="text-align: center; color: ${getQualityColor(pmData.pm25)};">
               <div style="font-weight: bold;">${Math.round(pmData.pm25)}</div>
               <div>PM2.5</div>
             </div>
-            <div style="text-align: center;">
+            <div style="text-align: center; color: ${getQualityColor(pmData.pm10)};">
               <div style="font-weight: bold;">${Math.round(pmData.pm10)}</div>
-              <div style="color: #666;">PM10</div>
+              <div>PM10</div>
             </div>
           </div>
           <div style="font-size: 10px; color: #666; margin-top: 4px; text-align: center;">
@@ -300,7 +316,7 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
       duration: 1500
     });
 
-  }, [currentLocation, pmData]);
+  }, [currentLocation, pmData, thresholds]);
 
   // Update track visualization when trackPoints change
   useEffect(() => {
@@ -354,6 +370,14 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
       });
     }
   }, [trackPoints, isRecording]);
+
+  // Update map styling when thresholds change
+  useEffect(() => {
+    if (!map.current || !map.current.getLayer('track-points')) return;
+
+    // Update the circle color expression with new thresholds
+    map.current.setPaintProperty('track-points', 'circle-color', createMapStyleExpression());
+  }, [thresholds]);
 
   // Toggle between satellite and map view
   const toggleMapStyle = () => {
@@ -429,16 +453,7 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
             8,
             6
           ],
-          'circle-color': [
-            'case',
-            ['<=', ['get', 'pm25'], 12],
-            '#22c55e', // Good - Green
-            ['<=', ['get', 'pm25'], 35],
-            '#eab308', // Moderate - Yellow  
-            ['<=', ['get', 'pm25'], 55],
-            '#f97316', // Poor - Orange
-            '#ef4444'  // Very Poor - Red
-          ],
+          'circle-color': createMapStyleExpression(),
           'circle-stroke-width': 2,
           'circle-stroke-color': '#ffffff',
           'circle-opacity': 0.8
