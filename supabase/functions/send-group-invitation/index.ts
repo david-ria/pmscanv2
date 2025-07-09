@@ -31,16 +31,34 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Verify user is a member of the group
-    const { data: membership, error: membershipError } = await supabaseClient
-      .from('group_memberships')
-      .select('role')
-      .eq('group_id', groupId)
-      .eq('user_id', user.id)
+    // Verify user has permission to invite (is member or creator of the group)
+    const { data: group, error: groupError } = await supabaseClient
+      .from('groups')
+      .select('created_by')
+      .eq('id', groupId)
       .single();
 
-    if (membershipError || !membership) {
-      throw new Error('You are not a member of this group');
+    if (groupError || !group) {
+      throw new Error('Group not found');
+    }
+
+    // Check if user is creator or member
+    const isCreator = group.created_by === user.id;
+    let isMember = false;
+
+    if (!isCreator) {
+      const { data: membership } = await supabaseClient
+        .from('group_memberships')
+        .select('role')
+        .eq('group_id', groupId)
+        .eq('user_id', user.id)
+        .single();
+      
+      isMember = !!membership;
+    }
+
+    if (!isCreator && !isMember) {
+      throw new Error('You do not have permission to invite users to this group');
     }
 
     // Check if invitation already exists for this email and group
@@ -58,18 +76,8 @@ serve(async (req) => {
     }
 
     // Check if user with this email is already a member
-    const { data: existingMember } = await supabaseClient
-      .from('group_memberships')
-      .select('gm.id')
-      .from('group_memberships gm')
-      .join('auth.users u ON gm.user_id = u.id')
-      .eq('gm.group_id', groupId)
-      .eq('u.email', email)
-      .single();
-
-    if (existingMember) {
-      throw new Error('This user is already a member of the group');
-    }
+    // We'll skip this check for now since we don't have direct access to auth.users
+    // This check can be implemented later with a more complex query
 
     // Generate unique token
     const token = crypto.randomUUID();
