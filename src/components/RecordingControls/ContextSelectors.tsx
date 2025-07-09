@@ -19,14 +19,14 @@ export function ContextSelectors({
   isRecording
 }: ContextSelectorsProps) {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <MapPin className="h-4 w-4" />
           <span>Localisation</span>
         </div>
         <Select value={selectedLocation} onValueChange={onLocationChange}>
-          <SelectTrigger>
+          <SelectTrigger className="h-11">
             <SelectValue placeholder="Aucune localisation" />
           </SelectTrigger>
           <SelectContent>
@@ -50,7 +50,7 @@ export function ContextSelectors({
           )}
         </div>
         <Select value={selectedActivity} onValueChange={onActivityChange}>
-          <SelectTrigger>
+          <SelectTrigger className="h-11">
             <SelectValue placeholder="Aucune activité" />
           </SelectTrigger>
           <SelectContent>

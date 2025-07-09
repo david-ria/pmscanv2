@@ -136,22 +136,20 @@ export function DataLogger({
     <div className={className}>
       {/* Header */}
       <div className="flex items-center justify-between p-3 bg-card/50 border rounded-t-lg text-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Database className="h-4 w-4" />
-            <span className="font-medium">Journal des données</span>
-            <Badge variant={isRecording ? "default" : "secondary"} className="text-xs">
-              {isRecording ? "Enregistrement" : "Arrêté"}
-            </Badge>
-          </div>
-          <span className="text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Database className="h-4 w-4" />
+          <span className="font-medium text-sm">Journal des données</span>
+          <Badge variant={isRecording ? "default" : "secondary"} className="text-xs">
+            {isRecording ? "Enregistrement" : "Arrêté"}
+          </Badge>
+          <span className="text-muted-foreground text-xs">
             {dataLog.length} entrées
           </span>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {dataLog.length > 0 && (
-            <span className="text-muted-foreground text-xs">
+            <span className="text-muted-foreground text-xs hidden sm:inline">
               Dernière: {dataLog[0]?.timestamp.toLocaleTimeString('fr-FR')}
             </span>
           )}
@@ -160,17 +158,17 @@ export function DataLogger({
             size="sm"
             onClick={exportRawData}
             disabled={dataLog.length === 0}
-            className="h-8 px-2"
+            className="h-8 w-8 p-0"
             title="Exporter les données brutes"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-3 w-3" />
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={clearLog}
             disabled={dataLog.length === 0}
-            className="h-8"
+            className="h-8 px-2 text-xs"
           >
             Effacer
           </Button>
@@ -178,20 +176,20 @@ export function DataLogger({
             variant="ghost"
             size="sm"
             onClick={() => setIsMinimized(!isMinimized)}
-            className="h-8 px-2"
+            className="h-8 w-8 p-0"
             title={isMinimized ? "Agrandir" : "Réduire"}
           >
-            {isMinimized ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {isMinimized ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
           </Button>
         </div>
       </div>
 
       {/* Console Log Display */}
       {!isMinimized && (
-        <div className="bg-background border-x border-b rounded-b-lg p-4 h-48 overflow-auto animate-accordion-down">
+        <div className="bg-background border-x border-b rounded-b-lg p-3 h-40 overflow-auto animate-accordion-down">
           {dataLog.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <div className="text-center py-6 text-muted-foreground">
+              <Database className="h-6 w-6 mx-auto mb-2 opacity-50" />
               <p className="text-sm">Aucune donnée enregistrée</p>
               <p className="text-xs mt-1">
                 {isRecording ? "En attente de données..." : "Démarrez un enregistrement pour voir les données"}
@@ -200,13 +198,22 @@ export function DataLogger({
           ) : (
             <div className="space-y-1 font-mono text-xs">
               {dataLog.map((entry) => (
-                <div key={entry.id} className="text-muted-foreground">
-                  [{entry.timestamp.toLocaleTimeString('fr-FR')}] New reading: PM1={entry.pmData.pm1.toFixed(1)}ug/m³, PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, PM10={entry.pmData.pm10.toFixed(1)}ug/m³, Temp={entry.pmData.temp.toFixed(1)}°C
+                <div key={entry.id} className="text-muted-foreground break-all">
+                  <div className="text-xs">
+                    [{entry.timestamp.toLocaleTimeString('fr-FR')}] New reading: PM1={entry.pmData.pm1.toFixed(1)}ug/m³,
+                  </div>
+                  <div className="text-xs pl-2">
+                    PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, PM10={entry.pmData.pm10.toFixed(1)}ug/m³, Temp={entry.pmData.temp.toFixed(1)}°C
+                  </div>
                   {entry.location && (
-                    <span> | GPS: {entry.location.latitude.toFixed(6)}, {entry.location.longitude.toFixed(6)} (+{Math.round(entry.location.accuracy || 0)}m)</span>
+                    <div className="text-xs pl-2">
+                      GPS: {entry.location.latitude.toFixed(6)}, {entry.location.longitude.toFixed(6)} (+{Math.round(entry.location.accuracy || 0)}m)
+                    </div>
                   )}
                   {entry.missionContext && (entry.missionContext.location || entry.missionContext.activity) && (
-                    <span> | Tags: {[entry.missionContext.location, entry.missionContext.activity].filter(Boolean).join(', ')}</span>
+                    <div className="text-xs pl-2">
+                      Tags: {[entry.missionContext.location, entry.missionContext.activity].filter(Boolean).join(', ')}
+                    </div>
                   )}
                 </div>
               ))}
