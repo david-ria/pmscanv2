@@ -140,5 +140,51 @@
   "welcome": {
     "title": "Welcome to Your Blank App",
     "subtitle": "Start building your amazing project here!"
+  },
+  "realTime": {
+    "map": "Map",
+    "graph": "Graph",
+    "satellite": "Satellite",
+    "connectionRequired": "Connection required for map view",
+    "connectSensor": "Connect your PMScan sensor to see real-time data",
+    "lastMeasurement": "Last measurement",
+    "airQuality": {
+      "good": "Good",
+      "moderate": "Moderate",
+      "poor": "Poor",
+      "veryPoor": "Very Poor"
+    },
+    "location": "Location",
+    "activity": "Activity",
+    "noLocation": "No location",
+    "noActivity": "No activity",
+    "dataLogger": "Data Log",
+    "recording": "Recording",
+    "stopped": "Stopped",
+    "entries": "entries",
+    "last": "Last",
+    "export": "Export raw data",
+    "clear": "Clear",
+    "expand": "Expand",
+    "minimize": "Minimize",
+    "noData": "No data recorded",
+    "waitingData": "Waiting for data...",
+    "startRecording": "Start recording to see data"
+  },
+  "locations": {
+    "home": "Home",
+    "school": "School",
+    "office": "Office",
+    "park": "Park",
+    "mainStreet": "Main street",
+    "transport": "Transport"
+  },
+  "activities": {
+    "walking": "Walking",
+    "cycling": "Cycling",
+    "transport": "Transport",
+    "sport": "Sport",
+    "rest": "Rest",
+    "work": "Work"
   }
 }

@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { PMScanData } from "@/lib/pmscan/types";
+import { useTranslation } from "react-i18next";
 
 interface AirQualityCardsProps {
   currentData: PMScanData | null;
@@ -7,11 +8,13 @@ interface AirQualityCardsProps {
 }
 
 export function AirQualityCards({ currentData, isConnected }: AirQualityCardsProps) {
+  const { t } = useTranslation();
+  
   const getAirQualityLevel = (pm25: number) => {
-    if (pm25 <= 12) return { level: "good", label: "Bon", color: "air-good" };
-    if (pm25 <= 35) return { level: "moderate", label: "Modéré", color: "air-moderate" };
-    if (pm25 <= 55) return { level: "poor", label: "Mauvais", color: "air-poor" };
-    return { level: "very-poor", label: "Très mauvais", color: "air-very-poor" };
+    if (pm25 <= 12) return { level: "good", label: t('realTime.airQuality.good'), color: "air-good" };
+    if (pm25 <= 35) return { level: "moderate", label: t('realTime.airQuality.moderate'), color: "air-moderate" };
+    if (pm25 <= 55) return { level: "poor", label: t('realTime.airQuality.poor'), color: "air-poor" };
+    return { level: "very-poor", label: t('realTime.airQuality.veryPoor'), color: "air-very-poor" };
   };
 
   if (!isConnected || !currentData) {
@@ -43,7 +46,7 @@ export function AirQualityCards({ currentData, isConnected }: AirQualityCardsPro
         </div>
         
         <div className="text-center text-sm text-muted-foreground mb-4 p-4 bg-muted/20 rounded-lg">
-          Connectez votre capteur PMScan pour voir les données en temps réel
+          {t('realTime.connectSensor')}
         </div>
       </>
     );
@@ -104,7 +107,7 @@ export function AirQualityCards({ currentData, isConnected }: AirQualityCardsPro
 
       {/* Real-time Status */}
       <div className="text-center text-xs text-muted-foreground mb-4">
-        Dernière mesure : {currentData.timestamp.toLocaleTimeString('fr-FR')}
+        {t('realTime.lastMeasurement')} : {currentData.timestamp.toLocaleTimeString()}
       </div>
     </>
   );

@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Database, Clock, MapPin, Thermometer, Droplet, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { PMScanData } from "@/lib/pmscan/types";
 import { LocationData } from "@/types/PMScan";
+import { useTranslation } from "react-i18next";
 
 interface DataLogEntry {
   id: string;
@@ -36,6 +37,7 @@ export function DataLogger({
   missionContext,
   className 
 }: DataLoggerProps) {
+  const { t } = useTranslation();
   const [dataLog, setDataLog] = useState<DataLogEntry[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
 
@@ -138,19 +140,19 @@ export function DataLogger({
       <div className="flex items-center justify-between p-3 bg-card/50 border rounded-t-lg text-sm">
         <div className="flex items-center gap-2">
           <Database className="h-4 w-4" />
-          <span className="font-medium text-sm">Journal des données</span>
+          <span className="font-medium text-sm">{t('realTime.dataLogger')}</span>
           <Badge variant={isRecording ? "default" : "secondary"} className="text-xs">
-            {isRecording ? "Enregistrement" : "Arrêté"}
+            {isRecording ? t('realTime.recording') : t('realTime.stopped')}
           </Badge>
           <span className="text-muted-foreground text-xs">
-            {dataLog.length} entrées
+            {dataLog.length} {t('realTime.entries')}
           </span>
         </div>
         
         <div className="flex items-center gap-1">
           {dataLog.length > 0 && (
             <span className="text-muted-foreground text-xs hidden sm:inline">
-              Dernière: {dataLog[0]?.timestamp.toLocaleTimeString('fr-FR')}
+              {t('realTime.last')}: {dataLog[0]?.timestamp.toLocaleTimeString()}
             </span>
           )}
           <Button
@@ -159,7 +161,7 @@ export function DataLogger({
             onClick={exportRawData}
             disabled={dataLog.length === 0}
             className="h-8 w-8 p-0"
-            title="Exporter les données brutes"
+            title={t('realTime.export')}
           >
             <Download className="h-3 w-3" />
           </Button>
@@ -170,14 +172,14 @@ export function DataLogger({
             disabled={dataLog.length === 0}
             className="h-8 px-2 text-xs"
           >
-            Effacer
+            {t('realTime.clear')}
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsMinimized(!isMinimized)}
             className="h-8 w-8 p-0"
-            title={isMinimized ? "Agrandir" : "Réduire"}
+            title={isMinimized ? t('realTime.expand') : t('realTime.minimize')}
           >
             {isMinimized ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
           </Button>
@@ -190,9 +192,9 @@ export function DataLogger({
           {dataLog.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
               <Database className="h-6 w-6 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Aucune donnée enregistrée</p>
+              <p className="text-sm">{t('realTime.noData')}</p>
               <p className="text-xs mt-1">
-                {isRecording ? "En attente de données..." : "Démarrez un enregistrement pour voir les données"}
+                {isRecording ? t('realTime.waitingData') : t('realTime.startRecording')}
               </p>
             </div>
           ) : (
@@ -200,7 +202,7 @@ export function DataLogger({
               {dataLog.map((entry) => (
                 <div key={entry.id} className="text-muted-foreground break-all">
                   <div className="text-xs">
-                    [{entry.timestamp.toLocaleTimeString('fr-FR')}] New reading: PM1={entry.pmData.pm1.toFixed(1)}ug/m³,
+                    [{entry.timestamp.toLocaleTimeString()}] New reading: PM1={entry.pmData.pm1.toFixed(1)}ug/m³,
                   </div>
                   <div className="text-xs pl-2">
                     PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, PM10={entry.pmData.pm10.toFixed(1)}ug/m³, Temp={entry.pmData.temp.toFixed(1)}°C

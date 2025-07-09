@@ -1,19 +1,19 @@
-export const locations = [
-  "Maison",
-  "École",
-  "Bureau", 
-  "Parc",
-  "Rue principale",
-  "Transport"
+export const locationKeys = [
+  "home",
+  "school",
+  "office", 
+  "park",
+  "mainStreet",
+  "transport"
 ];
 
-export const activities = [
-  "Marche",
-  "Vélo",
-  "Transport",
-  "Sport",
-  "Repos",
-  "Travail"
+export const activityKeys = [
+  "walking",
+  "cycling",
+  "transport",
+  "sport",
+  "rest",
+  "work"
 ];
 
 export const frequencyOptions = [

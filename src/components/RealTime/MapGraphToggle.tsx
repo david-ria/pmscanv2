@@ -6,6 +6,7 @@ import { FloatingRecordButton } from "@/components/FloatingRecordButton";
 import { PMScanData } from "@/lib/pmscan/types";
 import { LocationData } from "@/types/PMScan";
 import { PMScanDevice } from "@/lib/pmscan/types";
+import { useTranslation } from "react-i18next";
 
 interface RecordingEntry {
   pmData: PMScanData;
@@ -33,6 +34,7 @@ export function MapGraphToggle({
   isRecording,
   device
 }: MapGraphToggleProps) {
+  const { t } = useTranslation();
   return (
     <div className="mb-4">
       {/* Toggle Controls */}
@@ -45,7 +47,7 @@ export function MapGraphToggle({
             className="flex items-center gap-2"
           >
             <Map className="h-4 w-4" />
-            Carte
+            {t('realTime.map')}
           </Button>
           <Button
             variant={showGraph ? "default" : "ghost"}
@@ -54,7 +56,7 @@ export function MapGraphToggle({
             className="flex items-center gap-2"
           >
             <TrendingUp className="h-4 w-4" />
-            Graphique
+            {t('realTime.graph')}
           </Button>
         </div>
       </div>
@@ -85,7 +87,7 @@ export function MapGraphToggle({
               <div className="h-full bg-card border border-border rounded-lg flex items-center justify-center">
                 <div className="text-muted-foreground text-center">
                   <WifiOff className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Connexion requise pour la vue carte</p>
+                  <p>{t('realTime.connectionRequired')}</p>
                 </div>
               </div>
             )}

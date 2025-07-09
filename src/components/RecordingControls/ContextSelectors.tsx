@@ -1,7 +1,8 @@
 import { MapPin, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { locations, activities } from "@/lib/recordingConstants";
+import { locationKeys, activityKeys } from "@/lib/recordingConstants";
+import { useTranslation } from "react-i18next";
 
 interface ContextSelectorsProps {
   selectedLocation: string;
@@ -18,21 +19,22 @@ export function ContextSelectors({
   onActivityChange,
   isRecording
 }: ContextSelectorsProps) {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <MapPin className="h-4 w-4" />
-          <span>Localisation</span>
+          <span>{t('realTime.location')}</span>
         </div>
         <Select value={selectedLocation} onValueChange={onLocationChange}>
           <SelectTrigger className="h-11">
-            <SelectValue placeholder="Aucune localisation" />
+            <SelectValue placeholder={t('realTime.noLocation')} />
           </SelectTrigger>
           <SelectContent>
-            {locations.map((location) => (
-              <SelectItem key={location} value={location}>
-                {location}
+            {locationKeys.map((locationKey) => (
+              <SelectItem key={locationKey} value={t(`locations.${locationKey}`)}>
+                {t(`locations.${locationKey}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -42,7 +44,7 @@ export function ContextSelectors({
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Activity className="h-4 w-4" />
-          <span>Activité</span>
+          <span>{t('realTime.activity')}</span>
           {isRecording && selectedActivity && (
             <Badge variant="outline" className="text-xs">
               {selectedActivity}
@@ -51,12 +53,12 @@ export function ContextSelectors({
         </div>
         <Select value={selectedActivity} onValueChange={onActivityChange}>
           <SelectTrigger className="h-11">
-            <SelectValue placeholder="Aucune activité" />
+            <SelectValue placeholder={t('realTime.noActivity')} />
           </SelectTrigger>
           <SelectContent>
-            {activities.map((activity) => (
-              <SelectItem key={activity} value={activity}>
-                {activity}
+            {activityKeys.map((activityKey) => (
+              <SelectItem key={activityKey} value={t(`activities.${activityKey}`)}>
+                {t(`activities.${activityKey}`)}
               </SelectItem>
             ))}
           </SelectContent>

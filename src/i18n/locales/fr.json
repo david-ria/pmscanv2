@@ -140,5 +140,51 @@
   "welcome": {
     "title": "Bienvenue dans votre application vierge",
     "subtitle": "Commencez à construire votre projet incroyable ici !"
+  },
+  "realTime": {
+    "map": "Carte",
+    "graph": "Graphique",
+    "satellite": "Satellite",
+    "connectionRequired": "Connexion requise pour la vue carte",
+    "connectSensor": "Connectez votre capteur PMScan pour voir les données en temps réel",
+    "lastMeasurement": "Dernière mesure",
+    "airQuality": {
+      "good": "Bon",
+      "moderate": "Modéré",
+      "poor": "Mauvais",
+      "veryPoor": "Très mauvais"
+    },
+    "location": "Localisation",
+    "activity": "Activité",
+    "noLocation": "Aucune localisation",
+    "noActivity": "Aucune activité",
+    "dataLogger": "Journal des données",
+    "recording": "Enregistrement",
+    "stopped": "Arrêté",
+    "entries": "entrées",
+    "last": "Dernière",
+    "export": "Exporter les données brutes",
+    "clear": "Effacer",
+    "expand": "Agrandir",
+    "minimize": "Réduire",
+    "noData": "Aucune donnée enregistrée",
+    "waitingData": "En attente de données...",
+    "startRecording": "Démarrez un enregistrement pour voir les données"
+  },
+  "locations": {
+    "home": "Maison",
+    "school": "École",
+    "office": "Bureau",
+    "park": "Parc",
+    "mainStreet": "Rue principale",
+    "transport": "Transport"
+  },
+  "activities": {
+    "walking": "Marche",
+    "cycling": "Vélo",
+    "transport": "Transport",
+    "sport": "Sport",
+    "rest": "Repos",
+    "work": "Travail"
   }
 }
