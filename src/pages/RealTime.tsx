@@ -5,7 +5,7 @@ import { MapGraphToggle } from "@/components/RealTime/MapGraphToggle";
 import { ContextSelectors } from "@/components/RecordingControls/ContextSelectors";
 import { DataLogger } from "@/components/DataLogger";
 import { BackgroundRecordingStatus } from "@/components/BackgroundRecordingStatus";
-import { BackgroundRecordingControl } from "@/components/BackgroundRecordingControl";
+
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { useGPS } from "@/hooks/useGPS";
 import { useRecordingContext } from "@/contexts/RecordingContext";
@@ -89,8 +89,6 @@ export default function RealTime() {
         device={device}
       />
 
-      {/* Background Recording Controls */}
-      <BackgroundRecordingControl />
 
       {/* Background Recording Status */}
       <BackgroundRecordingStatus />
