@@ -12,8 +12,7 @@ export function exportMissionToCSV(mission: MissionData): void {
     'Longitude',
     'GPS Accuracy (m)',
     'Location Context',
-    'Activity Context',
-    'Recording Frequency'
+    'Activity Context'
   ];
 
   const rows = mission.measurements.map(m => [
@@ -27,8 +26,7 @@ export function exportMissionToCSV(mission: MissionData): void {
     m.longitude?.toFixed(6) || '',
     m.accuracy?.toFixed(0) || '',
     m.locationContext || mission.locationContext || '',
-    m.activityContext || mission.activityContext || '',
-    mission.recordingFrequency
+    m.activityContext || mission.activityContext || ''
   ]);
 
   const csvContent = [headers, ...rows]
