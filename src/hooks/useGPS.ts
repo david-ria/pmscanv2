@@ -7,6 +7,7 @@ export function useGPS() {
   const [watchId, setWatchId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastErrorTime, setLastErrorTime] = useState<number>(0);
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(0);
 
   const stopWatching = useCallback(() => {
     if (watchId !== null) {
@@ -28,6 +29,12 @@ export function useGPS() {
     };
 
     const handleSuccess = (position: GeolocationPosition) => {
+      // Throttle GPS updates to prevent spam - only update every 5 seconds
+      const now = Date.now();
+      if (now - lastUpdateTime < 5000) { // Less than 5 seconds since last update
+        return; // Skip this update
+      }
+      
       const locationData: LocationData = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
@@ -38,6 +45,7 @@ export function useGPS() {
       
       setLatestLocation(locationData);
       setError(null);
+      setLastUpdateTime(now);
       console.log('📍 GPS position updated:', locationData);
     };
 
