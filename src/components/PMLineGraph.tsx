@@ -125,27 +125,6 @@ export function PMLineGraph({ data, className }: PMLineGraphProps) {
           />
         </LineChart>
       </ResponsiveContainer>
-
-      <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-        <div className="p-2 bg-muted/50 rounded-lg">
-          <div className="text-sm text-muted-foreground">PM1 Moy.</div>
-          <div className="text-lg font-bold text-primary">
-            {chartData.length > 0 ? Math.round(chartData.reduce((sum, d) => sum + d.PM1, 0) / chartData.length) : 0} µg/m³
-          </div>
-        </div>
-        <div className="p-2 bg-muted/50 rounded-lg">
-          <div className="text-sm text-muted-foreground">PM2.5 Moy.</div>
-          <div className="text-lg font-bold text-destructive">
-            {chartData.length > 0 ? Math.round(chartData.reduce((sum, d) => sum + d.PM25, 0) / chartData.length) : 0} µg/m³
-          </div>
-        </div>
-        <div className="p-2 bg-muted/50 rounded-lg">
-          <div className="text-sm text-muted-foreground">PM10 Moy.</div>
-          <div className="text-lg font-bold text-secondary-foreground">
-            {chartData.length > 0 ? Math.round(chartData.reduce((sum, d) => sum + d.PM10, 0) / chartData.length) : 0} µg/m³
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
