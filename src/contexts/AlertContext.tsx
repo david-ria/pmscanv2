@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useGroupSettings } from '@/hooks/useGroupSettings';
 
 export interface AlertSettings {
   pm1: {
@@ -80,6 +81,41 @@ export function AlertProvider({ children }: AlertProviderProps) {
     pm10: { isAboveThreshold: false, startTime: null, currentDuration: 0 }
   });
 
+  const { getCurrentAlarms, getCurrentSettings, isGroupMode } = useGroupSettings();
+
+  // Get effective alert settings (group or user)
+  const getEffectiveAlertSettings = (): AlertSettings => {
+    if (isGroupMode) {
+      const groupAlarms = getCurrentAlarms();
+      const groupSettings = getCurrentSettings();
+      
+      if (groupAlarms.length > 0 && groupSettings) {
+        // Convert group alarms to AlertSettings format
+        const groupAlertSettings: AlertSettings = {
+          pm1: {
+            enabled: groupSettings.alarm_enabled && groupAlarms.some(a => a.enabled && a.pm1_threshold !== undefined),
+            threshold: groupAlarms.find(a => a.enabled && a.pm1_threshold !== undefined)?.pm1_threshold || null,
+            duration: 30 // Default duration, could be configurable
+          },
+          pm25: {
+            enabled: groupSettings.alarm_enabled && groupAlarms.some(a => a.enabled && a.pm25_threshold !== undefined),
+            threshold: groupAlarms.find(a => a.enabled && a.pm25_threshold !== undefined)?.pm25_threshold || null,
+            duration: 30
+          },
+          pm10: {
+            enabled: groupSettings.alarm_enabled && groupAlarms.some(a => a.enabled && a.pm10_threshold !== undefined),
+            threshold: groupAlarms.find(a => a.enabled && a.pm10_threshold !== undefined)?.pm10_threshold || null,
+            duration: 30
+          }
+        };
+        return groupAlertSettings;
+      }
+    }
+    
+    // Return user settings if not in group mode or no group alarms
+    return alertSettings;
+  };
+
   // Load alert settings from localStorage on mount and request notification permissions
   useEffect(() => {
     const savedSettings = localStorage.getItem('alertSettings');
@@ -139,6 +175,7 @@ export function AlertProvider({ children }: AlertProviderProps) {
   const checkAlerts = (pm1: number, pm25: number, pm10: number) => {
     if (!globalAlertsEnabled) return;
 
+    const effectiveSettings = getEffectiveAlertSettings();
     const now = new Date();
     const pollutants = [
       { key: 'pm1' as const, value: pm1 },
@@ -150,7 +187,7 @@ export function AlertProvider({ children }: AlertProviderProps) {
       const newState = { ...prevState };
 
       pollutants.forEach(({ key, value }) => {
-        const settings = alertSettings[key];
+        const settings = effectiveSettings[key];
         const currentState = newState[key];
 
         if (!settings.enabled || settings.threshold === null) {
@@ -194,7 +231,7 @@ export function AlertProvider({ children }: AlertProviderProps) {
 
   return (
     <AlertContext.Provider value={{
-      alertSettings,
+      alertSettings: getEffectiveAlertSettings(),
       updateAlertSettings,
       resetToDefaults,
       globalAlertsEnabled,
