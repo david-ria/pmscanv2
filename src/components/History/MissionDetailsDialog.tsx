@@ -40,13 +40,17 @@ export function MissionDetailsDialog({ mission, open, onOpenChange }: MissionDet
 
   // Get track points for the map (only measurements with location data)
   const trackPoints = mission.measurements
-    .filter(m => m.latitude && m.longitude)
+    .filter(m => m.latitude && m.longitude && m.latitude !== 0 && m.longitude !== 0)
     .map(m => ({
       longitude: m.longitude!,
       latitude: m.latitude!,
       pm25: m.pm25,
       timestamp: m.timestamp
     }));
+
+  console.log('🗺️ MissionDetailsDialog: Track points for map:', trackPoints);
+  console.log('🗺️ MissionDetailsDialog: Total measurements:', mission.measurements.length);
+  console.log('🗺️ MissionDetailsDialog: Measurements with location:', trackPoints.length);
 
   // Calculate statistics
   const pm1Values = mission.measurements.map(m => m.pm1);
@@ -98,7 +102,9 @@ export function MissionDetailsDialog({ mission, open, onOpenChange }: MissionDet
   };
 
   // Get the first location for map centering (if available)
-  const firstLocation = mission.measurements.find(m => m.latitude && m.longitude);
+  const firstLocation = mission.measurements.find(m => 
+    m.latitude && m.longitude && m.latitude !== 0 && m.longitude !== 0
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
