@@ -81,9 +81,10 @@ export class AirBeamDeviceInitializer {
       }
 
       if (dataCharacteristic) {
-        console.log('📡 Setting up data notifications...');
+        console.log('📡 Setting up data notifications on characteristic:', dataCharacteristic.uuid);
         await dataCharacteristic.startNotifications();
         dataCharacteristic.addEventListener('characteristicvaluechanged', onDataReceived);
+        console.log('✅ Notifications enabled, waiting for data...');
       } else {
         console.warn('⚠️ No suitable characteristic found with common UUIDs, trying additional ones...');
         

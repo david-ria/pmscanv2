@@ -46,8 +46,10 @@ export class AirBeamConnectionManager {
       throw new Error('No AirBeam device available or should not connect');
     }
     
+    console.log('🔄 Connecting to AirBeam device:', this.device.name);
     const server = await AirBeamConnectionUtils.connectToDevice(this.device);
     this.server = server;
+    console.log('✅ AirBeam server connected');
     return server;
   }
 

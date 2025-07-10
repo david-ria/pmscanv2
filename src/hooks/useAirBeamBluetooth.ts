@@ -32,12 +32,12 @@ export function useAirBeamBluetooth() {
       const decoder = new TextDecoder();
       const dataString = decoder.decode(target.value);
       
-      // Reduce logging frequency - only log every 10th message or when significant
-      const shouldLogVerbose = Math.random() < 0.1; // 10% chance
+      // Always log raw data to see what we're receiving
+      console.log('📡 AirBeam RAW data received:', dataString);
+      console.log('📡 Data length:', dataString.length, 'bytes');
       
-      if (shouldLogVerbose) {
-        console.log('📡 AirBeam sample data:', dataString.substring(0, 100) + '...');
-      }
+      // Show first 200 characters for debugging
+      console.log('📡 Data preview:', dataString.substring(0, 200));
       
       // Try parsing with full AirBeam format first
       let data = parseAirBeamDataPayload(dataString, connectionManager.state);
@@ -68,10 +68,8 @@ export function useAirBeamBluetooth() {
           return prevData;
         });
       } else {
-        // Log parsing failures less frequently
-        if (shouldLogVerbose) {
-          console.log('⚠️ Failed to parse AirBeam data:', dataString.substring(0, 50));
-        }
+        // Log parsing failures
+        console.log('⚠️ Failed to parse AirBeam data:', dataString.substring(0, 50));
       }
     }
   }, []);
