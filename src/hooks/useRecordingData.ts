@@ -1,12 +1,12 @@
 import { useEffect } from "react";
-import { dataStorage } from "@/lib/dataStorage";
 import { PMScanData } from "@/lib/pmscan/types";
 import { LocationData } from "@/types/PMScan";
-import { RecordingEntry } from "@/types/recording";
 import { useRecordingState } from "./useRecordingState";
 import { useBackgroundRecordingIntegration } from "./useBackgroundRecordingIntegration";
+import { useMissionSaver } from "./useMissionSaver";
+import { useAutoSync } from "./useAutoSync";
+import { useDataPointRecorder } from "./useDataPointRecorder";
 import { setGlobalRecording, setBackgroundRecording, getBackgroundRecording } from "@/lib/pmscan/globalConnectionManager";
-import { parseFrequencyToMs, shouldRecordData } from "@/lib/recordingUtils";
 
 export function useRecordingData() {
   const {
@@ -15,7 +15,6 @@ export function useRecordingData() {
     recordingFrequency,
     missionContext,
     recordingStartTime,
-    lastRecordedTime,
     startRecording: startRecordingState,
     stopRecording: stopRecordingState,
     addDataPoint: addDataPointToState,
@@ -30,6 +29,19 @@ export function useRecordingData() {
     storeBackgroundData,
   } = useBackgroundRecordingIntegration();
 
+  const { saveMission: saveMissionHelper } = useMissionSaver();
+
+  const { addDataPoint } = useDataPointRecorder({
+    isRecording,
+    recordingFrequency,
+    storeBackgroundData,
+    addDataPointToState,
+    updateLastRecordedTime,
+  });
+
+  // Use auto-sync functionality
+  useAutoSync();
+
   // Monitor recording state changes
   useEffect(() => {
     // Only log significant state changes
@@ -37,23 +49,6 @@ export function useRecordingData() {
       console.log("🎬 Recording started");
     }
   }, [isRecording]);
-
-  // Auto-sync when coming online
-  useEffect(() => {
-    const handleOnline = () => {
-      dataStorage.syncPendingMissions().catch(console.error);
-    };
-
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
-  }, []);
-
-  // Sync on app load if online
-  useEffect(() => {
-    if (navigator.onLine) {
-      dataStorage.syncPendingMissions().catch(console.error);
-    }
-  }, []);
 
   const startRecording = async (frequency: string = "10s") => {
     startRecordingState(frequency);
@@ -73,75 +68,6 @@ export function useRecordingData() {
     await disableRecordingBackground();
   };
 
-  const addDataPoint = (
-    pmData: PMScanData, 
-    location?: LocationData, 
-    context?: { location: string; activity: string }
-  ) => {
-    console.log('📊 addDataPoint called:', {
-      isRecording,
-      recordingFrequency,
-      lastRecordedTime,
-      pmData: {
-        pm1: pmData.pm1,
-        pm25: pmData.pm25,
-        pm10: pmData.pm10,
-        timestamp: pmData.timestamp
-      },
-      location
-    });
-
-    if (!isRecording) {
-      console.log('❌ Not recording, skipping data point');
-      return;
-    }
-
-    // Check if enough time has passed based on recording frequency
-    const frequencyMs = parseFrequencyToMs(recordingFrequency);
-    console.log('⏱️ Frequency check:', {
-      frequencyMs,
-      recordingFrequency,
-      lastRecordedTime,
-      shouldRecord: shouldRecordData(lastRecordedTime, frequencyMs)
-    });
-    
-    if (!shouldRecordData(lastRecordedTime, frequencyMs)) {
-      console.log('⏭️ Skipping data point - not enough time passed');
-      return;
-    }
-    
-    console.log('✅ Recording data point');
-    
-    // Update last recorded time
-    const currentTime = new Date();
-    updateLastRecordedTime(currentTime);
-    
-    // Use a unique timestamp for each data point
-    const uniqueTimestamp = new Date();
-    const pmDataWithUniqueTimestamp = {
-      ...pmData,
-      timestamp: uniqueTimestamp
-    };
-    
-    const entry: RecordingEntry = {
-      pmData: pmDataWithUniqueTimestamp,
-      location,
-      context
-    };
-
-    console.log('📝 Adding entry to recording data:', entry);
-
-    // Store data for background processing if background mode is enabled
-    if (getBackgroundRecording()) {
-      console.log('💾 Storing background data');
-      storeBackgroundData(pmDataWithUniqueTimestamp, location, context);
-    }
-
-    // Add to recording data
-    addDataPointToState(entry);
-    console.log('✅ Data point added successfully');
-  };
-
   const saveMission = (
     missionName: string,
     locationContext?: string,
@@ -149,42 +75,15 @@ export function useRecordingData() {
     recordingFrequency?: string,
     shared?: boolean
   ) => {
-    
-    if (!recordingStartTime) {
-      throw new Error("Aucun enregistrement en cours à sauvegarder");
-    }
-    
-    if (recordingData.length === 0) {
-      throw new Error("Aucune donnée enregistrée pour créer la mission");
-    }
-
-    const endTime = new Date();
-    const mission = dataStorage.createMissionFromRecording(
+    const mission = saveMissionHelper(
       recordingData,
-      missionName,
       recordingStartTime,
-      endTime,
+      missionName,
       locationContext,
       activityContext,
       recordingFrequency,
       shared
     );
-
-    // Export to CSV immediately without storing locally first
-    dataStorage.exportMissionToCSV(mission);
-
-    // Try to sync to database if online (but don't store locally)
-    if (navigator.onLine) {
-      // Create a temporary mission for database sync only
-      try {
-        dataStorage.saveMissionLocally(mission);
-        dataStorage.syncPendingMissions().catch(console.error);
-        // Clear storage immediately after sync attempt
-        dataStorage.clearLocalStorage();
-      } catch (storageError) {
-        console.warn('Local storage failed, but CSV exported successfully');
-      }
-    }
 
     // Clear recording data
     clearRecordingData();
