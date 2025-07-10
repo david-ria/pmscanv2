@@ -1,54 +1,23 @@
-import { useState } from "react";
-import { Bluetooth, BluetoothOff, Battery, Loader2, Search } from "lucide-react";
+import { Bluetooth, BluetoothOff, Battery, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useUnifiedDeviceConnection } from "@/hooks/useUnifiedDeviceConnection";
-import { getDeviceTypeDisplayName } from "@/lib/device/deviceDetection";
+import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { cn } from "@/lib/utils";
 
 interface BluetoothConnectionProps {
   className?: string;
-  preferredDeviceType?: 'pmscan' | 'airbeam';
 }
 
-export function BluetoothConnection({ className, preferredDeviceType }: BluetoothConnectionProps) {
-  const [availableDevices, setAvailableDevices] = useState<any[]>([]);
-  const [showDevicePicker, setShowDevicePicker] = useState(false);
-  
+export function BluetoothConnection({ className }: BluetoothConnectionProps) {
   const { 
     isConnected, 
     isConnecting, 
     device, 
-    error,
-    deviceType,
+    error, 
     requestDevice, 
-    disconnect,
-    scanForDevices,
-    connectToDevice
-  } = useUnifiedDeviceConnection();
-
-  const handleScanForDevices = async () => {
-    try {
-      const devices = await scanForDevices();
-      if (devices.length > 0) {
-        setAvailableDevices(devices);
-        setShowDevicePicker(true);
-      }
-    } catch (error) {
-      console.error('Failed to scan for devices:', error);
-    }
-  };
-
-  const handleDeviceSelection = async (deviceInfo: any) => {
-    try {
-      await connectToDevice(deviceInfo);
-      setShowDevicePicker(false);
-      setAvailableDevices([]);
-    } catch (error) {
-      console.error('Failed to connect to device:', error);
-    }
-  };
+    disconnect 
+  } = usePMScanBluetooth();
 
   return (
     <Card className={cn("", className)}>
@@ -59,7 +28,7 @@ export function BluetoothConnection({ className, preferredDeviceType }: Bluetoot
           ) : (
             <BluetoothOff className="h-4 w-4 text-muted-foreground" />
           )}
-          Connexion {deviceType ? getDeviceTypeDisplayName(deviceType) : 'Air Quality Device'}
+          Connexion PMScan
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -93,76 +62,42 @@ export function BluetoothConnection({ className, preferredDeviceType }: Bluetoot
             </div>
           ) : (
             <div className="text-sm text-muted-foreground text-center py-2">
-              {preferredDeviceType 
-                ? `Aucun ${getDeviceTypeDisplayName(preferredDeviceType)} connecté`
-                : "Aucun appareil connecté"
-              }
+              Aucun appareil connecté
             </div>
           )}
           
-          {!isConnected && !showDevicePicker && (
-            <Button 
-              onClick={handleScanForDevices}
-              disabled={isConnecting}
-              className="w-full"
-              size="sm"
-            >
-              {isConnecting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Scanning...
-                </>
-              ) : (
-                <>
-                  <Search className="h-4 w-4 mr-2" />
-                  Scan for Devices
-                </>
-              )}
-            </Button>
-          )}
-
-          {showDevicePicker && availableDevices.length > 0 && (
-            <div className="space-y-2">
-              <div className="text-xs text-muted-foreground">Select a device:</div>
-              {availableDevices.map((deviceInfo, index) => (
-                <Button
-                  key={index}
-                  onClick={() => handleDeviceSelection(deviceInfo)}
-                  variant="outline"
-                  className="w-full justify-start"
-                  size="sm"
-                >
-                  <Bluetooth className="h-4 w-4 mr-2" />
-                  <div className="flex flex-col items-start">
-                    <span className="font-medium">{deviceInfo.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {getDeviceTypeDisplayName(deviceInfo.type)}
-                    </span>
-                  </div>
-                </Button>
-              ))}
-              <Button
-                onClick={() => setShowDevicePicker(false)}
-                variant="ghost"
+          <div className="flex gap-2">
+            {!isConnected ? (
+              <Button 
+                onClick={requestDevice} 
+                disabled={isConnecting}
+                className="flex-1"
                 size="sm"
-                className="w-full"
               >
-                Cancel
+                {isConnecting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Connexion...
+                  </>
+                ) : (
+                  <>
+                    <Bluetooth className="h-4 w-4 mr-2" />
+                    Connecter
+                  </>
+                )}
               </Button>
-            </div>
-          )}
-          
-          {isConnected && (
-            <Button 
-              onClick={disconnect} 
-              variant="outline"
-              className="w-full"
-              size="sm"
-            >
-              <BluetoothOff className="h-4 w-4 mr-2" />
-              Déconnecter
-            </Button>
-          )}
+            ) : (
+              <Button 
+                onClick={disconnect} 
+                variant="outline"
+                className="flex-1"
+                size="sm"
+              >
+                <BluetoothOff className="h-4 w-4 mr-2" />
+                Déconnecter
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

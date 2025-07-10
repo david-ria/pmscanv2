@@ -6,8 +6,6 @@ export function useGPS() {
   const [latestLocation, setLatestLocation] = useState<LocationData | null>(null);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [lastErrorTime, setLastErrorTime] = useState<number>(0);
-  const [lastUpdateTime, setLastUpdateTime] = useState<number>(0);
 
   const stopWatching = useCallback(() => {
     if (watchId !== null) {
@@ -23,18 +21,12 @@ export function useGPS() {
     }
 
     const options: PositionOptions = {
-      enableHighAccuracy: false,  // Less demanding on the system
-      timeout: 30000,  // Increased timeout to 30 seconds
-      maximumAge: 60000  // Accept cached position up to 1 minute old
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 5000
     };
 
     const handleSuccess = (position: GeolocationPosition) => {
-      // Throttle GPS updates to prevent spam - only update every 5 seconds
-      const now = Date.now();
-      if (now - lastUpdateTime < 5000) { // Less than 5 seconds since last update
-        return; // Skip this update
-      }
-      
       const locationData: LocationData = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
@@ -45,18 +37,11 @@ export function useGPS() {
       
       setLatestLocation(locationData);
       setError(null);
-      setLastUpdateTime(now);
-      // Reduced GPS logging to prevent console spam
+      console.log('📍 GPS position updated:', locationData);
     };
 
     const handleError = (error: GeolocationPositionError) => {
-      // Throttle error logging to prevent spam
-      const now = Date.now();
-      if (now - lastErrorTime > 10000) { // Only log every 10 seconds
-        console.error('❌ GPS error:', error.message, 'Code:', error.code);
-        setLastErrorTime(now);
-      }
-      
+      console.error('❌ GPS error:', error.message, 'Code:', error.code);
       switch (error.code) {
         case error.PERMISSION_DENIED:
           setError('Location access denied');

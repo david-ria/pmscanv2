@@ -5,8 +5,7 @@ import { MapGraphToggle } from "@/components/RealTime/MapGraphToggle";
 import { ContextSelectors } from "@/components/RecordingControls/ContextSelectors";
 import { DataLogger } from "@/components/DataLogger";
 import { BackgroundRecordingStatus } from "@/components/BackgroundRecordingStatus";
-import { useUnifiedDeviceConnection } from "@/hooks/useUnifiedDeviceConnection";
-import { toPMScanData, toPMScanDevice } from "@/lib/device/dataAdapter";
+import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { useGPS } from "@/hooks/useGPS";
 import { useRecordingContext } from "@/contexts/RecordingContext";
 import { useAlerts } from "@/contexts/AlertContext";
@@ -17,7 +16,7 @@ export default function RealTime() {
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedActivity, setSelectedActivity] = useState("");
   
-  const { currentData, isConnected, device, error, requestDevice, disconnect } = useUnifiedDeviceConnection();
+  const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
   const { isRecording, addDataPoint, missionContext, recordingData, updateMissionContext } = useRecordingContext();
   const { checkAlerts } = useAlerts();
@@ -26,6 +25,8 @@ export default function RealTime() {
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
   
   useEffect(() => {
+    console.log("🔍 RealTime effect triggered - isRecording:", isRecording, "currentData PM2.5:", currentData?.pm25);
+    console.log("📍 Latest GPS location:", latestLocation);
     if (isRecording && currentData) {
       // Prevent duplicate data points by checking if this is actually new data
       const currentTimestamp = currentData.timestamp.getTime();
@@ -35,13 +36,15 @@ export default function RealTime() {
       
       if (!isDuplicate) {
         console.log("🎯 Adding new data point with PM2.5:", currentData.pm25, "and GPS:", latestLocation);
-        // Convert unified data to PMScan format for recording compatibility
-        const pmScanData = toPMScanData(currentData);
-        addDataPoint(pmScanData, latestLocation || undefined, missionContext);
+        addDataPoint(currentData, latestLocation || undefined, missionContext);
         lastDataRef.current = { pm25: currentData.pm25, timestamp: currentTimestamp };
+      } else {
+        console.log("⏭️ Skipping duplicate data point");
       }
+    } else {
+      console.log("❌ Not adding data - isRecording:", isRecording, "hasCurrentData:", !!currentData);
     }
-  }, [isRecording, currentData, addDataPoint, missionContext]);
+  }, [isRecording, currentData, latestLocation, addDataPoint]);
 
   // Check alerts whenever new data comes in
   useEffect(() => {
@@ -86,10 +89,10 @@ export default function RealTime() {
         onToggleView={setShowGraph}
         isOnline={isOnline}
         latestLocation={latestLocation}
-        currentData={currentData ? toPMScanData(currentData) : null}
+        currentData={currentData}
         recordingData={recordingData}
         isRecording={isRecording}
-        device={device ? toPMScanDevice(device) : null}
+        device={device}
       />
 
       {/* Background Recording Status */}
@@ -97,7 +100,7 @@ export default function RealTime() {
 
       {/* Real-time Readings - Air Quality Cards */}
       <AirQualityCards
-        currentData={currentData ? toPMScanData(currentData) : null}
+        currentData={currentData}
         isConnected={isConnected}
       />
 
@@ -115,7 +118,7 @@ export default function RealTime() {
       {/* Data Logger */}
       <DataLogger 
         isRecording={isRecording}
-        currentData={currentData ? toPMScanData(currentData) : null}
+        currentData={currentData}
         currentLocation={latestLocation}
         missionContext={{
           location: selectedLocation,
