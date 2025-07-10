@@ -38,11 +38,6 @@ export function MissionDetailsDialog({ mission, open, onOpenChange }: MissionDet
     } : undefined
   }));
 
-  console.log('🗺️ MissionDetailsDialog: Mission data:', mission);
-  console.log('🗺️ MissionDetailsDialog: Raw measurements sample:', mission.measurements.slice(0, 3));
-  console.log('🗺️ MissionDetailsDialog: Measurements with any location data:', 
-    mission.measurements.filter(m => m.latitude || m.longitude).length);
-  
   // Get track points for the map (only measurements with location data)
   const trackPoints = mission.measurements
     .filter(m => m.latitude && m.longitude && m.latitude !== 0 && m.longitude !== 0)
@@ -52,10 +47,6 @@ export function MissionDetailsDialog({ mission, open, onOpenChange }: MissionDet
       pm25: m.pm25,
       timestamp: m.timestamp
     }));
-
-  console.log('🗺️ MissionDetailsDialog: Track points for map:', trackPoints);
-  console.log('🗺️ MissionDetailsDialog: Total measurements:', mission.measurements.length);
-  console.log('🗺️ MissionDetailsDialog: Measurements with location:', trackPoints.length);
 
   // Calculate statistics
   const pm1Values = mission.measurements.map(m => m.pm1);

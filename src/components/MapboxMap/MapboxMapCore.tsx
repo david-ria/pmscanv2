@@ -37,13 +37,6 @@ export const MapboxMapCore = ({
   isRecording = false, 
   className 
 }: MapboxMapCoreProps) => {
-  console.log('🗺️ MapboxMapCore: Component rendering with props:', {
-    currentLocation,
-    pmData,
-    trackPoints,
-    isRecording,
-    className
-  });
 
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -52,13 +45,6 @@ export const MapboxMapCore = ({
   const [error, setError] = useState<string | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
   const { thresholds, getAirQualityLevel } = useThresholds();
-
-  console.log('🗺️ MapboxMapCore: State values:', {
-    loading,
-    error,
-    isSatellite,
-    thresholds
-  });
 
   // Initialize map
   useEffect(() => {
@@ -102,7 +88,7 @@ export const MapboxMapCore = ({
         map.current.remove();
       }
     };
-  }, []);
+  }, [currentLocation?.latitude, currentLocation?.longitude, thresholds]);
 
   // Update marker when location changes
   useEffect(() => {

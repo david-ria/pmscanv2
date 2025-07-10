@@ -80,13 +80,6 @@ export function MapGraphToggle({
           <>
             {isOnline ? (
               <>
-                {console.log('🗺️ MapGraphToggle: Rendering MapboxMap with props:', {
-                  currentLocation: latestLocation,
-                  pmData: currentData,
-                  trackPoints: trackPoints,
-                  isRecording: isRecording,
-                  isOnline: isOnline
-                })}
                 <MapboxMap 
                   currentLocation={latestLocation}
                   pmData={currentData}
