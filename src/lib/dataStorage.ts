@@ -23,8 +23,6 @@ export interface MissionData {
   shared: boolean;
   measurements: MeasurementData[];
   synced: boolean; // For local storage tracking
-  deviceId?: string;
-  deviceName?: string;
 }
 
 export interface MeasurementData {

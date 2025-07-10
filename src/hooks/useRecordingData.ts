@@ -147,9 +147,7 @@ export function useRecordingData() {
     locationContext?: string,
     activityContext?: string,
     recordingFrequency?: string,
-    shared?: boolean,
-    deviceId?: string,
-    deviceName?: string
+    shared?: boolean
   ) => {
     
     if (!recordingStartTime) {
@@ -169,9 +167,7 @@ export function useRecordingData() {
       locationContext,
       activityContext,
       recordingFrequency,
-      shared,
-      deviceId,
-      deviceName
+      shared
     );
 
     // Export to CSV immediately without storing locally first

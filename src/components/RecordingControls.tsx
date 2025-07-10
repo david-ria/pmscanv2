@@ -69,9 +69,7 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
         selectedLocation || undefined,
         selectedActivity || undefined,
         recordingFrequency,
-        shareData,
-        device?.id || device?.gatt?.device?.id,
-        device?.name
+        shareData
       );
 
       stopRecording();

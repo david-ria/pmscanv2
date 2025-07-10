@@ -19,9 +19,7 @@ export function createMissionFromRecording(
   locationContext?: string,
   activityContext?: string,
   recordingFrequency?: string,
-  shared?: boolean,
-  deviceId?: string,
-  deviceName?: string
+  shared?: boolean
 ): MissionData {
   const measurementData: MeasurementData[] = measurements.map(m => ({
     id: crypto.randomUUID(),
@@ -60,9 +58,7 @@ export function createMissionFromRecording(
     recordingFrequency: recordingFrequency || '30s',
     shared: shared || false,
     measurements: measurementData,
-    synced: false,
-    deviceId,
-    deviceName
+    synced: false
   };
 
   return mission;

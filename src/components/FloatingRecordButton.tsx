@@ -59,9 +59,7 @@ export function FloatingRecordButton({ device, className }: FloatingRecordButton
         missionContext?.location,
         missionContext?.activity,
         recordingFrequency,
-        shareData,
-        device?.id || device?.gatt?.device?.id,
-        device?.name
+        shareData
       );
 
       stopRecording();

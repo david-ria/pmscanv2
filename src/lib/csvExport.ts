@@ -11,9 +11,6 @@ export function exportMissionToCSV(mission: MissionData): void {
     'Latitude',
     'Longitude',
     'GPS Accuracy (m)',
-    'Device ID',
-    'Device Name',
-    'Mission Name',
     'Location Context',
     'Activity Context',
     'Recording Frequency'
@@ -29,9 +26,6 @@ export function exportMissionToCSV(mission: MissionData): void {
     m.latitude?.toFixed(6) || '',
     m.longitude?.toFixed(6) || '',
     m.accuracy?.toFixed(0) || '',
-    mission.deviceId || '',
-    mission.deviceName || '',
-    mission.name,
     m.locationContext || mission.locationContext || '',
     m.activityContext || mission.activityContext || '',
     mission.recordingFrequency
