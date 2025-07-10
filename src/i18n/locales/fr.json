@@ -218,6 +218,7 @@
   },
   "analysis": {
     "title": "Analyse IA personnalisée",
+    "statisticalAnalysis": "Analyse Statistique",
     "refresh": "Actualiser",
     "analyzing": "Analyse...",
     "analysisInProgress": "Analyse en cours...",

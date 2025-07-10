@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Brain, MessageSquare, Download, Trophy, RefreshCw, Calendar, Activity, Clock, BarChart3 } from "lucide-react";
+import { Download, Trophy, RefreshCw, Calendar, Activity, Clock, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ export default function Analysis() {
   const [missions, setMissions] = useState<MissionData[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<"day" | "week" | "month" | "year">("week");
-  const [aiAnalysis, setAiAnalysis] = useState<string>("");
+  const [statisticalAnalysis, setStatisticalAnalysis] = useState<string>("");
   const [dataPoints, setDataPoints] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [analysisGenerated, setAnalysisGenerated] = useState(false);
@@ -151,9 +151,9 @@ export default function Analysis() {
       if (filtered.length === 0) {
         const hasAnyMissions = missions.length > 0;
         if (hasAnyMissions) {
-          setAiAnalysis(`${t(`analysis.noDataForPeriod.${selectedPeriod}`)}\n\n${t('analysis.youHaveMissions', { count: missions.length })}\n\n${t('analysis.tryTo')}\n${t('analysis.changePeriod')}\n${t('analysis.selectDifferentDate')}\n${t('analysis.goToHistory')}`);
+          setStatisticalAnalysis(`${t(`analysis.noDataForPeriod.${selectedPeriod}`)}\n\n${t('analysis.youHaveMissions', { count: missions.length })}\n\n${t('analysis.tryTo')}\n${t('analysis.changePeriod')}\n${t('analysis.selectDifferentDate')}\n${t('analysis.goToHistory')}`);
         } else {
-          setAiAnalysis(`${t('analysis.noDataAvailable')}\n\n${t('analysis.forPersonalizedAnalysis')}\n${t('analysis.goToRealTime')}\n${t('analysis.connectSensor')}\n${t('analysis.startRecording')}\n${t('analysis.comeBackHere')}`);
+          setStatisticalAnalysis(`${t('analysis.noDataAvailable')}\n\n${t('analysis.forPersonalizedAnalysis')}\n${t('analysis.goToRealTime')}\n${t('analysis.connectSensor')}\n${t('analysis.startRecording')}\n${t('analysis.comeBackHere')}`);
         }
         setDataPoints({
           totalMissions: missions.length,
@@ -170,29 +170,55 @@ export default function Analysis() {
                            selectedPeriod === "week" ? t('history.periods.week') : 
                            selectedPeriod === "month" ? t('history.periods.month') : t('history.periods.year');
 
-      console.log("Calling edge function with data:", { missionsCount: filtered.length, timeframe: timeframeText });
-
-      const response = await supabase.functions.invoke('analyze-air-quality', {
-        body: {
-          missions: filtered,
-          timeframe: timeframeText
+      // Generate local statistical analysis instead of AI analysis
+      const validMissions = filtered.filter(m => m.avgPm25 != null && !isNaN(m.avgPm25));
+      const totalExposureMinutes = filtered.reduce((sum, m) => sum + (m.durationMinutes || 0), 0);
+      const avgPM25 = validMissions.length > 0 ? validMissions.reduce((sum, m) => sum + m.avgPm25, 0) / validMissions.length : 0;
+      const maxPM25 = validMissions.length > 0 ? Math.max(...validMissions.map(m => m.maxPm25 || 0)) : 0;
+      const timeAboveWHO = filtered.reduce((total, mission) => {
+        if (mission.avgPm25 != null && !isNaN(mission.avgPm25) && mission.avgPm25 > 15) {
+          return total + (mission.durationMinutes || 0);
         }
+        return total;
+      }, 0);
+
+      // Create statistical summary
+      const exposureHours = (totalExposureMinutes / 60).toFixed(1);
+      const whoExceedancePercentage = totalExposureMinutes > 0 ? ((timeAboveWHO / totalExposureMinutes) * 100).toFixed(1) : 0;
+      
+      const analysisText = `📊 ANALYSE STATISTIQUE - ${timeframeText.toUpperCase()}
+
+🔢 RÉSUMÉ DES DONNÉES:
+• Nombre de missions: ${filtered.length}
+• Temps d'exposition total: ${Math.round(totalExposureMinutes)} minutes (${exposureHours} heures)
+• PM2.5 moyen: ${avgPM25.toFixed(1)} μg/m³
+• PM2.5 maximum: ${maxPM25.toFixed(1)} μg/m³
+
+⚠️ SEUILS OMS:
+• Temps au-dessus du seuil OMS (15 μg/m³): ${timeAboveWHO.toFixed(0)} minutes
+• Pourcentage d'exposition au-dessus du seuil: ${whoExceedancePercentage}%
+
+📈 ÉVALUATION:
+${avgPM25 <= 12 ? '✅ Qualité de l\'air bonne - PM2.5 dans les normes' : 
+  avgPM25 <= 35 ? '⚠️ Qualité de l\'air modérée - Surveillance recommandée' : 
+  avgPM25 <= 55 ? '🔶 Qualité de l\'air mauvaise - Précautions nécessaires' : 
+  '🔴 Qualité de l\'air très mauvaise - Éviter l\'exposition prolongée'}
+
+📍 MISSIONS LES PLUS EXPOSÉES:
+${filtered
+  .sort((a, b) => (b.avgPm25 || 0) - (a.avgPm25 || 0))
+  .slice(0, 3)
+  .map((m, i) => `${i + 1}. ${m.name}: ${(m.avgPm25 || 0).toFixed(1)} μg/m³`)
+  .join('\n')}`;
+
+      setStatisticalAnalysis(analysisText);
+      setDataPoints({
+        totalMissions: filtered.length,
+        totalExposureMinutes,
+        averagePM25: avgPM25,
+        maxPM25,
+        timeAboveWHO
       });
-
-      console.log("Edge function response:", response);
-
-      if (response.error) {
-        console.error("Edge function error:", response.error);
-        throw new Error(response.error.message || 'Failed to generate analysis');
-      }
-
-      if (!response.data) {
-        console.error("No data in response:", response);
-        throw new Error('No data received from analysis function');
-      }
-
-      setAiAnalysis(response.data.analysis || t('analysis.analysisUnavailable'));
-      setDataPoints(response.data.dataPoints);
       setAnalysisGenerated(true);
 
       toast({
@@ -202,7 +228,7 @@ export default function Analysis() {
 
     } catch (error) {
       console.error('Error generating analysis:', error);
-      setAiAnalysis(`${t('analysis.unableToGenerate')}\n\n${t('analysis.forPersonalizedReport')}\n${t('analysis.checkRecordedData')}\n${t('analysis.goToRealTimeForMeasures')}\n${t('analysis.comeBackInMoments')}\n\n${t('analysis.changePeriodIfPersists')}`);
+      setStatisticalAnalysis(`${t('analysis.unableToGenerate')}\n\n${t('analysis.forPersonalizedReport')}\n${t('analysis.checkRecordedData')}\n${t('analysis.goToRealTimeForMeasures')}\n${t('analysis.comeBackInMoments')}\n\n${t('analysis.changePeriodIfPersists')}`);
       toast({
         title: t('analysis.analysisUnavailable'),
         description: t('analysis.checkDataAndRetry'),
@@ -229,54 +255,52 @@ export default function Analysis() {
         className="mb-6"
       />
 
-      {/* AI Analysis Card - temporarily hidden */}
-      {/* <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-primary" />
-              {t('analysis.title')}
-            </CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={regenerateAnalysis}
-              disabled={loading}
-            >
-              {loading ? (
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              {loading ? t('analysis.analyzing') : t('analysis.refresh')}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-8">
-              <RefreshCw className="h-8 w-8 mx-auto text-primary animate-spin mb-4" />
-              <p className="text-muted-foreground">{t('analysis.analysisInProgress')}</p>
+      {/* Statistical Analysis Card */}
+      {statisticalAnalysis && (
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                {t('analysis.statisticalAnalysis')}
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={regenerateAnalysis}
+                disabled={loading}
+              >
+                {loading ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                {loading ? t('analysis.analyzing') : t('analysis.refresh')}
+              </Button>
             </div>
-          ) : (
-            <>
-              <div className="whitespace-pre-line text-sm text-foreground leading-relaxed">
-                {aiAnalysis}
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-8">
+                <RefreshCw className="h-8 w-8 mx-auto text-primary animate-spin mb-4" />
+                <p className="text-muted-foreground">{t('analysis.analysisInProgress')}</p>
               </div>
-              <div className="flex gap-2 mt-4">
-                <Button variant="outline" size="sm" className="flex-1">
-                  <MessageSquare className="h-3 w-3 mr-2" />
-                  {t('analysis.askQuestion')}
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Download className="h-3 w-3 mr-2" />
-                  {t('analysis.exportReport')}
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card> */}
+            ) : (
+              <>
+                <div className="whitespace-pre-line text-sm text-foreground leading-relaxed font-mono">
+                  {statisticalAnalysis}
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Download className="h-3 w-3 mr-2" />
+                    {t('analysis.exportReport')}
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Data Points Summary */}
       {dataPoints && (

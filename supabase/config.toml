@@ -17,6 +17,3 @@ verify_jwt = true
 
 [functions.google-fit-sync]
 verify_jwt = true
-
-[functions.analyze-air-quality]
-verify_jwt = true

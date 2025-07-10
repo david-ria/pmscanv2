@@ -217,6 +217,7 @@
   },
   "analysis": {
     "title": "Personalized AI Analysis",
+    "statisticalAnalysis": "Statistical Analysis",
     "refresh": "Refresh",
     "analyzing": "Analyzing...",
     "analysisInProgress": "Analysis in progress...",
