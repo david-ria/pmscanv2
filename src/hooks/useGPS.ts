@@ -6,6 +6,7 @@ export function useGPS() {
   const [latestLocation, setLatestLocation] = useState<LocationData | null>(null);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastErrorTime, setLastErrorTime] = useState<number>(0);
 
   const stopWatching = useCallback(() => {
     if (watchId !== null) {
@@ -21,9 +22,9 @@ export function useGPS() {
     }
 
     const options: PositionOptions = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 5000
+      enableHighAccuracy: false,  // Less demanding on the system
+      timeout: 30000,  // Increased timeout to 30 seconds
+      maximumAge: 60000  // Accept cached position up to 1 minute old
     };
 
     const handleSuccess = (position: GeolocationPosition) => {
@@ -41,7 +42,13 @@ export function useGPS() {
     };
 
     const handleError = (error: GeolocationPositionError) => {
-      console.error('❌ GPS error:', error.message, 'Code:', error.code);
+      // Throttle error logging to prevent spam
+      const now = Date.now();
+      if (now - lastErrorTime > 10000) { // Only log every 10 seconds
+        console.error('❌ GPS error:', error.message, 'Code:', error.code);
+        setLastErrorTime(now);
+      }
+      
       switch (error.code) {
         case error.PERMISSION_DENIED:
           setError('Location access denied');
