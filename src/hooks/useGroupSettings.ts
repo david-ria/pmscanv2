@@ -10,7 +10,17 @@ export const useGroupSettings = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const groupId = searchParams.get('group');
+    // Check for both 'group' parameter and direct group ID as parameter
+    let groupId = searchParams.get('group');
+    
+    // If no 'group' parameter found, check if the first search param might be a group ID
+    if (!groupId) {
+      const firstParam = Array.from(searchParams.keys())[0];
+      if (firstParam && firstParam.includes('research-lab')) {
+        groupId = firstParam;
+      }
+    }
+    
     console.log('Group ID from URL:', groupId); // Debug log
     
     if (groupId) {
