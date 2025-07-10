@@ -49,35 +49,22 @@ export const MapboxMapCore = ({
   // Initialize map
   useEffect(() => {
     const initMap = async () => {
-      console.log('🗺️ MapboxMapCore: Starting map initialization useEffect');
-      console.log('🗺️ MapboxMapCore: mapContainer.current:', mapContainer.current);
-      
-      if (!mapContainer.current) {
-        console.log('🗺️ MapboxMapCore: ❌ No map container found, aborting');
-        return;
-      }
+      if (!mapContainer.current) return;
 
-      console.log('🗺️ MapboxMapCore: Setting loading state to true');
       setLoading(true);
       setError(null);
 
-      console.log('🗺️ MapboxMapCore: Calling initializeMap...');
       const mapInstance = await initializeMap(
         mapContainer.current,
         currentLocation,
         thresholds,
-        () => {
-          console.log('🗺️ MapboxMapCore: ✅ Map loaded successfully');
-          setLoading(false);
-        },
+        () => setLoading(false),
         (errorMsg) => {
-          console.log('🗺️ MapboxMapCore: ❌ Map loading failed:', errorMsg);
           setError(errorMsg);
           setLoading(false);
         }
       );
 
-      console.log('🗺️ MapboxMapCore: Map instance result:', mapInstance);
       map.current = mapInstance;
     };
 
@@ -88,7 +75,7 @@ export const MapboxMapCore = ({
         map.current.remove();
       }
     };
-  }, [currentLocation?.latitude, currentLocation?.longitude, thresholds]);
+  }, []);
 
   // Update marker when location changes
   useEffect(() => {
@@ -101,7 +88,7 @@ export const MapboxMapCore = ({
       getAirQualityLevel,
       marker.current
     );
-  }, [currentLocation, pmData, thresholds]);
+  }, [currentLocation, pmData]);
 
   // Update track visualization when trackPoints change
   useEffect(() => {
