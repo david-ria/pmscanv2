@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { StatusButtons } from "@/components/RealTime/StatusButtons";
-import { AirQualityCards } from "@/components/RealTime/AirQualityCards";
 import { MapGraphToggle } from "@/components/RealTime/MapGraphToggle";
 import { ContextSelectors } from "@/components/RecordingControls/ContextSelectors";
 import { DataLogger } from "@/components/DataLogger";
@@ -103,11 +102,6 @@ export default function RealTime() {
 
 
 
-      {/* Real-time Readings - Air Quality Cards */}
-      <AirQualityCards
-        currentData={currentData}
-        isConnected={isConnected}
-      />
 
       {/* Context Selectors */}
       <div className="mb-4">
