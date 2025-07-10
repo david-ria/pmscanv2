@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MissionData } from "@/lib/dataStorage";
 import { ShareDialog } from "./ShareDialog";
+import { MissionDetailsDialog } from "./MissionDetailsDialog";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
 
 interface MissionCardProps {
   mission: MissionData;
@@ -15,6 +17,7 @@ interface MissionCardProps {
 
 export function MissionCard({ mission, onExport, onDelete, onShare }: MissionCardProps) {
   const { t } = useTranslation();
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const getQualityColor = (pm25: number) => {
     if (pm25 <= 12) return "text-air-good";
     if (pm25 <= 35) return "text-air-moderate";
@@ -47,8 +50,9 @@ export function MissionCard({ mission, onExport, onDelete, onShare }: MissionCar
   };
 
   return (
-    <Card className="relative">
-      <CardHeader className="pb-3">
+    <>
+      <Card className="relative cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDetailsOpen(true)}>
+        <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -80,7 +84,7 @@ export function MissionCard({ mission, onExport, onDelete, onShare }: MissionCar
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <ShareDialog mission={mission} onShare={onShare}>
             <Button variant="outline" size="sm" className="flex-1">
               <Share className="h-3 w-3 mr-2" />
@@ -106,5 +110,12 @@ export function MissionCard({ mission, onExport, onDelete, onShare }: MissionCar
         </div>
       </CardContent>
     </Card>
+    
+    <MissionDetailsDialog
+      mission={mission}
+      open={detailsOpen}
+      onOpenChange={setDetailsOpen}
+    />
+    </>
   );
 }

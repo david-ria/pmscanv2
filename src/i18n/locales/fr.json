@@ -203,6 +203,11 @@
     "export": "Export",
     "sync": "Sync",
     "local": "Local",
+    "statistics": "Statistiques",
+    "noLocationData": "Aucune donnée de localisation disponible",
+    "average": "Moyenne",
+    "minimum": "Minimum",
+    "maximum": "Maximum",
     "periods": {
       "day": "Jour",
       "week": "Semaine",
