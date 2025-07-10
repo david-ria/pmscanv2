@@ -2,10 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { LocationData } from '@/types/PMScan';
 
 export function useGPS() {
+  console.log('🧭 GPS: Hook initialized');
+  
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [latestLocation, setLatestLocation] = useState<LocationData | null>(null);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  console.log('🧭 GPS: Current state:', { locationEnabled, latestLocation, watchId, error });
 
   const stopWatching = useCallback(() => {
     if (watchId !== null) {
@@ -15,7 +19,10 @@ export function useGPS() {
   }, [watchId]);
 
   const startWatching = useCallback(() => {
+    console.log('🧭 GPS: Starting to watch position...');
+    
     if (!navigator.geolocation) {
+      console.error('🧭 GPS: Geolocation is not supported by this browser');
       setError('Geolocation is not supported by this browser');
       return;
     }
@@ -26,7 +33,15 @@ export function useGPS() {
       maximumAge: 60000 // Cache for 60 seconds to reduce requests
     };
 
+    console.log('🧭 GPS: Options configured:', options);
+
     const handleSuccess = (position: GeolocationPosition) => {
+      console.log('🧭 GPS: Position received successfully!', {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy
+      });
+      
       const locationData: LocationData = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
@@ -37,23 +52,35 @@ export function useGPS() {
       
       setLatestLocation(locationData);
       setError(null);
-      // GPS logging completely disabled to keep console clean
+      setLocationEnabled(true);
+      console.log('🧭 GPS: Location state updated, locationEnabled should now be true');
     };
 
     const handleError = (error: GeolocationPositionError) => {
-      // GPS error logging completely disabled to keep console clean
+      console.error('🧭 GPS: Error occurred:', {
+        code: error.code,
+        message: error.message,
+        PERMISSION_DENIED: error.PERMISSION_DENIED,
+        POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
+        TIMEOUT: error.TIMEOUT
+      });
+      
       switch (error.code) {
         case error.PERMISSION_DENIED:
+          console.error('🧭 GPS: Permission denied');
           setError('Location access denied');
           setLocationEnabled(false);
           break;
         case error.POSITION_UNAVAILABLE:
+          console.error('🧭 GPS: Position unavailable');
           setError('Location information unavailable');
           break;
         case error.TIMEOUT:
+          console.warn('🧭 GPS: Timeout occurred');
           // Don't set error for timeout - GPS might work later
           break;
         default:
+          console.error('🧭 GPS: Unknown error');
           setError('Unknown GPS error');
           break;
       }
@@ -69,10 +96,14 @@ export function useGPS() {
   }, []);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
+    console.log('🧭 GPS: Permission request initiated...');
+    
     try {
       // Check if permissions API is available
       if ('permissions' in navigator) {
+        console.log('🧭 GPS: Using permissions API');
         const permission = await navigator.permissions.query({ name: 'geolocation' });
+        console.log('🧭 GPS: Current permission state:', permission.state);
         
         if (permission.state === 'granted') {
           setLocationEnabled(true);
