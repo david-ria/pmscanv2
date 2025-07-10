@@ -13,24 +13,34 @@ export const initializeMap = async (
   onError: (error: string) => void
 ): Promise<mapboxgl.Map | null> => {
   try {
-    console.log('Requesting Mapbox token from edge function...');
+    console.log('🗺️ Starting map initialization...');
+    console.log('🗺️ Container element:', container);
+    console.log('🗺️ Current location:', currentLocation);
+    
+    console.log('🗺️ Step 1: Requesting Mapbox token from edge function...');
     const { data, error: tokenError } = await supabase.functions.invoke('get-mapbox-token');
     
-    console.log('Edge function response:', { data, error: tokenError });
+    console.log('🗺️ Step 2: Edge function response received:', { data, error: tokenError });
     
     if (tokenError) {
-      console.error('Edge function error:', tokenError);
+      console.error('🗺️ ❌ Edge function error:', tokenError);
       throw new Error(`Edge function error: ${tokenError.message || tokenError}`);
     }
     
     if (!data?.token) {
-      console.error('No token in response:', data);
+      console.error('🗺️ ❌ No token in response:', data);
       throw new Error('No Mapbox token received from edge function');
     }
     
-    console.log('Successfully received Mapbox token');
+    console.log('🗺️ ✅ Successfully received Mapbox token');
+    console.log('🗺️ Token length:', data.token?.length);
 
+    console.log('🗺️ Step 3: Setting Mapbox access token...');
     mapboxgl.accessToken = data.token;
+    
+    console.log('🗺️ Step 4: Creating Mapbox map instance...');
+    console.log('🗺️ Map style:', MAP_STYLES.LIGHT);
+    console.log('🗺️ Map center:', currentLocation ? [currentLocation.longitude, currentLocation.latitude] : [2.3522, 48.8566]);
     
     // Initialize map
     const map = new mapboxgl.Map({
@@ -40,6 +50,9 @@ export const initializeMap = async (
       zoom: currentLocation ? 15 : 10,
       pitch: 0,
     });
+
+    console.log('🗺️ ✅ Map instance created successfully');
+    console.log('🗺️ Map object:', map);
 
     // Add navigation controls
     map.addControl(

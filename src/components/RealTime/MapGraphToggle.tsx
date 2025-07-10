@@ -79,13 +79,22 @@ export function MapGraphToggle({
         ) : (
           <>
             {isOnline ? (
-              <MapboxMap 
-                currentLocation={latestLocation}
-                pmData={currentData}
-                trackPoints={trackPoints}
-                isRecording={isRecording}
-                className="h-full w-full"
-              />
+              <>
+                {console.log('🗺️ MapGraphToggle: Rendering MapboxMap with props:', {
+                  currentLocation: latestLocation,
+                  pmData: currentData,
+                  trackPoints: trackPoints,
+                  isRecording: isRecording,
+                  isOnline: isOnline
+                })}
+                <MapboxMap 
+                  currentLocation={latestLocation}
+                  pmData={currentData}
+                  trackPoints={trackPoints}
+                  isRecording={isRecording}
+                  className="h-full w-full"
+                />
+              </>
             ) : (
               <div className="h-full bg-card border border-border rounded-lg flex items-center justify-center">
                 <div className="text-muted-foreground text-center">

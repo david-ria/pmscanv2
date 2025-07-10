@@ -37,6 +37,14 @@ export const MapboxMapCore = ({
   isRecording = false, 
   className 
 }: MapboxMapCoreProps) => {
+  console.log('🗺️ MapboxMapCore: Component rendering with props:', {
+    currentLocation,
+    pmData,
+    trackPoints,
+    isRecording,
+    className
+  });
+
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
@@ -45,25 +53,45 @@ export const MapboxMapCore = ({
   const [isSatellite, setIsSatellite] = useState(false);
   const { thresholds, getAirQualityLevel } = useThresholds();
 
+  console.log('🗺️ MapboxMapCore: State values:', {
+    loading,
+    error,
+    isSatellite,
+    thresholds
+  });
+
   // Initialize map
   useEffect(() => {
     const initMap = async () => {
-      if (!mapContainer.current) return;
+      console.log('🗺️ MapboxMapCore: Starting map initialization useEffect');
+      console.log('🗺️ MapboxMapCore: mapContainer.current:', mapContainer.current);
+      
+      if (!mapContainer.current) {
+        console.log('🗺️ MapboxMapCore: ❌ No map container found, aborting');
+        return;
+      }
 
+      console.log('🗺️ MapboxMapCore: Setting loading state to true');
       setLoading(true);
       setError(null);
 
+      console.log('🗺️ MapboxMapCore: Calling initializeMap...');
       const mapInstance = await initializeMap(
         mapContainer.current,
         currentLocation,
         thresholds,
-        () => setLoading(false),
+        () => {
+          console.log('🗺️ MapboxMapCore: ✅ Map loaded successfully');
+          setLoading(false);
+        },
         (errorMsg) => {
+          console.log('🗺️ MapboxMapCore: ❌ Map loading failed:', errorMsg);
           setError(errorMsg);
           setLoading(false);
         }
       );
 
+      console.log('🗺️ MapboxMapCore: Map instance result:', mapInstance);
       map.current = mapInstance;
     };
 
