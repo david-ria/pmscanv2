@@ -292,14 +292,13 @@
       "save": "Save"
     },
     "frequency": {
-      "realtime": "Real-time",
       "every1s": "Every 1 second",
+      "every5s": "Every 5 seconds",
       "every10s": "Every 10 seconds",
       "every30s": "Every 30 seconds", 
       "every1m": "Every minute",
       "every5m": "Every 5 minutes",
-      "every10m": "Every 10 minutes",
-      "continuous": "Continuous"
+      "every10m": "Every 10 minutes"
     }
   },
   "thresholds": {

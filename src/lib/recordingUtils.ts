@@ -4,20 +4,13 @@
  * @returns Number of milliseconds
  */
 export const parseFrequencyToMs = (frequency: string): number => {
-  if (frequency === "realtime") {
-    return 0; // No filtering for realtime
-  }
-  if (frequency === "continuous") {
-    return 1000; // 1 second for continuous recording
-  }
-  
   const number = parseInt(frequency);
   if (frequency.includes('s')) {
     return number * 1000; // seconds to milliseconds
   } else if (frequency.includes('m')) {
     return number * 60 * 1000; // minutes to milliseconds
   }
-  return 30000; // default 30 seconds
+  return 10000; // default 10 seconds
 };
 
 /**
@@ -30,9 +23,6 @@ export const shouldRecordData = (
   lastRecordedTime: Date | null,
   frequencyMs: number
 ): boolean => {
-  // Always record for realtime (frequencyMs = 0)
-  if (frequencyMs === 0) return true;
-  
   if (!lastRecordedTime) return true;
   
   const currentTime = new Date();

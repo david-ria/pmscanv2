@@ -17,12 +17,11 @@ export const activityKeys = [
 ];
 
 export const frequencyOptionKeys = [
-  { value: "realtime", key: "realtime" },
   { value: "1s", key: "every1s" },
+  { value: "5s", key: "every5s" },
   { value: "10s", key: "every10s" },
   { value: "30s", key: "every30s" },
   { value: "1m", key: "every1m" },
   { value: "5m", key: "every5m" },
-  { value: "10m", key: "every10m" },
-  { value: "continuous", key: "continuous" }
+  { value: "10m", key: "every10m" }
 ];
