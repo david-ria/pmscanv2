@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useGroupSettings } from "@/hooks/useGroupSettings";
 
 interface AirQualityData {
   pm1: number;
@@ -15,33 +16,56 @@ interface AirQualityCardProps {
   className?: string;
 }
 
-const getAirQualityLevel = (pm25: number) => {
-  if (pm25 <= 12) return { level: "good", label: "Bon", color: "air-good" };
-  if (pm25 <= 35) return { level: "moderate", label: "Modéré", color: "air-moderate" };
-  if (pm25 <= 55) return { level: "poor", label: "Mauvais", color: "air-poor" };
-  return { level: "very-poor", label: "Très mauvais", color: "air-very-poor" };
-};
-
 export function AirQualityCard({ data, className }: AirQualityCardProps) {
-  const quality = getAirQualityLevel(data.pm25);
+  const { getCurrentThresholds, isGroupMode } = useGroupSettings();
+  
+  const getAirQualityLevel = (pm25: number, pm10: number, pm1: number) => {
+    if (isGroupMode) {
+      const thresholds = getCurrentThresholds();
+      
+      // Find the appropriate threshold based on the current values
+      for (const threshold of thresholds) {
+        if (!threshold.enabled) continue;
+        
+        const matchesPM25 = !threshold.pm25_min || !threshold.pm25_max || 
+          (pm25 >= threshold.pm25_min && pm25 <= threshold.pm25_max);
+        const matchesPM10 = !threshold.pm10_min || !threshold.pm10_max || 
+          (pm10 >= threshold.pm10_min && pm10 <= threshold.pm10_max);
+        const matchesPM1 = !threshold.pm1_min || !threshold.pm1_max || 
+          (pm1 >= threshold.pm1_min && pm1 <= threshold.pm1_max);
+          
+        if (matchesPM25 && matchesPM10 && matchesPM1) {
+          return { 
+            level: threshold.name.toLowerCase().replace(' ', '-'), 
+            label: threshold.name, 
+            color: threshold.color 
+          };
+        }
+      }
+    }
+    
+    // Fallback to default thresholds
+    if (pm25 <= 12) return { level: "good", label: "Bon", color: "#22c55e" };
+    if (pm25 <= 35) return { level: "moderate", label: "Modéré", color: "#eab308" };
+    if (pm25 <= 55) return { level: "poor", label: "Mauvais", color: "#f97316" };
+    return { level: "very-poor", label: "Très mauvais", color: "#ef4444" };
+  };
+
+  const quality = getAirQualityLevel(data.pm25, data.pm10, data.pm1);
   
   return (
     <Card className={cn("relative overflow-hidden", className)}>
       <div 
-        className={cn(
-          "absolute inset-0 opacity-5",
-          `bg-${quality.color}`
-        )}
+        className="absolute inset-0 opacity-5"
+        style={{ backgroundColor: quality.color }}
       />
       <CardHeader className="relative">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold">Qualité de l'air</CardTitle>
           <Badge 
             variant="secondary" 
-            className={cn(
-              "text-white font-medium",
-              `bg-${quality.color}`
-            )}
+            className="text-white font-medium"
+            style={{ backgroundColor: quality.color }}
           >
             {quality.label}
           </Badge>
