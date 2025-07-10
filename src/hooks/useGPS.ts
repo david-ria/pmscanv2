@@ -21,9 +21,9 @@ export function useGPS() {
     }
 
     const options: PositionOptions = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 5000
+      enableHighAccuracy: false, // Reduced for better compatibility
+      timeout: 30000, // Increased timeout to prevent frequent errors
+      maximumAge: 30000 // Cache position for 30 seconds
     };
 
     const handleSuccess = (position: GeolocationPosition) => {
@@ -37,11 +37,17 @@ export function useGPS() {
       
       setLatestLocation(locationData);
       setError(null);
-      console.log('📍 GPS position updated:', locationData);
+      // Reduced GPS logging frequency
+      if (Math.random() < 0.1) { // Only log 10% of updates
+        console.log('📍 GPS position updated');
+      }
     };
 
     const handleError = (error: GeolocationPositionError) => {
-      console.error('❌ GPS error:', error.message, 'Code:', error.code);
+      // Only log GPS errors occasionally to reduce spam
+      if (Math.random() < 0.2) {
+        console.warn('GPS error:', error.message);
+      }
       switch (error.code) {
         case error.PERMISSION_DENIED:
           setError('Location access denied');

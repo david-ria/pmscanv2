@@ -29,9 +29,12 @@ export function useRecordingData() {
     storeBackgroundData,
   } = useBackgroundRecordingIntegration();
 
-  // Debug: Log when isRecording changes
+  // Monitor recording state changes
   useEffect(() => {
-    console.log("🚨 isRecording state changed to:", isRecording);
+    // Only log significant state changes
+    if (isRecording) {
+      console.log("🎬 Recording started");
+    }
   }, [isRecording]);
 
   // Auto-sync when coming online
@@ -66,10 +69,7 @@ export function useRecordingData() {
     location?: LocationData, 
     context?: { location: string; activity: string }
   ) => {
-    console.log("🎯 addDataPoint called - isRecording:", isRecording, "pmData:", pmData?.pm25, "location:", location, "context:", context);
-    
     if (!isRecording) {
-      console.log("❌ Not recording, skipping data point");
       return;
     }
 
@@ -77,12 +77,8 @@ export function useRecordingData() {
     const frequencyMs = parseFrequencyToMs(recordingFrequency);
     
     if (!shouldRecordData(lastRecordedTime, frequencyMs)) {
-      const timePassed = lastRecordedTime ? new Date().getTime() - lastRecordedTime.getTime() : 0;
-      console.log(`⏳ Throttling: only ${timePassed}ms passed, need ${frequencyMs}ms`);
       return;
     }
-
-    console.log("✅ Adding data point to recording with context:", context);
     
     // Update last recorded time
     const currentTime = new Date();
@@ -117,7 +113,6 @@ export function useRecordingData() {
     deviceId?: string,
     deviceName?: string
   ) => {
-    console.log("🎯 saveMission called - recordingData length:", recordingData.length, "recordingStartTime:", recordingStartTime);
     
     if (!recordingStartTime) {
       throw new Error("Aucun enregistrement en cours à sauvegarder");
