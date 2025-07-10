@@ -22,7 +22,7 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
   const [selectedActivity, setSelectedActivity] = useState<string>("");
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
   const [showMissionDialog, setShowMissionDialog] = useState(false);
-  const [recordingFrequency, setRecordingFrequency] = useState<string>("30s");
+  const [recordingFrequency, setRecordingFrequency] = useState<string>("10s");
   const [missionName, setMissionName] = useState<string>("");
   const [shareData, setShareData] = useState<boolean>(false);
   const { toast } = useToast();

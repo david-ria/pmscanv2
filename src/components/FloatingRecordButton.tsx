@@ -17,7 +17,7 @@ export function FloatingRecordButton({ device, className }: FloatingRecordButton
   const { t } = useTranslation();
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
   const [showMissionDialog, setShowMissionDialog] = useState(false);
-  const [recordingFrequency, setRecordingFrequency] = useState<string>("30s");
+  const [recordingFrequency, setRecordingFrequency] = useState<string>("10s");
   const [missionName, setMissionName] = useState<string>("");
   const [shareData, setShareData] = useState<boolean>(false);
   const { toast } = useToast();

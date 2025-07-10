@@ -5,7 +5,7 @@ import { setGlobalRecording } from "@/lib/pmscan/globalConnectionManager";
 export function useRecordingState() {
   const [recordingData, setRecordingData] = useState<RecordingEntry[]>([]);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordingFrequency, setRecordingFrequency] = useState<string>("30s");
+  const [recordingFrequency, setRecordingFrequency] = useState<string>("10s");
   const [missionContext, setMissionContext] = useState<MissionContext>({ 
     location: "", 
     activity: "" 
@@ -14,7 +14,7 @@ export function useRecordingState() {
   const recordingStartTime = useRef<Date | null>(null);
   const lastRecordedTime = useRef<Date | null>(null);
 
-  const startRecording = (frequency: string = "30s") => {
+  const startRecording = (frequency: string = "10s") => {
     console.log("🎬 Starting recording with frequency:", frequency);
     setIsRecording(true);
     setRecordingData([]);

@@ -55,7 +55,7 @@ export function useRecordingData() {
     }
   }, []);
 
-  const startRecording = async (frequency: string = "30s") => {
+  const startRecording = async (frequency: string = "10s") => {
     startRecordingState(frequency);
     setGlobalRecording(true);
     
