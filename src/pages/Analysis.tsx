@@ -170,46 +170,89 @@ export default function Analysis() {
                            selectedPeriod === "week" ? t('history.periods.week') : 
                            selectedPeriod === "month" ? t('history.periods.month') : t('history.periods.year');
 
-      // Generate local statistical analysis instead of AI analysis
-      const validMissions = filtered.filter(m => m.avgPm25 != null && !isNaN(m.avgPm25));
+      // Generate local statistical analysis with PM1, PM2.5, and PM10
+      const validMissions = filtered.filter(m => 
+        m.avgPm25 != null && !isNaN(m.avgPm25) &&
+        m.avgPm1 != null && !isNaN(m.avgPm1) &&
+        m.avgPm10 != null && !isNaN(m.avgPm10)
+      );
+      
       const totalExposureMinutes = filtered.reduce((sum, m) => sum + (m.durationMinutes || 0), 0);
+      
+      // Calculate averages for all PM types
+      const avgPM1 = validMissions.length > 0 ? validMissions.reduce((sum, m) => sum + m.avgPm1, 0) / validMissions.length : 0;
       const avgPM25 = validMissions.length > 0 ? validMissions.reduce((sum, m) => sum + m.avgPm25, 0) / validMissions.length : 0;
+      const avgPM10 = validMissions.length > 0 ? validMissions.reduce((sum, m) => sum + m.avgPm10, 0) / validMissions.length : 0;
+      
+      // Calculate maximums for all PM types
+      const maxPM1 = validMissions.length > 0 ? Math.max(...validMissions.map(m => m.avgPm1 || 0)) : 0;
       const maxPM25 = validMissions.length > 0 ? Math.max(...validMissions.map(m => m.maxPm25 || 0)) : 0;
-      const timeAboveWHO = filtered.reduce((total, mission) => {
+      const maxPM10 = validMissions.length > 0 ? Math.max(...validMissions.map(m => m.avgPm10 || 0)) : 0;
+      
+      // Calculate WHO threshold exceedances for each PM type
+      const timeAboveWHO_PM25 = filtered.reduce((total, mission) => {
         if (mission.avgPm25 != null && !isNaN(mission.avgPm25) && mission.avgPm25 > 15) {
           return total + (mission.durationMinutes || 0);
         }
         return total;
       }, 0);
-
-      // Create statistical summary
-      const exposureHours = (totalExposureMinutes / 60).toFixed(1);
-      const whoExceedancePercentage = totalExposureMinutes > 0 ? ((timeAboveWHO / totalExposureMinutes) * 100).toFixed(1) : 0;
       
-      const analysisText = `📊 ANALYSE STATISTIQUE - ${timeframeText.toUpperCase()}
+      const timeAboveWHO_PM10 = filtered.reduce((total, mission) => {
+        if (mission.avgPm10 != null && !isNaN(mission.avgPm10) && mission.avgPm10 > 45) {
+          return total + (mission.durationMinutes || 0);
+        }
+        return total;
+      }, 0);
+
+      // Create comprehensive statistical summary
+      const exposureHours = (totalExposureMinutes / 60).toFixed(1);
+      const whoExceedancePercentage_PM25 = totalExposureMinutes > 0 ? ((timeAboveWHO_PM25 / totalExposureMinutes) * 100).toFixed(1) : 0;
+      const whoExceedancePercentage_PM10 = totalExposureMinutes > 0 ? ((timeAboveWHO_PM10 / totalExposureMinutes) * 100).toFixed(1) : 0;
+      
+      // Overall air quality assessment based on most restrictive PM value
+      const getAirQualityStatus = () => {
+        const worstPM = Math.max(avgPM25, avgPM10 / 3); // Normalize PM10 for comparison
+        if (worstPM <= 12) return '✅ Qualité de l\'air bonne - Toutes les particules dans les normes';
+        if (worstPM <= 35) return '⚠️ Qualité de l\'air modérée - Surveillance recommandée';
+        if (worstPM <= 55) return '🔶 Qualité de l\'air mauvaise - Précautions nécessaires';
+        return '🔴 Qualité de l\'air très mauvaise - Éviter l\'exposition prolongée';
+      };
+      
+      const analysisText = `📊 ANALYSE STATISTIQUE COMPLÈTE - ${timeframeText.toUpperCase()}
 
 🔢 RÉSUMÉ DES DONNÉES:
 • Nombre de missions: ${filtered.length}
 • Temps d'exposition total: ${Math.round(totalExposureMinutes)} minutes (${exposureHours} heures)
-• PM2.5 moyen: ${avgPM25.toFixed(1)} μg/m³
-• PM2.5 maximum: ${maxPM25.toFixed(1)} μg/m³
 
-⚠️ SEUILS OMS:
-• Temps au-dessus du seuil OMS (15 μg/m³): ${timeAboveWHO.toFixed(0)} minutes
-• Pourcentage d'exposition au-dessus du seuil: ${whoExceedancePercentage}%
+🌫️ PARTICULES FINES (MOYENNES):
+• PM1.0: ${avgPM1.toFixed(1)} μg/m³ (max: ${maxPM1.toFixed(1)} μg/m³)
+• PM2.5: ${avgPM25.toFixed(1)} μg/m³ (max: ${maxPM25.toFixed(1)} μg/m³)
+• PM10: ${avgPM10.toFixed(1)} μg/m³ (max: ${maxPM10.toFixed(1)} μg/m³)
 
-📈 ÉVALUATION:
-${avgPM25 <= 12 ? '✅ Qualité de l\'air bonne - PM2.5 dans les normes' : 
-  avgPM25 <= 35 ? '⚠️ Qualité de l\'air modérée - Surveillance recommandée' : 
-  avgPM25 <= 55 ? '🔶 Qualité de l\'air mauvaise - Précautions nécessaires' : 
-  '🔴 Qualité de l\'air très mauvaise - Éviter l\'exposition prolongée'}
+⚠️ SEUILS OMS (Organisation Mondiale de la Santé):
+• PM2.5 > 15 μg/m³: ${timeAboveWHO_PM25.toFixed(0)} min (${whoExceedancePercentage_PM25}% du temps)
+• PM10 > 45 μg/m³: ${timeAboveWHO_PM10.toFixed(0)} min (${whoExceedancePercentage_PM10}% du temps)
+• PM1.0: Pas de seuil OMS défini (particules ultrafines)
 
-📍 MISSIONS LES PLUS EXPOSÉES:
+📋 CLASSIFICATION DES PARTICULES:
+• PM1.0: Particules ultrafines - Pénètrent profondément dans les alvéoles
+• PM2.5: Particules fines - Atteignent les voies respiratoires inférieures
+• PM10: Particules grossières - Affectent principalement les voies supérieures
+
+📈 ÉVALUATION GLOBALE:
+${getAirQualityStatus()}
+
+🏆 MISSIONS LES PLUS EXPOSÉES (PM2.5):
 ${filtered
   .sort((a, b) => (b.avgPm25 || 0) - (a.avgPm25 || 0))
   .slice(0, 3)
-  .map((m, i) => `${i + 1}. ${m.name}: ${(m.avgPm25 || 0).toFixed(1)} μg/m³`)
-  .join('\n')}`;
+  .map((m, i) => `${i + 1}. ${m.name}: PM2.5=${(m.avgPm25 || 0).toFixed(1)}, PM10=${(m.avgPm10 || 0).toFixed(1)} μg/m³`)
+  .join('\n')}
+
+💡 RECOMMANDATIONS:
+${avgPM25 > 15 || avgPM10 > 45 ? 
+  '• Limitez les activités extérieures intenses\n• Consultez les prévisions de qualité de l\'air\n• Considérez un purificateur d\'air intérieur' : 
+  '• Qualité de l\'air acceptable\n• Continuez le monitoring pour détecter les variations\n• Maintenez une bonne ventilation intérieure'}`;
 
       setStatisticalAnalysis(analysisText);
       setDataPoints({
@@ -217,7 +260,7 @@ ${filtered
         totalExposureMinutes,
         averagePM25: avgPM25,
         maxPM25,
-        timeAboveWHO
+        timeAboveWHO: timeAboveWHO_PM25 // Use PM2.5 WHO exceedance for consistency
       });
       setAnalysisGenerated(true);
 
