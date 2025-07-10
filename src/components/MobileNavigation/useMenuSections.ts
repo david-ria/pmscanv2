@@ -1,4 +1,4 @@
-import { User, Settings, Users, Smartphone, AlertTriangle, LogOut, Activity, Languages } from "lucide-react";
+import { User, Settings, Users, Smartphone, AlertTriangle, LogOut, Activity, Languages, Moon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,9 +18,10 @@ interface MenuSection {
 
 interface UseMenuSectionsProps {
   onNavigate: () => void;
+  onBackgroundRecording?: () => void;
 }
 
-export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSection[] {
+export function useMenuSections({ onNavigate, onBackgroundRecording }: UseMenuSectionsProps): MenuSection[] {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { isAuthenticated, connectGoogleFit, syncActivities } = useGoogleFit();
@@ -81,7 +82,9 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
     return lang ? lang.name : currentLanguage.toUpperCase();
   };
 
-  
+  const handleBackgroundRecording = () => {
+    onBackgroundRecording?.();
+  };
 
   return [
     {
@@ -96,7 +99,8 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
       items: [
         { icon: Settings, label: t('settingsMenu.customThresholds'), badge: null, action: handleCustomThresholds },
         { icon: AlertTriangle, label: t('settingsMenu.alertsAlarms'), badge: null, action: handleCustomAlerts },
-        { icon: Languages, label: t('settingsMenu.language'), badge: getCurrentLanguageDisplay() }
+        { icon: Languages, label: t('settingsMenu.language'), badge: getCurrentLanguageDisplay() },
+        { icon: Moon, label: 'Background Recording', badge: null, action: handleBackgroundRecording }
       ]
     },
     // Groups section temporarily hidden
