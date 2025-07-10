@@ -21,9 +21,9 @@ export function useGPS() {
     }
 
     const options: PositionOptions = {
-      enableHighAccuracy: false, // Reduced for better compatibility
-      timeout: 30000, // Increased timeout to prevent frequent errors
-      maximumAge: 30000 // Cache position for 30 seconds
+      enableHighAccuracy: false,
+      timeout: 60000, // 60 seconds - very long timeout
+      maximumAge: 60000 // Cache for 60 seconds to reduce requests
     };
 
     const handleSuccess = (position: GeolocationPosition) => {
@@ -44,9 +44,9 @@ export function useGPS() {
     };
 
     const handleError = (error: GeolocationPositionError) => {
-      // Only log GPS errors occasionally to reduce spam
-      if (Math.random() < 0.2) {
-        console.warn('GPS error:', error.message);
+      // Suppress most GPS errors to keep console clean
+      if (error.code === error.PERMISSION_DENIED && Math.random() < 0.1) {
+        console.warn('GPS permission denied');
       }
       switch (error.code) {
         case error.PERMISSION_DENIED:
@@ -57,7 +57,7 @@ export function useGPS() {
           setError('Location information unavailable');
           break;
         case error.TIMEOUT:
-          setError('Location request timed out');
+          // Don't set error for timeout - GPS might work later
           break;
         default:
           setError('Unknown GPS error');
