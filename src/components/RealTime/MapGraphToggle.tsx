@@ -79,15 +79,13 @@ export function MapGraphToggle({
         ) : (
           <>
             {isOnline ? (
-              <>
-                <MapboxMap 
-                  currentLocation={latestLocation}
-                  pmData={currentData}
-                  trackPoints={trackPoints}
-                  isRecording={isRecording}
-                  className="h-full w-full"
-                />
-              </>
+              <MapboxMap 
+                currentLocation={latestLocation}
+                pmData={currentData}
+                trackPoints={trackPoints}
+                isRecording={isRecording}
+                className="h-full w-full"
+              />
             ) : (
               <div className="h-full bg-card border border-border rounded-lg flex items-center justify-center">
                 <div className="text-muted-foreground text-center">
@@ -96,16 +94,14 @@ export function MapGraphToggle({
                 </div>
               </div>
             )}
-            
-            {/* Floating Record Button */}
-            {!showGraph && (
-              <FloatingRecordButton
-                device={device}
-                className="absolute bottom-4 right-4 z-10"
-              />
-            )}
           </>
         )}
+        
+        {/* Floating Record Button - Always visible */}
+        <FloatingRecordButton
+          device={device}
+          className="absolute bottom-4 right-4 z-10"
+        />
       </div>
     </div>
   );
