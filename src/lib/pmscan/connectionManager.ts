@@ -79,10 +79,12 @@ export class PMScanConnectionManager {
   }
 
   public async disconnect(): Promise<void> {
-    // Check if we're recording globally before allowing disconnection
-    const { getGlobalRecording } = require('./globalConnectionManager');
-    if (getGlobalRecording()) {
-      console.log('🚫 Cannot disconnect PMScan while recording is active');
+    // Check if we're recording globally or in background mode before allowing disconnection
+    const { getGlobalRecording, getBackgroundRecording } = require('./globalConnectionManager');
+    const shouldPreventDisconnect = getGlobalRecording() || getBackgroundRecording();
+    
+    if (shouldPreventDisconnect) {
+      console.log('🚫 Cannot disconnect PMScan while recording is active or background mode is enabled');
       return;
     }
     
@@ -102,18 +104,24 @@ export class PMScanConnectionManager {
 
   public onDisconnected(): void {
     console.log('🔌 PMScan Device disconnected');
+    this.isInited = false;
+
+    // Check if we should automatically reconnect (when recording or in background mode)
+    const { getGlobalRecording, getBackgroundRecording } = require('./globalConnectionManager');
+    const shouldReconnect = getGlobalRecording() || getBackgroundRecording();
     
-    // Check if we should automatically reconnect (when recording)
-    const { getGlobalRecording } = require('./globalConnectionManager');
-    if (getGlobalRecording()) {
-      console.log('🔄 Auto-reconnecting PMScan due to active recording...');
+    if (shouldReconnect) {
+      console.log('🔄 Auto-reconnecting PMScan due to active recording or background mode...');
       // Reset init state but keep shouldConnect true for reconnection
       this.isInited = false;
       // Don't set shouldConnect to false as we want to reconnect
     } else {
-      this.isInited = false;
       this.shouldConnect = false;
     }
+
+    this.device = null;
+    this.server = null;
+    this.service = null;
   }
 
   public async reestablishEventListeners(

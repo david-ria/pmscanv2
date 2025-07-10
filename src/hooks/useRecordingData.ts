@@ -5,6 +5,7 @@ import { LocationData } from "@/types/PMScan";
 import { RecordingEntry } from "@/types/recording";
 import { useRecordingState } from "./useRecordingState";
 import { useBackgroundRecordingIntegration } from "./useBackgroundRecordingIntegration";
+import { setGlobalRecording, setBackgroundRecording, getBackgroundRecording } from "@/lib/pmscan/globalConnectionManager";
 import { parseFrequencyToMs, shouldRecordData } from "@/lib/recordingUtils";
 
 export function useRecordingData() {
@@ -56,11 +57,19 @@ export function useRecordingData() {
 
   const startRecording = async (frequency: string = "30s") => {
     startRecordingState(frequency);
-    await enableRecordingBackground(frequency);
+    setGlobalRecording(true);
+    
+    // Enable background recording if background mode is active
+    if (getBackgroundRecording()) {
+      await enableRecordingBackground(frequency);
+    }
   };
 
   const stopRecording = async () => {
     stopRecordingState();
+    setGlobalRecording(false);
+    
+    // Disable background recording when stopping
     await disableRecordingBackground();
   };
 
@@ -97,8 +106,10 @@ export function useRecordingData() {
       context
     };
 
-    // Store data for background processing if enabled
-    storeBackgroundData(pmDataWithUniqueTimestamp, location, context);
+    // Store data for background processing if background mode is enabled
+    if (getBackgroundRecording()) {
+      storeBackgroundData(pmDataWithUniqueTimestamp, location, context);
+    }
 
     // Add to recording data
     addDataPointToState(entry);
