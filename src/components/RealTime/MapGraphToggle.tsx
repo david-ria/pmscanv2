@@ -36,15 +36,13 @@ export function MapGraphToggle({
 }: MapGraphToggleProps) {
   const { t } = useTranslation();
   
-  // Debug log to check track points
+  // Calculate track points for the map
   const trackPoints = recordingData.map(entry => ({
     longitude: entry.location?.longitude || 0,
     latitude: entry.location?.latitude || 0,
     pm25: entry.pmData.pm25,
     timestamp: entry.pmData.timestamp
   })).filter(point => point.longitude !== 0 && point.latitude !== 0);
-  
-  console.log('Recording data:', recordingData.length, 'Track points:', trackPoints.length);
   return (
     <div className="mb-4">
       {/* Toggle Controls */}
