@@ -78,16 +78,39 @@ export function useRecordingData() {
     location?: LocationData, 
     context?: { location: string; activity: string }
   ) => {
+    console.log('📊 addDataPoint called:', {
+      isRecording,
+      recordingFrequency,
+      lastRecordedTime,
+      pmData: {
+        pm1: pmData.pm1,
+        pm25: pmData.pm25,
+        pm10: pmData.pm10,
+        timestamp: pmData.timestamp
+      },
+      location
+    });
+
     if (!isRecording) {
+      console.log('❌ Not recording, skipping data point');
       return;
     }
 
     // Check if enough time has passed based on recording frequency
     const frequencyMs = parseFrequencyToMs(recordingFrequency);
+    console.log('⏱️ Frequency check:', {
+      frequencyMs,
+      recordingFrequency,
+      lastRecordedTime,
+      shouldRecord: shouldRecordData(lastRecordedTime, frequencyMs)
+    });
     
     if (!shouldRecordData(lastRecordedTime, frequencyMs)) {
+      console.log('⏭️ Skipping data point - not enough time passed');
       return;
     }
+    
+    console.log('✅ Recording data point');
     
     // Update last recorded time
     const currentTime = new Date();
@@ -106,13 +129,17 @@ export function useRecordingData() {
       context
     };
 
+    console.log('📝 Adding entry to recording data:', entry);
+
     // Store data for background processing if background mode is enabled
     if (getBackgroundRecording()) {
+      console.log('💾 Storing background data');
       storeBackgroundData(pmDataWithUniqueTimestamp, location, context);
     }
 
     // Add to recording data
     addDataPointToState(entry);
+    console.log('✅ Data point added successfully');
   };
 
   const saveMission = (
