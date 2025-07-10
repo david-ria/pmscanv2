@@ -288,6 +288,7 @@
       "save": "Sauver"
     },
     "frequency": {
+      "every1s": "Chaque seconde",
       "every10s": "Toutes les 10 secondes",
       "every30s": "Toutes les 30 secondes", 
       "every1m": "Toutes les minutes",

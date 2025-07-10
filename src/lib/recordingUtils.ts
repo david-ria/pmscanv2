@@ -1,9 +1,13 @@
 /**
  * Parse frequency string to milliseconds
- * @param frequency - Frequency string like "30s" or "2m"
+ * @param frequency - Frequency string like "30s" or "2m" or "continuous"
  * @returns Number of milliseconds
  */
 export const parseFrequencyToMs = (frequency: string): number => {
+  if (frequency === "continuous") {
+    return 1000; // 1 second for continuous recording
+  }
+  
   const number = parseInt(frequency);
   if (frequency.includes('s')) {
     return number * 1000; // seconds to milliseconds
