@@ -17,6 +17,11 @@ export default function Analysis() {
 
   return (
     <div className="min-h-screen bg-background px-4 py-6">
+      {/* Header spacing to match History page layout */}
+      <div className="mb-6">
+        {/* Empty space to align with History page sync button area */}
+      </div>
+
       {/* Date Filter */}
       <DateFilter
         selectedDate={selectedDate}
