@@ -27,7 +27,8 @@ export function StatusButtons({
     deviceType,
     isConnecting,
     scanForDevices,
-    connectToDevice
+    connectToDevice,
+    requestDevice
   } = useUnifiedDeviceConnection();
 
   const handleScanForDevices = async () => {
@@ -49,6 +50,24 @@ export function StatusButtons({
       setAvailableDevices([]);
     } catch (error) {
       console.error('Failed to connect to device:', error);
+    }
+  };
+
+  const handleConnectAirBeam = async () => {
+    try {
+      console.log('🔌 Force connecting to AirBeam...');
+      await requestDevice('airbeam');
+    } catch (error) {
+      console.error('Failed to connect to AirBeam:', error);
+    }
+  };
+
+  const handleConnectPMScan = async () => {
+    try {
+      console.log('🔌 Force connecting to PMScan...');
+      await requestDevice('pmscan');
+    } catch (error) {
+      console.error('Failed to connect to PMScan:', error);
     }
   };
 
@@ -91,6 +110,26 @@ export function StatusButtons({
               className="px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
             >
               Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Specific Device Type Buttons - for debugging */}
+        {!isConnected && !showDevicePicker && (
+          <div className="flex gap-1">
+            <button
+              onClick={handleConnectAirBeam}
+              disabled={isConnecting}
+              className="px-2 py-1 text-xs bg-purple-500/20 text-purple-700 border border-purple-500/30 rounded hover:bg-purple-500/30 disabled:opacity-50"
+            >
+              AirBeam
+            </button>
+            <button
+              onClick={handleConnectPMScan}
+              disabled={isConnecting}
+              className="px-2 py-1 text-xs bg-blue-500/20 text-blue-700 border border-blue-500/30 rounded hover:bg-blue-500/30 disabled:opacity-50"
+            >
+              PMScan
             </button>
           </div>
         )}
