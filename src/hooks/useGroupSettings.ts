@@ -11,9 +11,11 @@ export const useGroupSettings = () => {
 
   useEffect(() => {
     const groupId = searchParams.get('group');
+    console.log('Group ID from URL:', groupId); // Debug log
     
     if (groupId) {
       const groupConfig = getGroupConfig(groupId);
+      console.log('Group config found:', groupConfig); // Debug log
       
       if (groupConfig) {
         setActiveGroup(groupConfig);
@@ -29,6 +31,7 @@ export const useGroupSettings = () => {
           duration: 3000
         });
       } else {
+        console.error('Group not found:', groupId); // Debug log
         toast({
           title: "Group Not Found",
           description: `Group "${groupId}" does not exist`,
@@ -38,6 +41,7 @@ export const useGroupSettings = () => {
     } else {
       // Check if we have a stored group
       const storedGroupId = localStorage.getItem('activeGroupId');
+      console.log('Stored group ID:', storedGroupId); // Debug log
       if (storedGroupId) {
         const groupConfig = getGroupConfig(storedGroupId);
         if (groupConfig) {
