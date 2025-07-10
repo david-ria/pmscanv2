@@ -126,45 +126,49 @@ export const groupConfigs: Record<string, GroupConfig> = {
     ],
     locations: [
       {
-        name: 'Home',
+        name: 'Gare TGV',
         description: 'Residential area monitoring'
       },
       {
-        name: 'Office',
+        name: 'Trame',
         description: 'Workplace environment'
       },
       {
-        name: 'Outdoor',
+        name: 'Rue',
         description: 'External environment monitoring'
       },
       {
-        name: 'Transit',
+        name: 'Musée',
+        description: 'Transportation monitoring'
+      }
+      {
+        name: 'Maison',
         description: 'Transportation monitoring'
       }
     ],
     activities: [
       {
-        name: 'Resting',
+        name: 'Cuisine',
         description: 'Sedentary activities',
         icon: 'home'
       },
       {
-        name: 'Working',
+        name: 'Travaille',
         description: 'Work-related activities',
         icon: 'briefcase'
       },
       {
-        name: 'Exercise',
+        name: 'Ménage',
         description: 'Physical activities',
         icon: 'activity'
       },
       {
-        name: 'Commuting',
+        name: 'Bricolage',
         description: 'Transportation activities',
         icon: 'car'
       },
       {
-        name: 'Cooking',
+        name: 'Ventilation',
         description: 'Food preparation',
         icon: 'chef-hat'
       }
