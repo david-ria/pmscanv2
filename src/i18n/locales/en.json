@@ -292,6 +292,7 @@
       "save": "Save"
     },
     "frequency": {
+      "realtime": "Real-time",
       "every1s": "Every 1 second",
       "every10s": "Every 10 seconds",
       "every30s": "Every 30 seconds", 

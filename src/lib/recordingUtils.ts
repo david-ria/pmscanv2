@@ -4,6 +4,9 @@
  * @returns Number of milliseconds
  */
 export const parseFrequencyToMs = (frequency: string): number => {
+  if (frequency === "realtime") {
+    return 0; // No filtering for realtime
+  }
   if (frequency === "continuous") {
     return 1000; // 1 second for continuous recording
   }
@@ -27,6 +30,9 @@ export const shouldRecordData = (
   lastRecordedTime: Date | null,
   frequencyMs: number
 ): boolean => {
+  // Always record for realtime (frequencyMs = 0)
+  if (frequencyMs === 0) return true;
+  
   if (!lastRecordedTime) return true;
   
   const currentTime = new Date();
