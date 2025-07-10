@@ -14,13 +14,15 @@ import { useAlerts } from "@/contexts/AlertContext";
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [selectedActivity, setSelectedActivity] = useState("");
   
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
   const { isRecording, addDataPoint, missionContext, recordingData, updateMissionContext } = useRecordingContext();
   const { checkAlerts } = useAlerts();
+  
+  // Initialize with current mission context if already recording
+  const [selectedLocation, setSelectedLocation] = useState(missionContext.location);
+  const [selectedActivity, setSelectedActivity] = useState(missionContext.activity);
 
   // Add data to recording when new data comes in - with deduplication
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
@@ -52,6 +54,16 @@ export default function RealTime() {
   useEffect(() => {
     updateMissionContext(selectedLocation, selectedActivity);
   }, [selectedLocation, selectedActivity, updateMissionContext]);
+
+  // Sync local state with mission context when component mounts or recording starts
+  useEffect(() => {
+    if (isRecording && missionContext.location && !selectedLocation) {
+      setSelectedLocation(missionContext.location);
+    }
+    if (isRecording && missionContext.activity && !selectedActivity) {
+      setSelectedActivity(missionContext.activity);
+    }
+  }, [isRecording, missionContext.location, missionContext.activity, selectedLocation, selectedActivity]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
