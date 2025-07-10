@@ -96,12 +96,12 @@ export const groupConfigs: Record<string, GroupConfig> = {
       },
       {
         name: 'Poor Quality',
-        pm25_min: 35,
-        pm25_max: 75,
-        pm10_min: 50,
-        pm10_max: 100,
-        pm1_min: 25,
-        pm1_max: 50,
+        pm25_min: 100,
+        pm25_max: 200,
+        pm10_min: 150,
+        pm10_max: 250,
+        pm1_min: 88,
+        pm1_max: 99,
         color: '#f97316',
         enabled: true
       },
