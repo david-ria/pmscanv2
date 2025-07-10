@@ -46,7 +46,7 @@ export function useGPS() {
       setLatestLocation(locationData);
       setError(null);
       setLastUpdateTime(now);
-      console.log('📍 GPS position updated:', locationData);
+      // Reduced GPS logging to prevent console spam
     };
 
     const handleError = (error: GeolocationPositionError) => {

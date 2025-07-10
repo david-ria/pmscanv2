@@ -26,12 +26,6 @@ export default function RealTime() {
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
   
   useEffect(() => {
-    // Only log occasionally to prevent spam
-    const shouldLog = Math.random() < 0.05; // 5% chance
-    if (shouldLog) {
-      console.log('🔍 RealTime effect - isRecording:', isRecording, 'currentData:', currentData ? 'HAS DATA' : 'NO DATA');
-    }
-    
     if (isRecording && currentData) {
       // Prevent duplicate data points by checking if this is actually new data
       const currentTimestamp = currentData.timestamp.getTime();
