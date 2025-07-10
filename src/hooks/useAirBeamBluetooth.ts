@@ -76,16 +76,18 @@ export function useAirBeamBluetooth() {
 
   const onDeviceConnected = useCallback(async (server: BluetoothRemoteGATTServer) => {
     try {
+      console.log('🔗 AirBeam device connected, initializing...');
       const manager = connectionManager;
       const deviceInfo = await manager.initializeDevice(handleDataReceived);
       
+      console.log('✅ AirBeam device initialized:', deviceInfo);
       setDevice(deviceInfo);
       setIsConnected(true);
       setIsConnecting(false);
       setError(null);
     } catch (error) {
       console.error('❌ Error initializing AirBeam device:', error);
-      setError('Failed to initialize AirBeam device');
+      setError('Failed to initialize AirBeam device: ' + (error instanceof Error ? error.message : 'Unknown error'));
       setIsConnecting(false);
     }
   }, [handleDataReceived]);

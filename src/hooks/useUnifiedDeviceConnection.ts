@@ -49,25 +49,34 @@ export function useUnifiedDeviceConnection(): DeviceConnectionState & DeviceConn
   
   // Add debugging for connection state
   useEffect(() => {
-    console.log('🔧 Unified Device Connection State:', {
-      selectedDeviceType,
-      manualDeviceType,
-      pmScanConnected: pmScanConnection.isConnected,
-      airBeamConnected: airBeamConnection.isConnected,
-      activeConnectionType: selectedDeviceType || manualDeviceType || 'auto-detected',
-      currentData: activeConnection.currentData ? 'has data' : 'no data'
-    });
-  }, [selectedDeviceType, manualDeviceType, pmScanConnection.isConnected, airBeamConnection.isConnected, activeConnection.currentData]);
+    // Only log occasionally to prevent spam
+    const shouldLog = Math.random() < 0.1; // 10% chance
+    if (shouldLog) {
+      console.log('🔧 Unified Device Connection State:', {
+        selectedDeviceType,
+        manualDeviceType,
+        pmScanConnected: pmScanConnection.isConnected,
+        airBeamConnected: airBeamConnection.isConnected,
+        activeConnectionType: selectedDeviceType || manualDeviceType || 'auto-detected',
+        currentData: activeConnection.currentData ? 'has data' : 'no data',
+        airBeamError: airBeamConnection.error,
+        pmScanError: pmScanConnection.error
+      });
+    }
+  }, [selectedDeviceType, manualDeviceType, pmScanConnection.isConnected, airBeamConnection.isConnected, activeConnection.currentData, airBeamConnection.error, pmScanConnection.error]);
 
   const requestDevice = useCallback(async (deviceType?: DeviceType) => {
     try {
+      console.log('🔌 Requesting device with type:', deviceType);
       if (deviceType) {
         setManualDeviceType(deviceType);
         setSelectedDeviceType(deviceType);
         
         if (deviceType === 'pmscan') {
+          console.log('🔌 Connecting to PMScan...');
           await pmScanConnection.requestDevice();
         } else if (deviceType === 'airbeam') {
+          console.log('🔌 Connecting to AirBeam...');
           await airBeamConnection.requestDevice();
         }
       } else {
