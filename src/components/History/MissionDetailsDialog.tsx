@@ -38,6 +38,11 @@ export function MissionDetailsDialog({ mission, open, onOpenChange }: MissionDet
     } : undefined
   }));
 
+  console.log('🗺️ MissionDetailsDialog: Mission data:', mission);
+  console.log('🗺️ MissionDetailsDialog: Raw measurements sample:', mission.measurements.slice(0, 3));
+  console.log('🗺️ MissionDetailsDialog: Measurements with any location data:', 
+    mission.measurements.filter(m => m.latitude || m.longitude).length);
+  
   // Get track points for the map (only measurements with location data)
   const trackPoints = mission.measurements
     .filter(m => m.latitude && m.longitude && m.latitude !== 0 && m.longitude !== 0)

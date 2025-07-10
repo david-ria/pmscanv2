@@ -110,18 +110,25 @@ export const updateTrackData = (
   }
 
   // Auto-fit map to show entire track when not recording
-  if (!isRecording && trackPoints.length > 1) {
+  if (!isRecording && trackPoints.length > 0) {
     const coordinates = trackPoints.map(point => [point.longitude, point.latitude]);
     const bounds = new mapboxgl.LngLatBounds();
     
-    coordinates.forEach(coord => {
-      bounds.extend(coord as [number, number]);
-    });
+    if (coordinates.length === 1) {
+      // For single point, center on it with a reasonable zoom
+      map.setCenter(coordinates[0] as [number, number]);
+      map.setZoom(15);
+    } else {
+      // For multiple points, fit bounds
+      coordinates.forEach(coord => {
+        bounds.extend(coord as [number, number]);
+      });
 
-    map.fitBounds(bounds, {
-      padding: 50,
-      duration: 1000
-    });
+      map.fitBounds(bounds, {
+        padding: 50,
+        duration: 1000
+      });
+    }
   }
 };
 
