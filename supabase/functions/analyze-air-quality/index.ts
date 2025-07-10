@@ -95,7 +95,7 @@ Sois précis, bienveillant et actionnable dans tes recommandations.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Analyse ces données d'exposition aux particules fines sur ${timeframe} :\n\n${dataSummary}` }
