@@ -63,34 +63,46 @@ export function useGoogleFit(): UseGoogleFitReturn {
 
   const initGapiAuth = useCallback(async () => {
     return new Promise<void>((resolve, reject) => {
+      console.log('Loading Google Auth2 library...');
       window.gapi.load('auth2', {
         callback: async () => {
           try {
-            console.log('Google Auth2 library loaded');
-            // Get the Google Client ID from Supabase secrets
-            const { data: clientIdResponse } = await supabase.functions.invoke('get-google-client-id');
-            const clientId = clientIdResponse?.client_id;
+            console.log('Google Auth2 library loaded successfully');
+            console.log('Getting Google Client ID from Supabase...');
             
-            if (!clientId) {
-              throw new Error('Google Client ID not configured');
+            // Get the Google Client ID from Supabase secrets
+            const { data: clientIdResponse, error: clientIdError } = await supabase.functions.invoke('get-google-client-id');
+            
+            if (clientIdError) {
+              console.error('Error calling get-google-client-id function:', clientIdError);
+              throw new Error(`Failed to get Google Client ID: ${clientIdError.message}`);
             }
             
+            const clientId = clientIdResponse?.client_id;
+            console.log('Received client ID:', clientId ? 'Got client ID' : 'No client ID');
+            
+            if (!clientId) {
+              throw new Error('Google Client ID not configured in Supabase secrets');
+            }
+            
+            console.log('Initializing Google Auth2 with client ID...');
             window.gapi.auth2.init({
               client_id: clientId,
               scope: 'https://www.googleapis.com/auth/fitness.activity.read'
             }).then(() => {
-              console.log('Google Auth2 initialized');
+              console.log('Google Auth2 initialized successfully');
               resolve();
             }).catch((error: any) => {
               console.error('Auth2 init error:', error);
               reject(error);
             });
           } catch (error) {
-            console.error('Error getting Google Client ID:', error);
+            console.error('Error in initGapiAuth:', error);
             reject(error);
           }
         },
         onerror: () => {
+          console.error('Failed to load Google Auth2 library');
           reject(new Error('Failed to load Google Auth2 library'));
         }
       });
@@ -100,9 +112,11 @@ export function useGoogleFit(): UseGoogleFitReturn {
   const connectGoogleFit = useCallback(async () => {
     try {
       setIsLoading(true);
+      console.log('Starting Google Fit connection...');
       
       // Load Google API if not already loaded
       if (!window.gapi) {
+        console.log('Loading Google API script...');
         const script = document.createElement('script');
         script.src = 'https://apis.google.com/js/api.js';
         script.onload = () => initGoogleAPI();
@@ -110,11 +124,16 @@ export function useGoogleFit(): UseGoogleFitReturn {
         await new Promise(resolve => script.onload = resolve);
       }
       
+      console.log('Initializing Google API...');
       await initGoogleAPI();
       
+      console.log('Getting auth instance...');
       const authInstance = window.gapi.auth2.getAuthInstance();
+      console.log('Auth instance obtained, attempting sign in...');
       const user = await authInstance.signIn();
+      console.log('Sign in successful, getting auth response...');
       const authResponse = user.getAuthResponse();
+      console.log('Auth response received');
       
       setAccessToken(authResponse.access_token);
       setIsAuthenticated(true);
