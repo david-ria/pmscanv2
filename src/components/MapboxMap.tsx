@@ -72,11 +72,22 @@ export const MapboxMap = ({ currentLocation, pmData, trackPoints = [], isRecordi
         setError(null);
 
         // Get Mapbox token from edge function
+        console.log('Requesting Mapbox token from edge function...');
         const { data, error: tokenError } = await supabase.functions.invoke('get-mapbox-token');
         
-        if (tokenError || !data?.token) {
-          throw new Error('Failed to get Mapbox token');
+        console.log('Edge function response:', { data, error: tokenError });
+        
+        if (tokenError) {
+          console.error('Edge function error:', tokenError);
+          throw new Error(`Edge function error: ${tokenError.message || tokenError}`);
         }
+        
+        if (!data?.token) {
+          console.error('No token in response:', data);
+          throw new Error('No Mapbox token received from edge function');
+        }
+        
+        console.log('Successfully received Mapbox token');
 
         mapboxgl.accessToken = data.token;
         
