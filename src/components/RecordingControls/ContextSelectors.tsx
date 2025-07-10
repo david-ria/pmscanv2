@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { locationKeys, activityKeys } from "@/lib/recordingConstants";
 import { useTranslation } from "react-i18next";
+import { useGroupSettings } from "@/hooks/useGroupSettings";
 
 interface ContextSelectorsProps {
   selectedLocation: string;
@@ -20,6 +21,12 @@ export function ContextSelectors({
   isRecording
 }: ContextSelectorsProps) {
   const { t } = useTranslation();
+  const { getCurrentLocations, getCurrentActivities, isGroupMode } = useGroupSettings();
+  
+  // Use group locations if in group mode, otherwise use default locations
+  const locations = isGroupMode ? getCurrentLocations() : locationKeys.map(key => ({ name: t(`locations.${key}`) }));
+  const activities = isGroupMode ? getCurrentActivities() : activityKeys.map(key => ({ name: t(`activities.${key}`) }));
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div className="space-y-2">
@@ -32,9 +39,9 @@ export function ContextSelectors({
             <SelectValue placeholder={t('realTime.noLocation')} />
           </SelectTrigger>
           <SelectContent>
-            {locationKeys.map((locationKey) => (
-              <SelectItem key={locationKey} value={t(`locations.${locationKey}`)}>
-                {t(`locations.${locationKey}`)}
+            {locations.map((location, index) => (
+              <SelectItem key={isGroupMode ? location.name : locationKeys[index]} value={location.name}>
+                {location.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -56,9 +63,9 @@ export function ContextSelectors({
             <SelectValue placeholder={t('realTime.noActivity')} />
           </SelectTrigger>
           <SelectContent>
-            {activityKeys.map((activityKey) => (
-              <SelectItem key={activityKey} value={t(`activities.${activityKey}`)}>
-                {t(`activities.${activityKey}`)}
+            {activities.map((activity, index) => (
+              <SelectItem key={isGroupMode ? activity.name : activityKeys[index]} value={activity.name}>
+                {activity.name}
               </SelectItem>
             ))}
           </SelectContent>
