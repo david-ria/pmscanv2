@@ -34,11 +34,13 @@ export default function RealTime() {
         Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
       
       if (!isDuplicate) {
+        // Ensure we pass location data even if it's null
+        console.log('Adding data point with location:', latestLocation);
         addDataPoint(currentData, latestLocation || undefined, missionContext);
         lastDataRef.current = { pm25: currentData.pm25, timestamp: currentTimestamp };
       }
     }
-  }, [isRecording, currentData, latestLocation, addDataPoint]);
+  }, [isRecording, currentData, latestLocation, addDataPoint, missionContext]);
 
   // Check alerts whenever new data comes in
   useEffect(() => {
