@@ -37,17 +37,11 @@ export function useGPS() {
       
       setLatestLocation(locationData);
       setError(null);
-      // Reduced GPS logging frequency
-      if (Math.random() < 0.1) { // Only log 10% of updates
-        console.log('📍 GPS position updated');
-      }
+      // GPS logging completely disabled to keep console clean
     };
 
     const handleError = (error: GeolocationPositionError) => {
-      // Suppress most GPS errors to keep console clean
-      if (error.code === error.PERMISSION_DENIED && Math.random() < 0.1) {
-        console.warn('GPS permission denied');
-      }
+      // GPS error logging completely disabled to keep console clean
       switch (error.code) {
         case error.PERMISSION_DENIED:
           setError('Location access denied');
