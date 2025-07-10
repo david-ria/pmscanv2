@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, RotateCcw, Save } from 'lucide-react';
+import { RotateCcw, Save } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useThresholds, AirQualityThresholds } from '@/contexts/ThresholdContext';
+import { MenuPageHeader } from '@/components/MenuPageHeader';
 
 export default function CustomThresholds() {
   const { t } = useTranslation();
@@ -132,70 +133,60 @@ export default function CustomThresholds() {
 
   return (
     <div className="min-h-screen bg-background px-4 py-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate('/profile')}
-          className="h-9 w-9"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{t('thresholds.title')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t('thresholds.subtitle')}
-          </p>
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Header */}
+        <MenuPageHeader 
+          title={t('thresholds.title')}
+          subtitle={t('thresholds.subtitle')}
+        />
+
+        {/* WHO Standards Info */}
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardContent className="p-4">
+            <p className="text-sm">
+              <strong>{t('thresholds.whoInfo.title')}:</strong>{' '}
+              {t('thresholds.whoInfo.description')}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Threshold Controls */}
+        <div className="space-y-6">
+          {renderPollutantCard('pm1', 'PM1')}
+          {renderPollutantCard('pm25', 'PM2.5')}
+          {renderPollutantCard('pm10', 'PM10')}
         </div>
-      </div>
 
-      {/* WHO Standards Info */}
-      <Card className="mb-6 border-primary/20 bg-primary/5">
-        <CardContent className="p-4">
-          <p className="text-sm">
-            <strong>{t('thresholds.whoInfo.title')}:</strong>{' '}
-            {t('thresholds.whoInfo.description')}
-          </p>
-        </CardContent>
-      </Card>
+        <Separator className="my-6" />
 
-      {/* Threshold Controls */}
-      <div className="space-y-6">
-        {renderPollutantCard('pm1', 'PM1')}
-        {renderPollutantCard('pm25', 'PM2.5')}
-        {renderPollutantCard('pm10', 'PM10')}
-      </div>
-
-      <Separator className="my-6" />
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Button
-          variant="outline"
-          onClick={handleReset}
-          className="flex-1"
-        >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          {t('thresholds.resetToWHO')}
-        </Button>
-        <Button
-          onClick={handleSave}
-          className="flex-1"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          {t('common.save')}
-        </Button>
-      </div>
-
-      {/* Validation Warning */}
-      {!validateThresholds(localThresholds) && (
-        <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-          <p className="text-sm text-destructive">
-            {t('thresholds.validation.increasingOrder')}
-          </p>
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            className="flex-1"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            {t('thresholds.resetToWHO')}
+          </Button>
+          <Button
+            onClick={handleSave}
+            className="flex-1"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {t('common.save')}
+          </Button>
         </div>
-      )}
+
+        {/* Validation Warning */}
+        {!validateThresholds(localThresholds) && (
+          <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <p className="text-sm text-destructive">
+              {t('thresholds.validation.increasingOrder')}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

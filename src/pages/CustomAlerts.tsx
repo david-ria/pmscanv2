@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, RotateCcw, Save, Bell, BellOff } from 'lucide-react';
+import { RotateCcw, Save, Bell, BellOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useAlerts, AlertSettings } from '@/contexts/AlertContext';
+import { MenuPageHeader } from '@/components/MenuPageHeader';
 
 export default function CustomAlerts() {
   const { t } = useTranslation();
@@ -189,97 +190,87 @@ export default function CustomAlerts() {
 
   return (
     <div className="min-h-screen bg-background px-4 py-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate('/')}
-          className="h-9 w-9"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{t('alerts.title')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t('alerts.subtitle')}
-          </p>
-        </div>
-      </div>
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Header */}
+        <MenuPageHeader 
+          title={t('alerts.title')}
+          subtitle={t('alerts.subtitle')}
+        />
 
-      {/* Global Toggle */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {globalAlertsEnabled ? (
-                <Bell className="h-5 w-5 text-primary" />
-              ) : (
-                <BellOff className="h-5 w-5 text-muted-foreground" />
-              )}
-              <div>
-                <p className="font-medium">
-                  {globalAlertsEnabled ? t('alerts.enabled') : t('alerts.disabled')}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {t('alerts.toggleDescription')}
-                </p>
+        {/* Global Toggle */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {globalAlertsEnabled ? (
+                  <Bell className="h-5 w-5 text-primary" />
+                ) : (
+                  <BellOff className="h-5 w-5 text-muted-foreground" />
+                )}
+                <div>
+                  <p className="font-medium">
+                    {globalAlertsEnabled ? t('alerts.enabled') : t('alerts.disabled')}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('alerts.toggleDescription')}
+                  </p>
+                </div>
               </div>
+              <Switch
+                checked={globalAlertsEnabled}
+                onCheckedChange={setGlobalAlertsEnabled}
+              />
             </div>
-            <Switch
-              checked={globalAlertsEnabled}
-              onCheckedChange={setGlobalAlertsEnabled}
-            />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Description */}
-      <Card className="mb-6 border-primary/20 bg-primary/5">
-        <CardContent className="p-4">
-          <p className="text-sm">
-            {t('alerts.description')}
-          </p>
-        </CardContent>
-      </Card>
+        {/* Description */}
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardContent className="p-4">
+            <p className="text-sm">
+              {t('alerts.description')}
+            </p>
+          </CardContent>
+        </Card>
 
-      {/* Alert Controls */}
-      <div className="space-y-6">
-        {renderPollutantCard('pm1', t('alerts.pm1Alert'))}
-        {renderPollutantCard('pm25', t('alerts.pm25Alert'))}
-        {renderPollutantCard('pm10', t('alerts.pm10Alert'))}
-      </div>
-
-      <Separator className="my-6" />
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Button
-          variant="outline"
-          onClick={handleReset}
-          className="flex-1"
-        >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          {t('alerts.resetToDefaults')}
-        </Button>
-        <Button
-          onClick={handleSave}
-          className="flex-1"
-          disabled={!globalAlertsEnabled && !Object.values(localSettings).some(s => s.enabled)}
-        >
-          <Save className="h-4 w-4 mr-2" />
-          {t('common.save')}
-        </Button>
-      </div>
-
-      {/* Validation Warning */}
-      {!validateSettings(localSettings) && Object.values(localSettings).some(s => s.enabled) && (
-        <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-          <p className="text-sm text-destructive">
-            {t('alerts.validation.thresholdRequired')}
-          </p>
+        {/* Alert Controls */}
+        <div className="space-y-6">
+          {renderPollutantCard('pm1', t('alerts.pm1Alert'))}
+          {renderPollutantCard('pm25', t('alerts.pm25Alert'))}
+          {renderPollutantCard('pm10', t('alerts.pm10Alert'))}
         </div>
-      )}
+
+        <Separator className="my-6" />
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            className="flex-1"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            {t('alerts.resetToDefaults')}
+          </Button>
+          <Button
+            onClick={handleSave}
+            className="flex-1"
+            disabled={!globalAlertsEnabled && !Object.values(localSettings).some(s => s.enabled)}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {t('common.save')}
+          </Button>
+        </div>
+
+        {/* Validation Warning */}
+        {!validateSettings(localSettings) && Object.values(localSettings).some(s => s.enabled) && (
+          <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <p className="text-sm text-destructive">
+              {t('alerts.validation.thresholdRequired')}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

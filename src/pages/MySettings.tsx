@@ -18,8 +18,11 @@ import { LocationDialog } from '@/components/Settings/LocationDialog';
 import { ActivityDialog } from '@/components/Settings/ActivityDialog';
 import { AlarmDialog } from '@/components/Settings/AlarmDialog';
 import { EventDialog } from '@/components/Settings/EventDialog';
+import { MenuPageHeader } from '@/components/MenuPageHeader';
+import { useTranslation } from 'react-i18next';
 
 export default function MySettings() {
+  const { t } = useTranslation();
   const { locations, loading: locationsLoading, deleteLocation } = useUserLocations();
   const { activities, loading: activitiesLoading, deleteActivity } = useUserActivities();
   const { alarms, loading: alarmsLoading, deleteAlarm } = useUserAlarms();
@@ -76,11 +79,12 @@ export default function MySettings() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">My Settings</h1>
-        <p className="text-muted-foreground">Manage your personal locations, activities, alarms, and events</p>
-      </div>
+    <div className="min-h-screen bg-background px-4 py-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <MenuPageHeader 
+          title={t('settingsMenu.mySettings')}
+          subtitle="Manage your personal locations, activities, alarms, and events"
+        />
 
       <Tabs defaultValue="locations" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
@@ -364,6 +368,7 @@ export default function MySettings() {
         onOpenChange={handleCloseEventDialog}
         event={editingEvent}
       />
+      </div>
     </div>
   );
 }
