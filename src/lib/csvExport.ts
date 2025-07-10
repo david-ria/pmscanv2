@@ -44,7 +44,17 @@ export function exportMissionToCSV(mission: MissionData): void {
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
   
-  const filename = `PMScan_${mission.name}_${mission.startTime.toISOString().split('T')[0]}.csv`;
+  // Create filename using new naming convention: [DeviceID]_[YYYYMMDD]_[HHMMSS].csv
+  const startTime = mission.startTime;
+  const deviceId = "PMScan"; // Default device ID - could be enhanced to use actual device name
+  const dateStr = startTime.getFullYear().toString() + 
+                  (startTime.getMonth() + 1).toString().padStart(2, '0') + 
+                  startTime.getDate().toString().padStart(2, '0');
+  const timeStr = startTime.getHours().toString().padStart(2, '0') + 
+                  startTime.getMinutes().toString().padStart(2, '0') + 
+                  startTime.getSeconds().toString().padStart(2, '0');
+  
+  const filename = `${deviceId}_${dateStr}_${timeStr}.csv`;
   link.setAttribute('href', url);
   link.setAttribute('download', filename);
   link.style.visibility = 'hidden';
