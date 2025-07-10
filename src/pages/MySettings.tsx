@@ -83,40 +83,40 @@ export default function MySettings() {
       <div className="max-w-4xl mx-auto space-y-6">
         <MenuPageHeader 
           title={t('settingsMenu.mySettings')}
-          subtitle="Manage your personal locations, activities, alarms, and events"
+          subtitle={t('mySettings.subtitle')}
         />
 
       <Tabs defaultValue="locations" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="locations" className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Locations
-          </TabsTrigger>
-          <TabsTrigger value="activities" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            Activities
-          </TabsTrigger>
-          <TabsTrigger value="alarms" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            Alarms
-          </TabsTrigger>
-          <TabsTrigger value="events" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Events
-          </TabsTrigger>
-        </TabsList>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="locations" className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              {t('mySettings.tabs.locations')}
+            </TabsTrigger>
+            <TabsTrigger value="activities" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              {t('mySettings.tabs.activities')}
+            </TabsTrigger>
+            <TabsTrigger value="alarms" className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              {t('mySettings.tabs.alarms')}
+            </TabsTrigger>
+            <TabsTrigger value="events" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              {t('mySettings.tabs.events')}
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="locations" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">My Locations</h2>
-            <Button onClick={() => setLocationDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Location
-            </Button>
-          </div>
+          <TabsContent value="locations" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">{t('mySettings.sections.locations')}</h2>
+              <Button onClick={() => setLocationDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t('mySettings.actions.addLocation')}
+              </Button>
+            </div>
 
-          {locationsLoading ? (
-            <div>Loading locations...</div>
+            {locationsLoading ? (
+              <div>{t('common.loading')}</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {locations.map((location) => (
@@ -161,17 +161,17 @@ export default function MySettings() {
           )}
         </TabsContent>
 
-        <TabsContent value="activities" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">My Activities</h2>
-            <Button onClick={() => setActivityDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Activity
-            </Button>
-          </div>
+          <TabsContent value="activities" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">{t('mySettings.sections.activities')}</h2>
+              <Button onClick={() => setActivityDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t('mySettings.actions.addActivity')}
+              </Button>
+            </div>
 
-          {activitiesLoading ? (
-            <div>Loading activities...</div>
+            {activitiesLoading ? (
+              <div>{t('common.loading')}</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {activities.map((activity) => (
@@ -214,17 +214,17 @@ export default function MySettings() {
           )}
         </TabsContent>
 
-        <TabsContent value="alarms" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">My Alarms</h2>
-            <Button onClick={() => setAlarmDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Alarm
-            </Button>
-          </div>
+          <TabsContent value="alarms" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">{t('mySettings.sections.alarms')}</h2>
+              <Button onClick={() => setAlarmDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t('mySettings.actions.addAlarm')}
+              </Button>
+            </div>
 
-          {alarmsLoading ? (
-            <div>Loading alarms...</div>
+            {alarmsLoading ? (
+              <div>{t('common.loading')}</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {alarms.map((alarm) => (
@@ -323,19 +323,19 @@ export default function MySettings() {
                     )}
                     <div className="space-y-1">
                       <Badge variant="outline">{event.event_type}</Badge>
-                      {event.start_date && (
-                        <div className="text-xs text-muted-foreground">
-                          Start: {new Date(event.start_date).toLocaleDateString()}
-                        </div>
-                      )}
-                      {event.end_date && (
-                        <div className="text-xs text-muted-foreground">
-                          End: {new Date(event.end_date).toLocaleDateString()}
-                        </div>
-                      )}
-                      <Badge variant={event.enabled ? "default" : "secondary"}>
-                        {event.enabled ? "Active" : "Inactive"}
-                      </Badge>
+                        {event.start_date && (
+                          <div className="text-xs text-muted-foreground">
+                            {t('mySettings.startDate')}: {new Date(event.start_date).toLocaleDateString()}
+                          </div>
+                        )}
+                        {event.end_date && (
+                          <div className="text-xs text-muted-foreground">
+                            {t('mySettings.endDate')}: {new Date(event.end_date).toLocaleDateString()}
+                          </div>
+                        )}
+                        <Badge variant={event.enabled ? "default" : "secondary"}>
+                          {event.enabled ? t('common.enabled') : t('common.disabled')}
+                        </Badge>
                     </div>
                   </CardContent>
                 </Card>

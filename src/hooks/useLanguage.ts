@@ -12,7 +12,9 @@ export const useLanguage = () => {
   
   const languages = [
     { code: 'fr', name: 'Français' },
-    { code: 'en', name: 'English' }
+    { code: 'en', name: 'English' },
+    { code: 'de', name: 'Deutsch' },
+    { code: 'ca', name: 'Català' }
   ];
 
   return {

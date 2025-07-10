@@ -1,0 +1,395 @@
+{
+  "navigation": {
+    "realTime": "Echtzeitdaten",
+    "history": "Verlauf", 
+    "analysis": "Analyse",
+    "groups": "Gruppen"
+  },
+  "header": {
+    "title": "PMSCAN",
+    "realTime": "Echtzeitdaten"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "subtitle": "Konfiguration und Konto",
+    "appVersion": "PMSCAN v1.0.0",
+    "dataSync": "Datensync. 2 min"
+  },
+  "account": {
+    "title": "Konto",
+    "profile": "Mein Profil",
+    "logout": "Abmelden",
+    "connected": "Verbunden",
+    "user": "Benutzer"
+  },
+  "settingsMenu": {
+    "title": "Einstellungen",
+    "customThresholds": "Benutzerdefinierte Schwellenwerte",
+    "alertsAlarms": "Warnungen & Alarme",
+    "language": "Sprache",
+    "mySettings": "Meine Einstellungen"
+  },
+  "community": {
+    "title": "Gemeinschaft",
+    "joinGroup": "Einer Gruppe beitreten",
+    "healthNeighborhood": "Gesunde Nachbarschaft",
+    "members": "Mitglieder"
+  },
+  "sensors": {
+    "title": "Sensoren",
+    "pmscan": "PMSCAN Sensor",
+    "native": "Native Sensoren",
+    "googleFit": "Google Fit",
+    "connected": "Verbunden"
+  },
+  "loading": {
+    "app": "Anwendung wird geladen...",
+    "default": "Lädt..."
+  },
+  "auth": {
+    "signOut": "Abmelden",
+    "signIn": "Anmelden",
+    "signUp": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "connecting": "Verbinde...",
+    "signingUp": "Registriere...",
+    "authentication": "Authentifizierung",
+    "connectionError": "Verbindungsfehler",
+    "connectionSuccess": "Verbindung erfolgreich",
+    "youAreConnected": "Sie sind jetzt verbunden",
+    "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten",
+    "registrationError": "Registrierungsfehler",
+    "registrationSuccess": "Registrierung erfolgreich",
+    "checkEmailConfirm": "Überprüfen Sie Ihre E-Mail, um Ihr Konto zu bestätigen",
+    "emailPlaceholder": "ihre@email.de",
+    "passwordPlaceholder": "••••••••",
+    "firstNamePlaceholder": "Vorname",
+    "lastNamePlaceholder": "Nachname"
+  },
+  "language": {
+    "french": "Français",
+    "english": "English",
+    "german": "Deutsch",
+    "catalan": "Català"
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "subtitle": "Verwalten Sie Ihre persönlichen Informationen",
+    "loadingProfile": "Profil wird geladen...",
+    "personalInfo": "Persönliche Informationen",
+    "pseudo": "Benutzername",
+    "pseudoPlaceholder": "Ihr Benutzername",
+    "firstName": "Vorname",
+    "firstNamePlaceholder": "Ihr Vorname",
+    "lastName": "Nachname", 
+    "lastNamePlaceholder": "Ihr Nachname",
+    "email": "E-Mail",
+    "emailNotEditable": "E-Mail kann nicht geändert werden",
+    "save": "Speichern",
+    "saving": "Speichere...",
+    "accountInfo": "Kontoinformationen",
+    "connectedSince": "Verbunden seit",
+    "lastUpdate": "Letzte Aktualisierung",
+    "notAvailable": "Nicht verfügbar",
+    "changePassword": "Passwort ändern",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "changing": "Ändere...",
+    "error": "Fehler",
+    "profileUpdateError": "Profil konnte nicht geladen werden",
+    "profileUpdated": "Profil aktualisiert",
+    "infoSaved": "Ihre Informationen wurden gespeichert",
+    "passwordsNoMatch": "Passwörter stimmen nicht überein",
+    "passwordTooShort": "Passwort muss mindestens 6 Zeichen enthalten",
+    "passwordChanged": "Passwort geändert",
+    "passwordUpdated": "Ihr Passwort wurde aktualisiert"
+  },
+  "groups": {
+    "title": "Gruppen",
+    "subtitle": "Verwalten Sie Ihre Luftqualitäts-Überwachungsgruppen und arbeiten Sie mit anderen zusammen",
+    "createGroup": "Gruppe erstellen",
+    "myGroups": "Meine Gruppen",
+    "adminPanel": "Admin-Panel",
+    "invitations": "Einladungen",
+    "noGroupsYet": "Noch keine Gruppen",
+    "createFirstGroup": "Erstellen Sie Ihre erste Gruppe, um mit anderen bei der Luftqualitätsüberwachung zusammenzuarbeiten",
+    "createYourFirstGroup": "Ihre erste Gruppe erstellen",
+    "noPendingInvitations": "Keine ausstehenden Einladungen",
+    "invitationsDescription": "Wenn andere Sie zu ihren Gruppen einladen, sehen Sie die Einladungen hier"
+  },
+  "common": {
+    "error": "Fehler",
+    "success": "Erfolg",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "close": "Schließen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "loading": "Lädt...",
+    "notConnected": "Nicht verbunden",
+    "connecting": "Verbinde...",
+    "good": "Gut",
+    "moderate": "Mäßig", 
+    "poor": "Schlecht",
+    "admin": "Administrator",
+    "member": "Mitglied",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert"
+  },
+  "welcome": {
+    "title": "Willkommen zu Ihrer leeren App",
+    "subtitle": "Beginnen Sie hier mit dem Aufbau Ihres fantastischen Projekts!"
+  },
+  "realTime": {
+    "map": "Karte",
+    "graph": "Diagramm",
+    "satellite": "Satellit",
+    "connectionRequired": "Verbindung für Kartenansicht erforderlich",
+    "connectSensor": "Verbinden Sie Ihren PMScan-Sensor, um Echtzeitdaten zu sehen",
+    "lastMeasurement": "Letzte Messung",
+    "airQuality": {
+      "good": "Gut",
+      "moderate": "Mäßig",
+      "poor": "Schlecht",
+      "veryPoor": "Sehr schlecht"
+    },
+    "location": "Standort",
+    "activity": "Aktivität",
+    "noLocation": "Kein Standort",
+    "noActivity": "Keine Aktivität",
+    "dataLogger": "Datenprotokoll",
+    "recording": "Aufzeichnung",
+    "stopped": "Bereit zur Aufzeichnung",
+    "entries": "Einträge",
+    "last": "Letzte",
+    "export": "Rohdaten exportieren",
+    "clear": "Löschen",
+    "expand": "Erweitern",
+    "minimize": "Minimieren",
+    "noData": "Keine Daten aufgezeichnet",
+    "waitingData": "Warte auf Daten...",
+    "startRecording": "Aufzeichnung starten, um Daten zu sehen"
+  },
+  "locations": {
+    "home": "Zuhause",
+    "school": "Schule",
+    "office": "Büro",
+    "park": "Park",
+    "mainStreet": "Hauptstraße",
+    "transport": "Transport"
+  },
+  "activities": {
+    "walking": "Gehen",
+    "cycling": "Radfahren",
+    "transport": "Transport",
+    "sport": "Sport",
+    "rest": "Ruhe",
+    "work": "Arbeit"
+  },
+  "history": {
+    "loadingMissions": "Missionen werden geladen...",
+    "noMissionsForPeriod": "Keine Missionen für diesen Zeitraum",
+    "selectAnotherDate": "Wählen Sie ein anderes Datum oder einen anderen Zeitraum, um Ihre Daten zu sehen",
+    "recentMissions": "Aktuelle Missionen",
+    "summary": "Zusammenfassung",
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "measurements": "Messungen",
+    "avg": "Durchschn.",
+    "share": "Teilen",
+    "export": "Exportieren",
+    "sync": "Synchronisieren",
+    "local": "Lokal",
+    "statistics": "Statistiken",
+    "noLocationData": "Keine Standortdaten verfügbar",
+    "average": "Durchschnitt",
+    "minimum": "Minimum",
+    "maximum": "Maximum",
+    "periods": {
+      "day": "Tag",
+      "week": "Woche",
+      "month": "Monat",
+      "year": "Jahr"
+    },
+    "stats": {
+      "totalExposure": "Gesamtexposition",
+      "averagePM25": "Durchschn. PM2.5",
+      "pm25AboveWHO": "PM2.5 > WHO (15)",
+      "pm10AboveWHO": "PM10 > WHO (45)"
+    }
+  },
+  "analysis": {
+    "title": "Personalisierte KI-Analyse",
+    "statisticalAnalysis": "Statistische Analyse",
+    "refresh": "Aktualisieren",
+    "analyzing": "Analysiere...",
+    "analysisInProgress": "Analyse läuft...",
+    "askQuestion": "Eine Frage stellen",
+    "exportReport": "Bericht exportieren",
+    "dataSummary": "Datenzusammenfassung",
+    "missions": "Missionen",
+    "exposureTime": "Expositionszeit",
+    "averagePM25": "Durchschn. PM2.5 (μg/m³)",
+    "minutesAboveWHO": "Min >= WHO-Schwellenwert",
+    "whoComplianceTitle": "WHO-Schwellenwert-Compliance",
+    "timeBelowWHO": "Zeit unter WHO-Schwellenwert (15 μg/m³)",
+    "whoRecommendation": "Die WHO empfiehlt, die PM2.5-Exposition unter 15 μg/m³ zu halten, um die Gesundheit zu schützen.",
+    "groupComparison": {
+      "title": "Gruppenvergleich",
+      "loading": "Gruppendaten werden geladen...",
+      "yourAverage": "Ihr Durchschnitt",
+      "groupAverage": "Gruppendurchschnitt", 
+      "difference": "Unterschied",
+      "memberComparison": "Mitgliedervergleich",
+      "you": "Sie",
+      "member": "Mitglied",
+      "similar": "Ähnlich der Gruppe",
+      "higher": "Höher als Gruppe",
+      "lower": "Niedriger als Gruppe",
+      "groupContext": "Vergleich mit {{groupName}} Mitgliedern",
+      "insights": {
+        "title": "Einsichten & Empfehlungen",
+        "higherExposure": "Ihre Exposition liegt über dem Gruppendurchschnitt",
+        "checkActivities": "Überprüfen Sie Ihre Aktivitäten und Standorte während hoher Expositionsphasen",
+        "avoidPeakTimes": "Vermeiden Sie Outdoor-Aktivitäten während der Spitzenzeiten der Verschmutzung",
+        "lowerExposure": "Ihre Exposition liegt unter dem Gruppendurchschnitt - großartige Arbeit!",
+        "goodPractices": "Teilen Sie Ihre guten Praktiken mit der Gruppe",
+        "shareKnowledge": "Erwägen Sie, anderen Mitgliedern zu helfen, ihre Exposition zu reduzieren"
+      }
+    },
+    "error": "Fehler",
+    "errorLoadingMissions": "Missionen konnten nicht geladen werden",
+    "analysisGenerated": "Analyse generiert",
+    "analysisReady": "Ihre personalisierte Analyse ist bereit",
+    "analysisUnavailable": "Analyse nicht verfügbar",
+    "checkDataAndRetry": "Überprüfen Sie Ihre Daten und versuchen Sie es erneut",
+    "noDataForPeriod": {
+      "day": "Keine Daten für diesen Tag gefunden.",
+      "week": "Keine Daten für diese Woche gefunden.",
+      "month": "Keine Daten für diesen Monat gefunden.",
+      "year": "Keine Daten für dieses Jahr gefunden."
+    },
+    "youHaveMissions": "Sie haben {count} aufgezeichnete Mission(en), aber sie entsprechen nicht dem ausgewählten Zeitraum.",
+    "tryTo": "💡 Versuchen Sie:",
+    "changePeriod": "• Den Zeitraum ändern (Tag/Woche/Monat/Jahr)",
+    "selectDifferentDate": "• Ein anderes Datum auswählen",
+    "goToHistory": "• Oder gehen Sie zu 'Verlauf', um alle Ihre Daten zu sehen",
+    "noDataAvailable": "Keine Daten verfügbar.",
+    "forPersonalizedAnalysis": "Für eine personalisierte Analyse:",
+    "goToRealTime": "1. Gehen Sie zur 'Echtzeitdaten'-Seite",
+    "connectSensor": "2. Verbinden Sie Ihren PMScan-Sensor",
+    "startRecording": "3. Starten Sie eine Aufzeichnung für einige Minuten",
+    "comeBackHere": "4. Kommen Sie hierher zurück, um Ihre KI-Analyse zu sehen!",
+    "unableToGenerate": "Ihre Analyse kann momentan nicht generiert werden.",
+    "forPersonalizedReport": "Für Ihren personalisierten Bericht:",
+    "checkRecordedData": "1. Überprüfen Sie, dass Sie aufgezeichnete Daten haben",
+    "goToRealTimeForMeasures": "2. Gehen Sie zu 'Echtzeitdaten', um neue Messungen durchzuführen",
+    "comeBackInMoments": "3. Kommen Sie in wenigen Augenblicken hierher zurück",
+    "changePeriodIfPersists": "Wenn das Problem weiterhin besteht, versuchen Sie, den ausgewählten Zeitraum zu ändern.",
+    "mapTitle": "Messstandorte",
+    "points": "Punkte",
+    "activityAnalysisTitle": "Aktivitätsanalyse",
+    "timeSpent": "Verbrachte Zeit",
+    "exposure": "Exposition",
+    "measurements": "Messungen",
+    "unknownActivity": "Unbekannte Aktivität"
+  },
+  "modals": {
+    "recordingFrequency": {
+      "title": "Aufzeichnungsfrequenz",
+      "chooseMeasureFrequency": "Wählen Sie die Messfrequenz:",
+      "cancel": "Abbrechen",
+      "start": "Starten"
+    },
+    "missionDetails": {
+      "title": "Mission beenden",
+      "missionName": "Missionsname",
+      "placeholder": "z.B.: Büro-Luftqualitätsmessung",
+      "emptyWillUseDateTime": "Falls leer, wird aktuelles Datum und Uhrzeit verwendet",
+      "shareData": "Daten teilen",
+      "contributeToDatabase": "Zur Gemeinschaftsdatenbank beitragen",
+      "cancel": "Abbrechen",
+      "delete": "Löschen",
+      "save": "Speichern"
+    },
+    "frequency": {
+      "every1s": "Jede Sekunde",
+      "every5s": "Alle 5 Sekunden",
+      "every10s": "Alle 10 Sekunden",
+      "every30s": "Alle 30 Sekunden", 
+      "every1m": "Jede Minute",
+      "every5m": "Alle 5 Minuten",
+      "every10m": "Alle 10 Minuten"
+    }
+  },
+  "thresholds": {
+    "title": "Benutzerdefinierte Schwellenwerte",
+    "subtitle": "Definieren Sie Ihre eigenen Luftqualitätsschwellenwerte für die Farbcodierung",
+    "whoInfo": {
+      "title": "WHO-Standards",
+      "description": "Die Weltgesundheitsorganisation empfiehlt PM2.5 ≤ 12 μg/m³ und PM10 ≤ 20 μg/m³ für gute Luftqualität"
+    },
+    "levels": {
+      "good": "Gut (Grün)",
+      "moderate": "Mäßig (Orange)", 
+      "poor": "Schlecht (Rot)",
+      "veryPoor": "Sehr schlecht (Dunkelrot)"
+    },
+    "validation": {
+      "increasingOrder": "Schwellenwerte müssen in aufsteigender Reihenfolge sein: Gut < Mäßig < Schlecht"
+    },
+    "saved": "Benutzerdefinierte Schwellenwerte erfolgreich gespeichert",
+    "resetToWHO": "Auf WHO-Standards zurücksetzen"
+  },
+  "alerts": {
+    "title": "Warnungen & Alarme",
+    "subtitle": "Warnungen basierend auf Expositionszeit über Schwellenwerten einrichten",
+    "description": "Konfigurieren Sie Warnungen, die ausgelöst werden, wenn Sie bestimmte Zeit lang Verschmutzungswerten über spezifischen Schwellenwerten ausgesetzt sind",
+    "enabled": "Warnungen aktiviert",
+    "disabled": "Warnungen deaktiviert",
+    "toggleDescription": "Alle Warnmeldungen aktivieren oder deaktivieren",
+    "thresholdLevel": "Schwellenwert (μg/m³)",
+    "exposureDuration": "Expositionsdauer (Minuten)",
+    "minimumDuration": "Mindestdauer: 1 Minute",
+    "validation": {
+      "thresholdRequired": "Schwellenwert ist erforderlich",
+      "durationRequired": "Dauer ist erforderlich",
+      "minimumDuration": "Dauer muss mindestens 1 Minute betragen"
+    },
+    "saved": "Warnungseinstellungen erfolgreich gespeichert",
+    "resetToDefaults": "Auf Standardwerte zurücksetzen",
+    "pm1Alert": "PM1-Warnung",
+    "pm25Alert": "PM2.5-Warnung", 
+    "pm10Alert": "PM10-Warnung",
+    "alertWhen": "Warnung bei über {threshold} μg/m³ für {duration} Minuten",
+    "noAlertSet": "Kein Warnschwellenwert festgelegt"
+  },
+  "mySettings": {
+    "subtitle": "Verwalten Sie Ihre persönlichen Standorte, Aktivitäten, Alarme und Ereignisse",
+    "tabs": {
+      "locations": "Standorte",
+      "activities": "Aktivitäten", 
+      "alarms": "Alarme",
+      "events": "Ereignisse"
+    },
+    "sections": {
+      "locations": "Meine Standorte",
+      "activities": "Meine Aktivitäten",
+      "alarms": "Meine Alarme",
+      "events": "Meine Ereignisse"
+    },
+    "actions": {
+      "addLocation": "Standort hinzufügen",
+      "addActivity": "Aktivität hinzufügen",
+      "addAlarm": "Alarm hinzufügen",
+      "addEvent": "Ereignis hinzufügen"
+    },
+    "startDate": "Beginn",
+    "endDate": "Ende"
+  }
+}

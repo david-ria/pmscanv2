@@ -1,0 +1,395 @@
+{
+  "navigation": {
+    "realTime": "Temps real",
+    "history": "Historial", 
+    "analysis": "Anàlisi",
+    "groups": "Grups"
+  },
+  "header": {
+    "title": "PMSCAN",
+    "realTime": "Temps real"
+  },
+  "settings": {
+    "title": "Configuració",
+    "subtitle": "Configuració i compte",
+    "appVersion": "PMSCAN v1.0.0",
+    "dataSync": "Sincr. dades 2 min"
+  },
+  "account": {
+    "title": "Compte",
+    "profile": "El meu perfil",
+    "logout": "Tancar sessió",
+    "connected": "Connectat",
+    "user": "Usuari"
+  },
+  "settingsMenu": {
+    "title": "Configuració",
+    "customThresholds": "Llindars personalitzats",
+    "alertsAlarms": "Alertes i alarmes",
+    "language": "Idioma",
+    "mySettings": "La meva configuració"
+  },
+  "community": {
+    "title": "Comunitat",
+    "joinGroup": "Unir-se a un grup",
+    "healthNeighborhood": "Barri Salut Respira",
+    "members": "membres"
+  },
+  "sensors": {
+    "title": "Sensors",
+    "pmscan": "Sensor PMSCAN",
+    "native": "Sensors natius",
+    "googleFit": "Google Fit",
+    "connected": "Connectat"
+  },
+  "loading": {
+    "app": "Carregant l'aplicació...",
+    "default": "Carregant..."
+  },
+  "auth": {
+    "signOut": "Tancar sessió",
+    "signIn": "Iniciar sessió",
+    "signUp": "Registrar-se",
+    "email": "Correu electrònic",
+    "password": "Contrasenya",
+    "firstName": "Nom",
+    "lastName": "Cognoms",
+    "connecting": "Connectant...",
+    "signingUp": "Registrant...",
+    "authentication": "Autenticació",
+    "connectionError": "Error de connexió",
+    "connectionSuccess": "Connexió exitosa",
+    "youAreConnected": "Ara esteu connectat",
+    "unexpectedError": "S'ha produït un error inesperat",
+    "registrationError": "Error de registre",
+    "registrationSuccess": "Registre exitós",
+    "checkEmailConfirm": "Reviseu el vostre correu per confirmar el compte",
+    "emailPlaceholder": "el-vostre@email.cat",
+    "passwordPlaceholder": "••••••••",
+    "firstNamePlaceholder": "Nom",
+    "lastNamePlaceholder": "Cognoms"
+  },
+  "language": {
+    "french": "Français",
+    "english": "English",
+    "german": "Deutsch",
+    "catalan": "Català"
+  },
+  "profile": {
+    "title": "El meu perfil",
+    "subtitle": "Gestioneu la vostra informació personal",
+    "loadingProfile": "Carregant perfil...",
+    "personalInfo": "Informació personal",
+    "pseudo": "Nom d'usuari",
+    "pseudoPlaceholder": "El vostre nom d'usuari",
+    "firstName": "Nom",
+    "firstNamePlaceholder": "El vostre nom",
+    "lastName": "Cognoms", 
+    "lastNamePlaceholder": "Els vostres cognoms",
+    "email": "Correu electrònic",
+    "emailNotEditable": "El correu electrònic no es pot modificar",
+    "save": "Desar",
+    "saving": "Desant...",
+    "accountInfo": "Informació del compte",
+    "connectedSince": "Connectat des de",
+    "lastUpdate": "Última actualització",
+    "notAvailable": "No disponible",
+    "changePassword": "Canviar contrasenya",
+    "newPassword": "Nova contrasenya",
+    "confirmPassword": "Confirmar contrasenya",
+    "changing": "Canviant...",
+    "error": "Error",
+    "profileUpdateError": "No s'ha pogut carregar el perfil",
+    "profileUpdated": "Perfil actualitzat",
+    "infoSaved": "La vostra informació s'ha desat",
+    "passwordsNoMatch": "Les contrasenyes no coincideixen",
+    "passwordTooShort": "La contrasenya ha de tenir almenys 6 caràcters",
+    "passwordChanged": "Contrasenya canviada",
+    "passwordUpdated": "La vostra contrasenya s'ha actualitzat"
+  },
+  "groups": {
+    "title": "Grups",
+    "subtitle": "Gestioneu els vostres grups de monitorització de qualitat de l'aire i col·laboreu amb altres",
+    "createGroup": "Crear grup",
+    "myGroups": "Els meus grups",
+    "adminPanel": "Panell d'administrador",
+    "invitations": "Invitacions",
+    "noGroupsYet": "Encara no hi ha grups",
+    "createFirstGroup": "Creeu el vostre primer grup per començar a col·laborar amb altres en la monitorització de la qualitat de l'aire",
+    "createYourFirstGroup": "Crear el vostre primer grup",
+    "noPendingInvitations": "No hi ha invitacions pendents",
+    "invitationsDescription": "Quan altres us invitin als seus grups, veureu les invitacions aquí"
+  },
+  "common": {
+    "error": "Error",
+    "success": "Èxit",
+    "cancel": "Cancel·lar",
+    "confirm": "Confirmar",
+    "close": "Tancar",
+    "save": "Desar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "loading": "Carregant...",
+    "notConnected": "No connectat",
+    "connecting": "Connectant...",
+    "good": "Bo",
+    "moderate": "Moderat", 
+    "poor": "Dolent",
+    "admin": "Administrador",
+    "member": "Membre",
+    "enabled": "Activat",
+    "disabled": "Desactivat"
+  },
+  "welcome": {
+    "title": "Benvingut a la vostra aplicació buida",
+    "subtitle": "Comenceu a construir el vostre projecte increïble aquí!"
+  },
+  "realTime": {
+    "map": "Mapa",
+    "graph": "Gràfic",
+    "satellite": "Satèl·lit",
+    "connectionRequired": "Connexió requerida per a la vista de mapa",
+    "connectSensor": "Connecteu el vostre sensor PMScan per veure dades en temps real",
+    "lastMeasurement": "Última mesura",
+    "airQuality": {
+      "good": "Bo",
+      "moderate": "Moderat",
+      "poor": "Dolent",
+      "veryPoor": "Molt dolent"
+    },
+    "location": "Ubicació",
+    "activity": "Activitat",
+    "noLocation": "Sense ubicació",
+    "noActivity": "Sense activitat",
+    "dataLogger": "Registre de dades",
+    "recording": "Enregistrant",
+    "stopped": "Llest per enregistrar",
+    "entries": "entrades",
+    "last": "Última",
+    "export": "Exportar dades crues",
+    "clear": "Netejar",
+    "expand": "Expandir",
+    "minimize": "Minimitzar",
+    "noData": "No s'han enregistrat dades",
+    "waitingData": "Esperant dades...",
+    "startRecording": "Inicieu l'enregistrament per veure les dades"
+  },
+  "locations": {
+    "home": "Casa",
+    "school": "Escola",
+    "office": "Oficina",
+    "park": "Parc",
+    "mainStreet": "Carrer principal",
+    "transport": "Transport"
+  },
+  "activities": {
+    "walking": "Caminar",
+    "cycling": "Ciclisme",
+    "transport": "Transport",
+    "sport": "Esport",
+    "rest": "Descans",
+    "work": "Treball"
+  },
+  "history": {
+    "loadingMissions": "Carregant missions...",
+    "noMissionsForPeriod": "No hi ha missions per aquest període",
+    "selectAnotherDate": "Seleccioneu una altra data o període per veure les vostres dades",
+    "recentMissions": "missions recents",
+    "summary": "Resum",
+    "today": "Avui",
+    "yesterday": "Ahir",
+    "measurements": "mesures",
+    "avg": "mitjana",
+    "share": "Compartir",
+    "export": "Exportar",
+    "sync": "Sincronitzar",
+    "local": "Local",
+    "statistics": "Estadístiques",
+    "noLocationData": "No hi ha dades d'ubicació disponibles",
+    "average": "Mitjana",
+    "minimum": "Mínim",
+    "maximum": "Màxim",
+    "periods": {
+      "day": "Dia",
+      "week": "Setmana",
+      "month": "Mes",
+      "year": "Any"
+    },
+    "stats": {
+      "totalExposure": "Exposició total",
+      "averagePM25": "PM2.5 mitjà",
+      "pm25AboveWHO": "PM2.5 > OMS (15)",
+      "pm10AboveWHO": "PM10 > OMS (45)"
+    }
+  },
+  "analysis": {
+    "title": "Anàlisi IA personalitzada",
+    "statisticalAnalysis": "Anàlisi estadística",
+    "refresh": "Actualitzar",
+    "analyzing": "Analitzant...",
+    "analysisInProgress": "Anàlisi en curs...",
+    "askQuestion": "Fer una pregunta",
+    "exportReport": "Exportar informe",
+    "dataSummary": "Resum de dades",
+    "missions": "Missions",
+    "exposureTime": "Temps d'exposició",
+    "averagePM25": "PM2.5 mitjà (μg/m³)",
+    "minutesAboveWHO": "Min >= llindar OMS",
+    "whoComplianceTitle": "Compliment dels llindars OMS",
+    "timeBelowWHO": "Temps per sota del llindar OMS (15 μg/m³)",
+    "whoRecommendation": "L'OMS recomana mantenir l'exposició PM2.5 per sota de 15 μg/m³ per protegir la salut.",
+    "groupComparison": {
+      "title": "Comparació de grup",
+      "loading": "Carregant dades del grup...",
+      "yourAverage": "La vostra mitjana",
+      "groupAverage": "Mitjana del grup", 
+      "difference": "Diferència",
+      "memberComparison": "Comparació de membres",
+      "you": "Vosaltres",
+      "member": "Membre",
+      "similar": "Similar al grup",
+      "higher": "Superior al grup",
+      "lower": "Inferior al grup",
+      "groupContext": "Comparant amb els membres de {{groupName}}",
+      "insights": {
+        "title": "Insights i recomanacions",
+        "higherExposure": "La vostra exposició està per sobre de la mitjana del grup",
+        "checkActivities": "Reviseu les vostres activitats i ubicacions durant períodes d'alta exposició",
+        "avoidPeakTimes": "Intenteu evitar activitats a l'aire lliure durant les hores de pic de contaminació",
+        "lowerExposure": "La vostra exposició està per sota de la mitjana del grup - excel·lent feina!",
+        "goodPractices": "Compartiu les vostres bones pràctiques amb el grup",
+        "shareKnowledge": "Considereu ajudar altres membres a reduir la seva exposició"
+      }
+    },
+    "error": "Error",
+    "errorLoadingMissions": "No s'han pogut carregar les missions",
+    "analysisGenerated": "Anàlisi generada",
+    "analysisReady": "La vostra anàlisi personalitzada està llesta",
+    "analysisUnavailable": "Anàlisi no disponible",
+    "checkDataAndRetry": "Reviseu les vostres dades i torneu-ho a provar",
+    "noDataForPeriod": {
+      "day": "No s'han trobat dades per aquest dia.",
+      "week": "No s'han trobat dades per aquesta setmana.",
+      "month": "No s'han trobat dades per aquest mes.",
+      "year": "No s'han trobat dades per aquest any."
+    },
+    "youHaveMissions": "Teniu {count} missió(s) enregistrada(es), però no coincideixen amb el període seleccionat.",
+    "tryTo": "💡 Proveu a:",
+    "changePeriod": "• Canviar el període (dia/setmana/mes/any)",
+    "selectDifferentDate": "• Seleccionar una data diferent",
+    "goToHistory": "• O aneu a 'Historial' per veure totes les vostres dades",
+    "noDataAvailable": "No hi ha dades disponibles.",
+    "forPersonalizedAnalysis": "Per a una anàlisi personalitzada:",
+    "goToRealTime": "1. Aneu a la pàgina 'Temps real'",
+    "connectSensor": "2. Connecteu el vostre sensor PMScan",
+    "startRecording": "3. Inicieu un enregistrament durant uns minuts",
+    "comeBackHere": "4. Torneu aquí per veure la vostra anàlisi IA!",
+    "unableToGenerate": "No es pot generar la vostra anàlisi en aquest moment.",
+    "forPersonalizedReport": "Per al vostre informe personalitzat:",
+    "checkRecordedData": "1. Comproveu que teniu dades enregistrades",
+    "goToRealTimeForMeasures": "2. Aneu a 'Temps real' per fer noves mesures",
+    "comeBackInMoments": "3. Torneu aquí en uns moments",
+    "changePeriodIfPersists": "Si el problema persisteix, proveu de canviar el període de temps seleccionat.",
+    "mapTitle": "Ubicacions de mesura",
+    "points": "punts",
+    "activityAnalysisTitle": "Anàlisi d'activitat",
+    "timeSpent": "Temps invertit",
+    "exposure": "Exposició",
+    "measurements": "mesures",
+    "unknownActivity": "Activitat desconeguda"
+  },
+  "modals": {
+    "recordingFrequency": {
+      "title": "Freqüència d'enregistrament",
+      "chooseMeasureFrequency": "Trieu la freqüència de mesura:",
+      "cancel": "Cancel·lar",
+      "start": "Iniciar"
+    },
+    "missionDetails": {
+      "title": "Finalitzar missió",
+      "missionName": "Nom de la missió",
+      "placeholder": "Ex: Mesura qualitat aire oficina",
+      "emptyWillUseDateTime": "Si està buit, utilitzarà la data i hora actuals",
+      "shareData": "Compartir dades",
+      "contributeToDatabase": "Contribuir a la base de dades comunitària",
+      "cancel": "Cancel·lar",
+      "delete": "Eliminar",
+      "save": "Desar"
+    },
+    "frequency": {
+      "every1s": "Cada segon",
+      "every5s": "Cada 5 segons",
+      "every10s": "Cada 10 segons",
+      "every30s": "Cada 30 segons", 
+      "every1m": "Cada minut",
+      "every5m": "Cada 5 minuts",
+      "every10m": "Cada 10 minuts"
+    }
+  },
+  "thresholds": {
+    "title": "Llindars personalitzats",
+    "subtitle": "Definiu els vostres propis llindars de qualitat de l'aire per a la codificació de colors",
+    "whoInfo": {
+      "title": "Estàndards OMS",
+      "description": "L'Organització Mundial de la Salut recomana PM2.5 ≤ 12 μg/m³ i PM10 ≤ 20 μg/m³ per a una bona qualitat de l'aire"
+    },
+    "levels": {
+      "good": "Bo (Verd)",
+      "moderate": "Moderat (Taronja)", 
+      "poor": "Dolent (Vermell)",
+      "veryPoor": "Molt dolent (Vermell fosc)"
+    },
+    "validation": {
+      "increasingOrder": "Els llindars han d'estar en ordre creixent: Bo < Moderat < Dolent"
+    },
+    "saved": "Llindars personalitzats desats amb èxit",
+    "resetToWHO": "Reiniciar als estàndards OMS"
+  },
+  "alerts": {
+    "title": "Alertes i alarmes",
+    "subtitle": "Configureu alertes basades en el temps d'exposició per sobre dels llindars",
+    "description": "Configureu alertes que s'activin quan estigueu exposats a nivells de contaminació per sobre de llindars específics durant un temps determinat",
+    "enabled": "Alertes activades",
+    "disabled": "Alertes desactivades",
+    "toggleDescription": "Activar o desactivar totes les notificacions d'alerta",
+    "thresholdLevel": "Llindar (μg/m³)",
+    "exposureDuration": "Durada d'exposició (minuts)",
+    "minimumDuration": "Durada mínima: 1 minut",
+    "validation": {
+      "thresholdRequired": "El valor del llindar és obligatori",
+      "durationRequired": "La durada és obligatòria",
+      "minimumDuration": "La durada ha de ser almenys d'1 minut"
+    },
+    "saved": "Configuració d'alertes desada amb èxit",
+    "resetToDefaults": "Reiniciar als valors per defecte",
+    "pm1Alert": "Alerta PM1",
+    "pm25Alert": "Alerta PM2.5", 
+    "pm10Alert": "Alerta PM10",
+    "alertWhen": "Alertar quan estigui per sobre de {threshold} μg/m³ durant {duration} minuts",
+    "noAlertSet": "No s'ha establert cap llindar d'alerta"
+  },
+  "mySettings": {
+    "subtitle": "Gestioneu les vostres ubicacions, activitats, alarmes i esdeveniments personals",
+    "tabs": {
+      "locations": "Ubicacions",
+      "activities": "Activitats", 
+      "alarms": "Alarmes",
+      "events": "Esdeveniments"
+    },
+    "sections": {
+      "locations": "Les meves Ubicacions",
+      "activities": "Les meves Activitats",
+      "alarms": "Les meves Alarmes",
+      "events": "Els meus Esdeveniments"
+    },
+    "actions": {
+      "addLocation": "Afegir Ubicació",
+      "addActivity": "Afegir Activitat",
+      "addAlarm": "Afegir Alarma",
+      "addEvent": "Afegir Esdeveniment"
+    },
+    "startDate": "Inici",
+    "endDate": "Final"
+  }
+}

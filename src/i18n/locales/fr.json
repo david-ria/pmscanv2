@@ -26,7 +26,8 @@
     "title": "Paramètres",
     "customThresholds": "Seuils personnalisés",
     "alertsAlarms": "Alertes & alarmes",
-    "language": "Langue"
+    "language": "Langue",
+    "mySettings": "Mes Paramètres"
   },
   "community": {
     "title": "Communauté",
@@ -70,7 +71,9 @@
   },
   "language": {
     "french": "Français",
-    "english": "English"
+    "english": "English",
+    "german": "Deutsch",
+    "catalan": "Català"
   },
   "profile": {
     "title": "Mon Profil",
@@ -366,5 +369,28 @@
     "pm10Alert": "Alerte PM10",
     "alertWhen": "Alerter au-dessus de {threshold} μg/m³ pendant {duration} minutes",
     "noAlertSet": "Aucun seuil d'alerte défini"
+  },
+  "mySettings": {
+    "subtitle": "Gérez vos emplacements, activités, alarmes et événements personnels",
+    "tabs": {
+      "locations": "Emplacements",
+      "activities": "Activités", 
+      "alarms": "Alarmes",
+      "events": "Événements"
+    },
+    "sections": {
+      "locations": "Mes Emplacements",
+      "activities": "Mes Activités",
+      "alarms": "Mes Alarmes",
+      "events": "Mes Événements"
+    },
+    "actions": {
+      "addLocation": "Ajouter un Emplacement",
+      "addActivity": "Ajouter une Activité",
+      "addAlarm": "Ajouter une Alarme",
+      "addEvent": "Ajouter un Événement"
+    },
+    "startDate": "Début",
+    "endDate": "Fin"
   }
 }

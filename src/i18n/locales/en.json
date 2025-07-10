@@ -26,7 +26,8 @@
     "title": "Settings",
     "customThresholds": "Custom thresholds",
     "alertsAlarms": "Alerts & alarms",
-    "language": "Language"
+    "language": "Language",
+    "mySettings": "My Settings"
   },
   "community": {
     "title": "Community",
@@ -70,7 +71,9 @@
   },
   "language": {
     "french": "Français",
-    "english": "English"
+    "english": "English",
+    "german": "Deutsch",
+    "catalan": "Català"
   },
   "profile": {
     "title": "My Profile",
@@ -365,5 +368,28 @@
     "pm10Alert": "PM10 Alert",
     "alertWhen": "Alert when above {threshold} μg/m³ for {duration} minutes",
     "noAlertSet": "No alert threshold set"
+  },
+  "mySettings": {
+    "subtitle": "Manage your personal locations, activities, alarms, and events",
+    "tabs": {
+      "locations": "Locations",
+      "activities": "Activities", 
+      "alarms": "Alarms",
+      "events": "Events"
+    },
+    "sections": {
+      "locations": "My Locations",
+      "activities": "My Activities",
+      "alarms": "My Alarms",
+      "events": "My Events"
+    },
+    "actions": {
+      "addLocation": "Add Location",
+      "addActivity": "Add Activity",
+      "addAlarm": "Add Alarm",
+      "addEvent": "Add Event"
+    },
+    "startDate": "Start",
+    "endDate": "End"
   }
 }
