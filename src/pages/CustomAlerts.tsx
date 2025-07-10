@@ -194,7 +194,7 @@ export default function CustomAlerts() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate('/')}
           className="h-9 w-9"
         >
           <ArrowLeft className="h-5 w-5" />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Calendar, Lock, Save } from 'lucide-react';
+import { User, Calendar, Lock, Save, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 
@@ -25,6 +26,7 @@ export default function Profile() {
   const { user, updatePassword } = useAuth();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -174,10 +176,20 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-background px-4 py-6">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{t('profile.title')}</h1>
-          <p className="text-muted-foreground">{t('profile.subtitle')}</p>
+        {/* Header with Back Button */}
+        <div className="flex items-center gap-3 mb-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/')}
+            className="h-9 w-9"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="text-center flex-1">
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t('profile.title')}</h1>
+            <p className="text-muted-foreground">{t('profile.subtitle')}</p>
+          </div>
         </div>
 
         {/* Profile Information */}
