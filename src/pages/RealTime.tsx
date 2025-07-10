@@ -4,7 +4,6 @@ import { AirQualityCards } from "@/components/RealTime/AirQualityCards";
 import { MapGraphToggle } from "@/components/RealTime/MapGraphToggle";
 import { ContextSelectors } from "@/components/RecordingControls/ContextSelectors";
 import { DataLogger } from "@/components/DataLogger";
-import { BackgroundRecordingStatus } from "@/components/BackgroundRecordingStatus";
 
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { useGPS } from "@/hooks/useGPS";
@@ -103,8 +102,6 @@ export default function RealTime() {
       />
 
 
-      {/* Background Recording Status */}
-      <BackgroundRecordingStatus />
 
       {/* Real-time Readings - Air Quality Cards */}
       <AirQualityCards
