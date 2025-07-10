@@ -89,12 +89,6 @@ export default function RealTime() {
         onRequestLocationPermission={requestLocationPermission}
       />
 
-      {/* Air Quality Cards */}
-      <AirQualityCards 
-        currentData={currentData}
-        isConnected={isConnected}
-      />
-
       {/* Map/Graph Toggle Section */}
       <MapGraphToggle
         showGraph={showGraph}
@@ -105,6 +99,12 @@ export default function RealTime() {
         recordingData={recordingData}
         isRecording={isRecording}
         device={device}
+      />
+
+      {/* Air Quality Cards */}
+      <AirQualityCards 
+        currentData={currentData}
+        isConnected={isConnected}
       />
 
 
