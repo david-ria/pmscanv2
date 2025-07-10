@@ -140,7 +140,7 @@ export const groupConfigs: Record<string, GroupConfig> = {
       {
         name: 'Musée',
         description: 'Transportation monitoring'
-      }
+      },
       {
         name: 'Maison',
         description: 'Transportation monitoring'
