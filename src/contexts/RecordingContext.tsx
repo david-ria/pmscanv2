@@ -3,6 +3,7 @@ import { useRecordingData } from '@/hooks/useRecordingData';
 
 interface RecordingContextType {
   isRecording: boolean;
+  recordingFrequency: string;
   missionContext: {
     location: string;
     activity: string;

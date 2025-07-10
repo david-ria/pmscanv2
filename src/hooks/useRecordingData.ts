@@ -94,6 +94,7 @@ export function useRecordingData() {
   return {
     recordingData,
     isRecording,
+    recordingFrequency,
     missionContext,
     startRecording,
     stopRecording,

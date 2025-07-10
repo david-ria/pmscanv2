@@ -19,7 +19,7 @@ export default function RealTime() {
   
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
-  const { isRecording, addDataPoint, missionContext, recordingData, updateMissionContext } = useRecordingContext();
+  const { isRecording, addDataPoint, missionContext, recordingData, updateMissionContext, recordingFrequency } = useRecordingContext();
   const { checkAlerts } = useAlerts();
 
   // Add data to recording when new data comes in - with deduplication
@@ -27,20 +27,27 @@ export default function RealTime() {
   
   useEffect(() => {
     if (isRecording && currentData) {
-      // Prevent duplicate data points by checking if this is actually new data
       const currentTimestamp = currentData.timestamp.getTime();
-      const isDuplicate = lastDataRef.current && 
-        lastDataRef.current.pm25 === currentData.pm25 && 
-        Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
       
-      if (!isDuplicate) {
-        // Ensure we pass location data even if it's null
-        console.log('Adding data point with location:', latestLocation);
+      // For realtime recording, skip deduplication to capture every data point
+      if (recordingFrequency === "realtime") {
+        console.log('Realtime recording: Adding data point without deduplication');
         addDataPoint(currentData, latestLocation || undefined, missionContext);
         lastDataRef.current = { pm25: currentData.pm25, timestamp: currentTimestamp };
+      } else {
+        // For other frequencies, prevent duplicate data points by checking if this is actually new data
+        const isDuplicate = lastDataRef.current && 
+          lastDataRef.current.pm25 === currentData.pm25 && 
+          Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
+        
+        if (!isDuplicate) {
+          console.log('Adding data point with location:', latestLocation);
+          addDataPoint(currentData, latestLocation || undefined, missionContext);
+          lastDataRef.current = { pm25: currentData.pm25, timestamp: currentTimestamp };
+        }
       }
     }
-  }, [isRecording, currentData, latestLocation, addDataPoint, missionContext]);
+  }, [isRecording, currentData, latestLocation, addDataPoint, missionContext, recordingFrequency]);
 
   // Check alerts whenever new data comes in
   useEffect(() => {
