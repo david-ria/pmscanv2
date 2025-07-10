@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { dataStorage, MissionData } from "@/lib/dataStorage";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { GroupComparison } from "@/components/Analysis/GroupComparison";
 
 export default function Analysis() {
   const { t } = useTranslation();
@@ -343,6 +344,15 @@ ${avgPM25 > 15 || avgPM10 > 45 ?
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Group Comparison */}
+      {dataPoints && (
+        <GroupComparison 
+          userStats={dataPoints}
+          selectedPeriod={selectedPeriod}
+          selectedDate={selectedDate}
+        />
       )}
 
       {/* Data Points Summary */}
