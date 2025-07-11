@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 interface ActivityData {
   activity: string;
   timeSpent: number;
+  cumulativeDose: number; // In µg·h/m³
   averageExposure: number;
   measurements: number;
 }
@@ -47,7 +48,7 @@ export const ActivityAnalysis = ({
             />
             <Label htmlFor="activity-toggle" className="text-sm">
               <BarChart3 className="h-4 w-4 inline mr-1" />
-              {t('analysis.exposure')}
+              {t('analysis.cumulativeDose')}
             </Label>
           </div>
         </div>
@@ -56,11 +57,11 @@ export const ActivityAnalysis = ({
         <div className="space-y-4">
           {activityData.map((activity, index) => {
             const maxValue = showActivityExposure 
-              ? Math.max(...activityData.map(a => a.averageExposure))
+              ? Math.max(...activityData.map(a => a.cumulativeDose))
               : Math.max(...activityData.map(a => a.timeSpent));
             
             const currentValue = showActivityExposure 
-              ? activity.averageExposure 
+              ? activity.cumulativeDose 
               : activity.timeSpent;
             
             const percentage = maxValue > 0 ? (currentValue / maxValue) * 100 : 0;
@@ -74,7 +75,7 @@ export const ActivityAnalysis = ({
                   <div className="text-sm text-muted-foreground flex items-center gap-4">
                     <span>
                       {showActivityExposure 
-                        ? `${Math.round(activity.averageExposure)} µg/m³`
+                        ? `${activity.cumulativeDose.toFixed(1)} µg·h/m³`
                         : `${Math.round(activity.timeSpent / 60)}h ${activity.timeSpent % 60}min`
                       }
                     </span>

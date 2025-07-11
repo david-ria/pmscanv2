@@ -15,6 +15,7 @@ interface AnalysisData {
 interface ActivityData {
   activity: string;
   timeSpent: number;
+  cumulativeDose: number; // In µg·h/m³
   averageExposure: number;
   measurements: number;
 }
@@ -71,6 +72,7 @@ export const useAnalysisLogic = (
       const activityMap = new Map<string, {
         totalDuration: number;
         totalPM25: number;
+        cumulativeDose: number;
         measurements: number;
       }>();
 
@@ -79,11 +81,16 @@ export const useAnalysisLogic = (
         const existing = activityMap.get(activity) || {
           totalDuration: 0,
           totalPM25: 0,
+          cumulativeDose: 0,
           measurements: 0
         };
 
+        const durationHours = mission.durationMinutes / 60; // Convert minutes to hours
+        const dose = mission.avgPm25 * durationHours; // Ci × Δti formula
+        
         existing.totalDuration += mission.durationMinutes;
         existing.totalPM25 += mission.avgPm25 * mission.durationMinutes; // Weight by duration
+        existing.cumulativeDose += dose; // Cumulative dose in µg·h/m³
         existing.measurements += mission.measurementsCount;
 
         activityMap.set(activity, existing);
@@ -93,12 +100,13 @@ export const useAnalysisLogic = (
       const activities = Array.from(activityMap.entries()).map(([activity, data]) => ({
         activity,
         timeSpent: data.totalDuration,
+        cumulativeDose: data.cumulativeDose, // Total cumulative dose for this activity
         averageExposure: data.totalDuration > 0 ? data.totalPM25 / data.totalDuration : 0,
         measurements: data.measurements
       }));
 
-      // Sort by time spent (descending)
-      activities.sort((a, b) => b.timeSpent - a.timeSpent);
+      // Sort by cumulative dose (descending) - most exposed activities first
+      activities.sort((a, b) => b.cumulativeDose - a.cumulativeDose);
       setActivityData(activities);
     } catch (error) {
       console.error('Error loading activity data:', error);
@@ -204,6 +212,17 @@ export const useAnalysisLogic = (
         return total;
       }, 0);
 
+      // Calculate total cumulative dose for all missions
+      const totalCumulativeDosePM25 = filtered.reduce((total, mission) => {
+        const durationHours = mission.durationMinutes / 60;
+        return total + (mission.avgPm25 * durationHours);
+      }, 0);
+
+      const totalCumulativeDosePM10 = filtered.reduce((total, mission) => {
+        const durationHours = mission.durationMinutes / 60;
+        return total + (mission.avgPm10 * durationHours);
+      }, 0);
+
       // Create comprehensive statistical summary
       const exposureHours = (totalExposureMinutes / 60).toFixed(1);
       const whoExceedancePercentage_PM25 = totalExposureMinutes > 0 ? ((timeAboveWHO_PM25 / totalExposureMinutes) * 100).toFixed(1) : 0;
@@ -228,6 +247,11 @@ export const useAnalysisLogic = (
 • PM1.0: ${avgPM1.toFixed(1)} μg/m³ (max: ${maxPM1.toFixed(1)} μg/m³)
 • PM2.5: ${avgPM25.toFixed(1)} μg/m³ (max: ${maxPM25.toFixed(1)} μg/m³)
 • PM10: ${avgPM10.toFixed(1)} μg/m³ (max: ${maxPM10.toFixed(1)} μg/m³)
+
+💨 DOSE CUMULÉE INHALÉE:
+• PM2.5: ${totalCumulativeDosePM25.toFixed(1)} μg·h/m³
+• PM10: ${totalCumulativeDosePM10.toFixed(1)} μg·h/m³
+• Formule: Dose = ∑(Concentration × Temps d'exposition)
 
 ⚠️ SEUILS OMS (Organisation Mondiale de la Santé):
 • PM2.5 > 15 μg/m³: ${timeAboveWHO_PM25.toFixed(0)} min (${whoExceedancePercentage_PM25}% du temps)

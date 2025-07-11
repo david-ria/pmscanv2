@@ -297,6 +297,7 @@
     "activityAnalysisTitle": "Analyse des activités",
     "timeSpent": "Temps passé",
     "exposure": "Exposition",
+    "cumulativeDose": "Dose cumulée",
     "measurements": "mesures",
     "unknownActivity": "Activité inconnue",
     "dataAnalysis": "Analyse des données",
