@@ -9,6 +9,7 @@ import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
 import { useGPS } from "@/hooks/useGPS";
 import { useRecordingContext } from "@/contexts/RecordingContext";
 import { useAlerts } from "@/contexts/AlertContext";
+import { useAutoContext } from "@/hooks/useAutoContext";
 
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -18,6 +19,7 @@ export default function RealTime() {
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS();
   const { isRecording, addDataPoint, missionContext, recordingData, updateMissionContext } = useRecordingContext();
   const { checkAlerts } = useAlerts();
+  const { determineContext, isEnabled: autoContextEnabled } = useAutoContext();
   
   // Initialize with current mission context if already recording
   const [selectedLocation, setSelectedLocation] = useState(missionContext.location);
@@ -36,7 +38,16 @@ export default function RealTime() {
       
       if (!isDuplicate) {
         console.log('Adding data point with location:', latestLocation);
-        addDataPoint(currentData, latestLocation || undefined, missionContext);
+        
+        // Determine automatic context if enabled
+        const automaticContext = autoContextEnabled ? determineContext({
+          pmData: currentData,
+          location: latestLocation || undefined,
+          speed: 0, // Would need to calculate from GPS data
+          isMoving: false // Would need to determine from sensors
+        }) : '';
+        
+        addDataPoint(currentData, latestLocation || undefined, missionContext, automaticContext);
         lastDataRef.current = { pm25: currentData.pm25, timestamp: currentTimestamp };
       }
     }

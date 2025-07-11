@@ -25,7 +25,8 @@ export function useDataPointRecorder({
   const addDataPoint = (
     pmData: PMScanData, 
     location?: LocationData, 
-    context?: { location: string; activity: string }
+    context?: { location: string; activity: string },
+    automaticContext?: string
   ) => {
     console.log('📊 addDataPoint called:', {
       isRecording,
@@ -76,7 +77,8 @@ export function useDataPointRecorder({
     const entry: RecordingEntry = {
       pmData: pmDataWithUniqueTimestamp,
       location,
-      context
+      context,
+      automaticContext
     };
 
     console.log('📝 Adding entry to recording data:', entry);

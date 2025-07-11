@@ -8,6 +8,7 @@ export interface RecordingEntry {
     location: string;
     activity: string;
   };
+  automaticContext?: string;
 }
 
 export interface MissionContext {

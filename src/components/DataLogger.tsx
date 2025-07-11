@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Database, Clock, MapPin, Thermometer, Droplet, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { Database, Clock, MapPin, Thermometer, Droplet, ChevronDown, ChevronUp, Download, Brain } from "lucide-react";
 import { PMScanData } from "@/lib/pmscan/types";
 import { LocationData } from "@/types/PMScan";
 import { useTranslation } from "react-i18next";
+import { useAutoContext } from "@/hooks/useAutoContext";
 
 interface DataLogEntry {
   id: string;
@@ -17,6 +18,7 @@ interface DataLogEntry {
     location: string;
     activity: string;
   };
+  automaticContext?: string;
 }
 
 interface DataLoggerProps {
@@ -38,8 +40,17 @@ export function DataLogger({
   className 
 }: DataLoggerProps) {
   const { t } = useTranslation();
+  const { determineContext, isEnabled: autoContextEnabled } = useAutoContext();
   const [dataLog, setDataLog] = useState<DataLogEntry[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
+
+  // Get automatic context if enabled
+  const automaticContext = autoContextEnabled && currentData ? determineContext({
+    pmData: currentData,
+    location: currentLocation || undefined,
+    speed: 0, // Would need to calculate from GPS data
+    isMoving: false // Would need to determine from sensors
+  }) : '';
 
   // Add new data entry when recording and data is available - max 1 per second
   useEffect(() => {
@@ -64,7 +75,8 @@ export function DataLogger({
             timestamp: currentData.timestamp,
             pmData: currentData,
             location: currentLocation,
-            missionContext
+            missionContext,
+            automaticContext
           };
           
           const updated = [newEntry, ...prev.slice(0, 99)];
@@ -76,7 +88,7 @@ export function DataLogger({
         return prev;
       });
     }
-  }, [isRecording, currentData, currentLocation, missionContext]);
+  }, [isRecording, currentData, currentLocation, missionContext, automaticContext]);
 
   const clearLog = () => {
     setDataLog([]);
@@ -96,7 +108,8 @@ export function DataLogger({
       'Longitude',
       'GPS Accuracy (m)',
       'Location Context',
-      'Activity Context'
+      'Activity Context',
+      'Auto Context'
     ];
 
     const csvContent = [
@@ -112,7 +125,8 @@ export function DataLogger({
         entry.location?.longitude?.toFixed(6) || '',
         entry.location?.accuracy?.toFixed(0) || '',
         entry.missionContext?.location || '',
-        entry.missionContext?.activity || ''
+        entry.missionContext?.activity || '',
+        entry.automaticContext || ''
       ].join(','))
     ].join('\n');
 
@@ -144,6 +158,12 @@ export function DataLogger({
           <Badge variant={isRecording ? "default" : "secondary"} className="text-xs">
             {isRecording ? t('realTime.recording') : t('realTime.stopped')}
           </Badge>
+          {automaticContext && (
+            <Badge variant="outline" className="text-xs bg-muted">
+              <Brain className="h-3 w-3 mr-1" />
+              {automaticContext}
+            </Badge>
+          )}
           <span className="text-muted-foreground text-xs">
             {dataLog.length} {t('realTime.entries')}
           </span>
@@ -215,6 +235,11 @@ export function DataLogger({
                   {entry.missionContext && (entry.missionContext.location || entry.missionContext.activity) && (
                     <div className="text-xs pl-2">
                       Tags: {[entry.missionContext.location, entry.missionContext.activity].filter(Boolean).join(', ')}
+                    </div>
+                  )}
+                  {entry.automaticContext && (
+                    <div className="text-xs pl-2 text-blue-400">
+                      Auto: {entry.automaticContext}
                     </div>
                   )}
                 </div>
