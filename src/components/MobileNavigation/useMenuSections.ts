@@ -6,6 +6,7 @@ import { useGoogleFit } from "@/hooks/useGoogleFit";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAutoContext } from "@/hooks/useAutoContext";
+import { useBackgroundRecordingIntegration } from "@/hooks/useBackgroundRecordingIntegration";
 
 interface MenuSection {
   title: string;
@@ -18,15 +19,15 @@ interface MenuSection {
       checked: boolean;
       onCheckedChange: (checked: boolean) => void;
     };
+    info?: string;
   }[];
 }
 
 interface UseMenuSectionsProps {
   onNavigate: () => void;
-  onBackgroundRecording?: () => void;
 }
 
-export function useMenuSections({ onNavigate, onBackgroundRecording }: UseMenuSectionsProps): MenuSection[] {
+export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSection[] {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { isAuthenticated, connectGoogleFit, syncActivities } = useGoogleFit();
@@ -34,6 +35,7 @@ export function useMenuSections({ onNavigate, onBackgroundRecording }: UseMenuSe
   const { currentLanguage, languages } = useLanguage();
   const { userRole } = useUserRole();
   const { isEnabled: autoContextEnabled, toggleEnabled: toggleAutoContext } = useAutoContext();
+  const { isBackgroundEnabled, enableRecordingBackground, disableRecordingBackground } = useBackgroundRecordingIntegration();
 
   const handleProfileClick = () => {
     navigate('/profile');
@@ -88,8 +90,12 @@ export function useMenuSections({ onNavigate, onBackgroundRecording }: UseMenuSe
     return lang ? lang.name : currentLanguage.toUpperCase();
   };
 
-  const handleBackgroundRecording = () => {
-    onBackgroundRecording?.();
+  const handleBackgroundRecordingToggle = async (enabled: boolean) => {
+    if (enabled) {
+      await enableRecordingBackground("30s"); // Default 30 second frequency
+    } else {
+      await disableRecordingBackground();
+    }
   };
 
   return [
@@ -106,7 +112,16 @@ export function useMenuSections({ onNavigate, onBackgroundRecording }: UseMenuSe
         { icon: Settings, label: t('settingsMenu.customThresholds'), badge: null, action: handleCustomThresholds },
         { icon: AlertTriangle, label: t('settingsMenu.alertsAlarms'), badge: null, action: handleCustomAlerts },
         { icon: Languages, label: t('settingsMenu.language'), badge: getCurrentLanguageDisplay() },
-        { icon: Moon, label: 'Background Recording', badge: null, action: handleBackgroundRecording },
+        { 
+          icon: Moon, 
+          label: 'Background Recording', 
+          badge: null, 
+          toggle: {
+            checked: isBackgroundEnabled,
+            onCheckedChange: handleBackgroundRecordingToggle
+          },
+          info: 'Continue recording PMScan data even when the app is minimized or in the background'
+        },
         { 
           icon: Brain, 
           label: 'Auto Context', 

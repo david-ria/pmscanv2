@@ -13,6 +13,7 @@ interface MenuSectionProps {
       checked: boolean;
       onCheckedChange: (checked: boolean) => void;
     };
+    info?: string;
   }[];
 }
 
@@ -44,6 +45,7 @@ export function MenuSection({ title, items }: MenuSectionProps) {
               badge={item.badge}
               action={item.action}
               toggle={item.toggle}
+              info={item.info}
             />
           );
         })}
