@@ -243,18 +243,18 @@ export default function CustomAlerts() {
         <Separator className="my-6" />
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Button
             variant="outline"
             onClick={handleReset}
-            className="flex-1"
+            className="flex-1 min-h-[44px] touch-manipulation"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             {t('alerts.resetToDefaults')}
           </Button>
           <Button
             onClick={handleSave}
-            className="flex-1"
+            className="flex-1 min-h-[44px] touch-manipulation"
             disabled={!globalAlertsEnabled && !Object.values(localSettings).some(s => s.enabled)}
           >
             <Save className="h-4 w-4 mr-2" />

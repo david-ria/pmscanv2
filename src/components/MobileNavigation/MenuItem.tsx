@@ -14,18 +14,18 @@ export function MenuItem({ icon: Icon, label, badge, action }: MenuItemProps) {
 
   return (
     <div
-      className="flex items-center justify-between px-3 py-3 hover:bg-accent/50 transition-colors cursor-pointer rounded-lg min-h-[44px]"
+      className="flex items-center justify-between px-4 py-4 hover:bg-accent/50 transition-colors cursor-pointer rounded-lg min-h-[48px] touch-manipulation"
       onClick={action}
     >
-      <div className="flex items-center gap-3">
-        <Icon className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-foreground">{label}</span>
+      <div className="flex items-center gap-4">
+        <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+        <span className="text-sm text-foreground leading-tight">{label}</span>
       </div>
       {badge && (
         <Badge 
           variant="secondary" 
           className={cn(
-            "text-xs",
+            "text-xs ml-2 flex-shrink-0",
             badge === t('sensors.connected') && "bg-air-good/10 text-air-good"
           )}
         >

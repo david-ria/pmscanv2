@@ -17,13 +17,13 @@ export function LanguageSelector({ label, badge }: LanguageSelectorProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="flex items-center justify-between px-3 py-3 hover:bg-accent/50 transition-colors cursor-pointer rounded-lg min-h-[44px]">
-          <div className="flex items-center gap-3">
-            <Languages className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-foreground">{label}</span>
+        <div className="flex items-center justify-between px-4 py-4 hover:bg-accent/50 transition-colors cursor-pointer rounded-lg min-h-[48px] touch-manipulation">
+          <div className="flex items-center gap-4">
+            <Languages className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-sm text-foreground leading-tight">{label}</span>
           </div>
           {badge && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs ml-2 flex-shrink-0">
               {badge}
             </Badge>
           )}
