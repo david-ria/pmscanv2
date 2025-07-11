@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { MissionData } from "@/lib/dataStorage";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 
 interface PollutionBreakdownChartProps {
   missions: MissionData[];
@@ -21,9 +22,42 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
   const [breakdownType, setBreakdownType] = useState<BreakdownType>("activity");
   const [pmType, setPmType] = useState<PMType>("pm25");
 
+  // Filter missions based on selected date and period
+  const filteredMissions = () => {
+    let startDate: Date;
+    let endDate: Date;
+
+    switch (selectedPeriod) {
+      case "day":
+        startDate = startOfDay(selectedDate);
+        endDate = endOfDay(selectedDate);
+        break;
+      case "week":
+        startDate = startOfWeek(selectedDate, { weekStartsOn: 1 });
+        endDate = endOfWeek(selectedDate, { weekStartsOn: 1 });
+        break;
+      case "month":
+        startDate = startOfMonth(selectedDate);
+        endDate = endOfMonth(selectedDate);
+        break;
+      case "year":
+        startDate = startOfYear(selectedDate);
+        endDate = endOfYear(selectedDate);
+        break;
+      default:
+        return missions;
+    }
+
+    return missions.filter(mission => {
+      const missionDate = new Date(mission.startTime);
+      return isWithinInterval(missionDate, { start: startDate, end: endDate });
+    });
+  };
+
   // Calculate breakdown data based on type and PM selection
   const getBreakdownData = () => {
-    if (missions.length === 0) return [];
+    const filtered = filteredMissions();
+    if (filtered.length === 0) return [];
 
     const dataMap = new Map<string, { 
       totalExposure: number; 
@@ -31,7 +65,7 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
       color: string;
     }>();
 
-    missions.forEach(mission => {
+    filtered.forEach(mission => {
       let key = "";
       
       switch (breakdownType) {
