@@ -49,7 +49,8 @@ export async function syncPendingMissions(): Promise<void> {
         humidity: m.humidity,
         latitude: m.latitude,
         longitude: m.longitude,
-        accuracy: m.accuracy
+        accuracy: m.accuracy,
+        automatic_context: m.automaticContext
       }));
 
       const { error: measurementsError } = await supabase

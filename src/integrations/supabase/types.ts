@@ -341,6 +341,7 @@ export type Database = {
       measurements: {
         Row: {
           accuracy: number | null
+          automatic_context: string | null
           created_at: string
           humidity: number | null
           id: string
@@ -355,6 +356,7 @@ export type Database = {
         }
         Insert: {
           accuracy?: number | null
+          automatic_context?: string | null
           created_at?: string
           humidity?: number | null
           id?: string
@@ -369,6 +371,7 @@ export type Database = {
         }
         Update: {
           accuracy?: number | null
+          automatic_context?: string | null
           created_at?: string
           humidity?: number | null
           id?: string

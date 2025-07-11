@@ -65,7 +65,8 @@ export function formatDatabaseMission(dbMission: any): MissionData {
       humidity: m.humidity,
       latitude: m.latitude,
       longitude: m.longitude,
-      accuracy: m.accuracy
+      accuracy: m.accuracy,
+      automaticContext: m.automatic_context
     })) || [],
     synced: true
   };
