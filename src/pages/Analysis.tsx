@@ -3,12 +3,15 @@ import { DateFilter } from "@/components/DateFilter";
 import { StatisticalAnalysis } from "@/components/Analysis/StatisticalAnalysis";
 import { DataSummary } from "@/components/Analysis/DataSummary";
 import { GroupComparison } from "@/components/Analysis/GroupComparison";
+import { DataSummaryHeader } from "@/components/Analysis/DataSummaryHeader";
+import { PollutionBreakdownChart } from "@/components/Analysis/PollutionBreakdownChart";
 import { useAnalysisLogic } from "@/components/Analysis/AnalysisLogic";
 
 export default function Analysis() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<"day" | "week" | "month" | "year">("week");
   const {
+    missions,
     statisticalAnalysis,
     dataPoints,
     loading,
@@ -31,24 +34,22 @@ export default function Analysis() {
         className="mb-6"
       />
 
-      {/* Statistical Analysis Card */}
+      {/* Data Summary Header */}
+      <DataSummaryHeader dataPoints={dataPoints} />
+
+      {/* Pollution Breakdown Chart */}
+      <PollutionBreakdownChart 
+        missions={missions}
+        selectedPeriod={selectedPeriod}
+        selectedDate={selectedDate}
+      />
+
+      {/* Statistical Analysis Report */}
       <StatisticalAnalysis
         statisticalAnalysis={statisticalAnalysis}
         loading={loading}
         onRegenerate={regenerateAnalysis}
       />
-
-      {/* Group Comparison */}
-      {dataPoints && (
-        <GroupComparison 
-          userStats={dataPoints}
-          selectedPeriod={selectedPeriod}
-          selectedDate={selectedDate}
-        />
-      )}
-
-      {/* Data Points Summary */}
-      {dataPoints && <DataSummary dataPoints={dataPoints} />}
     </div>
   );
 }
