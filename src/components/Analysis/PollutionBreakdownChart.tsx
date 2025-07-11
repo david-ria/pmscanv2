@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { MissionData } from "@/lib/dataStorage";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 interface PollutionBreakdownChartProps {
   missions: MissionData[];
@@ -77,13 +78,13 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
 
   const getColorForKey = (key: string): string => {
     const colors = [
-      "bg-green-500",
-      "bg-blue-500", 
-      "bg-yellow-500",
-      "bg-orange-500",
-      "bg-red-500",
-      "bg-purple-500",
-      "bg-pink-500"
+      "#10b981", // green
+      "#3b82f6", // blue
+      "#f59e0b", // yellow
+      "#f97316", // orange
+      "#ef4444", // red
+      "#8b5cf6", // purple
+      "#ec4899"  // pink
     ];
     
     const hash = key.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -129,31 +130,36 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
 
       <CardContent className="space-y-6">
         {/* Chart area */}
-        <div className="space-y-4">
+        <div className="h-80">
           {breakdownData.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Aucune donnée disponible pour cette période
             </div>
           ) : (
-            <div className="space-y-3">
-              {breakdownData.map((item, index) => (
-                <div key={item.name} className="flex items-center gap-4 text-sm">
-                  <span className="font-medium min-w-20">{item.name}</span>
-                  <div className="flex-1 bg-muted rounded-full h-6 overflow-hidden">
-                    <div 
-                      className={`h-full ${getWHOStatus(item.avgPM)} transition-all duration-500`}
-                      style={{ width: `${item.percentage}%` }}
-                    />
-                  </div>
-                  <span className="text-muted-foreground min-w-8">{item.percentage.toFixed(0)}%</span>
-                  <div className="w-16 h-6 bg-red-200 dark:bg-red-900/30 rounded flex items-center justify-center">
-                    <span className="text-xs text-red-700 dark:text-red-300 font-medium">
-                      {Math.round(item.avgPM)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={breakdownData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="percentage"
+                  label={(entry) => `${entry.name}: ${entry.percentage.toFixed(0)}%`}
+                >
+                  {breakdownData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: number, name: string, props: any) => [
+                    `${value.toFixed(1)}%`,
+                    `PM${pmType.replace('pm', '')}: ${Math.round(props.payload.avgPM)} μg/m³`
+                  ]}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           )}
         </div>
 
