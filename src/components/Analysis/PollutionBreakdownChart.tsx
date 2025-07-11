@@ -144,6 +144,10 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
     <Card className="mb-6">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg">Analyse des données</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Ce graphique montre la répartition des concentrations moyennes de particules selon le type sélectionné. 
+          Les pourcentages représentent la proportion relative de pollution pour chaque catégorie.
+        </p>
         
         {/* Radio buttons for breakdown type */}
         <RadioGroup
