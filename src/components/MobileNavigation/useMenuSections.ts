@@ -120,7 +120,7 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
             checked: isBackgroundEnabled,
             onCheckedChange: handleBackgroundRecordingToggle
           },
-          info: 'Continue recording PMScan data even when the app is minimized or in the background'
+          info: 'Continue recording PMScan data even when the app is minimized or in the background. Note: This will use more battery.'
         },
         { 
           icon: Brain, 
