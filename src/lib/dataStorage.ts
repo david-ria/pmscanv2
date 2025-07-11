@@ -38,6 +38,7 @@ export interface MeasurementData {
   accuracy?: number;
   locationContext?: string;
   activityContext?: string;
+  automaticContext?: string;
 }
 
 class DataStorageService {

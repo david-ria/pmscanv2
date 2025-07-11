@@ -12,6 +12,7 @@ export function createMissionFromRecording(
       location: string;
       activity: string;
     };
+    automaticContext?: string;
   }>,
   missionName: string,
   startTime: Date,
@@ -33,7 +34,8 @@ export function createMissionFromRecording(
     longitude: m.location?.longitude,
     accuracy: m.location?.accuracy,
     locationContext: m.context?.location,
-    activityContext: m.context?.activity
+    activityContext: m.context?.activity,
+    automaticContext: m.automaticContext
   }));
 
   const pm25Values = measurementData.map(m => m.pm25);
