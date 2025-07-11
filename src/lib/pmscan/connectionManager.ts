@@ -3,6 +3,7 @@ import { PMScanDeviceState } from './deviceState';
 import { PMScanDeviceInitializer } from './deviceInitializer';
 import { PMScanEventManager } from './eventManager';
 import { PMScanConnectionUtils } from './connectionUtils';
+import { getGlobalRecording, getBackgroundRecording } from './globalConnectionManager';
 
 export class PMScanConnectionManager {
   private device: BluetoothDevice | null = null;
@@ -80,7 +81,6 @@ export class PMScanConnectionManager {
 
   public async disconnect(force: boolean = false): Promise<boolean> {
     // Check if we're recording globally or in background mode before allowing disconnection
-    const { getGlobalRecording, getBackgroundRecording } = require('./globalConnectionManager');
     const shouldPreventDisconnect = getGlobalRecording() || getBackgroundRecording();
     
     if (shouldPreventDisconnect && !force) {
@@ -108,7 +108,6 @@ export class PMScanConnectionManager {
     this.isInited = false;
 
     // Check if we should automatically reconnect (when recording or in background mode)
-    const { getGlobalRecording, getBackgroundRecording } = require('./globalConnectionManager');
     const shouldReconnect = getGlobalRecording() || getBackgroundRecording();
     
     if (shouldReconnect) {
