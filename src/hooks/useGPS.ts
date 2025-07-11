@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LocationData } from '@/types/PMScan';
 
-export function useGPS() {
-  console.log('🧭 GPS: Hook initialized');
+export function useGPS(enabled: boolean = true) {
+  console.log('🧭 GPS: Hook initialized', { enabled });
   
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [latestLocation, setLatestLocation] = useState<LocationData | null>(null);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  console.log('🧭 GPS: Current state:', { locationEnabled, latestLocation, watchId, error });
+  console.log('🧭 GPS: Current state:', { locationEnabled, latestLocation, watchId, error, enabled });
 
   const stopWatching = useCallback(() => {
     if (watchId !== null) {
@@ -19,7 +19,12 @@ export function useGPS() {
   }, [watchId]);
 
   const startWatching = useCallback(() => {
-    console.log('🧭 GPS: Starting to watch position...');
+    console.log('🧭 GPS: Starting to watch position...', { enabled });
+    
+    if (!enabled) {
+      console.log('🧭 GPS: GPS disabled because PMScan not connected');
+      return;
+    }
     
     if (!navigator.geolocation) {
       console.error('🧭 GPS: Geolocation is not supported by this browser');
@@ -93,7 +98,7 @@ export function useGPS() {
     );
     
     setWatchId(id);
-  }, []);
+  }, [enabled]);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
     console.log('🧭 GPS: Permission request initiated...');
@@ -178,6 +183,17 @@ export function useGPS() {
       });
     }
   }, [startWatching, stopWatching]);
+
+  // Handle enabled state changes
+  useEffect(() => {
+    if (!enabled) {
+      console.log('🧭 GPS: Stopping GPS due to PMScan disconnection');
+      stopWatching();
+      setLocationEnabled(false);
+      setLatestLocation(null);
+      setError(null);
+    }
+  }, [enabled, stopWatching]);
 
   // Cleanup on unmount
   useEffect(() => {
