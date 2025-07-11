@@ -24,7 +24,7 @@ export function RecordingFrequencyDialog({
   const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] mx-4">
+      <DialogContent className="w-[95vw]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
