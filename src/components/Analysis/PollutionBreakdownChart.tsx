@@ -62,17 +62,21 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
       dataMap.set(key, existing);
     });
 
-    const totalExposure = Array.from(dataMap.values()).reduce((sum, item) => sum + item.totalExposure, 0);
+    const totalPM = Array.from(dataMap.values()).reduce((sum, item) => sum + (item.totalExposure > 0 ? item.weightedPM / item.totalExposure : 0), 0);
     
     return Array.from(dataMap.entries())
-      .map(([key, data]) => ({
-        name: key,
-        percentage: totalExposure > 0 ? (data.totalExposure / totalExposure) * 100 : 0,
-        avgPM: data.totalExposure > 0 ? data.weightedPM / data.totalExposure : 0,
-        color: data.color,
-        exposure: data.totalExposure
-      }))
-      .sort((a, b) => b.percentage - a.percentage)
+      .map(([key, data]) => {
+        const avgPM = data.totalExposure > 0 ? data.weightedPM / data.totalExposure : 0;
+        return {
+          name: key,
+          percentage: totalPM > 0 ? (avgPM / totalPM) * 100 : 0,
+          avgPM: avgPM,
+          color: data.color,
+          exposure: data.totalExposure
+        };
+      })
+      .filter(item => item.avgPM > 0) // Only show categories with PM data
+      .sort((a, b) => b.avgPM - a.avgPM) // Sort by PM concentration
       .slice(0, 5); // Show top 5
   };
 
