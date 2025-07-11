@@ -35,7 +35,7 @@ export function AutoContextControl() {
                   <Settings className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="w-[95vw]">
                 <DialogHeader>
                   <DialogTitle>Auto Context Settings</DialogTitle>
                 </DialogHeader>

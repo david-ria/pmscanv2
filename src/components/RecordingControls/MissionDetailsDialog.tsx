@@ -30,7 +30,7 @@ export function MissionDetailsDialog({
   const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-md mx-auto">
+      <DialogContent className="w-[95vw]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Save className="h-5 w-5" />
