@@ -66,34 +66,62 @@ export const usePollutionBreakdownData = (
       }>();
 
       filtered.forEach(mission => {
-        let key = "";
-        
-        switch (breakdownType) {
-          case "location":
-            key = mission.locationContext || "Inconnue";
-            break;
-          case "activity":
-            key = mission.activityContext || "Inconnue";
-            break;
-          case "autocontext":
-            key = "Auto"; // Simplified for now
-            break;
+        // For autocontext, we need to aggregate data from all measurements
+        if (breakdownType === "autocontext") {
+          const contextMap = new Map<string, { totalExposure: number; weightedPM: number }>();
+          
+          mission.measurements.forEach(measurement => {
+            const autoContext = measurement.automaticContext || "Inconnu";
+            const pmValue = pmType === "pm1" ? measurement.pm1 : 
+                           pmType === "pm25" ? measurement.pm25 : 
+                           measurement.pm10;
+            
+            const existing = contextMap.get(autoContext) || { totalExposure: 0, weightedPM: 0 };
+            // Assume each measurement represents equal time exposure
+            const measurementDuration = mission.durationMinutes / mission.measurements.length;
+            existing.totalExposure += measurementDuration;
+            existing.weightedPM += pmValue * measurementDuration;
+            contextMap.set(autoContext, existing);
+          });
+          
+          // Add each context from this mission to the main dataMap
+          contextMap.forEach((data, context) => {
+            const existing = dataMap.get(context) || { 
+              totalExposure: 0, 
+              weightedPM: 0,
+              color: getColorForKey(context)
+            };
+            existing.totalExposure += data.totalExposure;
+            existing.weightedPM += data.weightedPM;
+            dataMap.set(context, existing);
+          });
+        } else {
+          let key = "";
+          
+          switch (breakdownType) {
+            case "location":
+              key = mission.locationContext || "Inconnue";
+              break;
+            case "activity":
+              key = mission.activityContext || "Inconnue";
+              break;
+          }
+
+          const pmValue = pmType === "pm1" ? mission.avgPm1 : 
+                         pmType === "pm25" ? mission.avgPm25 : 
+                         mission.avgPm10;
+
+          const existing = dataMap.get(key) || { 
+            totalExposure: 0, 
+            weightedPM: 0,
+            color: getColorForKey(key)
+          };
+          
+          existing.totalExposure += mission.durationMinutes;
+          existing.weightedPM += pmValue * mission.durationMinutes;
+          
+          dataMap.set(key, existing);
         }
-
-        const pmValue = pmType === "pm1" ? mission.avgPm1 : 
-                       pmType === "pm25" ? mission.avgPm25 : 
-                       mission.avgPm10;
-
-        const existing = dataMap.get(key) || { 
-          totalExposure: 0, 
-          weightedPM: 0,
-          color: getColorForKey(key)
-        };
-        
-        existing.totalExposure += mission.durationMinutes;
-        existing.weightedPM += pmValue * mission.durationMinutes;
-        
-        dataMap.set(key, existing);
       });
 
       const totalPM = Array.from(dataMap.values()).reduce((sum, item) => sum + (item.totalExposure > 0 ? item.weightedPM / item.totalExposure : 0), 0);
