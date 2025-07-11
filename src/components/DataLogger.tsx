@@ -151,7 +151,7 @@ export function DataLogger({
   return (
     <div className={className}>
       {/* Header */}
-      <div className="flex items-center justify-between p-3 bg-card/50 border rounded-t-lg text-sm">
+      <div className="flex items-center justify-between p-2 sm:p-3 bg-card/50 border rounded-t-lg text-sm">
         <div className="flex items-center gap-2">
           <Database className="h-4 w-4" />
           <span className="font-medium text-sm">{t('realTime.dataLogger')}</span>
@@ -208,7 +208,7 @@ export function DataLogger({
 
       {/* Console Log Display */}
       {!isMinimized && (
-        <div className="bg-background border-x border-b rounded-b-lg p-3 h-40 overflow-auto animate-accordion-down">
+        <div className="bg-background border-x border-b rounded-b-lg p-2 sm:p-3 h-32 sm:h-40 overflow-auto animate-accordion-down">
           {dataLog.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
               <Database className="h-6 w-6 mx-auto mb-2 opacity-50" />

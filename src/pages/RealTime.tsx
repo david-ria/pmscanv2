@@ -89,7 +89,7 @@ export default function RealTime() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6">
+    <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
       {/* Status Buttons Bar */}
       <StatusButtons
         isConnected={isConnected}
