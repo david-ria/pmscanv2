@@ -16,7 +16,7 @@ export const BreakdownTypeSelector = ({ breakdownType, onBreakdownTypeChange }: 
     <RadioGroup
       value={breakdownType}
       onValueChange={(value) => onBreakdownTypeChange(value as BreakdownType)}
-      className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-8"
+      className="flex flex-row justify-center gap-2 sm:gap-4"
     >
       <div className="flex items-center space-x-2">
         <RadioGroupItem value="location" id="location" />
