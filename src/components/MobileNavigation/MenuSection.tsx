@@ -9,6 +9,10 @@ interface MenuSectionProps {
     label: string;
     badge?: string | null;
     action?: () => void;
+    toggle?: {
+      checked: boolean;
+      onCheckedChange: (checked: boolean) => void;
+    };
   }[];
 }
 
@@ -39,6 +43,7 @@ export function MenuSection({ title, items }: MenuSectionProps) {
               label={item.label}
               badge={item.badge}
               action={item.action}
+              toggle={item.toggle}
             />
           );
         })}

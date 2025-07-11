@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useGoogleFit } from "@/hooks/useGoogleFit";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useAutoContext } from "@/hooks/useAutoContext";
 
 interface MenuSection {
   title: string;
@@ -13,22 +14,26 @@ interface MenuSection {
     label: string;
     badge?: string | null;
     action?: () => void;
+    toggle?: {
+      checked: boolean;
+      onCheckedChange: (checked: boolean) => void;
+    };
   }[];
 }
 
 interface UseMenuSectionsProps {
   onNavigate: () => void;
   onBackgroundRecording?: () => void;
-  onAutoContext?: () => void;
 }
 
-export function useMenuSections({ onNavigate, onBackgroundRecording, onAutoContext }: UseMenuSectionsProps): MenuSection[] {
+export function useMenuSections({ onNavigate, onBackgroundRecording }: UseMenuSectionsProps): MenuSection[] {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { isAuthenticated, connectGoogleFit, syncActivities } = useGoogleFit();
   const { t } = useTranslation();
   const { currentLanguage, languages } = useLanguage();
   const { userRole } = useUserRole();
+  const { isEnabled: autoContextEnabled, toggleEnabled: toggleAutoContext } = useAutoContext();
 
   const handleProfileClick = () => {
     navigate('/profile');
@@ -87,10 +92,6 @@ export function useMenuSections({ onNavigate, onBackgroundRecording, onAutoConte
     onBackgroundRecording?.();
   };
 
-  const handleAutoContext = () => {
-    onAutoContext?.();
-  };
-
   return [
     {
       title: t('account.title'),
@@ -106,7 +107,15 @@ export function useMenuSections({ onNavigate, onBackgroundRecording, onAutoConte
         { icon: AlertTriangle, label: t('settingsMenu.alertsAlarms'), badge: null, action: handleCustomAlerts },
         { icon: Languages, label: t('settingsMenu.language'), badge: getCurrentLanguageDisplay() },
         { icon: Moon, label: 'Background Recording', badge: null, action: handleBackgroundRecording },
-        { icon: Brain, label: 'Auto Context', badge: null, action: handleAutoContext }
+        { 
+          icon: Brain, 
+          label: 'Auto Context', 
+          badge: null, 
+          toggle: {
+            checked: autoContextEnabled,
+            onCheckedChange: toggleAutoContext
+          }
+        }
       ]
     },
     // Groups section temporarily hidden

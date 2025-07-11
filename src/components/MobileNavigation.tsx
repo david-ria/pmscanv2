@@ -6,7 +6,6 @@ import { MobileNavigationFooter } from "./MobileNavigation/MobileNavigationFoote
 import { useMenuSections } from "./MobileNavigation/useMenuSections";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BackgroundRecordingControl } from "@/components/BackgroundRecordingControl";
-import { AutoContextControl } from "@/components/AutoContextControl";
 
 interface MobileNavigationProps {
   onNavigate: () => void;
@@ -14,20 +13,14 @@ interface MobileNavigationProps {
 
 export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
   const [isBackgroundDialogOpen, setIsBackgroundDialogOpen] = useState(false);
-  const [isAutoContextDialogOpen, setIsAutoContextDialogOpen] = useState(false);
   
   const handleBackgroundRecording = () => {
     setIsBackgroundDialogOpen(true);
   };
 
-  const handleAutoContext = () => {
-    setIsAutoContextDialogOpen(true);
-  };
-
   const menuSections = useMenuSections({ 
     onNavigate, 
-    onBackgroundRecording: handleBackgroundRecording,
-    onAutoContext: handleAutoContext
+    onBackgroundRecording: handleBackgroundRecording
   });
 
   return (
@@ -60,14 +53,6 @@ export function MobileNavigation({ onNavigate }: MobileNavigationProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isAutoContextDialogOpen} onOpenChange={setIsAutoContextDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Auto Context Detection</DialogTitle>
-          </DialogHeader>
-          <AutoContextControl />
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
