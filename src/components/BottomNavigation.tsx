@@ -18,7 +18,7 @@ const navigationItems: NavigationItem[] = [
 export function BottomNavigation() {
   const { t } = useTranslation();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border z-50 safe-area-pb">
+    <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border z-[60] safe-area-pb">
       <div className="flex items-center justify-around h-16 px-2 max-w-md mx-auto">
         {navigationItems.map((item) => {
           const Icon = item.icon;
