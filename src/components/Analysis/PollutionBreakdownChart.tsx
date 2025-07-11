@@ -163,18 +163,19 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
 
   return (
     <Card className="mb-6">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg">{t('analysis.dataAnalysis')}</CardTitle>
-        <p className="text-sm text-muted-foreground">
+      <CardHeader className="pb-6">
+        <CardTitle className="text-lg mb-3">{t('analysis.dataAnalysis')}</CardTitle>
+        <p className="text-sm text-muted-foreground mb-6">
           {t('analysis.chartExplanation')}
         </p>
         
         {/* PM Type Selector */}
-        <div className="flex justify-center space-x-2">
+        <div className="flex justify-center space-x-3 mb-6">
           <Button
             variant={pmType === "pm1" ? "default" : "outline"}
             size="sm"
             onClick={() => setPmType("pm1")}
+            className="min-w-16"
           >
             PM1
           </Button>
@@ -182,6 +183,7 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
             variant={pmType === "pm25" ? "default" : "outline"}
             size="sm"
             onClick={() => setPmType("pm25")}
+            className="min-w-16"
           >
             PM2.5
           </Button>
@@ -189,6 +191,7 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
             variant={pmType === "pm10" ? "default" : "outline"}
             size="sm"
             onClick={() => setPmType("pm10")}
+            className="min-w-16"
           >
             PM10
           </Button>
@@ -215,7 +218,7 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
         </RadioGroup>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-8">
         {/* Chart area */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Pie Chart */}
