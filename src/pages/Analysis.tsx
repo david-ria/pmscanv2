@@ -4,7 +4,7 @@ import { StatisticalAnalysis } from "@/components/Analysis/StatisticalAnalysis";
 import { DataSummary } from "@/components/Analysis/DataSummary";
 import { GroupComparison } from "@/components/Analysis/GroupComparison";
 import { DataSummaryHeader } from "@/components/Analysis/DataSummaryHeader";
-import { PollutionBreakdownChart } from "@/components/Analysis/PollutionBreakdownChart";
+import { PollutionBreakdownChart } from "@/components/Analysis/PollutionBreakdown";
 import { useAnalysisLogic } from "@/components/Analysis/AnalysisLogic";
 
 export default function Analysis() {
