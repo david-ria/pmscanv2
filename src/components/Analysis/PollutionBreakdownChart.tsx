@@ -134,37 +134,73 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
 
       <CardContent className="space-y-6">
         {/* Chart area */}
-        <div className="h-80">
-          {breakdownData.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Aucune donnée disponible pour cette période
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={breakdownData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="percentage"
-                  label={(entry) => `${entry.name}: ${entry.percentage.toFixed(0)}%`}
-                >
-                  {breakdownData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: number, name: string, props: any) => [
-                    `${value.toFixed(1)}%`,
-                    `PM${pmType.replace('pm', '')}: ${Math.round(props.payload.avgPM)} μg/m³`
-                  ]}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Pie Chart */}
+          <div className="h-80">
+            {breakdownData.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Aucune donnée disponible pour cette période
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={breakdownData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="percentage"
+                    label={(entry) => `${entry.name}: ${entry.percentage.toFixed(0)}%`}
+                  >
+                    {breakdownData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number, name: string, props: any) => [
+                      `${value.toFixed(1)}%`,
+                      `PM${pmType.replace('pm', '')}: ${Math.round(props.payload.avgPM)} μg/m³`
+                    ]}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Summary Table */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground">Résumé détaillé</h4>
+            {breakdownData.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                Aucune donnée disponible
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {breakdownData.map((item, index) => (
+                  <div key={item.name} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                    <div 
+                      className="w-4 h-4 rounded-full" 
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{item.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {Math.round(item.exposure)} min • PM{pmType.replace('pm', '')}: {Math.round(item.avgPM)} μg/m³
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium text-sm">{item.percentage.toFixed(0)}%</div>
+                      <div className="text-xs text-muted-foreground">
+                        {(item.exposure / 60).toFixed(1)}h
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* PM Type Selector */}
