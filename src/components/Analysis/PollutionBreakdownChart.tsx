@@ -149,6 +149,31 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
           Les pourcentages représentent la proportion relative de pollution pour chaque catégorie.
         </p>
         
+        {/* PM Type Selector */}
+        <div className="flex justify-center space-x-2">
+          <Button
+            variant={pmType === "pm1" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setPmType("pm1")}
+          >
+            PM1
+          </Button>
+          <Button
+            variant={pmType === "pm25" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setPmType("pm25")}
+          >
+            PM2.5
+          </Button>
+          <Button
+            variant={pmType === "pm10" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setPmType("pm10")}
+          >
+            PM10
+          </Button>
+        </div>
+
         {/* Radio buttons for breakdown type */}
         <RadioGroup
           value={breakdownType}
@@ -241,30 +266,6 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
           </div>
         </div>
 
-        {/* PM Type Selector */}
-        <div className="flex justify-center space-x-2">
-          <Button
-            variant={pmType === "pm1" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setPmType("pm1")}
-          >
-            PM1
-          </Button>
-          <Button
-            variant={pmType === "pm25" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setPmType("pm25")}
-          >
-            PM2.5
-          </Button>
-          <Button
-            variant={pmType === "pm10" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setPmType("pm10")}
-          >
-            PM10
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
