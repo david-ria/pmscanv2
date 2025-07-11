@@ -2,14 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { LocationData } from '@/types/PMScan';
 
 export function useGPS(enabled: boolean = true) {
-  console.log('🧭 GPS: Hook initialized', { enabled });
-  
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [latestLocation, setLatestLocation] = useState<LocationData | null>(null);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  console.log('🧭 GPS: Current state:', { locationEnabled, latestLocation, watchId, error, enabled });
 
   const stopWatching = useCallback(() => {
     if (watchId !== null) {
@@ -19,10 +15,7 @@ export function useGPS(enabled: boolean = true) {
   }, [watchId]);
 
   const startWatching = useCallback(() => {
-    console.log('🧭 GPS: Starting to watch position...', { enabled });
-    
     if (!enabled) {
-      console.log('🧭 GPS: GPS disabled because PMScan not connected');
       return;
     }
     
@@ -38,15 +31,7 @@ export function useGPS(enabled: boolean = true) {
       maximumAge: 60000 // Cache for 60 seconds to reduce requests
     };
 
-    console.log('🧭 GPS: Options configured:', options);
-
     const handleSuccess = (position: GeolocationPosition) => {
-      console.log('🧭 GPS: Position received successfully!', {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy
-      });
-      
       const locationData: LocationData = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
@@ -58,7 +43,6 @@ export function useGPS(enabled: boolean = true) {
       setLatestLocation(locationData);
       setError(null);
       setLocationEnabled(true);
-      console.log('🧭 GPS: Location state updated, locationEnabled should now be true');
     };
 
     const handleError = (error: GeolocationPositionError) => {
@@ -187,7 +171,6 @@ export function useGPS(enabled: boolean = true) {
   // Handle enabled state changes
   useEffect(() => {
     if (!enabled) {
-      console.log('🧭 GPS: Stopping GPS due to PMScan disconnection');
       stopWatching();
       setLocationEnabled(false);
       setLatestLocation(null);
