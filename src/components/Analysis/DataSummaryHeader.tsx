@@ -35,6 +35,27 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
     return `${mins}min`;
   };
 
+  const getPM25BackgroundColor = (pm25: number) => {
+    if (pm25 <= 12) return 'bg-green-50 dark:bg-green-900/20';
+    if (pm25 <= 15) return 'bg-yellow-50 dark:bg-yellow-900/20';
+    if (pm25 <= 35) return 'bg-orange-50 dark:bg-orange-900/20';
+    return 'bg-red-50 dark:bg-red-900/20';
+  };
+
+  const getPM25TextColor = (pm25: number) => {
+    if (pm25 <= 12) return 'text-green-700 dark:text-green-300';
+    if (pm25 <= 15) return 'text-yellow-700 dark:text-yellow-300';
+    if (pm25 <= 35) return 'text-orange-700 dark:text-orange-300';
+    return 'text-red-700 dark:text-red-300';
+  };
+
+  const getPM25SubtextColor = (pm25: number) => {
+    if (pm25 <= 12) return 'text-green-600 dark:text-green-400';
+    if (pm25 <= 15) return 'text-yellow-600 dark:text-yellow-400';
+    if (pm25 <= 35) return 'text-orange-600 dark:text-orange-400';
+    return 'text-red-600 dark:text-red-400';
+  };
+
   return (
     <Card className="mb-6">
       <CardContent className="p-4">
@@ -58,9 +79,9 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
             <span className="text-orange-600 dark:text-orange-400 text-xs">Min {'>'}seuil OMS</span>
           </div>
 
-          <div className="flex items-center gap-1 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-1 rounded-lg">
-            <span className="font-bold text-yellow-700 dark:text-yellow-300 text-lg">{Math.round(dataPoints.averagePM25)}</span>
-            <span className="text-yellow-600 dark:text-yellow-400 text-xs">PM2.5 moyen (μg/m³)</span>
+          <div className={`flex items-center gap-1 ${getPM25BackgroundColor(dataPoints.averagePM25)} px-3 py-1 rounded-lg`}>
+            <span className={`font-bold ${getPM25TextColor(dataPoints.averagePM25)} text-lg`}>{Math.round(dataPoints.averagePM25)}</span>
+            <span className={`${getPM25SubtextColor(dataPoints.averagePM25)} text-xs`}>PM2.5 moyen (μg/m³)</span>
           </div>
         </div>
       </CardContent>
