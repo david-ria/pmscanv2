@@ -24,22 +24,22 @@ export const DataSummary = ({ dataPoints }: DataSummaryProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-primary/10 rounded-lg">
-            <div className="text-2xl font-bold text-primary">{dataPoints.totalMissions}</div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="text-center p-2 sm:p-3 bg-primary/10 rounded-lg">
+            <div className="text-lg sm:text-2xl font-bold text-primary">{dataPoints.totalMissions}</div>
             <div className="text-xs text-muted-foreground">{t('analysis.missions')}</div>
           </div>
-          <div className="text-center p-3 bg-accent rounded-lg">
-            <div className="text-2xl font-bold text-foreground">{Math.round(dataPoints.totalExposureMinutes / 60)}h</div>
+          <div className="text-center p-2 sm:p-3 bg-accent rounded-lg">
+            <div className="text-lg sm:text-2xl font-bold text-foreground">{Math.round(dataPoints.totalExposureMinutes / 60)}h</div>
             <div className="text-xs text-muted-foreground">{t('analysis.exposureTime')}</div>
           </div>
-          <div className="text-center p-3 bg-air-moderate/10 rounded-lg">
-            <div className="text-2xl font-bold text-air-moderate">{Math.round(dataPoints.averagePM25)}</div>
+          <div className="text-center p-2 sm:p-3 bg-air-moderate/10 rounded-lg">
+            <div className="text-lg sm:text-2xl font-bold text-air-moderate">{Math.round(dataPoints.averagePM25)}</div>
             <div className="text-xs text-muted-foreground">{t('analysis.averagePM25')}</div>
           </div>
-          <div className="text-center p-3 bg-air-poor/10 rounded-lg">
-            <div className="text-2xl font-bold text-air-poor">{Math.round(dataPoints.timeAboveWHO)}</div>
-            <div className="text-xs text-muted-foreground">{t('analysis.minutesAboveWHO')}</div>
+          <div className="text-center p-2 sm:p-3 bg-air-poor/10 rounded-lg">
+            <div className="text-lg sm:text-2xl font-bold text-air-poor">{Math.round(dataPoints.timeAboveWHO)}</div>
+            <div className="text-xs text-muted-foreground leading-tight">{t('analysis.minutesAboveWHO')}</div>
           </div>
         </div>
       </CardContent>

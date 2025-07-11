@@ -14,28 +14,25 @@ export const PMTypeSelector = ({ pmType, onPMTypeChange }: PMTypeSelectorProps) 
         variant={pmType === "pm1" ? "default" : "outline"}
         size="sm"
         onClick={() => onPMTypeChange("pm1")}
-        className="min-w-16 px-3 h-12 flex flex-col justify-center"
+        className="min-w-12 px-2"
       >
-        <span className="text-sm font-semibold">1</span>
-        <span className="text-xs">PM</span>
+        PM1
       </Button>
       <Button
         variant={pmType === "pm25" ? "default" : "outline"}
         size="sm"
         onClick={() => onPMTypeChange("pm25")}
-        className="min-w-16 px-3 h-12 flex flex-col justify-center"
+        className="min-w-12 px-2"
       >
-        <span className="text-sm font-semibold">2.5</span>
-        <span className="text-xs">PM</span>
+        PM2.5
       </Button>
       <Button
         variant={pmType === "pm10" ? "default" : "outline"}
         size="sm"
         onClick={() => onPMTypeChange("pm10")}
-        className="min-w-16 px-3 h-12 flex flex-col justify-center"
+        className="min-w-12 px-2"
       >
-        <span className="text-sm font-semibold">10</span>
-        <span className="text-xs">PM</span>
+        PM10
       </Button>
     </div>
   );
