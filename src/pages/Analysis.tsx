@@ -19,9 +19,9 @@ export default function Analysis() {
   } = useAnalysisLogic(selectedDate, selectedPeriod);
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6">
+    <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
       {/* Header spacing to match History page layout */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         {/* Empty space to align with History page sync button area */}
       </div>
 
@@ -31,7 +31,7 @@ export default function Analysis() {
         onDateChange={setSelectedDate}
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
-        className="mb-6"
+        className="mb-4 sm:mb-6"
       />
 
       {/* Data Summary Header */}
