@@ -64,19 +64,19 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
             <span className="text-primary font-medium">📊 Résumé des données</span>
           </div>
           
-          <div className="flex items-center gap-1 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-lg">
-            <span className="font-bold text-green-700 dark:text-green-300 text-lg">{dataPoints.totalMissions}</span>
-            <span className="text-green-600 dark:text-green-400 text-xs">Missions</span>
+          <div className="flex items-center gap-1 bg-muted/50 px-3 py-1 rounded-lg">
+            <span className="font-bold text-foreground text-lg">{dataPoints.totalMissions}</span>
+            <span className="text-muted-foreground text-xs">Missions</span>
           </div>
 
-          <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-lg">
-            <span className="font-bold text-blue-700 dark:text-blue-300 text-lg">{formatDuration(dataPoints.totalExposureMinutes)}</span>
-            <span className="text-blue-600 dark:text-blue-400 text-xs">Temps d'exposition</span>
+          <div className="flex items-center gap-1 bg-muted/50 px-3 py-1 rounded-lg">
+            <span className="font-bold text-foreground text-lg">{formatDuration(dataPoints.totalExposureMinutes)}</span>
+            <span className="text-muted-foreground text-xs">Temps d'exposition</span>
           </div>
 
-          <div className="flex items-center gap-1 bg-orange-50 dark:bg-orange-900/20 px-3 py-1 rounded-lg">
-            <span className="font-bold text-orange-700 dark:text-orange-300 text-lg">{formatDuration(dataPoints.timeAboveWHO)}</span>
-            <span className="text-orange-600 dark:text-orange-400 text-xs">Min {'>'}seuil OMS</span>
+          <div className="flex items-center gap-1 bg-muted/50 px-3 py-1 rounded-lg">
+            <span className="font-bold text-foreground text-lg">{formatDuration(dataPoints.timeAboveWHO)}</span>
+            <span className="text-muted-foreground text-xs">Min {'>'}seuil OMS</span>
           </div>
 
           <div className={`flex items-center gap-1 ${getPM25BackgroundColor(dataPoints.averagePM25)} px-3 py-1 rounded-lg`}>
