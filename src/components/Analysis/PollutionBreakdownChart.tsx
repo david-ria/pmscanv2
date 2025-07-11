@@ -165,12 +165,12 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
     <Card className="mb-6">
       <CardHeader className="pb-6">
         <CardTitle className="text-lg mb-3">{t('analysis.dataAnalysis')}</CardTitle>
-        <p className="text-sm text-muted-foreground mb-6">
+        <p className="text-sm text-muted-foreground mb-8">
           {t('analysis.chartExplanation')}
         </p>
         
         {/* PM Type Selector */}
-        <div className="flex justify-center space-x-3 mb-6">
+        <div className="flex justify-center space-x-3 py-6 my-4">
           <Button
             variant={pmType === "pm1" ? "default" : "outline"}
             size="sm"
