@@ -78,14 +78,14 @@ export class PMScanConnectionManager {
     return deviceInfo;
   }
 
-  public async disconnect(): Promise<void> {
+  public async disconnect(force: boolean = false): Promise<boolean> {
     // Check if we're recording globally or in background mode before allowing disconnection
     const { getGlobalRecording, getBackgroundRecording } = require('./globalConnectionManager');
     const shouldPreventDisconnect = getGlobalRecording() || getBackgroundRecording();
     
-    if (shouldPreventDisconnect) {
+    if (shouldPreventDisconnect && !force) {
       console.log('🚫 Cannot disconnect PMScan while recording is active or background mode is enabled');
-      return;
+      return false;
     }
     
     this.shouldConnect = false;
@@ -100,6 +100,7 @@ export class PMScanConnectionManager {
     }
     
     this.isInited = false;
+    return true;
   }
 
   public onDisconnected(): void {

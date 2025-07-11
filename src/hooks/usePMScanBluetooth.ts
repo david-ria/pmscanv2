@@ -138,10 +138,17 @@ export function usePMScanBluetooth() {
   }, [connect, onDeviceDisconnected]);
 
   const disconnect = useCallback(async () => {
-    await connectionManager.disconnect();
-    setIsConnected(false);
-    setDevice(null);
-    setCurrentData(null);
+    const success = await connectionManager.disconnect();
+    if (success) {
+      setIsConnected(false);
+      setDevice(null);
+      setCurrentData(null);
+    } else {
+      // Show warning that disconnection was prevented due to active recording
+      setError('Cannot disconnect while recording is active. Stop recording first.');
+      // Clear error after 3 seconds
+      setTimeout(() => setError(null), 3000);
+    }
   }, []);
 
   // Check for existing connection on component mount and re-establish event listeners
