@@ -87,31 +87,36 @@ export default function MySettings() {
         />
 
       <Tabs defaultValue="locations" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="locations" className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              {t('mySettings.tabs.locations')}
+          <TabsList className="grid w-full grid-cols-4 h-auto">
+            <TabsTrigger value="locations" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 text-xs sm:text-sm">
+              <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{t('mySettings.tabs.locations')}</span>
+              <span className="sm:hidden">Lieux</span>
             </TabsTrigger>
-            <TabsTrigger value="activities" className="flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              {t('mySettings.tabs.activities')}
+            <TabsTrigger value="activities" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 text-xs sm:text-sm">
+              <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{t('mySettings.tabs.activities')}</span>
+              <span className="sm:hidden">Act.</span>
             </TabsTrigger>
-            <TabsTrigger value="alarms" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              {t('mySettings.tabs.alarms')}
+            <TabsTrigger value="alarms" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 text-xs sm:text-sm">
+              <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{t('mySettings.tabs.alarms')}</span>
+              <span className="sm:hidden">Alarm.</span>
             </TabsTrigger>
-            <TabsTrigger value="events" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              {t('mySettings.tabs.events')}
+            <TabsTrigger value="events" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 text-xs sm:text-sm">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{t('mySettings.tabs.events')}</span>
+              <span className="sm:hidden">Évén.</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="locations" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">{t('mySettings.sections.locations')}</h2>
-              <Button onClick={() => setLocationDialogOpen(true)}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold">{t('mySettings.sections.locations')}</h2>
+              <Button onClick={() => setLocationDialogOpen(true)} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                {t('mySettings.actions.addLocation')}
+                <span className="hidden sm:inline">{t('mySettings.actions.addLocation')}</span>
+                <span className="sm:hidden">Ajouter</span>
               </Button>
             </div>
 
@@ -162,11 +167,12 @@ export default function MySettings() {
         </TabsContent>
 
           <TabsContent value="activities" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">{t('mySettings.sections.activities')}</h2>
-              <Button onClick={() => setActivityDialogOpen(true)}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold">{t('mySettings.sections.activities')}</h2>
+              <Button onClick={() => setActivityDialogOpen(true)} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                {t('mySettings.actions.addActivity')}
+                <span className="hidden sm:inline">{t('mySettings.actions.addActivity')}</span>
+                <span className="sm:hidden">Ajouter</span>
               </Button>
             </div>
 
@@ -215,11 +221,12 @@ export default function MySettings() {
         </TabsContent>
 
           <TabsContent value="alarms" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">{t('mySettings.sections.alarms')}</h2>
-              <Button onClick={() => setAlarmDialogOpen(true)}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold">{t('mySettings.sections.alarms')}</h2>
+              <Button onClick={() => setAlarmDialogOpen(true)} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                {t('mySettings.actions.addAlarm')}
+                <span className="hidden sm:inline">{t('mySettings.actions.addAlarm')}</span>
+                <span className="sm:hidden">Ajouter</span>
               </Button>
             </div>
 
@@ -279,11 +286,12 @@ export default function MySettings() {
         </TabsContent>
 
         <TabsContent value="events" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">My Events</h2>
-            <Button onClick={() => setEventDialogOpen(true)}>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-semibold">My Events</h2>
+            <Button onClick={() => setEventDialogOpen(true)} size="sm">
               <Plus className="h-4 w-4 mr-2" />
-              Add Event
+              <span className="hidden sm:inline">Add Event</span>
+              <span className="sm:hidden">Ajouter</span>
             </Button>
           </div>
 
