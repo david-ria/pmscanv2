@@ -137,7 +137,7 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
           ) : (
             <div className="space-y-3">
               {breakdownData.map((item, index) => (
-                <div key={item.name} className="space-y-2">
+                <div key={item.name} className="space-y-1">
                   <div className="flex justify-between items-center text-sm">
                     <span className="font-medium">{item.name}</span>
                     <span className="text-muted-foreground">{item.percentage.toFixed(0)}%</span>
@@ -149,7 +149,11 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
                         style={{ width: `${item.percentage}%` }}
                       />
                     </div>
-                    <div className="w-16 h-6 bg-red-200 dark:bg-red-900/30 rounded" />
+                    <div className="w-16 h-6 bg-red-200 dark:bg-red-900/30 rounded flex items-center justify-center">
+                      <span className="text-xs text-red-700 dark:text-red-300 font-medium">
+                        {Math.round(item.avgPM)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
