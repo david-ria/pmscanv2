@@ -138,6 +138,27 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
     return "bg-gray-400"; // PM1 has no WHO threshold
   };
 
+  const getWHOThreshold = (): { value: number | null; label: string } => {
+    if (pmType === "pm1") {
+      return { value: null, label: "Pas de seuil OMS" };
+    }
+    
+    // Daily/weekly vs monthly/yearly thresholds
+    const isShortPeriod = selectedPeriod === "day" || selectedPeriod === "week";
+    
+    if (pmType === "pm25") {
+      return isShortPeriod 
+        ? { value: 15, label: "Seuil OMS journalier: 15 μg/m³" }
+        : { value: 5, label: "Seuil OMS annuel: 5 μg/m³" };
+    } else if (pmType === "pm10") {
+      return isShortPeriod
+        ? { value: 45, label: "Seuil OMS journalier: 45 μg/m³" }
+        : { value: 15, label: "Seuil OMS annuel: 15 μg/m³" };
+    }
+    
+    return { value: null, label: "" };
+  };
+
   const breakdownData = getBreakdownData();
 
   return (
@@ -234,33 +255,48 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
 
           {/* Summary Table */}
           <div className="space-y-3">
-            <h4 className="font-medium text-sm text-muted-foreground">Résumé détaillé</h4>
+            <div className="flex justify-between items-center">
+              <h4 className="font-medium text-sm text-muted-foreground">Résumé détaillé</h4>
+              <div className="text-xs text-muted-foreground">
+                {getWHOThreshold().label}
+              </div>
+            </div>
             {breakdownData.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 Aucune donnée disponible
               </div>
             ) : (
               <div className="space-y-2">
-                {breakdownData.map((item, index) => (
-                  <div key={item.name} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                    <div 
-                      className="w-4 h-4 rounded-full" 
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{item.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {Math.round(item.exposure)} min • PM{pmType.replace('pm', '')}: {Math.round(item.avgPM)} μg/m³
+                {breakdownData.map((item, index) => {
+                  const whoThreshold = getWHOThreshold();
+                  const exceedsWHO = whoThreshold.value && item.avgPM > whoThreshold.value;
+                  
+                  return (
+                    <div key={item.name} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                      <div 
+                        className="w-4 h-4 rounded-full" 
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{item.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {Math.round(item.exposure)} min • PM{pmType.replace('pm', '')}: {Math.round(item.avgPM)} μg/m³
+                          {whoThreshold.value && (
+                            <span className={`ml-2 ${exceedsWHO ? 'text-red-600' : 'text-green-600'}`}>
+                              ({exceedsWHO ? 'Dépasse' : 'Respecte'} seuil OMS: {whoThreshold.value} μg/m³)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium text-sm">{item.percentage.toFixed(0)}%</div>
+                        <div className="text-xs text-muted-foreground">
+                          {(item.exposure / 60).toFixed(1)}h
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium text-sm">{item.percentage.toFixed(0)}%</div>
-                      <div className="text-xs text-muted-foreground">
-                        {(item.exposure / 60).toFixed(1)}h
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
