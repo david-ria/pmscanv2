@@ -297,7 +297,21 @@
     "timeSpent": "Verbrachte Zeit",
     "exposure": "Exposition",
     "measurements": "Messungen",
-    "unknownActivity": "Unbekannte Aktivität"
+    "unknownActivity": "Unbekannte Aktivität",
+    "dataAnalysis": "Datenanalyse",
+    "chartExplanation": "Dieses Diagramm zeigt die Verteilung der durchschnittlichen Partikelkonzentrationen nach ausgewähltem Typ. Die Prozentsätze stellen den relativen Verschmutzungsanteil für jede Kategorie dar.",
+    "location": "Standort",
+    "activity": "Aktivität",
+    "autocontext": "Autokontext",
+    "detailedSummary": "Detaillierte Zusammenfassung",
+    "noDataForPeriod": "Keine Daten für diesen Zeitraum verfügbar",
+    "minutes": "Min",
+    "exceeds": "Überschreitet",
+    "complies": "Entspricht",
+    "whoThreshold": "WHO-Grenzwert",
+    "noWHOThreshold": "Kein WHO-Grenzwert",
+    "whoThresholdDaily": "Täglicher WHO-Grenzwert: {{value}} μg/m³",
+    "whoThresholdAnnual": "Jährlicher WHO-Grenzwert: {{value}} μg/m³"
   },
   "modals": {
     "recordingFrequency": {

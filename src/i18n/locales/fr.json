@@ -298,7 +298,21 @@
     "timeSpent": "Temps passé",
     "exposure": "Exposition",
     "measurements": "mesures",
-    "unknownActivity": "Activité inconnue"
+    "unknownActivity": "Activité inconnue",
+    "dataAnalysis": "Analyse des données",
+    "chartExplanation": "Ce graphique montre la répartition des concentrations moyennes de particules selon le type sélectionné. Les pourcentages représentent la proportion relative de pollution pour chaque catégorie.",
+    "location": "localisation",
+    "activity": "activité",
+    "autocontext": "autocontexte",
+    "detailedSummary": "Résumé détaillé",
+    "noDataForPeriod": "Aucune donnée disponible pour cette période",
+    "minutes": "min",
+    "exceeds": "Dépasse",
+    "complies": "Respecte",
+    "whoThreshold": "seuil OMS",
+    "noWHOThreshold": "Pas de seuil OMS",
+    "whoThresholdDaily": "Seuil OMS journalier: {{value}} μg/m³",
+    "whoThresholdAnnual": "Seuil OMS annuel: {{value}} μg/m³"
   },
   "modals": {
     "recordingFrequency": {

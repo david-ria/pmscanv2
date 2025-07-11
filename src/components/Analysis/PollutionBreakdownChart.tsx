@@ -140,7 +140,7 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
 
   const getWHOThreshold = (): { value: number | null; label: string } => {
     if (pmType === "pm1") {
-      return { value: null, label: "Pas de seuil OMS" };
+      return { value: null, label: t('analysis.noWHOThreshold') };
     }
     
     // Daily/weekly vs monthly/yearly thresholds
@@ -148,12 +148,12 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
     
     if (pmType === "pm25") {
       return isShortPeriod 
-        ? { value: 15, label: "Seuil OMS journalier: 15 μg/m³" }
-        : { value: 5, label: "Seuil OMS annuel: 5 μg/m³" };
+        ? { value: 15, label: t('analysis.whoThresholdDaily', { value: 15 }) }
+        : { value: 5, label: t('analysis.whoThresholdAnnual', { value: 5 }) };
     } else if (pmType === "pm10") {
       return isShortPeriod
-        ? { value: 45, label: "Seuil OMS journalier: 45 μg/m³" }
-        : { value: 15, label: "Seuil OMS annuel: 15 μg/m³" };
+        ? { value: 45, label: t('analysis.whoThresholdDaily', { value: 45 }) }
+        : { value: 15, label: t('analysis.whoThresholdAnnual', { value: 15 }) };
     }
     
     return { value: null, label: "" };
@@ -164,10 +164,9 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
   return (
     <Card className="mb-6">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg">Analyse des données</CardTitle>
+        <CardTitle className="text-lg">{t('analysis.dataAnalysis')}</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Ce graphique montre la répartition des concentrations moyennes de particules selon le type sélectionné. 
-          Les pourcentages représentent la proportion relative de pollution pour chaque catégorie.
+          {t('analysis.chartExplanation')}
         </p>
         
         {/* PM Type Selector */}
@@ -203,15 +202,15 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="location" id="location" />
-            <Label htmlFor="location" className="cursor-pointer">localisation</Label>
+            <Label htmlFor="location" className="cursor-pointer">{t('analysis.location')}</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="activity" id="activity" />
-            <Label htmlFor="activity" className="cursor-pointer">activity</Label>
+            <Label htmlFor="activity" className="cursor-pointer">{t('analysis.activity')}</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="autocontext" id="autocontext" />
-            <Label htmlFor="autocontext" className="cursor-pointer">autocontext</Label>
+            <Label htmlFor="autocontext" className="cursor-pointer">{t('analysis.autocontext')}</Label>
           </div>
         </RadioGroup>
       </CardHeader>
@@ -223,7 +222,7 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
           <div className="h-80">
             {breakdownData.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                Aucune donnée disponible pour cette période
+                {t('analysis.noDataForPeriod')}
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -256,14 +255,14 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
           {/* Summary Table */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <h4 className="font-medium text-sm text-muted-foreground">Résumé détaillé</h4>
+              <h4 className="font-medium text-sm text-muted-foreground">{t('analysis.detailedSummary')}</h4>
               <div className="text-xs text-muted-foreground">
                 {getWHOThreshold().label}
               </div>
             </div>
             {breakdownData.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                Aucune donnée disponible
+                {t('analysis.noDataAvailable')}
               </div>
             ) : (
               <div className="space-y-2">
@@ -280,10 +279,10 @@ export const PollutionBreakdownChart = ({ missions, selectedPeriod, selectedDate
                       <div className="flex-1">
                         <div className="font-medium text-sm">{item.name}</div>
                         <div className="text-xs text-muted-foreground">
-                          {Math.round(item.exposure)} min • PM{pmType.replace('pm', '')}: {Math.round(item.avgPM)} μg/m³
+                          {Math.round(item.exposure)} {t('analysis.minutes')} • PM{pmType.replace('pm', '')}: {Math.round(item.avgPM)} μg/m³
                           {whoThreshold.value && (
                             <span className={`ml-2 ${exceedsWHO ? 'text-red-600' : 'text-green-600'}`}>
-                              ({exceedsWHO ? 'Dépasse' : 'Respecte'} seuil OMS: {whoThreshold.value} μg/m³)
+                              ({exceedsWHO ? t('analysis.exceeds') : t('analysis.complies')} {t('analysis.whoThreshold')}: {whoThreshold.value} μg/m³)
                             </span>
                           )}
                         </div>

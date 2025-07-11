@@ -297,7 +297,21 @@
     "timeSpent": "Time Spent",
     "exposure": "Exposure",
     "measurements": "measurements",
-    "unknownActivity": "Unknown Activity"
+    "unknownActivity": "Unknown Activity",
+    "dataAnalysis": "Data Analysis",
+    "chartExplanation": "This chart shows the breakdown of average particle concentrations by selected type. Percentages represent the relative pollution proportion for each category.",
+    "location": "location",
+    "activity": "activity", 
+    "autocontext": "autocontext",
+    "detailedSummary": "Detailed Summary",
+    "noDataForPeriod": "No data available for this period",
+    "minutes": "min",
+    "exceeds": "Exceeds",
+    "complies": "Complies with",
+    "whoThreshold": "WHO threshold",
+    "noWHOThreshold": "No WHO threshold",
+    "whoThresholdDaily": "Daily WHO threshold: {{value}} μg/m³",
+    "whoThresholdAnnual": "Annual WHO threshold: {{value}} μg/m³"
   },
   "modals": {
     "recordingFrequency": {

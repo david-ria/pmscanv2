@@ -297,7 +297,21 @@
     "timeSpent": "Temps invertit",
     "exposure": "Exposició",
     "measurements": "mesures",
-    "unknownActivity": "Activitat desconeguda"
+    "unknownActivity": "Activitat desconeguda",
+    "dataAnalysis": "Anàlisi de dades",
+    "chartExplanation": "Aquest gràfic mostra la distribució de les concentracions mitjanes de partícules segons el tipus seleccionat. Els percentatges representen la proporció relativa de contaminació per a cada categoria.",
+    "location": "localització",
+    "activity": "activitat",
+    "autocontext": "autocontext",
+    "detailedSummary": "Resum detallat",
+    "noDataForPeriod": "No hi ha dades disponibles per a aquest període",
+    "minutes": "min",
+    "exceeds": "Supera",
+    "complies": "Compleix",
+    "whoThreshold": "llindar OMS",
+    "noWHOThreshold": "Sense llindar OMS",
+    "whoThresholdDaily": "Llindar OMS diari: {{value}} μg/m³",
+    "whoThresholdAnnual": "Llindar OMS anual: {{value}} μg/m³"
   },
   "modals": {
     "recordingFrequency": {
