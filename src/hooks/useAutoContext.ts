@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import * as tf from '@tensorflow/tfjs';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
+import { useGPS } from '@/hooks/useGPS';
 
 const MODEL_LABELS = [
   'Indoor',
@@ -45,6 +46,7 @@ export function useAutoContext() {
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
   const [model, setModel] = useState<tf.LayersModel | null>(null);
+  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(settings.enabled);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
@@ -61,6 +63,14 @@ export function useAutoContext() {
         });
     }
   }, [settings.mlEnabled, model]);
+
+  useEffect(() => {
+    if (settings.enabled) {
+      requestLocationPermission().catch(err => {
+        console.error('Failed to request location permission', err);
+      });
+    }
+  }, [settings.enabled, requestLocationPermission]);
 
   // Mock function to get current WiFi SSID (in real app, this would use native APIs)
   const getCurrentWifiSSID = useCallback((): string => {
@@ -239,6 +249,9 @@ export function useAutoContext() {
     toggleEnabled,
     determineContext,
     isEnabled: settings.enabled,
-    mlEnabled: settings.mlEnabled
+    mlEnabled: settings.mlEnabled,
+    latestLocation,
+    locationEnabled,
+    requestLocationPermission
   };
 }

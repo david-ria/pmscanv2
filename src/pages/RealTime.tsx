@@ -7,7 +7,6 @@ import { ContextSelectors } from "@/components/RecordingControls/ContextSelector
 import { DataLogger } from "@/components/DataLogger";
 
 import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
-import { useGPS } from "@/hooks/useGPS";
 import { useRecordingContext } from "@/contexts/RecordingContext";
 import { useAlerts } from "@/contexts/AlertContext";
 import { useAutoContext } from "@/hooks/useAutoContext";
@@ -17,10 +16,15 @@ export default function RealTime() {
   const [showGraph, setShowGraph] = useState(false);
   
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
-  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(isConnected);
+  const {
+    determineContext,
+    isEnabled: autoContextEnabled,
+    latestLocation,
+    locationEnabled,
+    requestLocationPermission
+  } = useAutoContext();
   const { isRecording, addDataPoint, missionContext, recordingData, updateMissionContext } = useRecordingContext();
   const { checkAlerts } = useAlerts();
-  const { determineContext, isEnabled: autoContextEnabled } = useAutoContext();
   
   // Initialize with current mission context if already recording
   const [selectedLocation, setSelectedLocation] = useState(missionContext.location);
