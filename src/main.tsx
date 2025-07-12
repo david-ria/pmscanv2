@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThresholdProvider } from "@/contexts/ThresholdContext";
 import { AlertProvider } from "@/contexts/AlertContext";
+import { ThemeProvider } from "@/contexts/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
 import App from "./App.tsx";
 import "./index.css";
@@ -19,8 +20,10 @@ createRoot(document.getElementById("root")!).render(
         <AuthProvider>
           <ThresholdProvider>
             <AlertProvider>
-              <App />
-              <Toaster />
+              <ThemeProvider>
+                <App />
+                <Toaster />
+              </ThemeProvider>
             </AlertProvider>
           </ThresholdProvider>
         </AuthProvider>

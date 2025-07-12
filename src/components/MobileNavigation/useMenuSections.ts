@@ -1,4 +1,5 @@
-import { User, Settings, Users, Smartphone, AlertTriangle, LogOut, Activity, Languages, Moon, Brain } from "lucide-react";
+import { User, Settings, Users, Smartphone, AlertTriangle, LogOut, Activity, Languages, Moon, Brain, SunMoon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +35,7 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
   const { t } = useTranslation();
   const { currentLanguage, languages } = useLanguage();
   const { userRole } = useUserRole();
+  const { theme = 'light', setTheme } = useTheme();
   const { isEnabled: autoContextEnabled, toggleEnabled: toggleAutoContext } = useAutoContext();
   const { isBackgroundEnabled, enableRecordingBackground, disableRecordingBackground } = useBackgroundRecordingIntegration();
 
@@ -112,10 +114,19 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
         { icon: Settings, label: t('settingsMenu.customThresholds'), badge: null, action: handleCustomThresholds },
         { icon: AlertTriangle, label: t('settingsMenu.alertsAlarms'), badge: null, action: handleCustomAlerts },
         { icon: Languages, label: t('settingsMenu.language'), badge: getCurrentLanguageDisplay() },
-        { 
-          icon: Moon, 
-          label: 'Background Recording', 
-          badge: null, 
+        {
+          icon: SunMoon,
+          label: t('settingsMenu.darkMode'),
+          badge: null,
+          toggle: {
+            checked: theme === 'dark',
+            onCheckedChange: (checked: boolean) => setTheme(checked ? 'dark' : 'light')
+          }
+        },
+        {
+          icon: Moon,
+          label: 'Background Recording',
+          badge: null,
           toggle: {
             checked: isBackgroundEnabled,
             onCheckedChange: handleBackgroundRecordingToggle
