@@ -92,3 +92,6 @@ Automatic context detection can optionally use a TensorFlow.js model. To enable 
 2. Place your trained model files under `public/model/` so that `public/model/model.json` is accessible.
 3. Open the Auto Context settings in the application and toggle **Use ML model**.
 4. When enabled, sensor readings will be converted to tensors and passed to the model. If the model fails to load or predict, the heuristic logic is used instead.
+5. Enable **Override context** if you want the model's predicted activity to automatically replace your selected mission activity.
+
+When this option is active the app updates the mission activity field in real time using the prediction returned by the TensorFlow model. If the prediction changes, the current mission activity is updated accordingly.
