@@ -23,6 +23,7 @@ interface AutoContextInputs {
 interface AutoContextSettings {
   enabled: boolean;
   mlEnabled?: boolean;
+  highAccuracy?: boolean;
   homeArea?: {
     latitude: number;
     longitude: number;
@@ -40,13 +41,13 @@ interface AutoContextSettings {
 export function useAutoContext() {
   const [settings, setSettings] = useState<AutoContextSettings>(() => {
     const saved = localStorage.getItem('autoContextSettings');
-    return saved ? JSON.parse(saved) : { enabled: false, mlEnabled: false };
+    return saved ? JSON.parse(saved) : { enabled: false, mlEnabled: false, highAccuracy: false };
   });
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
   const [model, setModel] = useState<tf.LayersModel | null>(null);
-  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(settings.enabled);
+  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(settings.enabled, settings.highAccuracy ?? false);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
@@ -250,6 +251,7 @@ export function useAutoContext() {
     determineContext,
     isEnabled: settings.enabled,
     mlEnabled: settings.mlEnabled,
+    highAccuracy: settings.highAccuracy,
     latestLocation,
     locationEnabled,
     requestLocationPermission

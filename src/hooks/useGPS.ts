@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { LocationData } from '@/types/PMScan';
 import * as logger from '@/utils/logger';
 
-export function useGPS(enabled: boolean = true) {
+export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [latestLocation, setLatestLocation] = useState<LocationData | null>(null);
   const [watchId, setWatchId] = useState<number | null>(null);
@@ -32,7 +32,7 @@ export function useGPS(enabled: boolean = true) {
     }
 
     const options: PositionOptions = {
-      enableHighAccuracy: false,
+      enableHighAccuracy: highAccuracy,
       timeout: 60000, // 60 seconds - very long timeout
       maximumAge: 60000 // Cache for 60 seconds to reduce requests
     };
@@ -96,7 +96,7 @@ export function useGPS(enabled: boolean = true) {
     );
     
     setWatchId(id);
-  }, [enabled, watchId, stopWatching]);
+  }, [enabled, watchId, stopWatching, highAccuracy]);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
     logger.debug('🧭 GPS: Permission request initiated...');
@@ -208,6 +208,13 @@ export function useGPS(enabled: boolean = true) {
       setError(null);
     }
   }, [enabled, stopWatching]);
+
+  // Restart watcher when accuracy preference changes
+  useEffect(() => {
+    if (enabled) {
+      startWatching();
+    }
+  }, [highAccuracy, enabled, startWatching]);
 
   // Cleanup on unmount
   useEffect(() => {
