@@ -8,9 +8,12 @@ export const locationKeys = [
 ];
 
 export const activityKeys = [
+  "indoor",
+  "outdoor",
+  "transport",
   "walking",
   "cycling",
-  "transport",
+  "undergroundTransport",
   "sport",
   "rest",
   "work"

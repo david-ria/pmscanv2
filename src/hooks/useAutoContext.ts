@@ -10,7 +10,10 @@ const MODEL_LABELS = [
   'Transport',
   'Walking',
   'Cycling',
-  'Underground transport'
+  'Underground transport',
+  'Sport',
+  'Rest',
+  'Work'
 ];
 
 interface AutoContextInputs {

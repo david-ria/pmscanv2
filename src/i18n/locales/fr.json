@@ -189,7 +189,10 @@
     "transport": "Transport",
     "sport": "Sport",
     "rest": "Repos",
-    "work": "Travail"
+    "work": "Travail",
+    "indoor": "Intérieur",
+    "outdoor": "Extérieur",
+    "undergroundTransport": "Transport souterrain"
   },
   "history": {
     "loadingMissions": "Chargement des missions...",
