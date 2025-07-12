@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Settings } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAutoContext } from "@/hooks/useAutoContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -12,6 +12,10 @@ export function AutoContextControl() {
   const { settings, updateSettings, toggleEnabled, isEnabled } = useAutoContext();
   const [showSettings, setShowSettings] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
+
+  useEffect(() => {
+    setTempSettings(settings);
+  }, [settings, showSettings]);
 
   const handleSaveSettings = () => {
     updateSettings(tempSettings);
