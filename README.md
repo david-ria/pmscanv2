@@ -71,3 +71,15 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Debug logging
+
+Verbose logging can be enabled while developing by setting the `VITE_LOG_LEVEL`
+environment variable. When set to `debug` (or when running in `vite`'s default
+development mode) additional debug messages will be printed. Example:
+
+```sh
+VITE_LOG_LEVEL=debug npm run dev
+```
+
+Leave this variable unset (or use any other value) to silence debug output.

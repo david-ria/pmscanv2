@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import * as logger from "@/utils/logger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,7 +70,7 @@ export function DataLogger({
         
         // Only add if enough time passed OR data is significantly different
         if (!hasRecentEntry || isDataDifferent) {
-          console.log("📝 Adding data to logger:", { pm25: currentData.pm25, timestamp: currentData.timestamp });
+          logger.debug("📝 Adding data to logger:", { pm25: currentData.pm25, timestamp: currentData.timestamp });
           const newEntry: DataLogEntry = {
             id: Date.now().toString(),
             timestamp: currentData.timestamp,
@@ -80,7 +81,7 @@ export function DataLogger({
           };
           
           const updated = [newEntry, ...prev.slice(0, 99)];
-          console.log("📊 DataLog updated, total entries:", updated.length);
+          logger.debug("📊 DataLog updated, total entries:", updated.length);
           return updated;
         }
         

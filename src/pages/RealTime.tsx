@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import * as logger from "@/utils/logger";
 import { StatusButtons } from "@/components/RealTime/StatusButtons";
 import { AirQualityCards } from "@/components/RealTime/AirQualityCards";
 import { MapGraphToggle } from "@/components/RealTime/MapGraphToggle";
@@ -37,7 +38,7 @@ export default function RealTime() {
         Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
       
       if (!isDuplicate) {
-        console.log('Adding data point with location:', latestLocation);
+        logger.debug('Adding data point with location:', latestLocation);
         
         // Determine automatic context if enabled
         const automaticContext = autoContextEnabled ? determineContext({
