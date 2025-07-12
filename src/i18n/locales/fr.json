@@ -39,8 +39,6 @@
   "sensors": {
     "title": "Capteurs",
     "pmscan": "Capteur PMSCAN",
-    "native": "Capteurs natifs",
-    "googleFit": "Google Fit",
     "connected": "Connecté"
   },
   "loading": {
