@@ -7,17 +7,26 @@ export const locationKeys = [
   "transport"
 ];
 
-export const activityKeys = [
-  "indoor",
-  "outdoor",
-  "transport",
-  "walking",
-  "cycling",
-  "undergroundTransport",
-  "sport",
-  "rest",
-  "work"
+export interface ActivityCategory {
+  key: string;
+  label: string;
+}
+
+export const activityCategories: ActivityCategory[] = [
+  { key: "indoor", label: "Indoor" },
+  { key: "outdoor", label: "Outdoor" },
+  { key: "transport", label: "Transport" },
+  { key: "walking", label: "Walking" },
+  { key: "cycling", label: "Cycling" },
+  { key: "undergroundTransport", label: "Underground transport" },
+  { key: "sport", label: "Sport" },
+  { key: "rest", label: "Rest" },
+  { key: "work", label: "Work" }
 ];
+
+export const activityKeys = activityCategories.map(a => a.key);
+
+export const MODEL_LABELS = activityCategories.map(a => a.label);
 
 export const frequencyOptionKeys = [
   { value: "1s", key: "every1s" },

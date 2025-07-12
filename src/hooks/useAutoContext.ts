@@ -4,18 +4,7 @@ import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
 import { useRecordingContext } from '@/contexts/RecordingContext';
-
-const MODEL_LABELS = [
-  'Indoor',
-  'Outdoor',
-  'Transport',
-  'Walking',
-  'Cycling',
-  'Underground transport',
-  'Sport',
-  'Rest',
-  'Work'
-];
+import { MODEL_LABELS } from '@/lib/recordingConstants';
 
 interface AutoContextInputs {
   pmData?: PMScanData;

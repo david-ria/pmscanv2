@@ -1,7 +1,7 @@
 import { MapPin, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { locationKeys, activityKeys } from "@/lib/recordingConstants";
+import { locationKeys, activityCategories } from "@/lib/recordingConstants";
 import { useTranslation } from "react-i18next";
 import { useGroupSettings } from "@/hooks/useGroupSettings";
 
@@ -25,7 +25,9 @@ export function ContextSelectors({
   
   // Use group locations if in group mode, otherwise use default locations
   const locations = isGroupMode ? getCurrentLocations() : locationKeys.map(key => ({ name: t(`locations.${key}`) }));
-  const activities = isGroupMode ? getCurrentActivities() : activityKeys.map(key => ({ name: t(`activities.${key}`) }));
+  const activities = isGroupMode
+    ? getCurrentActivities()
+    : activityCategories.map(({ key }) => ({ key, name: t(`activities.${key}`) }));
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -63,8 +65,11 @@ export function ContextSelectors({
             <SelectValue placeholder={t('realTime.noActivity')} />
           </SelectTrigger>
           <SelectContent>
-            {activities.map((activity, index) => (
-              <SelectItem key={isGroupMode ? activity.name : activityKeys[index]} value={activity.name}>
+            {activities.map(activity => (
+              <SelectItem
+                key={isGroupMode ? activity.name : activity.key}
+                value={activity.name}
+              >
                 {activity.name}
               </SelectItem>
             ))}
