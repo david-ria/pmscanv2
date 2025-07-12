@@ -19,6 +19,11 @@ export function useGPS(enabled: boolean = true) {
     if (!enabled) {
       return;
     }
+
+    // Ensure any previous watcher is cleared before starting a new one
+    if (watchId !== null) {
+      stopWatching();
+    }
     
     if (!navigator.geolocation) {
       console.error('🧭 GPS: Geolocation is not supported by this browser');
@@ -91,7 +96,7 @@ export function useGPS(enabled: boolean = true) {
     );
     
     setWatchId(id);
-  }, [enabled]);
+  }, [enabled, watchId, stopWatching]);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
     logger.debug('🧭 GPS: Permission request initiated...');
