@@ -1,6 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
+import * as tf from '@tensorflow/tfjs';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
+import { useGPS } from '@/hooks/useGPS';
+
+const MODEL_LABELS = [
+  'Indoor',
+  'Outdoor',
+  'Transport',
+  'Walking',
+  'Cycling',
+  'Underground transport'
+];
 
 interface AutoContextInputs {
   pmData?: PMScanData;
@@ -11,6 +22,7 @@ interface AutoContextInputs {
 
 interface AutoContextSettings {
   enabled: boolean;
+  mlEnabled?: boolean;
   homeArea?: {
     latitude: number;
     longitude: number;
@@ -28,16 +40,37 @@ interface AutoContextSettings {
 export function useAutoContext() {
   const [settings, setSettings] = useState<AutoContextSettings>(() => {
     const saved = localStorage.getItem('autoContextSettings');
-    return saved ? JSON.parse(saved) : { enabled: false };
+    return saved ? JSON.parse(saved) : { enabled: false, mlEnabled: false };
   });
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
+  const [model, setModel] = useState<tf.LayersModel | null>(null);
+  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(settings.enabled);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('autoContextSettings', JSON.stringify(settings));
   }, [settings]);
+
+  useEffect(() => {
+    if (settings.mlEnabled && !model) {
+      tf.loadLayersModel('/model/model.json')
+        .then(setModel)
+        .catch(err => {
+          console.error('Failed to load ML model', err);
+          setModel(null);
+        });
+    }
+  }, [settings.mlEnabled, model]);
+
+  useEffect(() => {
+    if (settings.enabled) {
+      requestLocationPermission().catch(err => {
+        console.error('Failed to request location permission', err);
+      });
+    }
+  }, [settings.enabled, requestLocationPermission]);
 
   // Mock function to get current WiFi SSID (in real app, this would use native APIs)
   const getCurrentWifiSSID = useCallback((): string => {
@@ -71,6 +104,22 @@ export function useAutoContext() {
     const distance = R * c;
     return distance <= radiusMeters;
   }, []);
+
+  const convertToTensor = useCallback((inputs: AutoContextInputs): tf.Tensor => {
+    const { location, speed = 0, isMoving = false } = inputs;
+    const wifiId = currentWifiSSID === settings.homeWifiSSID
+      ? 1
+      : currentWifiSSID === settings.workWifiSSID
+        ? 2
+        : 0;
+    const data = [
+      location?.accuracy ?? 0,
+      speed,
+      isMoving ? 1 : 0,
+      wifiId
+    ];
+    return tf.tensor2d([data]);
+  }, [currentWifiSSID, settings.homeWifiSSID, settings.workWifiSSID]);
 
   // Main auto context determination function
   const determineContext = useCallback((inputs: AutoContextInputs): string => {
@@ -171,8 +220,20 @@ export function useAutoContext() {
       }
     }
 
+    if (settings.mlEnabled && model) {
+      try {
+        const tensor = convertToTensor({ ...inputs, isMoving });
+        const prediction = model.predict(tensor) as tf.Tensor;
+        const index = prediction.argMax(-1).dataSync()[0];
+        const mlState = MODEL_LABELS[index];
+        if (mlState) state = mlState;
+      } catch (err) {
+        console.error('ML prediction failed', err);
+      }
+    }
+
     return state;
-  }, [settings, currentWifiSSID, previousWifiSSID, getCurrentWifiSSID, getCellularSignal, isInsideArea]);
+  }, [settings, currentWifiSSID, previousWifiSSID, getCurrentWifiSSID, getCellularSignal, isInsideArea, convertToTensor, model]);
 
   const updateSettings = useCallback((newSettings: Partial<AutoContextSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
@@ -187,6 +248,10 @@ export function useAutoContext() {
     updateSettings,
     toggleEnabled,
     determineContext,
-    isEnabled: settings.enabled
+    isEnabled: settings.enabled,
+    mlEnabled: settings.mlEnabled,
+    latestLocation,
+    locationEnabled,
+    requestLocationPermission
   };
 }

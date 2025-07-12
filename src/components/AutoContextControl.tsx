@@ -58,6 +58,14 @@ export function AutoContextControl() {
                       placeholder="Your work WiFi name"
                     />
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="ml-enabled"
+                      checked={tempSettings.mlEnabled ?? false}
+                      onCheckedChange={(v) => setTempSettings(prev => ({ ...prev, mlEnabled: v }))}
+                    />
+                    <Label htmlFor="ml-enabled">Use ML model</Label>
+                  </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setShowSettings(false)}>
                       Cancel
@@ -83,6 +91,7 @@ export function AutoContextControl() {
             <p>• Indoor/outdoor detection based on GPS and WiFi</p>
             <p>• Activity recognition (walking, cycling, transport)</p>
             <p>• Work hours and location-based context</p>
+            <p>• Optional ML model predictions</p>
           </div>
         </CardContent>
       )}
