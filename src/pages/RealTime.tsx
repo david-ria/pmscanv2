@@ -17,8 +17,8 @@ export default function RealTime() {
   const [showGraph, setShowGraph] = useState(false);
   
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
-  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(isConnected);
   const { isRecording, addDataPoint, missionContext, recordingData, updateMissionContext } = useRecordingContext();
+  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(isConnected, isRecording);
   const { checkAlerts } = useAlerts();
   const { determineContext, isEnabled: autoContextEnabled } = useAutoContext();
   
