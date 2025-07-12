@@ -78,15 +78,18 @@ export default function RealTime() {
     updateMissionContext(selectedLocation, selectedActivity);
   }, [selectedLocation, selectedActivity, updateMissionContext]);
 
-  // Sync local state with mission context when component mounts or recording starts
+  // Keep local state in sync with mission context
   useEffect(() => {
-    if (isRecording && missionContext.location && !selectedLocation) {
+    if (missionContext.location !== selectedLocation) {
       setSelectedLocation(missionContext.location);
     }
-    if (isRecording && missionContext.activity && !selectedActivity) {
+  }, [missionContext.location]);
+
+  useEffect(() => {
+    if (missionContext.activity !== selectedActivity) {
       setSelectedActivity(missionContext.activity);
     }
-  }, [isRecording, missionContext.location, missionContext.activity, selectedLocation, selectedActivity]);
+  }, [missionContext.activity]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);

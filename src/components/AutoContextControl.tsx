@@ -70,6 +70,14 @@ export function AutoContextControl() {
                     />
                     <Label htmlFor="ml-enabled">Use ML model</Label>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="override-context"
+                      checked={tempSettings.overrideContext ?? false}
+                      onCheckedChange={(v) => setTempSettings(prev => ({ ...prev, overrideContext: v }))}
+                    />
+                    <Label htmlFor="override-context">Override activity</Label>
+                  </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setShowSettings(false)}>
                       Cancel
