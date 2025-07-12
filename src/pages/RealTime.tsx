@@ -52,7 +52,15 @@ export default function RealTime() {
         lastDataRef.current = { pm25: currentData.pm25, timestamp: currentTimestamp };
       }
     }
-  }, [isRecording, currentData, latestLocation, addDataPoint, missionContext]);
+  }, [
+    isRecording,
+    currentData,
+    latestLocation,
+    addDataPoint,
+    missionContext,
+    determineContext,
+    autoContextEnabled
+  ]);
 
   // Check alerts whenever new data comes in
   useEffect(() => {
