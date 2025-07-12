@@ -5,6 +5,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { RecordingProvider } from "@/contexts/RecordingContext";
+import { GPSProvider } from "@/contexts/GPSContext";
 import { useAuth } from "@/contexts/AuthContext";
 import RealTime from "./pages/RealTime";
 import History from "./pages/History";
@@ -65,13 +66,14 @@ const App = () => {
           <Route path="/*" element={
             <ProtectedRoute>
               <RecordingProvider>
-                <Header />
-                <main className="pt-14 pb-16">
-                  <Routes>
-                    <Route path="/" element={<RealTime />} />
-                    <Route path="/history" element={<History />} />
-                    <Route path="/analysis" element={<Analysis />} />
-                    <Route path="/groups" element={<Groups />} />
+                <GPSProvider>
+                  <Header />
+                  <main className="pt-14 pb-16">
+                    <Routes>
+                      <Route path="/" element={<RealTime />} />
+                      <Route path="/history" element={<History />} />
+                      <Route path="/analysis" element={<Analysis />} />
+                      <Route path="/groups" element={<Groups />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/custom-thresholds" element={<CustomThresholds />} />
                     <Route path="/custom-alerts" element={<CustomAlerts />} />
@@ -80,6 +82,7 @@ const App = () => {
                   </Routes>
                 </main>
                 <BottomNavigation />
+                </GPSProvider>
               </RecordingProvider>
             </ProtectedRoute>
           } />
