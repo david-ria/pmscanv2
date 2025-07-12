@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { LocationData } from '@/types/PMScan';
+import * as logger from '@/utils/logger';
 
 export function useGPS(enabled: boolean = true) {
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -45,8 +46,16 @@ export function useGPS(enabled: boolean = true) {
       setLocationEnabled(true);
     };
 
+    const lastErrorTimeRef = useRef(0);
+
     const handleError = (error: GeolocationPositionError) => {
-      console.error('🧭 GPS: Error occurred:', {
+      const now = Date.now();
+      if (now - lastErrorTimeRef.current < 10000) {
+        return;
+      }
+      lastErrorTimeRef.current = now;
+
+      logger.error('🧭 GPS: Error occurred:', {
         code: error.code,
         message: error.message,
         PERMISSION_DENIED: error.PERMISSION_DENIED,
@@ -85,14 +94,14 @@ export function useGPS(enabled: boolean = true) {
   }, [enabled]);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
-    console.log('🧭 GPS: Permission request initiated...');
+    logger.debug('🧭 GPS: Permission request initiated...');
     
     try {
       // Check if permissions API is available
       if ('permissions' in navigator) {
-        console.log('🧭 GPS: Using permissions API');
+        logger.debug('🧭 GPS: Using permissions API');
         const permission = await navigator.permissions.query({ name: 'geolocation' });
-        console.log('🧭 GPS: Current permission state:', permission.state);
+        logger.debug('🧭 GPS: Current permission state:', permission.state);
         
         if (permission.state === 'granted') {
           setLocationEnabled(true);
