@@ -155,15 +155,18 @@ export function useGPS(enabled: boolean = true) {
 
   // Check initial permission state
   useEffect(() => {
+    let permissionStatus: PermissionStatus | null = null;
+    let permissionChangeHandler: (() => void) | null = null;
+
     if ('permissions' in navigator) {
       navigator.permissions.query({ name: 'geolocation' }).then((permission) => {
+        permissionStatus = permission;
         if (permission.state === 'granted') {
           setLocationEnabled(true);
           startWatching();
         }
-        
-        // Listen for permission changes
-        permission.addEventListener('change', () => {
+
+        permissionChangeHandler = () => {
           if (permission.state === 'granted') {
             setLocationEnabled(true);
             startWatching();
@@ -172,9 +175,17 @@ export function useGPS(enabled: boolean = true) {
             stopWatching();
             setLatestLocation(null);
           }
-        });
+        };
+
+        permission.addEventListener('change', permissionChangeHandler);
       });
     }
+
+    return () => {
+      if (permissionStatus && permissionChangeHandler) {
+        permissionStatus.removeEventListener('change', permissionChangeHandler);
+      }
+    };
   }, [startWatching, stopWatching]);
 
   // Handle enabled state changes
