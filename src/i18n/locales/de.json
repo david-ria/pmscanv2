@@ -188,7 +188,10 @@
     "transport": "Transport",
     "sport": "Sport",
     "rest": "Ruhe",
-    "work": "Arbeit"
+    "work": "Arbeit",
+    "indoor": "Innenbereich",
+    "outdoor": "Außenbereich",
+    "undergroundTransport": "Unterirdischer Transport"
   },
   "history": {
     "loadingMissions": "Missionen werden geladen...",

@@ -188,7 +188,10 @@
     "transport": "Transport",
     "sport": "Esport",
     "rest": "Descans",
-    "work": "Treball"
+    "work": "Treball",
+    "indoor": "Interior",
+    "outdoor": "Exterior",
+    "undergroundTransport": "Transport subterrani"
   },
   "history": {
     "loadingMissions": "Carregant missions...",
