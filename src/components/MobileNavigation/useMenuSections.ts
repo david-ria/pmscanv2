@@ -1,4 +1,4 @@
-import { User, Settings, Users, Smartphone, AlertTriangle, LogOut, Activity, Languages, Moon, Brain, SunMoon } from "lucide-react";
+import { User, Settings, Smartphone, AlertTriangle, LogOut, Activity, Languages, Moon, Brain, SunMoon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
