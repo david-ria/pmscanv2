@@ -223,10 +223,12 @@ export function useAutoContext() {
 
     if (settings.mlEnabled && model) {
       try {
-        const tensor = convertToTensor({ ...inputs, isMoving });
-        const prediction = model.predict(tensor) as tf.Tensor;
-        const index = prediction.argMax(-1).dataSync()[0];
-        const mlState = MODEL_LABELS[index];
+        const mlState = tf.tidy(() => {
+          const tensor = convertToTensor({ ...inputs, isMoving });
+          const prediction = model.predict(tensor) as tf.Tensor;
+          const index = prediction.argMax(-1).dataSync()[0];
+          return MODEL_LABELS[index];
+        });
         if (mlState) state = mlState;
       } catch (err) {
         console.error('ML prediction failed', err);
