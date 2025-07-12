@@ -83,3 +83,12 @@ VITE_LOG_LEVEL=debug npm run dev
 ```
 
 Leave this variable unset (or use any other value) to silence debug output.
+
+## Machine Learning Context Detection
+
+Automatic context detection can optionally use a TensorFlow.js model. To enable this:
+
+1. Install dependencies with `npm install` which now includes `@tensorflow/tfjs`.
+2. Place your trained model files under `public/model/` so that `public/model/model.json` is accessible.
+3. Open the Auto Context settings in the application and toggle **Use ML model**.
+4. When enabled, sensor readings will be converted to tensors and passed to the model. If the model fails to load or predict, the heuristic logic is used instead.
