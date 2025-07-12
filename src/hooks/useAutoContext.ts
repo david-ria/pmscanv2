@@ -3,6 +3,7 @@ import * as tf from '@tensorflow/tfjs';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
+import { useRecordingContext } from '@/contexts/RecordingContext';
 
 const MODEL_LABELS = [
   'Indoor',
@@ -27,6 +28,7 @@ interface AutoContextSettings {
   enabled: boolean;
   mlEnabled?: boolean;
   highAccuracy?: boolean;
+  overrideContext?: boolean;
   homeArea?: {
     latitude: number;
     longitude: number;
@@ -44,11 +46,14 @@ interface AutoContextSettings {
 export function useAutoContext() {
   const [settings, setSettings] = useState<AutoContextSettings>(() => {
     const saved = localStorage.getItem('autoContextSettings');
-    return saved ? JSON.parse(saved) : { enabled: false, mlEnabled: false, highAccuracy: false };
+    return saved ? JSON.parse(saved) : { enabled: false, mlEnabled: false, highAccuracy: false, overrideContext: false };
   });
+
+  const { updateMissionContext, missionContext } = useRecordingContext();
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
+  const [latestContext, setLatestContext] = useState<string>('');
   const [model, setModel] = useState<tf.LayersModel | null>(null);
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(settings.enabled, settings.highAccuracy ?? false);
 
@@ -238,8 +243,15 @@ export function useAutoContext() {
       }
     }
 
+    setLatestContext(state);
+    if (settings.overrideContext && state) {
+      if (missionContext.activity !== state) {
+        updateMissionContext(missionContext.location, state);
+      }
+    }
+
     return state;
-  }, [settings, currentWifiSSID, previousWifiSSID, getCurrentWifiSSID, getCellularSignal, isInsideArea, convertToTensor, model]);
+  }, [settings, currentWifiSSID, previousWifiSSID, getCurrentWifiSSID, getCellularSignal, isInsideArea, convertToTensor, model, missionContext, updateMissionContext]);
 
   const updateSettings = useCallback((newSettings: Partial<AutoContextSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
@@ -254,6 +266,7 @@ export function useAutoContext() {
     updateSettings,
     toggleEnabled,
     determineContext,
+    latestContext,
     isEnabled: settings.enabled,
     mlEnabled: settings.mlEnabled,
     highAccuracy: settings.highAccuracy,
