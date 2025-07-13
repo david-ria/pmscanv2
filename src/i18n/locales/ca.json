@@ -331,7 +331,8 @@
       "contributeToDatabase": "Contribuir a la base de dades comunitària",
       "cancel": "Cancel·lar",
       "delete": "Eliminar",
-      "save": "Desar"
+      "save": "Desar",
+      "discarded": "Missió eliminada"
     },
     "frequency": {
       "every1s": "Cada segon",
