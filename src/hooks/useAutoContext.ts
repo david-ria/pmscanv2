@@ -5,6 +5,7 @@ import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { MODEL_LABELS } from '@/lib/recordingConstants';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AutoContextInputs {
   pmData?: PMScanData;
@@ -44,12 +45,47 @@ export function useAutoContext() {
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
   const [latestContext, setLatestContext] = useState<string>('');
   const [model, setModel] = useState<tf.LayersModel | null>(null);
+  const homeCountsKey = 'homeWifiCounts';
+  const workCountsKey = 'workWifiCounts';
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(settings.enabled, settings.highAccuracy ?? false);
+
+  const updateSettings = useCallback((newSettings: Partial<AutoContextSettings>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }));
+  }, []);
+
+  const toggleEnabled = useCallback(() => {
+    setSettings(prev => ({ ...prev, enabled: !prev.enabled }));
+  }, []);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('autoContextSettings', JSON.stringify(settings));
   }, [settings]);
+
+  useEffect(() => {
+    const loadSSIDs = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('home_wifi_ssid, work_wifi_ssid')
+          .eq('id', user.id)
+          .single();
+        if (!error && data) {
+          setSettings(prev => ({
+            ...prev,
+            homeWifiSSID: prev.homeWifiSSID ?? data.home_wifi_ssid ?? undefined,
+            workWifiSSID: prev.workWifiSSID ?? data.work_wifi_ssid ?? undefined
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to load profile SSIDs', err);
+      }
+    };
+
+    loadSSIDs();
+  }, []);
 
   useEffect(() => {
     if (settings.mlEnabled && !model) {
@@ -119,6 +155,55 @@ export function useAutoContext() {
     return tf.tensor2d([data]);
   }, [currentWifiSSID, settings.homeWifiSSID, settings.workWifiSSID]);
 
+  const incrementSSIDCount = useCallback((key: string, ssid: string) => {
+    if (!ssid) return {} as Record<string, number>;
+    const counts = JSON.parse(localStorage.getItem(key) || '{}') as Record<string, number>;
+    counts[ssid] = (counts[ssid] || 0) + 1;
+    localStorage.setItem(key, JSON.stringify(counts));
+    return counts;
+  }, []);
+
+  const getDominantSSID = (counts: Record<string, number>) => {
+    let top = '';
+    let topCount = 0;
+    let second = 0;
+    for (const [ssid, count] of Object.entries(counts)) {
+      if (count > topCount) {
+        second = topCount;
+        top = ssid;
+        topCount = count;
+      } else if (count > second) {
+        second = count;
+      }
+    }
+    return { ssid: top, count: topCount, second };
+  };
+
+  const persistSSID = useCallback(async (field: 'home_wifi_ssid' | 'work_wifi_ssid', ssid: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from('profiles').update({ [field]: ssid }).eq('id', user.id);
+    } catch (err) {
+      console.error('Failed to persist SSID', err);
+    }
+  }, []);
+
+  const updateDominantSSID = useCallback((area: 'home' | 'work', counts: Record<string, number>) => {
+    const { ssid, count, second } = getDominantSSID(counts);
+    if (!ssid) return;
+    if (count >= 5 && count >= second * 2) {
+      if (area === 'home' && ssid !== settings.homeWifiSSID) {
+        updateSettings({ homeWifiSSID: ssid });
+        persistSSID('home_wifi_ssid', ssid);
+      }
+      if (area === 'work' && ssid !== settings.workWifiSSID) {
+        updateSettings({ workWifiSSID: ssid });
+        persistSSID('work_wifi_ssid', ssid);
+      }
+    }
+  }, [persistSSID, settings.homeWifiSSID, settings.workWifiSSID, updateSettings]);
+
   // Main auto context determination function
   const determineContext = useCallback((inputs: AutoContextInputs): string => {
     if (!settings.enabled) {
@@ -162,6 +247,15 @@ export function useAutoContext() {
         settings.workArea.longitude,
         settings.workArea.radius
       );
+    }
+
+    if (insideHomeArea) {
+      const counts = incrementSSIDCount(homeCountsKey, newWifiSSID);
+      updateDominantSSID('home', counts);
+    }
+    if (insideWorkArea) {
+      const counts = incrementSSIDCount(workCountsKey, newWifiSSID);
+      updateDominantSSID('work', counts);
     }
 
     let state = "Unknown";
@@ -242,13 +336,6 @@ export function useAutoContext() {
     return state;
   }, [settings, currentWifiSSID, previousWifiSSID, getCurrentWifiSSID, getCellularSignal, isInsideArea, convertToTensor, model, missionContext, updateMissionContext]);
 
-  const updateSettings = useCallback((newSettings: Partial<AutoContextSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
-  }, []);
-
-  const toggleEnabled = useCallback(() => {
-    setSettings(prev => ({ ...prev, enabled: !prev.enabled }));
-  }, []);
 
   return {
     settings,
