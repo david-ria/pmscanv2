@@ -38,7 +38,7 @@ export function useAutoContext() {
     return saved ? JSON.parse(saved) : { enabled: false, mlEnabled: false, highAccuracy: false, overrideContext: false };
   });
 
-  const { updateMissionContext, missionContext } = useRecordingContext();
+  const { updateMissionContext, missionContext, isRecording } = useRecordingContext();
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
@@ -69,6 +69,13 @@ export function useAutoContext() {
       });
     }
   }, [settings.enabled, requestLocationPermission]);
+
+  // Toggle high accuracy based on recording state
+  useEffect(() => {
+    if (settings.enabled && settings.highAccuracy !== isRecording) {
+      updateSettings({ highAccuracy: isRecording });
+    }
+  }, [isRecording, settings.enabled, settings.highAccuracy, updateSettings]);
 
   // Mock function to get current WiFi SSID (in real app, this would use native APIs)
   const getCurrentWifiSSID = useCallback((): string => {
