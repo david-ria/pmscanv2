@@ -260,19 +260,26 @@ export function useAutoContext() {
 
     let state = "Unknown";
 
-    if (gpsQuality === "good") {
+    const wifiHome = currentWifiSSID === settings.homeWifiSSID;
+    const wifiWork = currentWifiSSID === settings.workWifiSSID;
+
+    if (wifiHome) {
+      state = "Indoor at home";
+      if (
+        gpsQuality === "poor" &&
+        WORK_START <= currentHour &&
+        currentHour <= WORK_END &&
+        previousWifiSSID === settings.homeWifiSSID
+      ) {
+        state = "Indoor at home (working from home)";
+      }
+    } else if (wifiWork) {
+      state = "Indoor at work";
+    } else if (gpsQuality === "good") {
       if (insideHomeArea) {
-        if (currentWifiSSID === settings.homeWifiSSID) {
-          state = "Indoor at home";
-        } else {
-          state = "Outdoor";
-        }
+        state = wifiHome ? "Indoor at home" : "Outdoor";
       } else if (insideWorkArea) {
-        if (currentWifiSSID === settings.workWifiSSID) {
-          state = "Indoor at work";
-        } else {
-          state = "Outdoor";
-        }
+        state = wifiWork ? "Indoor at work" : "Outdoor";
       } else {
         state = "Outdoor";
       }
@@ -287,28 +294,18 @@ export function useAutoContext() {
         }
       }
     } else {
-      if (currentWifiSSID === settings.homeWifiSSID) {
-        if (WORK_START <= currentHour && currentHour <= WORK_END) {
-          if (previousWifiSSID === settings.homeWifiSSID) {
-            state = "Indoor at home (working from home)";
-          } else {
-            state = "Indoor at home";
-          }
-        } else {
-          state = "Indoor at home";
-        }
-      } else if (currentWifiSSID === settings.workWifiSSID) {
-        if (WORK_START <= currentHour && currentHour <= WORK_END) {
-          state = "Indoor at work";
-        } else {
-          state = "Indoor";
-        }
+      if (
+        previousWifiSSID === settings.homeWifiSSID &&
+        currentHour >= 8 &&
+        currentHour <= 10
+      ) {
+        state = "Likely indoor at work";
+      } else if (!currentWifiSSID && latestContext.startsWith("Indoor")) {
+        state = latestContext;
+      } else if (!cellularSignal && isMoving) {
+        state = "Underground transport";
       } else {
-        if (!cellularSignal && isMoving) {
-          state = "Underground transport";
-        } else {
-          state = "Indoor";
-        }
+        state = "Indoor";
       }
     }
 
