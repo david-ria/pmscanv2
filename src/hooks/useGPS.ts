@@ -7,6 +7,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
   const [latestLocation, setLatestLocation] = useState<LocationData | null>(null);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const lastErrorTimeRef = useRef(0);
 
   const stopWatching = useCallback(() => {
     if (watchId !== null) {
@@ -50,8 +51,6 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
       setError(null);
       setLocationEnabled(true);
     };
-
-    const lastErrorTimeRef = useRef(0);
 
     const handleError = (error: GeolocationPositionError) => {
       const now = Date.now();
