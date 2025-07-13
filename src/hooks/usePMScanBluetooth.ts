@@ -3,6 +3,7 @@ import { PMScanData, PMScanDevice } from '@/lib/pmscan/types';
 import { parsePMScanDataPayload } from '@/lib/pmscan/dataParser';
 import { exponentialBackoff } from '@/lib/pmscan/utils';
 import { globalConnectionManager } from '@/lib/pmscan/globalConnectionManager';
+import * as logger from '@/utils/logger';
 
 export function usePMScanBluetooth() {
   const [isConnected, setIsConnected] = useState(false);
@@ -29,7 +30,7 @@ export function usePMScanBluetooth() {
           (data.timestamp.getTime() - prevData.timestamp.getTime()) >= 1000; // 1 second minimum
         
         if (isDifferent) {
-          console.log('🔄 RT Data received:', data);
+          logger.debug('🔄 RT Data received:', data);
           return data;
         }
         // Skip logging and updating if data is too similar
@@ -45,7 +46,7 @@ export function usePMScanBluetooth() {
       
       // Skip IM data entirely to avoid duplicates - RT data is sufficient for real-time display
       // IM data is typically the same as RT data but sent more frequently
-      console.log('📄 IM Data received (skipped to avoid duplicates)');
+      logger.debug('📄 IM Data received (skipped to avoid duplicates)');
     }
   }, []);
 
@@ -53,7 +54,7 @@ export function usePMScanBluetooth() {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target.value) {
       const batteryLevel = target.value.getUint8(0);
-      console.log(`🔋 Battery event: ${batteryLevel}%`);
+      logger.debug(`🔋 Battery event: ${batteryLevel}%`);
       connectionManager.updateBattery(batteryLevel);
       setDevice(prev => prev ? { ...prev, battery: batteryLevel } : null);
     }
@@ -63,7 +64,7 @@ export function usePMScanBluetooth() {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target.value) {
       const chargingStatus = target.value.getUint8(0);
-      console.log(`⚡ Charging event: ${chargingStatus}`);
+      logger.debug(`⚡ Charging event: ${chargingStatus}`);
       connectionManager.updateCharging(chargingStatus);
       setDevice(prev => prev ? { ...prev, charging: chargingStatus === 1 } : null);
     }
@@ -98,7 +99,7 @@ export function usePMScanBluetooth() {
 
   const connect = useCallback(() => {
     const manager = connectionManager;
-    console.log('🔄 connect() called, shouldConnect:', manager.shouldAutoConnect());
+    logger.debug('🔄 connect() called, shouldConnect:', manager.shouldAutoConnect());
     
     if (!manager.shouldAutoConnect()) return;
     
@@ -108,7 +109,7 @@ export function usePMScanBluetooth() {
       () => manager.connect(),
       (server) => onDeviceConnected(server),
       () => {
-        console.log('❌ Failed to reconnect.');
+        logger.debug('❌ Failed to reconnect.');
         setError('Failed to reconnect');
         setIsConnecting(false);
       }
@@ -124,7 +125,7 @@ export function usePMScanBluetooth() {
       const device = await manager.requestDevice();
       
       device.addEventListener('gattserverdisconnected', () => {
-        console.log('🔌 PMScan Device disconnected');
+        logger.debug('🔌 PMScan Device disconnected');
         onDeviceDisconnected();
         connect();
       });
@@ -166,7 +167,7 @@ export function usePMScanBluetooth() {
       ).then((deviceInfo) => {
         if (deviceInfo) {
           setDevice(deviceInfo);
-          console.log('🔄 Restored existing PMScan connection with event listeners');
+          logger.debug('🔄 Restored existing PMScan connection with event listeners');
         }
       }).catch(error => {
         console.error('❌ Failed to restore connection:', error);

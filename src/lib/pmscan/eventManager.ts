@@ -6,6 +6,7 @@ import {
 } from './constants';
 import { PMScanDeviceState } from './deviceState';
 import { PMScanDevice } from './types';
+import * as logger from '@/utils/logger';
 
 /**
  * Manages event listeners for PMScan device characteristics
@@ -40,7 +41,7 @@ export class PMScanEventManager {
       batteryChar.addEventListener('characteristicvaluechanged', onBatteryData);
       chargingChar.addEventListener('characteristicvaluechanged', onChargingData);
 
-      console.log('🔄 Event listeners re-established');
+      logger.debug('🔄 Event listeners re-established');
 
       return {
         name: device?.name || "PMScan Device",

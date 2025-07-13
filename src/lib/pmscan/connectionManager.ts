@@ -4,6 +4,7 @@ import { PMScanDeviceInitializer } from './deviceInitializer';
 import { PMScanEventManager } from './eventManager';
 import { PMScanConnectionUtils } from './connectionUtils';
 import { getGlobalRecording, getBackgroundRecording } from './globalConnectionManager';
+import * as logger from '@/utils/logger';
 
 export class PMScanConnectionManager {
   private device: BluetoothDevice | null = null;
@@ -84,7 +85,7 @@ export class PMScanConnectionManager {
     const shouldPreventDisconnect = getGlobalRecording() || getBackgroundRecording();
     
     if (shouldPreventDisconnect && !force) {
-      console.log('🚫 Cannot disconnect PMScan while recording is active or background mode is enabled');
+      logger.debug('🚫 Cannot disconnect PMScan while recording is active or background mode is enabled');
       return false;
     }
     
@@ -104,14 +105,14 @@ export class PMScanConnectionManager {
   }
 
   public onDisconnected(): void {
-    console.log('🔌 PMScan Device disconnected');
+    logger.debug('🔌 PMScan Device disconnected');
     this.isInited = false;
 
     // Check if we should automatically reconnect (when recording or in background mode)
     const shouldReconnect = getGlobalRecording() || getBackgroundRecording();
     
     if (shouldReconnect) {
-      console.log('🔄 Auto-reconnecting PMScan due to active recording or background mode...');
+      logger.debug('🔄 Auto-reconnecting PMScan due to active recording or background mode...');
       // Reset init state but keep shouldConnect true for reconnection
       this.isInited = false;
       // Don't set shouldConnect to false as we want to reconnect

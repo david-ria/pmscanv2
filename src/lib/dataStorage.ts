@@ -5,6 +5,7 @@ import { exportMissionToCSV } from "./csvExport";
 import { createMissionFromRecording, saveMissionLocally, deleteMission } from "./missionManager";
 import { getLocalMissions, formatDatabaseMission, clearLocalStorage } from "./localStorage";
 import { syncPendingMissions } from "./dataSync";
+import * as logger from "@/utils/logger";
 
 export interface MissionData {
   id: string;
@@ -64,7 +65,7 @@ class DataStorageService {
         return [...unsyncedLocal, ...formattedDbMissions];
       }
     } catch (error) {
-      console.log('Database not available, using local data only:', error);
+      logger.debug('Database not available, using local data only:', error);
     }
 
     return localMissions;

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
+import * as logger from '@/utils/logger';
 
 export interface AlertSettings {
   pm1: {
@@ -137,7 +138,7 @@ export function AlertProvider({ children }: AlertProviderProps) {
     // Request notification permission if not already granted
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission().then(permission => {
-        console.log('Notification permission:', permission);
+        logger.debug('Notification permission:', permission);
       });
     }
   }, []);

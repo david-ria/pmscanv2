@@ -1,4 +1,5 @@
 import { MissionData } from "./dataStorage";
+import * as logger from "@/utils/logger";
 
 export function exportMissionToCSV(mission: MissionData): void {
   const headers = [
@@ -65,5 +66,5 @@ export function exportMissionToCSV(mission: MissionData): void {
   link.click();
   document.body.removeChild(link);
   
-  console.log(`Mission exported to CSV: ${filename}`);
+  logger.debug(`Mission exported to CSV: ${filename}`);
 }

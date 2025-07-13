@@ -2,6 +2,7 @@ import { useBackgroundRecording } from "./useBackgroundRecording";
 import { parseFrequencyToMs } from "@/lib/recordingUtils";
 import { PMScanData } from "@/lib/pmscan/types";
 import { LocationData } from "@/types/PMScan";
+import * as logger from "@/utils/logger";
 
 export function useBackgroundRecordingIntegration() {
   const { 
@@ -18,7 +19,7 @@ export function useBackgroundRecordingIntegration() {
         enableNotifications: true,
         syncInterval: parseFrequencyToMs(frequency)
       });
-      console.log("🎯 Background recording enabled");
+      logger.debug("🎯 Background recording enabled");
     } catch (error) {
       console.warn("⚠️ Background recording failed to enable:", error);
     }
@@ -27,7 +28,7 @@ export function useBackgroundRecordingIntegration() {
   const disableRecordingBackground = async () => {
     try {
       await disableBackgroundRecording();
-      console.log("🛑 Background recording disabled");
+      logger.debug("🛑 Background recording disabled");
     } catch (error) {
       console.warn("⚠️ Background recording failed to disable:", error);
     }

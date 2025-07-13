@@ -4,6 +4,7 @@ import { LocationData } from "@/types/PMScan";
 import { RecordingEntry } from "@/types/recording";
 import { parseFrequencyToMs, shouldRecordData } from "@/lib/recordingUtils";
 import { getBackgroundRecording } from "@/lib/pmscan/globalConnectionManager";
+import * as logger from "@/utils/logger";
 
 interface UseDataPointRecorderProps {
   isRecording: boolean;
@@ -28,7 +29,7 @@ export function useDataPointRecorder({
     context?: { location: string; activity: string },
     automaticContext?: string
   ) => {
-    console.log('📊 addDataPoint called:', {
+    logger.debug('📊 addDataPoint called:', {
       isRecording,
       recordingFrequency,
       lastRecordedTime: lastRecordedTime.current,
@@ -42,13 +43,13 @@ export function useDataPointRecorder({
     });
 
     if (!isRecording) {
-      console.log('❌ Not recording, skipping data point');
+      logger.debug('❌ Not recording, skipping data point');
       return;
     }
 
     // Check if enough time has passed based on recording frequency
     const frequencyMs = parseFrequencyToMs(recordingFrequency);
-    console.log('⏱️ Frequency check:', {
+    logger.debug('⏱️ Frequency check:', {
       frequencyMs,
       recordingFrequency,
       lastRecordedTime: lastRecordedTime.current,
@@ -56,11 +57,11 @@ export function useDataPointRecorder({
     });
     
     if (!shouldRecordData(lastRecordedTime.current, frequencyMs)) {
-      console.log('⏭️ Skipping data point - not enough time passed');
+      logger.debug('⏭️ Skipping data point - not enough time passed');
       return;
     }
     
-    console.log('✅ Recording data point');
+    logger.debug('✅ Recording data point');
     
     // Update last recorded time
     const currentTime = new Date();
@@ -81,17 +82,17 @@ export function useDataPointRecorder({
       automaticContext
     };
 
-    console.log('📝 Adding entry to recording data:', entry);
+    logger.debug('📝 Adding entry to recording data:', entry);
 
     // Store data for background processing if background mode is enabled
     if (getBackgroundRecording()) {
-      console.log('💾 Storing background data');
+      logger.debug('💾 Storing background data');
       storeBackgroundData(pmDataWithUniqueTimestamp, location, context);
     }
 
     // Add to recording data
     addDataPointToState(entry);
-    console.log('✅ Data point added successfully');
+    logger.debug('✅ Data point added successfully');
   };
 
   return {

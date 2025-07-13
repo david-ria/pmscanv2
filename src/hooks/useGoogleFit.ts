@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import * as logger from "@/utils/logger";
 
 interface GoogleFitActivity {
   id: string;
@@ -46,7 +47,7 @@ export function useGoogleFit(): UseGoogleFitReturn {
         script.defer = true;
         
         script.onload = () => {
-          console.log('Google API script loaded');
+          logger.debug('Google API script loaded');
           initGapiAuth().then(resolve).catch(reject);
         };
         
@@ -63,12 +64,12 @@ export function useGoogleFit(): UseGoogleFitReturn {
 
   const initGapiAuth = useCallback(async () => {
     return new Promise<void>((resolve, reject) => {
-      console.log('Loading Google Auth2 library...');
+      logger.debug('Loading Google Auth2 library...');
       window.gapi.load('auth2', {
         callback: async () => {
           try {
-            console.log('Google Auth2 library loaded successfully');
-            console.log('Getting Google Client ID from Supabase...');
+            logger.debug('Google Auth2 library loaded successfully');
+            logger.debug('Getting Google Client ID from Supabase...');
             
             // Get the Google Client ID from Supabase secrets
             const { data: clientIdResponse, error: clientIdError } = await supabase.functions.invoke('get-google-client-id');
@@ -79,18 +80,18 @@ export function useGoogleFit(): UseGoogleFitReturn {
             }
             
             const clientId = clientIdResponse?.client_id;
-            console.log('Received client ID:', clientId ? 'Got client ID' : 'No client ID');
+            logger.debug('Received client ID:', clientId ? 'Got client ID' : 'No client ID');
             
             if (!clientId) {
               throw new Error('Google Client ID not configured in Supabase secrets');
             }
             
-            console.log('Initializing Google Auth2 with client ID...');
+            logger.debug('Initializing Google Auth2 with client ID...');
             window.gapi.auth2.init({
               client_id: clientId,
               scope: 'https://www.googleapis.com/auth/fitness.activity.read'
             }).then(() => {
-              console.log('Google Auth2 initialized successfully');
+              logger.debug('Google Auth2 initialized successfully');
               resolve();
             }).catch((error: any) => {
               console.error('Auth2 init error:', error);
@@ -112,11 +113,11 @@ export function useGoogleFit(): UseGoogleFitReturn {
   const connectGoogleFit = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log('Starting Google Fit connection...');
+      logger.debug('Starting Google Fit connection...');
       
       // Load Google API if not already loaded
       if (!window.gapi) {
-        console.log('Loading Google API script...');
+        logger.debug('Loading Google API script...');
         const script = document.createElement('script');
         script.src = 'https://apis.google.com/js/api.js';
         script.onload = () => initGoogleAPI();
@@ -124,16 +125,16 @@ export function useGoogleFit(): UseGoogleFitReturn {
         await new Promise(resolve => script.onload = resolve);
       }
       
-      console.log('Initializing Google API...');
+      logger.debug('Initializing Google API...');
       await initGoogleAPI();
       
-      console.log('Getting auth instance...');
+      logger.debug('Getting auth instance...');
       const authInstance = window.gapi.auth2.getAuthInstance();
-      console.log('Auth instance obtained, attempting sign in...');
+      logger.debug('Auth instance obtained, attempting sign in...');
       const user = await authInstance.signIn();
-      console.log('Sign in successful, getting auth response...');
+      logger.debug('Sign in successful, getting auth response...');
       const authResponse = user.getAuthResponse();
-      console.log('Auth response received');
+      logger.debug('Auth response received');
       
       setAccessToken(authResponse.access_token);
       setIsAuthenticated(true);

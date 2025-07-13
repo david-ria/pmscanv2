@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getLocalMissions, getPendingSyncIds, removeFromPendingSync } from "./localStorage";
 import { saveMissionLocally } from "./missionManager";
+import * as logger from "@/utils/logger";
 
 export async function syncPendingMissions(): Promise<void> {
   if (!navigator.onLine) return;
@@ -64,7 +65,7 @@ export async function syncPendingMissions(): Promise<void> {
       saveMissionLocally(mission);
       removeFromPendingSync(mission.id);
 
-      console.log(`Mission ${mission.name} synced successfully`);
+      logger.debug(`Mission ${mission.name} synced successfully`);
     } catch (error) {
       console.error(`Failed to sync mission ${mission.name}:`, error);
     }

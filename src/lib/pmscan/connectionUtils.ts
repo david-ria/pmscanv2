@@ -1,4 +1,5 @@
 import { PMScan_SERVICE_UUID, PMScan_MODE_UUID } from './constants';
+import * as logger from '@/utils/logger';
 
 /**
  * Utility functions for PMScan connection management
@@ -9,18 +10,18 @@ export class PMScanConnectionUtils {
       throw new Error('Bluetooth not available in this browser');
     }
 
-    console.log('🔍 Requesting any Bluetooth device...');
+    logger.debug('🔍 Requesting any Bluetooth device...');
     const device = await navigator.bluetooth.requestDevice({
       filters: [{ namePrefix: "PMScan" }],
       optionalServices: [PMScan_SERVICE_UUID]
     });
 
-    console.log('📱 Requested ' + device.name);
+    logger.debug('📱 Requested ' + device.name);
     return device;
   }
 
   public static async connectToDevice(device: BluetoothDevice): Promise<BluetoothRemoteGATTServer> {
-    console.log('🔌 Connecting to Bluetooth Device...');
+    logger.debug('🔌 Connecting to Bluetooth Device...');
     const server = await device.gatt!.connect();
     return server;
   }
@@ -30,7 +31,7 @@ export class PMScanConnectionUtils {
     mode: number
   ): Promise<void> {
     try {
-      console.log('🔌 Requesting disconnect...');
+      logger.debug('🔌 Requesting disconnect...');
       const modeChar = await service.getCharacteristic(PMScan_MODE_UUID);
       const modeToWrite = new Uint8Array(1);
       modeToWrite[0] = mode | 0x40;

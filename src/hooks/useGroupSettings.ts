@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getGroupConfig, type GroupConfig } from '@/lib/groupConfigs';
 import { useToast } from '@/hooks/use-toast';
+import * as logger from '@/utils/logger';
 
 export const useGroupSettings = () => {
   const [searchParams] = useSearchParams();
@@ -21,11 +22,11 @@ export const useGroupSettings = () => {
       }
     }
     
-    console.log('Group ID from URL:', groupId); // Debug log
+    logger.debug('Group ID from URL:', groupId);
     
     if (groupId) {
       const groupConfig = getGroupConfig(groupId);
-      console.log('Group config found:', groupConfig); // Debug log
+      logger.debug('Group config found:', groupConfig);
       
       if (groupConfig) {
         setActiveGroup(groupConfig);
@@ -51,7 +52,7 @@ export const useGroupSettings = () => {
     } else {
       // Check if we have a stored group
       const storedGroupId = localStorage.getItem('activeGroupId');
-      console.log('Stored group ID:', storedGroupId); // Debug log
+      logger.debug('Stored group ID:', storedGroupId);
       if (storedGroupId) {
         const groupConfig = getGroupConfig(storedGroupId);
         if (groupConfig) {

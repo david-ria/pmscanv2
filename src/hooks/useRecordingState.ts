@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { RecordingEntry, MissionContext, RecordingConfig } from "@/types/recording";
 import { setGlobalRecording } from "@/lib/pmscan/globalConnectionManager";
+import * as logger from "@/utils/logger";
 
 export function useRecordingState() {
   const [recordingData, setRecordingData] = useState<RecordingEntry[]>([]);
@@ -15,7 +16,7 @@ export function useRecordingState() {
   const lastRecordedTime = useRef<Date | null>(null);
 
   const startRecording = (frequency: string = "10s") => {
-    console.log("🎬 Starting recording with frequency:", frequency);
+    logger.debug("🎬 Starting recording with frequency:", frequency);
     setIsRecording(true);
     setRecordingData([]);
     setRecordingFrequency(frequency);
@@ -25,7 +26,7 @@ export function useRecordingState() {
     // Set global recording state to prevent disconnection during navigation
     setGlobalRecording(true);
     
-    console.log("✅ Recording started! isRecording should now be:", true);
+    logger.debug("✅ Recording started! isRecording should now be:", true);
   };
 
   const stopRecording = () => {
@@ -38,7 +39,7 @@ export function useRecordingState() {
   const addDataPoint = (entry: RecordingEntry) => {
     setRecordingData(prev => {
       const updated = [...prev, entry];
-      console.log("📊 Recording data updated, total points:", updated.length);
+      logger.debug("📊 Recording data updated, total points:", updated.length);
       return updated;
     });
   };
