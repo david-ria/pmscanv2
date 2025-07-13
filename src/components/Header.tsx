@@ -1,14 +1,20 @@
-import { useState } from "react";
-import { Menu, User, LogOut } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MobileNavigation } from "./MobileNavigation";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { Menu, User, LogOut } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { MobileNavigation } from './MobileNavigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -49,7 +55,9 @@ export function Header() {
 
           {/* App Title */}
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-foreground">{t('header.title')}</h1>
+            <h1 className="text-lg font-bold text-foreground">
+              {t('header.title')}
+            </h1>
             <Badge variant="outline" className="text-xs hidden sm:inline-flex">
               {t('header.realTime')}
             </Badge>

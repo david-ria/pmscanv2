@@ -1,12 +1,23 @@
-import { User, Settings, Users, Smartphone, AlertTriangle, LogOut, Languages, Moon, Brain, SunMoon } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/hooks/useLanguage";
-import { useUserRole } from "@/hooks/useUserRole";
-import { useAutoContext } from "@/hooks/useAutoContext";
-import { useBackgroundRecordingIntegration } from "@/hooks/useBackgroundRecordingIntegration";
+import {
+  User,
+  Settings,
+  Users,
+  Smartphone,
+  AlertTriangle,
+  LogOut,
+  Languages,
+  Moon,
+  Brain,
+  SunMoon,
+} from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/hooks/useLanguage';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useAutoContext } from '@/hooks/useAutoContext';
+import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
 
 interface MenuSection {
   title: string;
@@ -27,15 +38,22 @@ interface UseMenuSectionsProps {
   onNavigate: () => void;
 }
 
-export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSection[] {
+export function useMenuSections({
+  onNavigate,
+}: UseMenuSectionsProps): MenuSection[] {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { currentLanguage, languages } = useLanguage();
   const { userRole } = useUserRole();
   const { theme = 'light', setTheme } = useTheme();
-  const { isEnabled: autoContextEnabled, toggleEnabled: toggleAutoContext } = useAutoContext();
-  const { isBackgroundEnabled, enableRecordingBackground, disableRecordingBackground } = useBackgroundRecordingIntegration();
+  const { isEnabled: autoContextEnabled, toggleEnabled: toggleAutoContext } =
+    useAutoContext();
+  const {
+    isBackgroundEnabled,
+    enableRecordingBackground,
+    disableRecordingBackground,
+  } = useBackgroundRecordingIntegration();
 
   const handleProfileClick = () => {
     navigate('/profile');
@@ -47,7 +65,6 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
     navigate('/auth');
     onNavigate();
   };
-
 
   const handleCustomThresholds = () => {
     navigate('/custom-thresholds');
@@ -65,13 +82,13 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
   };
 
   const getCurrentLanguageDisplay = () => {
-    const lang = languages.find(l => l.code === currentLanguage);
+    const lang = languages.find((l) => l.code === currentLanguage);
     return lang ? lang.name : currentLanguage.toUpperCase();
   };
 
   const handleBackgroundRecordingToggle = async (enabled: boolean) => {
     if (enabled) {
-      await enableRecordingBackground("30s"); // Default 30 second frequency
+      await enableRecordingBackground('30s'); // Default 30 second frequency
     } else {
       await disableRecordingBackground();
     }
@@ -81,24 +98,49 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
     {
       title: t('account.title'),
       items: [
-        { icon: User, label: t('account.profile'), badge: null, action: handleProfileClick },
-        { icon: LogOut, label: t('account.logout'), badge: null, action: handleSignOut }
-      ]
+        {
+          icon: User,
+          label: t('account.profile'),
+          badge: null,
+          action: handleProfileClick,
+        },
+        {
+          icon: LogOut,
+          label: t('account.logout'),
+          badge: null,
+          action: handleSignOut,
+        },
+      ],
     },
     {
       title: t('settingsMenu.title'),
       items: [
-        { icon: Settings, label: t('settingsMenu.customThresholds'), badge: null, action: handleCustomThresholds },
-        { icon: AlertTriangle, label: t('settingsMenu.alertsAlarms'), badge: null, action: handleCustomAlerts },
-        { icon: Languages, label: t('settingsMenu.language'), badge: getCurrentLanguageDisplay() },
+        {
+          icon: Settings,
+          label: t('settingsMenu.customThresholds'),
+          badge: null,
+          action: handleCustomThresholds,
+        },
+        {
+          icon: AlertTriangle,
+          label: t('settingsMenu.alertsAlarms'),
+          badge: null,
+          action: handleCustomAlerts,
+        },
+        {
+          icon: Languages,
+          label: t('settingsMenu.language'),
+          badge: getCurrentLanguageDisplay(),
+        },
         {
           icon: SunMoon,
           label: t('settingsMenu.darkMode'),
           badge: null,
           toggle: {
             checked: theme === 'dark',
-            onCheckedChange: (checked: boolean) => setTheme(checked ? 'dark' : 'light')
-          }
+            onCheckedChange: (checked: boolean) =>
+              setTheme(checked ? 'dark' : 'light'),
+          },
         },
         {
           icon: Moon,
@@ -106,20 +148,20 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
           badge: null,
           toggle: {
             checked: isBackgroundEnabled,
-            onCheckedChange: handleBackgroundRecordingToggle
+            onCheckedChange: handleBackgroundRecordingToggle,
           },
-          info: 'Continue recording PMScan data even when the app is minimized or in the background. Note: This will use more battery.'
+          info: 'Continue recording PMScan data even when the app is minimized or in the background. Note: This will use more battery.',
         },
-        { 
-          icon: Brain, 
-          label: 'Auto Context', 
-          badge: null, 
+        {
+          icon: Brain,
+          label: 'Auto Context',
+          badge: null,
           toggle: {
             checked: autoContextEnabled,
-            onCheckedChange: toggleAutoContext
-          }
-        }
-      ]
+            onCheckedChange: toggleAutoContext,
+          },
+        },
+      ],
     },
     // Groups section temporarily hidden
     // {
@@ -137,8 +179,12 @@ export function useMenuSections({ onNavigate }: UseMenuSectionsProps): MenuSecti
     {
       title: t('sensors.title'),
       items: [
-        { icon: Smartphone, label: t('sensors.pmscan'), badge: t('sensors.connected') }
-      ]
-    }
+        {
+          icon: Smartphone,
+          label: t('sensors.pmscan'),
+          badge: t('sensors.connected'),
+        },
+      ],
+    },
   ];
 }

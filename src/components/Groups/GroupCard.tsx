@@ -1,6 +1,22 @@
 import { useState } from 'react';
-import { Users, Settings, UserPlus, MoreVertical, Trash2, Edit, LogOut, Cog, Target } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Users,
+  Settings,
+  UserPlus,
+  MoreVertical,
+  Trash2,
+  Edit,
+  LogOut,
+  Cog,
+  Target,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -33,7 +49,11 @@ interface GroupCardProps {
   isAdminView?: boolean;
 }
 
-export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCardProps) {
+export function GroupCard({
+  group,
+  onInviteUser,
+  isAdminView = false,
+}: GroupCardProps) {
   const { deleteGroup, leaveGroup } = useGroups();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -82,12 +102,15 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
             <DropdownMenuContent align="end">
               {/* View Details - Always available */}
               <DropdownMenuItem asChild>
-                <Link to={`/groups/${group.id}`} className="flex items-center w-full">
+                <Link
+                  to={`/groups/${group.id}`}
+                  className="flex items-center w-full"
+                >
                   <Settings className="h-4 w-4 mr-2" />
                   View Details
                 </Link>
               </DropdownMenuItem>
-              
+
               {/* Admin functions - Show in admin view OR if user is group admin */}
               {canManageGroup && (
                 <>
@@ -117,7 +140,7 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
                   </DropdownMenuItem>
                 </>
               )}
-              
+
               {/* Leave option - Only for non-admins in regular view */}
               {!isAdminView && !isAdmin && (
                 <>
@@ -146,9 +169,12 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
               {isAdmin ? 'Admin' : 'Member'}
             </Badge>
           </div>
-          
+
           <div className="text-xs text-muted-foreground">
-            Created {formatDistanceToNow(new Date(group.created_at), { addSuffix: true })}
+            Created{' '}
+            {formatDistanceToNow(new Date(group.created_at), {
+              addSuffix: true,
+            })}
           </div>
 
           {/* Action buttons - Show admin buttons when user can manage the group */}
@@ -159,10 +185,18 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
                   <UserPlus className="h-4 w-4 mr-2" />
                   Invite
                 </Button>
-                <Button variant="outline" onClick={() => setSettingsOpen(true)} size="sm">
+                <Button
+                  variant="outline"
+                  onClick={() => setSettingsOpen(true)}
+                  size="sm"
+                >
                   <Cog className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" onClick={() => setEditOpen(true)} size="sm">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditOpen(true)}
+                  size="sm"
+                >
                   <Settings className="h-4 w-4" />
                 </Button>
               </>
@@ -202,13 +236,17 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Group</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{group.name}"? This action cannot be undone.
-              All group data, settings, and shared statistics will be permanently deleted.
+              Are you sure you want to delete "{group.name}"? This action cannot
+              be undone. All group data, settings, and shared statistics will be
+              permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete Group
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -220,13 +258,17 @@ export function GroupCard({ group, onInviteUser, isAdminView = false }: GroupCar
           <AlertDialogHeader>
             <AlertDialogTitle>Leave Group</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to leave "{group.name}"? You'll lose access to group
-              settings and shared statistics. You can only rejoin if invited again.
+              Are you sure you want to leave "{group.name}"? You'll lose access
+              to group settings and shared statistics. You can only rejoin if
+              invited again.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLeave} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleLeave}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Leave Group
             </AlertDialogAction>
           </AlertDialogFooter>

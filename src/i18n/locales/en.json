@@ -1,7 +1,7 @@
 {
   "navigation": {
     "realTime": "Real Time",
-    "history": "History", 
+    "history": "History",
     "analysis": "Analysis",
     "groups": "Groups"
   },
@@ -60,7 +60,7 @@
     "connectionSuccess": "Connection successful",
     "youAreConnected": "You are now connected",
     "unexpectedError": "An unexpected error occurred",
-    "registrationError": "Registration error", 
+    "registrationError": "Registration error",
     "registrationSuccess": "Registration successful",
     "checkEmailConfirm": "Check your email to confirm your account",
     "emailPlaceholder": "your@email.com",
@@ -83,7 +83,7 @@
     "pseudoPlaceholder": "Your username",
     "firstName": "First name",
     "firstNamePlaceholder": "Your first name",
-    "lastName": "Last name", 
+    "lastName": "Last name",
     "lastNamePlaceholder": "Your last name",
     "email": "Email",
     "emailNotEditable": "Email cannot be modified",
@@ -133,7 +133,7 @@
     "notConnected": "Not connected",
     "connecting": "Connecting...",
     "good": "Good",
-    "moderate": "Moderate", 
+    "moderate": "Moderate",
     "poor": "Poor",
     "admin": "Admin",
     "member": "Member",
@@ -245,7 +245,7 @@
       "title": "Group Comparison",
       "loading": "Loading group data...",
       "yourAverage": "Your Average",
-      "groupAverage": "Group Average", 
+      "groupAverage": "Group Average",
       "difference": "Difference",
       "memberComparison": "Member Comparison",
       "you": "You",
@@ -303,7 +303,7 @@
     "dataAnalysis": "Data Analysis",
     "chartExplanation": "This chart shows the breakdown of average particle concentrations by selected type. Percentages represent the relative pollution proportion for each category.",
     "location": "location",
-    "activity": "activity", 
+    "activity": "activity",
     "autocontext": "autocontext",
     "detailedSummary": "Detailed Summary",
     "noDataForPeriod": "No data available for this period",
@@ -337,7 +337,7 @@
       "every1s": "Every 1 second",
       "every5s": "Every 5 seconds",
       "every10s": "Every 10 seconds",
-      "every30s": "Every 30 seconds", 
+      "every30s": "Every 30 seconds",
       "every1m": "Every minute",
       "every5m": "Every 5 minutes",
       "every10m": "Every 10 minutes"
@@ -352,7 +352,7 @@
     },
     "levels": {
       "good": "Good (Green)",
-      "moderate": "Moderate (Orange)", 
+      "moderate": "Moderate (Orange)",
       "poor": "Poor (Red)",
       "veryPoor": "Very Poor (Dark Red)"
     },
@@ -380,7 +380,7 @@
     "saved": "Alert settings saved successfully",
     "resetToDefaults": "Reset to Defaults",
     "pm1Alert": "PM1 Alert",
-    "pm25Alert": "PM2.5 Alert", 
+    "pm25Alert": "PM2.5 Alert",
     "pm10Alert": "PM10 Alert",
     "alertWhen": "Alert when above {threshold} μg/m³ for {duration} minutes",
     "noAlertSet": "No alert threshold set"
@@ -389,7 +389,7 @@
     "subtitle": "Manage your personal locations, activities, alarms, and events",
     "tabs": {
       "locations": "Locations",
-      "activities": "Activities", 
+      "activities": "Activities",
       "alarms": "Alarms",
       "events": "Events"
     },

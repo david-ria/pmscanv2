@@ -22,7 +22,10 @@ import { Switch } from '@/components/ui/switch';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useGroupCustomThresholds, GroupCustomThreshold } from '@/hooks/useGroupCustomThresholds';
+import {
+  useGroupCustomThresholds,
+  GroupCustomThreshold,
+} from '@/hooks/useGroupCustomThresholds';
 import { Group } from '@/hooks/useGroups';
 
 const thresholdSchema = z.object({
@@ -46,10 +49,17 @@ interface GroupThresholdDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function GroupThresholdDialog({ group, threshold, open, onOpenChange }: GroupThresholdDialogProps) {
-  const { createThreshold, updateThreshold } = useGroupCustomThresholds(group.id);
+export function GroupThresholdDialog({
+  group,
+  threshold,
+  open,
+  onOpenChange,
+}: GroupThresholdDialogProps) {
+  const { createThreshold, updateThreshold } = useGroupCustomThresholds(
+    group.id
+  );
   const [loading, setLoading] = useState(false);
-  
+
   const form = useForm<ThresholdFormData>({
     resolver: zodResolver(thresholdSchema),
     defaultValues: {
@@ -62,7 +72,7 @@ export function GroupThresholdDialog({ group, threshold, open, onOpenChange }: G
       pm10_max: undefined,
       color: '#3b82f6',
       enabled: true,
-    }
+    },
   });
 
   useEffect(() => {
@@ -108,7 +118,7 @@ export function GroupThresholdDialog({ group, threshold, open, onOpenChange }: G
         color: data.color,
         enabled: data.enabled,
       };
-      
+
       if (threshold) {
         await updateThreshold(threshold.id, cleanData);
       } else {
@@ -131,7 +141,9 @@ export function GroupThresholdDialog({ group, threshold, open, onOpenChange }: G
             {threshold ? 'Modifier le seuil' : 'Ajouter un seuil'}
           </DialogTitle>
           <DialogDescription>
-            {threshold ? 'Modifiez les paramètres du seuil' : 'Créez un nouveau seuil personnalisé pour le groupe'}
+            {threshold
+              ? 'Modifiez les paramètres du seuil'
+              : 'Créez un nouveau seuil personnalisé pour le groupe'}
           </DialogDescription>
         </DialogHeader>
 
@@ -181,7 +193,13 @@ export function GroupThresholdDialog({ group, threshold, open, onOpenChange }: G
                           type="number"
                           placeholder="0"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -199,7 +217,13 @@ export function GroupThresholdDialog({ group, threshold, open, onOpenChange }: G
                           type="number"
                           placeholder="∞"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -223,7 +247,13 @@ export function GroupThresholdDialog({ group, threshold, open, onOpenChange }: G
                           type="number"
                           placeholder="0"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -241,7 +271,13 @@ export function GroupThresholdDialog({ group, threshold, open, onOpenChange }: G
                           type="number"
                           placeholder="∞"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -265,7 +301,13 @@ export function GroupThresholdDialog({ group, threshold, open, onOpenChange }: G
                           type="number"
                           placeholder="0"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -283,7 +325,13 @@ export function GroupThresholdDialog({ group, threshold, open, onOpenChange }: G
                           type="number"
                           placeholder="∞"
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -305,18 +353,29 @@ export function GroupThresholdDialog({ group, threshold, open, onOpenChange }: G
                     </div>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Annuler
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Enregistrement...' : threshold ? 'Modifier' : 'Créer'}
+                {loading
+                  ? 'Enregistrement...'
+                  : threshold
+                    ? 'Modifier'
+                    : 'Créer'}
               </Button>
             </DialogFooter>
           </form>

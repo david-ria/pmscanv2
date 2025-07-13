@@ -12,10 +12,12 @@ import { MapboxMapCore } from '../MapboxMapCore';
 
 describe('MapboxMapCore', () => {
   it('shows error when initialization fails', async () => {
-    initializeMap.mockImplementation(async (container, loc, thr, onLoad, onError) => {
-      onError('Map failed to load');
-      return null;
-    });
+    initializeMap.mockImplementation(
+      async (container, loc, thr, onLoad, onError) => {
+        onError('Map failed to load');
+        return null;
+      }
+    );
 
     render(
       <ThresholdProvider>

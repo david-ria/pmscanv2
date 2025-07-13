@@ -1,7 +1,14 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-import { useTranslation } from "react-i18next";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+} from 'recharts';
+import { useTranslation } from 'react-i18next';
 
-type PMType = "pm1" | "pm25" | "pm10";
+type PMType = 'pm1' | 'pm25' | 'pm10';
 
 interface BreakdownData {
   name: string;
@@ -16,7 +23,10 @@ interface PollutionPieChartProps {
   pmType: PMType;
 }
 
-export const PollutionPieChart = ({ breakdownData, pmType }: PollutionPieChartProps) => {
+export const PollutionPieChart = ({
+  breakdownData,
+  pmType,
+}: PollutionPieChartProps) => {
   const { t } = useTranslation();
 
   if (breakdownData.length === 0) {
@@ -46,7 +56,7 @@ export const PollutionPieChart = ({ breakdownData, pmType }: PollutionPieChartPr
         <Tooltip
           formatter={(value: number, name: string, props: any) => [
             `${value.toFixed(1)}%`,
-            `PM${pmType.replace('pm', '')}: ${Math.round(props.payload.avgPM)} μg/m³`
+            `PM${pmType.replace('pm', '')}: ${Math.round(props.payload.avgPM)} μg/m³`,
           ]}
         />
         <Legend />

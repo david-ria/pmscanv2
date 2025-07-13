@@ -1,7 +1,7 @@
-import { Home, History, BarChart3 } from "lucide-react";
-import { NavLink } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
+import { Home, History, BarChart3 } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
 
 interface NavigationItem {
   to: string;
@@ -10,9 +10,9 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
-  { to: "/", icon: Home, labelKey: "navigation.realTime" },
-  { to: "/history", icon: History, labelKey: "navigation.history" },
-  { to: "/analysis", icon: BarChart3, labelKey: "navigation.analysis" },
+  { to: '/', icon: Home, labelKey: 'navigation.realTime' },
+  { to: '/history', icon: History, labelKey: 'navigation.history' },
+  { to: '/analysis', icon: BarChart3, labelKey: 'navigation.analysis' },
 ];
 
 export function BottomNavigation() {
@@ -28,15 +28,17 @@ export function BottomNavigation() {
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center justify-center space-y-1 px-4 py-2 rounded-lg transition-colors min-w-[70px] min-h-[44px]",
+                  'flex flex-col items-center justify-center space-y-1 px-4 py-2 rounded-lg transition-colors min-w-[70px] min-h-[44px]',
                   isActive
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                    ? 'text-primary bg-primary/10'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                 )
               }
             >
               <Icon className="h-5 w-5" />
-              <span className="text-xs font-medium leading-tight">{t(item.labelKey)}</span>
+              <span className="text-xs font-medium leading-tight">
+                {t(item.labelKey)}
+              </span>
             </NavLink>
           );
         })}

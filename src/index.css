@@ -49,8 +49,16 @@ All colors MUST be HSL.
     --air-very-poor-foreground: 0 0% 98%;
 
     /* Environmental gradients */
-    --gradient-air-quality: linear-gradient(135deg, hsl(var(--air-good)), hsl(var(--primary)));
-    --gradient-header: linear-gradient(135deg, hsl(var(--primary)), hsl(142 60% 45%));
+    --gradient-air-quality: linear-gradient(
+      135deg,
+      hsl(var(--air-good)),
+      hsl(var(--primary))
+    );
+    --gradient-header: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(142 60% 45%)
+    );
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(142 30% 98%));
 
     /* Shadows */

@@ -1,45 +1,49 @@
-import { useState, useRef } from "react";
-import { RecordingEntry, MissionContext, RecordingConfig } from "@/types/recording";
-import { setGlobalRecording } from "@/lib/pmscan/globalConnectionManager";
-import * as logger from "@/utils/logger";
+import { useState, useRef } from 'react';
+import {
+  RecordingEntry,
+  MissionContext,
+  RecordingConfig,
+} from '@/types/recording';
+import { setGlobalRecording } from '@/lib/pmscan/globalConnectionManager';
+import * as logger from '@/utils/logger';
 
 export function useRecordingState() {
   const [recordingData, setRecordingData] = useState<RecordingEntry[]>([]);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordingFrequency, setRecordingFrequency] = useState<string>("10s");
-  const [missionContext, setMissionContext] = useState<MissionContext>({ 
-    location: "", 
-    activity: "" 
+  const [recordingFrequency, setRecordingFrequency] = useState<string>('10s');
+  const [missionContext, setMissionContext] = useState<MissionContext>({
+    location: '',
+    activity: '',
   });
-  
+
   const recordingStartTime = useRef<Date | null>(null);
   const lastRecordedTime = useRef<Date | null>(null);
 
-  const startRecording = (frequency: string = "10s") => {
-    logger.debug("🎬 Starting recording with frequency:", frequency);
+  const startRecording = (frequency: string = '10s') => {
+    logger.debug('🎬 Starting recording with frequency:', frequency);
     setIsRecording(true);
     setRecordingData([]);
     setRecordingFrequency(frequency);
     recordingStartTime.current = new Date();
     lastRecordedTime.current = null;
-    
+
     // Set global recording state to prevent disconnection during navigation
     setGlobalRecording(true);
-    
-    logger.debug("✅ Recording started! isRecording should now be:", true);
+
+    logger.debug('✅ Recording started! isRecording should now be:', true);
   };
 
   const stopRecording = () => {
     setIsRecording(false);
-    
+
     // Clear global recording state to allow disconnection
     setGlobalRecording(false);
   };
 
   const addDataPoint = (entry: RecordingEntry) => {
-    setRecordingData(prev => {
+    setRecordingData((prev) => {
       const updated = [...prev, entry];
-      logger.debug("📊 Recording data updated, total points:", updated.length);
+      logger.debug('📊 Recording data updated, total points:', updated.length);
       return updated;
     });
   };
@@ -66,7 +70,7 @@ export function useRecordingState() {
     missionContext,
     recordingStartTime: recordingStartTime.current,
     lastRecordedTime: lastRecordedTime.current,
-    
+
     // Actions
     startRecording,
     stopRecording,

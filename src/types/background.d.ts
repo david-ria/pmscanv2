@@ -61,6 +61,6 @@ interface NotificationAction {
 
 declare global {
   interface WindowEventMap {
-    'sync': SyncEvent;
+    sync: SyncEvent;
   }
 }
