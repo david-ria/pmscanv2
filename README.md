@@ -110,6 +110,23 @@ npm test
 
 Vitest uses jsdom so tests can render React components.
 
+## Git hooks
+
+This repository ships with a `pre-commit` hook located in the `githooks/` folder.
+It automatically appends a trailing newline to files inside `src/contexts`,
+`src/i18n` and to top level files such as `components.json` and
+`BACKGROUND_RECORDING_STATUS.md`. Enable the hook after cloning by running:
+
+```sh
+git config core.hooksPath githooks
+```
+
+The same logic can be run manually with:
+
+```sh
+npm run fix:newlines
+```
+
 ## Machine Learning Context Detection
 
 Automatic context detection can optionally use a TensorFlow.js model. To enable this:

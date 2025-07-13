@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "fix:newlines": "node scripts/ensure-trailing-newline.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
