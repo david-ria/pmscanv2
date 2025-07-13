@@ -25,8 +25,14 @@ import * as z from 'zod';
 import { useGroups } from '@/hooks/useGroups';
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Group name is required').max(100, 'Group name must be less than 100 characters'),
-  description: z.string().max(500, 'Description must be less than 500 characters').optional(),
+  name: z
+    .string()
+    .min(1, 'Group name is required')
+    .max(100, 'Group name must be less than 100 characters'),
+  description: z
+    .string()
+    .max(500, 'Description must be less than 500 characters')
+    .optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -36,7 +42,10 @@ interface CreateGroupDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps) {
+export function CreateGroupDialog({
+  open,
+  onOpenChange,
+}: CreateGroupDialogProps) {
   const { createGroup } = useGroups();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

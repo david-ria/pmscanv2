@@ -12,15 +12,17 @@ export class PMScanConnectionUtils {
 
     logger.debug('🔍 Requesting any Bluetooth device...');
     const device = await navigator.bluetooth.requestDevice({
-      filters: [{ namePrefix: "PMScan" }],
-      optionalServices: [PMScan_SERVICE_UUID]
+      filters: [{ namePrefix: 'PMScan' }],
+      optionalServices: [PMScan_SERVICE_UUID],
     });
 
     logger.debug('📱 Requested ' + device.name);
     return device;
   }
 
-  public static async connectToDevice(device: BluetoothDevice): Promise<BluetoothRemoteGATTServer> {
+  public static async connectToDevice(
+    device: BluetoothDevice
+  ): Promise<BluetoothRemoteGATTServer> {
     logger.debug('🔌 Connecting to Bluetooth Device...');
     const server = await device.gatt!.connect();
     return server;

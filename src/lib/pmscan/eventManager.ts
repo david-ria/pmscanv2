@@ -1,8 +1,8 @@
-import { 
-  PMScan_RT_DATA_UUID, 
-  PMScan_IM_DATA_UUID, 
-  PMScan_BATTERY_UUID, 
-  PMScan_CHARGING_UUID 
+import {
+  PMScan_RT_DATA_UUID,
+  PMScan_IM_DATA_UUID,
+  PMScan_BATTERY_UUID,
+  PMScan_CHARGING_UUID,
 } from './constants';
 import { PMScanDeviceState } from './deviceState';
 import { PMScanDevice } from './types';
@@ -27,30 +27,40 @@ export class PMScanEventManager {
       const rtDataChar = await service.getCharacteristic(PMScan_RT_DATA_UUID);
       const imDataChar = await service.getCharacteristic(PMScan_IM_DATA_UUID);
       const batteryChar = await service.getCharacteristic(PMScan_BATTERY_UUID);
-      const chargingChar = await service.getCharacteristic(PMScan_CHARGING_UUID);
+      const chargingChar =
+        await service.getCharacteristic(PMScan_CHARGING_UUID);
 
       // Remove any existing listeners to prevent duplicates
       rtDataChar.removeEventListener('characteristicvaluechanged', onRTData);
       imDataChar.removeEventListener('characteristicvaluechanged', onIMData);
-      batteryChar.removeEventListener('characteristicvaluechanged', onBatteryData);
-      chargingChar.removeEventListener('characteristicvaluechanged', onChargingData);
+      batteryChar.removeEventListener(
+        'characteristicvaluechanged',
+        onBatteryData
+      );
+      chargingChar.removeEventListener(
+        'characteristicvaluechanged',
+        onChargingData
+      );
 
       // Add new listeners
       rtDataChar.addEventListener('characteristicvaluechanged', onRTData);
       imDataChar.addEventListener('characteristicvaluechanged', onIMData);
       batteryChar.addEventListener('characteristicvaluechanged', onBatteryData);
-      chargingChar.addEventListener('characteristicvaluechanged', onChargingData);
+      chargingChar.addEventListener(
+        'characteristicvaluechanged',
+        onChargingData
+      );
 
       logger.debug('🔄 Event listeners re-established');
 
       return {
-        name: device?.name || "PMScan Device",
+        name: device?.name || 'PMScan Device',
         version: this.deviceState.state.version,
         mode: this.deviceState.state.mode,
         interval: this.deviceState.state.interval,
         battery: this.deviceState.state.battery,
         charging: this.deviceState.state.charging === 1,
-        connected: true
+        connected: true,
       };
     } catch (error) {
       console.error('❌ Failed to re-establish event listeners:', error);

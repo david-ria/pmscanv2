@@ -10,9 +10,9 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  useGroupCustomThresholds, 
-  GroupCustomThreshold 
+import {
+  useGroupCustomThresholds,
+  GroupCustomThreshold,
 } from '@/hooks/useGroupCustomThresholds';
 import { Group } from '@/hooks/useGroups';
 import { GroupThresholdDialog } from './GroupThresholdDialog';
@@ -23,10 +23,18 @@ interface GroupCustomThresholdsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function GroupCustomThresholdsDialog({ group, open, onOpenChange }: GroupCustomThresholdsDialogProps) {
-  const { thresholds, loading, deleteThreshold } = useGroupCustomThresholds(group.id);
+export function GroupCustomThresholdsDialog({
+  group,
+  open,
+  onOpenChange,
+}: GroupCustomThresholdsDialogProps) {
+  const { thresholds, loading, deleteThreshold } = useGroupCustomThresholds(
+    group.id
+  );
   const [thresholdDialogOpen, setThresholdDialogOpen] = useState(false);
-  const [editingThreshold, setEditingThreshold] = useState<GroupCustomThreshold | undefined>();
+  const [editingThreshold, setEditingThreshold] = useState<
+    GroupCustomThreshold | undefined
+  >();
 
   const handleEdit = (threshold: GroupCustomThreshold) => {
     setEditingThreshold(threshold);
@@ -69,16 +77,22 @@ export function GroupCustomThresholdsDialog({ group, open, onOpenChange }: Group
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-24 bg-muted rounded animate-pulse" />
+                  <div
+                    key={i}
+                    className="h-24 bg-muted rounded animate-pulse"
+                  />
                 ))}
               </div>
             ) : thresholds.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Target className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Aucun seuil personnalisé</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Aucun seuil personnalisé
+                  </h3>
                   <p className="text-muted-foreground text-center mb-4">
-                    Créez des seuils personnalisés pour ce groupe afin de mieux surveiller la qualité de l'air
+                    Créez des seuils personnalisés pour ce groupe afin de mieux
+                    surveiller la qualité de l'air
                   </p>
                   <Button onClick={handleAdd}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -93,7 +107,7 @@ export function GroupCustomThresholdsDialog({ group, open, onOpenChange }: Group
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div 
+                          <div
                             className="w-4 h-4 rounded"
                             style={{ backgroundColor: threshold.color }}
                           />
@@ -116,27 +130,36 @@ export function GroupCustomThresholdsDialog({ group, open, onOpenChange }: Group
                           </Button>
                         </div>
                       </CardTitle>
-                      <Badge variant={threshold.enabled ? "default" : "secondary"} className="w-fit">
-                        {threshold.enabled ? "Actif" : "Inactif"}
+                      <Badge
+                        variant={threshold.enabled ? 'default' : 'secondary'}
+                        className="w-fit"
+                      >
+                        {threshold.enabled ? 'Actif' : 'Inactif'}
                       </Badge>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {threshold.pm1_min !== undefined || threshold.pm1_max !== undefined ? (
+                      {threshold.pm1_min !== undefined ||
+                      threshold.pm1_max !== undefined ? (
                         <div className="text-sm">
-                          <span className="font-medium">PM1:</span>{" "}
-                          {threshold.pm1_min || 0} - {threshold.pm1_max || "∞"} μg/m³
+                          <span className="font-medium">PM1:</span>{' '}
+                          {threshold.pm1_min || 0} - {threshold.pm1_max || '∞'}{' '}
+                          μg/m³
                         </div>
                       ) : null}
-                      {threshold.pm25_min !== undefined || threshold.pm25_max !== undefined ? (
+                      {threshold.pm25_min !== undefined ||
+                      threshold.pm25_max !== undefined ? (
                         <div className="text-sm">
-                          <span className="font-medium">PM2.5:</span>{" "}
-                          {threshold.pm25_min || 0} - {threshold.pm25_max || "∞"} μg/m³
+                          <span className="font-medium">PM2.5:</span>{' '}
+                          {threshold.pm25_min || 0} -{' '}
+                          {threshold.pm25_max || '∞'} μg/m³
                         </div>
                       ) : null}
-                      {threshold.pm10_min !== undefined || threshold.pm10_max !== undefined ? (
+                      {threshold.pm10_min !== undefined ||
+                      threshold.pm10_max !== undefined ? (
                         <div className="text-sm">
-                          <span className="font-medium">PM10:</span>{" "}
-                          {threshold.pm10_min || 0} - {threshold.pm10_max || "∞"} μg/m³
+                          <span className="font-medium">PM10:</span>{' '}
+                          {threshold.pm10_min || 0} -{' '}
+                          {threshold.pm10_max || '∞'} μg/m³
                         </div>
                       ) : null}
                     </CardContent>

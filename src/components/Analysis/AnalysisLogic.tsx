@@ -1,9 +1,19 @@
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { dataStorage, MissionData } from "@/lib/dataStorage";
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
-import { useTranslation } from "react-i18next";
-import * as logger from "@/utils/logger";
+import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { dataStorage, MissionData } from '@/lib/dataStorage';
+import {
+  startOfDay,
+  endOfDay,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  isWithinInterval,
+} from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import * as logger from '@/utils/logger';
 
 interface AnalysisData {
   totalMissions: number;
@@ -23,11 +33,11 @@ interface ActivityData {
 
 export const useAnalysisLogic = (
   selectedDate: Date,
-  selectedPeriod: "day" | "week" | "month" | "year"
+  selectedPeriod: 'day' | 'week' | 'month' | 'year'
 ) => {
   const { t } = useTranslation();
   const [missions, setMissions] = useState<MissionData[]>([]);
-  const [statisticalAnalysis, setStatisticalAnalysis] = useState<string>("");
+  const [statisticalAnalysis, setStatisticalAnalysis] = useState<string>('');
   const [dataPoints, setDataPoints] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(false);
   const [analysisGenerated, setAnalysisGenerated] = useState(false);
@@ -56,7 +66,7 @@ export const useAnalysisLogic = (
       toast({
         title: t('analysis.error'),
         description: t('analysis.errorLoadingMissions'),
-        variant: "destructive"
+        variant: 'destructive',
       });
     }
   };
@@ -70,25 +80,29 @@ export const useAnalysisLogic = (
       }
 
       // Group missions by activity context
-      const activityMap = new Map<string, {
-        totalDuration: number;
-        totalPM25: number;
-        cumulativeDose: number;
-        measurements: number;
-      }>();
+      const activityMap = new Map<
+        string,
+        {
+          totalDuration: number;
+          totalPM25: number;
+          cumulativeDose: number;
+          measurements: number;
+        }
+      >();
 
-      filtered.forEach(mission => {
-        const activity = mission.activityContext || t('analysis.unknownActivity');
+      filtered.forEach((mission) => {
+        const activity =
+          mission.activityContext || t('analysis.unknownActivity');
         const existing = activityMap.get(activity) || {
           totalDuration: 0,
           totalPM25: 0,
           cumulativeDose: 0,
-          measurements: 0
+          measurements: 0,
         };
 
         const durationHours = mission.durationMinutes / 60; // Convert minutes to hours
         const dose = mission.avgPm25 * durationHours; // Ci × Δti formula
-        
+
         existing.totalDuration += mission.durationMinutes;
         existing.totalPM25 += mission.avgPm25 * mission.durationMinutes; // Weight by duration
         existing.cumulativeDose += dose; // Cumulative dose in µg·h/m³
@@ -98,13 +112,16 @@ export const useAnalysisLogic = (
       });
 
       // Convert to array and calculate averages
-      const activities = Array.from(activityMap.entries()).map(([activity, data]) => ({
-        activity,
-        timeSpent: data.totalDuration,
-        cumulativeDose: data.cumulativeDose, // Total cumulative dose for this activity
-        averageExposure: data.totalDuration > 0 ? data.totalPM25 / data.totalDuration : 0,
-        measurements: data.measurements
-      }));
+      const activities = Array.from(activityMap.entries()).map(
+        ([activity, data]) => ({
+          activity,
+          timeSpent: data.totalDuration,
+          cumulativeDose: data.cumulativeDose, // Total cumulative dose for this activity
+          averageExposure:
+            data.totalDuration > 0 ? data.totalPM25 / data.totalDuration : 0,
+          measurements: data.measurements,
+        })
+      );
 
       // Sort by cumulative dose (descending) - most exposed activities first
       activities.sort((a, b) => b.cumulativeDose - a.cumulativeDose);
@@ -121,19 +138,19 @@ export const useAnalysisLogic = (
     let endDate: Date;
 
     switch (selectedPeriod) {
-      case "day":
+      case 'day':
         startDate = startOfDay(selectedDate);
         endDate = endOfDay(selectedDate);
         break;
-      case "week":
+      case 'week':
         startDate = startOfWeek(selectedDate, { weekStartsOn: 1 });
         endDate = endOfWeek(selectedDate, { weekStartsOn: 1 });
         break;
-      case "month":
+      case 'month':
         startDate = startOfMonth(selectedDate);
         endDate = endOfMonth(selectedDate);
         break;
-      case "year":
+      case 'year':
         startDate = startOfYear(selectedDate);
         endDate = endOfYear(selectedDate);
         break;
@@ -141,7 +158,7 @@ export const useAnalysisLogic = (
         return missions;
     }
 
-    return missions.filter(mission => {
+    return missions.filter((mission) => {
       const missionDate = new Date(mission.startTime);
       return isWithinInterval(missionDate, { start: startDate, end: endDate });
     });
@@ -151,63 +168,108 @@ export const useAnalysisLogic = (
     setLoading(true);
     try {
       const filtered = filteredMissions();
-      
+
       logger.debug('Total missions available:', missions.length);
       logger.debug('Filtered missions for analysis:', filtered.length);
       logger.debug('Selected period:', selectedPeriod);
       logger.debug('Selected date:', selectedDate);
-      
+
       if (filtered.length === 0) {
         const hasAnyMissions = missions.length > 0;
         if (hasAnyMissions) {
-          setStatisticalAnalysis(`${t(`analysis.noDataForPeriod.${selectedPeriod}`)}\n\n${t('analysis.youHaveMissions', { count: missions.length })}\n\n${t('analysis.tryTo')}\n${t('analysis.changePeriod')}\n${t('analysis.selectDifferentDate')}\n${t('analysis.goToHistory')}`);
+          setStatisticalAnalysis(
+            `${t(`analysis.noDataForPeriod.${selectedPeriod}`)}\n\n${t('analysis.youHaveMissions', { count: missions.length })}\n\n${t('analysis.tryTo')}\n${t('analysis.changePeriod')}\n${t('analysis.selectDifferentDate')}\n${t('analysis.goToHistory')}`
+          );
         } else {
-          setStatisticalAnalysis(`${t('analysis.noDataAvailable')}\n\n${t('analysis.forPersonalizedAnalysis')}\n${t('analysis.goToRealTime')}\n${t('analysis.connectSensor')}\n${t('analysis.startRecording')}\n${t('analysis.comeBackHere')}`);
+          setStatisticalAnalysis(
+            `${t('analysis.noDataAvailable')}\n\n${t('analysis.forPersonalizedAnalysis')}\n${t('analysis.goToRealTime')}\n${t('analysis.connectSensor')}\n${t('analysis.startRecording')}\n${t('analysis.comeBackHere')}`
+          );
         }
         setDataPoints({
           totalMissions: missions.length,
           totalExposureMinutes: 0,
           averagePM25: 0,
           maxPM25: 0,
-          timeAboveWHO: 0
+          timeAboveWHO: 0,
         });
         setAnalysisGenerated(true);
         return;
       }
 
-      const timeframeText = selectedPeriod === "day" ? t('history.periods.day') : 
-                           selectedPeriod === "week" ? t('history.periods.week') : 
-                           selectedPeriod === "month" ? t('history.periods.month') : t('history.periods.year');
+      const timeframeText =
+        selectedPeriod === 'day'
+          ? t('history.periods.day')
+          : selectedPeriod === 'week'
+            ? t('history.periods.week')
+            : selectedPeriod === 'month'
+              ? t('history.periods.month')
+              : t('history.periods.year');
 
       // Generate local statistical analysis with PM1, PM2.5, and PM10
-      const validMissions = filtered.filter(m => 
-        m.avgPm25 != null && !isNaN(m.avgPm25) &&
-        m.avgPm1 != null && !isNaN(m.avgPm1) &&
-        m.avgPm10 != null && !isNaN(m.avgPm10)
+      const validMissions = filtered.filter(
+        (m) =>
+          m.avgPm25 != null &&
+          !isNaN(m.avgPm25) &&
+          m.avgPm1 != null &&
+          !isNaN(m.avgPm1) &&
+          m.avgPm10 != null &&
+          !isNaN(m.avgPm10)
       );
-      
-      const totalExposureMinutes = filtered.reduce((sum, m) => sum + (m.durationMinutes || 0), 0);
-      
+
+      const totalExposureMinutes = filtered.reduce(
+        (sum, m) => sum + (m.durationMinutes || 0),
+        0
+      );
+
       // Calculate averages for all PM types
-      const avgPM1 = validMissions.length > 0 ? validMissions.reduce((sum, m) => sum + m.avgPm1, 0) / validMissions.length : 0;
-      const avgPM25 = validMissions.length > 0 ? validMissions.reduce((sum, m) => sum + m.avgPm25, 0) / validMissions.length : 0;
-      const avgPM10 = validMissions.length > 0 ? validMissions.reduce((sum, m) => sum + m.avgPm10, 0) / validMissions.length : 0;
-      
+      const avgPM1 =
+        validMissions.length > 0
+          ? validMissions.reduce((sum, m) => sum + m.avgPm1, 0) /
+            validMissions.length
+          : 0;
+      const avgPM25 =
+        validMissions.length > 0
+          ? validMissions.reduce((sum, m) => sum + m.avgPm25, 0) /
+            validMissions.length
+          : 0;
+      const avgPM10 =
+        validMissions.length > 0
+          ? validMissions.reduce((sum, m) => sum + m.avgPm10, 0) /
+            validMissions.length
+          : 0;
+
       // Calculate maximums for all PM types
-      const maxPM1 = validMissions.length > 0 ? Math.max(...validMissions.map(m => m.avgPm1 || 0)) : 0;
-      const maxPM25 = validMissions.length > 0 ? Math.max(...validMissions.map(m => m.maxPm25 || 0)) : 0;
-      const maxPM10 = validMissions.length > 0 ? Math.max(...validMissions.map(m => m.avgPm10 || 0)) : 0;
-      
+      const maxPM1 =
+        validMissions.length > 0
+          ? Math.max(...validMissions.map((m) => m.avgPm1 || 0))
+          : 0;
+      const maxPM25 =
+        validMissions.length > 0
+          ? Math.max(...validMissions.map((m) => m.maxPm25 || 0))
+          : 0;
+      const maxPM10 =
+        validMissions.length > 0
+          ? Math.max(...validMissions.map((m) => m.avgPm10 || 0))
+          : 0;
+
       // Calculate WHO threshold exceedances for each PM type
       const timeAboveWHO_PM25 = filtered.reduce((total, mission) => {
-        if (mission.avgPm25 != null && !isNaN(mission.avgPm25) && mission.avgPm25 > 15) {
+        if (
+          mission.avgPm25 != null &&
+          !isNaN(mission.avgPm25) &&
+          mission.avgPm25 > 15
+        ) {
           return total + (mission.durationMinutes || 0);
         }
         return total;
       }, 0);
-      
+
       const timeAboveWHO_PM10 = filtered.reduce((total, mission) => {
-        if (mission.avgPm10 != null && !isNaN(mission.avgPm10) && mission.avgPm10 > 45) {
+        if (
+          mission.avgPm10 != null &&
+          !isNaN(mission.avgPm10) &&
+          mission.avgPm10 > 45
+        ) {
           return total + (mission.durationMinutes || 0);
         }
         return total;
@@ -216,28 +278,37 @@ export const useAnalysisLogic = (
       // Calculate total cumulative dose for all missions
       const totalCumulativeDosePM25 = filtered.reduce((total, mission) => {
         const durationHours = mission.durationMinutes / 60;
-        return total + (mission.avgPm25 * durationHours);
+        return total + mission.avgPm25 * durationHours;
       }, 0);
 
       const totalCumulativeDosePM10 = filtered.reduce((total, mission) => {
         const durationHours = mission.durationMinutes / 60;
-        return total + (mission.avgPm10 * durationHours);
+        return total + mission.avgPm10 * durationHours;
       }, 0);
 
       // Create comprehensive statistical summary
       const exposureHours = (totalExposureMinutes / 60).toFixed(1);
-      const whoExceedancePercentage_PM25 = totalExposureMinutes > 0 ? ((timeAboveWHO_PM25 / totalExposureMinutes) * 100).toFixed(1) : 0;
-      const whoExceedancePercentage_PM10 = totalExposureMinutes > 0 ? ((timeAboveWHO_PM10 / totalExposureMinutes) * 100).toFixed(1) : 0;
-      
+      const whoExceedancePercentage_PM25 =
+        totalExposureMinutes > 0
+          ? ((timeAboveWHO_PM25 / totalExposureMinutes) * 100).toFixed(1)
+          : 0;
+      const whoExceedancePercentage_PM10 =
+        totalExposureMinutes > 0
+          ? ((timeAboveWHO_PM10 / totalExposureMinutes) * 100).toFixed(1)
+          : 0;
+
       // Overall air quality assessment based on most restrictive PM value
       const getAirQualityStatus = () => {
         const worstPM = Math.max(avgPM25, avgPM10 / 3); // Normalize PM10 for comparison
-        if (worstPM <= 12) return '✅ Qualité de l\'air bonne - Toutes les particules dans les normes';
-        if (worstPM <= 35) return '⚠️ Qualité de l\'air modérée - Surveillance recommandée';
-        if (worstPM <= 55) return '🔶 Qualité de l\'air mauvaise - Précautions nécessaires';
-        return '🔴 Qualité de l\'air très mauvaise - Éviter l\'exposition prolongée';
+        if (worstPM <= 12)
+          return "✅ Qualité de l'air bonne - Toutes les particules dans les normes";
+        if (worstPM <= 35)
+          return "⚠️ Qualité de l'air modérée - Surveillance recommandée";
+        if (worstPM <= 55)
+          return "🔶 Qualité de l'air mauvaise - Précautions nécessaires";
+        return "🔴 Qualité de l'air très mauvaise - Éviter l'exposition prolongée";
       };
-      
+
       const analysisText = `📊 ANALYSE STATISTIQUE COMPLÈTE - ${timeframeText.toUpperCase()}
 
 🔢 RÉSUMÉ DES DONNÉES:
@@ -271,13 +342,18 @@ ${getAirQualityStatus()}
 ${filtered
   .sort((a, b) => (b.avgPm25 || 0) - (a.avgPm25 || 0))
   .slice(0, 3)
-  .map((m, i) => `${i + 1}. ${m.name}: PM2.5=${(m.avgPm25 || 0).toFixed(1)}, PM10=${(m.avgPm10 || 0).toFixed(1)} μg/m³`)
+  .map(
+    (m, i) =>
+      `${i + 1}. ${m.name}: PM2.5=${(m.avgPm25 || 0).toFixed(1)}, PM10=${(m.avgPm10 || 0).toFixed(1)} μg/m³`
+  )
   .join('\n')}
 
 💡 RECOMMANDATIONS:
-${avgPM25 > 15 || avgPM10 > 45 ? 
-  '• Limitez les activités extérieures intenses\n• Consultez les prévisions de qualité de l\'air\n• Considérez un purificateur d\'air intérieur' : 
-  '• Qualité de l\'air acceptable\n• Continuez le monitoring pour détecter les variations\n• Maintenez une bonne ventilation intérieure'}`;
+${
+  avgPM25 > 15 || avgPM10 > 45
+    ? "• Limitez les activités extérieures intenses\n• Consultez les prévisions de qualité de l'air\n• Considérez un purificateur d'air intérieur"
+    : "• Qualité de l'air acceptable\n• Continuez le monitoring pour détecter les variations\n• Maintenez une bonne ventilation intérieure"
+}`;
 
       setStatisticalAnalysis(analysisText);
       setDataPoints({
@@ -285,22 +361,23 @@ ${avgPM25 > 15 || avgPM10 > 45 ?
         totalExposureMinutes,
         averagePM25: avgPM25,
         maxPM25,
-        timeAboveWHO: timeAboveWHO_PM25 // Use PM2.5 WHO exceedance for consistency
+        timeAboveWHO: timeAboveWHO_PM25, // Use PM2.5 WHO exceedance for consistency
       });
       setAnalysisGenerated(true);
 
       toast({
         title: t('analysis.analysisGenerated'),
-        description: t('analysis.analysisReady')
+        description: t('analysis.analysisReady'),
       });
-
     } catch (error) {
       console.error('Error generating analysis:', error);
-      setStatisticalAnalysis(`${t('analysis.unableToGenerate')}\n\n${t('analysis.forPersonalizedReport')}\n${t('analysis.checkRecordedData')}\n${t('analysis.goToRealTimeForMeasures')}\n${t('analysis.comeBackInMoments')}\n\n${t('analysis.changePeriodIfPersists')}`);
+      setStatisticalAnalysis(
+        `${t('analysis.unableToGenerate')}\n\n${t('analysis.forPersonalizedReport')}\n${t('analysis.checkRecordedData')}\n${t('analysis.goToRealTimeForMeasures')}\n${t('analysis.comeBackInMoments')}\n\n${t('analysis.changePeriodIfPersists')}`
+      );
       toast({
         title: t('analysis.analysisUnavailable'),
         description: t('analysis.checkDataAndRetry'),
-        variant: "destructive"
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -319,6 +396,6 @@ ${avgPM25 > 15 || avgPM10 > 45 ?
     loading,
     analysisGenerated,
     activityData,
-    regenerateAnalysis
+    regenerateAnalysis,
   };
 };

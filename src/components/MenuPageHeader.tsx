@@ -8,7 +8,11 @@ interface MenuPageHeaderProps {
   onBack?: () => void;
 }
 
-export function MenuPageHeader({ title, subtitle, onBack }: MenuPageHeaderProps) {
+export function MenuPageHeader({
+  title,
+  subtitle,
+  onBack,
+}: MenuPageHeaderProps) {
   const navigate = useNavigate();
 
   const handleBack = () => {
@@ -32,9 +36,7 @@ export function MenuPageHeader({ title, subtitle, onBack }: MenuPageHeaderProps)
       <div>
         <h1 className="text-2xl font-bold">{title}</h1>
         {subtitle && (
-          <p className="text-sm text-muted-foreground">
-            {subtitle}
-          </p>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
         )}
       </div>
     </div>

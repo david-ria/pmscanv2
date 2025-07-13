@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import { LocationData } from "@/types/PMScan";
+import { LocationData } from '@/types/PMScan';
 import { getQualityColor } from './mapStyles';
 
 interface PMData {
@@ -13,7 +13,10 @@ export const createLocationMarker = (
   map: mapboxgl.Map,
   currentLocation: LocationData,
   pmData: PMData | null,
-  getAirQualityLevel: (value: number, type: string) => { level: string; color: string },
+  getAirQualityLevel: (
+    value: number,
+    type: string
+  ) => { level: string; color: string },
   existingMarker?: mapboxgl.Marker | null
 ): mapboxgl.Marker => {
   const { longitude, latitude } = currentLocation;
@@ -72,7 +75,7 @@ export const createLocationMarker = (
   // Create new marker
   const marker = new mapboxgl.Marker({
     color: pmData ? '#3b82f6' : '#6b7280',
-    scale: 0.8
+    scale: 0.8,
   })
     .setLngLat([longitude, latitude])
     .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent))
@@ -82,7 +85,7 @@ export const createLocationMarker = (
   map.flyTo({
     center: [longitude, latitude],
     zoom: 15,
-    duration: 1500
+    duration: 1500,
   });
 
   return marker;

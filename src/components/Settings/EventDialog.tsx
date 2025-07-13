@@ -20,7 +20,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -47,7 +53,7 @@ interface EventDialogProps {
 export function EventDialog({ open, onOpenChange, event }: EventDialogProps) {
   const { createEvent, updateEvent } = useUserEvents();
   const [loading, setLoading] = useState(false);
-  
+
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
@@ -58,7 +64,7 @@ export function EventDialog({ open, onOpenChange, event }: EventDialogProps) {
       end_date: '',
       recurrence: '',
       enabled: true,
-    }
+    },
   });
 
   useEffect(() => {
@@ -97,7 +103,7 @@ export function EventDialog({ open, onOpenChange, event }: EventDialogProps) {
         recurrence: data.recurrence || undefined,
         enabled: data.enabled,
       };
-      
+
       if (event) {
         await updateEvent(event.id, cleanData);
       } else {
@@ -133,7 +139,10 @@ export function EventDialog({ open, onOpenChange, event }: EventDialogProps) {
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Meeting, Workout, Vacation..." {...field} />
+                    <Input
+                      placeholder="Meeting, Workout, Vacation..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,7 +156,10 @@ export function EventDialog({ open, onOpenChange, event }: EventDialogProps) {
                 <FormItem>
                   <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Additional details about this event..." {...field} />
+                    <Textarea
+                      placeholder="Additional details about this event..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -247,14 +259,21 @@ export function EventDialog({ open, onOpenChange, event }: EventDialogProps) {
                     </div>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>

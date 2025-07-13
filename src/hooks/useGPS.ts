@@ -4,7 +4,9 @@ import * as logger from '@/utils/logger';
 
 export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
   const [locationEnabled, setLocationEnabled] = useState(false);
-  const [latestLocation, setLatestLocation] = useState<LocationData | null>(null);
+  const [latestLocation, setLatestLocation] = useState<LocationData | null>(
+    null
+  );
   const [watchId, setWatchId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const lastErrorTimeRef = useRef(0);
@@ -25,7 +27,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
     if (watchId !== null) {
       stopWatching();
     }
-    
+
     if (!navigator.geolocation) {
       console.error('🧭 GPS: Geolocation is not supported by this browser');
       setError('Geolocation is not supported by this browser');
@@ -35,7 +37,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
     const options: PositionOptions = {
       enableHighAccuracy: highAccuracy,
       timeout: 60000, // 60 seconds - very long timeout
-      maximumAge: 60000 // Cache for 60 seconds to reduce requests
+      maximumAge: 60000, // Cache for 60 seconds to reduce requests
     };
 
     const handleSuccess = (position: GeolocationPosition) => {
@@ -44,9 +46,9 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
         longitude: position.coords.longitude,
         accuracy: position.coords.accuracy,
         altitude: position.coords.altitude || undefined,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      
+
       setLatestLocation(locationData);
       setError(null);
       setLocationEnabled(true);
@@ -64,9 +66,9 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
         message: error.message,
         PERMISSION_DENIED: error.PERMISSION_DENIED,
         POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
-        TIMEOUT: error.TIMEOUT
+        TIMEOUT: error.TIMEOUT,
       });
-      
+
       switch (error.code) {
         case error.PERMISSION_DENIED:
           console.error('🧭 GPS: Permission denied');
@@ -93,20 +95,22 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
       handleError,
       options
     );
-    
+
     setWatchId(id);
   }, [enabled, watchId, stopWatching, highAccuracy]);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
     logger.debug('🧭 GPS: Permission request initiated...');
-    
+
     try {
       // Check if permissions API is available
       if ('permissions' in navigator) {
         logger.debug('🧭 GPS: Using permissions API');
-        const permission = await navigator.permissions.query({ name: 'geolocation' });
+        const permission = await navigator.permissions.query({
+          name: 'geolocation',
+        });
         logger.debug('🧭 GPS: Current permission state:', permission.state);
-        
+
         if (permission.state === 'granted') {
           setLocationEnabled(true);
           startWatching();
@@ -226,6 +230,6 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
     locationEnabled,
     latestLocation,
     error,
-    requestLocationPermission
+    requestLocationPermission,
   };
 }

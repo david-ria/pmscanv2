@@ -5,17 +5,20 @@ import { reAddEventListeners } from './mapEventHandlers';
 export const toggleMapStyle = (
   map: mapboxgl.Map,
   isSatellite: boolean,
-  trackPoints: Array<{ longitude: number; latitude: number; pm25: number; timestamp: Date }>,
+  trackPoints: Array<{
+    longitude: number;
+    latitude: number;
+    pm25: number;
+    timestamp: Date;
+  }>,
   thresholds: any,
   onStyleChange: (newIsSatellite: boolean) => void
 ) => {
-  const newStyle = isSatellite 
-    ? MAP_STYLES.LIGHT 
-    : MAP_STYLES.SATELLITE;
-  
+  const newStyle = isSatellite ? MAP_STYLES.LIGHT : MAP_STYLES.SATELLITE;
+
   map.setStyle(newStyle);
   onStyleChange(!isSatellite);
-  
+
   // Re-add layers after style change
   map.once('styledata', () => {
     // Re-add track data sources and layers
@@ -26,9 +29,12 @@ export const toggleMapStyle = (
         properties: {},
         geometry: {
           type: 'LineString',
-          coordinates: trackPoints.length > 1 ? trackPoints.map(point => [point.longitude, point.latitude]) : []
-        }
-      }
+          coordinates:
+            trackPoints.length > 1
+              ? trackPoints.map((point) => [point.longitude, point.latitude])
+              : [],
+        },
+      },
     });
 
     map.addSource('track-points', {
@@ -40,14 +46,14 @@ export const toggleMapStyle = (
           id: index,
           geometry: {
             type: 'Point' as const,
-            coordinates: [point.longitude, point.latitude]
+            coordinates: [point.longitude, point.latitude],
           },
           properties: {
             pm25: point.pm25,
-            timestamp: point.timestamp.toISOString()
-          }
-        }))
-      }
+            timestamp: point.timestamp.toISOString(),
+          },
+        })),
+      },
     });
 
     // Re-add layers
@@ -57,13 +63,13 @@ export const toggleMapStyle = (
       source: 'track-line',
       layout: {
         'line-join': 'round',
-        'line-cap': 'round'
+        'line-cap': 'round',
       },
       paint: {
         'line-color': '#3b82f6',
         'line-width': 3,
-        'line-opacity': 0.8
-      }
+        'line-opacity': 0.8,
+      },
     });
 
     map.addLayer({
@@ -75,13 +81,13 @@ export const toggleMapStyle = (
           'case',
           ['boolean', ['feature-state', 'hovered'], false],
           8,
-          6
+          6,
         ],
         'circle-color': createMapStyleExpression(thresholds),
         'circle-stroke-width': 2,
         'circle-stroke-color': '#ffffff',
-        'circle-opacity': 0.8
-      }
+        'circle-opacity': 0.8,
+      },
     });
 
     // Re-add event listeners

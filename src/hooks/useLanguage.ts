@@ -4,23 +4,26 @@ import { useCallback } from 'react';
 export const useLanguage = () => {
   const { i18n } = useTranslation();
 
-  const changeLanguage = useCallback((language: string) => {
-    i18n.changeLanguage(language);
-  }, [i18n]);
+  const changeLanguage = useCallback(
+    (language: string) => {
+      i18n.changeLanguage(language);
+    },
+    [i18n]
+  );
 
   const currentLanguage = i18n.language;
-  
+
   const languages = [
     { code: 'fr', name: 'Français' },
     { code: 'en', name: 'English' },
     { code: 'de', name: 'Deutsch' },
-    { code: 'ca', name: 'Català' }
+    { code: 'ca', name: 'Català' },
   ];
 
   return {
     currentLanguage,
     changeLanguage,
     languages,
-    isLanguage: (lang: string) => currentLanguage === lang
+    isLanguage: (lang: string) => currentLanguage === lang,
   };
 };

@@ -1,15 +1,15 @@
-import { 
-  PMScan_SERVICE_UUID, 
-  PMScan_RT_DATA_UUID, 
-  PMScan_IM_DATA_UUID, 
-  PMScan_BATTERY_UUID, 
-  PMScan_CHARGING_UUID, 
-  PMScan_TIME_UUID, 
-  PMScan_INTERVAL_UUID, 
-  PMScan_MODE_UUID, 
-  PMScan_OTH_UUID, 
+import {
+  PMScan_SERVICE_UUID,
+  PMScan_RT_DATA_UUID,
+  PMScan_IM_DATA_UUID,
+  PMScan_BATTERY_UUID,
+  PMScan_CHARGING_UUID,
+  PMScan_TIME_UUID,
+  PMScan_INTERVAL_UUID,
+  PMScan_MODE_UUID,
+  PMScan_OTH_UUID,
   PMScan_DISPLAY_UUID,
-  DT_2000 
+  DT_2000,
 } from './constants';
 import { PMScanDeviceState } from './deviceState';
 import { PMScanDevice } from './types';
@@ -28,10 +28,13 @@ export class PMScanDeviceInitializer {
     onIMData: (event: Event) => void,
     onBatteryData: (event: Event) => void,
     onChargingData: (event: Event) => void
-  ): Promise<{ deviceInfo: PMScanDevice; service: BluetoothRemoteGATTService }> {
+  ): Promise<{
+    deviceInfo: PMScanDevice;
+    service: BluetoothRemoteGATTService;
+  }> {
     logger.debug('✅ PMScan Device Connected');
     logger.debug('🔍 Discovering services...');
-    
+
     const service = await server.getPrimaryService(PMScan_SERVICE_UUID);
 
     // Read battery level
@@ -97,34 +100,36 @@ export class PMScanDeviceInitializer {
     this.deviceState.updateDisplay(new Uint8Array(displayValue.buffer));
 
     logger.debug('🎉 Init finished');
-    
+
     const deviceInfo: PMScanDevice = {
-      name: device?.name || "PMScan Device",
+      name: device?.name || 'PMScan Device',
       version,
       mode,
       interval,
       battery,
       charging: charging === 1,
-      connected: true
+      connected: true,
     };
 
     return { deviceInfo, service };
   }
 
-  private async syncDeviceTime(service: BluetoothRemoteGATTService): Promise<void> {
+  private async syncDeviceTime(
+    service: BluetoothRemoteGATTService
+  ): Promise<void> {
     const timeChar = await service.getCharacteristic(PMScan_TIME_UUID);
     const timeValue = await timeChar.readValue();
     const deviceTime = timeValue.getUint32(0);
     logger.debug(`⏰ Time is ${deviceTime}`);
-    
+
     if (deviceTime === 0) {
       logger.debug('⏰ Time not sync, writing current time...');
-      const timeDt2000 = Math.floor((new Date().getTime() / 1000) - DT_2000);
+      const timeDt2000 = Math.floor(new Date().getTime() / 1000 - DT_2000);
       const time = new Uint8Array(4);
-      time[0] = timeDt2000 & 0xFF;
-      time[1] = (timeDt2000 >> 8) & 0xFF;
-      time[2] = (timeDt2000 >> 16) & 0xFF;
-      time[3] = (timeDt2000 >> 24) & 0xFF;
+      time[0] = timeDt2000 & 0xff;
+      time[1] = (timeDt2000 >> 8) & 0xff;
+      time[2] = (timeDt2000 >> 16) & 0xff;
+      time[3] = (timeDt2000 >> 24) & 0xff;
       await timeChar.writeValueWithResponse(time);
     } else {
       logger.debug('⏰ Time already sync');

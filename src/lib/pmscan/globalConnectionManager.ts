@@ -19,7 +19,7 @@ export const getGlobalRecording = () => isGlobalRecording;
 export const setBackgroundRecording = (recording: boolean) => {
   isBackgroundRecording = recording;
   logger.debug('🌙 Background recording state set to:', recording);
-  
+
   if (recording) {
     startAutoReconnection();
   } else {
@@ -32,16 +32,18 @@ export const getBackgroundRecording = () => isBackgroundRecording;
 // Auto-reconnection for background recording
 const startAutoReconnection = () => {
   if (reconnectionInterval) return;
-  
+
   logger.debug('🔄 Starting PMScan auto-reconnection for background recording');
-  
+
   reconnectionInterval = setInterval(async () => {
     if (!isBackgroundRecording) return;
-    
+
     // Check if we're still connected
     if (!globalConnectionManager.isConnected()) {
-      logger.debug('🔄 PMScan disconnected during background recording, attempting reconnection...');
-      
+      logger.debug(
+        '🔄 PMScan disconnected during background recording, attempting reconnection...'
+      );
+
       try {
         // Try to reconnect
         if (globalConnectionManager.shouldAutoConnect()) {

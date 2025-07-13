@@ -1,14 +1,24 @@
-import { useState, useEffect } from "react";
-import * as logger from "@/utils/logger";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Database, Clock, MapPin, Thermometer, Droplet, ChevronDown, ChevronUp, Download, Brain } from "lucide-react";
-import { PMScanData } from "@/lib/pmscan/types";
-import { LocationData } from "@/types/PMScan";
-import { useTranslation } from "react-i18next";
-import { useAutoContext } from "@/hooks/useAutoContext";
+import { useState, useEffect } from 'react';
+import * as logger from '@/utils/logger';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Database,
+  Clock,
+  MapPin,
+  Thermometer,
+  Droplet,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Brain,
+} from 'lucide-react';
+import { PMScanData } from '@/lib/pmscan/types';
+import { LocationData } from '@/types/PMScan';
+import { useTranslation } from 'react-i18next';
+import { useAutoContext } from '@/hooks/useAutoContext';
 
 interface DataLogEntry {
   id: string;
@@ -33,12 +43,12 @@ interface DataLoggerProps {
   className?: string;
 }
 
-export function DataLogger({ 
-  isRecording, 
-  currentData, 
-  currentLocation, 
+export function DataLogger({
+  isRecording,
+  currentData,
+  currentLocation,
   missionContext,
-  className 
+  className,
 }: DataLoggerProps) {
   const { t } = useTranslation();
   const { determineContext, isEnabled: autoContextEnabled } = useAutoContext();
@@ -46,50 +56,63 @@ export function DataLogger({
   const [isMinimized, setIsMinimized] = useState(false);
 
   // Get automatic context if enabled
-  const automaticContext = autoContextEnabled && currentData ? determineContext({
-    pmData: currentData,
-    location: currentLocation || undefined,
-    speed: 0, // Would need to calculate from GPS data
-    isMoving: false // Would need to determine from sensors
-  }) : '';
+  const automaticContext =
+    autoContextEnabled && currentData
+      ? determineContext({
+          pmData: currentData,
+          location: currentLocation || undefined,
+          speed: 0, // Would need to calculate from GPS data
+          isMoving: false, // Would need to determine from sensors
+        })
+      : '';
 
   // Add new data entry when recording and data is available - max 1 per second
   useEffect(() => {
     if (isRecording && currentData) {
-      setDataLog(prev => {
+      setDataLog((prev) => {
         // Check if we already have an entry within the last second
         const currentTime = currentData.timestamp.getTime();
-        const hasRecentEntry = prev.length > 0 && 
-          (currentTime - prev[0].timestamp.getTime()) < 1000; // Less than 1 second
-        
+        const hasRecentEntry =
+          prev.length > 0 && currentTime - prev[0].timestamp.getTime() < 1000; // Less than 1 second
+
         // Check if data is significantly different from last entry
-        const isDataDifferent = prev.length === 0 || 
+        const isDataDifferent =
+          prev.length === 0 ||
           Math.abs(prev[0].pmData.pm25 - currentData.pm25) >= 0.1 ||
           Math.abs(prev[0].pmData.pm1 - currentData.pm1) >= 0.1 ||
           Math.abs(prev[0].pmData.pm10 - currentData.pm10) >= 0.1;
-        
+
         // Only add if enough time passed OR data is significantly different
         if (!hasRecentEntry || isDataDifferent) {
-          logger.debug("📝 Adding data to logger:", { pm25: currentData.pm25, timestamp: currentData.timestamp });
+          logger.debug('📝 Adding data to logger:', {
+            pm25: currentData.pm25,
+            timestamp: currentData.timestamp,
+          });
           const newEntry: DataLogEntry = {
             id: Date.now().toString(),
             timestamp: currentData.timestamp,
             pmData: currentData,
             location: currentLocation,
             missionContext,
-            automaticContext
+            automaticContext,
           };
-          
+
           const updated = [newEntry, ...prev.slice(0, 99)];
-          logger.debug("📊 DataLog updated, total entries:", updated.length);
+          logger.debug('📊 DataLog updated, total entries:', updated.length);
           return updated;
         }
-        
+
         // Skip adding duplicate/too frequent entries
         return prev;
       });
     }
-  }, [isRecording, currentData, currentLocation, missionContext, automaticContext]);
+  }, [
+    isRecording,
+    currentData,
+    currentLocation,
+    missionContext,
+    automaticContext,
+  ]);
 
   const clearLog = () => {
     setDataLog([]);
@@ -101,7 +124,7 @@ export function DataLogger({
     const headers = [
       'Timestamp',
       'PM1 (μg/m³)',
-      'PM2.5 (μg/m³)', 
+      'PM2.5 (μg/m³)',
       'PM10 (μg/m³)',
       'Temperature (°C)',
       'Humidity (%)',
@@ -110,25 +133,27 @@ export function DataLogger({
       'GPS Accuracy (m)',
       'Location Context',
       'Activity Context',
-      'Auto Context'
+      'Auto Context',
     ];
 
     const csvContent = [
       headers.join(','),
-      ...dataLog.map(entry => [
-        entry.timestamp.toISOString(),
-        entry.pmData.pm1.toFixed(2),
-        entry.pmData.pm25.toFixed(2),
-        entry.pmData.pm10.toFixed(2),
-        entry.pmData.temp.toFixed(2),
-        entry.pmData.humidity.toFixed(1),
-        entry.location?.latitude?.toFixed(6) || '',
-        entry.location?.longitude?.toFixed(6) || '',
-        entry.location?.accuracy?.toFixed(0) || '',
-        entry.missionContext?.location || '',
-        entry.missionContext?.activity || '',
-        entry.automaticContext || ''
-      ].join(','))
+      ...dataLog.map((entry) =>
+        [
+          entry.timestamp.toISOString(),
+          entry.pmData.pm1.toFixed(2),
+          entry.pmData.pm25.toFixed(2),
+          entry.pmData.pm10.toFixed(2),
+          entry.pmData.temp.toFixed(2),
+          entry.pmData.humidity.toFixed(1),
+          entry.location?.latitude?.toFixed(6) || '',
+          entry.location?.longitude?.toFixed(6) || '',
+          entry.location?.accuracy?.toFixed(0) || '',
+          entry.missionContext?.location || '',
+          entry.missionContext?.activity || '',
+          entry.automaticContext || '',
+        ].join(',')
+      ),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -143,10 +168,10 @@ export function DataLogger({
   };
 
   const getAirQualityColor = (pm25: number) => {
-    if (pm25 <= 12) return "text-air-good";
-    if (pm25 <= 35) return "text-air-moderate";
-    if (pm25 <= 55) return "text-air-poor";
-    return "text-air-very-poor";
+    if (pm25 <= 12) return 'text-air-good';
+    if (pm25 <= 35) return 'text-air-moderate';
+    if (pm25 <= 55) return 'text-air-poor';
+    return 'text-air-very-poor';
   };
 
   return (
@@ -155,8 +180,13 @@ export function DataLogger({
       <div className="flex items-center justify-between p-2 sm:p-3 bg-card/50 border rounded-t-lg text-sm">
         <div className="flex items-center gap-2">
           <Database className="h-4 w-4" />
-          <span className="font-medium text-sm">{t('realTime.dataLogger')}</span>
-          <Badge variant={isRecording ? "default" : "secondary"} className="text-xs">
+          <span className="font-medium text-sm">
+            {t('realTime.dataLogger')}
+          </span>
+          <Badge
+            variant={isRecording ? 'default' : 'secondary'}
+            className="text-xs"
+          >
             {isRecording ? t('realTime.recording') : t('realTime.stopped')}
           </Badge>
           {automaticContext && (
@@ -169,7 +199,7 @@ export function DataLogger({
             {dataLog.length} {t('realTime.entries')}
           </span>
         </div>
-        
+
         <div className="flex items-center gap-1">
           {dataLog.length > 0 && (
             <span className="text-muted-foreground text-xs hidden sm:inline">
@@ -202,7 +232,11 @@ export function DataLogger({
             className="h-8 w-8 p-0"
             title={isMinimized ? t('realTime.expand') : t('realTime.minimize')}
           >
-            {isMinimized ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            {isMinimized ? (
+              <ChevronUp className="h-3 w-3" />
+            ) : (
+              <ChevronDown className="h-3 w-3" />
+            )}
           </Button>
         </div>
       </div>
@@ -215,7 +249,9 @@ export function DataLogger({
               <Database className="h-6 w-6 mx-auto mb-2 opacity-50" />
               <p className="text-sm">{t('realTime.noData')}</p>
               <p className="text-xs mt-1">
-                {isRecording ? t('realTime.waitingData') : t('realTime.startRecording')}
+                {isRecording
+                  ? t('realTime.waitingData')
+                  : t('realTime.startRecording')}
               </p>
             </div>
           ) : (
@@ -223,21 +259,34 @@ export function DataLogger({
               {dataLog.map((entry) => (
                 <div key={entry.id} className="text-muted-foreground break-all">
                   <div className="text-xs">
-                    [{entry.timestamp.toLocaleTimeString()}] New reading: PM1={entry.pmData.pm1.toFixed(1)}ug/m³,
+                    [{entry.timestamp.toLocaleTimeString()}] New reading: PM1=
+                    {entry.pmData.pm1.toFixed(1)}ug/m³,
                   </div>
                   <div className="text-xs pl-2">
-                    PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, PM10={entry.pmData.pm10.toFixed(1)}ug/m³, Temp={entry.pmData.temp.toFixed(1)}°C
+                    PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, PM10=
+                    {entry.pmData.pm10.toFixed(1)}ug/m³, Temp=
+                    {entry.pmData.temp.toFixed(1)}°C
                   </div>
                   {entry.location && (
                     <div className="text-xs pl-2">
-                      GPS: {entry.location.latitude.toFixed(6)}, {entry.location.longitude.toFixed(6)} (+{Math.round(entry.location.accuracy || 0)}m)
+                      GPS: {entry.location.latitude.toFixed(6)},{' '}
+                      {entry.location.longitude.toFixed(6)} (+
+                      {Math.round(entry.location.accuracy || 0)}m)
                     </div>
                   )}
-                  {entry.missionContext && (entry.missionContext.location || entry.missionContext.activity) && (
-                    <div className="text-xs pl-2">
-                      Tags: {[entry.missionContext.location, entry.missionContext.activity].filter(Boolean).join(', ')}
-                    </div>
-                  )}
+                  {entry.missionContext &&
+                    (entry.missionContext.location ||
+                      entry.missionContext.activity) && (
+                      <div className="text-xs pl-2">
+                        Tags:{' '}
+                        {[
+                          entry.missionContext.location,
+                          entry.missionContext.activity,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </div>
+                    )}
                   {entry.automaticContext && (
                     <div className="text-xs pl-2 text-blue-400">
                       Auto: {entry.automaticContext}
@@ -249,7 +298,7 @@ export function DataLogger({
           )}
         </div>
       )}
-      
+
       {/* Minimized state - show border bottom when minimized */}
       {isMinimized && (
         <div className="border-x border-b rounded-b-lg h-1"></div>

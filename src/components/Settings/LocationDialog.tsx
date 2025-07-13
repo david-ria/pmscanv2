@@ -39,10 +39,14 @@ interface LocationDialogProps {
   location?: UserLocation;
 }
 
-export function LocationDialog({ open, onOpenChange, location }: LocationDialogProps) {
+export function LocationDialog({
+  open,
+  onOpenChange,
+  location,
+}: LocationDialogProps) {
   const { createLocation, updateLocation } = useUserLocations();
   const [loading, setLoading] = useState(false);
-  
+
   const form = useForm<LocationFormData>({
     resolver: zodResolver(locationSchema),
     defaultValues: {
@@ -50,7 +54,7 @@ export function LocationDialog({ open, onOpenChange, location }: LocationDialogP
       description: '',
       latitude: undefined,
       longitude: undefined,
-    }
+    },
   });
 
   useEffect(() => {
@@ -80,7 +84,7 @@ export function LocationDialog({ open, onOpenChange, location }: LocationDialogP
         latitude: data.latitude || undefined,
         longitude: data.longitude || undefined,
       };
-      
+
       if (location) {
         await updateLocation(location.id, cleanData);
       } else {
@@ -117,7 +121,9 @@ export function LocationDialog({ open, onOpenChange, location }: LocationDialogP
             {location ? 'Edit Location' : 'Add Location'}
           </DialogTitle>
           <DialogDescription>
-            {location ? 'Update your location details' : 'Create a new custom location'}
+            {location
+              ? 'Update your location details'
+              : 'Create a new custom location'}
           </DialogDescription>
         </DialogHeader>
 
@@ -144,7 +150,10 @@ export function LocationDialog({ open, onOpenChange, location }: LocationDialogP
                 <FormItem>
                   <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Additional details about this location..." {...field} />
+                    <Textarea
+                      placeholder="Additional details about this location..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -164,7 +173,13 @@ export function LocationDialog({ open, onOpenChange, location }: LocationDialogP
                         step="any"
                         placeholder="40.7128"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -184,7 +199,13 @@ export function LocationDialog({ open, onOpenChange, location }: LocationDialogP
                         step="any"
                         placeholder="-74.0060"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -203,7 +224,11 @@ export function LocationDialog({ open, onOpenChange, location }: LocationDialogP
             </Button>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
