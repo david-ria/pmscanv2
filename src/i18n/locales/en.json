@@ -97,7 +97,7 @@
     "newPassword": "New password",
     "confirmPassword": "Confirm password",
     "changing": "Changing...",
-    "error": "Error",
+    "error": "An error occurred",
     "profileUpdateError": "Unable to load profile",
     "profileUpdated": "Profile updated",
     "infoSaved": "Your information has been saved",
@@ -264,7 +264,7 @@
         "shareKnowledge": "Consider helping other members reduce their exposure"
       }
     },
-    "error": "Error",
+    "error": "An error occurred",
     "errorLoadingMissions": "Unable to load missions",
     "analysisGenerated": "Analysis generated",
     "analysisReady": "Your personalized analysis is ready",

@@ -264,7 +264,7 @@
         "shareKnowledge": "Erwägen Sie, anderen Mitgliedern zu helfen, ihre Exposition zu reduzieren"
       }
     },
-    "error": "Fehler",
+    "error": "Ein Fehler ist aufgetreten",
     "errorLoadingMissions": "Missionen konnten nicht geladen werden",
     "analysisGenerated": "Analyse generiert",
     "analysisReady": "Ihre personalisierte Analyse ist bereit",
