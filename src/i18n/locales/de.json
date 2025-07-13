@@ -331,7 +331,8 @@
       "contributeToDatabase": "Zur Gemeinschaftsdatenbank beitragen",
       "cancel": "Abbrechen",
       "delete": "Löschen",
-      "save": "Speichern"
+      "save": "Speichern",
+      "discarded": "Mission gelöscht"
     },
     "frequency": {
       "every1s": "Jede Sekunde",

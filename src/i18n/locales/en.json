@@ -331,7 +331,8 @@
       "contributeToDatabase": "Contribute to the community database",
       "cancel": "Cancel",
       "delete": "Delete",
-      "save": "Save"
+      "save": "Save",
+      "discarded": "Mission discarded"
     },
     "frequency": {
       "every1s": "Every 1 second",

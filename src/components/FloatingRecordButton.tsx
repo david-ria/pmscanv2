@@ -104,7 +104,7 @@ export function FloatingRecordButton({
 
     toast({
       title: t('modals.missionDetails.delete'),
-      description: t('analysis.error'),
+      description: t('modals.missionDetails.discarded'),
     });
   };
 

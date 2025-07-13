@@ -333,7 +333,8 @@
       "contributeToDatabase": "Contribuer à la base de données communautaire",
       "cancel": "Annuler",
       "delete": "Supprimer",
-      "save": "Sauver"
+      "save": "Sauver",
+      "discarded": "Mission supprimée"
     },
     "frequency": {
       "every1s": "Chaque seconde",
