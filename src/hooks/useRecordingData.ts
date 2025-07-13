@@ -7,6 +7,7 @@ import { useMissionSaver } from "./useMissionSaver";
 import { useAutoSync } from "./useAutoSync";
 import { useDataPointRecorder } from "./useDataPointRecorder";
 import { setGlobalRecording, setBackgroundRecording, getBackgroundRecording } from "@/lib/pmscan/globalConnectionManager";
+import * as logger from "@/utils/logger";
 
 export function useRecordingData() {
   const {
@@ -46,7 +47,7 @@ export function useRecordingData() {
   useEffect(() => {
     // Only log significant state changes
     if (isRecording) {
-      console.log("🎬 Recording started");
+      logger.debug("🎬 Recording started");
     }
   }, [isRecording]);
 

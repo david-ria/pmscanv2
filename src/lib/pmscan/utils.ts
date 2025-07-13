@@ -1,3 +1,5 @@
+import * as logger from '@/utils/logger';
+
 export function exponentialBackoff(
   max: number,
   delay: number,
@@ -11,7 +13,7 @@ export function exponentialBackoff(
       if (max === 0) {
         return fail();
       }
-      console.log(`🔄 Retrying in ${delay}s... (${max} tries left)`);
+      logger.debug(`🔄 Retrying in ${delay}s... (${max} tries left)`);
       setTimeout(() => {
         exponentialBackoff(--max, Math.floor(5 + delay), toTry, success, fail);
       }, delay * 1000);

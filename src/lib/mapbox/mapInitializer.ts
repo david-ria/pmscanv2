@@ -5,6 +5,7 @@ import { addTrackDataSources, addTrackLayers } from './mapLayers';
 import { addTrackPointEventListeners } from './mapEventHandlers';
 import { MAP_STYLES } from './mapStyles';
 import { loadMapState, setupMapStatePersistence } from './mapPersistence';
+import * as logger from '@/utils/logger';
 
 export const initializeMap = async (
   container: HTMLDivElement,
@@ -14,14 +15,14 @@ export const initializeMap = async (
   onError: (error: string) => void
 ): Promise<mapboxgl.Map | null> => {
   try {
-    console.log('🗺️ Starting map initialization...');
-    console.log('🗺️ Container element:', container);
-    console.log('🗺️ Current location:', currentLocation);
+    logger.debug('🗺️ Starting map initialization...');
+    logger.debug('🗺️ Container element:', container);
+    logger.debug('🗺️ Current location:', currentLocation);
     
-    console.log('🗺️ Step 1: Requesting Mapbox token from edge function...');
+    logger.debug('🗺️ Step 1: Requesting Mapbox token from edge function...');
     const { data, error: tokenError } = await supabase.functions.invoke('get-mapbox-token');
     
-    console.log('🗺️ Step 2: Edge function response received:', { data, error: tokenError });
+    logger.debug('🗺️ Step 2: Edge function response received:', { data, error: tokenError });
     
     if (tokenError) {
       console.error('🗺️ ❌ Edge function error:', tokenError);
@@ -33,13 +34,13 @@ export const initializeMap = async (
       throw new Error('No Mapbox token received from edge function');
     }
     
-    console.log('🗺️ ✅ Successfully received Mapbox token');
-    console.log('🗺️ Token length:', data.token?.length);
+    logger.debug('🗺️ ✅ Successfully received Mapbox token');
+    logger.debug('🗺️ Token length:', data.token?.length);
 
-    console.log('🗺️ Step 3: Setting Mapbox access token...');
+    logger.debug('🗺️ Step 3: Setting Mapbox access token...');
     mapboxgl.accessToken = data.token;
     
-    console.log('🗺️ Step 4: Determining map initial state...');
+    logger.debug('🗺️ Step 4: Determining map initial state...');
     
     // Determine initial map state - prioritize current location, then saved state, then default
     let center: [number, number];
@@ -50,7 +51,7 @@ export const initializeMap = async (
       // Priority 1: Use current location if available
       center = [currentLocation.longitude, currentLocation.latitude];
       zoom = 15;
-      console.log('🗺️ Using current location for map center');
+      logger.debug('🗺️ Using current location for map center');
     } else {
       // Priority 2: Try to load saved state
       const savedState = loadMapState();
@@ -58,20 +59,20 @@ export const initializeMap = async (
         center = savedState.center;
         zoom = savedState.zoom;
         pitch = savedState.pitch;
-        console.log('🗺️ Using saved map state:', savedState);
+        logger.debug('🗺️ Using saved map state:', savedState);
       } else {
         // Priority 3: Default to Paris
         center = [2.3522, 48.8566];
         zoom = 10;
-        console.log('🗺️ Using default map center (Paris)');
+        logger.debug('🗺️ Using default map center (Paris)');
       }
     }
     
-    console.log('🗺️ Step 5: Creating Mapbox map instance...');
-    console.log('🗺️ Map style:', MAP_STYLES.LIGHT);
-    console.log('🗺️ Map center:', center);
-    console.log('🗺️ Map zoom:', zoom);
-    console.log('🗺️ Map pitch:', pitch);
+    logger.debug('🗺️ Step 5: Creating Mapbox map instance...');
+    logger.debug('🗺️ Map style:', MAP_STYLES.LIGHT);
+    logger.debug('🗺️ Map center:', center);
+    logger.debug('🗺️ Map zoom:', zoom);
+    logger.debug('🗺️ Map pitch:', pitch);
     
     // Initialize map
     const map = new mapboxgl.Map({
@@ -82,8 +83,8 @@ export const initializeMap = async (
       pitch,
     });
 
-    console.log('🗺️ ✅ Map instance created successfully');
-    console.log('🗺️ Map object:', map);
+    logger.debug('🗺️ ✅ Map instance created successfully');
+    logger.debug('🗺️ Map object:', map);
 
     // Add navigation controls
     map.addControl(
@@ -106,7 +107,7 @@ export const initializeMap = async (
       
       // Set up map state persistence after the map is loaded
       setupMapStatePersistence(map);
-      console.log('🗺️ ✅ Map state persistence setup complete');
+      logger.debug('🗺️ ✅ Map state persistence setup complete');
       
       onLoad();
     });

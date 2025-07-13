@@ -1,4 +1,5 @@
 import { MissionData } from "./dataStorage";
+import * as logger from "@/utils/logger";
 
 const MISSIONS_KEY = 'pmscan_missions';
 const PENDING_SYNC_KEY = 'pmscan_pending_sync';
@@ -97,7 +98,7 @@ export function removeFromPendingSync(missionId: string): void {
 export function clearLocalStorage(): void {
   localStorage.removeItem(MISSIONS_KEY);
   localStorage.removeItem(PENDING_SYNC_KEY);
-  console.log('Local storage cleared after CSV export');
+  logger.debug('Local storage cleared after CSV export');
 }
 
 export function cleanupOldMissions(missions: MissionData[]): void {
@@ -105,7 +106,7 @@ export function cleanupOldMissions(missions: MissionData[]): void {
   const sortedMissions = missions.sort((a, b) => b.endTime.getTime() - a.endTime.getTime());
   const recentMissions = sortedMissions.slice(0, 10);
   
-  console.log(`Cleaning up old missions, keeping ${recentMissions.length} most recent ones`);
+  logger.debug(`Cleaning up old missions, keeping ${recentMissions.length} most recent ones`);
   localStorage.setItem(MISSIONS_KEY, JSON.stringify(recentMissions));
   
   // Update pending sync list to only include kept missions

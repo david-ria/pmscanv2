@@ -4,6 +4,7 @@ import { useRecordingContext } from "@/contexts/RecordingContext";
 import { cn } from "@/lib/utils";
 import { frequencyOptionKeys } from "@/lib/recordingConstants";
 import { useTranslation } from "react-i18next";
+import * as logger from "@/utils/logger";
 import { RecordingButton } from "./RecordingControls/RecordingButton";
 import { ContextSelectors } from "./RecordingControls/ContextSelectors";
 import { RecordingFrequencyDialog } from "./RecordingControls/RecordingFrequencyDialog";
@@ -34,15 +35,15 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
   };
 
   const handleStartRecording = () => {
-    console.log("🎯 handleStartRecording called");
+    logger.debug("🎯 handleStartRecording called");
     setShowFrequencyDialog(true);
   };
 
   const confirmStartRecording = () => {
-    console.log("⚡ Confirming start recording...");
+    logger.debug("⚡ Confirming start recording...");
     setShowFrequencyDialog(false);
     startRecording(recordingFrequency); // Pass the frequency here
-    console.log("📞 Called startRecording function with frequency:", recordingFrequency);
+    logger.debug("📞 Called startRecording function with frequency:", recordingFrequency);
     toast({
       title: t('realTime.recording'),
       description: `${t('modals.recordingFrequency.chooseMeasureFrequency')} ${getFrequencyLabel(recordingFrequency)}`,
@@ -115,12 +116,12 @@ export function RecordingControls({ isRecording, onToggleRecording, device, clas
   };
 
   const handleRecordingClick = () => {
-    console.log("🔴 Recording button clicked! contextIsRecording:", contextIsRecording);
+    logger.debug("🔴 Recording button clicked! contextIsRecording:", contextIsRecording);
     if (contextIsRecording) {
-      console.log("⏹️ Stopping recording...");
+      logger.debug("⏹️ Stopping recording...");
       handleStopRecording();
     } else {
-      console.log("▶️ Starting recording...");
+      logger.debug("▶️ Starting recording...");
       handleStartRecording();
     }
   };

@@ -13,6 +13,7 @@ import {
 } from './constants';
 import { PMScanDeviceState } from './deviceState';
 import { PMScanDevice } from './types';
+import * as logger from '@/utils/logger';
 
 /**
  * Handles PMScan device initialization and service discovery
@@ -28,8 +29,8 @@ export class PMScanDeviceInitializer {
     onBatteryData: (event: Event) => void,
     onChargingData: (event: Event) => void
   ): Promise<{ deviceInfo: PMScanDevice; service: BluetoothRemoteGATTService }> {
-    console.log('✅ PMScan Device Connected');
-    console.log('🔍 Discovering services...');
+    logger.debug('✅ PMScan Device Connected');
+    logger.debug('🔍 Discovering services...');
     
     const service = await server.getPrimaryService(PMScan_SERVICE_UUID);
 
@@ -37,7 +38,7 @@ export class PMScanDeviceInitializer {
     const batteryChar = await service.getCharacteristic(PMScan_BATTERY_UUID);
     const batteryValue = await batteryChar.readValue();
     const battery = batteryValue.getUint8(0);
-    console.log(`🔋 Battery: ${battery}%`);
+    logger.debug(`🔋 Battery: ${battery}%`);
     this.deviceState.updateBattery(battery);
 
     // Start RT data notifications
@@ -65,37 +66,37 @@ export class PMScanDeviceInitializer {
     // Read charging status
     const chargingValue = await chargingChar.readValue();
     const charging = chargingValue.getUint8(0);
-    console.log(`⚡ Charging: ${charging}`);
+    logger.debug(`⚡ Charging: ${charging}`);
     this.deviceState.updateCharging(charging);
 
     // Read version
     const versionChar = await service.getCharacteristic(PMScan_OTH_UUID);
     const versionValue = await versionChar.readValue();
     const version = versionValue.getUint8(0) >> 2;
-    console.log(`📋 Version: ${version}`);
+    logger.debug(`📋 Version: ${version}`);
     this.deviceState.updateVersion(version);
 
     // Read interval
     const intervalChar = await service.getCharacteristic(PMScan_INTERVAL_UUID);
     const intervalValue = await intervalChar.readValue();
     const interval = intervalValue.getUint8(0);
-    console.log(`⏱️ Interval: ${interval}`);
+    logger.debug(`⏱️ Interval: ${interval}`);
     this.deviceState.updateInterval(interval);
 
     // Read mode
     const modeChar = await service.getCharacteristic(PMScan_MODE_UUID);
     const modeValue = await modeChar.readValue();
     const mode = modeValue.getUint8(0);
-    console.log(`⚙️ Mode: ${mode}`);
+    logger.debug(`⚙️ Mode: ${mode}`);
     this.deviceState.updateMode(mode);
 
     // Read display settings
     const displayChar = await service.getCharacteristic(PMScan_DISPLAY_UUID);
     const displayValue = await displayChar.readValue();
-    console.log(`🖥️ Display: ${displayValue.getUint8(0)}`);
+    logger.debug(`🖥️ Display: ${displayValue.getUint8(0)}`);
     this.deviceState.updateDisplay(new Uint8Array(displayValue.buffer));
 
-    console.log('🎉 Init finished');
+    logger.debug('🎉 Init finished');
     
     const deviceInfo: PMScanDevice = {
       name: device?.name || "PMScan Device",
@@ -114,10 +115,10 @@ export class PMScanDeviceInitializer {
     const timeChar = await service.getCharacteristic(PMScan_TIME_UUID);
     const timeValue = await timeChar.readValue();
     const deviceTime = timeValue.getUint32(0);
-    console.log(`⏰ Time is ${deviceTime}`);
+    logger.debug(`⏰ Time is ${deviceTime}`);
     
     if (deviceTime === 0) {
-      console.log('⏰ Time not sync, writing current time...');
+      logger.debug('⏰ Time not sync, writing current time...');
       const timeDt2000 = Math.floor((new Date().getTime() / 1000) - DT_2000);
       const time = new Uint8Array(4);
       time[0] = timeDt2000 & 0xFF;
@@ -126,7 +127,7 @@ export class PMScanDeviceInitializer {
       time[3] = (timeDt2000 >> 24) & 0xFF;
       await timeChar.writeValueWithResponse(time);
     } else {
-      console.log('⏰ Time already sync');
+      logger.debug('⏰ Time already sync');
     }
   }
 }

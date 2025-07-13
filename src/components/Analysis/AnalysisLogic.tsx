@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { dataStorage, MissionData } from "@/lib/dataStorage";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { useTranslation } from "react-i18next";
+import * as logger from "@/utils/logger";
 
 interface AnalysisData {
   totalMissions: number;
@@ -151,10 +152,10 @@ export const useAnalysisLogic = (
     try {
       const filtered = filteredMissions();
       
-      console.log('Total missions available:', missions.length);
-      console.log('Filtered missions for analysis:', filtered.length);
-      console.log('Selected period:', selectedPeriod);
-      console.log('Selected date:', selectedDate);
+      logger.debug('Total missions available:', missions.length);
+      logger.debug('Filtered missions for analysis:', filtered.length);
+      logger.debug('Selected period:', selectedPeriod);
+      logger.debug('Selected date:', selectedDate);
       
       if (filtered.length === 0) {
         const hasAnyMissions = missions.length > 0;

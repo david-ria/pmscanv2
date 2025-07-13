@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { frequencyOptionKeys } from "@/lib/recordingConstants";
 import { useTranslation } from "react-i18next";
+import * as logger from "@/utils/logger";
 
 interface RecordingButtonProps {
   isRecording: boolean;
@@ -20,8 +21,8 @@ export function RecordingButton({ isRecording, onClick, recordingFrequency }: Re
   };
   
   const handleClick = () => {
-    console.log("🚨 BUTTON CLICKED - RecordingButton");
-    console.log("Current isRecording state:", isRecording);
+    logger.debug("🚨 BUTTON CLICKED - RecordingButton");
+    logger.debug("Current isRecording state:", isRecording);
     onClick();
   };
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
+import * as logger from '@/utils/logger';
 
 interface BackgroundRecordingOptions {
   enableWakeLock: boolean;
@@ -29,13 +30,13 @@ export function useBackgroundRecording() {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js');
         setServiceWorkerRegistration(registration);
-        console.log('🔧 Service Worker registered successfully');
+        logger.debug('🔧 Service Worker registered successfully');
 
         // Listen for service worker messages
         navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
 
         await navigator.serviceWorker.ready;
-        console.log('🚀 Service Worker ready');
+        logger.debug('🚀 Service Worker ready');
       } catch (error) {
         console.error('❌ Service Worker registration failed:', error);
       }
@@ -43,21 +44,21 @@ export function useBackgroundRecording() {
   };
 
   const handleServiceWorkerMessage = (event: MessageEvent) => {
-    console.log('📨 Received message from Service Worker:', event.data);
+    logger.debug('📨 Received message from Service Worker:', event.data);
     
     switch (event.data.type) {
       case 'BACKGROUND_SYNC_RUNNING':
-        console.log('🔄 Background sync is running...');
+        logger.debug('🔄 Background sync is running...');
         break;
       case 'BACKGROUND_SYNC_COMPLETE':
-        console.log(`✅ Background sync completed. Processed ${event.data.processedCount} data points`);
+        logger.debug(`✅ Background sync completed. Processed ${event.data.processedCount} data points`);
         break;
       case 'BACKGROUND_SYNC_ERROR':
         console.error('❌ Background sync error:', event.data.error);
         showNotification('PMScan Error', 'Background data collection failed. Please check the app.');
         break;
       case 'SYNC_PENDING_MISSIONS':
-        console.log('🔄 Syncing pending missions...');
+        logger.debug('🔄 Syncing pending missions...');
         // This would trigger the actual sync logic in the main app
         break;
     }
@@ -66,7 +67,7 @@ export function useBackgroundRecording() {
   const checkBackgroundSyncSupport = () => {
     const isSupported = 'serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype;
     setBackgroundSyncSupported(isSupported);
-    console.log('🔄 Background Sync supported:', isSupported);
+    logger.debug('🔄 Background Sync supported:', isSupported);
   };
 
   const checkNotificationPermission = async () => {
@@ -101,11 +102,11 @@ export function useBackgroundRecording() {
       setWakeLock(wakeLockSentinel);
       
       wakeLockSentinel.addEventListener('release', () => {
-        console.log('🔋 Wake lock was released');
+        logger.debug('🔋 Wake lock was released');
         setWakeLock(null);
       });
 
-      console.log('🔋 Wake lock acquired');
+      logger.debug('🔋 Wake lock acquired');
       return true;
     } catch (error) {
       console.error('❌ Wake lock request failed:', error);
@@ -118,7 +119,7 @@ export function useBackgroundRecording() {
       try {
         await wakeLock.release();
         setWakeLock(null);
-        console.log('🔋 Wake lock released');
+        logger.debug('🔋 Wake lock released');
       } catch (error) {
         console.error('❌ Wake lock release failed:', error);
       }
@@ -151,7 +152,7 @@ export function useBackgroundRecording() {
           navigator.serviceWorker.controller?.postMessage({
             type: 'SCHEDULE_BACKGROUND_SYNC'
           });
-          console.log('🔄 Background sync scheduled');
+          logger.debug('🔄 Background sync scheduled');
         } catch (error) {
           console.error('❌ Failed to schedule background sync:', error);
         }
@@ -171,7 +172,7 @@ export function useBackgroundRecording() {
       }, options.syncInterval);
 
       setIsBackgroundEnabled(true);
-      console.log('🎯 Background recording enabled');
+      logger.debug('🎯 Background recording enabled');
       
       showNotification('PMScan Background Active', 'Data collection will continue in the background');
       return true;
@@ -193,7 +194,7 @@ export function useBackgroundRecording() {
       }
 
       setIsBackgroundEnabled(false);
-      console.log('🛑 Background recording disabled');
+      logger.debug('🛑 Background recording disabled');
       
       showNotification('PMScan Background Stopped', 'Background data collection has been disabled');
     } catch (error) {

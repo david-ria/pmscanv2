@@ -12,6 +12,7 @@ import { CreateGroupDialog } from '@/components/Groups/CreateGroupDialog';
 import { InviteUserDialog } from '@/components/Groups/InviteUserDialog';
 import { GroupCard } from '@/components/Groups/GroupCard';
 import { InvitationCard } from '@/components/Groups/InvitationCard';
+import * as logger from '@/utils/logger';
 
 export default function Groups() {
   const [searchParams] = useSearchParams();
@@ -38,7 +39,7 @@ export default function Groups() {
   }, [searchParams, isSuperAdmin]);
 
   // Log user role for debugging
-  console.log('Groups page - User role:', userRole, 'Is super admin:', isSuperAdmin, 'Active tab:', activeTab, 'URL tab:', searchParams.get('tab'));
+  logger.debug('Groups page - User role:', userRole, 'Is super admin:', isSuperAdmin, 'Active tab:', activeTab, 'URL tab:', searchParams.get('tab'));
 
   const handleInviteUser = (groupId: string) => {
     setSelectedGroupId(groupId);
