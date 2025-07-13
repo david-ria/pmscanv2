@@ -84,6 +84,17 @@ VITE_LOG_LEVEL=debug npm run dev
 
 Leave this variable unset (or use any other value) to silence debug output.
 
+## Running tests
+
+This project uses [Vitest](https://vitest.dev/) for unit tests. After installing
+dependencies with `npm install`, run all tests with:
+
+```sh
+npm test
+```
+
+Vitest uses jsdom so tests can render React components.
+
 ## Machine Learning Context Detection
 
 Automatic context detection can optionally use a TensorFlow.js model. To enable this:
