@@ -93,7 +93,7 @@ export function FloatingRecordButton({ device, className }: FloatingRecordButton
     
     toast({
       title: t('modals.missionDetails.delete'),
-      description: t('analysis.error'), // TODO: Add proper translation
+      description: t('analysis.error'),
     });
   };
 
