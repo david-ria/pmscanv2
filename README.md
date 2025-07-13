@@ -95,3 +95,7 @@ Automatic context detection can optionally use a TensorFlow.js model. To enable 
 5. Enable **Override context** (`overrideContext` toggle) to have the model's predicted activity automatically replace your selected mission activity.
 
 When `overrideContext` is active, the application continuously updates the mission activity field with the latest prediction returned by the TensorFlow model. Any change in prediction immediately updates the currently selected activity.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
