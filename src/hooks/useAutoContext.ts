@@ -6,6 +6,12 @@ import { useGPS } from '@/hooks/useGPS';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { MODEL_LABELS } from '@/lib/recordingConstants';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  DEFAULT_AUTO_CONTEXT_RULES,
+  AutoContextRule,
+  AutoContextEvaluationData,
+  evaluateAutoContextRules
+} from '@/lib/autoContextRules';
 
 interface AutoContextInputs {
   pmData?: PMScanData;
@@ -31,6 +37,7 @@ interface AutoContextSettings {
   };
   homeWifiSSID?: string;
   workWifiSSID?: string;
+  customRules?: AutoContextRule[]; // Allow custom rules
 }
 
 export function useAutoContext() {
@@ -306,7 +313,7 @@ export function useAutoContext() {
     }
   }, [settings.homeWifiSSID, settings.workWifiSSID, updateSettings, persistSSID]);
 
-  // Main auto context determination function
+  // Main auto context determination function using configurable rules
   const determineContext = useCallback(
     (inputs: AutoContextInputs): string => {
       if (!settings.enabled) {
@@ -315,8 +322,6 @@ export function useAutoContext() {
 
       const { location, speed = 0 } = inputs;
       const currentHour = new Date().getHours();
-      const WORK_START = 8;
-      const WORK_END = 18;
 
       // Update WiFi tracking
       const newWifiSSID = getCurrentWifiSSID();
@@ -329,11 +334,11 @@ export function useAutoContext() {
         location && location.accuracy && location.accuracy < 50
           ? 'good'
           : 'poor';
-      // For now, assume not connected to car (would be implemented in mobile app)
+      
       const isCarConnected = false; // await isConnectedToCarBluetooth();
       const cellularSignal = getCellularSignal();
-
-      const isMoving = speed > 1; // Consider moving if speed > 1 km/h
+      const isMoving = speed > 1;
+      
       let insideHomeArea = false;
       let insideWorkArea = false;
 
@@ -359,65 +364,46 @@ export function useAutoContext() {
 
       // Track WiFi usage patterns for automatic home/work detection
       const wifiTracking = trackWifiByTime(newWifiSSID);
-      
-      // Automatically classify WiFi networks based on time patterns
       classifyWifiByTimePattern(wifiTracking);
 
-      let state = 'Unknown';
+      // Prepare evaluation data for rule engine
+      const evaluationData: AutoContextEvaluationData = {
+        wifi: {
+          home: currentWifiSSID === settings.homeWifiSSID,
+          work: currentWifiSSID === settings.workWifiSSID,
+          known: !!(currentWifiSSID && (currentWifiSSID === settings.homeWifiSSID || currentWifiSSID === settings.workWifiSSID)),
+          currentSSID: currentWifiSSID,
+          previousSSID: previousWifiSSID,
+        },
+        location: {
+          insideHome: insideHomeArea,
+          insideWork: insideWorkArea,
+          gpsQuality,
+        },
+        movement: {
+          speed,
+          isMoving,
+        },
+        time: {
+          currentHour,
+        },
+        connectivity: {
+          cellularSignal,
+          carBluetooth: isCarConnected,
+        },
+        context: {
+          latestContext,
+        },
+      };
 
-      const wifiHome = currentWifiSSID === settings.homeWifiSSID;
-      const wifiWork = currentWifiSSID === settings.workWifiSSID;
+      // Use custom rules if available, otherwise use default rules
+      const rulesToUse = settings.customRules && settings.customRules.length > 0 
+        ? settings.customRules 
+        : DEFAULT_AUTO_CONTEXT_RULES;
 
-      if (wifiHome) {
-        state = 'Indoor at home';
-        if (
-          gpsQuality === 'poor' &&
-          WORK_START <= currentHour &&
-          currentHour <= WORK_END &&
-          previousWifiSSID === settings.homeWifiSSID
-        ) {
-          state = 'Indoor at home (working from home)';
-        }
-      } else if (wifiWork) {
-        state = 'Indoor at work';
-      } else if (gpsQuality === 'good') {
-        if (insideHomeArea) {
-          state = wifiHome ? 'Indoor at home' : 'Outdoor';
-        } else if (insideWorkArea) {
-          state = wifiWork ? 'Indoor at work' : 'Outdoor';
-        } else {
-          state = 'Outdoor';
-        }
+      let state = evaluateAutoContextRules(rulesToUse, evaluationData);
 
-        if (state === 'Outdoor') {
-          // Enhanced transportation detection with car bluetooth
-          if (isCarConnected && speed > 5) {
-            state = 'Driving';
-          } else if (speed < 7) {
-            state = 'Outdoor walking';
-          } else if (speed < 30) {
-            state = 'Outdoor cycling';
-          } else {
-            // High speed without car bluetooth = generic transport
-            state = 'Outdoor transport';
-          }
-        }
-      } else {
-        if (
-          previousWifiSSID === settings.homeWifiSSID &&
-          currentHour >= 8 &&
-          currentHour <= 10
-        ) {
-          state = 'Likely indoor at work';
-        } else if (!currentWifiSSID && latestContext.startsWith('Indoor')) {
-          state = latestContext;
-        } else if (!cellularSignal && isMoving) {
-          state = isCarConnected ? 'Driving in tunnel' : 'Underground transport';
-        } else {
-          state = 'Indoor';
-        }
-      }
-
+      // Apply ML model if enabled and available
       if (settings.mlEnabled && model) {
         try {
           const mlState = tf.tidy(() => {
@@ -432,7 +418,7 @@ export function useAutoContext() {
         }
       }
 
-      // Override ML predictions for car bluetooth detection
+      // Override ML predictions for car bluetooth detection (highest priority)
       if (isCarConnected && speed > 5) {
         state = 'Driving';
       }
@@ -450,11 +436,14 @@ export function useAutoContext() {
       settings,
       currentWifiSSID,
       previousWifiSSID,
+      latestContext,
       getCurrentWifiSSID,
       getCellularSignal,
-      isConnectedToCarBluetooth,
+      isInsideArea,
+      trackWifiByTime,
       classifyWifiByTimePattern,
       model,
+      convertToTensor,
       missionContext,
       updateMissionContext,
     ]
