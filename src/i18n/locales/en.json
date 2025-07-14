@@ -39,6 +39,7 @@
   "sensors": {
     "title": "Sensors",
     "pmscan": "PMSCAN Sensor",
+    "gps": "GPS",
     "connected": "Connected"
   },
   "loading": {

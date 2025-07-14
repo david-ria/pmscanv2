@@ -9,6 +9,8 @@ import {
   Moon,
   Brain,
   SunMoon,
+  MapPin,
+  Bluetooth,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +21,8 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
+import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
+import { useGPS } from '@/hooks/useGPS';
 
 interface MenuSection {
   title: string;
@@ -55,6 +59,10 @@ export function useMenuSections({
     enableRecordingBackground,
     disableRecordingBackground,
   } = useBackgroundRecordingIntegration();
+  
+  // Get PMScan and GPS status
+  const { isConnected: isPMScanConnected, requestDevice, disconnect } = usePMScanBluetooth();
+  const { locationEnabled, requestLocationPermission } = useGPS();
 
   const handleProfileClick = () => {
     navigate('/profile');
@@ -181,9 +189,26 @@ export function useMenuSections({
       title: t('sensors.title'),
       items: [
         {
-          icon: Smartphone,
+          icon: Bluetooth,
           label: t('sensors.pmscan'),
-          badge: t('sensors.connected'),
+          badge: isPMScanConnected ? t('sensors.connected') : null,
+          action: () => {
+            if (isPMScanConnected) {
+              disconnect();
+            } else {
+              requestDevice();
+            }
+          },
+        },
+        {
+          icon: MapPin,
+          label: 'GPS',
+          badge: locationEnabled ? t('sensors.connected') : null,
+          action: () => {
+            if (!locationEnabled) {
+              requestLocationPermission();
+            }
+          },
         },
       ],
     },

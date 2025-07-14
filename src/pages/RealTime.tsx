@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import * as logger from '@/utils/logger';
-import { StatusButtons } from '@/components/RealTime/StatusButtons';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
 import { ContextSelectors } from '@/components/RecordingControls/ContextSelectors';
@@ -128,15 +127,6 @@ export default function RealTime() {
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-      {/* Status Buttons Bar */}
-      <StatusButtons
-        isConnected={isConnected}
-        locationEnabled={locationEnabled}
-        isRecording={isRecording}
-        onConnectDevice={requestDevice}
-        onDisconnectDevice={disconnect}
-        onRequestLocationPermission={requestLocationPermission}
-      />
 
       {/* Map/Graph Toggle Section */}
       <MapGraphToggle
