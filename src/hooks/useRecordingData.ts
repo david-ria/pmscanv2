@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useRecordingState } from './useRecordingState';
@@ -89,7 +89,7 @@ export function useRecordingData() {
     }
   }, [recordingData, isRecording, recordingStartTime, recordingFrequency, missionContext]);
 
-  const startRecording = async (frequency: string = '10s') => {
+  const startRecording = useCallback(async (frequency: string = '10s') => {
     startRecordingState(frequency);
     setGlobalRecording(true);
 
@@ -97,17 +97,17 @@ export function useRecordingData() {
     if (getBackgroundRecording()) {
       await enableRecordingBackground(frequency);
     }
-  };
+  }, [startRecordingState, enableRecordingBackground]);
 
-  const stopRecording = async () => {
+  const stopRecording = useCallback(async () => {
     stopRecordingState();
     setGlobalRecording(false);
 
     // Disable background recording when stopping
     await disableRecordingBackground();
-  };
+  }, [stopRecordingState, disableRecordingBackground]);
 
-  const saveMission = (
+  const saveMission = useCallback((
     missionName: string,
     locationContext?: string,
     activityContext?: string,
@@ -131,7 +131,7 @@ export function useRecordingData() {
     clearRecordingData();
 
     return mission;
-  };
+  }, [recordingData, recordingStartTime, saveMissionHelper, clearRecoveryData, clearRecordingData]);
 
   return {
     recordingData,
