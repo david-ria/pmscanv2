@@ -39,6 +39,45 @@ export interface AutoContextRule {
   result: string;
 }
 
+export interface AutoContextInputs {
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  };
+  speed?: number;
+}
+
+export interface AutoContextEvaluationData {
+  wifi: {
+    home: boolean;
+    work: boolean;
+    known: boolean;
+    currentSSID: string | null;
+    previousSSID: string | null;
+  };
+  location: {
+    insideHome: boolean;
+    insideWork: boolean;
+    gpsQuality: 'good' | 'poor';
+  };
+  movement: {
+    speed: number;
+    isMoving: boolean;
+  };
+  time: {
+    currentHour: number;
+  };
+  connectivity: {
+    cellularSignal: boolean;
+    carBluetooth: boolean;
+  };
+  context: {
+    latestContext: string;
+  };
+}
+
+// Default rules that replicate the original hardcoded logic
 export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
   // High priority WiFi-based rules
   {
@@ -73,28 +112,6 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
       wifi: { work: true }
     },
     result: 'Indoor at work'
-  },
-
-  // GPS-based rules (medium priority)
-  {
-    id: 'gps-home-area',
-    name: 'Home area',
-    description: 'Good GPS signal in home area',
-    priority: 70,
-    conditions: {
-      location: { insideHome: true, gpsQuality: 'good' }
-    },
-    result: 'Outdoor'
-  },
-  {
-    id: 'gps-work-area',
-    name: 'Work area',
-    description: 'Good GPS signal in work area',
-    priority: 70,
-    conditions: {
-      location: { insideWork: true, gpsQuality: 'good' }
-    },
-    result: 'Outdoor'
   },
 
   // Transportation rules (high priority when conditions match)
@@ -142,6 +159,28 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
       connectivity: { carBluetooth: false }
     },
     result: 'Outdoor transport'
+  },
+
+  // GPS-based rules (medium priority)
+  {
+    id: 'gps-home-area',
+    name: 'Home area',
+    description: 'Good GPS signal in home area',
+    priority: 70,
+    conditions: {
+      location: { insideHome: true, gpsQuality: 'good' }
+    },
+    result: 'Outdoor'
+  },
+  {
+    id: 'gps-work-area',
+    name: 'Work area',
+    description: 'Good GPS signal in work area',
+    priority: 70,
+    conditions: {
+      location: { insideWork: true, gpsQuality: 'good' }
+    },
+    result: 'Outdoor'
   },
 
   // Special connectivity rules
@@ -201,44 +240,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
   }
 ];
 
-export interface AutoContextInputs {
-  location?: {
-    latitude: number;
-    longitude: number;
-    accuracy?: number;
-  };
-  speed?: number;
-}
-
-export interface AutoContextEvaluationData {
-  wifi: {
-    home: boolean;
-    work: boolean;
-    known: boolean;
-    currentSSID: string | null;
-    previousSSID: string | null;
-  };
-  location: {
-    insideHome: boolean;
-    insideWork: boolean;
-    gpsQuality: 'good' | 'poor';
-  };
-  movement: {
-    speed: number;
-    isMoving: boolean;
-  };
-  time: {
-    currentHour: number;
-  };
-  connectivity: {
-    cellularSignal: boolean;
-    carBluetooth: boolean;
-  };
-  context: {
-    latestContext: string;
-  };
-}
-
+// Rule evaluation engine
 export function evaluateAutoContextRules(
   rules: AutoContextRule[],
   data: AutoContextEvaluationData
@@ -331,4 +333,115 @@ function matchesRule(rule: AutoContextRule, data: AutoContextEvaluationData): bo
   }
 
   return true;
+}
+
+// Rule templates for easy creation of new rules
+export interface RuleTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: 'location' | 'activity' | 'transport' | 'time' | 'custom';
+  template: Omit<AutoContextRule, 'id'>;
+}
+
+export const RULE_TEMPLATES: RuleTemplate[] = [
+  {
+    id: 'indoor-gym',
+    name: 'Indoor at gym',
+    description: 'Specific WiFi network for gym',
+    category: 'location',
+    template: {
+      name: 'Indoor at gym',
+      description: 'Connected to gym WiFi',
+      priority: 85,
+      conditions: { wifi: { known: true } },
+      result: 'Indoor at gym'
+    }
+  },
+  {
+    id: 'indoor-restaurant',
+    name: 'Indoor restaurant',
+    description: 'Restaurant or cafe WiFi',
+    category: 'location',
+    template: {
+      name: 'Indoor restaurant',
+      description: 'Connected to restaurant WiFi',
+      priority: 85,
+      conditions: { wifi: { known: true } },
+      result: 'Indoor restaurant'
+    }
+  },
+  {
+    id: 'outdoor-jogging',
+    name: 'Outdoor jogging',
+    description: 'Jogging pace with good GPS',
+    category: 'activity',
+    template: {
+      name: 'Outdoor jogging',
+      description: 'Running/jogging speed outdoors',
+      priority: 75,
+      conditions: {
+        location: { gpsQuality: 'good' },
+        movement: { speed: { min: 8, max: 20 } }
+      },
+      result: 'Outdoor jogging'
+    }
+  }
+];
+
+// Rule management utilities
+export class AutoContextConfig {
+  private static STORAGE_KEY = 'customAutoContextRules';
+
+  static saveCustomRules(rules: AutoContextRule[]): void {
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(rules));
+  }
+
+  static loadCustomRules(): AutoContextRule[] {
+    const saved = localStorage.getItem(this.STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  }
+
+  static addRule(rule: AutoContextRule): AutoContextRule[] {
+    const existing = this.loadCustomRules();
+    const updated = [...existing, rule];
+    this.saveCustomRules(updated);
+    return updated;
+  }
+
+  static updateRule(ruleId: string, updates: Partial<AutoContextRule>): AutoContextRule[] {
+    const existing = this.loadCustomRules();
+    const updated = existing.map(rule => 
+      rule.id === ruleId ? { ...rule, ...updates } : rule
+    );
+    this.saveCustomRules(updated);
+    return updated;
+  }
+
+  static deleteRule(ruleId: string): AutoContextRule[] {
+    const existing = this.loadCustomRules();
+    const updated = existing.filter(rule => rule.id !== ruleId);
+    this.saveCustomRules(updated);
+    return updated;
+  }
+
+  static getAllRules(): AutoContextRule[] {
+    const customRules = this.loadCustomRules();
+    return [...DEFAULT_AUTO_CONTEXT_RULES, ...customRules];
+  }
+
+  static createRuleFromTemplate(templateId: string, customizations?: Partial<AutoContextRule>): AutoContextRule {
+    const template = RULE_TEMPLATES.find(t => t.id === templateId);
+    if (!template) {
+      throw new Error(`Template ${templateId} not found`);
+    }
+
+    const rule: AutoContextRule = {
+      id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      ...template.template,
+      ...customizations
+    };
+
+    return rule;
+  }
 }

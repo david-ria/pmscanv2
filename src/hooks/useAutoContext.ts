@@ -10,8 +10,9 @@ import {
   DEFAULT_AUTO_CONTEXT_RULES,
   AutoContextRule,
   AutoContextEvaluationData,
-  evaluateAutoContextRules
-} from '@/lib/autoContextRules';
+  evaluateAutoContextRules,
+  AutoContextConfig
+} from '@/lib/autoContextConfig';
 
 interface AutoContextInputs {
   pmData?: PMScanData;
