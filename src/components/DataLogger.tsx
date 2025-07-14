@@ -54,17 +54,22 @@ export function DataLogger({
   const { determineContext, isEnabled: autoContextEnabled } = useAutoContext();
   const [dataLog, setDataLog] = useState<DataLogEntry[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [cachedAutomaticContext, setCachedAutomaticContext] = useState<string>('');
 
-  // Get automatic context if enabled
-  const automaticContext =
-    autoContextEnabled && currentData
-      ? determineContext({
-          pmData: currentData,
-          location: currentLocation || undefined,
-          speed: 0, // Would need to calculate from GPS data
-          isMoving: false, // Would need to determine from sensors
-        })
-      : '';
+  // Update automatic context when dependencies change
+  useEffect(() => {
+    if (autoContextEnabled && currentData) {
+      const context = determineContext({
+        pmData: currentData,
+        location: currentLocation || undefined,
+        speed: 0, // Would need to calculate from GPS data
+        isMoving: false, // Would need to determine from sensors
+      });
+      setCachedAutomaticContext(context);
+    } else {
+      setCachedAutomaticContext('');
+    }
+  }, [autoContextEnabled, currentData, currentLocation, determineContext]);
 
   // Add new data entry when recording and data is available - max 1 per second
   useEffect(() => {
@@ -94,7 +99,7 @@ export function DataLogger({
             pmData: currentData,
             location: currentLocation,
             missionContext,
-            automaticContext,
+            automaticContext: cachedAutomaticContext,
           };
 
           const updated = [newEntry, ...prev.slice(0, 99)];
@@ -111,7 +116,7 @@ export function DataLogger({
     currentData,
     currentLocation,
     missionContext,
-    automaticContext,
+    cachedAutomaticContext,
   ]);
 
   const clearLog = () => {
@@ -189,10 +194,10 @@ export function DataLogger({
           >
             {isRecording ? t('realTime.recording') : t('realTime.stopped')}
           </Badge>
-          {automaticContext && (
+          {cachedAutomaticContext && (
             <Badge variant="outline" className="text-xs bg-muted">
               <Brain className="h-3 w-3 mr-1" />
-              {automaticContext}
+              {cachedAutomaticContext}
             </Badge>
           )}
           <span className="text-muted-foreground text-xs">
