@@ -75,7 +75,7 @@ export function useRecordingData() {
 
       return () => clearInterval(interval);
     }
-  }, [isRecording, recordingData, recordingStartTime, recordingFrequency, missionContext, saveRecordingProgress]);
+  }, [isRecording, recordingData, recordingStartTime, recordingFrequency, missionContext]);
 
   // Save progress whenever new data is added
   useEffect(() => {
@@ -87,7 +87,7 @@ export function useRecordingData() {
         missionContext
       );
     }
-  }, [recordingData, isRecording, recordingStartTime, recordingFrequency, missionContext, saveRecordingProgress]);
+  }, [recordingData, isRecording, recordingStartTime, recordingFrequency, missionContext]);
 
   const startRecording = async (frequency: string = '10s') => {
     startRecordingState(frequency);

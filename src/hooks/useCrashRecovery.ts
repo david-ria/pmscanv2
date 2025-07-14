@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { RecordingEntry } from '@/types/recording';
 import { dataStorage } from '@/lib/dataStorage';
 import { useMissionSaver } from './useMissionSaver';
@@ -129,7 +129,7 @@ export function useCrashRecovery() {
   }, [saveMission]);
 
   // Save recording data for crash recovery
-  const saveRecordingProgress = (
+  const saveRecordingProgress = useCallback((
     recordingData: RecordingEntry[],
     startTime: Date | null,
     frequency: string,
@@ -154,7 +154,7 @@ export function useCrashRecovery() {
     } catch (error) {
       console.warn('Failed to save recording progress for crash recovery:', error);
     }
-  };
+  }, []);
 
   // Clear recovery data when recording is properly saved
   const clearRecoveryData = () => {
