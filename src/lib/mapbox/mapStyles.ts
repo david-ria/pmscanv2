@@ -35,6 +35,7 @@ export const createMapStyleExpression = (thresholds: any): any => {
   ] as any;
 };
 
+
 export const MAP_STYLES = {
   LIGHT: 'mapbox://styles/mapbox/light-v11',
   SATELLITE: 'mapbox://styles/mapbox/satellite-streets-v12',
