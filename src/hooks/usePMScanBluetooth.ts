@@ -174,6 +174,7 @@ export function usePMScanBluetooth() {
   // Check for existing connection on component mount and re-establish event listeners
   useEffect(() => {
     const manager = connectionManager;
+    
     if (manager.isConnected()) {
       setIsConnected(true);
 
@@ -197,6 +198,11 @@ export function usePMScanBluetooth() {
           console.error('❌ Failed to restore connection:', error);
           setError('Failed to restore connection');
         });
+    } else {
+      // Ensure state is clean if no connection exists
+      setIsConnected(false);
+      setDevice(null);
+      setCurrentData(null);
     }
   }, [handleRTData, handleIMData, handleBatteryData, handleChargingData]);
 

@@ -42,16 +42,23 @@ export class PMScanEventManager {
         onChargingData
       );
 
-      // Add new listeners
+      // Add new listeners and start notifications
+      await rtDataChar.startNotifications();
       rtDataChar.addEventListener('characteristicvaluechanged', onRTData);
+      
+      await imDataChar.startNotifications();
       imDataChar.addEventListener('characteristicvaluechanged', onIMData);
+      
+      await batteryChar.startNotifications();
       batteryChar.addEventListener('characteristicvaluechanged', onBatteryData);
+      
+      await chargingChar.startNotifications();
       chargingChar.addEventListener(
         'characteristicvaluechanged',
         onChargingData
       );
 
-      logger.debug('🔄 Event listeners re-established');
+      logger.debug('🔄 Event listeners re-established and notifications started');
 
       return {
         name: device?.name || 'PMScan Device',
