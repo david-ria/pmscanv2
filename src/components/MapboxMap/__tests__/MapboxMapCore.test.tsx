@@ -5,14 +5,17 @@ import { ThresholdProvider } from '@/contexts/ThresholdContext';
 vi.mock('mapbox-gl/dist/mapbox-gl.css', () => ({}));
 vi.mock('mapbox-gl', () => ({ default: {} }));
 
-vi.mock('@/lib/mapbox/mapInitializer', () => ({ initializeMap: vi.fn() }));
+vi.mock('@/lib/mapbox/mapInitializer', () => ({ 
+  initializeMap: vi.fn() 
+}));
 
 import { initializeMap } from '@/lib/mapbox/mapInitializer';
+const mockInitializeMap = vi.mocked(initializeMap);
 import { MapboxMapCore } from '../MapboxMapCore';
 
 describe('MapboxMapCore', () => {
   it('shows error when initialization fails', async () => {
-    initializeMap.mockImplementation(
+    mockInitializeMap.mockImplementation(
       async (container, loc, thr, onLoad, onError) => {
         onError('Map failed to load');
         return null;
@@ -30,7 +33,7 @@ describe('MapboxMapCore', () => {
   });
 
   it('calls initializeMap on mount', async () => {
-    initializeMap.mockImplementation(async (container, loc, thr, onLoad) => {
+    mockInitializeMap.mockImplementation(async (container, loc, thr, onLoad) => {
       onLoad();
       return { remove: vi.fn() } as any;
     });
@@ -41,6 +44,6 @@ describe('MapboxMapCore', () => {
       </ThresholdProvider>
     );
 
-    await waitFor(() => expect(initializeMap).toHaveBeenCalled());
+    await waitFor(() => expect(mockInitializeMap).toHaveBeenCalled());
   });
 });

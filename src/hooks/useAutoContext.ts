@@ -91,8 +91,8 @@ export function useAutoContext() {
         if (!error && data) {
           setSettings((prev) => ({
             ...prev,
-            homeWifiSSID: prev.homeWifiSSID ?? data.home_wifi_ssid ?? undefined,
-            workWifiSSID: prev.workWifiSSID ?? data.work_wifi_ssid ?? undefined,
+            // homeWifiSSID: prev.homeWifiSSID ?? data.home_wifi_ssid ?? undefined,
+            // workWifiSSID: prev.workWifiSSID ?? data.work_wifi_ssid ?? undefined,
           }));
         }
       } catch (err) {
