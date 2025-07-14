@@ -137,6 +137,23 @@ export function useAutoContext() {
     return navigator.onLine ? 'MockWiFi' : '';
   }, []);
 
+  // Check if connected to car bluetooth
+  const isConnectedToCarBluetooth = useCallback(async (): Promise<boolean> => {
+    try {
+      // Check if Web Bluetooth API is available (limited browser support)
+      if (!('bluetooth' in navigator)) {
+        return false;
+      }
+      
+      // For now, return false as Web Bluetooth getDevices() is not widely supported
+      // In a real mobile app, this would use native Bluetooth APIs
+      return false;
+    } catch (error) {
+      // Bluetooth not available or permission denied
+      return false;
+    }
+  }, []);
+
   // Mock function to get cellular signal strength
   const getCellularSignal = useCallback((): boolean => {
     // In a real implementation, this would use device APIs
@@ -312,9 +329,11 @@ export function useAutoContext() {
         location && location.accuracy && location.accuracy < 50
           ? 'good'
           : 'poor';
+      // For now, assume not connected to car (would be implemented in mobile app)
+      const isCarConnected = false; // await isConnectedToCarBluetooth();
       const cellularSignal = getCellularSignal();
-      const isMoving = speed > 1; // Consider moving if speed > 1 km/h
 
+      const isMoving = speed > 1; // Consider moving if speed > 1 km/h
       let insideHomeArea = false;
       let insideWorkArea = false;
 
@@ -371,11 +390,15 @@ export function useAutoContext() {
         }
 
         if (state === 'Outdoor') {
-          if (speed < 7) {
+          // Enhanced transportation detection with car bluetooth
+          if (isCarConnected && speed > 5) {
+            state = 'Driving';
+          } else if (speed < 7) {
             state = 'Outdoor walking';
           } else if (speed < 30) {
             state = 'Outdoor cycling';
           } else {
+            // High speed without car bluetooth = generic transport
             state = 'Outdoor transport';
           }
         }
@@ -389,7 +412,7 @@ export function useAutoContext() {
         } else if (!currentWifiSSID && latestContext.startsWith('Indoor')) {
           state = latestContext;
         } else if (!cellularSignal && isMoving) {
-          state = 'Underground transport';
+          state = isCarConnected ? 'Driving in tunnel' : 'Underground transport';
         } else {
           state = 'Indoor';
         }
@@ -409,6 +432,11 @@ export function useAutoContext() {
         }
       }
 
+      // Override ML predictions for car bluetooth detection
+      if (isCarConnected && speed > 5) {
+        state = 'Driving';
+      }
+
       setLatestContext(state);
       if (settings.overrideContext && state) {
         if (missionContext.activity !== state) {
@@ -424,7 +452,7 @@ export function useAutoContext() {
       previousWifiSSID,
       getCurrentWifiSSID,
       getCellularSignal,
-      trackWifiByTime,
+      isConnectedToCarBluetooth,
       classifyWifiByTimePattern,
       model,
       missionContext,
