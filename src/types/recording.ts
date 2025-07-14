@@ -1,5 +1,5 @@
-import { PMScanData } from "@/lib/pmscan/types";
-import { LocationData } from "@/types/PMScan";
+import { PMScanData } from '@/lib/pmscan/types';
+import { LocationData } from '@/types/PMScan';
 
 export interface RecordingEntry {
   pmData: PMScanData;

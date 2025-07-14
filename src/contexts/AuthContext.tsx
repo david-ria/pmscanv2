@@ -6,7 +6,11 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
+  signUp: (
+    email: string,
+    password: string,
+    metadata?: any
+  ) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<{ error: any }>;
   loading: boolean;
@@ -21,13 +25,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -49,14 +53,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: metadata
-      }
+        data: metadata,
+      },
     });
     return { error };
   };
@@ -70,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updatePassword = async (newPassword: string) => {
     const { error } = await supabase.auth.updateUser({
-      password: newPassword
+      password: newPassword,
     });
     return { error };
   };
@@ -82,14 +86,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     updatePassword,
-    loading
+    loading,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

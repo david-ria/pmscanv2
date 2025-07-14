@@ -81,7 +81,7 @@ export const groupConfigs: Record<string, GroupConfig> = {
         pm1_min: 0,
         pm1_max: 8,
         color: '#22c55e',
-        enabled: true
+        enabled: true,
       },
       {
         name: 'Moderate',
@@ -92,7 +92,7 @@ export const groupConfigs: Record<string, GroupConfig> = {
         pm1_min: 8,
         pm1_max: 25,
         color: '#eab308',
-        enabled: true
+        enabled: true,
       },
       {
         name: 'Poor Quality',
@@ -103,7 +103,7 @@ export const groupConfigs: Record<string, GroupConfig> = {
         pm1_min: 88,
         pm1_max: 99,
         color: '#f97316',
-        enabled: true
+        enabled: true,
       },
       {
         name: 'Hazardous',
@@ -111,8 +111,8 @@ export const groupConfigs: Record<string, GroupConfig> = {
         pm10_min: 100,
         pm1_min: 50,
         color: '#ef4444',
-        enabled: true
-      }
+        enabled: true,
+      },
     ],
     alarms: [
       {
@@ -121,57 +121,57 @@ export const groupConfigs: Record<string, GroupConfig> = {
         pm10_threshold: 50,
         pm1_threshold: 25,
         enabled: true,
-        notification_frequency: 'immediate'
-      }
+        notification_frequency: 'immediate',
+      },
     ],
     locations: [
       {
         name: 'Gare TGV',
-        description: 'Residential area monitoring'
+        description: 'Residential area monitoring',
       },
       {
         name: 'Trame',
-        description: 'Workplace environment'
+        description: 'Workplace environment',
       },
       {
         name: 'Rue',
-        description: 'External environment monitoring'
+        description: 'External environment monitoring',
       },
       {
         name: 'Musée',
-        description: 'Transportation monitoring'
+        description: 'Transportation monitoring',
       },
       {
         name: 'Maison',
-        description: 'Transportation monitoring'
-      }
+        description: 'Transportation monitoring',
+      },
     ],
     activities: [
       {
         name: 'Cuisine',
         description: 'Sedentary activities',
-        icon: 'home'
+        icon: 'home',
       },
       {
         name: 'Travaille',
         description: 'Work-related activities',
-        icon: 'briefcase'
+        icon: 'briefcase',
       },
       {
         name: 'Ménage',
         description: 'Physical activities',
-        icon: 'activity'
+        icon: 'activity',
       },
       {
         name: 'Bricolage',
         description: 'Transportation activities',
-        icon: 'car'
+        icon: 'car',
       },
       {
         name: 'Ventilation',
         description: 'Food preparation',
-        icon: 'chef-hat'
-      }
+        icon: 'chef-hat',
+      },
     ],
     events: [
       {
@@ -181,7 +181,7 @@ export const groupConfigs: Record<string, GroupConfig> = {
         start_date: '07:00',
         end_date: '09:00',
         recurrence: 'daily',
-        enabled: true
+        enabled: true,
       },
       {
         name: 'Evening Rush Hour',
@@ -190,8 +190,8 @@ export const groupConfigs: Record<string, GroupConfig> = {
         start_date: '17:00',
         end_date: '19:00',
         recurrence: 'daily',
-        enabled: true
-      }
+        enabled: true,
+      },
     ],
     settings: {
       pm25_threshold: 35,
@@ -203,8 +203,8 @@ export const groupConfigs: Record<string, GroupConfig> = {
       location_auto_detect: true,
       activity_auto_suggest: true,
       event_notifications: true,
-      weekly_reports: true
-    }
+      weekly_reports: true,
+    },
   },
 
   'office-building-monitoring': {
@@ -218,7 +218,7 @@ export const groupConfigs: Record<string, GroupConfig> = {
         pm10_max: 25,
         pm1_max: 10,
         color: '#16a34a',
-        enabled: true
+        enabled: true,
       },
       {
         name: 'Good',
@@ -229,7 +229,7 @@ export const groupConfigs: Record<string, GroupConfig> = {
         pm1_min: 10,
         pm1_max: 20,
         color: '#65a30d',
-        enabled: true
+        enabled: true,
       },
       {
         name: 'Needs Attention',
@@ -237,8 +237,8 @@ export const groupConfigs: Record<string, GroupConfig> = {
         pm10_min: 45,
         pm1_min: 20,
         color: '#dc2626',
-        enabled: true
-      }
+        enabled: true,
+      },
     ],
     alarms: [
       {
@@ -247,43 +247,43 @@ export const groupConfigs: Record<string, GroupConfig> = {
         pm10_threshold: 45,
         pm1_threshold: 20,
         enabled: true,
-        notification_frequency: 'hourly'
-      }
+        notification_frequency: 'hourly',
+      },
     ],
     locations: [
       {
         name: 'Floor 1',
-        description: 'Ground floor workspace'
+        description: 'Ground floor workspace',
       },
       {
         name: 'Floor 2',
-        description: 'Second floor workspace'
+        description: 'Second floor workspace',
       },
       {
         name: 'Meeting Room A',
-        description: 'Conference room'
+        description: 'Conference room',
       },
       {
         name: 'Break Room',
-        description: 'Kitchen and dining area'
-      }
+        description: 'Kitchen and dining area',
+      },
     ],
     activities: [
       {
         name: 'Desk Work',
         description: 'Computer-based tasks',
-        icon: 'monitor'
+        icon: 'monitor',
       },
       {
         name: 'Meeting',
         description: 'Conference or discussion',
-        icon: 'users'
+        icon: 'users',
       },
       {
         name: 'Break',
         description: 'Rest period',
-        icon: 'coffee'
-      }
+        icon: 'coffee',
+      },
     ],
     events: [],
     settings: {
@@ -296,9 +296,9 @@ export const groupConfigs: Record<string, GroupConfig> = {
       location_auto_detect: false,
       activity_auto_suggest: true,
       event_notifications: false,
-      weekly_reports: true
-    }
-  }
+      weekly_reports: true,
+    },
+  },
 };
 
 // Helper functions
@@ -310,6 +310,9 @@ export function getAllGroupIds(): string[] {
   return Object.keys(groupConfigs);
 }
 
-export function generateGroupUrl(groupId: string, baseUrl: string = window.location.origin): string {
+export function generateGroupUrl(
+  groupId: string,
+  baseUrl: string = window.location.origin
+): string {
   return `${baseUrl}?group=${groupId}`;
 }

@@ -21,8 +21,9 @@ export function useUserRole() {
 
   const fetchUserRole = async () => {
     try {
-      const { data, error } = await supabase
-        .rpc('get_user_role', { _user_id: user?.id });
+      const { data, error } = await supabase.rpc('get_user_role', {
+        _user_id: user?.id,
+      });
 
       if (error) {
         console.error('Error fetching user role:', error);
@@ -40,16 +41,19 @@ export function useUserRole() {
 
   const isSuperAdmin = userRole === 'super_admin';
   const isAdmin = userRole === 'admin' || userRole === 'super_admin';
-  const isModerator = userRole === 'moderator' || userRole === 'admin' || userRole === 'super_admin';
+  const isModerator =
+    userRole === 'moderator' ||
+    userRole === 'admin' ||
+    userRole === 'super_admin';
 
   const hasRole = (role: UserRole): boolean => {
     if (!userRole || !role) return false;
-    
+
     const roleHierarchy = {
-      'user': 1,
-      'moderator': 2,
-      'admin': 3,
-      'super_admin': 4
+      user: 1,
+      moderator: 2,
+      admin: 3,
+      super_admin: 4,
     };
 
     return roleHierarchy[userRole] >= roleHierarchy[role];
@@ -62,6 +66,6 @@ export function useUserRole() {
     isAdmin,
     isModerator,
     hasRole,
-    refetch: fetchUserRole
+    refetch: fetchUserRole,
   };
 }

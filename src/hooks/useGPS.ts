@@ -2,11 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { LocationData } from '@/types/PMScan';
 import * as logger from '@/utils/logger';
 
-export function useGPS(enabled: boolean = true) {
+export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
   const [locationEnabled, setLocationEnabled] = useState(false);
-  const [latestLocation, setLatestLocation] = useState<LocationData | null>(null);
+  const [latestLocation, setLatestLocation] = useState<LocationData | null>(
+    null
+  );
   const [watchId, setWatchId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const lastErrorTimeRef = useRef(0);
 
   const stopWatching = useCallback(() => {
     if (watchId !== null) {
@@ -24,7 +27,7 @@ export function useGPS(enabled: boolean = true) {
     if (watchId !== null) {
       stopWatching();
     }
-    
+
     if (!navigator.geolocation) {
       console.error('🧭 GPS: Geolocation is not supported by this browser');
       setError('Geolocation is not supported by this browser');
@@ -32,9 +35,9 @@ export function useGPS(enabled: boolean = true) {
     }
 
     const options: PositionOptions = {
-      enableHighAccuracy: false,
+      enableHighAccuracy: highAccuracy,
       timeout: 60000, // 60 seconds - very long timeout
-      maximumAge: 60000 // Cache for 60 seconds to reduce requests
+      maximumAge: 60000, // Cache for 60 seconds to reduce requests
     };
 
     const handleSuccess = (position: GeolocationPosition) => {
@@ -43,15 +46,13 @@ export function useGPS(enabled: boolean = true) {
         longitude: position.coords.longitude,
         accuracy: position.coords.accuracy,
         altitude: position.coords.altitude || undefined,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      
+
       setLatestLocation(locationData);
       setError(null);
       setLocationEnabled(true);
     };
-
-    const lastErrorTimeRef = useRef(0);
 
     const handleError = (error: GeolocationPositionError) => {
       const now = Date.now();
@@ -65,9 +66,9 @@ export function useGPS(enabled: boolean = true) {
         message: error.message,
         PERMISSION_DENIED: error.PERMISSION_DENIED,
         POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
-        TIMEOUT: error.TIMEOUT
+        TIMEOUT: error.TIMEOUT,
       });
-      
+
       switch (error.code) {
         case error.PERMISSION_DENIED:
           console.error('🧭 GPS: Permission denied');
@@ -94,20 +95,22 @@ export function useGPS(enabled: boolean = true) {
       handleError,
       options
     );
-    
+
     setWatchId(id);
-  }, [enabled, watchId, stopWatching]);
+  }, [enabled, watchId, stopWatching, highAccuracy]);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
     logger.debug('🧭 GPS: Permission request initiated...');
-    
+
     try {
       // Check if permissions API is available
       if ('permissions' in navigator) {
         logger.debug('🧭 GPS: Using permissions API');
-        const permission = await navigator.permissions.query({ name: 'geolocation' });
+        const permission = await navigator.permissions.query({
+          name: 'geolocation',
+        });
         logger.debug('🧭 GPS: Current permission state:', permission.state);
-        
+
         if (permission.state === 'granted') {
           setLocationEnabled(true);
           startWatching();
@@ -160,33 +163,39 @@ export function useGPS(enabled: boolean = true) {
 
   // Check initial permission state
   useEffect(() => {
+    let isMounted = true;
     let permissionStatus: PermissionStatus | null = null;
     let permissionChangeHandler: (() => void) | null = null;
 
     if ('permissions' in navigator) {
-      navigator.permissions.query({ name: 'geolocation' }).then((permission) => {
-        permissionStatus = permission;
-        if (permission.state === 'granted') {
-          setLocationEnabled(true);
-          startWatching();
-        }
+      navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((permission) => {
+          if (!isMounted) return;
 
-        permissionChangeHandler = () => {
+          permissionStatus = permission;
           if (permission.state === 'granted') {
             setLocationEnabled(true);
             startWatching();
-          } else {
-            setLocationEnabled(false);
-            stopWatching();
-            setLatestLocation(null);
           }
-        };
 
-        permission.addEventListener('change', permissionChangeHandler);
-      });
+          permissionChangeHandler = () => {
+            if (permission.state === 'granted') {
+              setLocationEnabled(true);
+              startWatching();
+            } else {
+              setLocationEnabled(false);
+              stopWatching();
+              setLatestLocation(null);
+            }
+          };
+
+          permission.addEventListener('change', permissionChangeHandler);
+        });
     }
 
     return () => {
+      isMounted = false;
       if (permissionStatus && permissionChangeHandler) {
         permissionStatus.removeEventListener('change', permissionChangeHandler);
       }
@@ -203,6 +212,13 @@ export function useGPS(enabled: boolean = true) {
     }
   }, [enabled, stopWatching]);
 
+  // Restart watcher when accuracy preference changes
+  useEffect(() => {
+    if (enabled) {
+      startWatching();
+    }
+  }, [highAccuracy, enabled, startWatching]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -214,6 +230,6 @@ export function useGPS(enabled: boolean = true) {
     locationEnabled,
     latestLocation,
     error,
-    requestLocationPermission
+    requestLocationPermission,
   };
 }

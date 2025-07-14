@@ -35,7 +35,11 @@ interface InviteUserDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function InviteUserDialog({ groupId, open, onOpenChange }: InviteUserDialogProps) {
+export function InviteUserDialog({
+  groupId,
+  open,
+  onOpenChange,
+}: InviteUserDialogProps) {
   const { sendInvitation } = useGroupInvitations();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -65,8 +69,8 @@ export function InviteUserDialog({ groupId, open, onOpenChange }: InviteUserDial
         <DialogHeader>
           <DialogTitle>Invite User to Group</DialogTitle>
           <DialogDescription>
-            Send an invitation email to someone to join your group.
-            They'll receive an email with a link to accept or decline the invitation.
+            Send an invitation email to someone to join your group. They'll
+            receive an email with a link to accept or decline the invitation.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Git pre-commit hook to ensure files end with a newline
+
+# Run Node script to append newline where missing
+node "$(git rev-parse --show-toplevel)/scripts/ensure-trailing-newline.cjs"

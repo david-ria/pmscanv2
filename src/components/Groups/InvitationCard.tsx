@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { Check, X, Users, Clock } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useGroupInvitations, GroupInvitation } from '@/hooks/useGroups';
@@ -37,11 +43,14 @@ export function InvitationCard({ invitation }: InvitationCardProps) {
     }
   };
 
-  const inviterName = invitation.inviter_profile?.pseudo ||
+  const inviterName =
+    invitation.inviter_profile?.pseudo ||
     `${invitation.inviter_profile?.first_name || ''} ${invitation.inviter_profile?.last_name || ''}`.trim() ||
     'Unknown User';
 
-  const expiresIn = formatDistanceToNow(new Date(invitation.expires_at), { addSuffix: true });
+  const expiresIn = formatDistanceToNow(new Date(invitation.expires_at), {
+    addSuffix: true,
+  });
 
   return (
     <Card>
@@ -52,9 +61,7 @@ export function InvitationCard({ invitation }: InvitationCardProps) {
               <Users className="h-5 w-5" />
               {invitation.group?.name}
             </CardTitle>
-            <CardDescription>
-              Invited by {inviterName}
-            </CardDescription>
+            <CardDescription>Invited by {inviterName}</CardDescription>
           </div>
           <Badge variant="outline" className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
@@ -68,7 +75,7 @@ export function InvitationCard({ invitation }: InvitationCardProps) {
             {invitation.group.description}
           </p>
         )}
-        
+
         <div className="flex gap-2">
           <Button
             onClick={handleAccept}

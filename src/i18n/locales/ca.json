@@ -1,7 +1,7 @@
 {
   "navigation": {
     "realTime": "Temps real",
-    "history": "Historial", 
+    "history": "Historial",
     "analysis": "Anàlisi",
     "groups": "Grups"
   },
@@ -39,8 +39,6 @@
   "sensors": {
     "title": "Sensors",
     "pmscan": "Sensor PMSCAN",
-    "native": "Sensors natius",
-    "googleFit": "Google Fit",
     "connected": "Connectat"
   },
   "loading": {
@@ -85,7 +83,7 @@
     "pseudoPlaceholder": "El vostre nom d'usuari",
     "firstName": "Nom",
     "firstNamePlaceholder": "El vostre nom",
-    "lastName": "Cognoms", 
+    "lastName": "Cognoms",
     "lastNamePlaceholder": "Els vostres cognoms",
     "email": "Correu electrònic",
     "emailNotEditable": "El correu electrònic no es pot modificar",
@@ -135,7 +133,7 @@
     "notConnected": "No connectat",
     "connecting": "Connectant...",
     "good": "Bo",
-    "moderate": "Moderat", 
+    "moderate": "Moderat",
     "poor": "Dolent",
     "admin": "Administrador",
     "member": "Membre",
@@ -190,7 +188,10 @@
     "transport": "Transport",
     "sport": "Esport",
     "rest": "Descans",
-    "work": "Treball"
+    "work": "Treball",
+    "indoor": "Interior",
+    "outdoor": "Exterior",
+    "undergroundTransport": "Transport subterrani"
   },
   "history": {
     "loadingMissions": "Carregant missions...",
@@ -244,7 +245,7 @@
       "title": "Comparació de grup",
       "loading": "Carregant dades del grup...",
       "yourAverage": "La vostra mitjana",
-      "groupAverage": "Mitjana del grup", 
+      "groupAverage": "Mitjana del grup",
       "difference": "Diferència",
       "memberComparison": "Comparació de membres",
       "you": "Vosaltres",
@@ -263,7 +264,7 @@
         "shareKnowledge": "Considereu ajudar altres membres a reduir la seva exposició"
       }
     },
-    "error": "Error",
+    "error": "S'ha produït un error",
     "errorLoadingMissions": "No s'han pogut carregar les missions",
     "analysisGenerated": "Anàlisi generada",
     "analysisReady": "La vostra anàlisi personalitzada està llesta",
@@ -330,13 +331,14 @@
       "contributeToDatabase": "Contribuir a la base de dades comunitària",
       "cancel": "Cancel·lar",
       "delete": "Eliminar",
-      "save": "Desar"
+      "save": "Desar",
+      "discarded": "Missió eliminada"
     },
     "frequency": {
       "every1s": "Cada segon",
       "every5s": "Cada 5 segons",
       "every10s": "Cada 10 segons",
-      "every30s": "Cada 30 segons", 
+      "every30s": "Cada 30 segons",
       "every1m": "Cada minut",
       "every5m": "Cada 5 minuts",
       "every10m": "Cada 10 minuts"
@@ -351,7 +353,7 @@
     },
     "levels": {
       "good": "Bo (Verd)",
-      "moderate": "Moderat (Taronja)", 
+      "moderate": "Moderat (Taronja)",
       "poor": "Dolent (Vermell)",
       "veryPoor": "Molt dolent (Vermell fosc)"
     },
@@ -379,7 +381,7 @@
     "saved": "Configuració d'alertes desada amb èxit",
     "resetToDefaults": "Reiniciar als valors per defecte",
     "pm1Alert": "Alerta PM1",
-    "pm25Alert": "Alerta PM2.5", 
+    "pm25Alert": "Alerta PM2.5",
     "pm10Alert": "Alerta PM10",
     "alertWhen": "Alertar quan estigui per sobre de {threshold} μg/m³ durant {duration} minuts",
     "noAlertSet": "No s'ha establert cap llindar d'alerta"
@@ -388,7 +390,7 @@
     "subtitle": "Gestioneu les vostres ubicacions, activitats, alarmes i esdeveniments personals",
     "tabs": {
       "locations": "Ubicacions",
-      "activities": "Activitats", 
+      "activities": "Activitats",
       "alarms": "Alarmes",
       "events": "Esdeveniments"
     },

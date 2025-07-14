@@ -32,7 +32,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-  
+
   // Form states
   const [pseudo, setPseudo] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -59,7 +59,7 @@ export default function Profile() {
         toast({
           title: t('common.error'),
           description: t('profile.profileUpdateError'),
-          variant: "destructive"
+          variant: 'destructive',
         });
       } else {
         setProfile(data);
@@ -92,12 +92,12 @@ export default function Profile() {
         toast({
           title: t('common.error'),
           description: error.message,
-          variant: "destructive"
+          variant: 'destructive',
         });
       } else {
         toast({
           title: t('profile.profileUpdated'),
-          description: t('profile.infoSaved')
+          description: t('profile.infoSaved'),
         });
         fetchProfile(); // Refresh profile data
       }
@@ -105,7 +105,7 @@ export default function Profile() {
       toast({
         title: t('common.error'),
         description: t('auth.unexpectedError'),
-        variant: "destructive"
+        variant: 'destructive',
       });
     } finally {
       setSaving(false);
@@ -114,12 +114,12 @@ export default function Profile() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (newPassword !== confirmPassword) {
       toast({
         title: t('common.error'),
         description: t('profile.passwordsNoMatch'),
-        variant: "destructive"
+        variant: 'destructive',
       });
       return;
     }
@@ -128,7 +128,7 @@ export default function Profile() {
       toast({
         title: t('common.error'),
         description: t('profile.passwordTooShort'),
-        variant: "destructive"
+        variant: 'destructive',
       });
       return;
     }
@@ -137,17 +137,17 @@ export default function Profile() {
 
     try {
       const { error } = await updatePassword(newPassword);
-      
+
       if (error) {
         toast({
           title: t('common.error'),
           description: error.message,
-          variant: "destructive"
+          variant: 'destructive',
         });
       } else {
         toast({
           title: t('profile.passwordChanged'),
-          description: t('profile.passwordUpdated')
+          description: t('profile.passwordUpdated'),
         });
         setNewPassword('');
         setConfirmPassword('');
@@ -156,7 +156,7 @@ export default function Profile() {
       toast({
         title: t('common.error'),
         description: t('auth.unexpectedError'),
-        variant: "destructive"
+        variant: 'destructive',
       });
     } finally {
       setChangingPassword(false);
@@ -178,7 +178,7 @@ export default function Profile() {
     <div className="min-h-screen bg-background px-4 py-6">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header with Back Button */}
-        <MenuPageHeader 
+        <MenuPageHeader
           title={t('profile.title')}
           subtitle={t('profile.subtitle')}
         />
@@ -202,7 +202,7 @@ export default function Profile() {
                   onChange={(e) => setPseudo(e.target.value)}
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">{t('profile.firstName')}</Label>
@@ -255,22 +255,32 @@ export default function Profile() {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <Label className="text-sm font-medium">{t('profile.connectedSince')}</Label>
+                <Label className="text-sm font-medium">
+                  {t('profile.connectedSince')}
+                </Label>
                 <p className="text-muted-foreground">
-                  {profile?.created_at ? 
-                    format(new Date(profile.created_at), 'dd MMMM yyyy à HH:mm', { locale: i18n.language === 'fr' ? fr : enUS })
-                    : t('profile.notAvailable')
-                  }
+                  {profile?.created_at
+                    ? format(
+                        new Date(profile.created_at),
+                        'dd MMMM yyyy à HH:mm',
+                        { locale: i18n.language === 'fr' ? fr : enUS }
+                      )
+                    : t('profile.notAvailable')}
                 </p>
               </div>
-              
+
               <div>
-                <Label className="text-sm font-medium">{t('profile.lastUpdate')}</Label>
+                <Label className="text-sm font-medium">
+                  {t('profile.lastUpdate')}
+                </Label>
                 <p className="text-muted-foreground">
-                  {profile?.updated_at ? 
-                    format(new Date(profile.updated_at), 'dd MMMM yyyy à HH:mm', { locale: i18n.language === 'fr' ? fr : enUS })
-                    : t('profile.notAvailable')
-                  }
+                  {profile?.updated_at
+                    ? format(
+                        new Date(profile.updated_at),
+                        'dd MMMM yyyy à HH:mm',
+                        { locale: i18n.language === 'fr' ? fr : enUS }
+                      )
+                    : t('profile.notAvailable')}
                 </p>
               </div>
             </div>
@@ -297,9 +307,11 @@ export default function Profile() {
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">{t('profile.confirmPassword')}</Label>
+                <Label htmlFor="confirmPassword">
+                  {t('profile.confirmPassword')}
+                </Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -309,12 +321,14 @@ export default function Profile() {
                 />
               </div>
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={changingPassword || !newPassword || !confirmPassword}
               >
                 <Lock className="h-4 w-4 mr-2" />
-                {changingPassword ? t('profile.changing') : t('profile.changePassword')}
+                {changingPassword
+                  ? t('profile.changing')
+                  : t('profile.changePassword')}
               </Button>
             </form>
           </CardContent>

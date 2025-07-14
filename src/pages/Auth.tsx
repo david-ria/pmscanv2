@@ -31,12 +31,12 @@ export default function Auth() {
         toast({
           title: t('auth.connectionError'),
           description: error.message,
-          variant: "destructive"
+          variant: 'destructive',
         });
       } else {
         toast({
           title: t('auth.connectionSuccess'),
-          description: t('auth.youAreConnected')
+          description: t('auth.youAreConnected'),
         });
         navigate('/');
       }
@@ -44,7 +44,7 @@ export default function Auth() {
       toast({
         title: t('common.error'),
         description: t('auth.unexpectedError'),
-        variant: "destructive"
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -58,26 +58,26 @@ export default function Auth() {
     try {
       const { error } = await signUp(email, password, {
         first_name: firstName,
-        last_name: lastName
+        last_name: lastName,
       });
-      
+
       if (error) {
         toast({
           title: t('auth.registrationError'),
           description: error.message,
-          variant: "destructive"
+          variant: 'destructive',
         });
       } else {
         toast({
           title: t('auth.registrationSuccess'),
-          description: t('auth.checkEmailConfirm')
+          description: t('auth.checkEmailConfirm'),
         });
       }
     } catch (error) {
       toast({
         title: t('common.error'),
         description: t('auth.unexpectedError'),
-        variant: "destructive"
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -88,7 +88,9 @@ export default function Auth() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center">{t('auth.authentication')}</CardTitle>
+          <CardTitle className="text-center">
+            {t('auth.authentication')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
@@ -96,7 +98,7 @@ export default function Auth() {
               <TabsTrigger value="signin">{t('auth.signIn')}</TabsTrigger>
               <TabsTrigger value="signup">{t('auth.signUp')}</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
@@ -127,7 +129,7 @@ export default function Auth() {
                 </Button>
               </form>
             </TabsContent>
-            
+
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">

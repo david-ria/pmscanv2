@@ -66,40 +66,40 @@ export const useUserLocations = () => {
       setLocations(data || []);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to fetch locations",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to fetch locations',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const createLocation = async (location: Omit<UserLocation, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const createLocation = async (
+    location: Omit<UserLocation, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+  ) => {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
-        .from('user_locations')
-        .insert({
-          ...location,
-          user_id: user.user.id
-        });
+      const { error } = await supabase.from('user_locations').insert({
+        ...location,
+        user_id: user.user.id,
+      });
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Location created successfully"
+        title: 'Success',
+        description: 'Location created successfully',
       });
 
       await fetchLocations();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create location",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to create location',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -115,16 +115,16 @@ export const useUserLocations = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Location updated successfully"
+        title: 'Success',
+        description: 'Location updated successfully',
       });
 
       await fetchLocations();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update location",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to update location',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -140,16 +140,16 @@ export const useUserLocations = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Location deleted successfully"
+        title: 'Success',
+        description: 'Location deleted successfully',
       });
 
       await fetchLocations();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete location",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to delete location',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -165,7 +165,7 @@ export const useUserLocations = () => {
     createLocation,
     updateLocation,
     deleteLocation,
-    refetch: fetchLocations
+    refetch: fetchLocations,
   };
 };
 
@@ -185,40 +185,40 @@ export const useUserActivities = () => {
       setActivities(data || []);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to fetch activities",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to fetch activities',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const createActivity = async (activity: Omit<UserActivity, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const createActivity = async (
+    activity: Omit<UserActivity, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+  ) => {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
-        .from('user_activities')
-        .insert({
-          ...activity,
-          user_id: user.user.id
-        });
+      const { error } = await supabase.from('user_activities').insert({
+        ...activity,
+        user_id: user.user.id,
+      });
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Activity created successfully"
+        title: 'Success',
+        description: 'Activity created successfully',
       });
 
       await fetchActivities();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create activity",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to create activity',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -234,16 +234,16 @@ export const useUserActivities = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Activity updated successfully"
+        title: 'Success',
+        description: 'Activity updated successfully',
       });
 
       await fetchActivities();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update activity",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to update activity',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -259,16 +259,16 @@ export const useUserActivities = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Activity deleted successfully"
+        title: 'Success',
+        description: 'Activity deleted successfully',
       });
 
       await fetchActivities();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete activity",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to delete activity',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -284,7 +284,7 @@ export const useUserActivities = () => {
     createActivity,
     updateActivity,
     deleteActivity,
-    refetch: fetchActivities
+    refetch: fetchActivities,
   };
 };
 
@@ -304,40 +304,40 @@ export const useUserAlarms = () => {
       setAlarms(data || []);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to fetch alarms",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to fetch alarms',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const createAlarm = async (alarm: Omit<UserAlarm, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const createAlarm = async (
+    alarm: Omit<UserAlarm, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+  ) => {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
-        .from('user_alarms')
-        .insert({
-          ...alarm,
-          user_id: user.user.id
-        });
+      const { error } = await supabase.from('user_alarms').insert({
+        ...alarm,
+        user_id: user.user.id,
+      });
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Alarm created successfully"
+        title: 'Success',
+        description: 'Alarm created successfully',
       });
 
       await fetchAlarms();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create alarm",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to create alarm',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -353,16 +353,16 @@ export const useUserAlarms = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Alarm updated successfully"
+        title: 'Success',
+        description: 'Alarm updated successfully',
       });
 
       await fetchAlarms();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update alarm",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to update alarm',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -378,16 +378,16 @@ export const useUserAlarms = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Alarm deleted successfully"
+        title: 'Success',
+        description: 'Alarm deleted successfully',
       });
 
       await fetchAlarms();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete alarm",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to delete alarm',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -403,7 +403,7 @@ export const useUserAlarms = () => {
     createAlarm,
     updateAlarm,
     deleteAlarm,
-    refetch: fetchAlarms
+    refetch: fetchAlarms,
   };
 };
 
@@ -423,40 +423,40 @@ export const useUserEvents = () => {
       setEvents(data || []);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to fetch events",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to fetch events',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const createEvent = async (event: Omit<UserEvent, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const createEvent = async (
+    event: Omit<UserEvent, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+  ) => {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
-        .from('user_events')
-        .insert({
-          ...event,
-          user_id: user.user.id
-        });
+      const { error } = await supabase.from('user_events').insert({
+        ...event,
+        user_id: user.user.id,
+      });
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Event created successfully"
+        title: 'Success',
+        description: 'Event created successfully',
       });
 
       await fetchEvents();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create event",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to create event',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -472,16 +472,16 @@ export const useUserEvents = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Event updated successfully"
+        title: 'Success',
+        description: 'Event updated successfully',
       });
 
       await fetchEvents();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update event",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to update event',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -497,16 +497,16 @@ export const useUserEvents = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Event deleted successfully"
+        title: 'Success',
+        description: 'Event deleted successfully',
       });
 
       await fetchEvents();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete event",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to delete event',
+        variant: 'destructive',
       });
       throw error;
     }
@@ -522,6 +522,6 @@ export const useUserEvents = () => {
     createEvent,
     updateEvent,
     deleteEvent,
-    refetch: fetchEvents
+    refetch: fetchEvents,
   };
 };

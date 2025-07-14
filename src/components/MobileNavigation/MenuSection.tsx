@@ -1,6 +1,6 @@
-import { useTranslation } from "react-i18next";
-import { MenuItem } from "./MenuItem";
-import { LanguageSelector } from "./LanguageSelector";
+import { useTranslation } from 'react-i18next';
+import { MenuItem } from './MenuItem';
+import { LanguageSelector } from './LanguageSelector';
 
 interface MenuSectionProps {
   title: string;
@@ -26,17 +26,17 @@ export function MenuSection({ title, items }: MenuSectionProps) {
       <div className="space-y-1">
         {items.map((item, itemIndex) => {
           const isLanguageItem = item.label === t('settingsMenu.language');
-          
+
           if (isLanguageItem) {
             return (
-              <LanguageSelector 
+              <LanguageSelector
                 key={itemIndex}
                 label={item.label}
-                badge={item.badge || ""}
+                badge={item.badge || ''}
               />
             );
           }
-          
+
           return (
             <MenuItem
               key={itemIndex}

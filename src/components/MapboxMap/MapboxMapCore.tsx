@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertTriangle } from "lucide-react";
-import { LocationData } from "@/types/PMScan";
-import { useThresholds } from "@/contexts/ThresholdContext";
-import { initializeMap } from "@/lib/mapbox/mapInitializer";
-import { createLocationMarker } from "@/lib/mapbox/mapMarker";
-import { updateTrackData, updateLayerStyles } from "@/lib/mapbox/mapLayers";
-import { toggleMapStyle } from "@/lib/mapbox/mapStyleToggle";
-import { MapboxMapControls } from "./MapboxMapControls";
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, AlertTriangle } from 'lucide-react';
+import { LocationData } from '@/types/PMScan';
+import { useThresholds } from '@/contexts/ThresholdContext';
+import { initializeMap } from '@/lib/mapbox/mapInitializer';
+import { createLocationMarker } from '@/lib/mapbox/mapMarker';
+import { updateTrackData, updateLayerStyles } from '@/lib/mapbox/mapLayers';
+import { toggleMapStyle } from '@/lib/mapbox/mapStyleToggle';
+import { MapboxMapControls } from './MapboxMapControls';
 
 interface MapboxMapCoreProps {
   currentLocation?: LocationData | null;
@@ -30,14 +30,13 @@ interface MapboxMapCoreProps {
   className?: string;
 }
 
-export const MapboxMapCore = ({ 
-  currentLocation, 
-  pmData, 
-  trackPoints = [], 
-  isRecording = false, 
-  className 
+export const MapboxMapCore = ({
+  currentLocation,
+  pmData,
+  trackPoints = [],
+  isRecording = false,
+  className,
 }: MapboxMapCoreProps) => {
-
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
@@ -105,7 +104,7 @@ export const MapboxMapCore = ({
   // Toggle between satellite and map view
   const handleToggleMapStyle = () => {
     if (!map.current) return;
-    
+
     toggleMapStyle(
       map.current,
       isSatellite,
@@ -139,9 +138,12 @@ export const MapboxMapCore = ({
           </div>
         </div>
       )}
-      
-      <div ref={mapContainer} className="w-full h-full rounded-lg overflow-hidden" />
-      
+
+      <div
+        ref={mapContainer}
+        className="w-full h-full rounded-lg overflow-hidden"
+      />
+
       <MapboxMapControls
         isSatellite={isSatellite}
         onToggleMapStyle={handleToggleMapStyle}

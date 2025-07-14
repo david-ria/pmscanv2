@@ -1,9 +1,9 @@
-import { User, Users } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
-import { useTranslation } from "react-i18next";
-import { useGroupSettings } from "@/hooks/useGroupSettings";
+import { User, Users } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { useGroupSettings } from '@/hooks/useGroupSettings';
 
 export function UserInfoCard() {
   const { user } = useAuth();

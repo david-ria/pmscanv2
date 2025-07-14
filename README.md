@@ -82,7 +82,49 @@ development mode) additional debug messages will be printed. Example:
 VITE_LOG_LEVEL=debug npm run dev
 ```
 
-Leave this variable unset (or use any other value) to silence debug output.
+## Supabase configuration
+
+The application expects Supabase connection details to be available as
+environment variables. When running locally with Vite, create a `.env` file with
+the following keys:
+
+```sh
+VITE_SUPABASE_URL=<your Supabase project URL>
+VITE_SUPABASE_ANON_KEY=<your Supabase anon key>
+```
+
+These values are used to initialize the client. If either variable is undefined
+the default values bundled in the repository are used instead.
+
+Leave `VITE_LOG_LEVEL` unset (or use any other value) to silence debug output.
+
+## Running tests
+
+This project uses [Vitest](https://vitest.dev/) for unit tests. After installing
+dependencies with `npm install`, run all tests with:
+
+```sh
+npm test
+```
+
+Vitest uses jsdom so tests can render React components.
+
+## Git hooks
+
+This repository ships with a `pre-commit` hook located in the `githooks/` folder.
+It automatically appends a trailing newline to files inside `src/contexts`,
+`src/i18n` and to top level files such as `components.json` and
+`BACKGROUND_RECORDING_STATUS.md`. Enable the hook after cloning by running:
+
+```sh
+git config core.hooksPath githooks
+```
+
+The same logic can be run manually with:
+
+```sh
+npm run fix:newlines
+```
 
 ## Machine Learning Context Detection
 
@@ -92,3 +134,10 @@ Automatic context detection can optionally use a TensorFlow.js model. To enable 
 2. Place your trained model files under `public/model/` so that `public/model/model.json` is accessible.
 3. Open the Auto Context settings in the application and toggle **Use ML model**.
 4. When enabled, sensor readings will be converted to tensors and passed to the model. If the model fails to load or predict, the heuristic logic is used instead.
+5. Enable **Override context** (`overrideContext` toggle) to have the model's predicted activity automatically replace your selected mission activity.
+
+When `overrideContext` is active, the application continuously updates the mission activity field with the latest prediction returned by the TensorFlow model. Any change in prediction immediately updates the currently selected activity.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

@@ -26,7 +26,10 @@ interface BluetoothDevice extends EventTarget {
   id: string;
   name?: string;
   gatt?: BluetoothRemoteGATTServer;
-  addEventListener(type: 'gattserverdisconnected', listener: (this: BluetoothDevice, ev: Event) => any): void;
+  addEventListener(
+    type: 'gattserverdisconnected',
+    listener: (this: BluetoothDevice, ev: Event) => any
+  ): void;
 }
 
 interface BluetoothRemoteGATTServer {
@@ -34,13 +37,17 @@ interface BluetoothRemoteGATTServer {
   connected: boolean;
   connect(): Promise<BluetoothRemoteGATTServer>;
   disconnect(): void;
-  getPrimaryService(service: BluetoothServiceUUID): Promise<BluetoothRemoteGATTService>;
+  getPrimaryService(
+    service: BluetoothServiceUUID
+  ): Promise<BluetoothRemoteGATTService>;
 }
 
 interface BluetoothRemoteGATTService {
   device: BluetoothDevice;
   uuid: string;
-  getCharacteristic(characteristic: BluetoothCharacteristicUUID): Promise<BluetoothRemoteGATTCharacteristic>;
+  getCharacteristic(
+    characteristic: BluetoothCharacteristicUUID
+  ): Promise<BluetoothRemoteGATTCharacteristic>;
 }
 
 type BluetoothCharacteristicUUID = string;
@@ -52,5 +59,8 @@ interface BluetoothRemoteGATTCharacteristic extends EventTarget {
   readValue(): Promise<DataView>;
   writeValueWithResponse(value: BufferSource): Promise<void>;
   startNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
-  addEventListener(type: 'characteristicvaluechanged', listener: (this: BluetoothRemoteGATTCharacteristic, ev: Event) => any): void;
+  addEventListener(
+    type: 'characteristicvaluechanged',
+    listener: (this: BluetoothRemoteGATTCharacteristic, ev: Event) => any
+  ): void;
 }

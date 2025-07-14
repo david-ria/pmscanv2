@@ -38,17 +38,21 @@ interface ActivityDialogProps {
   activity?: UserActivity;
 }
 
-export function ActivityDialog({ open, onOpenChange, activity }: ActivityDialogProps) {
+export function ActivityDialog({
+  open,
+  onOpenChange,
+  activity,
+}: ActivityDialogProps) {
   const { createActivity, updateActivity } = useUserActivities();
   const [loading, setLoading] = useState(false);
-  
+
   const form = useForm<ActivityFormData>({
     resolver: zodResolver(activitySchema),
     defaultValues: {
       name: '',
       description: '',
       icon: '',
-    }
+    },
   });
 
   useEffect(() => {
@@ -75,7 +79,7 @@ export function ActivityDialog({ open, onOpenChange, activity }: ActivityDialogP
         description: data.description || undefined,
         icon: data.icon || undefined,
       };
-      
+
       if (activity) {
         await updateActivity(activity.id, cleanData);
       } else {
@@ -98,7 +102,9 @@ export function ActivityDialog({ open, onOpenChange, activity }: ActivityDialogP
             {activity ? 'Edit Activity' : 'Add Activity'}
           </DialogTitle>
           <DialogDescription>
-            {activity ? 'Update your activity details' : 'Create a new custom activity'}
+            {activity
+              ? 'Update your activity details'
+              : 'Create a new custom activity'}
           </DialogDescription>
         </DialogHeader>
 
@@ -111,7 +117,10 @@ export function ActivityDialog({ open, onOpenChange, activity }: ActivityDialogP
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Running, Reading, Meeting..." {...field} />
+                    <Input
+                      placeholder="Running, Reading, Meeting..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -125,7 +134,10 @@ export function ActivityDialog({ open, onOpenChange, activity }: ActivityDialogP
                 <FormItem>
                   <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Additional details about this activity..." {...field} />
+                    <Textarea
+                      placeholder="Additional details about this activity..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,7 +159,11 @@ export function ActivityDialog({ open, onOpenChange, activity }: ActivityDialogP
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>

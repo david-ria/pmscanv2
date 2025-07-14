@@ -1,7 +1,7 @@
 {
   "navigation": {
     "realTime": "Temps réel",
-    "history": "Historique", 
+    "history": "Historique",
     "analysis": "Analyse",
     "groups": "Groupes"
   },
@@ -39,8 +39,6 @@
   "sensors": {
     "title": "Capteurs",
     "pmscan": "Capteur PMSCAN",
-    "native": "Capteurs natifs",
-    "googleFit": "Google Fit",
     "connected": "Connecté"
   },
   "loading": {
@@ -191,7 +189,10 @@
     "transport": "Transport",
     "sport": "Sport",
     "rest": "Repos",
-    "work": "Travail"
+    "work": "Travail",
+    "indoor": "Intérieur",
+    "outdoor": "Extérieur",
+    "undergroundTransport": "Transport souterrain"
   },
   "history": {
     "loadingMissions": "Chargement des missions...",
@@ -246,7 +247,7 @@
       "loading": "Chargement des données du groupe...",
       "yourAverage": "Votre Moyenne",
       "groupAverage": "Moyenne du Groupe",
-      "difference": "Différence", 
+      "difference": "Différence",
       "memberComparison": "Comparaison des Membres",
       "you": "Vous",
       "member": "Membre",
@@ -264,7 +265,7 @@
         "shareKnowledge": "Considérez aider les autres membres à réduire leur exposition"
       }
     },
-    "error": "Erreur",
+    "error": "Une erreur est survenue",
     "errorLoadingMissions": "Impossible de charger les missions",
     "analysisGenerated": "Analyse générée",
     "analysisReady": "Votre analyse personnalisée est prête",
@@ -332,13 +333,14 @@
       "contributeToDatabase": "Contribuer à la base de données communautaire",
       "cancel": "Annuler",
       "delete": "Supprimer",
-      "save": "Sauver"
+      "save": "Sauver",
+      "discarded": "Mission supprimée"
     },
     "frequency": {
       "every1s": "Chaque seconde",
       "every5s": "Toutes les 5 secondes",
       "every10s": "Toutes les 10 secondes",
-      "every30s": "Toutes les 30 secondes", 
+      "every30s": "Toutes les 30 secondes",
       "every1m": "Toutes les minutes",
       "every5m": "Toutes les 5 minutes",
       "every10m": "Toutes les 10 minutes"
@@ -353,7 +355,7 @@
     },
     "levels": {
       "good": "Bon (Vert)",
-      "moderate": "Modéré (Orange)", 
+      "moderate": "Modéré (Orange)",
       "poor": "Mauvais (Rouge)",
       "veryPoor": "Très mauvais (Rouge foncé)"
     },
@@ -381,7 +383,7 @@
     "saved": "Paramètres d'alerte sauvegardés avec succès",
     "resetToDefaults": "Réinitialiser aux valeurs par défaut",
     "pm1Alert": "Alerte PM1",
-    "pm25Alert": "Alerte PM2.5", 
+    "pm25Alert": "Alerte PM2.5",
     "pm10Alert": "Alerte PM10",
     "alertWhen": "Alerter au-dessus de {threshold} μg/m³ pendant {duration} minutes",
     "noAlertSet": "Aucun seuil d'alerte défini"
@@ -390,7 +392,7 @@
     "subtitle": "Gérez vos emplacements, activités, alarmes et événements personnels",
     "tabs": {
       "locations": "Emplacements",
-      "activities": "Activités", 
+      "activities": "Activités",
       "alarms": "Alarmes",
       "events": "Événements"
     },

@@ -1,9 +1,22 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Users, X, Settings, QrCode } from 'lucide-react';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { generateGroupUrl } from '@/lib/groupConfigs';
 
 export const GroupModeIndicator = () => {
@@ -30,7 +43,9 @@ export const GroupModeIndicator = () => {
             <div>
               <CardTitle className="text-base">{activeGroup.name}</CardTitle>
               {activeGroup.description && (
-                <CardDescription className="text-sm">{activeGroup.description}</CardDescription>
+                <CardDescription className="text-sm">
+                  {activeGroup.description}
+                </CardDescription>
               )}
             </div>
           </div>
@@ -54,21 +69,23 @@ export const GroupModeIndicator = () => {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col items-center space-y-4">
-                  <img 
-                    src={generateQRCode()} 
+                  <img
+                    src={generateQRCode()}
                     alt="Group Settings QR Code"
                     className="w-64 h-64 border rounded-lg"
                   />
                   <div className="text-center">
                     <p className="text-sm font-medium">{activeGroup.name}</p>
-                    <p className="text-xs text-muted-foreground break-all">{groupUrl}</p>
+                    <p className="text-xs text-muted-foreground break-all">
+                      {groupUrl}
+                    </p>
                   </div>
                 </div>
               </DialogContent>
             </Dialog>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={clearGroupSettings}
               className="gap-1 text-muted-foreground hover:text-foreground"
             >
@@ -78,7 +95,7 @@ export const GroupModeIndicator = () => {
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
           <span>Thresholds: {activeGroup.thresholds.length}</span>
