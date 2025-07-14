@@ -153,10 +153,9 @@ export const usePollutionBreakdownData = (
         }
       });
 
-      const totalPM = Array.from(dataMap.values()).reduce(
-        (sum, item) =>
-          sum +
-          (item.totalExposure > 0 ? item.weightedPM / item.totalExposure : 0),
+      // Calculate total exposure time for percentage calculation
+      const totalExposure = Array.from(dataMap.values()).reduce(
+        (sum, item) => sum + item.totalExposure,
         0
       );
 
@@ -166,7 +165,7 @@ export const usePollutionBreakdownData = (
             data.totalExposure > 0 ? data.weightedPM / data.totalExposure : 0;
           return {
             name: key,
-            percentage: totalPM > 0 ? (avgPM / totalPM) * 100 : 0,
+            percentage: totalExposure > 0 ? (data.totalExposure / totalExposure) * 100 : 0,
             avgPM: avgPM,
             color: data.color,
             exposure: data.totalExposure,
