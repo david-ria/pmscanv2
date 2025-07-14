@@ -53,10 +53,21 @@ export function useCrashRecovery() {
             logger.debug('🔄 Found crash recovery data, auto-saving mission...');
             
             try {
-              // Auto-save the interrupted recording as a mission
-              const crashMissionName = `Recovered Mission ${new Date(recoveryData.startTime).toLocaleString()}`;
+              // Create unique mission name with timestamp to avoid duplicates
+              const startTime = new Date(recoveryData.startTime);
+              const crashMissionName = `Recovered Mission ${startTime.toISOString().replace(/[:.]/g, '-')}`;
               
-              // Create a temporary mission from recovery data
+              // Check if a mission with this exact name already exists to prevent duplicates
+              const existingMissions = await dataStorage.getAllMissions();
+              const duplicateExists = existingMissions.some(mission => mission.name === crashMissionName);
+              
+              if (duplicateExists) {
+                logger.debug('🔄 Crash recovery mission already exists, skipping...');
+                localStorage.removeItem(CRASH_RECOVERY_KEY);
+                return;
+              }
+              
+              // Create a temporary mission from recovery data with unique ID
               const mission = dataStorage.createMissionFromRecording(
                 restoredRecordingData,
                 crashMissionName,
