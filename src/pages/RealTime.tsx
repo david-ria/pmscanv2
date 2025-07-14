@@ -4,16 +4,25 @@ import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
 import { ContextSelectors } from '@/components/RecordingControls/ContextSelectors';
 import { DataLogger } from '@/components/DataLogger';
+import { RecordingFrequencyDialog } from '@/components/RecordingControls/RecordingFrequencyDialog';
 
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useAlerts } from '@/contexts/AlertContext';
 import { useAutoContext } from '@/hooks/useAutoContext';
+import { frequencyOptionKeys } from '@/lib/recordingConstants';
+import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 export default function RealTime() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
+  const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
+  const [recordingFrequency, setRecordingFrequency] = useState(frequencyOptionKeys[0].value);
+  const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
 
+  const { t } = useTranslation();
+  const { toast } = useToast();
   const { currentData, isConnected, device, error, requestDevice, disconnect } =
     usePMScanBluetooth();
   const {
@@ -29,6 +38,7 @@ export default function RealTime() {
     missionContext,
     recordingData,
     updateMissionContext,
+    startRecording,
   } = useRecordingContext();
   const { checkAlerts } = useAlerts();
 
@@ -125,6 +135,44 @@ export default function RealTime() {
     };
   }, []);
 
+  // Auto-open frequency dialog when device connects for the first time
+  useEffect(() => {
+    if (isConnected && !isRecording && !hasShownFrequencyDialog) {
+      setShowFrequencyDialog(true);
+      setHasShownFrequencyDialog(true);
+      logger.debug('🎯 Auto-opening frequency dialog after device connection');
+    }
+  }, [isConnected, isRecording, hasShownFrequencyDialog]);
+
+  // Reset frequency dialog flag when device disconnects
+  useEffect(() => {
+    if (!isConnected) {
+      setHasShownFrequencyDialog(false);
+    }
+  }, [isConnected]);
+
+  // Handle frequency dialog confirmation
+  const handleFrequencyConfirm = async () => {
+    try {
+      setShowFrequencyDialog(false);
+      await startRecording(recordingFrequency);
+      
+      toast({
+        title: t('notifications.recordingStarted'),
+        description: t('notifications.recordingStartedDesc', { frequency: recordingFrequency }),
+      });
+      
+      logger.debug(`🎬 Recording started with frequency: ${recordingFrequency}`);
+    } catch (error) {
+      logger.error('Failed to start recording:', error);
+      toast({
+        title: t('notifications.error'),
+        description: t('notifications.recordingStartError'),
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
 
@@ -169,6 +217,15 @@ export default function RealTime() {
           activity: selectedActivity,
         }}
         className="mb-4"
+      />
+
+      {/* Auto-triggered Recording Frequency Dialog */}
+      <RecordingFrequencyDialog
+        open={showFrequencyDialog}
+        onOpenChange={setShowFrequencyDialog}
+        recordingFrequency={recordingFrequency}
+        onFrequencyChange={setRecordingFrequency}
+        onConfirm={handleFrequencyConfirm}
       />
     </div>
   );
