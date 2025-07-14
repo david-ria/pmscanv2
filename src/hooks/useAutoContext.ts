@@ -141,8 +141,14 @@ export function useAutoContext() {
 
   // Mock function to get current WiFi SSID (in real app, this would use native APIs)
   const getCurrentWifiSSID = useCallback((): string => {
+    // Check for test WiFi SSID from localStorage first
+    const testWifi = localStorage.getItem('mock_wifi_ssid');
+    if (testWifi) {
+      return testWifi;
+    }
+    
     // In a real implementation, this would use Capacitor's Network plugin
-    // For now, we'll return a mock value
+    // For now, we'll return a mock value only if online
     return navigator.onLine ? 'MockWiFi' : '';
   }, []);
 

@@ -9,9 +9,10 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Settings } from 'lucide-react';
+import { Settings, TestTube, Wifi } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAutoContext } from '@/hooks/useAutoContext';
+import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -23,8 +24,10 @@ import {
 export function AutoContextControl() {
   const { settings, updateSettings, toggleEnabled, isEnabled } =
     useAutoContext();
+  const { toast } = useToast();
   const [showSettings, setShowSettings] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
+  const [testWifi, setTestWifi] = useState('');
 
   useEffect(() => {
     setTempSettings(settings);
@@ -33,6 +36,23 @@ export function AutoContextControl() {
   const handleSaveSettings = () => {
     updateSettings(tempSettings);
     setShowSettings(false);
+  };
+
+  const handleSetTestWifi = () => {
+    localStorage.setItem('mock_wifi_ssid', testWifi);
+    toast({
+      title: 'Test WiFi Set',
+      description: `Now simulating connection to: ${testWifi}`,
+    });
+    setTestWifi('');
+  };
+
+  const handleClearTestWifi = () => {
+    localStorage.removeItem('mock_wifi_ssid');
+    toast({
+      title: 'Test WiFi Cleared',
+      description: 'No longer simulating any specific WiFi network.',
+    });
   };
 
   return (
@@ -71,20 +91,53 @@ export function AutoContextControl() {
                       placeholder="Your home WiFi name"
                     />
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="workWifi">Work WiFi Name</Label>
-                    <Input
-                      id="workWifi"
-                      value={tempSettings.workWifiSSID || ''}
-                      onChange={(e) =>
-                        setTempSettings((prev) => ({
-                          ...prev,
-                          workWifiSSID: e.target.value,
-                        }))
-                      }
-                      placeholder="Your work WiFi name"
-                    />
-                  </div>
+                   <div className="grid gap-2">
+                     <Label htmlFor="workWifi">Work WiFi Name</Label>
+                     <Input
+                       id="workWifi"
+                       value={tempSettings.workWifiSSID || ''}
+                       onChange={(e) =>
+                         setTempSettings((prev) => ({
+                           ...prev,
+                           workWifiSSID: e.target.value,
+                         }))
+                       }
+                       placeholder="Your work WiFi name"
+                     />
+                   </div>
+                   
+                   <div className="border-t pt-4">
+                     <div className="flex items-center gap-2 mb-2">
+                       <TestTube className="h-4 w-4" />
+                       <Label className="text-sm font-medium">Test WiFi Detection</Label>
+                     </div>
+                     <div className="flex gap-2">
+                       <Input
+                         value={testWifi}
+                         onChange={(e) => setTestWifi(e.target.value)}
+                         placeholder="Enter WiFi name to simulate"
+                         className="flex-1"
+                       />
+                       <Button 
+                         variant="outline" 
+                         size="sm"
+                         onClick={handleSetTestWifi}
+                         disabled={!testWifi.trim()}
+                       >
+                         Set
+                       </Button>
+                       <Button 
+                         variant="outline" 
+                         size="sm"
+                         onClick={handleClearTestWifi}
+                       >
+                         Clear
+                       </Button>
+                     </div>
+                     <p className="text-xs text-muted-foreground mt-1">
+                       Simulate being connected to a specific WiFi network for testing auto-context.
+                     </p>
+                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
                       id="ml-enabled"
