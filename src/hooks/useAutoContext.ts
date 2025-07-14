@@ -183,15 +183,41 @@ export function useAutoContext() {
     [currentWifiSSID, settings.homeWifiSSID, settings.workWifiSSID]
   );
 
-  const incrementSSIDCount = useCallback((key: string, ssid: string) => {
-    if (!ssid) return {} as Record<string, number>;
-    const counts = JSON.parse(localStorage.getItem(key) || '{}') as Record<
-      string,
-      number
-    >;
-    counts[ssid] = (counts[ssid] || 0) + 1;
-    localStorage.setItem(key, JSON.stringify(counts));
-    return counts;
+  // Track WiFi usage by time periods for automatic home/work detection
+  const trackWifiByTime = useCallback((ssid: string) => {
+    if (!ssid) return {};
+    
+    const currentHour = new Date().getHours();
+    const timeKey = 'wifiTimeTracking';
+    const tracking = JSON.parse(localStorage.getItem(timeKey) || '{}') as Record<string, {
+      morning: number;    // 6 AM - 10 AM
+      workday: number;    // 9 AM - 6 PM
+      evening: number;    // 6 PM - midnight
+      weekend: number;    // Saturday/Sunday
+    }>;
+    
+    if (!tracking[ssid]) {
+      tracking[ssid] = { morning: 0, workday: 0, evening: 0, weekend: 0 };
+    }
+    
+    const isWeekend = [0, 6].includes(new Date().getDay()); // Sunday = 0, Saturday = 6
+    
+    if (isWeekend) {
+      tracking[ssid].weekend++;
+    } else {
+      if (currentHour >= 6 && currentHour < 10) {
+        tracking[ssid].morning++;
+      }
+      if (currentHour >= 9 && currentHour < 18) {
+        tracking[ssid].workday++;
+      }
+      if (currentHour >= 18 || currentHour < 6) {
+        tracking[ssid].evening++;
+      }
+    }
+    
+    localStorage.setItem(timeKey, JSON.stringify(tracking));
+    return tracking;
   }, []);
 
   const getDominantSSID = (counts: Record<string, number>) => {
@@ -232,23 +258,36 @@ export function useAutoContext() {
     []
   );
 
-  const updateDominantSSID = useCallback(
-    (area: 'home' | 'work', counts: Record<string, number>) => {
-      const { ssid, count, second } = getDominantSSID(counts);
-      if (!ssid) return;
-      if (count >= 5 && count >= second * 2) {
-        if (area === 'home' && ssid !== settings.homeWifiSSID) {
-          updateSettings({ homeWifiSSID: ssid });
-          persistSSID('home_wifi_ssid', ssid);
-        }
-        if (area === 'work' && ssid !== settings.workWifiSSID) {
-          updateSettings({ workWifiSSID: ssid });
-          persistSSID('work_wifi_ssid', ssid);
-        }
+  // Determine if WiFi should be classified as home or work based on time patterns
+  const classifyWifiByTimePattern = useCallback((tracking: Record<string, { morning: number; workday: number; evening: number; weekend: number }>) => {
+    for (const [ssid, times] of Object.entries(tracking)) {
+      const totalUsage = times.morning + times.workday + times.evening + times.weekend;
+      
+      // Need at least 10 data points to make a classification
+      if (totalUsage < 10) continue;
+      
+      // Home WiFi: Used in both morning AND evening, or heavily on weekends
+      const isHomePatter = (times.morning >= 3 && times.evening >= 3) || 
+                          (times.weekend >= 5 && times.weekend > times.workday);
+      
+      // Work WiFi: Used primarily during work hours, but NOT heavily in evening/morning
+      const isWorkPattern = times.workday >= 8 && 
+                           times.workday > (times.morning + times.evening) * 1.5 &&
+                           times.weekend < times.workday * 0.3;
+      
+      if (isHomePatter && ssid !== settings.homeWifiSSID) {
+        console.log(`🏠 Auto-detected HOME WiFi: ${ssid} (morning: ${times.morning}, evening: ${times.evening}, weekend: ${times.weekend})`);
+        updateSettings({ homeWifiSSID: ssid });
+        persistSSID('home_wifi_ssid', ssid);
       }
-    },
-    [persistSSID, settings.homeWifiSSID, settings.workWifiSSID, updateSettings]
-  );
+      
+      if (isWorkPattern && ssid !== settings.workWifiSSID && ssid !== settings.homeWifiSSID) {
+        console.log(`🏢 Auto-detected WORK WiFi: ${ssid} (workday: ${times.workday}, morning: ${times.morning}, evening: ${times.evening})`);
+        updateSettings({ workWifiSSID: ssid });
+        persistSSID('work_wifi_ssid', ssid);
+      }
+    }
+  }, [settings.homeWifiSSID, settings.workWifiSSID, updateSettings, persistSSID]);
 
   // Main auto context determination function
   const determineContext = useCallback(
@@ -299,14 +338,11 @@ export function useAutoContext() {
         );
       }
 
-      if (insideHomeArea) {
-        const counts = incrementSSIDCount(homeCountsKey, newWifiSSID);
-        updateDominantSSID('home', counts);
-      }
-      if (insideWorkArea) {
-        const counts = incrementSSIDCount(workCountsKey, newWifiSSID);
-        updateDominantSSID('work', counts);
-      }
+      // Track WiFi usage patterns for automatic home/work detection
+      const wifiTracking = trackWifiByTime(newWifiSSID);
+      
+      // Automatically classify WiFi networks based on time patterns
+      classifyWifiByTimePattern(wifiTracking);
 
       let state = 'Unknown';
 
@@ -388,8 +424,8 @@ export function useAutoContext() {
       previousWifiSSID,
       getCurrentWifiSSID,
       getCellularSignal,
-      isInsideArea,
-      convertToTensor,
+      trackWifiByTime,
+      classifyWifiByTimePattern,
       model,
       missionContext,
       updateMissionContext,
