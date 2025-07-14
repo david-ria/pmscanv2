@@ -31,8 +31,28 @@ export function useCrashRecovery() {
   useEffect(() => {
     const checkCrashRecovery = async () => {
       try {
-        // Check for interrupted recording data
+        // First, clean up any very old recovery data (older than 24 hours)
         const recoveryDataStr = localStorage.getItem(CRASH_RECOVERY_KEY);
+        if (recoveryDataStr) {
+          const recoveryData: RecoveryData = JSON.parse(recoveryDataStr);
+          const isVeryOld = Date.now() - recoveryData.timestamp > 24 * 60 * 60 * 1000;
+          
+          if (isVeryOld) {
+            logger.debug('🧹 Clearing old crash recovery data (>24h)');
+            localStorage.removeItem(CRASH_RECOVERY_KEY);
+            return;
+          }
+        }
+
+        // Clear any pending sync missions that might be causing duplicates
+        // This prevents endless retry loops for missions that already exist
+        if (navigator.onLine) {
+          logger.debug('🧹 Cleaning up pending sync before crash recovery...');
+          // Just clear the local storage instead of trying to sync again
+          dataStorage.clearLocalStorage();
+        }
+        
+        // Check for interrupted recording data
         if (recoveryDataStr) {
           const recoveryData: RecoveryData = JSON.parse(recoveryDataStr);
           
@@ -45,7 +65,7 @@ export function useCrashRecovery() {
             }
           }));
           
-          // If recovery data is less than 24 hours old and has meaningful data
+          // Only process if data is meaningful and recent (within 24 hours)
           const isRecent = Date.now() - recoveryData.timestamp < 24 * 60 * 60 * 1000;
           const hasData = restoredRecordingData.length > 0;
           
@@ -57,17 +77,7 @@ export function useCrashRecovery() {
               const startTime = new Date(recoveryData.startTime);
               const crashMissionName = `Recovered Mission ${startTime.toISOString().replace(/[:.]/g, '-')}`;
               
-              // Check if a mission with this exact name already exists to prevent duplicates
-              const existingMissions = await dataStorage.getAllMissions();
-              const duplicateExists = existingMissions.some(mission => mission.name === crashMissionName);
-              
-              if (duplicateExists) {
-                logger.debug('🔄 Crash recovery mission already exists, skipping...');
-                localStorage.removeItem(CRASH_RECOVERY_KEY);
-                return;
-              }
-              
-              // Create a temporary mission from recovery data with unique ID
+              // Create a temporary mission from recovery data
               const mission = dataStorage.createMissionFromRecording(
                 restoredRecordingData,
                 crashMissionName,
@@ -79,28 +89,16 @@ export function useCrashRecovery() {
                 false // Don't share auto-recovered missions
               );
 
-              // Export to CSV and attempt sync
+              // Export to CSV only, don't try to sync to avoid duplicates
               dataStorage.exportMissionToCSV(mission);
+              logger.debug('✅ Crash recovery mission exported as CSV');
               
-              if (navigator.onLine) {
-                try {
-                  dataStorage.saveMissionLocally(mission);
-                  await dataStorage.syncPendingMissions();
-                  dataStorage.clearLocalStorage();
-                } catch (syncError) {
-                  console.warn('Failed to sync recovered mission, but CSV exported');
-                }
-              }
-              
-              logger.debug('✅ Crash recovery mission saved successfully');
             } catch (error) {
               console.error('Failed to save crash recovery mission:', error);
-              // Keep the recovery data for manual intervention
-              return;
             }
           }
           
-          // Clear recovery data after successful processing or if too old
+          // Always clear recovery data after processing
           localStorage.removeItem(CRASH_RECOVERY_KEY);
         }
 

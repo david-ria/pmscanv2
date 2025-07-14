@@ -13,15 +13,40 @@ export async function syncPendingMissions(): Promise<void> {
   const pendingIds = getPendingSyncIds();
   const localMissions = getLocalMissions();
 
-  for (const missionId of pendingIds) {
+  // Clean up any missions that don't exist locally but are still in pending sync
+  const validPendingIds = pendingIds.filter(id => 
+    localMissions.some(mission => mission.id === id)
+  );
+  
+  // Remove invalid pending IDs
+  const invalidIds = pendingIds.filter(id => !validPendingIds.includes(id));
+  invalidIds.forEach(id => removeFromPendingSync(id));
+
+  for (const missionId of validPendingIds) {
     const mission = localMissions.find((m) => m.id === missionId);
     if (!mission) continue;
 
     try {
-      // Save mission to database
+      // Check if mission already exists first
+      const { data: existingMission } = await supabase
+        .from('missions')
+        .select('id')
+        .eq('id', mission.id)
+        .single();
+
+      // If mission already exists, skip syncing and mark as complete
+      if (existingMission) {
+        logger.debug(`Mission ${mission.name} already exists in database, skipping sync`);
+        mission.synced = true;
+        saveMissionLocally(mission);
+        removeFromPendingSync(mission.id);
+        continue;
+      }
+
+      // Save mission to database using upsert to handle edge cases
       const { data: savedMission, error: missionError } = await supabase
         .from('missions')
-        .insert({
+        .upsert({
           id: mission.id,
           name: mission.name,
           start_time: mission.startTime.toISOString(),
@@ -42,7 +67,7 @@ export async function syncPendingMissions(): Promise<void> {
 
       if (missionError) throw missionError;
 
-      // Save measurements to database
+      // Save measurements to database using upsert to handle duplicates
       const measurementsToInsert = mission.measurements.map((m) => ({
         id: m.id,
         mission_id: mission.id,
@@ -60,7 +85,7 @@ export async function syncPendingMissions(): Promise<void> {
 
       const { error: measurementsError } = await supabase
         .from('measurements')
-        .insert(measurementsToInsert);
+        .upsert(measurementsToInsert);
 
       if (measurementsError) throw measurementsError;
 
