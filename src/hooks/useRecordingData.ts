@@ -15,6 +15,16 @@ import {
 import * as logger from '@/utils/logger';
 
 export function useRecordingData() {
+  // All hooks must be called in the same order every time
+  const recordingState = useRecordingState();
+  const backgroundRecordingIntegration = useBackgroundRecordingIntegration();
+  const missionSaver = useMissionSaver();
+  const crashRecovery = useCrashRecovery();
+  
+  // Use auto-sync functionality - must be called before conditional logic
+  useAutoSync();
+
+  // Destructure after all hooks are called
   const {
     recordingData,
     isRecording,
@@ -27,18 +37,18 @@ export function useRecordingData() {
     clearRecordingData,
     updateMissionContext,
     updateLastRecordedTime,
-  } = useRecordingState();
+  } = recordingState;
 
   const {
     enableRecordingBackground,
     disableRecordingBackground,
     storeBackgroundData,
-  } = useBackgroundRecordingIntegration();
+  } = backgroundRecordingIntegration;
 
-  const { saveMission: saveMissionHelper } = useMissionSaver();
-  const { saveRecordingProgress, clearRecoveryData } = useCrashRecovery();
+  const { saveMission: saveMissionHelper } = missionSaver;
+  const { saveRecordingProgress, clearRecoveryData } = crashRecovery;
 
-  const { addDataPoint } = useDataPointRecorder({
+  const dataPointRecorder = useDataPointRecorder({
     isRecording,
     recordingFrequency,
     storeBackgroundData,
@@ -46,8 +56,7 @@ export function useRecordingData() {
     updateLastRecordedTime,
   });
 
-  // Use auto-sync functionality
-  useAutoSync();
+  const { addDataPoint } = dataPointRecorder;
 
   // Monitor recording state changes and save progress for crash recovery
   useEffect(() => {
