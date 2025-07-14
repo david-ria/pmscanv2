@@ -20,6 +20,7 @@ import { LocationData } from '@/types/PMScan';
 import { useTranslation } from 'react-i18next';
 import { useAutoContext } from '@/hooks/useAutoContext';
 
+// Data logger component for real-time PM measurement tracking
 interface DataLogEntry {
   id: string;
   timestamp: Date;
