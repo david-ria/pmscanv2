@@ -458,26 +458,32 @@ export type Database = {
         Row: {
           created_at: string
           first_name: string | null
+          home_wifi_ssid: string | null
           id: string
           last_name: string | null
           pseudo: string | null
           updated_at: string
+          work_wifi_ssid: string | null
         }
         Insert: {
           created_at?: string
           first_name?: string | null
+          home_wifi_ssid?: string | null
           id: string
           last_name?: string | null
           pseudo?: string | null
           updated_at?: string
+          work_wifi_ssid?: string | null
         }
         Update: {
           created_at?: string
           first_name?: string | null
+          home_wifi_ssid?: string | null
           id?: string
           last_name?: string | null
           pseudo?: string | null
           updated_at?: string
+          work_wifi_ssid?: string | null
         }
         Relationships: []
       }
