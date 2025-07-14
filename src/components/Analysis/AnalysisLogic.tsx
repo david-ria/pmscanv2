@@ -173,6 +173,26 @@ export const useAnalysisLogic = (
       logger.debug('Filtered missions for analysis:', filtered.length);
       logger.debug('Selected period:', selectedPeriod);
       logger.debug('Selected date:', selectedDate);
+      
+      // Debug mission dates to understand filtering
+      if (missions.length > 0) {
+        logger.debug('All mission dates:', missions.map(m => ({
+          name: m.name,
+          startTime: m.startTime,
+          dateString: new Date(m.startTime).toLocaleDateString()
+        })));
+        
+        logger.debug('Date range for filtering:', {
+          startDate: selectedPeriod === 'day' ? startOfDay(selectedDate) : 
+                    selectedPeriod === 'week' ? startOfWeek(selectedDate, { weekStartsOn: 1 }) :
+                    selectedPeriod === 'month' ? startOfMonth(selectedDate) :
+                    startOfYear(selectedDate),
+          endDate: selectedPeriod === 'day' ? endOfDay(selectedDate) : 
+                   selectedPeriod === 'week' ? endOfWeek(selectedDate, { weekStartsOn: 1 }) :
+                   selectedPeriod === 'month' ? endOfMonth(selectedDate) :
+                   endOfYear(selectedDate)
+        });
+      }
 
       if (filtered.length === 0) {
         const hasAnyMissions = missions.length > 0;
