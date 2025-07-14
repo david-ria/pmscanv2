@@ -71,8 +71,16 @@ export const MapboxMapCore = ({
 
     return () => {
       if (map.current) {
-        map.current.remove();
-        map.current = null;
+        try {
+          // Check if map is still valid before removing
+          if (map.current.getContainer()) {
+            map.current.remove();
+          }
+        } catch (error) {
+          console.warn('Error removing map:', error);
+        } finally {
+          map.current = null;
+        }
       }
     };
   }, []); // Empty dependency array - only run once
