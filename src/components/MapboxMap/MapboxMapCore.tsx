@@ -45,10 +45,10 @@ export const MapboxMapCore = ({
   const [isSatellite, setIsSatellite] = useState(false);
   const { thresholds, getAirQualityLevel } = useThresholds();
 
-  // Initialize map
+  // Initialize map (only once)
   useEffect(() => {
     const initMap = async () => {
-      if (!mapContainer.current) return;
+      if (!mapContainer.current || map.current) return; // Prevent re-initialization
 
       setLoading(true);
       setError(null);
@@ -72,9 +72,10 @@ export const MapboxMapCore = ({
     return () => {
       if (map.current) {
         map.current.remove();
+        map.current = null;
       }
     };
-  }, []);
+  }, []); // Empty dependency array - only run once
 
   // Update marker when location changes
   useEffect(() => {
@@ -87,7 +88,7 @@ export const MapboxMapCore = ({
       getAirQualityLevel,
       marker.current
     );
-  }, [currentLocation, pmData]);
+  }, [currentLocation, pmData, getAirQualityLevel]);
 
   // Update track visualization when trackPoints change
   useEffect(() => {
