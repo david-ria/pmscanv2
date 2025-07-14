@@ -36,9 +36,18 @@ export function useCrashRecovery() {
         if (recoveryDataStr) {
           const recoveryData: RecoveryData = JSON.parse(recoveryDataStr);
           
+          // Convert timestamps back to Date objects
+          const restoredRecordingData = recoveryData.recordingData.map(entry => ({
+            ...entry,
+            pmData: {
+              ...entry.pmData,
+              timestamp: new Date(entry.pmData.timestamp)
+            }
+          }));
+          
           // If recovery data is less than 24 hours old and has meaningful data
           const isRecent = Date.now() - recoveryData.timestamp < 24 * 60 * 60 * 1000;
-          const hasData = recoveryData.recordingData.length > 0;
+          const hasData = restoredRecordingData.length > 0;
           
           if (isRecent && hasData) {
             logger.debug('🔄 Found crash recovery data, auto-saving mission...');
@@ -49,7 +58,7 @@ export function useCrashRecovery() {
               
               // Create a temporary mission from recovery data
               const mission = dataStorage.createMissionFromRecording(
-                recoveryData.recordingData,
+                restoredRecordingData,
                 crashMissionName,
                 new Date(recoveryData.startTime),
                 new Date(recoveryData.timestamp),
