@@ -94,25 +94,37 @@ class DataStorageService {
   saveMissionLocally = saveMissionLocally;
   deleteMission = deleteMission;
 
-  // Sync methods with debouncing
+  // Sync methods with proper debouncing
   async syncPendingMissions(): Promise<void> {
     // Clear existing timeout
     if (syncTimeout) {
       clearTimeout(syncTimeout);
     }
     
-    // Set new timeout
-    return new Promise((resolve, reject) => {
+    // Don't sync if already syncing
+    if (this.isSyncing) {
+      logger.debug('🔄 Sync already in progress, skipping...');
+      return;
+    }
+    
+    // Set new timeout for debounced sync
+    return new Promise((resolve) => {
       syncTimeout = setTimeout(async () => {
         try {
+          this.isSyncing = true;
           await syncPendingMissions();
-          resolve();
+          logger.debug('✅ Sync completed');
         } catch (error) {
-          reject(error);
+          logger.error('❌ Sync failed:', error);
+        } finally {
+          this.isSyncing = false;
+          resolve();
         }
       }, SYNC_DEBOUNCE_MS);
     });
   }
+
+  private isSyncing = false;
 }
 
 export const dataStorage = new DataStorageService();

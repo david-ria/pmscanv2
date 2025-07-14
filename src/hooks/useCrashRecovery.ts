@@ -44,12 +44,9 @@ export function useCrashRecovery() {
           }
         }
 
-        // Clear any pending sync missions that might be causing duplicates
-        // This prevents endless retry loops for missions that already exist
+        // Skip clearing local storage during crash recovery to prevent more sync issues
         if (navigator.onLine) {
-          logger.debug('🧹 Cleaning up pending sync before crash recovery...');
-          // Just clear the local storage instead of trying to sync again
-          dataStorage.clearLocalStorage();
+          logger.debug('🧹 Online - but skipping storage clear to prevent sync loops');
         }
         
         // Check for interrupted recording data
@@ -119,12 +116,8 @@ export function useCrashRecovery() {
           }
         }
 
-        // Only sync if we have pending missions (reduce unnecessary syncs)
-        const pendingSyncIds = localStorage.getItem('pmscan_pending_sync');
-        if (navigator.onLine && pendingSyncIds && JSON.parse(pendingSyncIds).length > 0) {
-          logger.debug('🔄 Syncing pending missions...');
-          await dataStorage.syncPendingMissions();
-        }
+        // Skip automatic sync during crash recovery to prevent loops
+        logger.debug('🚫 Skipping auto-sync during crash recovery to prevent loops');
 
       } catch (error) {
         console.error('Error during crash recovery:', error);

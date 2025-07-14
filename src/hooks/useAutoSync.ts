@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { dataStorage } from '@/lib/dataStorage';
+import * as logger from '@/utils/logger';
 
 export function useAutoSync() {
   // Auto-sync when coming online (debounced)
@@ -21,14 +22,9 @@ export function useAutoSync() {
     };
   }, []);
 
-  // Sync on app load if online (only once)
+  // Disable initial sync on app load to reduce sync spam
   useEffect(() => {
-    if (navigator.onLine) {
-      const timeoutId = setTimeout(() => {
-        dataStorage.syncPendingMissions().catch(console.error);
-      }, 3000); // Delay initial sync to let app load
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, []); // Empty dependency array ensures this runs only once
+    // Skip initial sync to prevent excessive syncing
+    logger.debug('🚫 Skipping initial sync to reduce sync frequency');
+  }, []);
 }

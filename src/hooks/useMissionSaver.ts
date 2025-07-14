@@ -1,5 +1,6 @@
 import { dataStorage } from '@/lib/dataStorage';
 import { RecordingEntry } from '@/types/recording';
+import * as logger from '@/utils/logger';
 
 export function useMissionSaver() {
   const saveMission = (
@@ -34,21 +35,8 @@ export function useMissionSaver() {
     // Export to CSV immediately without storing locally first
     dataStorage.exportMissionToCSV(mission);
 
-    // Try to sync to database if online (but don't store locally)
-    if (navigator.onLine) {
-      // Create a temporary mission for database sync only
-      try {
-        dataStorage.saveMissionLocally(mission);
-        // Let the debounced sync handle this instead of immediate sync
-        setTimeout(() => {
-          dataStorage.syncPendingMissions().catch(console.error);
-        }, 1000);
-        // Clear storage immediately after sync attempt
-        dataStorage.clearLocalStorage();
-      } catch (storageError) {
-        console.warn('Local storage failed, but CSV exported successfully');
-      }
-    }
+    // Skip database sync for now to prevent excessive syncing
+    logger.debug('📁 Mission exported to CSV - skipping database sync to reduce sync frequency');
 
     return mission;
   };
