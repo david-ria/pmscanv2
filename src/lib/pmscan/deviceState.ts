@@ -5,7 +5,7 @@ import { PMScanInternalState } from './types';
  */
 export class PMScanDeviceState {
   public state: PMScanInternalState = {
-    name: "PMScanXXXXXX",
+    name: 'PMScanXXXXXX',
     version: 0,
     mode: 0,
     interval: 0,

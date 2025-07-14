@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getGroupConfig, type GroupConfig } from '@/lib/groupConfigs';
 import { useToast } from '@/hooks/use-toast';
+import * as logger from '@/utils/logger';
 
 export const useGroupSettings = () => {
   const [searchParams] = useSearchParams();
@@ -12,7 +13,7 @@ export const useGroupSettings = () => {
   useEffect(() => {
     // Check for both 'group' parameter and direct group ID as parameter
     let groupId = searchParams.get('group');
-    
+
     // If no 'group' parameter found, check if the first search param might be a group ID
     if (!groupId) {
       const firstParam = Array.from(searchParams.keys())[0];
@@ -20,38 +21,38 @@ export const useGroupSettings = () => {
         groupId = firstParam;
       }
     }
-    
-    console.log('Group ID from URL:', groupId); // Debug log
-    
+
+    logger.debug('Group ID from URL:', groupId);
+
     if (groupId) {
       const groupConfig = getGroupConfig(groupId);
-      console.log('Group config found:', groupConfig); // Debug log
-      
+      logger.debug('Group config found:', groupConfig);
+
       if (groupConfig) {
         setActiveGroup(groupConfig);
         setIsGroupMode(true);
-        
+
         // Store group settings in localStorage for persistence
         localStorage.setItem('activeGroupId', groupId);
         localStorage.setItem('groupSettings', JSON.stringify(groupConfig));
-        
+
         toast({
           title: `Group Settings Applied`,
           description: `Now using settings for: ${groupConfig.name}`,
-          duration: 3000
+          duration: 3000,
         });
       } else {
         console.error('Group not found:', groupId); // Debug log
         toast({
-          title: "Group Not Found",
+          title: 'Group Not Found',
           description: `Group "${groupId}" does not exist`,
-          variant: "destructive"
+          variant: 'destructive',
         });
       }
     } else {
       // Check if we have a stored group
       const storedGroupId = localStorage.getItem('activeGroupId');
-      console.log('Stored group ID:', storedGroupId); // Debug log
+      logger.debug('Stored group ID:', storedGroupId);
       if (storedGroupId) {
         const groupConfig = getGroupConfig(storedGroupId);
         if (groupConfig) {
@@ -67,44 +68,44 @@ export const useGroupSettings = () => {
     setIsGroupMode(false);
     localStorage.removeItem('activeGroupId');
     localStorage.removeItem('groupSettings');
-    
+
     // Remove group parameter from URL without page reload
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.delete('group');
     window.history.replaceState({}, '', newUrl.toString());
-    
+
     toast({
-      title: "Group Settings Cleared",
-      description: "Returned to personal settings",
+      title: 'Group Settings Cleared',
+      description: 'Returned to personal settings',
     });
   };
 
   const applyGroupById = (groupId: string) => {
     const groupConfig = getGroupConfig(groupId);
-    
+
     if (groupConfig) {
       setActiveGroup(groupConfig);
       setIsGroupMode(true);
-      
+
       localStorage.setItem('activeGroupId', groupId);
       localStorage.setItem('groupSettings', JSON.stringify(groupConfig));
-      
+
       // Add group parameter to URL
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set('group', groupId);
       window.history.replaceState({}, '', newUrl.toString());
-      
+
       toast({
         title: `Group Settings Applied`,
         description: `Now using settings for: ${groupConfig.name}`,
       });
-      
+
       return true;
     } else {
       toast({
-        title: "Group Not Found",
+        title: 'Group Not Found',
         description: `Group "${groupId}" does not exist`,
-        variant: "destructive"
+        variant: 'destructive',
       });
       return false;
     }
@@ -166,6 +167,6 @@ export const useGroupSettings = () => {
     getCurrentAlarms,
     getCurrentLocations,
     getCurrentActivities,
-    getCurrentEvents
+    getCurrentEvents,
   };
 };

@@ -1,10 +1,21 @@
-import { Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { frequencyOptionKeys } from "@/lib/recordingConstants";
-import { useTranslation } from "react-i18next";
+import { Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { frequencyOptionKeys } from '@/lib/recordingConstants';
+import { useTranslation } from 'react-i18next';
 
 interface RecordingFrequencyDialogProps {
   open: boolean;
@@ -19,7 +30,7 @@ export function RecordingFrequencyDialog({
   onOpenChange,
   recordingFrequency,
   onFrequencyChange,
-  onConfirm
+  onConfirm,
 }: RecordingFrequencyDialogProps) {
   const { t } = useTranslation();
   return (
@@ -46,17 +57,14 @@ export function RecordingFrequencyDialog({
             </SelectContent>
           </Select>
           <div className="flex gap-2 pt-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => onOpenChange(false)}
               className="flex-1"
             >
               {t('modals.recordingFrequency.cancel')}
             </Button>
-            <Button 
-              onClick={onConfirm}
-              className="flex-1"
-            >
+            <Button onClick={onConfirm} className="flex-1">
               {t('modals.recordingFrequency.start')}
             </Button>
           </div>

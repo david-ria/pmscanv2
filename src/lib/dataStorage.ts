@@ -1,10 +1,19 @@
-import { supabase } from "@/integrations/supabase/client";
-import { PMScanData } from "@/lib/pmscan/types";
-import { LocationData } from "@/types/PMScan";
-import { exportMissionToCSV } from "./csvExport";
-import { createMissionFromRecording, saveMissionLocally, deleteMission } from "./missionManager";
-import { getLocalMissions, formatDatabaseMission, clearLocalStorage } from "./localStorage";
-import { syncPendingMissions } from "./dataSync";
+import { supabase } from '@/integrations/supabase/client';
+import { PMScanData } from '@/lib/pmscan/types';
+import { LocationData } from '@/types/PMScan';
+import { exportMissionToCSV } from './csvExport';
+import {
+  createMissionFromRecording,
+  saveMissionLocally,
+  deleteMission,
+} from './missionManager';
+import {
+  getLocalMissions,
+  formatDatabaseMission,
+  clearLocalStorage,
+} from './localStorage';
+import { syncPendingMissions } from './dataSync';
+import * as logger from '@/utils/logger';
 
 export interface MissionData {
   id: string;
@@ -45,26 +54,28 @@ class DataStorageService {
   // Get all missions (local + synced from database)
   async getAllMissions(): Promise<MissionData[]> {
     const localMissions = getLocalMissions();
-    
+
     try {
       // Try to fetch from database if online
       const { data: dbMissions, error } = await supabase
         .from('missions')
-        .select(`
+        .select(
+          `
           *,
           measurements (*)
-        `)
+        `
+        )
         .order('created_at', { ascending: false });
 
       if (!error && dbMissions) {
         const formattedDbMissions = dbMissions.map(formatDatabaseMission);
-        
+
         // Merge with local unsynced missions
-        const unsyncedLocal = localMissions.filter(m => !m.synced);
+        const unsyncedLocal = localMissions.filter((m) => !m.synced);
         return [...unsyncedLocal, ...formattedDbMissions];
       }
     } catch (error) {
-      console.log('Database not available, using local data only:', error);
+      logger.debug('Database not available, using local data only:', error);
     }
 
     return localMissions;

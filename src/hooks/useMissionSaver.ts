@@ -1,5 +1,5 @@
-import { dataStorage } from "@/lib/dataStorage";
-import { RecordingEntry } from "@/types/recording";
+import { dataStorage } from '@/lib/dataStorage';
+import { RecordingEntry } from '@/types/recording';
 
 export function useMissionSaver() {
   const saveMission = (
@@ -12,11 +12,11 @@ export function useMissionSaver() {
     shared?: boolean
   ) => {
     if (!recordingStartTime) {
-      throw new Error("Aucun enregistrement en cours à sauvegarder");
+      throw new Error('Aucun enregistrement en cours à sauvegarder');
     }
-    
+
     if (recordingData.length === 0) {
-      throw new Error("Aucune donnée enregistrée pour créer la mission");
+      throw new Error('Aucune donnée enregistrée pour créer la mission');
     }
 
     const endTime = new Date();

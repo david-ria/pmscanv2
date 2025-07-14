@@ -1,12 +1,17 @@
-import { useEffect } from "react";
-import { PMScanData } from "@/lib/pmscan/types";
-import { LocationData } from "@/types/PMScan";
-import { useRecordingState } from "./useRecordingState";
-import { useBackgroundRecordingIntegration } from "./useBackgroundRecordingIntegration";
-import { useMissionSaver } from "./useMissionSaver";
-import { useAutoSync } from "./useAutoSync";
-import { useDataPointRecorder } from "./useDataPointRecorder";
-import { setGlobalRecording, setBackgroundRecording, getBackgroundRecording } from "@/lib/pmscan/globalConnectionManager";
+import { useEffect } from 'react';
+import { PMScanData } from '@/lib/pmscan/types';
+import { LocationData } from '@/types/PMScan';
+import { useRecordingState } from './useRecordingState';
+import { useBackgroundRecordingIntegration } from './useBackgroundRecordingIntegration';
+import { useMissionSaver } from './useMissionSaver';
+import { useAutoSync } from './useAutoSync';
+import { useDataPointRecorder } from './useDataPointRecorder';
+import {
+  setGlobalRecording,
+  setBackgroundRecording,
+  getBackgroundRecording,
+} from '@/lib/pmscan/globalConnectionManager';
+import * as logger from '@/utils/logger';
 
 export function useRecordingData() {
   const {
@@ -46,14 +51,14 @@ export function useRecordingData() {
   useEffect(() => {
     // Only log significant state changes
     if (isRecording) {
-      console.log("🎬 Recording started");
+      logger.debug('🎬 Recording started');
     }
   }, [isRecording]);
 
-  const startRecording = async (frequency: string = "10s") => {
+  const startRecording = async (frequency: string = '10s') => {
     startRecordingState(frequency);
     setGlobalRecording(true);
-    
+
     // Enable background recording if background mode is active
     if (getBackgroundRecording()) {
       await enableRecordingBackground(frequency);
@@ -63,7 +68,7 @@ export function useRecordingData() {
   const stopRecording = async () => {
     stopRecordingState();
     setGlobalRecording(false);
-    
+
     // Disable background recording when stopping
     await disableRecordingBackground();
   };
@@ -102,6 +107,6 @@ export function useRecordingData() {
     saveMission,
     clearRecordingData,
     updateMissionContext,
-    recordingStartTime
+    recordingStartTime,
   };
 }

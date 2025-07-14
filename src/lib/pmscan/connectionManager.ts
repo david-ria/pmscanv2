@@ -3,7 +3,11 @@ import { PMScanDeviceState } from './deviceState';
 import { PMScanDeviceInitializer } from './deviceInitializer';
 import { PMScanEventManager } from './eventManager';
 import { PMScanConnectionUtils } from './connectionUtils';
-import { getGlobalRecording, getBackgroundRecording } from './globalConnectionManager';
+import {
+  getGlobalRecording,
+  getBackgroundRecording,
+} from './globalConnectionManager';
+import * as logger from '@/utils/logger';
 
 export class PMScanConnectionManager {
   private device: BluetoothDevice | null = null;
@@ -11,7 +15,7 @@ export class PMScanConnectionManager {
   private service: BluetoothRemoteGATTService | null = null;
   private isInited = false;
   private shouldConnect = false;
-  
+
   private deviceState: PMScanDeviceState;
   private deviceInitializer: PMScanDeviceInitializer;
   private eventManager: PMScanEventManager;
@@ -27,7 +31,7 @@ export class PMScanConnectionManager {
   }
 
   public isConnected(): boolean {
-    return this.device?.gatt?.connected && this.isInited || false;
+    return (this.device?.gatt?.connected && this.isInited) || false;
   }
 
   public shouldAutoConnect(): boolean {
@@ -46,7 +50,7 @@ export class PMScanConnectionManager {
     if (!this.device || !this.shouldConnect) {
       throw new Error('No device available or should not connect');
     }
-    
+
     const server = await PMScanConnectionUtils.connectToDevice(this.device);
     this.server = server;
     return server;
@@ -63,55 +67,64 @@ export class PMScanConnectionManager {
     }
 
     this.isInited = false;
-    
-    const { deviceInfo, service } = await this.deviceInitializer.initializeDevice(
-      this.server,
-      this.device,
-      onRTData,
-      onIMData,
-      onBatteryData,
-      onChargingData
-    );
-    
+
+    const { deviceInfo, service } =
+      await this.deviceInitializer.initializeDevice(
+        this.server,
+        this.device,
+        onRTData,
+        onIMData,
+        onBatteryData,
+        onChargingData
+      );
+
     this.service = service;
     this.isInited = true;
-    
+
     return deviceInfo;
   }
 
   public async disconnect(force: boolean = false): Promise<boolean> {
     // Check if we're recording globally or in background mode before allowing disconnection
-    const shouldPreventDisconnect = getGlobalRecording() || getBackgroundRecording();
-    
+    const shouldPreventDisconnect =
+      getGlobalRecording() || getBackgroundRecording();
+
     if (shouldPreventDisconnect && !force) {
-      console.log('🚫 Cannot disconnect PMScan while recording is active or background mode is enabled');
+      logger.debug(
+        '🚫 Cannot disconnect PMScan while recording is active or background mode is enabled'
+      );
       return false;
     }
-    
+
     this.shouldConnect = false;
-    
+
     if (this.device?.gatt?.connected && this.service) {
       try {
-        await PMScanConnectionUtils.sendDisconnectCommand(this.service, this.deviceState.state.mode);
+        await PMScanConnectionUtils.sendDisconnectCommand(
+          this.service,
+          this.deviceState.state.mode
+        );
         this.device.gatt.disconnect();
       } catch (err) {
         console.error('❌ Failed to send disconnect command:', err);
       }
     }
-    
+
     this.isInited = false;
     return true;
   }
 
   public onDisconnected(): void {
-    console.log('🔌 PMScan Device disconnected');
+    logger.debug('🔌 PMScan Device disconnected');
     this.isInited = false;
 
     // Check if we should automatically reconnect (when recording or in background mode)
     const shouldReconnect = getGlobalRecording() || getBackgroundRecording();
-    
+
     if (shouldReconnect) {
-      console.log('🔄 Auto-reconnecting PMScan due to active recording or background mode...');
+      logger.debug(
+        '🔄 Auto-reconnecting PMScan due to active recording or background mode...'
+      );
       // Reset init state but keep shouldConnect true for reconnection
       this.isInited = false;
       // Don't set shouldConnect to false as we want to reconnect

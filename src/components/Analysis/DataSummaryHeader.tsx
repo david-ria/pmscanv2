@@ -1,5 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { useTranslation } from "react-i18next";
+import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from 'react-i18next';
 
 interface DataSummaryHeaderProps {
   dataPoints: {
@@ -61,27 +61,49 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
       <CardContent className="p-4">
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <span className="text-primary font-medium">📊 Résumé des données</span>
+            <span className="text-primary font-medium">
+              📊 Résumé des données
+            </span>
           </div>
-          
+
           <div className="flex items-center gap-1 bg-muted/50 px-3 py-1 rounded-lg">
-            <span className="font-bold text-foreground text-lg">{dataPoints.totalMissions}</span>
+            <span className="font-bold text-foreground text-lg">
+              {dataPoints.totalMissions}
+            </span>
             <span className="text-muted-foreground text-xs">Missions</span>
           </div>
 
           <div className="flex items-center gap-1 bg-muted/50 px-3 py-1 rounded-lg">
-            <span className="font-bold text-foreground text-lg">{formatDuration(dataPoints.totalExposureMinutes)}</span>
-            <span className="text-muted-foreground text-xs">Temps d'exposition</span>
+            <span className="font-bold text-foreground text-lg">
+              {formatDuration(dataPoints.totalExposureMinutes)}
+            </span>
+            <span className="text-muted-foreground text-xs">
+              Temps d'exposition
+            </span>
           </div>
 
           <div className="flex items-center gap-1 bg-muted/50 px-3 py-1 rounded-lg">
-            <span className="font-bold text-foreground text-lg">{formatDuration(dataPoints.timeAboveWHO)}</span>
-            <span className="text-muted-foreground text-xs">Min {'>'}seuil OMS</span>
+            <span className="font-bold text-foreground text-lg">
+              {formatDuration(dataPoints.timeAboveWHO)}
+            </span>
+            <span className="text-muted-foreground text-xs">
+              Min {'>'}seuil OMS
+            </span>
           </div>
 
-          <div className={`flex items-center gap-1 ${getPM25BackgroundColor(dataPoints.averagePM25)} px-3 py-1 rounded-lg`}>
-            <span className={`font-bold ${getPM25TextColor(dataPoints.averagePM25)} text-lg`}>{Math.round(dataPoints.averagePM25)}</span>
-            <span className={`${getPM25SubtextColor(dataPoints.averagePM25)} text-xs`}>PM2.5 moyen (μg/m³)</span>
+          <div
+            className={`flex items-center gap-1 ${getPM25BackgroundColor(dataPoints.averagePM25)} px-3 py-1 rounded-lg`}
+          >
+            <span
+              className={`font-bold ${getPM25TextColor(dataPoints.averagePM25)} text-lg`}
+            >
+              {Math.round(dataPoints.averagePM25)}
+            </span>
+            <span
+              className={`${getPM25SubtextColor(dataPoints.averagePM25)} text-xs`}
+            >
+              PM2.5 moyen (μg/m³)
+            </span>
           </div>
         </div>
       </CardContent>

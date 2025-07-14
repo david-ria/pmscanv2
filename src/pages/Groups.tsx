@@ -3,7 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Users, Settings, UserPlus, Mail, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGroups, useGroupInvitations } from '@/hooks/useGroups';
@@ -12,6 +18,7 @@ import { CreateGroupDialog } from '@/components/Groups/CreateGroupDialog';
 import { InviteUserDialog } from '@/components/Groups/InviteUserDialog';
 import { GroupCard } from '@/components/Groups/GroupCard';
 import { InvitationCard } from '@/components/Groups/InvitationCard';
+import * as logger from '@/utils/logger';
 
 export default function Groups() {
   const [searchParams] = useSearchParams();
@@ -24,7 +31,8 @@ export default function Groups() {
   const { t } = useTranslation();
 
   // Get initial tab from URL params
-  const initialTab = searchParams.get('tab') === 'admin' && isSuperAdmin ? 'admin' : 'my-groups';
+  const initialTab =
+    searchParams.get('tab') === 'admin' && isSuperAdmin ? 'admin' : 'my-groups';
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // Update active tab when URL or role changes
@@ -38,7 +46,16 @@ export default function Groups() {
   }, [searchParams, isSuperAdmin]);
 
   // Log user role for debugging
-  console.log('Groups page - User role:', userRole, 'Is super admin:', isSuperAdmin, 'Active tab:', activeTab, 'URL tab:', searchParams.get('tab'));
+  logger.debug(
+    'Groups page - User role:',
+    userRole,
+    'Is super admin:',
+    isSuperAdmin,
+    'Active tab:',
+    activeTab,
+    'URL tab:',
+    searchParams.get('tab')
+  );
 
   const handleInviteUser = (groupId: string) => {
     setSelectedGroupId(groupId);
@@ -64,10 +81,10 @@ export default function Groups() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('groups.title')}</h1>
-          <p className="text-muted-foreground">
-            {t('groups.subtitle')}
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t('groups.title')}
+          </h1>
+          <p className="text-muted-foreground">{t('groups.subtitle')}</p>
         </div>
       </div>
 
@@ -78,7 +95,10 @@ export default function Groups() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Admin Panel</h2>
-              <p className="text-muted-foreground">Manage all groups, create new groups, and handle administrative tasks</p>
+              <p className="text-muted-foreground">
+                Manage all groups, create new groups, and handle administrative
+                tasks
+              </p>
             </div>
             <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
@@ -90,11 +110,17 @@ export default function Groups() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Shield className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No groups created yet</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  No groups created yet
+                </h3>
                 <p className="text-muted-foreground text-center mb-4">
-                  Create your first group to start managing air quality monitoring groups
+                  Create your first group to start managing air quality
+                  monitoring groups
                 </p>
-                <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
+                <Button
+                  onClick={() => setCreateGroupOpen(true)}
+                  className="gap-2"
+                >
                   <Plus className="h-4 w-4" />
                   {t('groups.createGroup')}
                 </Button>
@@ -132,7 +158,9 @@ export default function Groups() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Users className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">{t('groups.noGroupsYet')}</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    {t('groups.noGroupsYet')}
+                  </h3>
                   <p className="text-muted-foreground text-center mb-4">
                     {t('groups.invitationsDescription')}
                   </p>
@@ -157,7 +185,9 @@ export default function Groups() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Mail className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">{t('groups.noPendingInvitations')}</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    {t('groups.noPendingInvitations')}
+                  </h3>
                   <p className="text-muted-foreground text-center">
                     {t('groups.invitationsDescription')}
                   </p>

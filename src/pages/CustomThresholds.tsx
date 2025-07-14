@@ -8,7 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { useThresholds, AirQualityThresholds } from '@/contexts/ThresholdContext';
+import {
+  useThresholds,
+  AirQualityThresholds,
+} from '@/contexts/ThresholdContext';
 import { MenuPageHeader } from '@/components/MenuPageHeader';
 
 export default function CustomThresholds() {
@@ -16,8 +19,9 @@ export default function CustomThresholds() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { thresholds, updateThresholds, resetToWHOStandards } = useThresholds();
-  
-  const [localThresholds, setLocalThresholds] = useState<AirQualityThresholds>(thresholds);
+
+  const [localThresholds, setLocalThresholds] =
+    useState<AirQualityThresholds>(thresholds);
 
   const handleInputChange = (
     pollutant: 'pm1' | 'pm25' | 'pm10',
@@ -27,12 +31,12 @@ export default function CustomThresholds() {
     const numValue = parseFloat(value);
     if (isNaN(numValue) || numValue < 0) return;
 
-    setLocalThresholds(prev => ({
+    setLocalThresholds((prev) => ({
       ...prev,
       [pollutant]: {
         ...prev[pollutant],
-        [level]: numValue
-      }
+        [level]: numValue,
+      },
     }));
   };
 
@@ -51,7 +55,7 @@ export default function CustomThresholds() {
       toast({
         title: t('common.error'),
         description: t('thresholds.validation.increasingOrder'),
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
@@ -59,7 +63,7 @@ export default function CustomThresholds() {
     updateThresholds(localThresholds);
     toast({
       title: t('common.success'),
-      description: t('thresholds.saved')
+      description: t('thresholds.saved'),
     });
     navigate('/profile');
   };
@@ -69,7 +73,7 @@ export default function CustomThresholds() {
     setLocalThresholds(thresholds);
     toast({
       title: t('common.success'),
-      description: t('thresholds.resetToWHO')
+      description: t('thresholds.resetToWHO'),
     });
   };
 
@@ -93,7 +97,9 @@ export default function CustomThresholds() {
               min="0"
               step="0.1"
               value={localThresholds[pollutant].good}
-              onChange={(e) => handleInputChange(pollutant, 'good', e.target.value)}
+              onChange={(e) =>
+                handleInputChange(pollutant, 'good', e.target.value)
+              }
               className="text-center"
             />
           </div>
@@ -106,7 +112,9 @@ export default function CustomThresholds() {
               min="0"
               step="0.1"
               value={localThresholds[pollutant].moderate}
-              onChange={(e) => handleInputChange(pollutant, 'moderate', e.target.value)}
+              onChange={(e) =>
+                handleInputChange(pollutant, 'moderate', e.target.value)
+              }
               className="text-center"
             />
           </div>
@@ -119,13 +127,16 @@ export default function CustomThresholds() {
               min="0"
               step="0.1"
               value={localThresholds[pollutant].poor}
-              onChange={(e) => handleInputChange(pollutant, 'poor', e.target.value)}
+              onChange={(e) =>
+                handleInputChange(pollutant, 'poor', e.target.value)
+              }
               className="text-center"
             />
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          {t('thresholds.levels.veryPoor')}: {'>'} {localThresholds[pollutant].poor} {unit}
+          {t('thresholds.levels.veryPoor')}: {'>'}{' '}
+          {localThresholds[pollutant].poor} {unit}
         </p>
       </CardContent>
     </Card>
@@ -135,7 +146,7 @@ export default function CustomThresholds() {
     <div className="min-h-screen bg-background px-4 py-6">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <MenuPageHeader 
+        <MenuPageHeader
           title={t('thresholds.title')}
           subtitle={t('thresholds.subtitle')}
         />

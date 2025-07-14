@@ -1,14 +1,15 @@
-import { useBackgroundRecording } from "./useBackgroundRecording";
-import { parseFrequencyToMs } from "@/lib/recordingUtils";
-import { PMScanData } from "@/lib/pmscan/types";
-import { LocationData } from "@/types/PMScan";
+import { useBackgroundRecording } from './useBackgroundRecording';
+import { parseFrequencyToMs } from '@/lib/recordingUtils';
+import { PMScanData } from '@/lib/pmscan/types';
+import { LocationData } from '@/types/PMScan';
+import * as logger from '@/utils/logger';
 
 export function useBackgroundRecordingIntegration() {
-  const { 
-    isBackgroundEnabled, 
-    enableBackgroundRecording, 
+  const {
+    isBackgroundEnabled,
+    enableBackgroundRecording,
     disableBackgroundRecording,
-    storeDataForBackground 
+    storeDataForBackground,
   } = useBackgroundRecording();
 
   const enableRecordingBackground = async (frequency: string) => {
@@ -16,26 +17,26 @@ export function useBackgroundRecordingIntegration() {
       await enableBackgroundRecording({
         enableWakeLock: true,
         enableNotifications: true,
-        syncInterval: parseFrequencyToMs(frequency)
+        syncInterval: parseFrequencyToMs(frequency),
       });
-      console.log("🎯 Background recording enabled");
+      logger.debug('🎯 Background recording enabled');
     } catch (error) {
-      console.warn("⚠️ Background recording failed to enable:", error);
+      console.warn('⚠️ Background recording failed to enable:', error);
     }
   };
 
   const disableRecordingBackground = async () => {
     try {
       await disableBackgroundRecording();
-      console.log("🛑 Background recording disabled");
+      logger.debug('🛑 Background recording disabled');
     } catch (error) {
-      console.warn("⚠️ Background recording failed to disable:", error);
+      console.warn('⚠️ Background recording failed to disable:', error);
     }
   };
 
   const storeBackgroundData = (
-    pmData: PMScanData, 
-    location?: LocationData, 
+    pmData: PMScanData,
+    location?: LocationData,
     context?: { location: string; activity: string }
   ) => {
     if (isBackgroundEnabled) {

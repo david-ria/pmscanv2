@@ -1,9 +1,9 @@
-import { Activity, Clock, BarChart3 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { useTranslation } from "react-i18next";
+import { Activity, Clock, BarChart3 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { useTranslation } from 'react-i18next';
 
 interface ActivityData {
   activity: string;
@@ -19,10 +19,10 @@ interface ActivityAnalysisProps {
   onToggleExposure: (value: boolean) => void;
 }
 
-export const ActivityAnalysis = ({ 
-  activityData, 
-  showActivityExposure, 
-  onToggleExposure 
+export const ActivityAnalysis = ({
+  activityData,
+  showActivityExposure,
+  onToggleExposure,
 }: ActivityAnalysisProps) => {
   const { t } = useTranslation();
 
@@ -56,15 +56,16 @@ export const ActivityAnalysis = ({
       <CardContent>
         <div className="space-y-4">
           {activityData.map((activity, index) => {
-            const maxValue = showActivityExposure 
-              ? Math.max(...activityData.map(a => a.cumulativeDose))
-              : Math.max(...activityData.map(a => a.timeSpent));
-            
-            const currentValue = showActivityExposure 
-              ? activity.cumulativeDose 
+            const maxValue = showActivityExposure
+              ? Math.max(...activityData.map((a) => a.cumulativeDose))
+              : Math.max(...activityData.map((a) => a.timeSpent));
+
+            const currentValue = showActivityExposure
+              ? activity.cumulativeDose
               : activity.timeSpent;
-            
-            const percentage = maxValue > 0 ? (currentValue / maxValue) * 100 : 0;
+
+            const percentage =
+              maxValue > 0 ? (currentValue / maxValue) * 100 : 0;
 
             return (
               <div key={activity.activity} className="space-y-2">
@@ -74,20 +75,16 @@ export const ActivityAnalysis = ({
                   </span>
                   <div className="text-sm text-muted-foreground flex items-center gap-4">
                     <span>
-                      {showActivityExposure 
+                      {showActivityExposure
                         ? `${activity.cumulativeDose.toFixed(1)} µg·h/m³`
-                        : `${Math.round(activity.timeSpent / 60)}h ${activity.timeSpent % 60}min`
-                      }
+                        : `${Math.round(activity.timeSpent / 60)}h ${activity.timeSpent % 60}min`}
                     </span>
                     <span className="text-xs">
                       {activity.measurements} {t('analysis.measurements')}
                     </span>
                   </div>
                 </div>
-                <Progress 
-                  value={percentage} 
-                  className="h-2"
-                />
+                <Progress value={percentage} className="h-2" />
               </div>
             );
           })}

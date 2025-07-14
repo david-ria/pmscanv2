@@ -1,7 +1,7 @@
-import { RefreshCw, BarChart3, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useTranslation } from "react-i18next";
+import { RefreshCw, BarChart3, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from 'react-i18next';
 
 interface StatisticalAnalysisProps {
   statisticalAnalysis: string;
@@ -12,7 +12,7 @@ interface StatisticalAnalysisProps {
 export const StatisticalAnalysis = ({
   statisticalAnalysis,
   loading,
-  onRegenerate
+  onRegenerate,
 }: StatisticalAnalysisProps) => {
   const { t } = useTranslation();
 
@@ -26,8 +26,8 @@ export const StatisticalAnalysis = ({
             <BarChart3 className="h-5 w-5 text-primary" />
             {t('analysis.statisticalAnalysis')}
           </CardTitle>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={onRegenerate}
             disabled={loading}
@@ -45,7 +45,9 @@ export const StatisticalAnalysis = ({
         {loading ? (
           <div className="text-center py-8">
             <RefreshCw className="h-8 w-8 mx-auto text-primary animate-spin mb-4" />
-            <p className="text-muted-foreground">{t('analysis.analysisInProgress')}</p>
+            <p className="text-muted-foreground">
+              {t('analysis.analysisInProgress')}
+            </p>
           </div>
         ) : (
           <>

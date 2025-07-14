@@ -82,7 +82,21 @@ development mode) additional debug messages will be printed. Example:
 VITE_LOG_LEVEL=debug npm run dev
 ```
 
-Leave this variable unset (or use any other value) to silence debug output.
+## Supabase configuration
+
+The application expects Supabase connection details to be available as
+environment variables. When running locally with Vite, create a `.env` file with
+the following keys:
+
+```sh
+VITE_SUPABASE_URL=<your Supabase project URL>
+VITE_SUPABASE_ANON_KEY=<your Supabase anon key>
+```
+
+These values are used to initialize the client. If either variable is undefined
+the default values bundled in the repository are used instead.
+
+Leave `VITE_LOG_LEVEL` unset (or use any other value) to silence debug output.
 
 ## Running tests
 

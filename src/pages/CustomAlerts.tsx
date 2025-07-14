@@ -16,15 +16,16 @@ export default function CustomAlerts() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { 
-    alertSettings, 
-    updateAlertSettings, 
-    resetToDefaults, 
-    globalAlertsEnabled, 
-    setGlobalAlertsEnabled 
+  const {
+    alertSettings,
+    updateAlertSettings,
+    resetToDefaults,
+    globalAlertsEnabled,
+    setGlobalAlertsEnabled,
   } = useAlerts();
-  
-  const [localSettings, setLocalSettings] = useState<AlertSettings>(alertSettings);
+
+  const [localSettings, setLocalSettings] =
+    useState<AlertSettings>(alertSettings);
 
   const handleThresholdChange = (
     pollutant: 'pm1' | 'pm25' | 'pm10',
@@ -33,12 +34,12 @@ export default function CustomAlerts() {
     const numValue = value === '' ? null : parseFloat(value);
     if (numValue !== null && (isNaN(numValue) || numValue < 0)) return;
 
-    setLocalSettings(prev => ({
+    setLocalSettings((prev) => ({
       ...prev,
       [pollutant]: {
         ...prev[pollutant],
-        threshold: numValue
-      }
+        threshold: numValue,
+      },
     }));
   };
 
@@ -49,12 +50,12 @@ export default function CustomAlerts() {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 1) return;
 
-    setLocalSettings(prev => ({
+    setLocalSettings((prev) => ({
       ...prev,
       [pollutant]: {
         ...prev[pollutant],
-        duration: numValue
-      }
+        duration: numValue,
+      },
     }));
   };
 
@@ -62,12 +63,12 @@ export default function CustomAlerts() {
     pollutant: 'pm1' | 'pm25' | 'pm10',
     enabled: boolean
   ) => {
-    setLocalSettings(prev => ({
+    setLocalSettings((prev) => ({
       ...prev,
       [pollutant]: {
         ...prev[pollutant],
-        enabled: enabled
-      }
+        enabled: enabled,
+      },
     }));
   };
 
@@ -75,7 +76,10 @@ export default function CustomAlerts() {
     for (const pollutant of ['pm1', 'pm25', 'pm10'] as const) {
       const pollutantSettings = settings[pollutant];
       if (pollutantSettings.enabled) {
-        if (pollutantSettings.threshold === null || pollutantSettings.threshold <= 0) {
+        if (
+          pollutantSettings.threshold === null ||
+          pollutantSettings.threshold <= 0
+        ) {
           return false;
         }
         if (pollutantSettings.duration < 1) {
@@ -91,7 +95,7 @@ export default function CustomAlerts() {
       toast({
         title: t('common.error'),
         description: t('alerts.validation.thresholdRequired'),
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
@@ -99,7 +103,7 @@ export default function CustomAlerts() {
     updateAlertSettings(localSettings);
     toast({
       title: t('common.success'),
-      description: t('alerts.saved')
+      description: t('alerts.saved'),
     });
     navigate('/profile');
   };
@@ -109,7 +113,7 @@ export default function CustomAlerts() {
     setLocalSettings(alertSettings);
     toast({
       title: t('common.success'),
-      description: t('alerts.resetToDefaults')
+      description: t('alerts.resetToDefaults'),
     });
   };
 
@@ -118,7 +122,7 @@ export default function CustomAlerts() {
     title: string
   ) => {
     const settings = localSettings[pollutant];
-    
+
     return (
       <Card key={pollutant}>
         <CardHeader>
@@ -126,7 +130,9 @@ export default function CustomAlerts() {
             <CardTitle className="text-lg">{title}</CardTitle>
             <Switch
               checked={settings.enabled}
-              onCheckedChange={(enabled) => handleEnabledToggle(pollutant, enabled)}
+              onCheckedChange={(enabled) =>
+                handleEnabledToggle(pollutant, enabled)
+              }
             />
           </div>
         </CardHeader>
@@ -134,20 +140,20 @@ export default function CustomAlerts() {
           {settings.enabled ? (
             <>
               <div className="space-y-2">
-                <Label className="text-sm">
-                  {t('alerts.thresholdLevel')}
-                </Label>
+                <Label className="text-sm">{t('alerts.thresholdLevel')}</Label>
                 <Input
                   type="number"
                   min="0"
                   step="0.1"
                   value={settings.threshold || ''}
-                  onChange={(e) => handleThresholdChange(pollutant, e.target.value)}
+                  onChange={(e) =>
+                    handleThresholdChange(pollutant, e.target.value)
+                  }
                   placeholder="Ex: 25"
                   className="text-center"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label className="text-sm">
                   {t('alerts.exposureDuration')}
@@ -157,7 +163,9 @@ export default function CustomAlerts() {
                   min="1"
                   step="1"
                   value={settings.duration}
-                  onChange={(e) => handleDurationChange(pollutant, e.target.value)}
+                  onChange={(e) =>
+                    handleDurationChange(pollutant, e.target.value)
+                  }
                   className="text-center"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -168,9 +176,9 @@ export default function CustomAlerts() {
               {settings.threshold !== null && (
                 <div className="mt-3 p-3 bg-primary/5 border border-primary/10 rounded-lg">
                   <p className="text-sm text-center">
-                    {t('alerts.alertWhen', { 
-                      threshold: settings.threshold, 
-                      duration: settings.duration 
+                    {t('alerts.alertWhen', {
+                      threshold: settings.threshold,
+                      duration: settings.duration,
                     })}
                   </p>
                 </div>
@@ -192,7 +200,7 @@ export default function CustomAlerts() {
     <div className="min-h-screen bg-background px-4 py-6">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <MenuPageHeader 
+        <MenuPageHeader
           title={t('alerts.title')}
           subtitle={t('alerts.subtitle')}
         />
@@ -209,7 +217,9 @@ export default function CustomAlerts() {
                 )}
                 <div>
                   <p className="font-medium">
-                    {globalAlertsEnabled ? t('alerts.enabled') : t('alerts.disabled')}
+                    {globalAlertsEnabled
+                      ? t('alerts.enabled')
+                      : t('alerts.disabled')}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {t('alerts.toggleDescription')}
@@ -227,9 +237,7 @@ export default function CustomAlerts() {
         {/* Description */}
         <Card className="mb-6 border-primary/20 bg-primary/5">
           <CardContent className="p-4">
-            <p className="text-sm">
-              {t('alerts.description')}
-            </p>
+            <p className="text-sm">{t('alerts.description')}</p>
           </CardContent>
         </Card>
 
@@ -255,7 +263,10 @@ export default function CustomAlerts() {
           <Button
             onClick={handleSave}
             className="flex-1 min-h-[44px] touch-manipulation"
-            disabled={!globalAlertsEnabled && !Object.values(localSettings).some(s => s.enabled)}
+            disabled={
+              !globalAlertsEnabled &&
+              !Object.values(localSettings).some((s) => s.enabled)
+            }
           >
             <Save className="h-4 w-4 mr-2" />
             {t('common.save')}
@@ -263,13 +274,14 @@ export default function CustomAlerts() {
         </div>
 
         {/* Validation Warning */}
-        {!validateSettings(localSettings) && Object.values(localSettings).some(s => s.enabled) && (
-          <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-            <p className="text-sm text-destructive">
-              {t('alerts.validation.thresholdRequired')}
-            </p>
-          </div>
-        )}
+        {!validateSettings(localSettings) &&
+          Object.values(localSettings).some((s) => s.enabled) && (
+            <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm text-destructive">
+                {t('alerts.validation.thresholdRequired')}
+              </p>
+            </div>
+          )}
       </div>
     </div>
   );

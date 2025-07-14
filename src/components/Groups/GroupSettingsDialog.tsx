@@ -19,7 +19,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,18 +38,18 @@ const settingsSchema = z.object({
   // Location settings
   default_location: z.string().optional(),
   location_auto_detect: z.boolean().default(false),
-  
-  // Activity settings  
+
+  // Activity settings
   default_activity: z.string().optional(),
   activity_auto_suggest: z.boolean().default(false),
-  
+
   // Alarm settings
   alarm_enabled: z.boolean().default(true),
   pm1_threshold: z.number().min(0).max(500).default(15),
-  pm25_threshold: z.number().min(0).max(500).default(25), 
+  pm25_threshold: z.number().min(0).max(500).default(25),
   pm10_threshold: z.number().min(0).max(500).default(50),
   notification_frequency: z.string().default('immediate'),
-  
+
   // Events settings
   auto_share_stats: z.boolean().default(true),
   event_notifications: z.boolean().default(true),
@@ -58,10 +64,14 @@ interface GroupSettingsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettingsDialogProps) {
+export function GroupSettingsDialog({
+  group,
+  open,
+  onOpenChange,
+}: GroupSettingsDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  
+
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
@@ -77,7 +87,7 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
       auto_share_stats: true,
       event_notifications: true,
       weekly_reports: false,
-    }
+    },
   });
 
   // Load existing settings
@@ -126,14 +136,15 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
   const onSubmit = async (data: SettingsFormData) => {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('group_settings')
-        .upsert({
+      const { error } = await supabase.from('group_settings').upsert(
+        {
           group_id: group.id,
           ...data,
-        }, {
-          onConflict: 'group_id'
-        });
+        },
+        {
+          onConflict: 'group_id',
+        }
+      );
 
       if (error) throw error;
 
@@ -141,7 +152,7 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
         title: 'Success',
         description: 'Group settings updated successfully',
       });
-      
+
       onOpenChange(false);
     } catch (error: any) {
       toast({
@@ -163,7 +174,8 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
             Group Settings - {group.name}
           </DialogTitle>
           <DialogDescription>
-            Configure location, activity, alarm, and event settings for this group
+            Configure location, activity, alarm, and event settings for this
+            group
           </DialogDescription>
         </DialogHeader>
 
@@ -175,7 +187,7 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                 <MapPin className="h-4 w-4 text-primary" />
                 <h3 className="text-lg font-semibold">Location Settings</h3>
               </div>
-              
+
               <FormField
                 control={form.control}
                 name="default_location"
@@ -183,7 +195,10 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                   <FormItem>
                     <FormLabel>Default Location</FormLabel>
                     <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select default location" />
                         </SelectTrigger>
@@ -214,7 +229,10 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                       </div>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -229,7 +247,7 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                 <Activity className="h-4 w-4 text-primary" />
                 <h3 className="text-lg font-semibold">Activity Settings</h3>
               </div>
-              
+
               <FormField
                 control={form.control}
                 name="default_activity"
@@ -237,7 +255,10 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                   <FormItem>
                     <FormLabel>Default Activity</FormLabel>
                     <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select default activity" />
                         </SelectTrigger>
@@ -268,7 +289,10 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                       </div>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -296,7 +320,10 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                       </div>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -313,7 +340,9 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                         <Input
                           type="number"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -331,7 +360,9 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                         <Input
                           type="number"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -349,7 +380,9 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                         <Input
                           type="number"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -365,7 +398,10 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                   <FormItem>
                     <FormLabel>Notification Frequency</FormLabel>
                     <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -404,7 +440,10 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                       </div>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -422,7 +461,10 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                       </div>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -440,7 +482,10 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
                       </div>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -448,7 +493,11 @@ export function GroupSettingsDialog({ group, open, onOpenChange }: GroupSettings
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
