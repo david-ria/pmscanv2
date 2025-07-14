@@ -18,7 +18,7 @@ Changes made via Lovable will be committed automatically to this repo.
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+The only requirement is having Node.js (version **18** or newer) and npm installed. You can install Node.js via [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) or from the [official website](https://nodejs.org/).
 
 Follow these steps:
 
@@ -100,8 +100,14 @@ Leave `VITE_LOG_LEVEL` unset (or use any other value) to silence debug output.
 
 ## Running tests
 
-This project uses [Vitest](https://vitest.dev/) for unit tests. After installing
-dependencies with `npm install`, run all tests with:
+This project uses [Vitest](https://vitest.dev/) for unit tests. Before running
+the tests make sure to install the project dependencies:
+
+```sh
+npm install
+```
+
+Once the dependencies are installed, run all tests with:
 
 ```sh
 npm test
