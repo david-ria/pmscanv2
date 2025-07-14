@@ -158,10 +158,18 @@ export const useAnalysisLogic = (
         return missions;
     }
 
-    return missions.filter((mission) => {
+    const filtered = missions.filter((mission) => {
       const missionDate = new Date(mission.startTime);
-      return isWithinInterval(missionDate, { start: startDate, end: endDate });
+      const isInRange = isWithinInterval(missionDate, { start: startDate, end: endDate });
+      
+      // Debug each mission filtering
+      logger.debug(`Mission "${mission.name}": start=${mission.startTime}, parsed=${missionDate.toISOString()}, inRange=${isInRange}, duration=${mission.durationMinutes}`);
+      
+      return isInRange;
     });
+    
+    logger.debug(`Filtered ${filtered.length} out of ${missions.length} missions for period ${selectedPeriod}`);
+    return filtered;
   };
 
   const generateAnalysis = async () => {
