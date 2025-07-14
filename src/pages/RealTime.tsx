@@ -148,6 +148,11 @@ export default function RealTime() {
         recordingData={recordingData}
         isRecording={isRecording}
         device={device}
+        isConnected={isConnected}
+        onConnect={requestDevice}
+        onDisconnect={disconnect}
+        onRequestLocationPermission={requestLocationPermission}
+        locationEnabled={locationEnabled}
       />
 
       {/* Air Quality Cards */}

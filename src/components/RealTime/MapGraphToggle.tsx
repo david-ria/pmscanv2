@@ -22,6 +22,11 @@ interface MapGraphToggleProps {
   recordingData: RecordingEntry[];
   isRecording: boolean;
   device: PMScanDevice | null;
+  isConnected: boolean;
+  onConnect: () => void;
+  onDisconnect: () => void;
+  onRequestLocationPermission: () => Promise<boolean>;
+  locationEnabled: boolean;
 }
 
 export function MapGraphToggle({
@@ -33,6 +38,11 @@ export function MapGraphToggle({
   recordingData,
   isRecording,
   device,
+  isConnected,
+  onConnect,
+  onDisconnect,
+  onRequestLocationPermission,
+  locationEnabled,
 }: MapGraphToggleProps) {
   const { t } = useTranslation();
 
@@ -99,6 +109,13 @@ export function MapGraphToggle({
         {/* Floating Record Button - Always visible */}
         <FloatingRecordButton
           device={device}
+          isConnected={isConnected}
+          connectionStatus={{ connected: isConnected, connecting: false, error: null }}
+          locationEnabled={locationEnabled}
+          latestLocation={latestLocation}
+          onConnect={onConnect}
+          onDisconnect={onDisconnect}
+          onRequestLocationPermission={onRequestLocationPermission}
           className="absolute bottom-4 right-4 z-10"
         />
       </div>

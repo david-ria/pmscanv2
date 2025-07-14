@@ -7,19 +7,36 @@ import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
 import { RecordingFrequencyDialog } from './RecordingControls/RecordingFrequencyDialog';
 import { MissionDetailsDialog } from './RecordingControls/MissionDetailsDialog';
+import { ConnectionDialog } from './ConnectionDialog';
+import { ConnectionStatus, PMScanDevice, LocationData } from '@/types/PMScan';
 
 interface FloatingRecordButtonProps {
-  device?: any;
+  device?: PMScanDevice;
+  isConnected?: boolean;
+  connectionStatus?: ConnectionStatus;
+  locationEnabled?: boolean;
+  latestLocation?: LocationData | null;
+  onConnect?: () => void;
+  onDisconnect?: () => void;
+  onRequestLocationPermission?: () => Promise<boolean>;
   className?: string;
 }
 
 export function FloatingRecordButton({
   device,
+  isConnected = false,
+  connectionStatus = { connected: false, connecting: false, error: null },
+  locationEnabled = false,
+  latestLocation = null,
+  onConnect = () => {},
+  onDisconnect = () => {},
+  onRequestLocationPermission = async () => false,
   className,
 }: FloatingRecordButtonProps) {
   const { t } = useTranslation();
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
   const [showMissionDialog, setShowMissionDialog] = useState(false);
+  const [showConnectionDialog, setShowConnectionDialog] = useState(false);
   const [recordingFrequency, setRecordingFrequency] = useState<string>('10s');
   const [missionName, setMissionName] = useState<string>('');
   const [shareData, setShareData] = useState<boolean>(false);
@@ -39,6 +56,11 @@ export function FloatingRecordButton({
   };
 
   const handleStartRecording = () => {
+    // Check if PMScan device is connected
+    if (!isConnected) {
+      setShowConnectionDialog(true);
+      return;
+    }
     setShowFrequencyDialog(true);
   };
 
@@ -153,6 +175,26 @@ export function FloatingRecordButton({
         onShareDataChange={setShareData}
         onConfirm={confirmStopRecording}
         onDiscard={handleDiscardMission}
+      />
+
+      <ConnectionDialog
+        open={showConnectionDialog}
+        onOpenChange={setShowConnectionDialog}
+        connectionStatus={connectionStatus}
+        deviceInfo={device || { 
+          name: '', 
+          connected: false, 
+          battery: 0, 
+          charging: false,
+          version: 0,
+          mode: 0,
+          interval: 0
+        }}
+        locationEnabled={locationEnabled}
+        latestLocation={latestLocation}
+        onConnect={onConnect}
+        onDisconnect={onDisconnect}
+        onRequestLocationPermission={onRequestLocationPermission}
       />
     </div>
   );
