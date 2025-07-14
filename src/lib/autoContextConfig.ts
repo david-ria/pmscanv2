@@ -79,12 +79,36 @@ export interface AutoContextEvaluationData {
 
 // Default rules that replicate the original hardcoded logic
 export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
-  // High priority WiFi-based rules
+  // Highest priority: Car bluetooth (overrides everything when driving)
+  {
+    id: 'driving-car',
+    name: 'Driving',
+    description: 'Car bluetooth connected with movement',
+    priority: 100,
+    conditions: {
+      connectivity: { carBluetooth: true },
+      movement: { speed: { min: 5 } }
+    },
+    result: 'Driving'
+  },
+  {
+    id: 'tunnel-driving',
+    name: 'Driving in tunnel',
+    description: 'No cellular signal while moving with car',
+    priority: 98,
+    conditions: {
+      connectivity: { cellularSignal: false, carBluetooth: true },
+      movement: { isMoving: true }
+    },
+    result: 'Driving in tunnel'
+  },
+
+  // High priority: WiFi-based indoor detection
   {
     id: 'wifi-home-wfh',
     name: 'Working from home',
     description: 'At home WiFi during work hours with poor GPS',
-    priority: 100,
+    priority: 95,
     conditions: {
       wifi: { home: true },
       location: { gpsQuality: 'poor' },
@@ -114,92 +138,12 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     result: 'Indoor at work'
   },
 
-  // Transportation rules (high priority when conditions match)
-  {
-    id: 'driving-car',
-    name: 'Driving',
-    description: 'Car bluetooth connected with movement',
-    priority: 95,
-    conditions: {
-      connectivity: { carBluetooth: true },
-      movement: { speed: { min: 5 } }
-    },
-    result: 'Driving'
-  },
-  {
-    id: 'walking',
-    name: 'Walking',
-    description: 'Slow outdoor movement',
-    priority: 60,
-    conditions: {
-      location: { gpsQuality: 'good' },
-      movement: { speed: { max: 7 } }
-    },
-    result: 'Outdoor walking'
-  },
-  {
-    id: 'cycling',
-    name: 'Cycling',
-    description: 'Medium speed outdoor movement',
-    priority: 60,
-    conditions: {
-      location: { gpsQuality: 'good' },
-      movement: { speed: { min: 7, max: 30 } }
-    },
-    result: 'Outdoor cycling'
-  },
-  {
-    id: 'transport',
-    name: 'Transport',
-    description: 'High speed movement without car',
-    priority: 60,
-    conditions: {
-      location: { gpsQuality: 'good' },
-      movement: { speed: { min: 30 } },
-      connectivity: { carBluetooth: false }
-    },
-    result: 'Outdoor transport'
-  },
-
-  // GPS-based rules (medium priority)
-  {
-    id: 'gps-home-area',
-    name: 'Home area',
-    description: 'Good GPS signal in home area',
-    priority: 70,
-    conditions: {
-      location: { insideHome: true, gpsQuality: 'good' }
-    },
-    result: 'Outdoor'
-  },
-  {
-    id: 'gps-work-area',
-    name: 'Work area',
-    description: 'Good GPS signal in work area',
-    priority: 70,
-    conditions: {
-      location: { insideWork: true, gpsQuality: 'good' }
-    },
-    result: 'Outdoor'
-  },
-
-  // Special connectivity rules
-  {
-    id: 'tunnel-driving',
-    name: 'Driving in tunnel',
-    description: 'No cellular signal while moving with car',
-    priority: 85,
-    conditions: {
-      connectivity: { cellularSignal: false, carBluetooth: true },
-      movement: { isMoving: true }
-    },
-    result: 'Driving in tunnel'
-  },
+  // Medium-high priority: Underground/tunnel transport
   {
     id: 'underground-transport',
     name: 'Underground transport',
     description: 'No cellular signal while moving without car',
-    priority: 80,
+    priority: 85,
     conditions: {
       connectivity: { cellularSignal: false, carBluetooth: false },
       movement: { isMoving: true }
@@ -207,7 +151,80 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     result: 'Underground transport'
   },
 
-  // Fallback rules (low priority)
+  // Medium priority: GPS-based outdoor activities (fixed logic)
+  {
+    id: 'outdoor-transport',
+    name: 'High-speed transport',
+    description: 'High speed movement without car bluetooth',
+    priority: 75,
+    conditions: {
+      location: { gpsQuality: 'good' },
+      movement: { speed: { min: 30 } },
+      connectivity: { carBluetooth: false }
+    },
+    result: 'Outdoor transport'
+  },
+  {
+    id: 'outdoor-cycling',
+    name: 'Cycling',
+    description: 'Medium speed outdoor movement',
+    priority: 70,
+    conditions: {
+      location: { gpsQuality: 'good' },
+      movement: { speed: { min: 7, max: 29 } } // Fixed overlap
+    },
+    result: 'Outdoor cycling'
+  },
+  {
+    id: 'outdoor-walking',
+    name: 'Walking',
+    description: 'Slow outdoor movement',
+    priority: 65,
+    conditions: {
+      location: { gpsQuality: 'good' },
+      movement: { speed: { max: 6 } } // Fixed overlap
+    },
+    result: 'Outdoor walking'
+  },
+
+  // Lower priority: GPS area detection (fixed to be more specific)
+  {
+    id: 'gps-home-outdoor',
+    name: 'Outdoor at home',
+    description: 'Good GPS in home area without home WiFi',
+    priority: 60,
+    conditions: {
+      location: { insideHome: true, gpsQuality: 'good' },
+      wifi: { home: false }, // Only when NOT on home WiFi
+      movement: { speed: { max: 5 } } // Not moving fast
+    },
+    result: 'Outdoor at home'
+  },
+  {
+    id: 'gps-work-outdoor',
+    name: 'Outdoor at work',
+    description: 'Good GPS in work area without work WiFi',
+    priority: 60,
+    conditions: {
+      location: { insideWork: true, gpsQuality: 'good' },
+      wifi: { work: false }, // Only when NOT on work WiFi
+      movement: { speed: { max: 5 } } // Not moving fast
+    },
+    result: 'Outdoor at work'
+  },
+  {
+    id: 'gps-outdoor-generic',
+    name: 'Outdoor generic',
+    description: 'Good GPS outside known areas',
+    priority: 55,
+    conditions: {
+      location: { insideHome: false, insideWork: false, gpsQuality: 'good' },
+      movement: { speed: { max: 5 } } // Slow movement or stationary
+    },
+    result: 'Outdoor'
+  },
+
+  // Fallback rules (low priority, no conflicts)
   {
     id: 'likely-work',
     name: 'Likely at work',
@@ -215,7 +232,8 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 40,
     conditions: {
       context: { previousWifi: 'home' },
-      time: { hourRange: { start: 8, end: 10 } }
+      time: { hourRange: { start: 8, end: 10 } },
+      wifi: { known: false } // Only when no known WiFi
     },
     result: 'Likely indoor at work'
   },
