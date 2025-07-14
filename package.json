@@ -14,9 +14,8 @@
   "fix:newlines": "node scripts/ensure-trailing-newline.cjs",
   "format": "prettier --write .",
   "format:check": "prettier --check ."
-},
-
   },
+
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
