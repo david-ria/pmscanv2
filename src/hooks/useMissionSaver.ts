@@ -39,7 +39,10 @@ export function useMissionSaver() {
       // Create a temporary mission for database sync only
       try {
         dataStorage.saveMissionLocally(mission);
-        dataStorage.syncPendingMissions().catch(console.error);
+        // Let the debounced sync handle this instead of immediate sync
+        setTimeout(() => {
+          dataStorage.syncPendingMissions().catch(console.error);
+        }, 1000);
         // Clear storage immediately after sync attempt
         dataStorage.clearLocalStorage();
       } catch (storageError) {

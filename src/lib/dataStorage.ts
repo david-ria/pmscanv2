@@ -15,6 +15,10 @@ import {
 import { syncPendingMissions } from './dataSync';
 import * as logger from '@/utils/logger';
 
+// Debounced sync to prevent excessive syncing
+let syncTimeout: NodeJS.Timeout | null = null;
+const SYNC_DEBOUNCE_MS = 5000; // 5 seconds
+
 export interface MissionData {
   id: string;
   name: string;
@@ -90,8 +94,25 @@ class DataStorageService {
   saveMissionLocally = saveMissionLocally;
   deleteMission = deleteMission;
 
-  // Sync methods
-  syncPendingMissions = syncPendingMissions;
+  // Sync methods with debouncing
+  async syncPendingMissions(): Promise<void> {
+    // Clear existing timeout
+    if (syncTimeout) {
+      clearTimeout(syncTimeout);
+    }
+    
+    // Set new timeout
+    return new Promise((resolve, reject) => {
+      syncTimeout = setTimeout(async () => {
+        try {
+          await syncPendingMissions();
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      }, SYNC_DEBOUNCE_MS);
+    });
+  }
 }
 
 export const dataStorage = new DataStorageService();

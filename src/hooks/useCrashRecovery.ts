@@ -119,8 +119,10 @@ export function useCrashRecovery() {
           }
         }
 
-        // Trigger regular sync of any pending missions
-        if (navigator.onLine) {
+        // Only sync if we have pending missions (reduce unnecessary syncs)
+        const pendingSyncIds = localStorage.getItem('pmscan_pending_sync');
+        if (navigator.onLine && pendingSyncIds && JSON.parse(pendingSyncIds).length > 0) {
+          logger.debug('🔄 Syncing pending missions...');
           await dataStorage.syncPendingMissions();
         }
 
@@ -209,12 +211,8 @@ async function syncCSVToServer(csvData: UnsentCSV): Promise<void> {
   // For now, we'll trigger the sync of pending missions instead
   logger.debug(`📡 Attempting to sync CSV: ${csvData.filename}`);
   
-  // If online, try to sync any pending missions
-  if (navigator.onLine) {
-    await dataStorage.syncPendingMissions();
-  } else {
-    throw new Error('Device is offline, cannot sync CSV');
-  }
+  // Skip sync here to reduce excessive calls - handled by main sync
+  logger.debug('CSV sync request handled by main sync system');
 }
 
 // Export function to store CSV data for later sync
