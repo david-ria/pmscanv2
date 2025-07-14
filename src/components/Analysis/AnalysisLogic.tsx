@@ -182,15 +182,21 @@ export const useAnalysisLogic = (
           dateString: new Date(m.startTime).toLocaleDateString()
         })));
         
+        // Calculate date range for debugging (moved outside to avoid re-render loop)
+        const now = new Date();
+        const startDate = selectedPeriod === 'day' ? startOfDay(selectedDate) : 
+                         selectedPeriod === 'week' ? startOfWeek(selectedDate, { weekStartsOn: 1 }) :
+                         selectedPeriod === 'month' ? startOfMonth(selectedDate) :
+                         startOfYear(selectedDate);
+        const endDate = selectedPeriod === 'day' ? endOfDay(selectedDate) : 
+                       selectedPeriod === 'week' ? endOfWeek(selectedDate, { weekStartsOn: 1 }) :
+                       selectedPeriod === 'month' ? endOfMonth(selectedDate) :
+                       endOfYear(selectedDate);
+        
         logger.debug('Date range for filtering:', {
-          startDate: selectedPeriod === 'day' ? startOfDay(selectedDate) : 
-                    selectedPeriod === 'week' ? startOfWeek(selectedDate, { weekStartsOn: 1 }) :
-                    selectedPeriod === 'month' ? startOfMonth(selectedDate) :
-                    startOfYear(selectedDate),
-          endDate: selectedPeriod === 'day' ? endOfDay(selectedDate) : 
-                   selectedPeriod === 'week' ? endOfWeek(selectedDate, { weekStartsOn: 1 }) :
-                   selectedPeriod === 'month' ? endOfMonth(selectedDate) :
-                   endOfYear(selectedDate)
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          todayForReference: now.toISOString()
         });
       }
 
