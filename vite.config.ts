@@ -7,18 +7,19 @@ import type { PluginOption } from 'vite';
 export default defineConfig(async ({ mode }) => {
   const plugins: PluginOption[] = [react()];
   
-  // Dynamically import lovable-tagger in development mode
-  if (mode === 'development') {
-    try {
-      const { componentTagger } = await import('lovable-tagger');
-      const tagger = componentTagger();
-      if (tagger) {
-        plugins.push(tagger);
-      }
-    } catch (error) {
-      console.warn('lovable-tagger not available:', error);
-    }
-  }
+  // Note: componentTagger temporarily disabled to prevent console errors
+  // Will be re-enabled when the issue is resolved
+  // if (mode === 'development') {
+  //   try {
+  //     const { componentTagger } = await import('lovable-tagger');
+  //     const tagger = componentTagger();
+  //     if (tagger) {
+  //       plugins.push(tagger);
+  //     }
+  //   } catch (error) {
+  //     console.warn('lovable-tagger not available:', error);
+  //   }
+  // }
 
   return {
     server: {
