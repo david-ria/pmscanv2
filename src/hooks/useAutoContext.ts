@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import * as tf from '@tensorflow/tfjs';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
@@ -54,8 +54,9 @@ export function useAutoContext() {
         };
   });
 
-  const { updateMissionContext, missionContext, isRecording } =
-    useRecordingContext();
+  // Use a context that might not be available
+  const recordingContext = useRecordingContext();
+  const { updateMissionContext, missionContext, isRecording } = recordingContext;
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');

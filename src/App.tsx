@@ -71,24 +71,26 @@ const App = () => {
               <ProtectedRoute>
                 <RecordingProvider>
                   <CrashRecoveryInitializer />
-                  <Header />
-                  <main className="pt-14 pb-16">
-                    <Routes>
-                      <Route path="/" element={<RealTime />} />
-                      <Route path="/history" element={<History />} />
-                      <Route path="/analysis" element={<Analysis />} />
-                      <Route path="/groups" element={<Groups />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route
-                        path="/custom-thresholds"
-                        element={<CustomThresholds />}
-                      />
-                      <Route path="/custom-alerts" element={<CustomAlerts />} />
-                      <Route path="/my-settings" element={<MySettings />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </main>
-                  <BottomNavigation />
+                  <div className="min-h-screen bg-background">
+                    <Header />
+                    <main className="pt-14 pb-16">
+                      <Routes>
+                        <Route path="/" element={<RealTime />} />
+                        <Route path="/history" element={<History />} />
+                        <Route path="/analysis" element={<Analysis />} />
+                        <Route path="/groups" element={<Groups />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route
+                          path="/custom-thresholds"
+                          element={<CustomThresholds />}
+                        />
+                        <Route path="/custom-alerts" element={<CustomAlerts />} />
+                        <Route path="/my-settings" element={<MySettings />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </main>
+                    <BottomNavigation />
+                  </div>
                 </RecordingProvider>
               </ProtectedRoute>
             }
