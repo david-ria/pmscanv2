@@ -76,32 +76,19 @@ export function useAutoContext() {
     localStorage.setItem('autoContextSettings', JSON.stringify(settings));
   }, [settings]);
 
-  useEffect(() => {
-    const loadSSIDs = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('home_wifi_ssid, work_wifi_ssid')
-          .eq('id', user.id)
-          .single();
-        if (!error && data) {
-          setSettings((prev) => ({
-            ...prev,
-            // homeWifiSSID: prev.homeWifiSSID ?? data.home_wifi_ssid ?? undefined,
-            // workWifiSSID: prev.workWifiSSID ?? data.work_wifi_ssid ?? undefined,
-          }));
-        }
-      } catch (err) {
-        console.error('Failed to load profile SSIDs', err);
-      }
-    };
-
-    loadSSIDs();
-  }, []);
+  // WiFi SSID functionality disabled - columns don't exist in profiles table
+  // useEffect(() => {
+  //   const loadSSIDs = async () => {
+  //     try {
+  //       const { data: { user } } = await supabase.auth.getUser();
+  //       if (!user) return;
+  //       // This would require adding home_wifi_ssid and work_wifi_ssid columns to profiles table
+  //     } catch (err) {
+  //       console.error('Failed to load profile SSIDs', err);
+  //     }
+  //   };
+  //   loadSSIDs();
+  // }, []);
 
   useEffect(() => {
     if (settings.mlEnabled && !model) {
@@ -209,20 +196,11 @@ export function useAutoContext() {
     return { ssid: top, count: topCount, second };
   };
 
+  // WiFi SSID persistence disabled - columns don't exist in profiles table
   const persistSSID = useCallback(
     async (field: 'home_wifi_ssid' | 'work_wifi_ssid', ssid: string) => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return;
-        await supabase
-          .from('profiles')
-          .update({ [field]: ssid })
-          .eq('id', user.id);
-      } catch (err) {
-        console.error('Failed to persist SSID', err);
-      }
+      // This would require adding columns to profiles table
+      console.warn('WiFi SSID persistence disabled - database columns not available');
     },
     []
   );
