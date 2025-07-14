@@ -12,10 +12,12 @@ interface BackgroundRecordingOptions {
 export function useBackgroundRecording() {
   const [isBackgroundEnabled, setIsBackgroundEnabled] = useState(false);
   const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
-  const [serviceWorkerRegistration, setServiceWorkerRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [serviceWorkerRegistration, setServiceWorkerRegistration] =
+    useState<ServiceWorkerRegistration | null>(null);
   const [backgroundSyncSupported, setBackgroundSyncSupported] = useState(false);
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
-  
+  const [notificationPermission, setNotificationPermission] =
+    useState<NotificationPermission>('default');
+
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize service worker and check capabilities
@@ -33,7 +35,10 @@ export function useBackgroundRecording() {
         logger.debug('🔧 Service Worker registered successfully');
 
         // Listen for service worker messages
-        navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+        navigator.serviceWorker.addEventListener(
+          'message',
+          handleServiceWorkerMessage
+        );
 
         await navigator.serviceWorker.ready;
         logger.debug('🚀 Service Worker ready');
@@ -45,17 +50,22 @@ export function useBackgroundRecording() {
 
   const handleServiceWorkerMessage = (event: MessageEvent) => {
     logger.debug('📨 Received message from Service Worker:', event.data);
-    
+
     switch (event.data.type) {
       case 'BACKGROUND_SYNC_RUNNING':
         logger.debug('🔄 Background sync is running...');
         break;
       case 'BACKGROUND_SYNC_COMPLETE':
-        logger.debug(`✅ Background sync completed. Processed ${event.data.processedCount} data points`);
+        logger.debug(
+          `✅ Background sync completed. Processed ${event.data.processedCount} data points`
+        );
         break;
       case 'BACKGROUND_SYNC_ERROR':
         console.error('❌ Background sync error:', event.data.error);
-        showNotification('PMScan Error', 'Background data collection failed. Please check the app.');
+        showNotification(
+          'PMScan Error',
+          'Background data collection failed. Please check the app.'
+        );
         break;
       case 'SYNC_PENDING_MISSIONS':
         logger.debug('🔄 Syncing pending missions...');
@@ -65,7 +75,9 @@ export function useBackgroundRecording() {
   };
 
   const checkBackgroundSyncSupport = () => {
-    const isSupported = 'serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype;
+    const isSupported =
+      'serviceWorker' in navigator &&
+      'sync' in window.ServiceWorkerRegistration.prototype;
     setBackgroundSyncSupported(isSupported);
     logger.debug('🔄 Background Sync supported:', isSupported);
   };
@@ -100,7 +112,7 @@ export function useBackgroundRecording() {
     try {
       const wakeLockSentinel = await navigator.wakeLock.request('screen');
       setWakeLock(wakeLockSentinel);
-      
+
       wakeLockSentinel.addEventListener('release', () => {
         logger.debug('🔋 Wake lock was released');
         setWakeLock(null);
@@ -126,11 +138,13 @@ export function useBackgroundRecording() {
     }
   };
 
-  const enableBackgroundRecording = async (options: BackgroundRecordingOptions = {
-    enableWakeLock: true,
-    enableNotifications: true,
-    syncInterval: 30000 // 30 seconds
-  }): Promise<boolean> => {
+  const enableBackgroundRecording = async (
+    options: BackgroundRecordingOptions = {
+      enableWakeLock: true,
+      enableNotifications: true,
+      syncInterval: 30000, // 30 seconds
+    }
+  ): Promise<boolean> => {
     try {
       // Request notification permission if needed
       if (options.enableNotifications) {
@@ -150,7 +164,7 @@ export function useBackgroundRecording() {
         try {
           // Use service worker message to schedule sync
           navigator.serviceWorker.controller?.postMessage({
-            type: 'SCHEDULE_BACKGROUND_SYNC'
+            type: 'SCHEDULE_BACKGROUND_SYNC',
           });
           logger.debug('🔄 Background sync scheduled');
         } catch (error) {
@@ -166,15 +180,18 @@ export function useBackgroundRecording() {
       syncIntervalRef.current = setInterval(() => {
         if (serviceWorkerRegistration && navigator.serviceWorker.controller) {
           navigator.serviceWorker.controller.postMessage({
-            type: 'SCHEDULE_BACKGROUND_SYNC'
+            type: 'SCHEDULE_BACKGROUND_SYNC',
           });
         }
       }, options.syncInterval);
 
       setIsBackgroundEnabled(true);
       logger.debug('🎯 Background recording enabled');
-      
-      showNotification('PMScan Background Active', 'Data collection will continue in the background');
+
+      showNotification(
+        'PMScan Background Active',
+        'Data collection will continue in the background'
+      );
       return true;
     } catch (error) {
       console.error('❌ Failed to enable background recording:', error);
@@ -195,34 +212,40 @@ export function useBackgroundRecording() {
 
       setIsBackgroundEnabled(false);
       logger.debug('🛑 Background recording disabled');
-      
-      showNotification('PMScan Background Stopped', 'Background data collection has been disabled');
+
+      showNotification(
+        'PMScan Background Stopped',
+        'Background data collection has been disabled'
+      );
     } catch (error) {
       console.error('❌ Failed to disable background recording:', error);
     }
   };
 
-  const storeDataForBackground = useCallback((pmData: PMScanData, location?: LocationData, context?: any) => {
-    if (!serviceWorkerRegistration || !isBackgroundEnabled) return;
+  const storeDataForBackground = useCallback(
+    (pmData: PMScanData, location?: LocationData, context?: any) => {
+      if (!serviceWorkerRegistration || !isBackgroundEnabled) return;
 
-    // Send data to service worker for background storage
-    navigator.serviceWorker.controller?.postMessage({
-      type: 'STORE_BACKGROUND_DATA',
-      payload: {
-        pmData,
-        location,
-        context,
-        timestamp: Date.now()
-      }
-    });
-  }, [serviceWorkerRegistration, isBackgroundEnabled]);
+      // Send data to service worker for background storage
+      navigator.serviceWorker.controller?.postMessage({
+        type: 'STORE_BACKGROUND_DATA',
+        payload: {
+          pmData,
+          location,
+          context,
+          timestamp: Date.now(),
+        },
+      });
+    },
+    [serviceWorkerRegistration, isBackgroundEnabled]
+  );
 
   const showNotification = (title: string, body: string) => {
     if (notificationPermission === 'granted') {
       new Notification(title, {
         body,
         icon: '/favicon.ico',
-        badge: '/favicon.ico'
+        badge: '/favicon.ico',
       });
     }
   };
@@ -245,6 +268,6 @@ export function useBackgroundRecording() {
     enableBackgroundRecording,
     disableBackgroundRecording,
     storeDataForBackground,
-    requestNotificationPermission
+    requestNotificationPermission,
   };
 }

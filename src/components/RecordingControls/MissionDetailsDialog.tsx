@@ -1,10 +1,15 @@
-import { Save, Share2, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { useTranslation } from "react-i18next";
+import { Save, Share2, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { useTranslation } from 'react-i18next';
 
 interface MissionDetailsDialogProps {
   open: boolean;
@@ -25,7 +30,7 @@ export function MissionDetailsDialog({
   shareData,
   onShareDataChange,
   onConfirm,
-  onDiscard
+  onDiscard,
 }: MissionDetailsDialogProps) {
   const { t } = useTranslation();
   return (
@@ -53,7 +58,7 @@ export function MissionDetailsDialog({
               {t('modals.missionDetails.emptyWillUseDateTime')}
             </p>
           </div>
-          
+
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Share2 className="h-4 w-4" />
@@ -74,25 +79,22 @@ export function MissionDetailsDialog({
           </div>
 
           <div className="grid grid-cols-3 gap-2 pt-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => onOpenChange(false)}
               className="h-12 text-sm"
             >
               {t('modals.missionDetails.cancel')}
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={onDiscard}
               className="h-12 text-sm flex items-center gap-2"
             >
               <Trash2 className="h-4 w-4" />
               {t('modals.missionDetails.delete')}
             </Button>
-            <Button 
-              onClick={onConfirm}
-              className="h-12 text-sm"
-            >
+            <Button onClick={onConfirm} className="h-12 text-sm">
               {t('modals.missionDetails.save')}
             </Button>
           </div>

@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { Map, Satellite, MapPin } from "lucide-react";
-import { LocationData } from "@/types/PMScan";
+import { Button } from '@/components/ui/button';
+import { Map, Satellite, MapPin } from 'lucide-react';
+import { LocationData } from '@/types/PMScan';
 
 interface MapboxMapControlsProps {
   isSatellite: boolean;
@@ -8,10 +8,10 @@ interface MapboxMapControlsProps {
   currentLocation: LocationData | null;
 }
 
-export const MapboxMapControls = ({ 
-  isSatellite, 
-  onToggleMapStyle, 
-  currentLocation 
+export const MapboxMapControls = ({
+  isSatellite,
+  onToggleMapStyle,
+  currentLocation,
 }: MapboxMapControlsProps) => {
   return (
     <>
@@ -36,7 +36,7 @@ export const MapboxMapControls = ({
           )}
         </Button>
       </div>
-      
+
       {/* Location Accuracy Display */}
       {currentLocation && (
         <div className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm p-2 rounded-md border border-border">

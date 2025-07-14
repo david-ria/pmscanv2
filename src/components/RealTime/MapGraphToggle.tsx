@@ -1,12 +1,12 @@
-import { WifiOff, Map, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { MapboxMap } from "@/components/MapboxMap";
-import { PMLineGraph } from "@/components/PMLineGraph";
-import { FloatingRecordButton } from "@/components/FloatingRecordButton";
-import { PMScanData } from "@/lib/pmscan/types";
-import { LocationData } from "@/types/PMScan";
-import { PMScanDevice } from "@/lib/pmscan/types";
-import { useTranslation } from "react-i18next";
+import { WifiOff, Map, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapboxMap } from '@/components/MapboxMap';
+import { PMLineGraph } from '@/components/PMLineGraph';
+import { FloatingRecordButton } from '@/components/FloatingRecordButton';
+import { PMScanData } from '@/lib/pmscan/types';
+import { LocationData } from '@/types/PMScan';
+import { PMScanDevice } from '@/lib/pmscan/types';
+import { useTranslation } from 'react-i18next';
 
 interface RecordingEntry {
   pmData: PMScanData;
@@ -32,24 +32,26 @@ export function MapGraphToggle({
   currentData,
   recordingData,
   isRecording,
-  device
+  device,
 }: MapGraphToggleProps) {
   const { t } = useTranslation();
-  
+
   // Calculate track points for the map
-  const trackPoints = recordingData.map(entry => ({
-    longitude: entry.location?.longitude || 0,
-    latitude: entry.location?.latitude || 0,
-    pm25: entry.pmData.pm25,
-    timestamp: entry.pmData.timestamp
-  })).filter(point => point.longitude !== 0 && point.latitude !== 0);
+  const trackPoints = recordingData
+    .map((entry) => ({
+      longitude: entry.location?.longitude || 0,
+      latitude: entry.location?.latitude || 0,
+      pm25: entry.pmData.pm25,
+      timestamp: entry.pmData.timestamp,
+    }))
+    .filter((point) => point.longitude !== 0 && point.latitude !== 0);
   return (
     <div className="mb-4">
       {/* Toggle Controls */}
       <div className="flex items-center justify-center mb-3">
         <div className="flex bg-muted p-1 rounded-lg">
           <Button
-            variant={!showGraph ? "default" : "ghost"}
+            variant={!showGraph ? 'default' : 'ghost'}
             size="sm"
             onClick={() => onToggleView(false)}
             className="flex items-center gap-2"
@@ -58,7 +60,7 @@ export function MapGraphToggle({
             {t('realTime.map')}
           </Button>
           <Button
-            variant={showGraph ? "default" : "ghost"}
+            variant={showGraph ? 'default' : 'ghost'}
             size="sm"
             onClick={() => onToggleView(true)}
             className="flex items-center gap-2"
@@ -72,14 +74,11 @@ export function MapGraphToggle({
       {/* Content Area */}
       <div className="h-[45vh] relative">
         {showGraph ? (
-          <PMLineGraph 
-            data={recordingData}
-            className="h-full"
-          />
+          <PMLineGraph data={recordingData} className="h-full" />
         ) : (
           <>
             {isOnline ? (
-              <MapboxMap 
+              <MapboxMap
                 currentLocation={latestLocation}
                 pmData={currentData}
                 trackPoints={trackPoints}
@@ -96,7 +95,7 @@ export function MapGraphToggle({
             )}
           </>
         )}
-        
+
         {/* Floating Record Button - Always visible */}
         <FloatingRecordButton
           device={device}

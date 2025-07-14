@@ -14,7 +14,7 @@ export const ConnectionCard = ({
   connectionStatus,
   deviceInfo,
   onConnect,
-  onDisconnect
+  onDisconnect,
 }: ConnectionCardProps) => {
   if (connectionStatus.connected) {
     return (
@@ -53,15 +53,19 @@ export const ConnectionCard = ({
             <div>
               <div className="font-medium text-sm">PMScan Device</div>
               <div className="text-xs text-muted-foreground">
-                {connectionStatus.connecting ? 'Connecting...' : 'Not connected'}
+                {connectionStatus.connecting
+                  ? 'Connecting...'
+                  : 'Not connected'}
               </div>
               {connectionStatus.error && (
-                <div className="text-xs text-destructive">{connectionStatus.error}</div>
+                <div className="text-xs text-destructive">
+                  {connectionStatus.error}
+                </div>
               )}
             </div>
           </div>
-          <Button 
-            onClick={onConnect} 
+          <Button
+            onClick={onConnect}
             disabled={connectionStatus.connecting}
             className="flex-1"
           >

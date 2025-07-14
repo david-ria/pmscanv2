@@ -1,10 +1,10 @@
-import { Play, Square, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { frequencyOptionKeys } from "@/lib/recordingConstants";
-import { useTranslation } from "react-i18next";
-import * as logger from "@/utils/logger";
+import { Play, Square, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { frequencyOptionKeys } from '@/lib/recordingConstants';
+import { useTranslation } from 'react-i18next';
+import * as logger from '@/utils/logger';
 
 interface RecordingButtonProps {
   isRecording: boolean;
@@ -12,17 +12,21 @@ interface RecordingButtonProps {
   recordingFrequency: string;
 }
 
-export function RecordingButton({ isRecording, onClick, recordingFrequency }: RecordingButtonProps) {
+export function RecordingButton({
+  isRecording,
+  onClick,
+  recordingFrequency,
+}: RecordingButtonProps) {
   const { t } = useTranslation();
-  
+
   const getFrequencyLabel = (frequency: string) => {
-    const option = frequencyOptionKeys.find(f => f.value === frequency);
+    const option = frequencyOptionKeys.find((f) => f.value === frequency);
     return option ? t(`modals.frequency.${option.key}`) : frequency;
   };
-  
+
   const handleClick = () => {
-    logger.debug("🚨 BUTTON CLICKED - RecordingButton");
-    logger.debug("Current isRecording state:", isRecording);
+    logger.debug('🚨 BUTTON CLICKED - RecordingButton');
+    logger.debug('Current isRecording state:', isRecording);
     onClick();
   };
 
@@ -33,11 +37,11 @@ export function RecordingButton({ isRecording, onClick, recordingFrequency }: Re
         <button
           onClick={handleClick}
           className={cn(
-            "h-16 w-16 rounded-full flex items-center justify-center transition-all duration-200",
-            "hover:scale-105 active:scale-95",
-            isRecording 
-              ? "bg-destructive text-destructive-foreground animate-pulse shadow-lg" 
-              : "bg-primary text-primary-foreground shadow-md hover:shadow-lg"
+            'h-16 w-16 rounded-full flex items-center justify-center transition-all duration-200',
+            'hover:scale-105 active:scale-95',
+            isRecording
+              ? 'bg-destructive text-destructive-foreground animate-pulse shadow-lg'
+              : 'bg-primary text-primary-foreground shadow-md hover:shadow-lg'
           )}
           type="button"
         >
@@ -51,7 +55,10 @@ export function RecordingButton({ isRecording, onClick, recordingFrequency }: Re
 
       {/* Status */}
       <div className="text-center">
-        <Badge variant={isRecording ? "destructive" : "secondary"} className="text-sm">
+        <Badge
+          variant={isRecording ? 'destructive' : 'secondary'}
+          className="text-sm"
+        >
           {isRecording ? (
             <div className="flex items-center gap-2">
               <span>{t('realTime.recording')}</span>

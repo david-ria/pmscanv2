@@ -1,21 +1,23 @@
-import { useState } from "react";
-import { DateFilter } from "@/components/DateFilter";
-import { StatisticalAnalysis } from "@/components/Analysis/StatisticalAnalysis";
-import { DataSummary } from "@/components/Analysis/DataSummary";
-import { GroupComparison } from "@/components/Analysis/GroupComparison";
-import { DataSummaryHeader } from "@/components/Analysis/DataSummaryHeader";
-import { PollutionBreakdownChart } from "@/components/Analysis/PollutionBreakdown";
-import { useAnalysisLogic } from "@/components/Analysis/AnalysisLogic";
+import { useState } from 'react';
+import { DateFilter } from '@/components/DateFilter';
+import { StatisticalAnalysis } from '@/components/Analysis/StatisticalAnalysis';
+import { DataSummary } from '@/components/Analysis/DataSummary';
+import { GroupComparison } from '@/components/Analysis/GroupComparison';
+import { DataSummaryHeader } from '@/components/Analysis/DataSummaryHeader';
+import { PollutionBreakdownChart } from '@/components/Analysis/PollutionBreakdown';
+import { useAnalysisLogic } from '@/components/Analysis/AnalysisLogic';
 
 export default function Analysis() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedPeriod, setSelectedPeriod] = useState<"day" | "week" | "month" | "year">("week");
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    'day' | 'week' | 'month' | 'year'
+  >('week');
   const {
     missions,
     statisticalAnalysis,
     dataPoints,
     loading,
-    regenerateAnalysis
+    regenerateAnalysis,
   } = useAnalysisLogic(selectedDate, selectedPeriod);
 
   return (
@@ -38,7 +40,7 @@ export default function Analysis() {
       <DataSummaryHeader dataPoints={dataPoints} />
 
       {/* Pollution Breakdown Chart */}
-      <PollutionBreakdownChart 
+      <PollutionBreakdownChart
         missions={missions}
         selectedPeriod={selectedPeriod}
         selectedDate={selectedDate}

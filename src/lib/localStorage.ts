@@ -1,5 +1,5 @@
-import { MissionData } from "./dataStorage";
-import * as logger from "@/utils/logger";
+import { MissionData } from './dataStorage';
+import * as logger from '@/utils/logger';
 
 const MISSIONS_KEY = 'pmscan_missions';
 const PENDING_SYNC_KEY = 'pmscan_pending_sync';
@@ -8,7 +8,7 @@ export function getLocalMissions(): MissionData[] {
   try {
     const stored = localStorage.getItem(MISSIONS_KEY);
     if (!stored) return [];
-    
+
     const missions = JSON.parse(stored);
     return missions.map((m: any) => ({
       ...m,
@@ -16,8 +16,8 @@ export function getLocalMissions(): MissionData[] {
       endTime: new Date(m.endTime),
       measurements: m.measurements.map((measurement: any) => ({
         ...measurement,
-        timestamp: new Date(measurement.timestamp)
-      }))
+        timestamp: new Date(measurement.timestamp),
+      })),
     }));
   } catch (error) {
     console.error('Error reading local missions:', error);
@@ -29,7 +29,10 @@ export function saveLocalMissions(missions: MissionData[]): void {
   try {
     localStorage.setItem(MISSIONS_KEY, JSON.stringify(missions));
   } catch (quotaError) {
-    if (quotaError instanceof DOMException && quotaError.name === 'QuotaExceededError') {
+    if (
+      quotaError instanceof DOMException &&
+      quotaError.name === 'QuotaExceededError'
+    ) {
       console.warn('LocalStorage quota exceeded, cleaning up old missions...');
       cleanupOldMissions(missions);
       // Try again after cleanup
@@ -56,20 +59,21 @@ export function formatDatabaseMission(dbMission: any): MissionData {
     activityContext: dbMission.activity_context,
     recordingFrequency: dbMission.recording_frequency,
     shared: dbMission.shared,
-    measurements: dbMission.measurements?.map((m: any) => ({
-      id: m.id,
-      timestamp: new Date(m.timestamp),
-      pm1: m.pm1,
-      pm25: m.pm25,
-      pm10: m.pm10,
-      temperature: m.temperature,
-      humidity: m.humidity,
-      latitude: m.latitude,
-      longitude: m.longitude,
-      accuracy: m.accuracy,
-      automaticContext: m.automatic_context
-    })) || [],
-    synced: true
+    measurements:
+      dbMission.measurements?.map((m: any) => ({
+        id: m.id,
+        timestamp: new Date(m.timestamp),
+        pm1: m.pm1,
+        pm25: m.pm25,
+        pm10: m.pm10,
+        temperature: m.temperature,
+        humidity: m.humidity,
+        latitude: m.latitude,
+        longitude: m.longitude,
+        accuracy: m.accuracy,
+        automaticContext: m.automatic_context,
+      })) || [],
+    synced: true,
   };
 }
 
@@ -91,7 +95,7 @@ export function addToPendingSync(missionId: string): void {
 }
 
 export function removeFromPendingSync(missionId: string): void {
-  const pending = getPendingSyncIds().filter(id => id !== missionId);
+  const pending = getPendingSyncIds().filter((id) => id !== missionId);
   localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pending));
 }
 
@@ -103,14 +107,20 @@ export function clearLocalStorage(): void {
 
 export function cleanupOldMissions(missions: MissionData[]): void {
   // Keep only the most recent 10 missions to free up space
-  const sortedMissions = missions.sort((a, b) => b.endTime.getTime() - a.endTime.getTime());
+  const sortedMissions = missions.sort(
+    (a, b) => b.endTime.getTime() - a.endTime.getTime()
+  );
   const recentMissions = sortedMissions.slice(0, 10);
-  
-  logger.debug(`Cleaning up old missions, keeping ${recentMissions.length} most recent ones`);
+
+  logger.debug(
+    `Cleaning up old missions, keeping ${recentMissions.length} most recent ones`
+  );
   localStorage.setItem(MISSIONS_KEY, JSON.stringify(recentMissions));
-  
+
   // Update pending sync list to only include kept missions
-  const keptMissionIds = recentMissions.map(m => m.id);
-  const updatedPending = getPendingSyncIds().filter(id => keptMissionIds.includes(id));
+  const keptMissionIds = recentMissions.map((m) => m.id);
+  const updatedPending = getPendingSyncIds().filter((id) =>
+    keptMissionIds.includes(id)
+  );
   localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(updatedPending));
 }

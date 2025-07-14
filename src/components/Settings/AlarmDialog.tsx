@@ -19,7 +19,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -45,7 +51,7 @@ interface AlarmDialogProps {
 export function AlarmDialog({ open, onOpenChange, alarm }: AlarmDialogProps) {
   const { createAlarm, updateAlarm } = useUserAlarms();
   const [loading, setLoading] = useState(false);
-  
+
   const form = useForm<AlarmFormData>({
     resolver: zodResolver(alarmSchema),
     defaultValues: {
@@ -55,7 +61,7 @@ export function AlarmDialog({ open, onOpenChange, alarm }: AlarmDialogProps) {
       pm10_threshold: undefined,
       notification_frequency: 'immediate',
       enabled: true,
-    }
+    },
   });
 
   useEffect(() => {
@@ -91,7 +97,7 @@ export function AlarmDialog({ open, onOpenChange, alarm }: AlarmDialogProps) {
         notification_frequency: data.notification_frequency,
         enabled: data.enabled,
       };
-      
+
       if (alarm) {
         await updateAlarm(alarm.id, cleanData);
       } else {
@@ -127,7 +133,10 @@ export function AlarmDialog({ open, onOpenChange, alarm }: AlarmDialogProps) {
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="High PM2.5 Alert, Outdoor Warning..." {...field} />
+                    <Input
+                      placeholder="High PM2.5 Alert, Outdoor Warning..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -146,7 +155,13 @@ export function AlarmDialog({ open, onOpenChange, alarm }: AlarmDialogProps) {
                         type="number"
                         placeholder="15"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -165,7 +180,13 @@ export function AlarmDialog({ open, onOpenChange, alarm }: AlarmDialogProps) {
                         type="number"
                         placeholder="25"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -184,7 +205,13 @@ export function AlarmDialog({ open, onOpenChange, alarm }: AlarmDialogProps) {
                         type="number"
                         placeholder="50"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -229,14 +256,21 @@ export function AlarmDialog({ open, onOpenChange, alarm }: AlarmDialogProps) {
                     </div>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>

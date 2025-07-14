@@ -82,7 +82,6 @@ development mode) additional debug messages will be printed. Example:
 VITE_LOG_LEVEL=debug npm run dev
 ```
 
-
 ## Supabase configuration
 
 The application expects Supabase connection details to be available as

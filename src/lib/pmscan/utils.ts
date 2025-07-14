@@ -8,8 +8,8 @@ export function exponentialBackoff(
   fail: () => void
 ): void {
   toTry()
-    .then(result => success(result))
-    .catch(_ => {
+    .then((result) => success(result))
+    .catch((_) => {
       if (max === 0) {
         return fail();
       }

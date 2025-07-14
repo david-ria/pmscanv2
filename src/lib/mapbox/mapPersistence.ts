@@ -13,7 +13,7 @@ export const saveMapState = (map: mapboxgl.Map) => {
     const state: MapState = {
       center: [map.getCenter().lng, map.getCenter().lat],
       zoom: map.getZoom(),
-      pitch: map.getPitch()
+      pitch: map.getPitch(),
     };
     localStorage.setItem(MAP_STATE_KEY, JSON.stringify(state));
   } catch (error) {
@@ -27,7 +27,11 @@ export const loadMapState = (): MapState | null => {
     if (savedState) {
       const state = JSON.parse(savedState) as MapState;
       // Validate the state has required properties
-      if (state.center && state.zoom !== undefined && state.pitch !== undefined) {
+      if (
+        state.center &&
+        state.zoom !== undefined &&
+        state.pitch !== undefined
+      ) {
         return state;
       }
     }
@@ -40,11 +44,11 @@ export const loadMapState = (): MapState | null => {
 export const setupMapStatePersistence = (map: mapboxgl.Map) => {
   // Save state when the map stops moving
   const saveState = () => saveMapState(map);
-  
+
   map.on('moveend', saveState);
   map.on('zoomend', saveState);
   map.on('pitchend', saveState);
-  
+
   // Return cleanup function
   return () => {
     map.off('moveend', saveState);

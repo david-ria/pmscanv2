@@ -1,15 +1,28 @@
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Settings } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useAutoContext } from "@/hooks/useAutoContext";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Settings } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useAutoContext } from '@/hooks/useAutoContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 export function AutoContextControl() {
-  const { settings, updateSettings, toggleEnabled, isEnabled } = useAutoContext();
+  const { settings, updateSettings, toggleEnabled, isEnabled } =
+    useAutoContext();
   const [showSettings, setShowSettings] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
 
@@ -49,7 +62,12 @@ export function AutoContextControl() {
                     <Input
                       id="homeWifi"
                       value={tempSettings.homeWifiSSID || ''}
-                      onChange={(e) => setTempSettings(prev => ({ ...prev, homeWifiSSID: e.target.value }))}
+                      onChange={(e) =>
+                        setTempSettings((prev) => ({
+                          ...prev,
+                          homeWifiSSID: e.target.value,
+                        }))
+                      }
                       placeholder="Your home WiFi name"
                     />
                   </div>
@@ -58,7 +76,12 @@ export function AutoContextControl() {
                     <Input
                       id="workWifi"
                       value={tempSettings.workWifiSSID || ''}
-                      onChange={(e) => setTempSettings(prev => ({ ...prev, workWifiSSID: e.target.value }))}
+                      onChange={(e) =>
+                        setTempSettings((prev) => ({
+                          ...prev,
+                          workWifiSSID: e.target.value,
+                        }))
+                      }
                       placeholder="Your work WiFi name"
                     />
                   </div>
@@ -66,7 +89,9 @@ export function AutoContextControl() {
                     <Switch
                       id="ml-enabled"
                       checked={tempSettings.mlEnabled ?? false}
-                      onCheckedChange={(v) => setTempSettings(prev => ({ ...prev, mlEnabled: v }))}
+                      onCheckedChange={(v) =>
+                        setTempSettings((prev) => ({ ...prev, mlEnabled: v }))
+                      }
                     />
                     <Label htmlFor="ml-enabled">Use ML model</Label>
                   </div>
@@ -74,17 +99,23 @@ export function AutoContextControl() {
                     <Switch
                       id="override-context"
                       checked={tempSettings.overrideContext ?? false}
-                      onCheckedChange={(v) => setTempSettings(prev => ({ ...prev, overrideContext: v }))}
+                      onCheckedChange={(v) =>
+                        setTempSettings((prev) => ({
+                          ...prev,
+                          overrideContext: v,
+                        }))
+                      }
                     />
                     <Label htmlFor="override-context">Override activity</Label>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setShowSettings(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowSettings(false)}
+                    >
                       Cancel
                     </Button>
-                    <Button onClick={handleSaveSettings}>
-                      Save
-                    </Button>
+                    <Button onClick={handleSaveSettings}>Save</Button>
                   </div>
                 </div>
               </DialogContent>

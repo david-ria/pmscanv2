@@ -1,14 +1,17 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { PMScanData } from "@/lib/pmscan/types";
-import { useTranslation } from "react-i18next";
-import { useThresholds } from "@/contexts/ThresholdContext";
+import { Card, CardContent } from '@/components/ui/card';
+import { PMScanData } from '@/lib/pmscan/types';
+import { useTranslation } from 'react-i18next';
+import { useThresholds } from '@/contexts/ThresholdContext';
 
 interface AirQualityCardsProps {
   currentData: PMScanData | null;
   isConnected: boolean;
 }
 
-export function AirQualityCards({ currentData, isConnected }: AirQualityCardsProps) {
+export function AirQualityCards({
+  currentData,
+  isConnected,
+}: AirQualityCardsProps) {
   const { t } = useTranslation();
   const { getAirQualityLevel } = useThresholds();
 
@@ -19,27 +22,39 @@ export function AirQualityCards({ currentData, isConnected }: AirQualityCardsPro
           {/* No Data Cards */}
           <Card className="text-center bg-muted/30">
             <CardContent className="p-4">
-              <div className="text-3xl font-bold text-muted-foreground mb-1">--</div>
-              <div className="text-sm font-medium text-muted-foreground">PM1</div>
+              <div className="text-3xl font-bold text-muted-foreground mb-1">
+                --
+              </div>
+              <div className="text-sm font-medium text-muted-foreground">
+                PM1
+              </div>
               <div className="text-xs text-muted-foreground">μg/m³</div>
             </CardContent>
           </Card>
           <Card className="text-center bg-muted/30">
             <CardContent className="p-4">
-              <div className="text-3xl font-bold text-muted-foreground mb-1">--</div>
-              <div className="text-sm font-medium text-muted-foreground">PM2.5</div>
+              <div className="text-3xl font-bold text-muted-foreground mb-1">
+                --
+              </div>
+              <div className="text-sm font-medium text-muted-foreground">
+                PM2.5
+              </div>
               <div className="text-xs text-muted-foreground">μg/m³</div>
             </CardContent>
           </Card>
           <Card className="text-center bg-muted/30">
             <CardContent className="p-4">
-              <div className="text-3xl font-bold text-muted-foreground mb-1">--</div>
-              <div className="text-sm font-medium text-muted-foreground">PM10</div>
+              <div className="text-3xl font-bold text-muted-foreground mb-1">
+                --
+              </div>
+              <div className="text-sm font-medium text-muted-foreground">
+                PM10
+              </div>
               <div className="text-xs text-muted-foreground">μg/m³</div>
             </CardContent>
           </Card>
         </div>
-        
+
         <div className="text-center text-sm text-muted-foreground mb-4 p-4 bg-muted/20 rounded-lg">
           {t('realTime.connectSensor')}
         </div>
@@ -56,14 +71,14 @@ export function AirQualityCards({ currentData, isConnected }: AirQualityCardsPro
       <div className="grid grid-cols-3 gap-3 mb-4">
         {/* PM1 */}
         <Card className={`text-center relative overflow-hidden`}>
-          <div 
+          <div
             className="absolute inset-0 opacity-10"
-            style={{backgroundColor: `hsl(var(--${pm1Quality.color}))`}}
+            style={{ backgroundColor: `hsl(var(--${pm1Quality.color}))` }}
           />
           <CardContent className="p-4 relative">
-            <div 
+            <div
               className="text-3xl font-bold mb-1"
-              style={{color: `hsl(var(--${pm1Quality.color}))`}}
+              style={{ color: `hsl(var(--${pm1Quality.color}))` }}
             >
               {Math.round(currentData.pm1)}
             </div>
@@ -74,24 +89,26 @@ export function AirQualityCards({ currentData, isConnected }: AirQualityCardsPro
 
         {/* PM2.5 - Main indicator with quality status */}
         <Card className="text-center relative overflow-hidden">
-          <div 
+          <div
             className="absolute inset-0 opacity-20"
-            style={{backgroundColor: `hsl(var(--${pm25Quality.color}))`}}
+            style={{ backgroundColor: `hsl(var(--${pm25Quality.color}))` }}
           />
           <CardContent className="p-4 relative">
-            <div 
+            <div
               className="text-3xl font-bold mb-1"
-              style={{color: `hsl(var(--${pm25Quality.color}))`}}
+              style={{ color: `hsl(var(--${pm25Quality.color}))` }}
             >
               {Math.round(currentData.pm25)}
             </div>
-            <div className="text-sm font-medium text-muted-foreground">PM2.5</div>
+            <div className="text-sm font-medium text-muted-foreground">
+              PM2.5
+            </div>
             <div className="text-xs text-muted-foreground mb-2">μg/m³</div>
-            <div 
+            <div
               className="text-xs font-medium px-2 py-1 rounded-full"
               style={{
                 backgroundColor: `hsl(var(--${pm25Quality.color}) / 0.2)`,
-                color: `hsl(var(--${pm25Quality.color}))`
+                color: `hsl(var(--${pm25Quality.color}))`,
               }}
             >
               {t(`realTime.airQuality.${pm25Quality.level}`)}
@@ -101,18 +118,20 @@ export function AirQualityCards({ currentData, isConnected }: AirQualityCardsPro
 
         {/* PM10 */}
         <Card className={`text-center relative overflow-hidden`}>
-          <div 
+          <div
             className="absolute inset-0 opacity-10"
-            style={{backgroundColor: `hsl(var(--${pm10Quality.color}))`}}
+            style={{ backgroundColor: `hsl(var(--${pm10Quality.color}))` }}
           />
           <CardContent className="p-4 relative">
-            <div 
+            <div
               className="text-3xl font-bold mb-1"
-              style={{color: `hsl(var(--${pm10Quality.color}))`}}
+              style={{ color: `hsl(var(--${pm10Quality.color}))` }}
             >
               {Math.round(currentData.pm10)}
             </div>
-            <div className="text-sm font-medium text-muted-foreground">PM10</div>
+            <div className="text-sm font-medium text-muted-foreground">
+              PM10
+            </div>
             <div className="text-xs text-muted-foreground">μg/m³</div>
           </CardContent>
         </Card>
@@ -120,7 +139,8 @@ export function AirQualityCards({ currentData, isConnected }: AirQualityCardsPro
 
       {/* Real-time Status */}
       <div className="text-center text-xs text-muted-foreground mb-4">
-        {t('realTime.lastMeasurement')} : {currentData.timestamp.toLocaleTimeString()}
+        {t('realTime.lastMeasurement')} :{' '}
+        {currentData.timestamp.toLocaleTimeString()}
       </div>
     </>
   );

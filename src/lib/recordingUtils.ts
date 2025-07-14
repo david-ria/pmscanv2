@@ -24,7 +24,7 @@ export const shouldRecordData = (
   frequencyMs: number
 ): boolean => {
   if (!lastRecordedTime) return true;
-  
+
   const currentTime = new Date();
-  return (currentTime.getTime() - lastRecordedTime.getTime()) >= frequencyMs;
+  return currentTime.getTime() - lastRecordedTime.getTime() >= frequencyMs;
 };

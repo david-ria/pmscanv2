@@ -1,9 +1,15 @@
-import { MapPin, Activity } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { locationKeys, activityCategories } from "@/lib/recordingConstants";
-import { useTranslation } from "react-i18next";
-import { useGroupSettings } from "@/hooks/useGroupSettings";
+import { MapPin, Activity } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { locationKeys, activityCategories } from '@/lib/recordingConstants';
+import { useTranslation } from 'react-i18next';
+import { useGroupSettings } from '@/hooks/useGroupSettings';
 
 interface ContextSelectorsProps {
   selectedLocation: string;
@@ -18,16 +24,22 @@ export function ContextSelectors({
   onLocationChange,
   selectedActivity,
   onActivityChange,
-  isRecording
+  isRecording,
 }: ContextSelectorsProps) {
   const { t } = useTranslation();
-  const { getCurrentLocations, getCurrentActivities, isGroupMode } = useGroupSettings();
-  
+  const { getCurrentLocations, getCurrentActivities, isGroupMode } =
+    useGroupSettings();
+
   // Use group locations if in group mode, otherwise use default locations
-  const locations = isGroupMode ? getCurrentLocations() : locationKeys.map(key => ({ name: t(`locations.${key}`) }));
+  const locations = isGroupMode
+    ? getCurrentLocations()
+    : locationKeys.map((key) => ({ name: t(`locations.${key}`) }));
   const activities = isGroupMode
     ? getCurrentActivities()
-    : activityCategories.map(({ key }) => ({ key, name: t(`activities.${key}`) }));
+    : activityCategories.map(({ key }) => ({
+        key,
+        name: t(`activities.${key}`),
+      }));
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -42,7 +54,10 @@ export function ContextSelectors({
           </SelectTrigger>
           <SelectContent>
             {locations.map((location, index) => (
-              <SelectItem key={isGroupMode ? location.name : locationKeys[index]} value={location.name}>
+              <SelectItem
+                key={isGroupMode ? location.name : locationKeys[index]}
+                value={location.name}
+              >
                 {location.name}
               </SelectItem>
             ))}
@@ -65,7 +80,7 @@ export function ContextSelectors({
             <SelectValue placeholder={t('realTime.noActivity')} />
           </SelectTrigger>
           <SelectContent>
-            {activities.map(activity => (
+            {activities.map((activity) => (
               <SelectItem
                 key={isGroupMode ? activity.name : activity.key}
                 value={activity.name}

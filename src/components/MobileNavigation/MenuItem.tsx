@@ -1,9 +1,14 @@
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
-import { Info } from "lucide-react";
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
+import { Info } from 'lucide-react';
 
 interface MenuItemProps {
   icon: React.ComponentType<any>;
@@ -17,7 +22,14 @@ interface MenuItemProps {
   info?: string;
 }
 
-export function MenuItem({ icon: Icon, label, badge, action, toggle, info }: MenuItemProps) {
+export function MenuItem({
+  icon: Icon,
+  label,
+  badge,
+  action,
+  toggle,
+  info,
+}: MenuItemProps) {
   const { t } = useTranslation();
 
   const handleClick = () => {
@@ -49,11 +61,12 @@ export function MenuItem({ icon: Icon, label, badge, action, toggle, info }: Men
         </div>
         <div className="flex items-center gap-2">
           {badge && (
-            <Badge 
-              variant="secondary" 
+            <Badge
+              variant="secondary"
               className={cn(
-                "text-xs flex-shrink-0",
-                badge === t('sensors.connected') && "bg-air-good/10 text-air-good"
+                'text-xs flex-shrink-0',
+                badge === t('sensors.connected') &&
+                  'bg-air-good/10 text-air-good'
               )}
             >
               {badge}

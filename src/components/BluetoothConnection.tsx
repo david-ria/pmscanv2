@@ -1,26 +1,26 @@
-import { Bluetooth, BluetoothOff, Battery, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { usePMScanBluetooth } from "@/hooks/usePMScanBluetooth";
-import { cn } from "@/lib/utils";
+import { Bluetooth, BluetoothOff, Battery, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
+import { cn } from '@/lib/utils';
 
 interface BluetoothConnectionProps {
   className?: string;
 }
 
 export function BluetoothConnection({ className }: BluetoothConnectionProps) {
-  const { 
-    isConnected, 
-    isConnecting, 
-    device, 
-    error, 
-    requestDevice, 
-    disconnect 
+  const {
+    isConnected,
+    isConnecting,
+    device,
+    error,
+    requestDevice,
+    disconnect,
   } = usePMScanBluetooth();
 
   return (
-    <Card className={cn("", className)}>
+    <Card className={cn('', className)}>
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-medium flex items-center gap-2">
           {isConnected ? (
@@ -38,16 +38,16 @@ export function BluetoothConnection({ className }: BluetoothConnectionProps) {
               {error}
             </div>
           )}
-          
+
           {device ? (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">{device.name}</span>
-                <Badge variant={isConnected ? "default" : "secondary"}>
-                  {isConnected ? "Connecté" : "Déconnecté"}
+                <Badge variant={isConnected ? 'default' : 'secondary'}>
+                  {isConnected ? 'Connecté' : 'Déconnecté'}
                 </Badge>
               </div>
-              
+
               {isConnected && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Battery className="h-4 w-4" />
@@ -65,11 +65,11 @@ export function BluetoothConnection({ className }: BluetoothConnectionProps) {
               Aucun appareil connecté
             </div>
           )}
-          
+
           <div className="flex gap-2">
             {!isConnected ? (
-              <Button 
-                onClick={requestDevice} 
+              <Button
+                onClick={requestDevice}
                 disabled={isConnecting}
                 className="flex-1"
                 size="sm"
@@ -87,8 +87,8 @@ export function BluetoothConnection({ className }: BluetoothConnectionProps) {
                 )}
               </Button>
             ) : (
-              <Button 
-                onClick={disconnect} 
+              <Button
+                onClick={disconnect}
                 variant="outline"
                 className="flex-1"
                 size="sm"

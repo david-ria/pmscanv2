@@ -4,7 +4,7 @@ export const addTrackPointEventListeners = (map: mapboxgl.Map) => {
   // Add hover effects for track points
   map.on('mouseenter', 'track-points', (e) => {
     map.getCanvas().style.cursor = 'pointer';
-    
+
     if (e.features && e.features[0]) {
       const feature = e.features[0];
       map.setFeatureState(
@@ -17,17 +17,19 @@ export const addTrackPointEventListeners = (map: mapboxgl.Map) => {
       if (properties) {
         const popup = new mapboxgl.Popup({
           offset: 25,
-          closeButton: false
+          closeButton: false,
         })
           .setLngLat(e.lngLat)
-          .setHTML(`
+          .setHTML(
+            `
             <div style="font-family: system-ui; padding: 6px; font-size: 12px;">
               <div style="font-weight: bold; margin-bottom: 4px;">PM2.5: ${Math.round(properties.pm25)} µg/m³</div>
               <div style="color: #666; font-size: 10px;">${new Date(properties.timestamp).toLocaleTimeString()}</div>
             </div>
-          `)
+          `
+          )
           .addTo(map);
-        
+
         // Store popup reference for cleanup
         (e.target as any)._tempPopup = popup;
       }
@@ -36,7 +38,7 @@ export const addTrackPointEventListeners = (map: mapboxgl.Map) => {
 
   map.on('mouseleave', 'track-points', (e) => {
     map.getCanvas().style.cursor = '';
-    
+
     if (e.features && e.features[0]) {
       map.setFeatureState(
         { source: 'track-points', id: e.features[0].id },
@@ -56,7 +58,7 @@ export const reAddEventListeners = (map: mapboxgl.Map) => {
   // Re-add event listeners after style change
   map.on('mouseenter', 'track-points', (e) => {
     map.getCanvas().style.cursor = 'pointer';
-    
+
     if (e.features && e.features[0]) {
       const feature = e.features[0];
       map.setFeatureState(
@@ -68,17 +70,19 @@ export const reAddEventListeners = (map: mapboxgl.Map) => {
       if (properties) {
         const popup = new mapboxgl.Popup({
           offset: 25,
-          closeButton: false
+          closeButton: false,
         })
           .setLngLat(e.lngLat)
-          .setHTML(`
+          .setHTML(
+            `
             <div style="font-family: system-ui; padding: 6px; font-size: 12px;">
               <div style="font-weight: bold; margin-bottom: 4px;">PM2.5: ${Math.round(properties.pm25)} µg/m³</div>
               <div style="color: #666; font-size: 10px;">${new Date(properties.timestamp).toLocaleTimeString()}</div>
             </div>
-          `)
+          `
+          )
           .addTo(map);
-        
+
         (e.target as any)._tempPopup = popup;
       }
     }
@@ -86,7 +90,7 @@ export const reAddEventListeners = (map: mapboxgl.Map) => {
 
   map.on('mouseleave', 'track-points', (e) => {
     map.getCanvas().style.cursor = '';
-    
+
     if (e.features && e.features[0]) {
       map.setFeatureState(
         { source: 'track-points', id: e.features[0].id },

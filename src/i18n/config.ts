@@ -9,17 +9,17 @@ import ca from './locales/ca.json';
 
 const resources = {
   fr: {
-    translation: fr
+    translation: fr,
   },
   en: {
-    translation: en
+    translation: en,
   },
   de: {
-    translation: de
+    translation: de,
   },
   ca: {
-    translation: ca
-  }
+    translation: ca,
+  },
 };
 
 i18n
@@ -29,7 +29,7 @@ i18n
     resources,
     fallbackLng: 'fr', // Default to French since the app is currently in French
     debug: false,
-    
+
     detection: {
       // Order of language detection
       order: ['localStorage', 'navigator', 'htmlTag'],
