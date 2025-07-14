@@ -54,8 +54,11 @@ export function useAutoContext() {
         };
   });
 
-  // Use a context that might not be available
+  // Use the recording context directly - this should work if properly wrapped
+  console.log('useAutoContext: Attempting to access RecordingContext');
   const recordingContext = useRecordingContext();
+  console.log('useAutoContext: Successfully accessed RecordingContext', recordingContext);
+  
   const { updateMissionContext, missionContext, isRecording } = recordingContext;
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
