@@ -98,6 +98,19 @@ the default values bundled in the repository are used instead.
 
 Leave `VITE_LOG_LEVEL` unset (or use any other value) to silence debug output.
 
+### Mapbox token secret
+
+The Mapbox access token is provided to the app via the Supabase secret
+`MAPBOX_PUBLIC_TOKEN`. After adding or updating this secret you must redeploy the
+`get-mapbox-token` function so the new value is picked up:
+
+```sh
+supabase functions deploy get-mapbox-token
+```
+
+The token is accessed in
+[`supabase/functions/get-mapbox-token/index.ts`](supabase/functions/get-mapbox-token/index.ts).
+
 ## Running tests
 
 This project uses [Vitest](https://vitest.dev/) for unit tests. After installing
