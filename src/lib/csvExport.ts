@@ -1,4 +1,5 @@
 import { MissionData } from './dataStorage';
+import { storeCSVForSync } from '@/hooks/useCrashRecovery';
 import * as logger from '@/utils/logger';
 
 export function exportMissionToCSV(mission: MissionData): void {
@@ -60,14 +61,17 @@ export function exportMissionToCSV(mission: MissionData): void {
     startTime.getSeconds().toString().padStart(2, '0');
 
   const filename = `${deviceId}_${dateStr}_${timeStr}.csv`;
+  
+  // Store CSV content for sync in case of network issues
+  storeCSVForSync(filename, csvWithBOM);
+  
   link.setAttribute('href', url);
   link.setAttribute('download', filename);
   link.style.visibility = 'hidden';
-
 
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 
-  logger.debug(`Mission exported to CSV: ${filename}`);
+  logger.debug(`📄 Mission exported to CSV: ${filename}`);
 }

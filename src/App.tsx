@@ -5,6 +5,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { RecordingProvider } from '@/contexts/RecordingContext';
+import { CrashRecoveryInitializer } from '@/components/CrashRecoveryInitializer';
 import { useAuth } from '@/contexts/AuthContext';
 import RealTime from './pages/RealTime';
 import History from './pages/History';
@@ -69,6 +70,7 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <RecordingProvider>
+                  <CrashRecoveryInitializer />
                   <Header />
                   <main className="pt-14 pb-16">
                     <Routes>

@@ -6,6 +6,7 @@ import { useBackgroundRecordingIntegration } from './useBackgroundRecordingInteg
 import { useMissionSaver } from './useMissionSaver';
 import { useAutoSync } from './useAutoSync';
 import { useDataPointRecorder } from './useDataPointRecorder';
+import { useCrashRecovery } from './useCrashRecovery';
 import {
   setGlobalRecording,
   setBackgroundRecording,
@@ -35,6 +36,7 @@ export function useRecordingData() {
   } = useBackgroundRecordingIntegration();
 
   const { saveMission: saveMissionHelper } = useMissionSaver();
+  const { saveRecordingProgress, clearRecoveryData } = useCrashRecovery();
 
   const { addDataPoint } = useDataPointRecorder({
     isRecording,
@@ -47,13 +49,36 @@ export function useRecordingData() {
   // Use auto-sync functionality
   useAutoSync();
 
-  // Monitor recording state changes
+  // Monitor recording state changes and save progress for crash recovery
   useEffect(() => {
-    // Only log significant state changes
     if (isRecording) {
       logger.debug('🎬 Recording started');
+      
+      // Periodically save recording progress for crash recovery
+      const interval = setInterval(() => {
+        saveRecordingProgress(
+          recordingData,
+          recordingStartTime,
+          recordingFrequency,
+          missionContext
+        );
+      }, 5000); // Save every 5 seconds
+
+      return () => clearInterval(interval);
     }
-  }, [isRecording]);
+  }, [isRecording, recordingData, recordingStartTime, recordingFrequency, missionContext, saveRecordingProgress]);
+
+  // Save progress whenever new data is added
+  useEffect(() => {
+    if (isRecording && recordingData.length > 0) {
+      saveRecordingProgress(
+        recordingData,
+        recordingStartTime,
+        recordingFrequency,
+        missionContext
+      );
+    }
+  }, [recordingData, isRecording, recordingStartTime, recordingFrequency, missionContext, saveRecordingProgress]);
 
   const startRecording = async (frequency: string = '10s') => {
     startRecordingState(frequency);
@@ -90,6 +115,9 @@ export function useRecordingData() {
       shared
     );
 
+    // Clear crash recovery data since mission was properly saved
+    clearRecoveryData();
+    
     // Clear recording data
     clearRecordingData();
 
