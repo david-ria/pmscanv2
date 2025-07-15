@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -45,13 +45,7 @@ export const GroupComparison = ({
   const [groupStats, setGroupStats] = useState<GroupStatistics[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (isGroupMode && activeGroup) {
-      loadGroupStatistics();
-    }
-  }, [isGroupMode, activeGroup, selectedPeriod, selectedDate]);
-
-  const loadGroupStatistics = async () => {
+  const loadGroupStatistics = useCallback(async () => {
     if (!activeGroup) return;
 
     setLoading(true);
@@ -99,7 +93,13 @@ export const GroupComparison = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeGroup, userStats, selectedDate]);
+
+  useEffect(() => {
+    if (isGroupMode && activeGroup) {
+      loadGroupStatistics();
+    }
+  }, [isGroupMode, activeGroup, selectedPeriod, selectedDate, loadGroupStatistics]);
 
   if (!isGroupMode || !activeGroup) {
     return null;

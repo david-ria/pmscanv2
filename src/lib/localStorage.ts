@@ -10,11 +10,11 @@ export function getLocalMissions(): MissionData[] {
     if (!stored) return [];
 
     const missions = JSON.parse(stored);
-    return missions.map((m: any) => ({
+    return missions.map((m: Partial<MissionData> & { startTime: string; endTime: string; measurements: Array<{ timestamp: string }> }) => ({
       ...m,
       startTime: new Date(m.startTime),
       endTime: new Date(m.endTime),
-      measurements: m.measurements.map((measurement: any) => ({
+      measurements: m.measurements.map((measurement: { timestamp: string; [key: string]: unknown }) => ({
         ...measurement,
         timestamp: new Date(measurement.timestamp),
       })),
@@ -43,7 +43,35 @@ export function saveLocalMissions(missions: MissionData[]): void {
   }
 }
 
-export function formatDatabaseMission(dbMission: any): MissionData {
+export function formatDatabaseMission(dbMission: {
+  id: string;
+  name: string;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  avg_pm1: number;
+  avg_pm25: number;
+  avg_pm10: number;
+  max_pm25: number;
+  measurements_count: number;
+  location_context?: string;
+  activity_context?: string;
+  recording_frequency?: string;
+  shared?: boolean;
+  measurements?: Array<{
+    id: string;
+    timestamp: string;
+    pm1: number;
+    pm25: number;
+    pm10: number;
+    temperature?: number;
+    humidity?: number;
+    latitude?: number;
+    longitude?: number;
+    accuracy?: number;
+    automatic_context?: string;
+  }>;
+}): MissionData {
   return {
     id: dbMission.id,
     name: dbMission.name,
@@ -60,7 +88,7 @@ export function formatDatabaseMission(dbMission: any): MissionData {
     recordingFrequency: dbMission.recording_frequency,
     shared: dbMission.shared,
     measurements:
-      dbMission.measurements?.map((m: any) => ({
+      dbMission.measurements?.map((m) => ({
         id: m.id,
         timestamp: new Date(m.timestamp),
         pm1: m.pm1,

@@ -1,11 +1,11 @@
-import { Home, History, BarChart3 } from 'lucide-react';
+import { Home, History, BarChart3, LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 interface NavigationItem {
   to: string;
-  icon: React.ComponentType<any>;
+  icon: LucideIcon;
   labelKey: string;
 }
 

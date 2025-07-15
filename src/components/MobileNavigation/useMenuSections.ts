@@ -23,11 +23,12 @@ import { useAutoContext } from '@/hooks/useAutoContext';
 import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useGPS } from '@/hooks/useGPS';
+import { LucideIcon } from 'lucide-react';
 
 interface MenuSection {
   title: string;
   items: {
-    icon: React.ComponentType<any>;
+    icon: LucideIcon;
     label: string;
     badge?: string | null;
     action?: () => void;

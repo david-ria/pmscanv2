@@ -1,11 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { MenuItem } from './MenuItem';
 import { LanguageSelector } from './LanguageSelector';
+import { LucideIcon } from 'lucide-react';
 
 interface MenuSectionProps {
   title: string;
   items: {
-    icon: React.ComponentType<any>;
+    icon: LucideIcon;
     label: string;
     badge?: string | null;
     action?: () => void;

@@ -8,10 +8,10 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
-import { Info } from 'lucide-react';
+import { Info, LucideIcon } from 'lucide-react';
 
 interface MenuItemProps {
-  icon: React.ComponentType<any>;
+  icon: LucideIcon;
   label: string;
   badge?: string | null;
   action?: () => void;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { dataStorage, MissionData } from '@/lib/dataStorage';
 import {
@@ -44,20 +44,7 @@ export const useAnalysisLogic = (
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const { toast } = useToast();
 
-  // Load missions on component mount
-  useEffect(() => {
-    loadMissions();
-  }, []);
-
-  // Generate analysis when missions or date filter changes
-  useEffect(() => {
-    if (missions.length > 0 && !loading) {
-      generateAnalysis();
-      loadActivityData();
-    }
-  }, [missions, selectedDate, selectedPeriod]);
-
-  const loadMissions = async () => {
+  const loadMissions = useCallback(async () => {
     try {
       const missionData = await dataStorage.getAllMissions();
       setMissions(missionData);
@@ -69,9 +56,9 @@ export const useAnalysisLogic = (
         variant: 'destructive',
       });
     }
-  };
+  }, [toast, t]);
 
-  const loadActivityData = () => {
+  const loadActivityData = useCallback(() => {
     try {
       const filtered = filteredMissions();
       if (filtered.length === 0) {
@@ -130,7 +117,7 @@ export const useAnalysisLogic = (
       console.error('Error loading activity data:', error);
       setActivityData([]);
     }
-  };
+  }, [missions, selectedDate, selectedPeriod, t]);
 
   // Filter missions based on selected date and period
   const filteredMissions = () => {
@@ -179,7 +166,7 @@ export const useAnalysisLogic = (
     return filtered;
   };
 
-  const generateAnalysis = async () => {
+  const generateAnalysis = useCallback(async () => {
     setLoading(true);
     try {
       const filtered = filteredMissions();
@@ -434,7 +421,20 @@ ${
     } finally {
       setLoading(false);
     }
-  };
+  }, [missions, selectedDate, selectedPeriod, t, toast]);
+
+  // Load missions on component mount
+  useEffect(() => {
+    loadMissions();
+  }, [loadMissions]);
+
+  // Generate analysis when missions or date filter changes
+  useEffect(() => {
+    if (missions.length > 0 && !loading) {
+      generateAnalysis();
+      loadActivityData();
+    }
+  }, [missions, selectedDate, selectedPeriod, loading, generateAnalysis, loadActivityData]);
 
   const regenerateAnalysis = () => {
     setAnalysisGenerated(false);
