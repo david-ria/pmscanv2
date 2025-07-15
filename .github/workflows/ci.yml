@@ -30,7 +30,7 @@ jobs:
         run: npx prettier --version
 
       - name: Run Prettier check
-        run: npx prettier --check "src/**/*.{ts,tsx}" "scripts/**/*.{js,ts}"
+        run: npm run format:check
 
       - name: Run Tests
         run: npm test
