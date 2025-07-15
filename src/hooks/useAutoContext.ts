@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback, useContext } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import * as tf from '@tensorflow/tfjs';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
-import { useRecordingContext } from '@/contexts/RecordingContext';
 import { MODEL_LABELS } from '@/lib/recordingConstants';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -53,17 +52,6 @@ export function useAutoContext() {
           overrideContext: false,
         };
   });
-
-  // Use the recording context directly - this should work if properly wrapped
-  console.log('useAutoContext: Attempting to access RecordingContext');
-  const recordingContext = useRecordingContext();
-  console.log(
-    'useAutoContext: Successfully accessed RecordingContext',
-    recordingContext
-  );
-
-  const { updateMissionContext, missionContext, isRecording } =
-    recordingContext;
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
@@ -141,12 +129,6 @@ export function useAutoContext() {
     }
   }, [settings.enabled, requestLocationPermission]);
 
-  // Toggle high accuracy based on recording state
-  useEffect(() => {
-    if (settings.enabled && settings.highAccuracy !== isRecording) {
-      updateSettings({ highAccuracy: isRecording });
-    }
-  }, [isRecording, settings.enabled, settings.highAccuracy, updateSettings]);
 
   // Mock function to get current WiFi SSID (in real app, this would use native APIs)
   const getCurrentWifiSSID = useCallback((): string => {
@@ -472,12 +454,6 @@ export function useAutoContext() {
       }
 
       setLatestContext(state);
-      if (settings.overrideContext && state) {
-        if (missionContext.activity !== state) {
-          updateMissionContext(missionContext.location, state);
-        }
-      }
-
       return state;
     },
     [
@@ -492,8 +468,6 @@ export function useAutoContext() {
       classifyWifiByTimePattern,
       model,
       convertToTensor,
-      missionContext,
-      updateMissionContext,
     ]
   );
 
