@@ -337,7 +337,7 @@ export function useAutoContext() {
     [settings.homeWifiSSID, settings.workWifiSSID, updateSettings, persistSSID]
   );
 
-  // Main auto context determination function using configurable rules
+  // Pure context determination function without side effects
   const determineContext = useCallback(
     (inputs: AutoContextInputs): string => {
       if (!settings.enabled) {
@@ -347,12 +347,8 @@ export function useAutoContext() {
       const { location, speed = 0 } = inputs;
       const currentHour = new Date().getHours();
 
-      // Update WiFi tracking
+      // Get current WiFi without updating state
       const newWifiSSID = getCurrentWifiSSID();
-      if (newWifiSSID !== currentWifiSSID) {
-        setPreviousWifiSSID(currentWifiSSID);
-        setCurrentWifiSSID(newWifiSSID);
-      }
 
       const gpsQuality =
         location && location.accuracy && location.accuracy < 50
@@ -386,22 +382,18 @@ export function useAutoContext() {
         );
       }
 
-      // Track WiFi usage patterns for automatic home/work detection
-      const wifiTracking = trackWifiByTime(newWifiSSID);
-      classifyWifiByTimePattern(wifiTracking);
-
       // Prepare evaluation data for rule engine
       const evaluationData: AutoContextEvaluationData = {
         wifi: {
-          home: currentWifiSSID === settings.homeWifiSSID,
-          work: currentWifiSSID === settings.workWifiSSID,
+          home: newWifiSSID === settings.homeWifiSSID,
+          work: newWifiSSID === settings.workWifiSSID,
           known: !!(
-            currentWifiSSID &&
-            (currentWifiSSID === settings.homeWifiSSID ||
-              currentWifiSSID === settings.workWifiSSID)
+            newWifiSSID &&
+            (newWifiSSID === settings.homeWifiSSID ||
+              newWifiSSID === settings.workWifiSSID)
           ),
-          currentSSID: currentWifiSSID,
-          previousSSID: previousWifiSSID,
+          currentSSID: newWifiSSID,
+          previousSSID: currentWifiSSID,
         },
         location: {
           insideHome: insideHomeArea,
@@ -452,22 +444,39 @@ export function useAutoContext() {
         state = 'Driving';
       }
 
-      setLatestContext(state);
       return state;
     },
     [
       settings,
       currentWifiSSID,
-      previousWifiSSID,
+      latestContext,
       getCurrentWifiSSID,
       getCellularSignal,
       isInsideArea,
-      trackWifiByTime,
-      classifyWifiByTimePattern,
       model,
       convertToTensor,
     ]
   );
+
+  // Separate effect to handle WiFi state updates
+  useEffect(() => {
+    const newWifiSSID = getCurrentWifiSSID();
+    if (newWifiSSID !== currentWifiSSID) {
+      setPreviousWifiSSID(currentWifiSSID);
+      setCurrentWifiSSID(newWifiSSID);
+      
+      // Track WiFi usage patterns for automatic home/work detection
+      const wifiTracking = trackWifiByTime(newWifiSSID);
+      classifyWifiByTimePattern(wifiTracking);
+    }
+  }, [getCurrentWifiSSID, currentWifiSSID, trackWifiByTime, classifyWifiByTimePattern]);
+
+  // Separate function to update context (called from RealTime component)
+  const updateLatestContext = useCallback((context: string) => {
+    if (context !== latestContext) {
+      setLatestContext(context);
+    }
+  }, [latestContext]);
 
   return useMemo(
     () => ({
@@ -475,6 +484,7 @@ export function useAutoContext() {
       updateSettings,
       toggleEnabled,
       determineContext,
+      updateLatestContext,
       latestContext,
       isEnabled: settings.enabled,
       mlEnabled: settings.mlEnabled,
@@ -488,6 +498,7 @@ export function useAutoContext() {
       updateSettings,
       toggleEnabled,
       determineContext,
+      updateLatestContext,
       latestContext,
       latestLocation,
       locationEnabled,

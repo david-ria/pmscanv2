@@ -33,6 +33,7 @@ export default function RealTime() {
   console.log('RealTime: About to call useAutoContext');
   const {
     determineContext,
+    updateLatestContext,
     isEnabled: autoContextEnabled,
     latestLocation,
     locationEnabled,
@@ -82,6 +83,11 @@ export default function RealTime() {
             })
           : '';
 
+        // Update context state separately
+        if (automaticContext) {
+          updateLatestContext(automaticContext);
+        }
+
         // Apply automatic context override if enabled
         if (
           autoContextEnabled &&
@@ -110,6 +116,7 @@ export default function RealTime() {
     addDataPoint,
     missionContext,
     determineContext,
+    updateLatestContext,
     autoContextEnabled,
   ]);
 
