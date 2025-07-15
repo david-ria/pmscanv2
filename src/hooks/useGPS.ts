@@ -25,7 +25,8 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
 
     // Ensure any previous watcher is cleared before starting a new one
     if (watchId !== null) {
-      stopWatching();
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
     }
 
     if (!navigator.geolocation) {
@@ -97,7 +98,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
     );
 
     setWatchId(id);
-  }, [enabled, watchId, stopWatching, highAccuracy]);
+  }, [enabled, highAccuracy, watchId]);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
     logger.debug('🧭 GPS: Permission request initiated...');
@@ -113,7 +114,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
 
         if (permission.state === 'granted') {
           setLocationEnabled(true);
-          startWatching();
+          // Trigger startWatching via state change instead of calling directly
           return true;
         } else if (permission.state === 'prompt') {
           // Will trigger permission dialog on first geolocation call
@@ -121,7 +122,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
             navigator.geolocation.getCurrentPosition(
               (position) => {
                 setLocationEnabled(true);
-                startWatching();
+                // Trigger startWatching via state change instead of calling directly
                 resolve(true);
               },
               (error) => {
@@ -142,7 +143,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
           navigator.geolocation.getCurrentPosition(
             (position) => {
               setLocationEnabled(true);
-              startWatching();
+              // Trigger startWatching via state change instead of calling directly
               resolve(true);
             },
             (error) => {
@@ -159,7 +160,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
       setError('Failed to request location permission');
       return false;
     }
-  }, [startWatching]);
+  }, []);
 
   // Check initial permission state
   useEffect(() => {
@@ -176,16 +177,13 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
           permissionStatus = permission;
           if (permission.state === 'granted') {
             setLocationEnabled(true);
-            startWatching();
           }
 
           permissionChangeHandler = () => {
             if (permission.state === 'granted') {
               setLocationEnabled(true);
-              startWatching();
             } else {
               setLocationEnabled(false);
-              stopWatching();
               setLatestLocation(null);
             }
           };
@@ -200,31 +198,40 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
         permissionStatus.removeEventListener('change', permissionChangeHandler);
       }
     };
-  }, [startWatching, stopWatching]);
+  }, []);
 
   // Handle enabled state changes
   useEffect(() => {
     if (!enabled) {
-      stopWatching();
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        setWatchId(null);
+      }
       setLocationEnabled(false);
       setLatestLocation(null);
       setError(null);
     }
-  }, [enabled, stopWatching]);
+  }, [enabled, watchId]);
 
-  // Restart watcher when accuracy preference changes
+  // Start watching when enabled and location permission granted
   useEffect(() => {
-    if (enabled) {
-      startWatching();
+    if (enabled && locationEnabled) {
+      // Small delay to prevent rapid state changes
+      const timer = setTimeout(() => {
+        startWatching();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [highAccuracy, enabled, startWatching]);
+  }, [enabled, locationEnabled, highAccuracy, startWatching]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      stopWatching();
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
     };
-  }, [stopWatching]);
+  }, [watchId]);
 
   return {
     locationEnabled,

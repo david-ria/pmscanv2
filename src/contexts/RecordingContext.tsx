@@ -46,6 +46,7 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
     return recordingData;
   }, [recordingData]);
 
+  console.log('🔄 RecordingProvider: About to render children');
   return (
     <RecordingContext.Provider value={contextValue}>
       {children}
