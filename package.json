@@ -13,7 +13,8 @@
     "test:perf": "npx playwright test tests/performance-budgets.spec.ts tests/energy-usage.spec.ts tests/perf-top-offenders.spec.ts",
     "fix:newlines": "node scripts/ensure-trailing-newline.cjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"scripts/**/*.{js,ts}\""
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"scripts/**/*.{js,ts}\"",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -114,6 +115,7 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "husky": "^8.0.0"
   }
 }
