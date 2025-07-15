@@ -82,6 +82,10 @@ development mode) additional debug messages will be printed. Example:
 VITE_LOG_LEVEL=debug npm run dev
 ```
 
+Note that when React's `StrictMode` is enabled (the default in development),
+components and hooks initialize twice, leading to duplicate debug logs. This
+doesn't occur in production.
+
 ## Supabase configuration
 
 The application expects Supabase connection details to be available as
