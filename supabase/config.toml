@@ -3,9 +3,6 @@ project_id = "shydpfwuvnlzdzbubmgb"
 [functions.get-mapbox-token]
 verify_jwt = false
 
-[functions.get-google-client-id]
-verify_jwt = false
-
 [functions.send-group-invitation]
 verify_jwt = true
 
@@ -15,5 +12,3 @@ verify_jwt = true
 [functions.decline-group-invitation]
 verify_jwt = true
 
-[functions.google-fit-sync]
-verify_jwt = true

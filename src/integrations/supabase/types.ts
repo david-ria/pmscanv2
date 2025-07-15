@@ -14,54 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      fitness_activities: {
-        Row: {
-          activity_type: string
-          calories: number | null
-          created_at: string
-          distance_meters: number | null
-          duration_minutes: number
-          end_time: string
-          id: string
-          raw_data: Json | null
-          source: string | null
-          start_time: string
-          steps: number | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          activity_type: string
-          calories?: number | null
-          created_at?: string
-          distance_meters?: number | null
-          duration_minutes: number
-          end_time: string
-          id?: string
-          raw_data?: Json | null
-          source?: string | null
-          start_time: string
-          steps?: number | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          activity_type?: string
-          calories?: number | null
-          created_at?: string
-          distance_meters?: number | null
-          duration_minutes?: number
-          end_time?: string
-          id?: string
-          raw_data?: Json | null
-          source?: string | null
-          start_time?: string
-          steps?: number | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       group_custom_thresholds: {
         Row: {
           color: string | null
