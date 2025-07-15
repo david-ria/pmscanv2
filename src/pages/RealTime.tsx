@@ -83,7 +83,11 @@ export default function RealTime() {
           : '';
 
         // Apply automatic context override if enabled
-        if (autoContextEnabled && automaticContext && missionContext.activity !== automaticContext) {
+        if (
+          autoContextEnabled &&
+          automaticContext &&
+          missionContext.activity !== automaticContext
+        ) {
           updateMissionContext(missionContext.location, automaticContext);
         }
 

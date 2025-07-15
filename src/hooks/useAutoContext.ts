@@ -129,7 +129,6 @@ export function useAutoContext() {
     }
   }, [settings.enabled, requestLocationPermission]);
 
-
   // Mock function to get current WiFi SSID (in real app, this would use native APIs)
   const getCurrentWifiSSID = useCallback((): string => {
     // Check for test WiFi SSID from localStorage first
