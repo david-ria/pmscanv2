@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useRecordingState } from './useRecordingState';
@@ -133,7 +133,7 @@ export function useRecordingData() {
     return mission;
   }, [recordingData, recordingStartTime, saveMissionHelper, clearRecoveryData, clearRecordingData]);
 
-  return {
+  return useMemo(() => ({
     recordingData,
     isRecording,
     recordingFrequency,
@@ -145,5 +145,17 @@ export function useRecordingData() {
     clearRecordingData,
     updateMissionContext,
     recordingStartTime,
-  };
+  }), [
+    recordingData,
+    isRecording,
+    recordingFrequency,
+    missionContext,
+    startRecording,
+    stopRecording,
+    addDataPoint,
+    saveMission,
+    clearRecordingData,
+    updateMissionContext,
+    recordingStartTime,
+  ]);
 }
