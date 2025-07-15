@@ -459,7 +459,6 @@ export function useAutoContext() {
       settings,
       currentWifiSSID,
       previousWifiSSID,
-      latestContext,
       getCurrentWifiSSID,
       getCellularSignal,
       isInsideArea,
