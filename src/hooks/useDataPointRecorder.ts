@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useCallback } from 'react';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { RecordingEntry } from '@/types/recording';
@@ -27,77 +27,86 @@ export function useDataPointRecorder({
 }: UseDataPointRecorderProps) {
   const lastRecordedTime = useRef<Date | null>(null);
 
-  const addDataPoint = (
-    pmData: PMScanData,
-    location?: LocationData,
-    context?: { location: string; activity: string },
-    automaticContext?: string
-  ) => {
-    logger.debug('📊 addDataPoint called:', {
+  const addDataPoint = useCallback(
+    (
+      pmData: PMScanData,
+      location?: LocationData,
+      context?: { location: string; activity: string },
+      automaticContext?: string
+    ) => {
+      logger.debug('📊 addDataPoint called:', {
+        isRecording,
+        recordingFrequency,
+        lastRecordedTime: lastRecordedTime.current,
+        pmData: {
+          pm1: pmData.pm1,
+          pm25: pmData.pm25,
+          pm10: pmData.pm10,
+          timestamp: pmData.timestamp,
+        },
+        location,
+      });
+
+      if (!isRecording) {
+        logger.debug('❌ Not recording, skipping data point');
+        return;
+      }
+
+      // Check if enough time has passed based on recording frequency
+      const frequencyMs = parseFrequencyToMs(recordingFrequency);
+      logger.debug('⏱️ Frequency check:', {
+        frequencyMs,
+        recordingFrequency,
+        lastRecordedTime: lastRecordedTime.current,
+        shouldRecord: shouldRecordData(lastRecordedTime.current, frequencyMs),
+      });
+
+      if (!shouldRecordData(lastRecordedTime.current, frequencyMs)) {
+        logger.debug('⏭️ Skipping data point - not enough time passed');
+        return;
+      }
+
+      logger.debug('✅ Recording data point');
+
+      // Update last recorded time
+      const currentTime = new Date();
+      lastRecordedTime.current = currentTime;
+      updateLastRecordedTime(currentTime);
+
+      // Use a unique timestamp for each data point
+      const uniqueTimestamp = new Date();
+      const pmDataWithUniqueTimestamp = {
+        ...pmData,
+        timestamp: uniqueTimestamp,
+      };
+
+      const entry: RecordingEntry = {
+        pmData: pmDataWithUniqueTimestamp,
+        location,
+        context,
+        automaticContext,
+      };
+
+      logger.debug('📝 Adding entry to recording data:', entry);
+
+      // Store data for background processing if background mode is enabled
+      if (getBackgroundRecording()) {
+        logger.debug('💾 Storing background data');
+        storeBackgroundData(pmDataWithUniqueTimestamp, location, context);
+      }
+
+      // Add to recording data
+      addDataPointToState(entry);
+      logger.debug('✅ Data point added successfully');
+    },
+    [
       isRecording,
       recordingFrequency,
-      lastRecordedTime: lastRecordedTime.current,
-      pmData: {
-        pm1: pmData.pm1,
-        pm25: pmData.pm25,
-        pm10: pmData.pm10,
-        timestamp: pmData.timestamp,
-      },
-      location,
-    });
-
-    if (!isRecording) {
-      logger.debug('❌ Not recording, skipping data point');
-      return;
-    }
-
-    // Check if enough time has passed based on recording frequency
-    const frequencyMs = parseFrequencyToMs(recordingFrequency);
-    logger.debug('⏱️ Frequency check:', {
-      frequencyMs,
-      recordingFrequency,
-      lastRecordedTime: lastRecordedTime.current,
-      shouldRecord: shouldRecordData(lastRecordedTime.current, frequencyMs),
-    });
-
-    if (!shouldRecordData(lastRecordedTime.current, frequencyMs)) {
-      logger.debug('⏭️ Skipping data point - not enough time passed');
-      return;
-    }
-
-    logger.debug('✅ Recording data point');
-
-    // Update last recorded time
-    const currentTime = new Date();
-    lastRecordedTime.current = currentTime;
-    updateLastRecordedTime(currentTime);
-
-    // Use a unique timestamp for each data point
-    const uniqueTimestamp = new Date();
-    const pmDataWithUniqueTimestamp = {
-      ...pmData,
-      timestamp: uniqueTimestamp,
-    };
-
-    const entry: RecordingEntry = {
-      pmData: pmDataWithUniqueTimestamp,
-      location,
-      context,
-      automaticContext,
-    };
-
-    logger.debug('📝 Adding entry to recording data:', entry);
-
-    // Store data for background processing if background mode is enabled
-    if (getBackgroundRecording()) {
-      logger.debug('💾 Storing background data');
-      storeBackgroundData(pmDataWithUniqueTimestamp, location, context);
-    }
-
-    // Add to recording data
-    addDataPointToState(entry);
-    logger.debug('✅ Data point added successfully');
-  };
+      updateLastRecordedTime,
+      storeBackgroundData,
+      addDataPointToState,
+    ]
+  );
 
   return {
     addDataPoint,
