@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as tf from '@tensorflow/tfjs';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
@@ -470,17 +470,29 @@ export function useAutoContext() {
     ]
   );
 
-  return {
-    settings,
-    updateSettings,
-    toggleEnabled,
-    determineContext,
-    latestContext,
-    isEnabled: settings.enabled,
-    mlEnabled: settings.mlEnabled,
-    highAccuracy: settings.highAccuracy,
-    latestLocation,
-    locationEnabled,
-    requestLocationPermission,
-  };
+  return useMemo(
+    () => ({
+      settings,
+      updateSettings,
+      toggleEnabled,
+      determineContext,
+      latestContext,
+      isEnabled: settings.enabled,
+      mlEnabled: settings.mlEnabled,
+      highAccuracy: settings.highAccuracy,
+      latestLocation,
+      locationEnabled,
+      requestLocationPermission,
+    }),
+    [
+      settings,
+      updateSettings,
+      toggleEnabled,
+      determineContext,
+      latestContext,
+      latestLocation,
+      locationEnabled,
+      requestLocationPermission,
+    ]
+  );
 }
