@@ -1,9 +1,10 @@
+import { useCallback } from 'react';
 import { dataStorage } from '@/lib/dataStorage';
 import { RecordingEntry } from '@/types/recording';
 import * as logger from '@/utils/logger';
 
 export function useMissionSaver() {
-  const saveMission = (
+  const saveMission = useCallback((
     recordingData: RecordingEntry[],
     recordingStartTime: Date | null,
     missionName: string,
@@ -41,7 +42,7 @@ export function useMissionSaver() {
     );
 
     return mission;
-  };
+  }, []);
 
   return {
     saveMission,

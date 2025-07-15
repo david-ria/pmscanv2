@@ -173,9 +173,9 @@ export function useCrashRecovery() {
   );
 
   // Clear recovery data when recording is properly saved
-  const clearRecoveryData = () => {
+  const clearRecoveryData = useCallback(() => {
     localStorage.removeItem(CRASH_RECOVERY_KEY);
-  };
+  }, []);
 
   return {
     saveRecordingProgress,
