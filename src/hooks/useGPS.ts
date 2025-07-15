@@ -8,15 +8,17 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
     null
   );
   const [watchId, setWatchId] = useState<number | null>(null);
+  const watchIdRef = useRef<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const lastErrorTimeRef = useRef(0);
 
   const stopWatching = useCallback(() => {
-    if (watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
       setWatchId(null);
     }
-  }, [watchId]);
+  }, []);
 
   const startWatching = useCallback(() => {
     if (!enabled) {
@@ -24,8 +26,9 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
     }
 
     // Ensure any previous watcher is cleared before starting a new one
-    if (watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
       setWatchId(null);
     }
 
@@ -97,8 +100,9 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
       options
     );
 
+    watchIdRef.current = id;
     setWatchId(id);
-  }, [enabled, highAccuracy, watchId]);
+  }, [enabled, highAccuracy]);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
     logger.debug('🧭 GPS: Permission request initiated...');
@@ -203,15 +207,16 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
   // Handle enabled state changes
   useEffect(() => {
     if (!enabled) {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
         setWatchId(null);
       }
       setLocationEnabled(false);
       setLatestLocation(null);
       setError(null);
     }
-  }, [enabled, watchId]);
+  }, [enabled]);
 
   // Start watching when enabled and location permission granted
   useEffect(() => {
@@ -222,16 +227,16 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [enabled, locationEnabled, highAccuracy, startWatching]);
+  }, [enabled, locationEnabled, highAccuracy]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
       }
     };
-  }, [watchId]);
+  }, []);
 
   return {
     locationEnabled,

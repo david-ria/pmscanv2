@@ -49,11 +49,16 @@ describe('useGPS', () => {
       vi.runAllTimers();
     });
 
+    // Run timers again to ensure no additional watchers are created
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
     vi.useRealTimers();
 
     expect(result.current.locationEnabled).toBe(true);
     await waitFor(() =>
-      expect(geolocation.watchPosition).toHaveBeenCalled()
+      expect(geolocation.watchPosition).toHaveBeenCalledTimes(1)
     );
   });
 });
