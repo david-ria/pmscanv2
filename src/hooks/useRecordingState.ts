@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   RecordingEntry,
   MissionContext,
@@ -19,7 +19,7 @@ export function useRecordingState() {
   const recordingStartTime = useRef<Date | null>(null);
   const lastRecordedTime = useRef<Date | null>(null);
 
-  const startRecording = (frequency: string = '10s') => {
+  const startRecording = useCallback((frequency: string = '10s') => {
     logger.debug('🎬 Starting recording with frequency:', frequency);
     setIsRecording(true);
     setRecordingData([]);
@@ -31,36 +31,36 @@ export function useRecordingState() {
     setGlobalRecording(true);
 
     logger.debug('✅ Recording started! isRecording should now be:', true);
-  };
+  }, []);
 
-  const stopRecording = () => {
+  const stopRecording = useCallback(() => {
     setIsRecording(false);
 
     // Clear global recording state to allow disconnection
     setGlobalRecording(false);
-  };
+  }, []);
 
-  const addDataPoint = (entry: RecordingEntry) => {
+  const addDataPoint = useCallback((entry: RecordingEntry) => {
     setRecordingData((prev) => {
       const updated = [...prev, entry];
       logger.debug('📊 Recording data updated, total points:', updated.length);
       return updated;
     });
-  };
+  }, []);
 
-  const clearRecordingData = () => {
+  const clearRecordingData = useCallback(() => {
     setRecordingData([]);
     recordingStartTime.current = null;
     lastRecordedTime.current = null;
-  };
+  }, []);
 
-  const updateMissionContext = (location: string, activity: string) => {
+  const updateMissionContext = useCallback((location: string, activity: string) => {
     setMissionContext({ location, activity });
-  };
+  }, []);
 
-  const updateLastRecordedTime = (time: Date) => {
+  const updateLastRecordedTime = useCallback((time: Date) => {
     lastRecordedTime.current = time;
-  };
+  }, []);
 
   return {
     // State

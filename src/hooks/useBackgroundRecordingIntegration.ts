@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useBackgroundRecording } from './useBackgroundRecording';
 import { parseFrequencyToMs } from '@/lib/recordingUtils';
 import { PMScanData } from '@/lib/pmscan/types';
@@ -12,7 +13,7 @@ export function useBackgroundRecordingIntegration() {
     storeDataForBackground,
   } = useBackgroundRecording();
 
-  const enableRecordingBackground = async (frequency: string) => {
+  const enableRecordingBackground = useCallback(async (frequency: string) => {
     try {
       await enableBackgroundRecording({
         enableWakeLock: true,
@@ -23,18 +24,18 @@ export function useBackgroundRecordingIntegration() {
     } catch (error) {
       console.warn('⚠️ Background recording failed to enable:', error);
     }
-  };
+  }, [enableBackgroundRecording]);
 
-  const disableRecordingBackground = async () => {
+  const disableRecordingBackground = useCallback(async () => {
     try {
       await disableBackgroundRecording();
       logger.debug('🛑 Background recording disabled');
     } catch (error) {
       console.warn('⚠️ Background recording failed to disable:', error);
     }
-  };
+  }, [disableBackgroundRecording]);
 
-  const storeBackgroundData = (
+  const storeBackgroundData = useCallback((
     pmData: PMScanData,
     location?: LocationData,
     context?: { location: string; activity: string }
@@ -42,7 +43,7 @@ export function useBackgroundRecordingIntegration() {
     if (isBackgroundEnabled) {
       storeDataForBackground(pmData, location, context);
     }
-  };
+  }, [isBackgroundEnabled, storeDataForBackground]);
 
   return {
     isBackgroundEnabled,
