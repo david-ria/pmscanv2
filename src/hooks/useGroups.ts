@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -52,7 +52,7 @@ export const useGroups = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     try {
       // Get current user first
       const {
@@ -100,9 +100,9 @@ export const useGroups = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const createGroup = async (name: string, description?: string) => {
+  const createGroup = useCallback(async (name: string, description?: string) => {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
@@ -134,9 +134,9 @@ export const useGroups = () => {
       });
       throw error;
     }
-  };
+  }, [fetchGroups, toast]);
 
-  const updateGroup = async (
+  const updateGroup = useCallback(async (
     groupId: string,
     updates: { name?: string; description?: string }
   ) => {
@@ -162,9 +162,9 @@ export const useGroups = () => {
       });
       throw error;
     }
-  };
+  }, [fetchGroups, toast]);
 
-  const deleteGroup = async (groupId: string) => {
+  const deleteGroup = useCallback(async (groupId: string) => {
     try {
       const { error } = await supabase
         .from('groups')
@@ -187,9 +187,9 @@ export const useGroups = () => {
       });
       throw error;
     }
-  };
+  }, [fetchGroups, toast]);
 
-  const leaveGroup = async (groupId: string) => {
+  const leaveGroup = useCallback(async (groupId: string) => {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
@@ -216,11 +216,11 @@ export const useGroups = () => {
       });
       throw error;
     }
-  };
+  }, [fetchGroups, toast]);
 
   useEffect(() => {
     fetchGroups();
-  }, []);
+  }, [fetchGroups]);
 
   return {
     groups,

@@ -20,35 +20,17 @@ export function useBackgroundRecording() {
 
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize service worker and check capabilities
-  useEffect(() => {
-    initializeServiceWorker();
-    checkBackgroundSyncSupport();
-    checkNotificationPermission();
-  }, []);
-
-  const initializeServiceWorker = async () => {
-    if ('serviceWorker' in navigator) {
-      try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
-        setServiceWorkerRegistration(registration);
-        logger.debug('🔧 Service Worker registered successfully');
-
-        // Listen for service worker messages
-        navigator.serviceWorker.addEventListener(
-          'message',
-          handleServiceWorkerMessage
-        );
-
-        await navigator.serviceWorker.ready;
-        logger.debug('🚀 Service Worker ready');
-      } catch (error) {
-        console.error('❌ Service Worker registration failed:', error);
-      }
+  const showNotification = useCallback((title: string, body: string) => {
+    if (notificationPermission === 'granted') {
+      new Notification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+      });
     }
-  };
+  }, [notificationPermission]);
 
-  const handleServiceWorkerMessage = (event: MessageEvent) => {
+  const handleServiceWorkerMessage = useCallback((event: MessageEvent) => {
     logger.debug('📨 Received message from Service Worker:', event.data);
 
     switch (event.data.type) {
@@ -72,23 +54,52 @@ export function useBackgroundRecording() {
         // This would trigger the actual sync logic in the main app
         break;
     }
-  };
+  }, [showNotification]);
 
-  const checkBackgroundSyncSupport = () => {
+  const initializeServiceWorker = useCallback(async () => {
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        setServiceWorkerRegistration(registration);
+        logger.debug('🔧 Service Worker registered successfully');
+
+        await navigator.serviceWorker.ready;
+        logger.debug('🚀 Service Worker ready');
+      } catch (error) {
+        console.error('❌ Service Worker registration failed:', error);
+      }
+    }
+  }, []);
+
+  const checkBackgroundSyncSupport = useCallback(() => {
     const isSupported =
       'serviceWorker' in navigator &&
       'sync' in window.ServiceWorkerRegistration.prototype;
     setBackgroundSyncSupported(isSupported);
     logger.debug('🔄 Background Sync supported:', isSupported);
-  };
+  }, []);
 
-  const checkNotificationPermission = async () => {
+  const checkNotificationPermission = useCallback(async () => {
     if ('Notification' in window) {
       setNotificationPermission(Notification.permission);
     }
-  };
+  }, []);
 
-  const requestNotificationPermission = async (): Promise<boolean> => {
+  // Initialize service worker and check capabilities
+  useEffect(() => {
+    initializeServiceWorker();
+    checkBackgroundSyncSupport();
+    checkNotificationPermission();
+    
+    // Listen for service worker messages after initialization
+    navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+    
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+    };
+  }, [initializeServiceWorker, checkBackgroundSyncSupport, checkNotificationPermission, handleServiceWorkerMessage]);
+
+  const requestNotificationPermission = useCallback(async (): Promise<boolean> => {
     if (!('Notification' in window)) {
       console.warn('⚠️ Notifications not supported');
       return false;
@@ -101,9 +112,9 @@ export function useBackgroundRecording() {
     const permission = await Notification.requestPermission();
     setNotificationPermission(permission);
     return permission === 'granted';
-  };
+  }, []);
 
-  const acquireWakeLock = async (): Promise<boolean> => {
+  const acquireWakeLock = useCallback(async (): Promise<boolean> => {
     if (!('wakeLock' in navigator)) {
       console.warn('⚠️ Wake Lock API not supported');
       return false;
@@ -124,9 +135,9 @@ export function useBackgroundRecording() {
       console.error('❌ Wake lock request failed:', error);
       return false;
     }
-  };
+  }, []);
 
-  const releaseWakeLock = async () => {
+  const releaseWakeLock = useCallback(async () => {
     if (wakeLock) {
       try {
         await wakeLock.release();
@@ -136,9 +147,9 @@ export function useBackgroundRecording() {
         console.error('❌ Wake lock release failed:', error);
       }
     }
-  };
+  }, [wakeLock]);
 
-  const enableBackgroundRecording = async (
+  const enableBackgroundRecording = useCallback(async (
     options: BackgroundRecordingOptions = {
       enableWakeLock: true,
       enableNotifications: true,
@@ -197,9 +208,9 @@ export function useBackgroundRecording() {
       console.error('❌ Failed to enable background recording:', error);
       return false;
     }
-  };
+  }, [requestNotificationPermission, acquireWakeLock, backgroundSyncSupported, serviceWorkerRegistration, showNotification]);
 
-  const disableBackgroundRecording = async () => {
+  const disableBackgroundRecording = useCallback(async () => {
     try {
       // Release wake lock
       await releaseWakeLock();
@@ -220,7 +231,7 @@ export function useBackgroundRecording() {
     } catch (error) {
       console.error('❌ Failed to disable background recording:', error);
     }
-  };
+  }, [releaseWakeLock, showNotification]);
 
   const storeDataForBackground = useCallback(
     (pmData: PMScanData, location?: LocationData, context?: any) => {
@@ -240,16 +251,6 @@ export function useBackgroundRecording() {
     [serviceWorkerRegistration, isBackgroundEnabled]
   );
 
-  const showNotification = (title: string, body: string) => {
-    if (notificationPermission === 'granted') {
-      new Notification(title, {
-        body,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-      });
-    }
-  };
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -258,7 +259,7 @@ export function useBackgroundRecording() {
       }
       releaseWakeLock();
     };
-  }, []);
+  }, [releaseWakeLock]);
 
   return {
     isBackgroundEnabled,
