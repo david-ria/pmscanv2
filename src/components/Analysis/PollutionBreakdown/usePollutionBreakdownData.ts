@@ -165,7 +165,10 @@ export const usePollutionBreakdownData = (
             data.totalExposure > 0 ? data.weightedPM / data.totalExposure : 0;
           return {
             name: key,
-            percentage: totalExposure > 0 ? (data.totalExposure / totalExposure) * 100 : 0,
+            percentage:
+              totalExposure > 0
+                ? (data.totalExposure / totalExposure) * 100
+                : 0,
             avgPM: avgPM,
             color: data.color,
             exposure: data.totalExposure,

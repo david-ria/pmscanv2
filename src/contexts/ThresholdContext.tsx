@@ -88,31 +88,34 @@ export function ThresholdProvider({ children }: ThresholdProviderProps) {
     localStorage.setItem('airQualityThresholds', JSON.stringify(thresholds));
   }, [thresholds]);
 
-  const updateThresholds = useCallback((newThresholds: AirQualityThresholds) => {
-    setThresholds(newThresholds);
-  }, []);
+  const updateThresholds = useCallback(
+    (newThresholds: AirQualityThresholds) => {
+      setThresholds(newThresholds);
+    },
+    []
+  );
 
   const resetToWHOStandards = useCallback(() => {
     setThresholds(WHO_THRESHOLDS);
   }, []);
 
-  const getAirQualityLevel = useCallback((
-    value: number,
-    pollutant: 'pm1' | 'pm25' | 'pm10'
-  ) => {
-    const pollutantThresholds = thresholds[pollutant];
+  const getAirQualityLevel = useCallback(
+    (value: number, pollutant: 'pm1' | 'pm25' | 'pm10') => {
+      const pollutantThresholds = thresholds[pollutant];
 
-    if (value <= pollutantThresholds.good) {
-      return { level: 'good' as const, color: 'air-good' };
-    }
-    if (value <= pollutantThresholds.moderate) {
-      return { level: 'moderate' as const, color: 'air-moderate' };
-    }
-    if (value <= pollutantThresholds.poor) {
-      return { level: 'poor' as const, color: 'air-poor' };
-    }
-    return { level: 'very-poor' as const, color: 'air-very-poor' };
-  }, [thresholds]);
+      if (value <= pollutantThresholds.good) {
+        return { level: 'good' as const, color: 'air-good' };
+      }
+      if (value <= pollutantThresholds.moderate) {
+        return { level: 'moderate' as const, color: 'air-moderate' };
+      }
+      if (value <= pollutantThresholds.poor) {
+        return { level: 'poor' as const, color: 'air-poor' };
+      }
+      return { level: 'very-poor' as const, color: 'air-very-poor' };
+    },
+    [thresholds]
+  );
 
   return (
     <ThresholdContext.Provider

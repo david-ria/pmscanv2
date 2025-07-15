@@ -6,7 +6,7 @@ export function useAutoSync() {
   // Auto-sync when coming online (debounced)
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    
+
     const handleOnline = () => {
       // Debounce to prevent multiple rapid online events
       clearTimeout(timeoutId);

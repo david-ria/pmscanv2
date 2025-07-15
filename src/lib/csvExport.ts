@@ -19,7 +19,10 @@ export function exportMissionToCSV(mission: MissionData): void {
   ];
 
   const rows = mission.measurements.map((m) => [
-    (m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp)).toISOString(),
+    (m.timestamp instanceof Date
+      ? m.timestamp
+      : new Date(m.timestamp)
+    ).toISOString(),
     m.pm1.toFixed(1),
     m.pm25.toFixed(1),
     m.pm10.toFixed(1),
@@ -61,10 +64,10 @@ export function exportMissionToCSV(mission: MissionData): void {
     startTime.getSeconds().toString().padStart(2, '0');
 
   const filename = `${deviceId}_${dateStr}_${timeStr}.csv`;
-  
+
   // Store CSV content for sync in case of network issues
   storeCSVForSync(filename, csvWithBOM);
-  
+
   link.setAttribute('href', url);
   link.setAttribute('download', filename);
   link.style.visibility = 'hidden';

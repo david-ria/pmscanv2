@@ -160,15 +160,22 @@ export const useAnalysisLogic = (
 
     const filtered = missions.filter((mission) => {
       const missionDate = new Date(mission.startTime);
-      const isInRange = isWithinInterval(missionDate, { start: startDate, end: endDate });
-      
+      const isInRange = isWithinInterval(missionDate, {
+        start: startDate,
+        end: endDate,
+      });
+
       // Debug each mission filtering
-      logger.debug(`Mission "${mission.name}": start=${mission.startTime}, parsed=${missionDate.toISOString()}, inRange=${isInRange}, duration=${mission.durationMinutes}`);
-      
+      logger.debug(
+        `Mission "${mission.name}": start=${mission.startTime}, parsed=${missionDate.toISOString()}, inRange=${isInRange}, duration=${mission.durationMinutes}`
+      );
+
       return isInRange;
     });
-    
-    logger.debug(`Filtered ${filtered.length} out of ${missions.length} missions for period ${selectedPeriod}`);
+
+    logger.debug(
+      `Filtered ${filtered.length} out of ${missions.length} missions for period ${selectedPeriod}`
+    );
     return filtered;
   };
 
@@ -181,30 +188,41 @@ export const useAnalysisLogic = (
       logger.debug('Filtered missions for analysis:', filtered.length);
       logger.debug('Selected period:', selectedPeriod);
       logger.debug('Selected date:', selectedDate);
-      
+
       // Debug mission dates to understand filtering
       if (missions.length > 0) {
-        logger.debug('All mission dates:', missions.map(m => ({
-          name: m.name,
-          startTime: m.startTime,
-          dateString: new Date(m.startTime).toLocaleDateString()
-        })));
-        
+        logger.debug(
+          'All mission dates:',
+          missions.map((m) => ({
+            name: m.name,
+            startTime: m.startTime,
+            dateString: new Date(m.startTime).toLocaleDateString(),
+          }))
+        );
+
         // Calculate date range for debugging (moved outside to avoid re-render loop)
         const now = new Date();
-        const startDate = selectedPeriod === 'day' ? startOfDay(selectedDate) : 
-                         selectedPeriod === 'week' ? startOfWeek(selectedDate, { weekStartsOn: 1 }) :
-                         selectedPeriod === 'month' ? startOfMonth(selectedDate) :
-                         startOfYear(selectedDate);
-        const endDate = selectedPeriod === 'day' ? endOfDay(selectedDate) : 
-                       selectedPeriod === 'week' ? endOfWeek(selectedDate, { weekStartsOn: 1 }) :
-                       selectedPeriod === 'month' ? endOfMonth(selectedDate) :
-                       endOfYear(selectedDate);
-        
+        const startDate =
+          selectedPeriod === 'day'
+            ? startOfDay(selectedDate)
+            : selectedPeriod === 'week'
+              ? startOfWeek(selectedDate, { weekStartsOn: 1 })
+              : selectedPeriod === 'month'
+                ? startOfMonth(selectedDate)
+                : startOfYear(selectedDate);
+        const endDate =
+          selectedPeriod === 'day'
+            ? endOfDay(selectedDate)
+            : selectedPeriod === 'week'
+              ? endOfWeek(selectedDate, { weekStartsOn: 1 })
+              : selectedPeriod === 'month'
+                ? endOfMonth(selectedDate)
+                : endOfYear(selectedDate);
+
         logger.debug('Date range for filtering:', {
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
-          todayForReference: now.toISOString()
+          todayForReference: now.toISOString(),
         });
       }
 

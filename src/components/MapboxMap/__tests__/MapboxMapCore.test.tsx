@@ -5,8 +5,8 @@ import { ThresholdProvider } from '@/contexts/ThresholdContext';
 vi.mock('mapbox-gl/dist/mapbox-gl.css', () => ({}));
 vi.mock('mapbox-gl', () => ({ default: {} }));
 
-vi.mock('@/lib/mapbox/mapInitializer', () => ({ 
-  initializeMap: vi.fn() 
+vi.mock('@/lib/mapbox/mapInitializer', () => ({
+  initializeMap: vi.fn(),
 }));
 
 import { initializeMap } from '@/lib/mapbox/mapInitializer';
@@ -33,10 +33,12 @@ describe('MapboxMapCore', () => {
   });
 
   it('calls initializeMap on mount', async () => {
-    mockInitializeMap.mockImplementation(async (container, loc, thr, onLoad) => {
-      onLoad();
-      return { remove: vi.fn() } as any;
-    });
+    mockInitializeMap.mockImplementation(
+      async (container, loc, thr, onLoad) => {
+        onLoad();
+        return { remove: vi.fn() } as any;
+      }
+    );
 
     render(
       <ThresholdProvider>

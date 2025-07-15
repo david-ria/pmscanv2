@@ -87,9 +87,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 100,
     conditions: {
       connectivity: { carBluetooth: true },
-      movement: { speed: { min: 5 } }
+      movement: { speed: { min: 5 } },
     },
-    result: 'Driving'
+    result: 'Driving',
   },
   {
     id: 'tunnel-driving',
@@ -98,9 +98,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 98,
     conditions: {
       connectivity: { cellularSignal: false, carBluetooth: true },
-      movement: { isMoving: true }
+      movement: { isMoving: true },
     },
-    result: 'Driving in tunnel'
+    result: 'Driving in tunnel',
   },
 
   // High priority: WiFi-based indoor detection
@@ -113,9 +113,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
       wifi: { home: true },
       location: { gpsQuality: 'poor' },
       time: { hourRange: { start: 8, end: 18 } },
-      context: { previousWifi: 'home' }
+      context: { previousWifi: 'home' },
     },
-    result: 'Indoor at home (working from home)'
+    result: 'Indoor at home (working from home)',
   },
   {
     id: 'wifi-home',
@@ -123,9 +123,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     description: 'Connected to home WiFi',
     priority: 90,
     conditions: {
-      wifi: { home: true }
+      wifi: { home: true },
     },
-    result: 'Indoor at home'
+    result: 'Indoor at home',
   },
   {
     id: 'wifi-work',
@@ -133,9 +133,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     description: 'Connected to work WiFi',
     priority: 90,
     conditions: {
-      wifi: { work: true }
+      wifi: { work: true },
     },
-    result: 'Indoor at work'
+    result: 'Indoor at work',
   },
 
   // Medium-high priority: Underground/tunnel transport
@@ -146,9 +146,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 85,
     conditions: {
       connectivity: { cellularSignal: false, carBluetooth: false },
-      movement: { isMoving: true }
+      movement: { isMoving: true },
     },
-    result: 'Underground transport'
+    result: 'Underground transport',
   },
 
   // Medium priority: GPS-based outdoor activities (fixed logic)
@@ -160,9 +160,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     conditions: {
       location: { gpsQuality: 'good' },
       movement: { speed: { min: 30 } },
-      connectivity: { carBluetooth: false }
+      connectivity: { carBluetooth: false },
     },
-    result: 'Outdoor transport'
+    result: 'Outdoor transport',
   },
   {
     id: 'outdoor-cycling',
@@ -171,9 +171,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 70,
     conditions: {
       location: { gpsQuality: 'good' },
-      movement: { speed: { min: 7, max: 29 } } // Fixed overlap
+      movement: { speed: { min: 7, max: 29 } }, // Fixed overlap
     },
-    result: 'Outdoor cycling'
+    result: 'Outdoor cycling',
   },
   {
     id: 'outdoor-walking',
@@ -182,9 +182,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 65,
     conditions: {
       location: { gpsQuality: 'good' },
-      movement: { speed: { max: 6 } } // Fixed overlap
+      movement: { speed: { max: 6 } }, // Fixed overlap
     },
-    result: 'Outdoor walking'
+    result: 'Outdoor walking',
   },
 
   // Lower priority: GPS area detection (fixed to be more specific)
@@ -196,9 +196,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     conditions: {
       location: { insideHome: true, gpsQuality: 'good' },
       wifi: { home: false }, // Only when NOT on home WiFi
-      movement: { speed: { max: 5 } } // Not moving fast
+      movement: { speed: { max: 5 } }, // Not moving fast
     },
-    result: 'Outdoor at home'
+    result: 'Outdoor at home',
   },
   {
     id: 'gps-work-outdoor',
@@ -208,9 +208,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     conditions: {
       location: { insideWork: true, gpsQuality: 'good' },
       wifi: { work: false }, // Only when NOT on work WiFi
-      movement: { speed: { max: 5 } } // Not moving fast
+      movement: { speed: { max: 5 } }, // Not moving fast
     },
-    result: 'Outdoor at work'
+    result: 'Outdoor at work',
   },
   {
     id: 'gps-outdoor-generic',
@@ -219,9 +219,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 55,
     conditions: {
       location: { insideHome: false, insideWork: false, gpsQuality: 'good' },
-      movement: { speed: { max: 5 } } // Slow movement or stationary
+      movement: { speed: { max: 5 } }, // Slow movement or stationary
     },
-    result: 'Outdoor'
+    result: 'Outdoor',
   },
 
   // Fallback rules (low priority, no conflicts)
@@ -233,9 +233,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     conditions: {
       context: { previousWifi: 'home' },
       time: { hourRange: { start: 8, end: 10 } },
-      wifi: { known: false } // Only when no known WiFi
+      wifi: { known: false }, // Only when no known WiFi
     },
-    result: 'Likely indoor at work'
+    result: 'Likely indoor at work',
   },
   {
     id: 'maintain-indoor',
@@ -244,9 +244,9 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 30,
     conditions: {
       wifi: { known: false },
-      context: { latestContextStartsWith: 'Indoor' }
+      context: { latestContextStartsWith: 'Indoor' },
     },
-    result: 'Indoor'
+    result: 'Indoor',
   },
   {
     id: 'generic-indoor',
@@ -254,8 +254,8 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     description: 'Default indoor when conditions unclear',
     priority: 10,
     conditions: {},
-    result: 'Indoor'
-  }
+    result: 'Indoor',
+  },
 ];
 
 // Rule evaluation engine
@@ -275,45 +275,75 @@ export function evaluateAutoContextRules(
   return 'Unknown';
 }
 
-function matchesRule(rule: AutoContextRule, data: AutoContextEvaluationData): boolean {
+function matchesRule(
+  rule: AutoContextRule,
+  data: AutoContextEvaluationData
+): boolean {
   const { conditions } = rule;
 
   // Check WiFi conditions
   if (conditions.wifi) {
-    if (conditions.wifi.home !== undefined && conditions.wifi.home !== data.wifi.home) {
+    if (
+      conditions.wifi.home !== undefined &&
+      conditions.wifi.home !== data.wifi.home
+    ) {
       return false;
     }
-    if (conditions.wifi.work !== undefined && conditions.wifi.work !== data.wifi.work) {
+    if (
+      conditions.wifi.work !== undefined &&
+      conditions.wifi.work !== data.wifi.work
+    ) {
       return false;
     }
-    if (conditions.wifi.known !== undefined && conditions.wifi.known !== data.wifi.known) {
+    if (
+      conditions.wifi.known !== undefined &&
+      conditions.wifi.known !== data.wifi.known
+    ) {
       return false;
     }
   }
 
   // Check location conditions
   if (conditions.location) {
-    if (conditions.location.insideHome !== undefined && conditions.location.insideHome !== data.location.insideHome) {
+    if (
+      conditions.location.insideHome !== undefined &&
+      conditions.location.insideHome !== data.location.insideHome
+    ) {
       return false;
     }
-    if (conditions.location.insideWork !== undefined && conditions.location.insideWork !== data.location.insideWork) {
+    if (
+      conditions.location.insideWork !== undefined &&
+      conditions.location.insideWork !== data.location.insideWork
+    ) {
       return false;
     }
-    if (conditions.location.gpsQuality !== undefined && conditions.location.gpsQuality !== data.location.gpsQuality) {
+    if (
+      conditions.location.gpsQuality !== undefined &&
+      conditions.location.gpsQuality !== data.location.gpsQuality
+    ) {
       return false;
     }
   }
 
   // Check movement conditions
   if (conditions.movement) {
-    if (conditions.movement.isMoving !== undefined && conditions.movement.isMoving !== data.movement.isMoving) {
+    if (
+      conditions.movement.isMoving !== undefined &&
+      conditions.movement.isMoving !== data.movement.isMoving
+    ) {
       return false;
     }
     if (conditions.movement.speed) {
-      if (conditions.movement.speed.min !== undefined && data.movement.speed < conditions.movement.speed.min) {
+      if (
+        conditions.movement.speed.min !== undefined &&
+        data.movement.speed < conditions.movement.speed.min
+      ) {
         return false;
       }
-      if (conditions.movement.speed.max !== undefined && data.movement.speed > conditions.movement.speed.max) {
+      if (
+        conditions.movement.speed.max !== undefined &&
+        data.movement.speed > conditions.movement.speed.max
+      ) {
         return false;
       }
     }
@@ -329,10 +359,17 @@ function matchesRule(rule: AutoContextRule, data: AutoContextEvaluationData): bo
 
   // Check connectivity conditions
   if (conditions.connectivity) {
-    if (conditions.connectivity.cellularSignal !== undefined && conditions.connectivity.cellularSignal !== data.connectivity.cellularSignal) {
+    if (
+      conditions.connectivity.cellularSignal !== undefined &&
+      conditions.connectivity.cellularSignal !==
+        data.connectivity.cellularSignal
+    ) {
       return false;
     }
-    if (conditions.connectivity.carBluetooth !== undefined && conditions.connectivity.carBluetooth !== data.connectivity.carBluetooth) {
+    if (
+      conditions.connectivity.carBluetooth !== undefined &&
+      conditions.connectivity.carBluetooth !== data.connectivity.carBluetooth
+    ) {
       return false;
     }
   }
@@ -345,7 +382,12 @@ function matchesRule(rule: AutoContextRule, data: AutoContextEvaluationData): bo
     if (conditions.context.previousWifi === 'work' && !data.wifi.previousSSID) {
       return false;
     }
-    if (conditions.context.latestContextStartsWith && !data.context.latestContext.startsWith(conditions.context.latestContextStartsWith)) {
+    if (
+      conditions.context.latestContextStartsWith &&
+      !data.context.latestContext.startsWith(
+        conditions.context.latestContextStartsWith
+      )
+    ) {
       return false;
     }
   }
@@ -373,8 +415,8 @@ export const RULE_TEMPLATES: RuleTemplate[] = [
       description: 'Connected to gym WiFi',
       priority: 85,
       conditions: { wifi: { known: true } },
-      result: 'Indoor at gym'
-    }
+      result: 'Indoor at gym',
+    },
   },
   {
     id: 'indoor-restaurant',
@@ -386,8 +428,8 @@ export const RULE_TEMPLATES: RuleTemplate[] = [
       description: 'Connected to restaurant WiFi',
       priority: 85,
       conditions: { wifi: { known: true } },
-      result: 'Indoor restaurant'
-    }
+      result: 'Indoor restaurant',
+    },
   },
   {
     id: 'outdoor-jogging',
@@ -400,11 +442,11 @@ export const RULE_TEMPLATES: RuleTemplate[] = [
       priority: 75,
       conditions: {
         location: { gpsQuality: 'good' },
-        movement: { speed: { min: 8, max: 20 } }
+        movement: { speed: { min: 8, max: 20 } },
       },
-      result: 'Outdoor jogging'
-    }
-  }
+      result: 'Outdoor jogging',
+    },
+  },
 ];
 
 // Rule management utilities
@@ -427,9 +469,12 @@ export class AutoContextConfig {
     return updated;
   }
 
-  static updateRule(ruleId: string, updates: Partial<AutoContextRule>): AutoContextRule[] {
+  static updateRule(
+    ruleId: string,
+    updates: Partial<AutoContextRule>
+  ): AutoContextRule[] {
     const existing = this.loadCustomRules();
-    const updated = existing.map(rule => 
+    const updated = existing.map((rule) =>
       rule.id === ruleId ? { ...rule, ...updates } : rule
     );
     this.saveCustomRules(updated);
@@ -438,7 +483,7 @@ export class AutoContextConfig {
 
   static deleteRule(ruleId: string): AutoContextRule[] {
     const existing = this.loadCustomRules();
-    const updated = existing.filter(rule => rule.id !== ruleId);
+    const updated = existing.filter((rule) => rule.id !== ruleId);
     this.saveCustomRules(updated);
     return updated;
   }
@@ -448,8 +493,11 @@ export class AutoContextConfig {
     return [...DEFAULT_AUTO_CONTEXT_RULES, ...customRules];
   }
 
-  static createRuleFromTemplate(templateId: string, customizations?: Partial<AutoContextRule>): AutoContextRule {
-    const template = RULE_TEMPLATES.find(t => t.id === templateId);
+  static createRuleFromTemplate(
+    templateId: string,
+    customizations?: Partial<AutoContextRule>
+  ): AutoContextRule {
+    const template = RULE_TEMPLATES.find((t) => t.id === templateId);
     if (!template) {
       throw new Error(`Template ${templateId} not found`);
     }
@@ -457,7 +505,7 @@ export class AutoContextConfig {
     const rule: AutoContextRule = {
       id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       ...template.template,
-      ...customizations
+      ...customizations,
     };
 
     return rule;

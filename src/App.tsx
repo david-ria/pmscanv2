@@ -84,7 +84,10 @@ const App = () => {
                           path="/custom-thresholds"
                           element={<CustomThresholds />}
                         />
-                        <Route path="/custom-alerts" element={<CustomAlerts />} />
+                        <Route
+                          path="/custom-alerts"
+                          element={<CustomAlerts />}
+                        />
                         <Route path="/my-settings" element={<MySettings />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>

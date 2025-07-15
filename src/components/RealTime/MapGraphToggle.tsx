@@ -110,7 +110,11 @@ export function MapGraphToggle({
         <FloatingRecordButton
           device={device}
           isConnected={isConnected}
-          connectionStatus={{ connected: isConnected, connecting: false, error: null }}
+          connectionStatus={{
+            connected: isConnected,
+            connecting: false,
+            error: null,
+          }}
           locationEnabled={locationEnabled}
           latestLocation={latestLocation}
           onConnect={onConnect}

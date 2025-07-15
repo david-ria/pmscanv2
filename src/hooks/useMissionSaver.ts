@@ -36,7 +36,9 @@ export function useMissionSaver() {
     dataStorage.exportMissionToCSV(mission);
 
     // Skip database sync for now to prevent excessive syncing
-    logger.debug('📁 Mission exported to CSV - skipping database sync to reduce sync frequency');
+    logger.debug(
+      '📁 Mission exported to CSV - skipping database sync to reduce sync frequency'
+    );
 
     return mission;
   };

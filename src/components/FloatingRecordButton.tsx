@@ -181,15 +181,17 @@ export function FloatingRecordButton({
         open={showConnectionDialog}
         onOpenChange={setShowConnectionDialog}
         connectionStatus={connectionStatus}
-        deviceInfo={device || { 
-          name: '', 
-          connected: false, 
-          battery: 0, 
-          charging: false,
-          version: 0,
-          mode: 0,
-          interval: 0
-        }}
+        deviceInfo={
+          device || {
+            name: '',
+            connected: false,
+            battery: 0,
+            charging: false,
+            version: 0,
+            mode: 0,
+            interval: 0,
+          }
+        }
         locationEnabled={locationEnabled}
         latestLocation={latestLocation}
         onConnect={onConnect}

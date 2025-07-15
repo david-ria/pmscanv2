@@ -59,9 +59,13 @@ export function useMenuSections({
     enableRecordingBackground,
     disableRecordingBackground,
   } = useBackgroundRecordingIntegration();
-  
+
   // Get PMScan and GPS status
-  const { isConnected: isPMScanConnected, requestDevice, disconnect } = usePMScanBluetooth();
+  const {
+    isConnected: isPMScanConnected,
+    requestDevice,
+    disconnect,
+  } = usePMScanBluetooth();
   const { locationEnabled, requestLocationPermission } = useGPS();
 
   const handleProfileClick = () => {

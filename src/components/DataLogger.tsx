@@ -55,7 +55,8 @@ export function DataLogger({
   const { determineContext, isEnabled: autoContextEnabled } = useAutoContext();
   const [dataLog, setDataLog] = useState<DataLogEntry[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [cachedAutomaticContext, setCachedAutomaticContext] = useState<string>('');
+  const [cachedAutomaticContext, setCachedAutomaticContext] =
+    useState<string>('');
 
   // Update automatic context when dependencies change
   useEffect(() => {

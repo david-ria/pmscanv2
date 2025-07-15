@@ -3,7 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Wifi, Home, Building2 } from 'lucide-react';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useToast } from '@/hooks/use-toast';
@@ -32,7 +39,9 @@ export function WiFiConfigDialog({ children }: WiFiConfigDialogProps) {
       });
 
       // Save to database
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         const { error } = await supabase
           .from('profiles')
@@ -73,9 +82,7 @@ export function WiFiConfigDialog({ children }: WiFiConfigDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -86,7 +93,7 @@ export function WiFiConfigDialog({ children }: WiFiConfigDialogProps) {
             {t('settings.wifi.description')}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="home-wifi" className="flex items-center gap-2">
@@ -100,7 +107,7 @@ export function WiFiConfigDialog({ children }: WiFiConfigDialogProps) {
               placeholder={t('settings.wifi.homeNetworkPlaceholder')}
             />
           </div>
-          
+
           <div className="grid gap-2">
             <Label htmlFor="work-wifi" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />

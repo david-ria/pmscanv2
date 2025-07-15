@@ -14,13 +14,13 @@ export async function syncPendingMissions(): Promise<void> {
   const localMissions = getLocalMissions();
 
   // Clean up any missions that don't exist locally but are still in pending sync
-  const validPendingIds = pendingIds.filter(id => 
-    localMissions.some(mission => mission.id === id)
+  const validPendingIds = pendingIds.filter((id) =>
+    localMissions.some((mission) => mission.id === id)
   );
-  
+
   // Remove invalid pending IDs
-  const invalidIds = pendingIds.filter(id => !validPendingIds.includes(id));
-  invalidIds.forEach(id => removeFromPendingSync(id));
+  const invalidIds = pendingIds.filter((id) => !validPendingIds.includes(id));
+  invalidIds.forEach((id) => removeFromPendingSync(id));
 
   for (const missionId of validPendingIds) {
     const mission = localMissions.find((m) => m.id === missionId);
@@ -36,7 +36,9 @@ export async function syncPendingMissions(): Promise<void> {
 
       // If mission already exists, skip syncing and mark as complete
       if (existingMission) {
-        logger.debug(`Mission ${mission.name} already exists in database, skipping sync`);
+        logger.debug(
+          `Mission ${mission.name} already exists in database, skipping sync`
+        );
         mission.synced = true;
         saveMissionLocally(mission);
         removeFromPendingSync(mission.id);

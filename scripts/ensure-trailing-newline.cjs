@@ -24,15 +24,9 @@ function ensureTrailingNewline(file) {
   }
 }
 
-const rootFiles = [
-  'components.json',
-  'BACKGROUND_RECORDING_STATUS.md'
-];
+const rootFiles = ['components.json', 'BACKGROUND_RECORDING_STATUS.md'];
 
-const directories = [
-  path.join('src', 'contexts'),
-  path.join('src', 'i18n')
-];
+const directories = [path.join('src', 'contexts'), path.join('src', 'i18n')];
 
 for (const dir of directories) {
   for (const file of getFiles(dir)) {

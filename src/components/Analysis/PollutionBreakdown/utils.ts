@@ -50,7 +50,7 @@ export const getWHOThreshold = (
     return isShortPeriod
       ? { value: 45, label: t('analysis.whoThresholdDaily', { value: 45 }) }
       : { value: 15, label: t('analysis.whoThresholdAnnual', { value: 15 }) };
-}
+  }
 
-return { value: null, label: '' };
+  return { value: null, label: '' };
 };

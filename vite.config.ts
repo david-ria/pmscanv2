@@ -6,7 +6,7 @@ import type { PluginOption } from 'vite';
 // https://vitejs.dev/config/
 export default defineConfig(async ({ mode }) => {
   const plugins: PluginOption[] = [react()];
-  
+
   // Note: componentTagger temporarily disabled to prevent console errors
   // Will be re-enabled when the issue is resolved
   // if (mode === 'development') {

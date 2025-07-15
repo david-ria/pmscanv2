@@ -20,7 +20,7 @@ export function useRecordingData() {
   const backgroundRecordingIntegration = useBackgroundRecordingIntegration();
   const missionSaver = useMissionSaver();
   const crashRecovery = useCrashRecovery();
-  
+
   // Use auto-sync functionality - must be called before conditional logic
   useAutoSync();
 
@@ -62,7 +62,7 @@ export function useRecordingData() {
   useEffect(() => {
     if (isRecording) {
       logger.debug('🎬 Recording started');
-      
+
       // Periodically save recording progress for crash recovery
       const interval = setInterval(() => {
         saveRecordingProgress(
@@ -75,7 +75,13 @@ export function useRecordingData() {
 
       return () => clearInterval(interval);
     }
-  }, [isRecording, recordingData, recordingStartTime, recordingFrequency, missionContext]);
+  }, [
+    isRecording,
+    recordingData,
+    recordingStartTime,
+    recordingFrequency,
+    missionContext,
+  ]);
 
   // Save progress whenever new data is added
   useEffect(() => {
@@ -87,17 +93,26 @@ export function useRecordingData() {
         missionContext
       );
     }
-  }, [recordingData, isRecording, recordingStartTime, recordingFrequency, missionContext]);
+  }, [
+    recordingData,
+    isRecording,
+    recordingStartTime,
+    recordingFrequency,
+    missionContext,
+  ]);
 
-  const startRecording = useCallback(async (frequency: string = '10s') => {
-    startRecordingState(frequency);
-    setGlobalRecording(true);
+  const startRecording = useCallback(
+    async (frequency: string = '10s') => {
+      startRecordingState(frequency);
+      setGlobalRecording(true);
 
-    // Enable background recording if background mode is active
-    if (getBackgroundRecording()) {
-      await enableRecordingBackground(frequency);
-    }
-  }, [startRecordingState, enableRecordingBackground]);
+      // Enable background recording if background mode is active
+      if (getBackgroundRecording()) {
+        await enableRecordingBackground(frequency);
+      }
+    },
+    [startRecordingState, enableRecordingBackground]
+  );
 
   const stopRecording = useCallback(async () => {
     stopRecordingState();
@@ -107,55 +122,67 @@ export function useRecordingData() {
     await disableRecordingBackground();
   }, [stopRecordingState, disableRecordingBackground]);
 
-  const saveMission = useCallback((
-    missionName: string,
-    locationContext?: string,
-    activityContext?: string,
-    recordingFrequency?: string,
-    shared?: boolean
-  ) => {
-    const mission = saveMissionHelper(
+  const saveMission = useCallback(
+    (
+      missionName: string,
+      locationContext?: string,
+      activityContext?: string,
+      recordingFrequency?: string,
+      shared?: boolean
+    ) => {
+      const mission = saveMissionHelper(
+        recordingData,
+        recordingStartTime,
+        missionName,
+        locationContext,
+        activityContext,
+        recordingFrequency,
+        shared
+      );
+
+      // Clear crash recovery data since mission was properly saved
+      clearRecoveryData();
+
+      // Clear recording data
+      clearRecordingData();
+
+      return mission;
+    },
+    [
       recordingData,
       recordingStartTime,
-      missionName,
-      locationContext,
-      activityContext,
+      saveMissionHelper,
+      clearRecoveryData,
+      clearRecordingData,
+    ]
+  );
+
+  return useMemo(
+    () => ({
+      recordingData,
+      isRecording,
       recordingFrequency,
-      shared
-    );
-
-    // Clear crash recovery data since mission was properly saved
-    clearRecoveryData();
-    
-    // Clear recording data
-    clearRecordingData();
-
-    return mission;
-  }, [recordingData, recordingStartTime, saveMissionHelper, clearRecoveryData, clearRecordingData]);
-
-  return useMemo(() => ({
-    recordingData,
-    isRecording,
-    recordingFrequency,
-    missionContext,
-    startRecording,
-    stopRecording,
-    addDataPoint,
-    saveMission,
-    clearRecordingData,
-    updateMissionContext,
-    recordingStartTime,
-  }), [
-    recordingData,
-    isRecording,
-    recordingFrequency,
-    missionContext,
-    startRecording,
-    stopRecording,
-    addDataPoint,
-    saveMission,
-    clearRecordingData,
-    updateMissionContext,
-    recordingStartTime,
-  ]);
+      missionContext,
+      startRecording,
+      stopRecording,
+      addDataPoint,
+      saveMission,
+      clearRecordingData,
+      updateMissionContext,
+      recordingStartTime,
+    }),
+    [
+      recordingData,
+      isRecording,
+      recordingFrequency,
+      missionContext,
+      startRecording,
+      stopRecording,
+      addDataPoint,
+      saveMission,
+      clearRecordingData,
+      updateMissionContext,
+      recordingStartTime,
+    ]
+  );
 }

@@ -100,13 +100,13 @@ class DataStorageService {
     if (syncTimeout) {
       clearTimeout(syncTimeout);
     }
-    
+
     // Don't sync if already syncing
     if (this.isSyncing) {
       logger.debug('🔄 Sync already in progress, skipping...');
       return;
     }
-    
+
     // Set new timeout for debounced sync
     return new Promise((resolve) => {
       syncTimeout = setTimeout(async () => {

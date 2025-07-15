@@ -3,7 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { TestTube, Wifi } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,7 +27,7 @@ export function WiFiTestDialog({ children }: WiFiTestDialogProps) {
   const handleSetTestWifi = () => {
     // Store the test WiFi SSID in localStorage for mock detection
     localStorage.setItem('mock_wifi_ssid', testWifi);
-    
+
     toast({
       title: t('settings.wifiTest.set'),
       description: t('settings.wifiTest.setDescription', { ssid: testWifi }),
@@ -31,7 +38,7 @@ export function WiFiTestDialog({ children }: WiFiTestDialogProps) {
   const handleClearTestWifi = () => {
     localStorage.removeItem('mock_wifi_ssid');
     setTestWifi('');
-    
+
     toast({
       title: t('settings.wifiTest.cleared'),
       description: t('settings.wifiTest.clearedDescription'),
@@ -41,9 +48,7 @@ export function WiFiTestDialog({ children }: WiFiTestDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -54,7 +59,7 @@ export function WiFiTestDialog({ children }: WiFiTestDialogProps) {
             {t('settings.wifiTest.description')}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="test-wifi" className="flex items-center gap-2">

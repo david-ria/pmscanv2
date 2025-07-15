@@ -174,7 +174,7 @@ export function usePMScanBluetooth() {
   // Check for existing connection on component mount and re-establish event listeners
   useEffect(() => {
     const manager = connectionManager;
-    
+
     if (manager.isConnected()) {
       setIsConnected(true);
 
