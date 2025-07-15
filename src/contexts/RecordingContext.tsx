@@ -34,11 +34,17 @@ const RecordingContext = createContext<RecordingContextType | undefined>(
 );
 
 export function RecordingProvider({ children }: { children: React.ReactNode }) {
-  console.log('RecordingProvider: Initializing provider');
+  console.log('🔄 RecordingProvider: Initializing provider');
   const recordingData = useRecordingData();
-  console.log('RecordingProvider: Recording data loaded', recordingData);
+  console.log('🔄 RecordingProvider: Recording data loaded', { 
+    isRecording: recordingData.isRecording,
+    dataLength: recordingData.recordingData.length 
+  });
 
-  const contextValue = useMemo(() => recordingData, [recordingData]);
+  const contextValue = useMemo(() => {
+    console.log('🔄 RecordingProvider: Creating new context value');
+    return recordingData;
+  }, [recordingData]);
 
   return (
     <RecordingContext.Provider value={contextValue}>
