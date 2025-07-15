@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useRecordingData } from '@/hooks/useRecordingData';
 
 interface RecordingContextType {
@@ -38,8 +38,10 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   const recordingData = useRecordingData();
   console.log('RecordingProvider: Recording data loaded', recordingData);
 
+  const contextValue = useMemo(() => recordingData, [recordingData]);
+
   return (
-    <RecordingContext.Provider value={recordingData}>
+    <RecordingContext.Provider value={contextValue}>
       {children}
     </RecordingContext.Provider>
   );
