@@ -8,11 +8,29 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
-      - run: npm ci
-      - run: npm run format:check
-      - run: npm test
+
+      - name: Clean node_modules and npm cache
+        run: |
+          rm -rf node_modules
+          npm cache clean --force
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Prettier version
+        run: npx prettier --version
+
+      - name: Run Prettier check
+        run: npm run format:check
+
+      - name: Run Tests
+        run: npm test
