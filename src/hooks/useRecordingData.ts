@@ -16,17 +16,19 @@ import * as logger from '@/utils/logger';
 
 export function useRecordingData() {
   console.log('🔄 useRecordingData: Hook called');
-  
+
   // All hooks must be called in the same order every time
   const recordingState = useRecordingState();
-  console.log('🔄 useRecordingData: recordingState loaded', { isRecording: recordingState.isRecording });
-  
+  console.log('🔄 useRecordingData: recordingState loaded', {
+    isRecording: recordingState.isRecording,
+  });
+
   const backgroundRecordingIntegration = useBackgroundRecordingIntegration();
   console.log('🔄 useRecordingData: backgroundRecordingIntegration loaded');
-  
+
   const missionSaver = useMissionSaver();
   console.log('🔄 useRecordingData: missionSaver loaded');
-  
+
   const crashRecovery = useCrashRecovery();
   console.log('🔄 useRecordingData: crashRecovery loaded');
 

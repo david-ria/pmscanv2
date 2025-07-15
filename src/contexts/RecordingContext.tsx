@@ -36,9 +36,9 @@ const RecordingContext = createContext<RecordingContextType | undefined>(
 export function RecordingProvider({ children }: { children: React.ReactNode }) {
   console.log('🔄 RecordingProvider: Initializing provider');
   const recordingData = useRecordingData();
-  console.log('🔄 RecordingProvider: Recording data loaded', { 
+  console.log('🔄 RecordingProvider: Recording data loaded', {
     isRecording: recordingData.isRecording,
-    dataLength: recordingData.recordingData.length 
+    dataLength: recordingData.recordingData.length,
   });
 
   const contextValue = useMemo(() => {
