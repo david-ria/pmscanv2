@@ -9,7 +9,7 @@
     "test:watch": "vitest",
     "fix:newlines": "node scripts/ensure-trailing-newline.cjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check . --ignore-path .prettierignore"
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"scripts/**/*.{js,ts}\""
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
