@@ -1,5 +1,10 @@
+# Ignore dependencies and build output
 node_modules
 build
 dist
+
+# Supabase generated files
 supabase
-.github/workflows/*.yml
+
+# CI/CD workflows (exclude from Prettier check)
+.github/workflows/*
