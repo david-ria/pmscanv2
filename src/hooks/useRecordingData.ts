@@ -92,6 +92,7 @@ export function useRecordingData() {
     recordingStartTime,
     recordingFrequency,
     missionContext,
+    saveRecordingProgress,
   ]);
 
   // Save progress whenever new data is added
@@ -110,6 +111,7 @@ export function useRecordingData() {
     recordingStartTime,
     recordingFrequency,
     missionContext,
+    saveRecordingProgress,
   ]);
 
   const startRecording = useCallback(
