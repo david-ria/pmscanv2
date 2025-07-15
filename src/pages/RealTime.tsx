@@ -15,20 +15,22 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
 export default function RealTime() {
-  console.log('RealTime: Component initializing');
-  
+  logger.debug('RealTime: Component initializing');
+
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
-  const [recordingFrequency, setRecordingFrequency] = useState(frequencyOptionKeys[0].value);
+  const [recordingFrequency, setRecordingFrequency] = useState(
+    frequencyOptionKeys[0].value
+  );
   const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
 
   const { t } = useTranslation();
   const { toast } = useToast();
   const { currentData, isConnected, device, error, requestDevice, disconnect } =
     usePMScanBluetooth();
-    
-  console.log('RealTime: About to call useAutoContext');
+
+  logger.debug('RealTime: About to call useAutoContext');
   const {
     determineContext,
     isEnabled: autoContextEnabled,
@@ -36,7 +38,7 @@ export default function RealTime() {
     locationEnabled,
     requestLocationPermission,
   } = useAutoContext();
-  console.log('RealTime: useAutoContext completed successfully');
+  logger.debug('RealTime: useAutoContext completed successfully');
   const {
     isRecording,
     addDataPoint,
@@ -161,13 +163,17 @@ export default function RealTime() {
     try {
       setShowFrequencyDialog(false);
       await startRecording(recordingFrequency);
-      
+
       toast({
         title: t('notifications.recordingStarted'),
-        description: t('notifications.recordingStartedDesc', { frequency: recordingFrequency }),
+        description: t('notifications.recordingStartedDesc', {
+          frequency: recordingFrequency,
+        }),
       });
-      
-      logger.debug(`🎬 Recording started with frequency: ${recordingFrequency}`);
+
+      logger.debug(
+        `🎬 Recording started with frequency: ${recordingFrequency}`
+      );
     } catch (error) {
       logger.error('Failed to start recording:', error);
       toast({
@@ -180,7 +186,6 @@ export default function RealTime() {
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-
       {/* Map/Graph Toggle Section */}
       <MapGraphToggle
         showGraph={showGraph}

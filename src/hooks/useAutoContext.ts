@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useContext } from 'react';
 import * as tf from '@tensorflow/tfjs';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
+import * as logger from '@/utils/logger';
 import { useGPS } from '@/hooks/useGPS';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { MODEL_LABELS } from '@/lib/recordingConstants';
@@ -11,7 +12,7 @@ import {
   AutoContextRule,
   AutoContextEvaluationData,
   evaluateAutoContextRules,
-  AutoContextConfig
+  AutoContextConfig,
 } from '@/lib/autoContextConfig';
 
 interface AutoContextInputs {
@@ -55,11 +56,15 @@ export function useAutoContext() {
   });
 
   // Use the recording context directly - this should work if properly wrapped
-  console.log('useAutoContext: Attempting to access RecordingContext');
+  logger.debug('useAutoContext: Attempting to access RecordingContext');
   const recordingContext = useRecordingContext();
-  console.log('useAutoContext: Successfully accessed RecordingContext', recordingContext);
-  
-  const { updateMissionContext, missionContext, isRecording } = recordingContext;
+  logger.debug(
+    'useAutoContext: Successfully accessed RecordingContext',
+    recordingContext
+  );
+
+  const { updateMissionContext, missionContext, isRecording } =
+    recordingContext;
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
@@ -92,15 +97,17 @@ export function useAutoContext() {
   useEffect(() => {
     const loadSSIDs = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
-        
+
         const { data, error } = await supabase
           .from('profiles')
           .select('home_wifi_ssid, work_wifi_ssid')
           .eq('id', user.id)
           .single();
-          
+
         if (!error && data) {
           setSettings((prev) => ({
             ...prev,
@@ -149,7 +156,7 @@ export function useAutoContext() {
     if (testWifi) {
       return testWifi;
     }
-    
+
     // In a real implementation, this would use Capacitor's Network plugin
     // For now, we'll return a mock value only if online
     return navigator.onLine ? 'MockWiFi' : '';
@@ -162,7 +169,7 @@ export function useAutoContext() {
       if (!('bluetooth' in navigator)) {
         return false;
       }
-      
+
       // For now, return false as Web Bluetooth getDevices() is not widely supported
       // In a real mobile app, this would use native Bluetooth APIs
       return false;
@@ -221,22 +228,27 @@ export function useAutoContext() {
   // Track WiFi usage by time periods for automatic home/work detection
   const trackWifiByTime = useCallback((ssid: string) => {
     if (!ssid) return {};
-    
+
     const currentHour = new Date().getHours();
     const timeKey = 'wifiTimeTracking';
-    const tracking = JSON.parse(localStorage.getItem(timeKey) || '{}') as Record<string, {
-      morning: number;    // 6 AM - 10 AM
-      workday: number;    // 9 AM - 6 PM
-      evening: number;    // 6 PM - midnight
-      weekend: number;    // Saturday/Sunday
-    }>;
-    
+    const tracking = JSON.parse(
+      localStorage.getItem(timeKey) || '{}'
+    ) as Record<
+      string,
+      {
+        morning: number; // 6 AM - 10 AM
+        workday: number; // 9 AM - 6 PM
+        evening: number; // 6 PM - midnight
+        weekend: number; // Saturday/Sunday
+      }
+    >;
+
     if (!tracking[ssid]) {
       tracking[ssid] = { morning: 0, workday: 0, evening: 0, weekend: 0 };
     }
-    
+
     const isWeekend = [0, 6].includes(new Date().getDay()); // Sunday = 0, Saturday = 6
-    
+
     if (isWeekend) {
       tracking[ssid].weekend++;
     } else {
@@ -250,7 +262,7 @@ export function useAutoContext() {
         tracking[ssid].evening++;
       }
     }
-    
+
     localStorage.setItem(timeKey, JSON.stringify(tracking));
     return tracking;
   }, []);
@@ -275,14 +287,16 @@ export function useAutoContext() {
   const persistSSID = useCallback(
     async (field: 'home_wifi_ssid' | 'work_wifi_ssid', ssid: string) => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
-        
+
         const { error } = await supabase
           .from('profiles')
           .update({ [field]: ssid })
           .eq('id', user.id);
-          
+
         if (error) {
           console.error('Failed to persist SSID', error);
         }
@@ -294,35 +308,54 @@ export function useAutoContext() {
   );
 
   // Determine if WiFi should be classified as home or work based on time patterns
-  const classifyWifiByTimePattern = useCallback((tracking: Record<string, { morning: number; workday: number; evening: number; weekend: number }>) => {
-    for (const [ssid, times] of Object.entries(tracking)) {
-      const totalUsage = times.morning + times.workday + times.evening + times.weekend;
-      
-      // Need at least 10 data points to make a classification
-      if (totalUsage < 10) continue;
-      
-      // Home WiFi: Used in both morning AND evening, or heavily on weekends
-      const isHomePatter = (times.morning >= 3 && times.evening >= 3) || 
-                          (times.weekend >= 5 && times.weekend > times.workday);
-      
-      // Work WiFi: Used primarily during work hours, but NOT heavily in evening/morning
-      const isWorkPattern = times.workday >= 8 && 
-                           times.workday > (times.morning + times.evening) * 1.5 &&
-                           times.weekend < times.workday * 0.3;
-      
-      if (isHomePatter && ssid !== settings.homeWifiSSID) {
-        console.log(`🏠 Auto-detected HOME WiFi: ${ssid} (morning: ${times.morning}, evening: ${times.evening}, weekend: ${times.weekend})`);
-        updateSettings({ homeWifiSSID: ssid });
-        persistSSID('home_wifi_ssid', ssid);
+  const classifyWifiByTimePattern = useCallback(
+    (
+      tracking: Record<
+        string,
+        { morning: number; workday: number; evening: number; weekend: number }
+      >
+    ) => {
+      for (const [ssid, times] of Object.entries(tracking)) {
+        const totalUsage =
+          times.morning + times.workday + times.evening + times.weekend;
+
+        // Need at least 10 data points to make a classification
+        if (totalUsage < 10) continue;
+
+        // Home WiFi: Used in both morning AND evening, or heavily on weekends
+        const isHomePatter =
+          (times.morning >= 3 && times.evening >= 3) ||
+          (times.weekend >= 5 && times.weekend > times.workday);
+
+        // Work WiFi: Used primarily during work hours, but NOT heavily in evening/morning
+        const isWorkPattern =
+          times.workday >= 8 &&
+          times.workday > (times.morning + times.evening) * 1.5 &&
+          times.weekend < times.workday * 0.3;
+
+        if (isHomePatter && ssid !== settings.homeWifiSSID) {
+          logger.debug(
+            `🏠 Auto-detected HOME WiFi: ${ssid} (morning: ${times.morning}, evening: ${times.evening}, weekend: ${times.weekend})`
+          );
+          updateSettings({ homeWifiSSID: ssid });
+          persistSSID('home_wifi_ssid', ssid);
+        }
+
+        if (
+          isWorkPattern &&
+          ssid !== settings.workWifiSSID &&
+          ssid !== settings.homeWifiSSID
+        ) {
+          logger.debug(
+            `🏢 Auto-detected WORK WiFi: ${ssid} (workday: ${times.workday}, morning: ${times.morning}, evening: ${times.evening})`
+          );
+          updateSettings({ workWifiSSID: ssid });
+          persistSSID('work_wifi_ssid', ssid);
+        }
       }
-      
-      if (isWorkPattern && ssid !== settings.workWifiSSID && ssid !== settings.homeWifiSSID) {
-        console.log(`🏢 Auto-detected WORK WiFi: ${ssid} (workday: ${times.workday}, morning: ${times.morning}, evening: ${times.evening})`);
-        updateSettings({ workWifiSSID: ssid });
-        persistSSID('work_wifi_ssid', ssid);
-      }
-    }
-  }, [settings.homeWifiSSID, settings.workWifiSSID, updateSettings, persistSSID]);
+    },
+    [settings.homeWifiSSID, settings.workWifiSSID, updateSettings, persistSSID]
+  );
 
   // Main auto context determination function using configurable rules
   const determineContext = useCallback(
@@ -345,11 +378,11 @@ export function useAutoContext() {
         location && location.accuracy && location.accuracy < 50
           ? 'good'
           : 'poor';
-      
+
       const isCarConnected = false; // await isConnectedToCarBluetooth();
       const cellularSignal = getCellularSignal();
       const isMoving = speed > 1;
-      
+
       let insideHomeArea = false;
       let insideWorkArea = false;
 
@@ -382,7 +415,11 @@ export function useAutoContext() {
         wifi: {
           home: currentWifiSSID === settings.homeWifiSSID,
           work: currentWifiSSID === settings.workWifiSSID,
-          known: !!(currentWifiSSID && (currentWifiSSID === settings.homeWifiSSID || currentWifiSSID === settings.workWifiSSID)),
+          known: !!(
+            currentWifiSSID &&
+            (currentWifiSSID === settings.homeWifiSSID ||
+              currentWifiSSID === settings.workWifiSSID)
+          ),
           currentSSID: currentWifiSSID,
           previousSSID: previousWifiSSID,
         },
@@ -408,9 +445,10 @@ export function useAutoContext() {
       };
 
       // Use custom rules if available, otherwise use default rules
-      const rulesToUse = settings.customRules && settings.customRules.length > 0 
-        ? settings.customRules 
-        : DEFAULT_AUTO_CONTEXT_RULES;
+      const rulesToUse =
+        settings.customRules && settings.customRules.length > 0
+          ? settings.customRules
+          : DEFAULT_AUTO_CONTEXT_RULES;
 
       let state = evaluateAutoContextRules(rulesToUse, evaluationData);
 
