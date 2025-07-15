@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useGPS } from '../useGPS';
 
@@ -36,6 +36,7 @@ describe('useGPS', () => {
   });
 
   it('requests permission and starts watching when enabled', async () => {
+    vi.useFakeTimers();
     const { geolocation } = createNavigatorMocks();
 
     const { result } = renderHook(() => useGPS(true));
@@ -44,7 +45,15 @@ describe('useGPS', () => {
       await result.current.requestLocationPermission();
     });
 
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    vi.useRealTimers();
+
     expect(result.current.locationEnabled).toBe(true);
-    expect(geolocation.watchPosition).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(geolocation.watchPosition).toHaveBeenCalled()
+    );
   });
 });
