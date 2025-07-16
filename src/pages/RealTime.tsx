@@ -71,7 +71,12 @@ export default function RealTime() {
         Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
 
       if (!isDuplicate) {
-        logger.debug('Adding data point with location:', latestLocation);
+        logger.rateLimitedDebug(
+          'realTime.addData',
+          5000,
+          'Adding data point with location:',
+          latestLocation
+        );
 
         // Determine automatic context if enabled
         const automaticContext = autoContextEnabled
