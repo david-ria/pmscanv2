@@ -3,6 +3,7 @@ import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
 import { ContextSelectors } from '@/components/RecordingControls/ContextSelectors';
+import { AutoContextDisplay } from '@/components/AutoContextDisplay';
 import { DataLogger } from '@/components/DataLogger';
 import { RecordingFrequencyDialog } from '@/components/RecordingControls/RecordingFrequencyDialog';
 
@@ -97,14 +98,8 @@ export default function RealTime() {
           updateLatestContext(automaticContext);
         }
 
-        // Apply automatic context override if enabled
-        if (
-          autoContextEnabled &&
-          automaticContext &&
-          missionContext.activity !== automaticContext
-        ) {
-          updateMissionContext(missionContext.location, automaticContext);
-        }
+        // DO NOT override user's manual activity selection
+        // Auto context should be separate from manual tags
 
         addDataPoint(
           currentData,
@@ -240,6 +235,11 @@ export default function RealTime() {
           onActivityChange={setSelectedActivity}
           isRecording={isRecording}
         />
+      </div>
+
+      {/* Auto Context Display - separate from manual tags */}
+      <div className="mb-4">
+        <AutoContextDisplay />
       </div>
 
       {/* Data Logger */}
