@@ -1,7 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BaseCard } from '@/components/shared/BaseCard';
+import { PMDisplay, QualityIndicator } from '@/components/shared/DataDisplay';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
+import { PMData } from '@/types/shared';
 
 interface AirQualityData {
   pm1: number;
@@ -61,51 +63,31 @@ export function AirQualityCard({ data, className }: AirQualityCardProps) {
 
   const quality = getAirQualityLevel(data.pm25, data.pm10, data.pm1);
 
+  const headerActions = (
+    <Badge
+      variant="secondary"
+      className="text-white font-medium"
+      style={{ backgroundColor: quality.color }}
+    >
+      {quality.label}
+    </Badge>
+  );
+
   return (
-    <Card className={cn('relative overflow-hidden', className)}>
+    <BaseCard 
+      title="Qualité de l'air"
+      headerActions={headerActions}
+      className={cn('relative overflow-hidden', className)}
+    >
       <div
         className="absolute inset-0 opacity-5"
         style={{ backgroundColor: quality.color }}
       />
-      <CardHeader className="relative">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">
-            Qualité de l'air
-          </CardTitle>
-          <Badge
-            variant="secondary"
-            className="text-white font-medium"
-            style={{ backgroundColor: quality.color }}
-          >
-            {quality.label}
-          </Badge>
-        </div>
-        {data.location && (
-          <p className="text-sm text-muted-foreground">{data.location}</p>
-        )}
-      </CardHeader>
-      <CardContent className="relative">
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-foreground">{data.pm1}</div>
-            <div className="text-xs text-muted-foreground">PM1</div>
-            <div className="text-xs text-muted-foreground">µg/m³</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-foreground">
-              {data.pm25}
-            </div>
-            <div className="text-xs text-muted-foreground">PM2.5</div>
-            <div className="text-xs text-muted-foreground">µg/m³</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-foreground">
-              {data.pm10}
-            </div>
-            <div className="text-xs text-muted-foreground">PM10</div>
-            <div className="text-xs text-muted-foreground">µg/m³</div>
-          </div>
-        </div>
+      {data.location && (
+        <p className="text-sm text-muted-foreground mb-4">{data.location}</p>
+      )}
+      <div className="relative">
+        <PMDisplay data={data} />
         {data.timestamp && (
           <div className="mt-4 pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground text-center">
@@ -113,7 +95,7 @@ export function AirQualityCard({ data, className }: AirQualityCardProps) {
             </p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </BaseCard>
   );
 }

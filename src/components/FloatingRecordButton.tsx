@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { RecordingFrequencyDialog } from './RecordingControls/RecordingFrequencyDialog';
 import { MissionDetailsDialog } from './RecordingControls/MissionDetailsDialog';
 import { ConnectionDialog } from './ConnectionDialog';
+import { useDialogs } from '@/hooks/useDialog';
 import { ConnectionStatus, PMScanDevice, LocationData } from '@/types/PMScan';
 
 interface FloatingRecordButtonProps {
@@ -34,9 +35,11 @@ export function FloatingRecordButton({
   className,
 }: FloatingRecordButtonProps) {
   const { t } = useTranslation();
-  const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
-  const [showMissionDialog, setShowMissionDialog] = useState(false);
-  const [showConnectionDialog, setShowConnectionDialog] = useState(false);
+  const { dialogs, openDialog, closeDialog, getOnOpenChange } = useDialogs({
+    frequency: false,
+    mission: false,
+    connection: false
+  });
   const [recordingFrequency, setRecordingFrequency] = useState<string>('10s');
   const [missionName, setMissionName] = useState<string>('');
   const [shareData, setShareData] = useState<boolean>(false);
@@ -58,15 +61,15 @@ export function FloatingRecordButton({
   const handleStartRecording = () => {
     // Check if PMScan device is connected
     if (!isConnected) {
-      setShowConnectionDialog(true);
+      openDialog('connection');
       return;
     }
-    setShowFrequencyDialog(true);
+    openDialog('frequency');
   };
 
   const confirmStartRecording = () => {
-    setShowFrequencyDialog(false);
-    setShowConnectionDialog(false); // Close connection dialog when recording starts
+    closeDialog('frequency');
+    closeDialog('connection'); // Close connection dialog when recording starts
     startRecording(recordingFrequency);
     toast({
       title: t('realTime.recording'),
@@ -75,7 +78,7 @@ export function FloatingRecordButton({
   };
 
   const handleStopRecording = () => {
-    setShowMissionDialog(true);
+    openDialog('mission');
   };
 
   const confirmStopRecording = () => {
@@ -96,7 +99,7 @@ export function FloatingRecordButton({
       );
 
       stopRecording();
-      setShowMissionDialog(false);
+      closeDialog('mission');
 
       toast({
         title: t('history.export'),
@@ -120,7 +123,7 @@ export function FloatingRecordButton({
   const handleDiscardMission = () => {
     stopRecording();
     clearRecordingData();
-    setShowMissionDialog(false);
+    closeDialog('mission');
 
     setMissionName('');
     setShareData(false);
@@ -160,16 +163,16 @@ export function FloatingRecordButton({
       </button>
 
       <RecordingFrequencyDialog
-        open={showFrequencyDialog}
-        onOpenChange={setShowFrequencyDialog}
+        open={dialogs.frequency}
+        onOpenChange={getOnOpenChange('frequency')}
         recordingFrequency={recordingFrequency}
         onFrequencyChange={setRecordingFrequency}
         onConfirm={confirmStartRecording}
       />
 
       <MissionDetailsDialog
-        open={showMissionDialog}
-        onOpenChange={setShowMissionDialog}
+        open={dialogs.mission}
+        onOpenChange={getOnOpenChange('mission')}
         missionName={missionName}
         onMissionNameChange={setMissionName}
         shareData={shareData}
@@ -179,8 +182,8 @@ export function FloatingRecordButton({
       />
 
       <ConnectionDialog
-        open={showConnectionDialog}
-        onOpenChange={setShowConnectionDialog}
+        open={dialogs.connection}
+        onOpenChange={getOnOpenChange('connection')}
         connectionStatus={connectionStatus}
         deviceInfo={
           device || {

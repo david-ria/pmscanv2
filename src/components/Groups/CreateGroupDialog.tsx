@@ -23,6 +23,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useGroups } from '@/hooks/useGroups';
+import { BaseDialogProps } from '@/types/shared';
 
 const formSchema = z.object({
   name: z
@@ -37,10 +38,7 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-interface CreateGroupDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+interface CreateGroupDialogProps extends BaseDialogProps {}
 
 export function CreateGroupDialog({
   open,

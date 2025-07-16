@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 import { ExportReportDialog } from './ExportReportDialog';
+import { useDialog } from '@/hooks/useDialog';
 import { generateAnalysisReport, downloadPDF } from '@/lib/pdfExport';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -39,7 +40,7 @@ export const StatisticalAnalysis = ({
   breakdownType,
 }: StatisticalAnalysisProps) => {
   const { t } = useTranslation();
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const exportDialog = useDialog();
   const [exportLoading, setExportLoading] = useState(false);
 
   const handleExport = async (method: 'download' | 'email', email?: string) => {
@@ -111,7 +112,7 @@ export const StatisticalAnalysis = ({
                 variant="outline" 
                 size="sm" 
                 className="flex-1"
-                onClick={() => setExportDialogOpen(true)}
+                onClick={exportDialog.openDialog}
                 disabled={exportLoading}
               >
                 <Download className="h-3 w-3 mr-2" />
@@ -120,8 +121,8 @@ export const StatisticalAnalysis = ({
             </div>
             
             <ExportReportDialog
-              open={exportDialogOpen}
-              onOpenChange={setExportDialogOpen}
+              open={exportDialog.open}
+              onOpenChange={exportDialog.onOpenChange}
               onExport={handleExport}
               loading={exportLoading}
             />

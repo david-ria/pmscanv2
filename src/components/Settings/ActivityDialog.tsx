@@ -23,6 +23,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUserActivities, UserActivity } from '@/hooks/useUserSettings';
+import { BaseDialogProps } from '@/types/shared';
 
 const activitySchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -32,9 +33,7 @@ const activitySchema = z.object({
 
 type ActivityFormData = z.infer<typeof activitySchema>;
 
-interface ActivityDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface ActivityDialogProps extends BaseDialogProps {
   activity?: UserActivity;
 }
 

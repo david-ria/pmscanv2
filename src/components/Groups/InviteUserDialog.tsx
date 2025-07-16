@@ -22,6 +22,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useGroupInvitations } from '@/hooks/useGroups';
+import { BaseDialogProps } from '@/types/shared';
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -29,10 +30,8 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-interface InviteUserDialogProps {
+interface InviteUserDialogProps extends BaseDialogProps {
   groupId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
 }
 
 export function InviteUserDialog({

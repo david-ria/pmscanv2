@@ -1,4 +1,5 @@
 import React from 'react';
+import { BaseCard } from '@/components/shared/BaseCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Cloud, Sun, CloudRain, CloudSnow, Eye, Wind, Droplets, Thermometer, Gauge } from 'lucide-react';
 
