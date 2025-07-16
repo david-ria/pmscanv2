@@ -13,12 +13,12 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
-  Brain,
+  // Brain icon removed - no longer needed for auto context display
 } from 'lucide-react';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useTranslation } from 'react-i18next';
-import { useAutoContext } from '@/hooks/useAutoContext';
+// useAutoContext removed - auto context now handled centrally
 import { WeatherInfo } from '@/components/WeatherInfo';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 
@@ -55,26 +55,11 @@ export function DataLogger({
   className,
 }: DataLoggerProps) {
   const { t } = useTranslation();
-  const { determineContext, isEnabled: autoContextEnabled } = useAutoContext();
+  // Auto context logic removed to avoid duplication
   const { recordingData } = useRecordingContext();
   const [isMinimized, setIsMinimized] = useState(false);
-  const [cachedAutomaticContext, setCachedAutomaticContext] =
-    useState<string>('');
-
-  // Update automatic context when dependencies change
-  useEffect(() => {
-    if (autoContextEnabled && currentData) {
-      const context = determineContext({
-        pmData: currentData,
-        location: currentLocation || undefined,
-        speed: 0, // Would need to calculate from GPS data
-        isMoving: false, // Would need to determine from sensors
-      });
-      setCachedAutomaticContext(context);
-    } else {
-      setCachedAutomaticContext('');
-    }
-  }, [autoContextEnabled, currentData, currentLocation, determineContext]);
+  // Auto context is now handled centrally via AutoContextDisplay component
+  // No need to duplicate the calculation here
 
   // Use actual recording data instead of managing separate log
   const displayData = recordingData.slice(0, 100).map((entry, index) => ({
@@ -164,12 +149,7 @@ export function DataLogger({
           >
             {isRecording ? t('realTime.recording') : t('realTime.stopped')}
           </Badge>
-          {cachedAutomaticContext && (
-            <Badge variant="outline" className="text-xs bg-muted">
-              <Brain className="h-3 w-3 mr-1" />
-              {cachedAutomaticContext}
-            </Badge>
-           )}
+          {/* Auto context is now displayed separately via AutoContextDisplay component */}
            <span className="text-muted-foreground text-xs">
              {displayData.length} {t('realTime.entries')}
            </span>
