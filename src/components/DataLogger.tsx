@@ -19,6 +19,8 @@ import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useTranslation } from 'react-i18next';
 import { useAutoContext } from '@/hooks/useAutoContext';
+import { WeatherInfo } from '@/components/WeatherInfo';
+import { useRecordingContext } from '@/contexts/RecordingContext';
 
 // Data logger component for real-time PM measurement tracking
 interface DataLogEntry {
@@ -31,6 +33,7 @@ interface DataLogEntry {
     activity: string;
   };
   automaticContext?: string;
+  weatherDataId?: string;
 }
 
 interface DataLoggerProps {
@@ -53,7 +56,7 @@ export function DataLogger({
 }: DataLoggerProps) {
   const { t } = useTranslation();
   const { determineContext, isEnabled: autoContextEnabled } = useAutoContext();
-  const [dataLog, setDataLog] = useState<DataLogEntry[]>([]);
+  const { recordingData } = useRecordingContext();
   const [isMinimized, setIsMinimized] = useState(false);
   const [cachedAutomaticContext, setCachedAutomaticContext] =
     useState<string>('');
@@ -73,60 +76,25 @@ export function DataLogger({
     }
   }, [autoContextEnabled, currentData, currentLocation, determineContext]);
 
-  // Add new data entry when recording and data is available - max 1 per second
-  useEffect(() => {
-    if (isRecording && currentData) {
-      setDataLog((prev) => {
-        // Check if we already have an entry within the last second
-        const currentTime = currentData.timestamp.getTime();
-        const hasRecentEntry =
-          prev.length > 0 && currentTime - prev[0].timestamp.getTime() < 1000; // Less than 1 second
-
-        // Check if data is significantly different from last entry
-        const isDataDifferent =
-          prev.length === 0 ||
-          Math.abs(prev[0].pmData.pm25 - currentData.pm25) >= 0.1 ||
-          Math.abs(prev[0].pmData.pm1 - currentData.pm1) >= 0.1 ||
-          Math.abs(prev[0].pmData.pm10 - currentData.pm10) >= 0.1;
-
-        // Only add if enough time passed OR data is significantly different
-        if (!hasRecentEntry || isDataDifferent) {
-          logger.debug('📝 Adding data to logger:', {
-            pm25: currentData.pm25,
-            timestamp: currentData.timestamp,
-          });
-          const newEntry: DataLogEntry = {
-            id: Date.now().toString(),
-            timestamp: currentData.timestamp,
-            pmData: currentData,
-            location: currentLocation,
-            missionContext,
-            automaticContext: cachedAutomaticContext,
-          };
-
-          const updated = [newEntry, ...prev.slice(0, 99)];
-          logger.debug('📊 DataLog updated, total entries:', updated.length);
-          return updated;
-        }
-
-        // Skip adding duplicate/too frequent entries
-        return prev;
-      });
-    }
-  }, [
-    isRecording,
-    currentData,
-    currentLocation,
-    missionContext,
-    cachedAutomaticContext,
-  ]);
+  // Use actual recording data instead of managing separate log
+  const displayData = recordingData.slice(0, 100).map((entry, index) => ({
+    id: index.toString(),
+    timestamp: entry.pmData.timestamp,
+    pmData: entry.pmData,
+    location: entry.location,
+    missionContext: entry.context,
+    automaticContext: entry.automaticContext,
+    weatherDataId: entry.weatherDataId,
+  }));
 
   const clearLog = () => {
-    setDataLog([]);
+    // This would need to be implemented in the context if needed
+    logger.debug('Clear log requested - this would clear actual recording data');
   };
 
+
   const exportRawData = () => {
-    if (dataLog.length === 0) return;
+    if (displayData.length === 0) return;
 
     const headers = [
       'Timestamp',
@@ -145,7 +113,7 @@ export function DataLogger({
 
     const csvContent = [
       headers.join(','),
-      ...dataLog.map((entry) =>
+      ...displayData.map((entry) =>
         [
           entry.timestamp.toISOString(),
           entry.pmData.pm1.toFixed(2),
@@ -201,23 +169,23 @@ export function DataLogger({
               <Brain className="h-3 w-3 mr-1" />
               {cachedAutomaticContext}
             </Badge>
-          )}
-          <span className="text-muted-foreground text-xs">
-            {dataLog.length} {t('realTime.entries')}
-          </span>
+           )}
+           <span className="text-muted-foreground text-xs">
+             {displayData.length} {t('realTime.entries')}
+           </span>
         </div>
 
         <div className="flex items-center gap-1">
-          {dataLog.length > 0 && (
+          {displayData.length > 0 && (
             <span className="text-muted-foreground text-xs hidden sm:inline">
-              {t('realTime.last')}: {dataLog[0]?.timestamp.toLocaleTimeString()}
+              {t('realTime.last')}: {displayData[0]?.timestamp.toLocaleTimeString()}
             </span>
           )}
           <Button
             variant="ghost"
             size="sm"
             onClick={exportRawData}
-            disabled={dataLog.length === 0}
+            disabled={displayData.length === 0}
             className="h-8 w-8 p-0"
             title={t('realTime.export')}
           >
@@ -227,7 +195,7 @@ export function DataLogger({
             variant="outline"
             size="sm"
             onClick={clearLog}
-            disabled={dataLog.length === 0}
+            disabled={displayData.length === 0}
             className="h-8 px-2 text-xs"
           >
             {t('realTime.clear')}
@@ -251,7 +219,7 @@ export function DataLogger({
       {/* Console Log Display */}
       {!isMinimized && (
         <div className="bg-background border-x border-b rounded-b-lg p-2 sm:p-3 h-32 sm:h-40 overflow-auto animate-accordion-down">
-          {dataLog.length === 0 ? (
+          {displayData.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
               <Database className="h-6 w-6 mx-auto mb-2 opacity-50" />
               <p className="text-sm">{t('realTime.noData')}</p>
@@ -263,7 +231,7 @@ export function DataLogger({
             </div>
           ) : (
             <div className="space-y-1 font-mono text-xs">
-              {dataLog.map((entry) => (
+              {displayData.map((entry) => (
                 <div key={entry.id} className="text-muted-foreground break-all">
                   <div className="text-xs">
                     [{entry.timestamp.toLocaleTimeString()}] New reading: PM1=
@@ -294,9 +262,14 @@ export function DataLogger({
                           .join(', ')}
                       </div>
                     )}
-                  {entry.automaticContext && (
+                   {entry.automaticContext && (
                     <div className="text-xs pl-2 text-blue-400">
                       Auto: {entry.automaticContext}
+                    </div>
+                  )}
+                  {entry.weatherDataId && (
+                    <div className="text-xs pl-2">
+                      <WeatherInfo weatherDataId={entry.weatherDataId} compact />
                     </div>
                   )}
                 </div>
