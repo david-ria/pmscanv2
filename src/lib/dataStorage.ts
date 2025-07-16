@@ -19,6 +19,8 @@ import * as logger from '@/utils/logger';
 let syncTimeout: NodeJS.Timeout | null = null;
 const SYNC_DEBOUNCE_MS = 5000; // 5 seconds
 
+export type SensorType = 'pmscan' | 'airbeam';
+
 export interface MissionData {
   id: string;
   name: string;
@@ -59,17 +61,22 @@ export interface MeasurementData {
 
 class DataStorageService {
   // Get all missions (local + synced from database)
-  async getAllMissions(): Promise<MissionData[]> {
-    const localMissions = getLocalMissions();
+  async getAllMissions(sensorType: SensorType = 'pmscan'): Promise<MissionData[]> {
+    const localMissions = getLocalMissions(sensorType);
 
     try {
       // Try to fetch from database if online
+      const table = sensorType === 'airbeam' ? 'airbeam_missions' : 'missions';
+      const measurementSelect =
+        sensorType === 'airbeam'
+          ? 'measurements:airbeam_measurements (*)'
+          : 'measurements (*)';
       const { data: dbMissions, error } = await supabase
-        .from('missions')
+        .from(table)
         .select(
           `
           *,
-          measurements (*)
+          ${measurementSelect}
         `
         )
         .order('created_at', { ascending: false });
@@ -98,7 +105,7 @@ class DataStorageService {
   deleteMission = deleteMission;
 
   // Sync methods with proper debouncing
-  async syncPendingMissions(): Promise<void> {
+  async syncPendingMissions(sensorType: SensorType = 'pmscan'): Promise<void> {
     // Clear existing timeout
     if (syncTimeout) {
       clearTimeout(syncTimeout);
@@ -115,7 +122,7 @@ class DataStorageService {
       syncTimeout = setTimeout(async () => {
         try {
           this.isSyncing = true;
-          await syncPendingMissions();
+          await syncPendingMissions(sensorType);
           logger.debug('✅ Sync completed');
         } catch (error) {
           logger.error('❌ Sync failed:', error);

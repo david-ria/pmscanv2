@@ -6,6 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ThresholdProvider } from '@/contexts/ThresholdContext';
 import { AlertProvider } from '@/contexts/AlertContext';
 import { ThemeProvider } from '@/contexts/ThemeProvider';
+import { SensorSelectionProvider } from '@/contexts/SensorSelectionContext';
 import { Toaster } from '@/components/ui/toaster';
 import App from './App.tsx';
 import './index.css';
@@ -20,8 +21,10 @@ createRoot(document.getElementById('root')!).render(
         <ThresholdProvider>
           <AlertProvider>
             <ThemeProvider>
-              <App />
-              <Toaster />
+              <SensorSelectionProvider>
+                <App />
+                <Toaster />
+              </SensorSelectionProvider>
             </ThemeProvider>
           </AlertProvider>
         </ThresholdProvider>
