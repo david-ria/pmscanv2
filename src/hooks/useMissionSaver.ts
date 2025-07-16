@@ -33,12 +33,14 @@ export function useMissionSaver() {
       shared
     );
 
-    // Export to CSV immediately without storing locally first
+    // Save mission locally so it appears in history
+    dataStorage.saveMissionLocally(mission);
+
+    // Export to CSV immediately
     dataStorage.exportMissionToCSV(mission);
 
-    // Skip database sync for now to prevent excessive syncing
     logger.debug(
-      '📁 Mission exported to CSV - skipping database sync to reduce sync frequency'
+      '📁 Mission saved locally and exported to CSV. Will sync to database later.'
     );
 
     return mission;
