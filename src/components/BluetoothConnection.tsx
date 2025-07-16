@@ -2,8 +2,7 @@ import { Bluetooth, BluetoothOff, Battery, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
-import { useAirBeamBluetooth } from '@/hooks/useAirBeamBluetooth';
+import { useBluetooth } from '@/hooks/useBluetooth';
 import { useSensor } from '@/contexts/SensorContext';
 import { cn } from '@/lib/utils';
 
@@ -20,7 +19,7 @@ export function BluetoothConnection({ className }: BluetoothConnectionProps) {
     error,
     requestDevice,
     disconnect,
-  } = sensorType === 'airBeam' ? useAirBeamBluetooth() : usePMScanBluetooth();
+  } = useBluetooth();
 
   return (
     <Card className={cn('', className)}>

@@ -8,8 +8,7 @@ import { DataLogger } from '@/components/DataLogger';
 import { WeatherCard } from '@/components/WeatherCard';
 import { RecordingFrequencyDialog } from '@/components/RecordingControls/RecordingFrequencyDialog';
 
-import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
-import { useAirBeamBluetooth } from '@/hooks/useAirBeamBluetooth';
+import { useBluetooth } from '@/hooks/useBluetooth';
 import { useSensor } from '@/contexts/SensorContext';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useAlerts } from '@/contexts/AlertContext';
@@ -36,8 +35,14 @@ export default function RealTime() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { sensorType } = useSensor();
-  const { currentData, isConnected, device, error, requestDevice, disconnect } =
-    sensorType === 'airBeam' ? useAirBeamBluetooth() : usePMScanBluetooth();
+  const {
+    currentData,
+    isConnected,
+    device,
+    error,
+    requestDevice,
+    disconnect,
+  } = useBluetooth();
 
   const {
     determineContext,
