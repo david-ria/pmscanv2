@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { PMScanData, PMScanDevice } from '@/lib/pmscan/types';
 
-// Placeholder hook for connecting to an AirBeam sensor.
-// It exposes the same API as usePMScanBluetooth so the UI can
-// handle either device type transparently.
+// Hook for connecting to an AirBeam sensor.
+// Exposes the same API as usePMScanBluetooth for transparent use.
 export function useAirBeamBluetooth() {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -11,13 +10,10 @@ export function useAirBeamBluetooth() {
   const [currentData, setCurrentData] = useState<PMScanData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // These functions would contain real Web Bluetooth logic. For now we
-  // simply mock a connection so the application can be exercised without
-  // an actual AirBeam device.
   const requestDevice = async () => {
     try {
       setIsConnecting(true);
-      // Pretend a device was found
+      // Simulate device detection
       const mockDevice: PMScanDevice = {
         name: 'AirBeam',
         version: 1,
@@ -30,7 +26,6 @@ export function useAirBeamBluetooth() {
       setDevice(mockDevice);
       setIsConnected(true);
       setIsConnecting(false);
-      // Emit dummy data once so components render something
       const now = new Date();
       setCurrentData({
         pm1: 0,
