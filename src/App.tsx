@@ -5,7 +5,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { RecordingProvider } from '@/contexts/RecordingContext';
-import { SensorProvider } from '@/contexts/SensorContext';
 import { CrashRecoveryInitializer } from '@/components/CrashRecoveryInitializer';
 import { useAuth } from '@/contexts/AuthContext';
 import RealTime from './pages/RealTime';
@@ -70,34 +69,32 @@ const App = () => {
             path="/*"
             element={
               <ProtectedRoute>
-                <SensorProvider>
-                  <RecordingProvider>
-                    <CrashRecoveryInitializer />
-                    <div className="min-h-screen bg-background">
-                      <Header />
-                      <main className="pt-14 pb-16">
-                        <Routes>
-                          <Route path="/" element={<RealTime />} />
-                          <Route path="/history" element={<History />} />
-                          <Route path="/analysis" element={<Analysis />} />
-                          <Route path="/groups" element={<Groups />} />
-                          <Route path="/profile" element={<Profile />} />
-                          <Route
-                            path="/custom-thresholds"
-                            element={<CustomThresholds />}
-                          />
-                          <Route
-                            path="/custom-alerts"
-                            element={<CustomAlerts />}
-                          />
-                          <Route path="/my-settings" element={<MySettings />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </main>
-                      <BottomNavigation />
-                    </div>
-                  </RecordingProvider>
-                </SensorProvider>
+                <RecordingProvider>
+                  <CrashRecoveryInitializer />
+                  <div className="min-h-screen bg-background">
+                    <Header />
+                    <main className="pt-14 pb-16">
+                      <Routes>
+                        <Route path="/" element={<RealTime />} />
+                        <Route path="/history" element={<History />} />
+                        <Route path="/analysis" element={<Analysis />} />
+                        <Route path="/groups" element={<Groups />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route
+                          path="/custom-thresholds"
+                          element={<CustomThresholds />}
+                        />
+                        <Route
+                          path="/custom-alerts"
+                          element={<CustomAlerts />}
+                        />
+                        <Route path="/my-settings" element={<MySettings />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </main>
+                    <BottomNavigation />
+                  </div>
+                </RecordingProvider>
               </ProtectedRoute>
             }
           />

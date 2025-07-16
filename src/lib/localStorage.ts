@@ -1,22 +1,12 @@
-import { MissionData, SensorType } from './dataStorage';
+import { MissionData } from './dataStorage';
 import * as logger from '@/utils/logger';
 
 const MISSIONS_KEY = 'pmscan_missions';
 const PENDING_SYNC_KEY = 'pmscan_pending_sync';
-const AIRBEAM_MISSIONS_KEY = 'airbeam_missions';
-const AIRBEAM_PENDING_SYNC_KEY = 'airbeam_pending_sync';
 
-function getMissionsKey(sensorType: SensorType = 'pmscan'): string {
-  return sensorType === 'airbeam' ? AIRBEAM_MISSIONS_KEY : MISSIONS_KEY;
-}
-
-function getPendingKey(sensorType: SensorType = 'pmscan'): string {
-  return sensorType === 'airbeam' ? AIRBEAM_PENDING_SYNC_KEY : PENDING_SYNC_KEY;
-}
-
-export function getLocalMissions(sensorType: SensorType = 'pmscan'): MissionData[] {
+export function getLocalMissions(): MissionData[] {
   try {
-    const stored = localStorage.getItem(getMissionsKey(sensorType));
+    const stored = localStorage.getItem(MISSIONS_KEY);
     if (!stored) return [];
 
     const missions = JSON.parse(stored);
@@ -35,21 +25,18 @@ export function getLocalMissions(sensorType: SensorType = 'pmscan'): MissionData
   }
 }
 
-export function saveLocalMissions(
-  missions: MissionData[],
-  sensorType: SensorType = 'pmscan'
-): void {
+export function saveLocalMissions(missions: MissionData[]): void {
   try {
-    localStorage.setItem(getMissionsKey(sensorType), JSON.stringify(missions));
+    localStorage.setItem(MISSIONS_KEY, JSON.stringify(missions));
   } catch (quotaError) {
     if (
       quotaError instanceof DOMException &&
       quotaError.name === 'QuotaExceededError'
     ) {
       console.warn('LocalStorage quota exceeded, cleaning up old missions...');
-      cleanupOldMissions(missions, sensorType);
+      cleanupOldMissions(missions);
       // Try again after cleanup
-      localStorage.setItem(getMissionsKey(sensorType), JSON.stringify(missions));
+      localStorage.setItem(MISSIONS_KEY, JSON.stringify(missions));
     } else {
       throw quotaError;
     }
@@ -122,44 +109,35 @@ export function formatDatabaseMission(dbMission: {
   };
 }
 
-export function getPendingSyncIds(sensorType: SensorType = 'pmscan'): string[] {
+export function getPendingSyncIds(): string[] {
   try {
-    const stored = localStorage.getItem(getPendingKey(sensorType));
+    const stored = localStorage.getItem(PENDING_SYNC_KEY);
     return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
   }
 }
 
-export function addToPendingSync(
-  missionId: string,
-  sensorType: SensorType = 'pmscan'
-): void {
-  const pending = getPendingSyncIds(sensorType);
+export function addToPendingSync(missionId: string): void {
+  const pending = getPendingSyncIds();
   if (!pending.includes(missionId)) {
     pending.push(missionId);
-    localStorage.setItem(getPendingKey(sensorType), JSON.stringify(pending));
+    localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pending));
   }
 }
 
-export function removeFromPendingSync(
-  missionId: string,
-  sensorType: SensorType = 'pmscan'
-): void {
-  const pending = getPendingSyncIds(sensorType).filter((id) => id !== missionId);
-  localStorage.setItem(getPendingKey(sensorType), JSON.stringify(pending));
+export function removeFromPendingSync(missionId: string): void {
+  const pending = getPendingSyncIds().filter((id) => id !== missionId);
+  localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pending));
 }
 
-export function clearLocalStorage(sensorType: SensorType = 'pmscan'): void {
-  localStorage.removeItem(getMissionsKey(sensorType));
-  localStorage.removeItem(getPendingKey(sensorType));
+export function clearLocalStorage(): void {
+  localStorage.removeItem(MISSIONS_KEY);
+  localStorage.removeItem(PENDING_SYNC_KEY);
   logger.debug('Local storage cleared after CSV export');
 }
 
-export function cleanupOldMissions(
-  missions: MissionData[],
-  sensorType: SensorType = 'pmscan'
-): void {
+export function cleanupOldMissions(missions: MissionData[]): void {
   // Keep only the most recent 10 missions to free up space
   const sortedMissions = missions.sort(
     (a, b) => b.endTime.getTime() - a.endTime.getTime()
@@ -169,15 +147,12 @@ export function cleanupOldMissions(
   logger.debug(
     `Cleaning up old missions, keeping ${recentMissions.length} most recent ones`
   );
-  localStorage.setItem(
-    getMissionsKey(sensorType),
-    JSON.stringify(recentMissions)
-  );
+  localStorage.setItem(MISSIONS_KEY, JSON.stringify(recentMissions));
 
   // Update pending sync list to only include kept missions
   const keptMissionIds = recentMissions.map((m) => m.id);
-  const updatedPending = getPendingSyncIds(sensorType).filter((id) =>
+  const updatedPending = getPendingSyncIds().filter((id) =>
     keptMissionIds.includes(id)
   );
-  localStorage.setItem(getPendingKey(sensorType), JSON.stringify(updatedPending));
+  localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(updatedPending));
 }

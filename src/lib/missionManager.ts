@@ -1,6 +1,6 @@
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
-import { MissionData, MeasurementData, SensorType } from './dataStorage';
+import { MissionData, MeasurementData } from './dataStorage';
 import {
   getLocalMissions,
   saveLocalMissions,
@@ -26,8 +26,7 @@ export function createMissionFromRecording(
   locationContext?: string,
   activityContext?: string,
   recordingFrequency?: string,
-  shared?: boolean,
-  sensorType: SensorType = 'pmscan'
+  shared?: boolean
 ): MissionData {
   const measurementData: MeasurementData[] = measurements.map((m) => ({
     id: crypto.randomUUID(),
@@ -89,12 +88,9 @@ export function createMissionFromRecording(
   return mission;
 }
 
-export function saveMissionLocally(
-  mission: MissionData,
-  sensorType: SensorType = 'pmscan'
-): void {
+export function saveMissionLocally(mission: MissionData): void {
   try {
-  const missions = getLocalMissions(sensorType);
+    const missions = getLocalMissions();
     const existingIndex = missions.findIndex((m) => m.id === mission.id);
 
     if (existingIndex >= 0) {
@@ -103,11 +99,11 @@ export function saveMissionLocally(
       missions.push(mission);
     }
 
-    saveLocalMissions(missions, sensorType);
+    saveLocalMissions(missions);
 
     // Add to pending sync if not already synced
     if (!mission.synced) {
-      addToPendingSync(mission.id, sensorType);
+      addToPendingSync(mission.id);
     }
   } catch (error) {
     console.error('Failed to save mission locally:', error);
@@ -117,20 +113,16 @@ export function saveMissionLocally(
   }
 }
 
-export async function deleteMission(
-  missionId: string,
-  sensorType: SensorType = 'pmscan'
-): Promise<void> {
+export async function deleteMission(missionId: string): Promise<void> {
   // Remove from local storage
-  const missions = getLocalMissions(sensorType).filter((m) => m.id !== missionId);
-  saveLocalMissions(missions, sensorType);
-  removeFromPendingSync(missionId, sensorType);
+  const missions = getLocalMissions().filter((m) => m.id !== missionId);
+  saveLocalMissions(missions);
+  removeFromPendingSync(missionId);
 
   // Try to delete from database if online
   if (navigator.onLine) {
     try {
-      const table = 'missions'; // Always use missions table
-      await supabase.from(table).delete().eq('id', missionId);
+      await supabase.from('missions').delete().eq('id', missionId);
     } catch (error) {
       console.error('Failed to delete mission from database:', error);
     }

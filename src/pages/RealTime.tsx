@@ -8,8 +8,7 @@ import { DataLogger } from '@/components/DataLogger';
 import { WeatherCard } from '@/components/WeatherCard';
 import { RecordingFrequencyDialog } from '@/components/RecordingControls/RecordingFrequencyDialog';
 
-import { useBluetooth } from '@/hooks/useBluetooth';
-import { useSensor } from '@/contexts/SensorContext';
+import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useAlerts } from '@/contexts/AlertContext';
 import { useAutoContext } from '@/hooks/useAutoContext';
@@ -34,15 +33,8 @@ export default function RealTime() {
 
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { sensorType } = useSensor();
-  const {
-    currentData,
-    isConnected,
-    device,
-    error,
-    requestDevice,
-    disconnect,
-  } = useBluetooth();
+  const { currentData, isConnected, device, error, requestDevice, disconnect } =
+    usePMScanBluetooth();
 
   const {
     determineContext,
@@ -52,13 +44,13 @@ export default function RealTime() {
     locationEnabled,
     requestLocationPermission,
   } = useAutoContext();
-
+  
   const { weatherData, fetchWeatherData } = useWeatherData();
-
+  
   useEffect(() => {
     logger.debug('RealTime: useAutoContext completed successfully');
   }, []);
-
+  
   const {
     isRecording,
     addDataPoint,
@@ -246,6 +238,7 @@ export default function RealTime() {
 
       {/* Air Quality Cards */}
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
+
 
       {/* Context Selectors */}
       <div className="mb-4">

@@ -39,7 +39,6 @@
   "sensors": {
     "title": "Sensors",
     "pmscan": "Sensor PMSCAN",
-    "airbeam": "Sensor AirBeam",
     "gps": "GPS",
     "weather": "Dades Meteorològiques",
     "connected": "Connectat"

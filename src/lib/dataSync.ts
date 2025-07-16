@@ -5,7 +5,7 @@ import {
   removeFromPendingSync,
 } from './localStorage';
 import { saveMissionLocally } from './missionManager';
-import { MissionData, SensorType } from './dataStorage';
+import { MissionData } from './dataStorage';
 import * as logger from '@/utils/logger';
 
 // Function to fetch weather data for a mission
@@ -86,13 +86,11 @@ async function fetchAirQualityForMission(mission: MissionData): Promise<string |
   }
 }
 
-export async function syncPendingMissions(
-  sensorType: SensorType = 'pmscan'
-): Promise<void> {
+export async function syncPendingMissions(): Promise<void> {
   if (!navigator.onLine) return;
 
-  const pendingIds = getPendingSyncIds(sensorType);
-  const localMissions = getLocalMissions(sensorType);
+  const pendingIds = getPendingSyncIds();
+  const localMissions = getLocalMissions();
 
   // Clean up any missions that don't exist locally but are still in pending sync
   const validPendingIds = pendingIds.filter((id) =>
@@ -101,7 +99,7 @@ export async function syncPendingMissions(
 
   // Remove invalid pending IDs
   const invalidIds = pendingIds.filter((id) => !validPendingIds.includes(id));
-  invalidIds.forEach((id) => removeFromPendingSync(id, sensorType));
+  invalidIds.forEach((id) => removeFromPendingSync(id));
 
   for (const missionId of validPendingIds) {
     const mission = localMissions.find((m) => m.id === missionId);
@@ -121,10 +119,8 @@ export async function syncPendingMissions(
       }
 
       // Check if mission already exists first
-      const missionTable = 'missions'; // Always use missions table
-      const measurementTable = 'measurements'; // Always use measurements table
       const { data: existingMission } = await supabase
-        .from(missionTable)
+        .from('missions')
         .select('id')
         .eq('id', mission.id)
         .single();
@@ -135,8 +131,8 @@ export async function syncPendingMissions(
           `Mission ${mission.name} already exists in database, skipping sync`
         );
         mission.synced = true;
-        saveMissionLocally(mission, sensorType);
-        removeFromPendingSync(mission.id, sensorType);
+        saveMissionLocally(mission);
+        removeFromPendingSync(mission.id);
         continue;
       }
 
@@ -191,8 +187,8 @@ export async function syncPendingMissions(
 
       // Mark as synced locally
       mission.synced = true;
-      saveMissionLocally(mission, sensorType);
-      removeFromPendingSync(mission.id, sensorType);
+      saveMissionLocally(mission);
+      removeFromPendingSync(mission.id);
 
       logger.debug(`Mission ${mission.name} synced successfully`);
     } catch (error) {
