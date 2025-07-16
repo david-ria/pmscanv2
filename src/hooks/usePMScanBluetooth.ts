@@ -34,7 +34,12 @@ export function usePMScanBluetooth() {
           data.timestamp.getTime() - prevData.timestamp.getTime() >= 1000; // 1 second minimum
 
         if (isDifferent) {
-          logger.debug('🔄 RT Data received:', data);
+          logger.rateLimitedDebug(
+            'pmbluetooth.rtdata',
+            5000,
+            '🔄 RT Data received:',
+            data
+          );
           return data;
         }
         // Skip logging and updating if data is too similar
@@ -52,8 +57,6 @@ export function usePMScanBluetooth() {
       );
 
       // Skip IM data entirely to avoid duplicates - RT data is sufficient for real-time display
-      // IM data is typically the same as RT data but sent more frequently
-      logger.debug('📄 IM Data received (skipped to avoid duplicates)');
     }
   }, []);
 
@@ -61,7 +64,11 @@ export function usePMScanBluetooth() {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target.value) {
       const batteryLevel = target.value.getUint8(0);
-      logger.debug(`🔋 Battery event: ${batteryLevel}%`);
+      logger.rateLimitedDebug(
+        'pmbluetooth.battery',
+        60000,
+        `🔋 Battery event: ${batteryLevel}%`
+      );
       connectionManager.updateBattery(batteryLevel);
       setDevice((prev) => (prev ? { ...prev, battery: batteryLevel } : null));
     }
@@ -71,7 +78,11 @@ export function usePMScanBluetooth() {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target.value) {
       const chargingStatus = target.value.getUint8(0);
-      logger.debug(`⚡ Charging event: ${chargingStatus}`);
+      logger.rateLimitedDebug(
+        'pmbluetooth.charging',
+        60000,
+        `⚡ Charging event: ${chargingStatus}`
+      );
       connectionManager.updateCharging(chargingStatus);
       setDevice((prev) =>
         prev ? { ...prev, charging: chargingStatus === 1 } : null
