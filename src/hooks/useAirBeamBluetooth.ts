@@ -6,12 +6,27 @@ import { globalConnectionManager } from '@/lib/airbeam/globalConnectionManager';
 import * as logger from '@/utils/logger';
 
 export function useAirBeamBluetooth() {
+  // Early stability check
+  const [isInitialized, setIsInitialized] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [device, setDevice] = useState<AirBeamDevice | null>(null);
   const [currentData, setCurrentData] = useState<AirBeamData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isMountedRef = useRef(true);
+  
+  // Early return if not properly initialized
+  if (!globalConnectionManager) {
+    return {
+      isConnected: false,
+      isConnecting: false,
+      device: null,
+      currentData: null,
+      error: 'Connection manager not available',
+      requestDevice: () => {},
+      disconnect: () => {},
+    };
+  }
 
   const connectionManager = globalConnectionManager;
 
@@ -113,45 +128,24 @@ export function useAirBeamBluetooth() {
     setCurrentData(null);
   }, []);
 
-  // Initialize connection status on mount
+  // Simple initialization effect with no dependencies to avoid comparison issues
   useEffect(() => {
-    if (!connectionManager || !isMountedRef.current) return;
+    if (!isMountedRef.current || isInitialized) return;
     
-    const checkConnection = async () => {
-      try {
-        if (connectionManager.isConnected()) {
-          if (!isMountedRef.current) return;
-          setIsConnected(true);
-          
-          const deviceInfo = await connectionManager.reestablishEventListeners(handleData);
-          if (!isMountedRef.current) return;
-          
-          if (deviceInfo) {
-            setDevice(deviceInfo);
-            logger.debug('🔄 Restored existing AirBeam connection');
-          }
-        } else {
-          if (!isMountedRef.current) return;
-          setIsConnected(false);
-          setDevice(null);
-          setCurrentData(null);
-        }
-      } catch (err) {
-        if (!isMountedRef.current) return;
-        console.error('❌ Failed to restore connection:', err);
-        setError('Failed to restore connection');
-      }
-    };
+    setIsInitialized(true);
     
-    checkConnection();
-  }, []); // Completely empty dependency array
+    // Simple connection check without complex async operations
+    if (connectionManager && connectionManager.isConnected()) {
+      setIsConnected(true);
+    }
+  });
   
-  // Cleanup on unmount
+  // Cleanup effect
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
     };
-  }, []);
+  });
 
   return {
     isConnected,
