@@ -14,19 +14,6 @@ export function useAirBeamBluetooth() {
   const [currentData, setCurrentData] = useState<AirBeamData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isMountedRef = useRef(true);
-  
-  // Check if connection manager is available after all hooks are called
-  if (!globalConnectionManager) {
-    return {
-      isConnected: false,
-      isConnecting: false,
-      device: null,
-      currentData: null,
-      error: 'Connection manager not available',
-      requestDevice: () => {},
-      disconnect: () => {},
-    };
-  }
 
   const connectionManager = globalConnectionManager;
 
