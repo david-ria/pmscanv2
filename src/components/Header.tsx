@@ -58,9 +58,6 @@ export function Header() {
             <h1 className="text-lg font-bold text-foreground">
               {t('header.title')}
             </h1>
-            <Badge variant="outline" className="text-xs hidden sm:inline-flex">
-              {t('header.realTime')}
-            </Badge>
           </div>
         </div>
 
