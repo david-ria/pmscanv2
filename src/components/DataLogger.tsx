@@ -58,6 +58,9 @@ export function DataLogger({
   const { recordingData } = useRecordingContext();
   const { latestContext, isEnabled: autoContextEnabled } = useAutoContext();
   const [isMinimized, setIsMinimized] = useState(false);
+  
+  // Debug logging to see autocontext state
+  console.log('DataLogger autocontext state:', { autoContextEnabled, latestContext });
 
   // Use actual recording data instead of managing separate log
   const displayData = recordingData.slice(0, 100).map((entry, index) => ({
@@ -141,11 +144,11 @@ export function DataLogger({
           <span className="font-medium text-sm">
             {t('realTime.dataLogger')}
           </span>
-          {autoContextEnabled && latestContext && (
+          {autoContextEnabled && (
             <>
               <Brain className="h-4 w-4 text-muted-foreground" />
               <Badge variant="outline" className="text-xs bg-muted">
-                {latestContext}
+                {latestContext || 'Detecting...'}
               </Badge>
             </>
           )}
