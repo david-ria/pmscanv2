@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
+import { useAirBeamBluetooth } from '@/hooks/useAirBeamBluetooth';
+import { useSensor } from '@/contexts/SensorContext';
 import { cn } from '@/lib/utils';
 
 interface BluetoothConnectionProps {
@@ -10,6 +12,7 @@ interface BluetoothConnectionProps {
 }
 
 export function BluetoothConnection({ className }: BluetoothConnectionProps) {
+  const { sensorType } = useSensor();
   const {
     isConnected,
     isConnecting,
@@ -17,7 +20,7 @@ export function BluetoothConnection({ className }: BluetoothConnectionProps) {
     error,
     requestDevice,
     disconnect,
-  } = usePMScanBluetooth();
+  } = sensorType === 'airBeam' ? useAirBeamBluetooth() : usePMScanBluetooth();
 
   return (
     <Card className={cn('', className)}>
@@ -28,7 +31,7 @@ export function BluetoothConnection({ className }: BluetoothConnectionProps) {
           ) : (
             <BluetoothOff className="h-4 w-4 text-muted-foreground" />
           )}
-          Connexion PMScan
+          {sensorType === 'airBeam' ? 'Connexion AirBeam' : 'Connexion PMScan'}
         </CardTitle>
       </CardHeader>
       <CardContent>

@@ -39,6 +39,7 @@
   "sensors": {
     "title": "Sensors",
     "pmscan": "PMSCAN Sensor",
+    "airbeam": "AirBeam Sensor",
     "gps": "GPS",
     "weather": "Weather Data",
     "connected": "Connected"
