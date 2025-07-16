@@ -33,7 +33,7 @@ interface DataLogEntry {
     activity: string;
   };
   automaticContext?: string;
-  weatherDataId?: string;
+  // weatherDataId removed - now at mission level
 }
 
 interface DataLoggerProps {
@@ -84,7 +84,7 @@ export function DataLogger({
     location: entry.location,
     missionContext: entry.context,
     automaticContext: entry.automaticContext,
-    weatherDataId: entry.weatherDataId,
+    // weatherDataId removed - now at mission level
   }));
 
   const clearLog = () => {
@@ -265,11 +265,6 @@ export function DataLogger({
                    {entry.automaticContext && (
                     <div className="text-xs pl-2 text-blue-400">
                       Auto: {entry.automaticContext}
-                    </div>
-                  )}
-                  {entry.weatherDataId && (
-                    <div className="text-xs pl-2">
-                      <WeatherInfo weatherDataId={entry.weatherDataId} compact />
                     </div>
                   )}
                 </div>

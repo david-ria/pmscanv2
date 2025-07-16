@@ -353,7 +353,6 @@ export type Database = {
           pm25: number
           temperature: number | null
           timestamp: string
-          weather_data_id: string | null
         }
         Insert: {
           accuracy?: number | null
@@ -369,7 +368,6 @@ export type Database = {
           pm25: number
           temperature?: number | null
           timestamp: string
-          weather_data_id?: string | null
         }
         Update: {
           accuracy?: number | null
@@ -385,7 +383,6 @@ export type Database = {
           pm25?: number
           temperature?: number | null
           timestamp?: string
-          weather_data_id?: string | null
         }
         Relationships: [
           {
@@ -393,13 +390,6 @@ export type Database = {
             columns: ["mission_id"]
             isOneToOne: false
             referencedRelation: "missions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "measurements_weather_data_id_fkey"
-            columns: ["weather_data_id"]
-            isOneToOne: false
-            referencedRelation: "weather_data"
             referencedColumns: ["id"]
           },
         ]
@@ -423,6 +413,7 @@ export type Database = {
           start_time: string
           updated_at: string
           user_id: string | null
+          weather_data_id: string | null
         }
         Insert: {
           activity_context?: string | null
@@ -442,6 +433,7 @@ export type Database = {
           start_time: string
           updated_at?: string
           user_id?: string | null
+          weather_data_id?: string | null
         }
         Update: {
           activity_context?: string | null
@@ -461,8 +453,17 @@ export type Database = {
           start_time?: string
           updated_at?: string
           user_id?: string | null
+          weather_data_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "missions_weather_data_id_fkey"
+            columns: ["weather_data_id"]
+            isOneToOne: false
+            referencedRelation: "weather_data"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

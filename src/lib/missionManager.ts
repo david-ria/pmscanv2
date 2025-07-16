@@ -45,8 +45,11 @@ export function createMissionFromRecording(
     locationContext: m.context?.location,
     activityContext: m.context?.activity,
     automaticContext: m.automaticContext,
-    weatherDataId: m.weatherDataId,
+    // weatherDataId removed - now at mission level
   }));
+
+  // Get weather data for the mission (use first measurement's weather data if available)
+  const missionWeatherDataId = measurements.find(m => m.weatherDataId)?.weatherDataId;
 
   const pm25Values = measurementData.map((m) => m.pm25);
   const avgPm1 =
@@ -78,6 +81,7 @@ export function createMissionFromRecording(
     shared: shared || false,
     measurements: measurementData,
     synced: false,
+    weatherDataId: missionWeatherDataId,
   };
 
   return mission;

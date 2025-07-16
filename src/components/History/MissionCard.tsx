@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { MissionData } from '@/lib/dataStorage';
 import { ShareDialog } from './ShareDialog';
 import { MissionDetailsDialog } from './MissionDetailsDialog';
+import { WeatherInfo } from '@/components/WeatherInfo';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 
@@ -89,6 +90,11 @@ export function MissionCard({
                 <p className="text-xs text-muted-foreground mt-1">
                   {mission.locationContext} • {mission.activityContext}
                 </p>
+              )}
+              {mission.weatherDataId && (
+                <div className="mt-1">
+                  <WeatherInfo weatherDataId={mission.weatherDataId} compact />
+                </div>
               )}
             </div>
             <div className="text-right">

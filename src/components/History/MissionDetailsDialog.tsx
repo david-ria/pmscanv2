@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapboxMap } from '@/components/MapboxMap';
 import { PMLineGraph } from '@/components/PMLineGraph';
 import { MissionData } from '@/lib/dataStorage';
+import { WeatherInfo } from '@/components/WeatherInfo';
 import { useTranslation } from 'react-i18next';
 
 interface MissionDetailsDialogProps {
@@ -138,6 +139,11 @@ export function MissionDetailsDialog({
                 <p className="text-xs text-muted-foreground mt-1">
                   {mission.locationContext} • {mission.activityContext}
                 </p>
+              )}
+              {mission.weatherDataId && (
+                <div className="mt-2">
+                  <WeatherInfo weatherDataId={mission.weatherDataId} />
+                </div>
               )}
             </div>
             <div className="text-right">

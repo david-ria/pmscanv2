@@ -36,6 +36,7 @@ export interface MissionData {
   shared: boolean;
   measurements: MeasurementData[];
   synced: boolean; // For local storage tracking
+  weatherDataId?: string; // Weather data for the entire mission
 }
 
 export interface MeasurementData {
@@ -52,7 +53,7 @@ export interface MeasurementData {
   locationContext?: string;
   activityContext?: string;
   automaticContext?: string;
-  weatherDataId?: string;
+  // weatherDataId removed - now at mission level
 }
 
 class DataStorageService {

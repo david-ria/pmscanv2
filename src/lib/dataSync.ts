@@ -63,6 +63,7 @@ export async function syncPendingMissions(): Promise<void> {
           activity_context: mission.activityContext,
           recording_frequency: mission.recordingFrequency,
           shared: mission.shared,
+          weather_data_id: mission.weatherDataId,
         })
         .select()
         .single();
@@ -83,7 +84,7 @@ export async function syncPendingMissions(): Promise<void> {
         longitude: m.longitude,
         accuracy: m.accuracy,
         automatic_context: m.automaticContext,
-        weather_data_id: m.weatherDataId,
+        // weather_data_id removed - now at mission level
       }));
 
       const { error: measurementsError } = await supabase
