@@ -31,7 +31,7 @@ export function useWeatherDisplay(weatherDataId?: string) {
           .from('weather_data')
           .select('*')
           .eq('id', weatherDataId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.warn('Failed to fetch weather data:', error);

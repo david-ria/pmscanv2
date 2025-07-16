@@ -44,22 +44,30 @@ export default function History() {
   }, [loadMissions]);
 
   // Enrich missions with missing weather/air quality data on first load
+  const [enrichmentInProgress, setEnrichmentInProgress] = useState(false);
+  const [hasTriggeredEnrichment, setHasTriggeredEnrichment] = useState(false);
+  
   useEffect(() => {
-    if (missions.length > 0 && navigator.onLine) {
+    if (missions.length > 0 && navigator.onLine && !enrichmentInProgress && !hasTriggeredEnrichment) {
       // Check if any missions are missing weather data
       const missionsNeedingEnrichment = missions.filter(
-        m => m.synced && (!m.weatherDataId || !m.airQualityDataId)
+        m => m.synced && !m.weatherDataId
       );
       
       if (missionsNeedingEnrichment.length > 0) {
         console.log(`Found ${missionsNeedingEnrichment.length} missions that need enrichment`);
+        setEnrichmentInProgress(true);
+        setHasTriggeredEnrichment(true);
+        
         handleEnrichMissions().then(() => {
           // Reload missions after enrichment to get the updated weather data IDs
           loadMissions();
+        }).finally(() => {
+          setEnrichmentInProgress(false);
         });
       }
     }
-  }, [missions, handleEnrichMissions, loadMissions]);
+  }, [missions, handleEnrichMissions, loadMissions, enrichmentInProgress, hasTriggeredEnrichment]);
 
   // Filter missions based on selected date and period
   const filteredMissions = useMemo(() => {

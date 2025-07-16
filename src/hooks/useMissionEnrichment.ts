@@ -22,6 +22,7 @@ export function useMissionEnrichment() {
     try {
       // Fetch weather data if not present
       if (!mission.weatherDataId) {
+        console.log('🔄 Fetching weather for mission:', mission.id);
         const { data: weatherData, error: weatherError } = await supabase.functions.invoke('fetch-weather', {
           body: {
             latitude: measurementWithLocation.latitude,
@@ -32,23 +33,32 @@ export function useMissionEnrichment() {
 
         if (!weatherError && weatherData?.weatherData) {
           result.weatherDataId = weatherData.weatherData.id;
-          logger.debug('✅ Weather data fetched for mission:', mission.id);
+          logger.debug('✅ Weather data fetched for mission:', mission.id, 'weatherId:', result.weatherDataId);
+        } else {
+          logger.error('❌ Failed to fetch weather data:', weatherError);
         }
+      } else {
+        console.log('ℹ️ Mission already has weather data:', mission.id);
       }
 
 
       // Update the mission in the database if we got new data
       if (result.weatherDataId) {
+        console.log('💾 Updating mission in database:', mission.id, 'with weather ID:', result.weatherDataId);
         const { error: updateError } = await supabase
           .from('missions')
           .update({ weather_data_id: result.weatherDataId })
           .eq('id', mission.id);
 
         if (updateError) {
+          console.error('❌ Database update failed:', updateError);
           logger.error('❌ Failed to update mission with enriched data:', updateError);
         } else {
+          console.log('✅ Database update successful for mission:', mission.id);
           logger.debug('✅ Mission updated with enriched data:', mission.id);
         }
+      } else {
+        console.log('⚠️ No weather data to update for mission:', mission.id);
       }
 
     } catch (error) {
