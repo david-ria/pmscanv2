@@ -45,9 +45,9 @@ export interface LoadingState {
   error?: string | null;
 }
 
-export interface AsyncOperationState extends LoadingState {
+export interface AsyncOperationState<T = unknown> extends LoadingState {
   isSuccess?: boolean;
-  data?: any;
+  data?: T;
 }
 
 // Common UI patterns

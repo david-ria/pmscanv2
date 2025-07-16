@@ -23,10 +23,22 @@ interface RecordingContextType {
     activityContext?: string,
     recordingFrequency?: string,
     shared?: boolean
-  ) => any;
+  ) => Promise<void>;
   updateMissionContext: (location: string, activity: string) => void;
   recordingStartTime: Date | null;
-  recordingData: any[];
+  recordingData: Array<{
+    timestamp: Date;
+    pm1: number;
+    pm25: number;
+    pm10: number;
+    temperature?: number;
+    humidity?: number;
+    location?: {
+      latitude: number;
+      longitude: number;
+      accuracy?: number;
+    };
+  }>;
   clearRecordingData: () => void;
 }
 

@@ -13,7 +13,11 @@ import { MissionDetailsDialog } from './RecordingControls/MissionDetailsDialog';
 interface RecordingControlsProps {
   isRecording: boolean;
   onToggleRecording: () => void;
-  device?: any; // PMScanDevice
+  device?: {
+    id: string;
+    name: string;
+    connected: boolean;
+  };
   className?: string;
 }
 

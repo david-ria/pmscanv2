@@ -40,7 +40,7 @@ interface NotificationOptions {
   actions?: NotificationAction[];
   badge?: string;
   body?: string;
-  data?: any;
+  data?: Record<string, unknown>;
   dir?: 'auto' | 'ltr' | 'rtl';
   icon?: string;
   image?: string;

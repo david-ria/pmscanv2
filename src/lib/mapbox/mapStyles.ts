@@ -32,7 +32,7 @@ export const createMapStyleExpression = (thresholds: any): any => {
     ['<=', ['get', 'pm25'], thresholds.pm25.poor],
     '#f97316', // Poor - Orange
     '#ef4444', // Very Poor - Red
-  ] as any;
+  ] as mapboxgl.Expression;
 };
 
 export const MAP_STYLES = {

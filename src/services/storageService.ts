@@ -25,10 +25,10 @@ export const STORAGE_KEYS = {
   GROUP_SETTINGS: 'groupSettings',
 } as const;
 
-interface StorageOptions {
-  defaultValue?: any;
-  parser?: (value: string) => any;
-  serializer?: (value: any) => string;
+interface StorageOptions<T = unknown> {
+  defaultValue?: T;
+  parser?: (value: string) => T;
+  serializer?: (value: T) => string;
 }
 
 class StorageService {
@@ -41,11 +41,11 @@ class StorageService {
     return StorageService.instance;
   }
 
-  get<T>(key: string, options?: StorageOptions): T | null {
+  get<T>(key: string, options?: StorageOptions<T>): T | null {
     try {
       const value = localStorage.getItem(key);
       if (value === null) {
-        return options?.defaultValue ?? null;
+        return (options?.defaultValue ?? null) as T | null;
       }
 
       if (options?.parser) {
@@ -54,13 +54,13 @@ class StorageService {
 
       // Try to parse as JSON, fallback to string
       try {
-        return JSON.parse(value);
+        return JSON.parse(value) as T;
       } catch {
-        return value as T;
+        return value as unknown as T;
       }
     } catch (error) {
-      logger.error(`Failed to get storage item "${key}":`, error);
-      return options?.defaultValue ?? null;
+      logger.error(`Failed to get storage item "${key}":`, error as Error);
+      return (options?.defaultValue ?? null) as T | null;
     }
   }
 

@@ -14,7 +14,11 @@ import { PMScanData } from '@/lib/pmscan/types';
 interface PMLineGraphProps {
   data: Array<{
     pmData: PMScanData;
-    location?: any;
+    location?: {
+      latitude: number;
+      longitude: number;
+      accuracy?: number;
+    };
   }>;
   className?: string;
 }
