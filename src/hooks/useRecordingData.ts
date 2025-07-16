@@ -15,22 +15,25 @@ import {
 import * as logger from '@/utils/logger';
 
 export function useRecordingData() {
-  logger.debug('🔄 useRecordingData: Hook called');
-
   // All hooks must be called in the same order every time
   const recordingState = useRecordingState();
-  logger.debug('🔄 useRecordingData: recordingState loaded', {
-    isRecording: recordingState.isRecording,
-  });
 
   const backgroundRecordingIntegration = useBackgroundRecordingIntegration();
-  logger.debug('🔄 useRecordingData: backgroundRecordingIntegration loaded');
 
   const missionSaver = useMissionSaver();
-  logger.debug('🔄 useRecordingData: missionSaver loaded');
 
   const crashRecovery = useCrashRecovery();
-  logger.debug('🔄 useRecordingData: crashRecovery loaded');
+
+  useEffect(() => {
+    logger.debug('🔄 useRecordingData: Hook called');
+    logger.debug('🔄 useRecordingData: recordingState loaded', {
+      isRecording: recordingState.isRecording,
+    });
+    logger.debug('🔄 useRecordingData: backgroundRecordingIntegration loaded');
+    logger.debug('🔄 useRecordingData: missionSaver loaded');
+    logger.debug('🔄 useRecordingData: crashRecovery loaded');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Use auto-sync functionality - must be called before conditional logic
   useAutoSync();
