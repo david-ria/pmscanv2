@@ -86,6 +86,10 @@ Note that when React's `StrictMode` is enabled (the default in development),
 components and hooks initialize twice, leading to duplicate debug logs. This
 doesn't occur in production.
 
+Leaving the log level set to `debug` while a recording is running can generate a
+large amount of console output. If memory usage becomes an issue, lower the
+level by setting `VITE_LOG_LEVEL=info` or unset it entirely.
+
 ## Supabase configuration
 
 The application expects Supabase connection details to be available as
@@ -100,7 +104,7 @@ VITE_SUPABASE_ANON_KEY=<your Supabase anon key>
 These values are used to initialize the client. If either variable is undefined
 the default values bundled in the repository are used instead.
 
-Leave `VITE_LOG_LEVEL` unset (or use any other value) to silence debug output.
+Leave `VITE_LOG_LEVEL` unset or set to `info` to silence debug output.
 
 ### Mapbox token (Supabase secret)
 
