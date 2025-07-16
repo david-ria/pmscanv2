@@ -21,8 +21,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
-import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
-import { useAirBeamBluetooth } from '@/hooks/useAirBeamBluetooth';
+import { useBluetooth } from '@/hooks/useBluetooth';
 import { useSensor } from '@/contexts/SensorContext';
 import { useGPS } from '@/hooks/useGPS';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
@@ -68,13 +67,11 @@ export function useMenuSections({
   const { isEnabled: weatherLoggingEnabled, setEnabled: setWeatherLoggingEnabled } = useWeatherLogging();
 
   const { sensorType, setSensorType } = useSensor();
-  const bluetooth =
-    sensorType === 'airBeam' ? useAirBeamBluetooth() : usePMScanBluetooth();
   const {
     isConnected: isSensorConnected,
     requestDevice,
     disconnect,
-  } = bluetooth;
+  } = useBluetooth();
 
   const { setSensor } = useSensorSelection();
   const { locationEnabled, requestLocationPermission } = useGPS();
