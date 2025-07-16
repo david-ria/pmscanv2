@@ -23,22 +23,10 @@ interface RecordingContextType {
     activityContext?: string,
     recordingFrequency?: string,
     shared?: boolean
-  ) => Promise<void>;
+  ) => any;
   updateMissionContext: (location: string, activity: string) => void;
   recordingStartTime: Date | null;
-  recordingData: Array<{
-    timestamp: Date;
-    pm1: number;
-    pm25: number;
-    pm10: number;
-    temperature?: number;
-    humidity?: number;
-    location?: {
-      latitude: number;
-      longitude: number;
-      accuracy?: number;
-    };
-  }>;
+  recordingData: any[];
   clearRecordingData: () => void;
 }
 
@@ -88,8 +76,8 @@ export function useRecordingContext() {
   
   if (context === undefined) {
     logger.error('🚨 useRecordingContext called outside of RecordingProvider!');
-    logger.error('🚨 Current context value:', context);
-    logger.error('🚨 Stack trace:', new Error().stack);
+    logger.error('🚨 Current context value:', undefined, { context });
+    logger.error('🚨 Stack trace:', new Error('Stack trace'));
     throw new Error(
       'useRecordingContext must be used within a RecordingProvider'
     );

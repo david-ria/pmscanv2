@@ -133,9 +133,15 @@ export const CustomThresholdSchema = z.object({
   group_id: UUIDSchema.optional(),
   enabled: z.boolean().default(true),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format'),
+  pm1_min: z.number().optional(),
+  pm1_max: z.number().optional(),
+  pm25_min: z.number().optional(),
+  pm25_max: z.number().optional(),
+  pm10_min: z.number().optional(),
+  pm10_max: z.number().optional(),
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
-}).merge(ThresholdConfigSchema);
+});
 
 // User activity schemas
 export const UserActivitySchema = z.object({

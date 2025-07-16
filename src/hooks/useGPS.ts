@@ -65,12 +65,12 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
       }
       lastErrorTimeRef.current = now;
 
-      logger.error('🧭 GPS: Error occurred:', {
-        code: error.code,
+      logger.error('🧭 GPS: Error occurred:', undefined, {
+        code: (error as any).code,
         message: error.message,
-        PERMISSION_DENIED: error.PERMISSION_DENIED,
-        POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
-        TIMEOUT: error.TIMEOUT,
+        PERMISSION_DENIED: (error as any).PERMISSION_DENIED,
+        POSITION_UNAVAILABLE: (error as any).POSITION_UNAVAILABLE,
+        TIMEOUT: (error as any).TIMEOUT,
       });
 
       switch (error.code) {
