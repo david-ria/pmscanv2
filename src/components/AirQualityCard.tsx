@@ -1,6 +1,7 @@
 import { BaseCard } from '@/components/shared/BaseCard';
 import { PMDisplay, QualityIndicator } from '@/components/shared/DataDisplay';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { PMData } from '@/types/shared';
