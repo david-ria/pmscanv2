@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as tf from '@tensorflow/tfjs';
+import * as logger from '@/utils/logger';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
@@ -314,7 +315,7 @@ export function useAutoContext() {
           times.weekend < times.workday * 0.3;
 
         if (isHomePatter && ssid !== settings.homeWifiSSID) {
-          console.log(
+          logger.debug(
             `🏠 Auto-detected HOME WiFi: ${ssid} (morning: ${times.morning}, evening: ${times.evening}, weekend: ${times.weekend})`
           );
           updateSettings({ homeWifiSSID: ssid });
@@ -326,7 +327,7 @@ export function useAutoContext() {
           ssid !== settings.workWifiSSID &&
           ssid !== settings.homeWifiSSID
         ) {
-          console.log(
+          logger.debug(
             `🏢 Auto-detected WORK WiFi: ${ssid} (workday: ${times.workday}, morning: ${times.morning}, evening: ${times.evening})`
           );
           updateSettings({ workWifiSSID: ssid });

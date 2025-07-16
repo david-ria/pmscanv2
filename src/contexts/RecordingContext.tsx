@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useRecordingData } from '@/hooks/useRecordingData';
+import * as logger from '@/utils/logger';
 
 interface RecordingContextType {
   isRecording: boolean;
@@ -34,19 +35,19 @@ const RecordingContext = createContext<RecordingContextType | undefined>(
 );
 
 export function RecordingProvider({ children }: { children: React.ReactNode }) {
-  console.log('🔄 RecordingProvider: Initializing provider');
+  logger.debug('🔄 RecordingProvider: Initializing provider');
   const recordingData = useRecordingData();
-  console.log('🔄 RecordingProvider: Recording data loaded', {
+  logger.debug('🔄 RecordingProvider: Recording data loaded', {
     isRecording: recordingData.isRecording,
     dataLength: recordingData.recordingData.length,
   });
 
   const contextValue = useMemo(() => {
-    console.log('🔄 RecordingProvider: Creating new context value');
+    logger.debug('🔄 RecordingProvider: Creating new context value');
     return recordingData;
   }, [recordingData]);
 
-  console.log('🔄 RecordingProvider: About to render children');
+  logger.debug('🔄 RecordingProvider: About to render children');
   return (
     <RecordingContext.Provider value={contextValue}>
       {children}
