@@ -80,17 +80,14 @@ export function useMissionEnrichment() {
 
   const enrichAllMissionsWithMissingData = useCallback(async () => {
     try {
-      // Get all missions without weather or air quality data
+      // Get all missions without weather or air quality data that have location measurements
       const { data: missionsToEnrich, error } = await supabase
         .from('missions')
         .select(`
-          id, name, start_time, weather_data_id, air_quality_data_id,
-          measurements!inner(latitude, longitude)
+          id, name, start_time, weather_data_id, air_quality_data_id
         `)
         .or('weather_data_id.is.null,air_quality_data_id.is.null')
-        .not('measurements.latitude', 'is', null)
-        .not('measurements.longitude', 'is', null)
-        .limit(10); // Process in batches to avoid overwhelming the API
+        .limit(20); // Process in batches to avoid overwhelming the API
 
       if (error) {
         logger.error('❌ Error fetching missions to enrich:', error);
@@ -102,9 +99,34 @@ export function useMissionEnrichment() {
         return;
       }
 
-      logger.debug(`🔄 Enriching ${missionsToEnrich.length} missions...`);
-
+      // Filter missions that have location data by checking measurements
+      const missionsWithLocation = [];
+      
       for (const mission of missionsToEnrich) {
+        const { data: measurements } = await supabase
+          .from('measurements')
+          .select('latitude, longitude')
+          .eq('mission_id', mission.id)
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null)
+          .limit(1);
+
+        if (measurements?.length > 0) {
+          missionsWithLocation.push({
+            ...mission,
+            measurements: measurements
+          });
+        }
+      }
+
+      if (missionsWithLocation.length === 0) {
+        logger.debug('ℹ️ No missions found with location data that need enrichment');
+        return;
+      }
+
+      logger.debug(`🔄 Enriching ${missionsWithLocation.length} missions...`);
+
+      for (const mission of missionsWithLocation) {
         if (mission.measurements?.[0]) {
           const missionData: Partial<MissionData> = {
             id: mission.id,
