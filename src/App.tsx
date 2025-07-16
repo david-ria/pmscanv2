@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { RecordingProvider } from '@/contexts/RecordingContext';
 import { CrashRecoveryInitializer } from '@/components/CrashRecoveryInitializer';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useAuth } from '@/contexts/AuthContext';
 import RealTime from './pages/RealTime';
 import History from './pages/History';
@@ -56,10 +57,11 @@ const App = () => {
   }
 
   return (
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <div className="relative min-h-screen">
+    <ErrorBoundary>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <div className="relative min-h-screen">
         <Routes>
           <Route
             path="/auth"
@@ -100,7 +102,8 @@ const App = () => {
           />
         </Routes>
       </div>
-    </TooltipProvider>
+      </TooltipProvider>
+    </ErrorBoundary>
   );
 };
 

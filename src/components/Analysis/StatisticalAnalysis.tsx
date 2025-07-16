@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 import { ExportReportDialog } from './ExportReportDialog';
 import { useDialog } from '@/hooks/useDialog';
+import { useNotifications } from '@/hooks/useNotifications';
 import { generateAnalysisReport, downloadPDF } from '@/lib/pdfExport';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -41,6 +42,7 @@ export const StatisticalAnalysis = ({
 }: StatisticalAnalysisProps) => {
   const { t } = useTranslation();
   const exportDialog = useDialog();
+  const { notifyInfo } = useNotifications();
   const [exportLoading, setExportLoading] = useState(false);
 
   const handleExport = async (method: 'download' | 'email', email?: string) => {
@@ -61,8 +63,8 @@ export const StatisticalAnalysis = ({
         const filename = `rapport-analyse-${format(selectedDate, 'yyyy-MM-dd', { locale: fr })}.pdf`;
         downloadPDF(pdfBlob, filename);
       } else if (method === 'email' && email) {
-        // TODO: Implement email sending functionality
-        console.log('Email functionality not implemented yet');
+        // Email functionality will be implemented in a future release
+        notifyInfo('Email functionality is coming soon!');
       }
     } finally {
       setExportLoading(false);

@@ -11,7 +11,9 @@ export function useAutoSync() {
       // Debounce to prevent multiple rapid online events
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        dataStorage.syncPendingMissions().catch(console.error);
+        dataStorage.syncPendingMissions().catch((error) => {
+          logger.error('Auto sync failed', error);
+        });
       }, 2000);
     };
 
