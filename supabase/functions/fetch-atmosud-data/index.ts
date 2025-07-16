@@ -56,69 +56,100 @@ serve(async (req) => {
     // Fetch new air quality data from Atmosud API
     console.log('Fetching new Atmosud data for:', latitude, longitude);
     
-    // Try to fetch from Atmosud observations API
-    // The API might require specific parameters or authentication
+    // Try different API endpoints as the API structure may have changed
     const atmosudHeaders: HeadersInit = {
       'Accept': 'application/json',
-      'User-Agent': 'Air Quality App'
+      'User-Agent': 'Air Quality App',
+      'Content-Type': 'application/json'
     };
     
     if (atmosudApiKey) {
       atmosudHeaders['Authorization'] = `Bearer ${atmosudApiKey}`;
+      atmosudHeaders['X-API-Key'] = atmosudApiKey;
     }
 
-    const atmosudResponse = await fetch(
-      `https://api.atmosud.org/observations/stations/nearest?lat=${latitude}&lng=${longitude}&limit=5`,
-      { headers: atmosudHeaders }
-    );
+    console.log('Trying Atmosud API with headers:', JSON.stringify(atmosudHeaders, null, 2));
+
+    // Try the main measurements endpoint first
+    let atmosudResponse: Response;
+    let apiUrl = `https://api.atmosud.org/srt/1.0/measurements/latest?lat=${latitude}&lng=${longitude}&radius=10000&pollutants=NO2,O3`;
+    
+    console.log('Attempting API call to:', apiUrl);
+    atmosudResponse = await fetch(apiUrl, { headers: atmosudHeaders });
 
     if (!atmosudResponse.ok) {
-      console.error('Atmosud API error:', atmosudResponse.status, atmosudResponse.statusText);
+      console.error('Atmosud API error (measurements latest):', atmosudResponse.status, atmosudResponse.statusText);
+      const errorText = await atmosudResponse.text();
+      console.error('Error response body:', errorText);
       
-      // Try alternative endpoint for measurements
-      const measurementsResponse = await fetch(
-        `https://api.atmosud.org/observations/measurements/latest?lat=${latitude}&lng=${longitude}&pollutants=NO2,O3`,
-        { headers: atmosudHeaders }
-      );
+      // Try alternative endpoint
+      apiUrl = `https://api.atmosud.org/observations/stations/nearest?lat=${latitude}&lng=${longitude}&limit=5`;
+      console.log('Trying alternative endpoint:', apiUrl);
+      atmosudResponse = await fetch(apiUrl, { headers: atmosudHeaders });
 
-      if (!measurementsResponse.ok) {
-        console.error('Atmosud measurements API also failed:', measurementsResponse.status);
+      if (!atmosudResponse.ok) {
+        console.error('Atmosud stations API also failed:', atmosudResponse.status, atmosudResponse.statusText);
+        const errorText2 = await atmosudResponse.text();
+        console.error('Stations error response body:', errorText2);
+        
+        // Try without authentication
+        console.log('Trying without authentication...');
+        const publicHeaders = {
+          'Accept': 'application/json',
+          'User-Agent': 'Air Quality App'
+        };
+        
+        atmosudResponse = await fetch(
+          `https://api.atmosud.org/observations/stations/nearest?lat=${latitude}&lng=${longitude}&limit=5`,
+          { headers: publicHeaders }
+        );
+
+        if (!atmosudResponse.ok) {
+          console.error('All Atmosud API endpoints failed. Status:', atmosudResponse.status);
+          return new Response(
+            JSON.stringify({ 
+              error: 'All Atmosud API endpoints failed',
+              details: {
+                status: atmosudResponse.status,
+                statusText: atmosudResponse.statusText,
+                apiKey: !!atmosudApiKey
+              }
+            }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
+    const responseData = await atmosudResponse.json();
+    console.log('Atmosud API response:', responseData);
+
+    // Process and store the measurements data
+    const airQualityRecord = await processAtmosudData(responseData, latitude, longitude, requestTime);
+    
+    if (airQualityRecord) {
+      const { data: savedData, error: saveError } = await supabase
+        .from('air_quality_data')
+        .insert(airQualityRecord)
+        .select()
+        .single();
+
+      if (saveError) {
+        console.error('Error saving air quality data:', saveError);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch air quality data from Atmosud API' }),
+          JSON.stringify({ error: 'Failed to save air quality data' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      const measurementsData = await measurementsResponse.json();
-      console.log('Atmosud measurements response:', measurementsData);
-
-      // Process and store the measurements data
-      const airQualityRecord = await processAtmosudData(measurementsData, latitude, longitude, requestTime);
-      
-      if (airQualityRecord) {
-        const { data: savedData, error: saveError } = await supabase
-          .from('air_quality_data')
-          .insert(airQualityRecord)
-          .select()
-          .single();
-
-        if (saveError) {
-          console.error('Error saving air quality data:', saveError);
-          return new Response(
-            JSON.stringify({ error: 'Failed to save air quality data' }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        console.log('Air quality data saved successfully:', savedData.id);
-        return new Response(
-          JSON.stringify({ airQualityData: savedData }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      console.log('Air quality data saved successfully:', savedData.id);
+      return new Response(
+        JSON.stringify({ airQualityData: savedData }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const stationsData = await atmosudResponse.json();
+    const stationsData = responseData;
     console.log('Atmosud stations response:', stationsData);
 
     // Find the nearest station and get its measurements
