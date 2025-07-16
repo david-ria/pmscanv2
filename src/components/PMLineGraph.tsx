@@ -79,7 +79,7 @@ export function PMLineGraph({ data, className }: PMLineGraphProps) {
     <div className={`bg-card border border-border rounded-lg p-4 ${className}`}>
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-foreground">
-          Évolution des particules fines
+          Évolution des particules fines (µg/m³)
         </h3>
         <p className="text-sm text-muted-foreground">
           {chartData.length} points de données • Dernière mesure:{' '}
@@ -87,10 +87,10 @@ export function PMLineGraph({ data, className }: PMLineGraphProps) {
         </p>
       </div>
 
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
-          margin={{ top: 5, right: 30, left: 20, bottom: 60 }}
+          margin={{ top: 5, right: 5, left: 5, bottom: 60 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
@@ -105,8 +105,8 @@ export function PMLineGraph({ data, className }: PMLineGraphProps) {
             }}
           />
           <YAxis
-            label={{ value: 'µg/m³', angle: -90, position: 'insideLeft' }}
             tick={{ fontSize: 12 }}
+            width={40}
           />
           <Tooltip
             formatter={formatTooltip}
@@ -125,30 +125,26 @@ export function PMLineGraph({ data, className }: PMLineGraphProps) {
           <Line
             type="monotone"
             dataKey="PM1"
-            stroke="hsl(var(--primary))"
-            strokeWidth={2}
-            dot={{ fill: 'hsl(var(--primary))', strokeWidth: 1, r: 3 }}
-            activeDot={{ r: 5, stroke: 'hsl(var(--primary))' }}
+            stroke="#22c55e"
+            strokeWidth={3}
+            dot={{ fill: '#22c55e', strokeWidth: 1, r: 3 }}
+            activeDot={{ r: 5, stroke: '#22c55e' }}
           />
           <Line
             type="monotone"
             dataKey="PM25"
-            stroke="hsl(var(--destructive))"
+            stroke="#ef4444"
             strokeWidth={3}
-            dot={{ fill: 'hsl(var(--destructive))', strokeWidth: 1, r: 3 }}
-            activeDot={{ r: 5, stroke: 'hsl(var(--destructive))' }}
+            dot={{ fill: '#ef4444', strokeWidth: 1, r: 3 }}
+            activeDot={{ r: 5, stroke: '#ef4444' }}
           />
           <Line
             type="monotone"
             dataKey="PM10"
-            stroke="hsl(var(--secondary-foreground))"
-            strokeWidth={2}
-            dot={{
-              fill: 'hsl(var(--secondary-foreground))',
-              strokeWidth: 1,
-              r: 3,
-            }}
-            activeDot={{ r: 5, stroke: 'hsl(var(--secondary-foreground))' }}
+            stroke="#3b82f6"
+            strokeWidth={3}
+            dot={{ fill: '#3b82f6', strokeWidth: 1, r: 3 }}
+            activeDot={{ r: 5, stroke: '#3b82f6' }}
           />
         </LineChart>
       </ResponsiveContainer>
