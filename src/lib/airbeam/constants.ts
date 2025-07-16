@@ -1,0 +1,4 @@
+// AirBeam Bluetooth Service UUIDs (Nordic UART Service)
+export const AIRBEAM_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+export const AIRBEAM_RX_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+export const AIRBEAM_TX_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
