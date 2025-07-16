@@ -3,7 +3,6 @@ import { DateFilter } from '@/components/DateFilter';
 import { StatisticalAnalysis } from '@/components/Analysis/StatisticalAnalysis';
 import { DataSummary } from '@/components/Analysis/DataSummary';
 import { GroupComparison } from '@/components/Analysis/GroupComparison';
-import { DataSummaryHeader } from '@/components/Analysis/DataSummaryHeader';
 import { PollutionBreakdownChart } from '@/components/Analysis/PollutionBreakdown';
 import { useAnalysisLogic } from '@/components/Analysis/AnalysisLogic';
 
@@ -36,8 +35,6 @@ export default function Analysis() {
         className="mb-4 sm:mb-6"
       />
 
-      {/* Data Summary Header */}
-      <DataSummaryHeader dataPoints={dataPoints} />
 
       {/* Pollution Breakdown Chart */}
       <PollutionBreakdownChart
