@@ -121,8 +121,8 @@ export async function syncPendingMissions(
       }
 
       // Check if mission already exists first
-      const missionTable = sensorType === 'airbeam' ? 'airbeam_missions' : 'missions';
-      const measurementTable = sensorType === 'airbeam' ? 'airbeam_measurements' : 'measurements';
+      const missionTable = 'missions'; // Always use missions table
+      const measurementTable = 'measurements'; // Always use measurements table
       const { data: existingMission } = await supabase
         .from(missionTable)
         .select('id')
@@ -142,7 +142,7 @@ export async function syncPendingMissions(
 
       // Save mission to database using upsert to handle edge cases
       const { data: savedMission, error: missionError } = await supabase
-        .from(missionTable)
+        .from('missions')
         .upsert({
           id: mission.id,
           name: mission.name,
@@ -184,7 +184,7 @@ export async function syncPendingMissions(
       }));
 
       const { error: measurementsError } = await supabase
-        .from(measurementTable)
+        .from('measurements')
         .upsert(measurementsToInsert);
 
       if (measurementsError) throw measurementsError;

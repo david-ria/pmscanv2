@@ -98,6 +98,8 @@ export function useAirBeamBluetooth() {
   }, []);
 
   useEffect(() => {
+    if (!connectionManager) return;
+    
     if (connectionManager.isConnected()) {
       setIsConnected(true);
       connectionManager

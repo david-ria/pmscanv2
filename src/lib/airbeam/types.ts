@@ -4,8 +4,8 @@ export interface AirBeamData {
   pm10: number;
   temp: number;
   humidity: number;
-  battery?: number;
-  charging?: boolean;
+  battery: number;
+  charging: boolean;
   timestamp: Date;
   location?: string;
 }

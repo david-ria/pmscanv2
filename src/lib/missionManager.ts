@@ -129,7 +129,7 @@ export async function deleteMission(
   // Try to delete from database if online
   if (navigator.onLine) {
     try {
-      const table = sensorType === 'airbeam' ? 'airbeam_missions' : 'missions';
+      const table = 'missions'; // Always use missions table
       await supabase.from(table).delete().eq('id', missionId);
     } catch (error) {
       console.error('Failed to delete mission from database:', error);

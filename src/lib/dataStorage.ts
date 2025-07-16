@@ -66,11 +66,8 @@ class DataStorageService {
 
     try {
       // Try to fetch from database if online
-      const table = sensorType === 'airbeam' ? 'airbeam_missions' : 'missions';
-      const measurementSelect =
-        sensorType === 'airbeam'
-          ? 'measurements:airbeam_measurements (*)'
-          : 'measurements (*)';
+      const table = 'missions'; // Always use missions table
+      const measurementSelect = 'measurements (*)';
       const { data: dbMissions, error } = await supabase
         .from(table)
         .select(
