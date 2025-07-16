@@ -15,22 +15,22 @@ import {
 import * as logger from '@/utils/logger';
 
 export function useRecordingData() {
-  console.log('🔄 useRecordingData: Hook called');
+  logger.debug('🔄 useRecordingData: Hook called');
 
   // All hooks must be called in the same order every time
   const recordingState = useRecordingState();
-  console.log('🔄 useRecordingData: recordingState loaded', {
+  logger.debug('🔄 useRecordingData: recordingState loaded', {
     isRecording: recordingState.isRecording,
   });
 
   const backgroundRecordingIntegration = useBackgroundRecordingIntegration();
-  console.log('🔄 useRecordingData: backgroundRecordingIntegration loaded');
+  logger.debug('🔄 useRecordingData: backgroundRecordingIntegration loaded');
 
   const missionSaver = useMissionSaver();
-  console.log('🔄 useRecordingData: missionSaver loaded');
+  logger.debug('🔄 useRecordingData: missionSaver loaded');
 
   const crashRecovery = useCrashRecovery();
-  console.log('🔄 useRecordingData: crashRecovery loaded');
+  logger.debug('🔄 useRecordingData: crashRecovery loaded');
 
   // Use auto-sync functionality - must be called before conditional logic
   useAutoSync();
