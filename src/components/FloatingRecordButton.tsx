@@ -64,6 +64,7 @@ export function FloatingRecordButton({
       openDialog('connection');
       return;
     }
+    // Go directly to frequency selection when device is connected
     openDialog('frequency');
   };
 
