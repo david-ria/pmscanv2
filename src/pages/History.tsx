@@ -53,10 +53,13 @@ export default function History() {
       
       if (missionsNeedingEnrichment.length > 0) {
         console.log(`Found ${missionsNeedingEnrichment.length} missions that need enrichment`);
-        handleEnrichMissions();
+        handleEnrichMissions().then(() => {
+          // Reload missions after enrichment to get the updated weather data IDs
+          loadMissions();
+        });
       }
     }
-  }, [missions, handleEnrichMissions]);
+  }, [missions, handleEnrichMissions, loadMissions]);
 
   // Filter missions based on selected date and period
   const filteredMissions = useMemo(() => {
