@@ -141,6 +141,7 @@ export async function syncPendingMissions(): Promise<void> {
         .from('missions')
         .upsert({
           id: mission.id,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
           name: mission.name,
           start_time: mission.startTime.toISOString(),
           end_time: mission.endTime.toISOString(),
