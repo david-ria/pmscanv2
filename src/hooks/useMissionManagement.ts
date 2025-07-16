@@ -201,10 +201,6 @@ ${mission.activityContext ? `Activité: ${mission.activityContext}` : ''}`;
     try {
       await enrichAllMissionsWithMissingData();
       await loadMissions();
-      toast({
-        title: 'Enrichissement terminé',
-        description: 'Les données météo et qualité de l\'air ont été ajoutées',
-      });
     } catch (error) {
       console.error('Enrichment error:', error);
       toast({

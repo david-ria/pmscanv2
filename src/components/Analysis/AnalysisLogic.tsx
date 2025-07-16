@@ -403,11 +403,6 @@ ${
         timeAboveWHO: timeAboveWHO_PM25, // Use PM2.5 WHO exceedance for consistency
       });
       setAnalysisGenerated(true);
-
-      toast({
-        title: t('analysis.analysisGenerated'),
-        description: t('analysis.analysisReady'),
-      });
     } catch (error) {
       console.error('Error generating analysis:', error);
       setStatisticalAnalysis(
