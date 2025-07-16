@@ -1,7 +1,7 @@
 import { Play, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRecordingContext } from '@/contexts/RecordingContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
@@ -52,6 +52,14 @@ export function FloatingRecordButton({
     clearRecordingData,
     missionContext,
   } = useRecordingContext();
+
+  // Auto-proceed to frequency selection when device becomes connected
+  useEffect(() => {
+    if (isConnected && dialogs.connection) {
+      closeDialog('connection');
+      openDialog('frequency');
+    }
+  }, [isConnected, dialogs.connection, closeDialog, openDialog]);
 
   const getFrequencyLabel = (frequency: string) => {
     const option = frequencyOptionKeys.find((f) => f.value === frequency);
