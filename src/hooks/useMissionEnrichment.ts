@@ -6,9 +6,8 @@ import * as logger from '@/utils/logger';
 export function useMissionEnrichment() {
   const enrichMissionWithWeatherAndAirQuality = useCallback(async (mission: MissionData): Promise<{
     weatherDataId?: string;
-    airQualityDataId?: string;
   }> => {
-    const result: { weatherDataId?: string; airQualityDataId?: string } = {};
+    const result: { weatherDataId?: string } = {};
 
     // Get the first measurement with location data
     const measurementWithLocation = mission.measurements.find(
@@ -37,31 +36,12 @@ export function useMissionEnrichment() {
         }
       }
 
-      // Fetch air quality data if not present
-      if (!mission.airQualityDataId) {
-        const { data: airQualityData, error: airQualityError } = await supabase.functions.invoke('fetch-atmosud-data', {
-          body: {
-            latitude: measurementWithLocation.latitude,
-            longitude: measurementWithLocation.longitude,
-            timestamp: mission.startTime.toISOString(),
-          },
-        });
-
-        if (!airQualityError && airQualityData?.airQualityData) {
-          result.airQualityDataId = airQualityData.airQualityData.id;
-          logger.debug('✅ Air quality data fetched for mission:', mission.id);
-        }
-      }
 
       // Update the mission in the database if we got new data
-      if (result.weatherDataId || result.airQualityDataId) {
-        const updateData: any = {};
-        if (result.weatherDataId) updateData.weather_data_id = result.weatherDataId;
-        if (result.airQualityDataId) updateData.air_quality_data_id = result.airQualityDataId;
-
+      if (result.weatherDataId) {
         const { error: updateError } = await supabase
           .from('missions')
-          .update(updateData)
+          .update({ weather_data_id: result.weatherDataId })
           .eq('id', mission.id);
 
         if (updateError) {
@@ -80,13 +60,13 @@ export function useMissionEnrichment() {
 
   const enrichAllMissionsWithMissingData = useCallback(async () => {
     try {
-      // Get all missions without weather or air quality data that have location measurements
+      // Get all missions without weather data that have location measurements
       const { data: missionsToEnrich, error } = await supabase
         .from('missions')
         .select(`
-          id, name, start_time, weather_data_id, air_quality_data_id
+          id, name, start_time, weather_data_id
         `)
-        .or('weather_data_id.is.null,air_quality_data_id.is.null')
+        .is('weather_data_id', null)
         .limit(20); // Process in batches to avoid overwhelming the API
 
       if (error) {
@@ -132,7 +112,6 @@ export function useMissionEnrichment() {
             id: mission.id,
             startTime: new Date(mission.start_time),
             weatherDataId: mission.weather_data_id,
-            airQualityDataId: mission.air_quality_data_id,
             measurements: [{
               id: 'temp',
               timestamp: new Date(mission.start_time),
