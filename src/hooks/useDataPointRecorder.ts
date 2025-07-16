@@ -4,6 +4,7 @@ import { LocationData } from '@/types/PMScan';
 import { RecordingEntry } from '@/types/recording';
 import { parseFrequencyToMs, shouldRecordData } from '@/lib/recordingUtils';
 import { getBackgroundRecording } from '@/lib/pmscan/globalConnectionManager';
+import { useWeatherData } from '@/hooks/useWeatherData';
 import * as logger from '@/utils/logger';
 
 interface UseDataPointRecorderProps {
@@ -12,7 +13,8 @@ interface UseDataPointRecorderProps {
   storeBackgroundData: (
     pmData: PMScanData,
     location?: LocationData,
-    context?: { location: string; activity: string }
+    context?: { location: string; activity: string },
+    weatherDataId?: string
   ) => void;
   addDataPointToState: (entry: RecordingEntry) => void;
   updateLastRecordedTime: (time: Date) => void;
@@ -26,9 +28,10 @@ export function useDataPointRecorder({
   updateLastRecordedTime,
 }: UseDataPointRecorderProps) {
   const lastRecordedTime = useRef<Date | null>(null);
+  const { getWeatherForMeasurement } = useWeatherData();
 
   const addDataPoint = useCallback(
-    (
+    async (
       pmData: PMScanData,
       location?: LocationData,
       context?: { location: string; activity: string },
@@ -57,21 +60,36 @@ export function useDataPointRecorder({
         timestamp: uniqueTimestamp,
       };
 
+      // Fetch weather data if location is available
+      let weatherDataId: string | null = null;
+      if (location?.latitude && location?.longitude) {
+        try {
+          weatherDataId = await getWeatherForMeasurement(
+            location.latitude,
+            location.longitude,
+            uniqueTimestamp
+          );
+        } catch (error) {
+          logger.debug('⚠️ Failed to fetch weather data for measurement:', error);
+        }
+      }
+
       const entry: RecordingEntry = {
         pmData: pmDataWithUniqueTimestamp,
         location,
         context,
         automaticContext,
+        weatherDataId,
       };
 
       // Store data for background processing if background mode is enabled
       if (getBackgroundRecording()) {
-        storeBackgroundData(pmDataWithUniqueTimestamp, location, context);
+        storeBackgroundData(pmDataWithUniqueTimestamp, location, context, weatherDataId);
       }
 
       // Add to recording data
       addDataPointToState(entry);
-      logger.rateLimitedDebug('dataRecorder.added', 10000, 'Data point added');
+      logger.rateLimitedDebug('dataRecorder.added', 10000, 'Data point added with weather data');
     },
     [
       isRecording,
@@ -79,6 +97,7 @@ export function useDataPointRecorder({
       updateLastRecordedTime,
       storeBackgroundData,
       addDataPointToState,
+      getWeatherForMeasurement,
     ]
   );
 

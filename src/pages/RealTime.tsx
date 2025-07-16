@@ -5,12 +5,14 @@ import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
 import { ContextSelectors } from '@/components/RecordingControls/ContextSelectors';
 import { AutoContextDisplay } from '@/components/AutoContextDisplay';
 import { DataLogger } from '@/components/DataLogger';
+import { WeatherCard } from '@/components/WeatherCard';
 import { RecordingFrequencyDialog } from '@/components/RecordingControls/RecordingFrequencyDialog';
 
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useAlerts } from '@/contexts/AlertContext';
 import { useAutoContext } from '@/hooks/useAutoContext';
+import { useWeatherData } from '@/hooks/useWeatherData';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
@@ -42,9 +44,13 @@ export default function RealTime() {
     locationEnabled,
     requestLocationPermission,
   } = useAutoContext();
+  
+  const { weatherData, fetchWeatherData } = useWeatherData();
+  
   useEffect(() => {
     logger.debug('RealTime: useAutoContext completed successfully');
   }, []);
+  
   const {
     isRecording,
     addDataPoint,
@@ -130,6 +136,13 @@ export default function RealTime() {
       checkAlerts(currentData.pm1, currentData.pm25, currentData.pm10);
     }
   }, [currentData, checkAlerts]);
+
+  // Fetch weather data when location changes
+  useEffect(() => {
+    if (latestLocation) {
+      fetchWeatherData(latestLocation);
+    }
+  }, [latestLocation, fetchWeatherData]);
 
   // Update mission context when location or activity changes
   useEffect(() => {
@@ -225,6 +238,11 @@ export default function RealTime() {
 
       {/* Air Quality Cards */}
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
+
+      {/* Weather Card */}
+      <div className="mb-4">
+        <WeatherCard weatherData={weatherData} />
+      </div>
 
       {/* Context Selectors */}
       <div className="mb-4">

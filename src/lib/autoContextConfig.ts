@@ -31,6 +31,17 @@ export interface AutoContextRule {
       cellularSignal?: boolean;
       carBluetooth?: boolean;
     };
+    weather?: {
+      main?: 'Clear' | 'Clouds' | 'Rain' | 'Snow' | 'Thunderstorm' | 'Drizzle' | 'Mist' | 'Fog';
+      temperature?: {
+        min?: number;
+        max?: number;
+      };
+      humidity?: {
+        min?: number;
+        max?: number;
+      };
+    };
     context?: {
       previousWifi?: 'home' | 'work';
       latestContextStartsWith?: string;
@@ -72,13 +83,56 @@ export interface AutoContextEvaluationData {
     cellularSignal: boolean;
     carBluetooth: boolean;
   };
+  weather: {
+    main: string;
+    temperature: number;
+    humidity: number;
+  };
   context: {
     latestContext: string;
   };
 }
 
-// Default rules that replicate the original hardcoded logic
+// Enhanced rules with weather context
 export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
+  // Weather-enhanced rules (highest priority)
+  {
+    id: 'outdoor-rain',
+    name: 'Outdoor in rain',
+    description: 'Outdoor activity during rain',
+    priority: 105,
+    conditions: {
+      location: { gpsQuality: 'good' },
+      weather: { main: 'Rain' },
+      movement: { speed: { max: 10 } },
+    },
+    result: 'Outdoor walking in rain',
+  },
+  {
+    id: 'outdoor-snow',
+    name: 'Outdoor in snow',
+    description: 'Outdoor activity during snow',
+    priority: 105,
+    conditions: {
+      location: { gpsQuality: 'good' },
+      weather: { main: 'Snow' },
+      movement: { speed: { max: 15 } },
+    },
+    result: 'Outdoor activity in snow',
+  },
+  {
+    id: 'indoor-bad-weather',
+    name: 'Indoor during bad weather',
+    description: 'Likely indoor when weather is bad',
+    priority: 88,
+    conditions: {
+      weather: { main: 'Thunderstorm' },
+      location: { gpsQuality: 'poor' },
+    },
+    result: 'Indoor (bad weather)',
+  },
+
+// Default rules that replicate the original hardcoded logic
   // Highest priority: Car bluetooth (overrides everything when driving)
   {
     id: 'driving-car',
@@ -371,6 +425,44 @@ function matchesRule(
       conditions.connectivity.carBluetooth !== data.connectivity.carBluetooth
     ) {
       return false;
+    }
+  }
+
+  // Check weather conditions
+  if (conditions.weather) {
+    if (
+      conditions.weather.main !== undefined &&
+      conditions.weather.main !== data.weather.main
+    ) {
+      return false;
+    }
+    if (conditions.weather.temperature) {
+      if (
+        conditions.weather.temperature.min !== undefined &&
+        data.weather.temperature < conditions.weather.temperature.min
+      ) {
+        return false;
+      }
+      if (
+        conditions.weather.temperature.max !== undefined &&
+        data.weather.temperature > conditions.weather.temperature.max
+      ) {
+        return false;
+      }
+    }
+    if (conditions.weather.humidity) {
+      if (
+        conditions.weather.humidity.min !== undefined &&
+        data.weather.humidity < conditions.weather.humidity.min
+      ) {
+        return false;
+      }
+      if (
+        conditions.weather.humidity.max !== undefined &&
+        data.weather.humidity > conditions.weather.humidity.max
+      ) {
+        return false;
+      }
     }
   }
 

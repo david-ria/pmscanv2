@@ -83,6 +83,7 @@ export async function syncPendingMissions(): Promise<void> {
         longitude: m.longitude,
         accuracy: m.accuracy,
         automatic_context: m.automaticContext,
+        weather_data_id: m.weatherDataId,
       }));
 
       const { error: measurementsError } = await supabase

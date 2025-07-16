@@ -18,6 +18,7 @@ export function createMissionFromRecording(
       activity: string;
     };
     automaticContext?: string;
+    weatherDataId?: string;
   }>,
   missionName: string,
   startTime: Date,
@@ -44,6 +45,7 @@ export function createMissionFromRecording(
     locationContext: m.context?.location,
     activityContext: m.context?.activity,
     automaticContext: m.automaticContext,
+    weatherDataId: m.weatherDataId,
   }));
 
   const pm25Values = measurementData.map((m) => m.pm25);

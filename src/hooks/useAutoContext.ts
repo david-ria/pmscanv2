@@ -4,6 +4,7 @@ import * as logger from '@/utils/logger';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
+import { useWeatherData } from '@/hooks/useWeatherData';
 import { MODEL_LABELS } from '@/lib/recordingConstants';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -64,6 +65,8 @@ export function useAutoContext() {
     settings.enabled,
     settings.highAccuracy ?? false
   );
+  
+  const { weatherData } = useWeatherData();
 
   const updateSettings = useCallback(
     (newSettings: Partial<AutoContextSettings>) => {
@@ -412,6 +415,11 @@ export function useAutoContext() {
           cellularSignal,
           carBluetooth: isCarConnected,
         },
+        weather: {
+          main: weatherData?.weather_main || 'Clear',
+          temperature: weatherData?.temperature || 20,
+          humidity: weatherData?.humidity || 50,
+        },
         context: {
           latestContext,
         },
@@ -451,6 +459,7 @@ export function useAutoContext() {
       settings,
       currentWifiSSID,
       latestContext,
+      weatherData,
       getCurrentWifiSSID,
       getCellularSignal,
       isInsideArea,

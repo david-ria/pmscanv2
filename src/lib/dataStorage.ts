@@ -52,6 +52,7 @@ export interface MeasurementData {
   locationContext?: string;
   activityContext?: string;
   automaticContext?: string;
+  weatherDataId?: string;
 }
 
 class DataStorageService {

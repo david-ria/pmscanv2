@@ -9,6 +9,7 @@ export interface RecordingEntry {
     activity: string;
   };
   automaticContext?: string;
+  weatherDataId?: string;
 }
 
 export interface MissionContext {

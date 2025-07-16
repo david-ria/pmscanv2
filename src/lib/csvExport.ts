@@ -16,6 +16,7 @@ export function exportMissionToCSV(mission: MissionData): void {
     'Location Context',
     'Activity Context',
     'Auto Context',
+    'Weather Data ID',
   ];
 
   const rows = mission.measurements.map((m) => [
@@ -34,6 +35,7 @@ export function exportMissionToCSV(mission: MissionData): void {
     m.locationContext || mission.locationContext || '',
     m.activityContext || mission.activityContext || '',
     m.automaticContext || '',
+    m.weatherDataId || '',
   ]);
 
   const csvContent = [headers, ...rows]
