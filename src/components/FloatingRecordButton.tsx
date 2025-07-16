@@ -1,4 +1,4 @@
-import { Play, Square } from 'lucide-react';
+import { Play, Square, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useState, useEffect } from 'react';
@@ -43,6 +43,7 @@ export function FloatingRecordButton({
   const [recordingFrequency, setRecordingFrequency] = useState<string>('10s');
   const [missionName, setMissionName] = useState<string>('');
   const [shareData, setShareData] = useState<boolean>(false);
+  const [recordingTime, setRecordingTime] = useState<number>(0);
   const { toast } = useToast();
   const {
     startRecording,
@@ -51,6 +52,7 @@ export function FloatingRecordButton({
     isRecording,
     clearRecordingData,
     missionContext,
+    recordingStartTime,
   } = useRecordingContext();
 
   // Auto-proceed to frequency selection when device becomes connected
@@ -60,6 +62,38 @@ export function FloatingRecordButton({
       openDialog('frequency');
     }
   }, [isConnected, dialogs.connection, closeDialog, openDialog]);
+
+  // Timer effect for recording duration
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isRecording && recordingStartTime) {
+      interval = setInterval(() => {
+        const now = new Date();
+        const diff = Math.floor((now.getTime() - recordingStartTime.getTime()) / 1000);
+        setRecordingTime(diff);
+      }, 1000);
+    } else {
+      setRecordingTime(0);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isRecording, recordingStartTime]);
+
+  const formatTime = (seconds: number): string => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hrs > 0) {
+      return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const getFrequencyLabel = (frequency: string) => {
     const option = frequencyOptionKeys.find((f) => f.value === frequency);
@@ -152,14 +186,25 @@ export function FloatingRecordButton({
   };
 
   return (
-    <div className={cn('flex flex-col items-center', className)}>
+    <div className={cn('flex items-center gap-4', className)}>
+      {/* Chronometer - only show when recording */}
+      {isRecording && (
+        <div className="flex items-center gap-2 bg-card px-3 py-2 rounded-lg border shadow-sm">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <span className="font-mono text-sm font-medium">
+            {formatTime(recordingTime)}
+          </span>
+        </div>
+      )}
+      
+      {/* Record Button */}
       <button
         onClick={handleRecordingClick}
         className={cn(
           'h-16 w-16 rounded-full flex items-center justify-center transition-all duration-200',
           'hover:scale-105 active:scale-95 shadow-xl',
           isRecording
-            ? 'bg-destructive text-destructive-foreground animate-pulse'
+            ? 'bg-destructive text-destructive-foreground animate-slow-pulse'
             : 'bg-primary text-primary-foreground hover:shadow-2xl'
         )}
         type="button"
