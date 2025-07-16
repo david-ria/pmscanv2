@@ -70,8 +70,12 @@ export function DataLogger({
     location: entry.location,
     missionContext: entry.context,
     automaticContext: entry.automaticContext,
-    // weatherDataId removed - now at mission level
   }));
+
+  // Get the most recent autocontext from recording data if available
+  const currentAutoContext = displayData.length > 0 && displayData[0].automaticContext 
+    ? displayData[0].automaticContext 
+    : latestContext;
 
   const clearLog = () => {
     // This would need to be implemented in the context if needed
@@ -148,7 +152,7 @@ export function DataLogger({
             <>
               <Brain className="h-4 w-4 text-muted-foreground" />
               <Badge variant="outline" className="text-xs bg-muted">
-                {latestContext || 'Detecting...'}
+                {currentAutoContext || 'Detecting...'}
               </Badge>
             </>
           )}
