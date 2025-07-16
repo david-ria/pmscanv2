@@ -16,7 +16,7 @@ export function useAirBeamBluetooth() {
 
   const handleData = useCallback((event: Event) => {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
-    if (target.value) {
+    if (target?.value) {
       const textDecoder = new TextDecoder();
       const message = textDecoder.decode(target.value.buffer);
       const parsed = parseAirBeamMessage(message);
@@ -98,28 +98,38 @@ export function useAirBeamBluetooth() {
   }, []);
 
   useEffect(() => {
-    if (!connectionManager) return;
+    let isMounted = true;
+    
+    if (!connectionManager || !handleData) return;
     
     if (connectionManager.isConnected()) {
       setIsConnected(true);
       connectionManager
         .reestablishEventListeners(handleData)
         .then((deviceInfo) => {
+          if (!isMounted) return;
           if (deviceInfo) {
             setDevice(deviceInfo);
             logger.debug('🔄 Restored existing AirBeam connection');
           }
         })
         .catch((err) => {
+          if (!isMounted) return;
           console.error('❌ Failed to restore connection:', err);
           setError('Failed to restore connection');
         });
     } else {
-      setIsConnected(false);
-      setDevice(null);
-      setCurrentData(null);
+      if (isMounted) {
+        setIsConnected(false);
+        setDevice(null);
+        setCurrentData(null);
+      }
     }
-  }, [handleData]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Remove handleData from dependencies to prevent comparison issues
 
   return {
     isConnected,
