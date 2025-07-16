@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      air_quality_data: {
+        Row: {
+          created_at: string
+          data_source: string
+          id: string
+          latitude: number
+          longitude: number
+          no2_value: number | null
+          o3_value: number | null
+          station_id: string | null
+          station_name: string | null
+          timestamp: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_source?: string
+          id?: string
+          latitude: number
+          longitude: number
+          no2_value?: number | null
+          o3_value?: number | null
+          station_id?: string | null
+          station_name?: string | null
+          timestamp: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_source?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          no2_value?: number | null
+          o3_value?: number | null
+          station_id?: string | null
+          station_name?: string | null
+          timestamp?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fitness_activities: {
         Row: {
           activity_type: string
