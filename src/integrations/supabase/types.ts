@@ -353,6 +353,7 @@ export type Database = {
           pm25: number
           temperature: number | null
           timestamp: string
+          weather_data_id: string | null
         }
         Insert: {
           accuracy?: number | null
@@ -368,6 +369,7 @@ export type Database = {
           pm25: number
           temperature?: number | null
           timestamp: string
+          weather_data_id?: string | null
         }
         Update: {
           accuracy?: number | null
@@ -383,6 +385,7 @@ export type Database = {
           pm25?: number
           temperature?: number | null
           timestamp?: string
+          weather_data_id?: string | null
         }
         Relationships: [
           {
@@ -390,6 +393,13 @@ export type Database = {
             columns: ["mission_id"]
             isOneToOne: false
             referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "measurements_weather_data_id_fkey"
+            columns: ["weather_data_id"]
+            isOneToOne: false
+            referencedRelation: "weather_data"
             referencedColumns: ["id"]
           },
         ]
@@ -652,6 +662,60 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      weather_data: {
+        Row: {
+          created_at: string
+          humidity: number
+          id: string
+          latitude: number
+          longitude: number
+          pressure: number
+          temperature: number
+          timestamp: string
+          updated_at: string
+          uv_index: number | null
+          visibility: number | null
+          weather_description: string
+          weather_main: string
+          wind_direction: number | null
+          wind_speed: number | null
+        }
+        Insert: {
+          created_at?: string
+          humidity: number
+          id?: string
+          latitude: number
+          longitude: number
+          pressure: number
+          temperature: number
+          timestamp: string
+          updated_at?: string
+          uv_index?: number | null
+          visibility?: number | null
+          weather_description: string
+          weather_main: string
+          wind_direction?: number | null
+          wind_speed?: number | null
+        }
+        Update: {
+          created_at?: string
+          humidity?: number
+          id?: string
+          latitude?: number
+          longitude?: number
+          pressure?: number
+          temperature?: number
+          timestamp?: string
+          updated_at?: string
+          uv_index?: number | null
+          visibility?: number | null
+          weather_description?: string
+          weather_main?: string
+          wind_direction?: number | null
+          wind_speed?: number | null
         }
         Relationships: []
       }
