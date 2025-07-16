@@ -139,14 +139,14 @@ export function useRecordingData() {
   }, [stopRecordingState, disableRecordingBackground]);
 
   const saveMission = useCallback(
-    (
+    async (
       missionName: string,
       locationContext?: string,
       activityContext?: string,
       recordingFrequency?: string,
       shared?: boolean
     ) => {
-      const mission = saveMissionHelper(
+      const mission = await saveMissionHelper(
         recordingData,
         recordingStartTime,
         missionName,
