@@ -11,6 +11,7 @@ import {
   SunMoon,
   MapPin,
   Bluetooth,
+  Cloud,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +23,7 @@ import { useAutoContext } from '@/hooks/useAutoContext';
 import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useGPS } from '@/hooks/useGPS';
+import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import { LucideIcon } from 'lucide-react';
 
 interface MenuSection {
@@ -59,6 +61,9 @@ export function useMenuSections({
     enableRecordingBackground,
     disableRecordingBackground,
   } = useBackgroundRecordingIntegration();
+
+  // Get weather logging state
+  const { isEnabled: weatherLoggingEnabled, setEnabled: setWeatherLoggingEnabled } = useWeatherLogging();
 
   // Get PMScan and GPS status
   const {
@@ -212,8 +217,17 @@ export function useMenuSections({
             if (!locationEnabled) {
               requestLocationPermission();
             }
-          },
-        },
+           },
+         },
+         {
+           icon: Cloud,
+           label: t('sensors.weather'),
+           badge: null,
+           toggle: {
+             checked: weatherLoggingEnabled,
+             onCheckedChange: setWeatherLoggingEnabled,
+           },
+         },
       ],
     },
   ];

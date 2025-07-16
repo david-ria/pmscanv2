@@ -239,10 +239,6 @@ export default function RealTime() {
       {/* Air Quality Cards */}
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
 
-      {/* Weather Card */}
-      <div className="mb-4">
-        <WeatherCard weatherData={weatherData} />
-      </div>
 
       {/* Context Selectors */}
       <div className="mb-4">

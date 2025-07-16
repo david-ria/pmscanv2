@@ -40,6 +40,7 @@
     "title": "Sensoren",
     "pmscan": "PMSCAN Sensor",
     "gps": "GPS",
+    "weather": "Wetterdaten",
     "connected": "Verbunden"
   },
   "loading": {

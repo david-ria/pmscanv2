@@ -5,6 +5,7 @@ import { RecordingEntry } from '@/types/recording';
 import { parseFrequencyToMs, shouldRecordData } from '@/lib/recordingUtils';
 import { getBackgroundRecording } from '@/lib/pmscan/globalConnectionManager';
 import { useWeatherData } from '@/hooks/useWeatherData';
+import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import * as logger from '@/utils/logger';
 
 interface UseDataPointRecorderProps {
@@ -29,6 +30,7 @@ export function useDataPointRecorder({
 }: UseDataPointRecorderProps) {
   const lastRecordedTime = useRef<Date | null>(null);
   const { getWeatherForMeasurement } = useWeatherData();
+  const { isEnabled: weatherLoggingEnabled } = useWeatherLogging();
 
   const addDataPoint = useCallback(
     async (
@@ -60,9 +62,9 @@ export function useDataPointRecorder({
         timestamp: uniqueTimestamp,
       };
 
-      // Fetch weather data if location is available
+      // Fetch weather data only if enabled and location is available
       let weatherDataId: string | null = null;
-      if (location?.latitude && location?.longitude) {
+      if (weatherLoggingEnabled && location?.latitude && location?.longitude) {
         try {
           weatherDataId = await getWeatherForMeasurement(
             location.latitude,
@@ -98,6 +100,7 @@ export function useDataPointRecorder({
       storeBackgroundData,
       addDataPointToState,
       getWeatherForMeasurement,
+      weatherLoggingEnabled,
     ]
   );
 
