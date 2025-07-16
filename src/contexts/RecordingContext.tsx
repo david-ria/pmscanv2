@@ -30,8 +30,8 @@ interface RecordingContextType {
   clearRecordingData: () => void;
 }
 
-const RecordingContext = createContext<RecordingContextType | null | undefined>(
-  undefined
+const RecordingContext = createContext<RecordingContextType | null>(
+  null
 );
 
 export function RecordingProvider({ children }: { children: React.ReactNode }) {
