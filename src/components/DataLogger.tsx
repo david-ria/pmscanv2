@@ -13,12 +13,12 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
-  // Brain icon removed - no longer needed for auto context display
+  Brain,
 } from 'lucide-react';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useTranslation } from 'react-i18next';
-// useAutoContext removed - auto context now handled centrally
+import { useAutoContext } from '@/hooks/useAutoContext';
 import { WeatherInfo } from '@/components/WeatherInfo';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 
@@ -55,11 +55,9 @@ export function DataLogger({
   className,
 }: DataLoggerProps) {
   const { t } = useTranslation();
-  // Auto context logic removed to avoid duplication
   const { recordingData } = useRecordingContext();
+  const { latestContext, isEnabled: autoContextEnabled } = useAutoContext();
   const [isMinimized, setIsMinimized] = useState(false);
-  // Auto context is now handled centrally via AutoContextDisplay component
-  // No need to duplicate the calculation here
 
   // Use actual recording data instead of managing separate log
   const displayData = recordingData.slice(0, 100).map((entry, index) => ({
@@ -143,16 +141,14 @@ export function DataLogger({
           <span className="font-medium text-sm">
             {t('realTime.dataLogger')}
           </span>
-          <Badge
-            variant={isRecording ? 'default' : 'secondary'}
-            className="text-xs"
-          >
-            {isRecording ? t('realTime.recording') : t('realTime.stopped')}
-          </Badge>
-          {/* Auto context is now displayed separately via AutoContextDisplay component */}
-           <span className="text-muted-foreground text-xs">
-             {displayData.length} {t('realTime.entries')}
-           </span>
+          {autoContextEnabled && latestContext && (
+            <>
+              <Brain className="h-4 w-4 text-muted-foreground" />
+              <Badge variant="outline" className="text-xs bg-muted">
+                {latestContext}
+              </Badge>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-1">
