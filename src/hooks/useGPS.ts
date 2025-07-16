@@ -11,6 +11,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
   const watchIdRef = useRef<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const lastErrorTimeRef = useRef(0);
+  const isMountedRef = useRef(true);
 
   const stopWatching = useCallback(() => {
     if (watchIdRef.current !== null) {
@@ -45,6 +46,8 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
     };
 
     const handleSuccess = (position: GeolocationPosition) => {
+      if (!isMountedRef.current) return;
+      
       const locationData: LocationData = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
@@ -59,6 +62,8 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
     };
 
     const handleError = (error: GeolocationPositionError) => {
+      if (!isMountedRef.current) return;
+      
       const now = Date.now();
       if (now - lastErrorTimeRef.current < 10000) {
         return;
@@ -117,6 +122,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
         logger.debug('🧭 GPS: Current permission state:', permission.state);
 
         if (permission.state === 'granted') {
+          if (!isMountedRef.current) return false;
           setLocationEnabled(true);
           // Trigger startWatching via state change instead of calling directly
           return true;
@@ -125,11 +131,19 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
           return new Promise((resolve) => {
             navigator.geolocation.getCurrentPosition(
               (position) => {
+                if (!isMountedRef.current) {
+                  resolve(false);
+                  return;
+                }
                 setLocationEnabled(true);
                 // Trigger startWatching via state change instead of calling directly
                 resolve(true);
               },
               (error) => {
+                if (!isMountedRef.current) {
+                  resolve(false);
+                  return;
+                }
                 console.error('Permission denied:', error);
                 setLocationEnabled(false);
                 setError('Location permission denied');
@@ -138,6 +152,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
             );
           });
         } else {
+          if (!isMountedRef.current) return false;
           setError('Location permission permanently denied');
           return false;
         }
@@ -146,11 +161,19 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
         return new Promise((resolve) => {
           navigator.geolocation.getCurrentPosition(
             (position) => {
+              if (!isMountedRef.current) {
+                resolve(false);
+                return;
+              }
               setLocationEnabled(true);
               // Trigger startWatching via state change instead of calling directly
               resolve(true);
             },
             (error) => {
+              if (!isMountedRef.current) {
+                resolve(false);
+                return;
+              }
               console.error('Permission denied:', error);
               setLocationEnabled(false);
               setError('Location permission denied');
@@ -184,6 +207,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
           }
 
           permissionChangeHandler = () => {
+            if (!isMountedRef.current) return;
             if (permission.state === 'granted') {
               setLocationEnabled(true);
             } else {
@@ -232,6 +256,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
