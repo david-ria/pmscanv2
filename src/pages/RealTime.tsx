@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
 export default function RealTime() {
-  console.log('RealTime: Component initializing');
+  logger.debug('RealTime: Component initializing');
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
@@ -30,7 +30,7 @@ export default function RealTime() {
   const { currentData, isConnected, device, error, requestDevice, disconnect } =
     usePMScanBluetooth();
 
-  console.log('RealTime: About to call useAutoContext');
+  logger.debug('RealTime: About to call useAutoContext');
   const {
     determineContext,
     updateLatestContext,
@@ -39,7 +39,7 @@ export default function RealTime() {
     locationEnabled,
     requestLocationPermission,
   } = useAutoContext();
-  console.log('RealTime: useAutoContext completed successfully');
+  logger.debug('RealTime: useAutoContext completed successfully');
   const {
     isRecording,
     addDataPoint,
