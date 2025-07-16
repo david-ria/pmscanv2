@@ -6,6 +6,7 @@ import { ContextSelectors } from '@/components/RecordingControls/ContextSelector
 import { AutoContextDisplay } from '@/components/AutoContextDisplay';
 import { DataLogger } from '@/components/DataLogger';
 import { WeatherCard } from '@/components/WeatherCard';
+import { AirQualityDisplay } from '@/components/RealTime/AirQualityDisplay';
 import { RecordingFrequencyDialog } from '@/components/RecordingControls/RecordingFrequencyDialog';
 
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
@@ -239,6 +240,10 @@ export default function RealTime() {
       {/* Air Quality Cards */}
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
 
+      {/* Air Quality Data from Atmosud */}
+      <div className="mb-4">
+        <AirQualityDisplay />
+      </div>
 
       {/* Context Selectors */}
       <div className="mb-4">
