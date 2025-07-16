@@ -5,7 +5,47 @@ import {
   removeFromPendingSync,
 } from './localStorage';
 import { saveMissionLocally } from './missionManager';
+import { MissionData } from './dataStorage';
 import * as logger from '@/utils/logger';
+
+// Function to fetch air quality data for a mission
+async function fetchAirQualityForMission(mission: MissionData): Promise<string | null> {
+  try {
+    // Get the first measurement with location data
+    const measurementWithLocation = mission.measurements.find(
+      m => m.latitude && m.longitude
+    );
+
+    if (!measurementWithLocation?.latitude || !measurementWithLocation?.longitude) {
+      logger.debug('❌ Cannot fetch air quality for mission: no location data');
+      return null;
+    }
+
+    // Fetch air quality data
+    const { data, error } = await supabase.functions.invoke('fetch-atmosud-data', {
+      body: {
+        latitude: measurementWithLocation.latitude,
+        longitude: measurementWithLocation.longitude,
+        timestamp: mission.startTime.toISOString(),
+      },
+    });
+
+    if (error) {
+      logger.error('❌ Error fetching air quality data for mission:', error);
+      return null;
+    }
+
+    if (data?.airQualityData) {
+      logger.debug('✅ Air quality data fetched for mission:', mission.id);
+      return data.airQualityData.id;
+    }
+
+    return null;
+  } catch (error) {
+    logger.error('❌ Error in air quality fetch for mission:', error);
+    return null;
+  }
+}
 
 export async function syncPendingMissions(): Promise<void> {
   if (!navigator.onLine) return;
@@ -27,6 +67,12 @@ export async function syncPendingMissions(): Promise<void> {
     if (!mission) continue;
 
     try {
+      // Fetch air quality data for the mission if not already present
+      let airQualityDataId = mission.airQualityDataId;
+      if (!airQualityDataId) {
+        airQualityDataId = await fetchAirQualityForMission(mission);
+      }
+
       // Check if mission already exists first
       const { data: existingMission } = await supabase
         .from('missions')
@@ -64,6 +110,7 @@ export async function syncPendingMissions(): Promise<void> {
           recording_frequency: mission.recordingFrequency,
           shared: mission.shared,
           weather_data_id: mission.weatherDataId,
+          air_quality_data_id: airQualityDataId,
         })
         .select()
         .single();

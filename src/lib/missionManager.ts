@@ -82,6 +82,7 @@ export function createMissionFromRecording(
     measurements: measurementData,
     synced: false,
     weatherDataId: missionWeatherDataId,
+    airQualityDataId: undefined, // Will be added when mission is synced
   };
 
   return mission;

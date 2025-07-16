@@ -6,6 +6,7 @@ import { MissionData } from '@/lib/dataStorage';
 import { ShareDialog } from './ShareDialog';
 import { MissionDetailsDialog } from './MissionDetailsDialog';
 import { WeatherInfo } from '@/components/WeatherInfo';
+import { AirQualityInfo } from '@/components/AirQualityInfo';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 
@@ -94,6 +95,11 @@ export function MissionCard({
               {mission.weatherDataId && (
                 <div className="mt-1">
                   <WeatherInfo weatherDataId={mission.weatherDataId} compact />
+                </div>
+              )}
+              {mission.airQualityDataId && (
+                <div className="mt-1">
+                  <AirQualityInfo airQualityDataId={mission.airQualityDataId} compact />
                 </div>
               )}
             </div>

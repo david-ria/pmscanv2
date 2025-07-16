@@ -11,6 +11,7 @@ import { MapboxMap } from '@/components/MapboxMap';
 import { PMLineGraph } from '@/components/PMLineGraph';
 import { MissionData } from '@/lib/dataStorage';
 import { WeatherInfo } from '@/components/WeatherInfo';
+import { AirQualityInfo } from '@/components/AirQualityInfo';
 import { useTranslation } from 'react-i18next';
 
 interface MissionDetailsDialogProps {
@@ -143,6 +144,11 @@ export function MissionDetailsDialog({
               {mission.weatherDataId && (
                 <div className="mt-2">
                   <WeatherInfo weatherDataId={mission.weatherDataId} />
+                </div>
+              )}
+              {mission.airQualityDataId && (
+                <div className="mt-2">
+                  <AirQualityInfo airQualityDataId={mission.airQualityDataId} />
                 </div>
               )}
             </div>

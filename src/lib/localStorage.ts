@@ -59,6 +59,7 @@ export function formatDatabaseMission(dbMission: {
   recording_frequency?: string;
   shared?: boolean;
   weather_data_id?: string;
+  air_quality_data_id?: string;
   measurements?: Array<{
     id: string;
     timestamp: string;
@@ -89,6 +90,7 @@ export function formatDatabaseMission(dbMission: {
     recordingFrequency: dbMission.recording_frequency,
     shared: dbMission.shared,
     weatherDataId: dbMission.weather_data_id,
+    airQualityDataId: dbMission.air_quality_data_id,
     measurements:
       dbMission.measurements?.map((m) => ({
         id: m.id,

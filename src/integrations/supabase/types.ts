@@ -439,6 +439,7 @@ export type Database = {
       missions: {
         Row: {
           activity_context: string | null
+          air_quality_data_id: string | null
           avg_pm1: number
           avg_pm10: number
           avg_pm25: number
@@ -459,6 +460,7 @@ export type Database = {
         }
         Insert: {
           activity_context?: string | null
+          air_quality_data_id?: string | null
           avg_pm1: number
           avg_pm10: number
           avg_pm25: number
@@ -479,6 +481,7 @@ export type Database = {
         }
         Update: {
           activity_context?: string | null
+          air_quality_data_id?: string | null
           avg_pm1?: number
           avg_pm10?: number
           avg_pm25?: number
@@ -498,6 +501,13 @@ export type Database = {
           weather_data_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_missions_air_quality_data"
+            columns: ["air_quality_data_id"]
+            isOneToOne: false
+            referencedRelation: "air_quality_data"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "missions_weather_data_id_fkey"
             columns: ["weather_data_id"]

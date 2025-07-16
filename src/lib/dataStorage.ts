@@ -37,6 +37,7 @@ export interface MissionData {
   measurements: MeasurementData[];
   synced: boolean; // For local storage tracking
   weatherDataId?: string; // Weather data for the entire mission
+  airQualityDataId?: string; // Air quality data for the entire mission
 }
 
 export interface MeasurementData {
