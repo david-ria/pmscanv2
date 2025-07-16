@@ -9,8 +9,6 @@ const corsHeaders = {
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const atmosudApiKey = Deno.env.get('ATMOSUD_API_KEY');
-const openWeatherApiKey = Deno.env.get('OPENWEATHERMAP_API_KEY');
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -36,7 +34,7 @@ serve(async (req) => {
     const { data: existingData } = await supabase
       .from('air_quality_data')
       .select('*')
-      .in('data_source', ['atmosud', 'openweathermap'])
+      .eq('data_source', 'atmosud')
       .gte('timestamp', oneHourAgo.toISOString())
       .lte('timestamp', requestTime.toISOString())
       .gte('latitude', latitude - 0.05) // ~5km radius
@@ -57,137 +55,70 @@ serve(async (req) => {
     // Fetch new air quality data from Atmosud API
     console.log('Fetching new Atmosud data for:', latitude, longitude);
     
-    // Try different API endpoints as the API structure may have changed
-    const atmosudHeaders: HeadersInit = {
-      'Accept': 'application/json',
-      'User-Agent': 'Air Quality App',
-      'Content-Type': 'application/json'
-    };
-    
-    if (atmosudApiKey) {
-      atmosudHeaders['Authorization'] = `Bearer ${atmosudApiKey}`;
-      atmosudHeaders['X-API-Key'] = atmosudApiKey;
-    }
-
-    console.log('Trying Atmosud API with headers:', JSON.stringify(atmosudHeaders, null, 2));
-
-    // Try the main measurements endpoint first
-    let atmosudResponse: Response;
-    let apiUrl = `https://api.atmosud.org/srt/1.0/measurements/latest?lat=${latitude}&lng=${longitude}&radius=10000&pollutants=NO2,O3`;
-    
-    console.log('Attempting API call to:', apiUrl);
-    atmosudResponse = await fetch(apiUrl, { headers: atmosudHeaders });
-
-    if (!atmosudResponse.ok) {
-      console.error('Atmosud API error (measurements latest):', atmosudResponse.status, atmosudResponse.statusText);
-      const errorText = await atmosudResponse.text();
-      console.error('Error response body:', errorText);
-      
-      // Try alternative endpoint
-      apiUrl = `https://api.atmosud.org/observations/stations/nearest?lat=${latitude}&lng=${longitude}&limit=5`;
-      console.log('Trying alternative endpoint:', apiUrl);
-      atmosudResponse = await fetch(apiUrl, { headers: atmosudHeaders });
-
-      if (!atmosudResponse.ok) {
-        console.error('Atmosud stations API also failed:', atmosudResponse.status, atmosudResponse.statusText);
-        const errorText2 = await atmosudResponse.text();
-        console.error('Stations error response body:', errorText2);
-        
-        // Try without authentication
-        console.log('Trying without authentication...');
-        const publicHeaders = {
+    // Try to fetch from Atmosud observations API
+    // The API might require specific parameters or authentication
+    const atmosudResponse = await fetch(
+      `https://api.atmosud.org/observations/stations/nearest?lat=${latitude}&lng=${longitude}&limit=5`,
+      {
+        headers: {
           'Accept': 'application/json',
           'User-Agent': 'Air Quality App'
-        };
-        
-        atmosudResponse = await fetch(
-          `https://api.atmosud.org/observations/stations/nearest?lat=${latitude}&lng=${longitude}&limit=5`,
-          { headers: publicHeaders }
-        );
-
-        if (!atmosudResponse.ok) {
-          console.error('All Atmosud API endpoints failed. Trying OpenWeatherMap as fallback...');
-          
-          // Fallback to OpenWeatherMap Air Pollution API
-          if (openWeatherApiKey) {
-            console.log('Using OpenWeatherMap Air Pollution API for Marseille coordinates:', latitude, longitude);
-            
-            const owmResponse = await fetch(
-              `https://api.openweathermap.org/data/2.5/air_pollution?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}`
-            );
-            
-            if (owmResponse.ok) {
-              const owmData = await owmResponse.json();
-              console.log('OpenWeatherMap Air Pollution response:', owmData);
-              
-              const airQualityRecord = await processOpenWeatherMapData(owmData, latitude, longitude, requestTime);
-              
-              if (airQualityRecord) {
-                const { data: savedData, error: saveError } = await supabase
-                  .from('air_quality_data')
-                  .insert(airQualityRecord)
-                  .select()
-                  .single();
-
-                if (saveError) {
-                  console.error('Error saving OpenWeatherMap air quality data:', saveError);
-                } else {
-                  console.log('OpenWeatherMap air quality data saved successfully:', savedData.id);
-                  return new Response(
-                    JSON.stringify({ airQualityData: savedData }),
-                    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-                  );
-                }
-              }
-            } else {
-              console.error('OpenWeatherMap API also failed:', owmResponse.status, owmResponse.statusText);
-            }
-          }
-          
-          return new Response(
-            JSON.stringify({ 
-              error: 'All air quality API endpoints failed',
-              details: {
-                atmosudStatus: atmosudResponse.status,
-                atmosudStatusText: atmosudResponse.statusText,
-                hasOpenWeatherKey: !!openWeatherApiKey
-              }
-            }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
         }
       }
-    }
+    );
 
-    const responseData = await atmosudResponse.json();
-    console.log('Atmosud API response:', responseData);
+    if (!atmosudResponse.ok) {
+      console.error('Atmosud API error:', atmosudResponse.status, atmosudResponse.statusText);
+      
+      // Try alternative endpoint for measurements
+      const measurementsResponse = await fetch(
+        `https://api.atmosud.org/observations/measurements/latest?lat=${latitude}&lng=${longitude}&pollutants=NO2,O3`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Air Quality App'
+          }
+        }
+      );
 
-    // Process and store the measurements data
-    const airQualityRecord = await processAtmosudData(responseData, latitude, longitude, requestTime);
-    
-    if (airQualityRecord) {
-      const { data: savedData, error: saveError } = await supabase
-        .from('air_quality_data')
-        .insert(airQualityRecord)
-        .select()
-        .single();
-
-      if (saveError) {
-        console.error('Error saving air quality data:', saveError);
+      if (!measurementsResponse.ok) {
+        console.error('Atmosud measurements API also failed:', measurementsResponse.status);
         return new Response(
-          JSON.stringify({ error: 'Failed to save air quality data' }),
+          JSON.stringify({ error: 'Failed to fetch air quality data from Atmosud API' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      console.log('Air quality data saved successfully:', savedData.id);
-      return new Response(
-        JSON.stringify({ airQualityData: savedData }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const measurementsData = await measurementsResponse.json();
+      console.log('Atmosud measurements response:', measurementsData);
+
+      // Process and store the measurements data
+      const airQualityRecord = await processAtmosudData(measurementsData, latitude, longitude, requestTime);
+      
+      if (airQualityRecord) {
+        const { data: savedData, error: saveError } = await supabase
+          .from('air_quality_data')
+          .insert(airQualityRecord)
+          .select()
+          .single();
+
+        if (saveError) {
+          console.error('Error saving air quality data:', saveError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to save air quality data' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        console.log('Air quality data saved successfully:', savedData.id);
+        return new Response(
+          JSON.stringify({ airQualityData: savedData }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
-    const stationsData = responseData;
+    const stationsData = await atmosudResponse.json();
     console.log('Atmosud stations response:', stationsData);
 
     // Find the nearest station and get its measurements
@@ -197,7 +128,12 @@ serve(async (req) => {
       // Try to get recent measurements from the nearest station
       const stationMeasurementsResponse = await fetch(
         `https://api.atmosud.org/observations/stations/${nearestStation.id}/measurements/latest?pollutants=NO2,O3`,
-        { headers: atmosudHeaders }
+        {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Air Quality App'
+          }
+        }
       );
 
       if (stationMeasurementsResponse.ok) {
@@ -329,39 +265,6 @@ async function processStationData(data: any, station: any, timestamp: Date) {
     };
   } catch (error) {
     console.error('Error processing station data:', error);
-    return null;
-  }
-}
-
-async function processOpenWeatherMapData(data: any, latitude: number, longitude: number, timestamp: Date) {
-  try {
-    console.log('Processing OpenWeatherMap data:', data);
-    
-    if (!data || !data.list || !Array.isArray(data.list) || data.list.length === 0) {
-      console.error('Invalid OpenWeatherMap response structure');
-      return null;
-    }
-
-    const pollution = data.list[0];
-    if (!pollution || !pollution.components) {
-      console.error('No pollution components found in OpenWeatherMap response');
-      return null;
-    }
-
-    const components = pollution.components;
-    
-    return {
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
-      timestamp: timestamp.toISOString(),
-      no2_value: components.no2 ? parseFloat(components.no2) : null,
-      o3_value: components.o3 ? parseFloat(components.o3) : null,
-      station_name: 'OpenWeatherMap',
-      station_id: 'owm',
-      data_source: 'openweathermap'
-    };
-  } catch (error) {
-    console.error('Error processing OpenWeatherMap data:', error);
     return null;
   }
 }

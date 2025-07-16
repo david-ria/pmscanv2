@@ -23,7 +23,7 @@ interface RecordingContextType {
     activityContext?: string,
     recordingFrequency?: string,
     shared?: boolean
-  ) => Promise<any>;
+  ) => any;
   updateMissionContext: (location: string, activity: string) => void;
   recordingStartTime: Date | null;
   recordingData: any[];
@@ -93,7 +93,7 @@ export function useRecordingContext() {
       startRecording: () => {},
       stopRecording: () => {},
       addDataPoint: () => {},
-      saveMission: async () => null,
+      saveMission: () => null,
       updateMissionContext: () => {},
       recordingStartTime: null,
       recordingData: [],

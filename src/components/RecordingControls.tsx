@@ -69,7 +69,7 @@ export function RecordingControls({
     setShowMissionDialog(true);
   };
 
-  const confirmStopRecording = async () => {
+  const confirmStopRecording = () => {
     let finalMissionName = missionName.trim();
 
     // If no mission name provided, use current date and time
@@ -80,7 +80,7 @@ export function RecordingControls({
 
     try {
       // Save the mission with all context including device info
-      const savedMission = await saveMission(
+      const savedMission = saveMission(
         finalMissionName,
         selectedLocation || undefined,
         selectedActivity || undefined,

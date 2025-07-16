@@ -77,7 +77,7 @@ export function FloatingRecordButton({
     setShowMissionDialog(true);
   };
 
-  const confirmStopRecording = async () => {
+  const confirmStopRecording = () => {
     let finalMissionName = missionName.trim();
 
     if (!finalMissionName) {
@@ -86,7 +86,7 @@ export function FloatingRecordButton({
     }
 
     try {
-      await saveMission(
+      saveMission(
         finalMissionName,
         missionContext?.location,
         missionContext?.activity,
