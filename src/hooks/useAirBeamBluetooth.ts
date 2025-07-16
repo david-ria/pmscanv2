@@ -6,7 +6,7 @@ import { globalConnectionManager } from '@/lib/airbeam/globalConnectionManager';
 import * as logger from '@/utils/logger';
 
 export function useAirBeamBluetooth() {
-  // Always call hooks in the same order
+  // Always call hooks in the same order - no conditional returns
   const [isInitialized, setIsInitialized] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);

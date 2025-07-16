@@ -6,11 +6,14 @@ import { globalConnectionManager } from '@/lib/pmscan/globalConnectionManager';
 import * as logger from '@/utils/logger';
 
 export function usePMScanBluetooth() {
+  // Must match useAirBeamBluetooth hook structure exactly
+  const [isInitialized, setIsInitialized] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [device, setDevice] = useState<PMScanDevice | null>(null);
   const [currentData, setCurrentData] = useState<PMScanData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
 
   // Use global connection manager to persist across component unmounts
   const connectionManager = globalConnectionManager;
@@ -216,6 +219,13 @@ export function usePMScanBluetooth() {
       setCurrentData(null);
     }
   }, [handleRTData, handleIMData, handleBatteryData, handleChargingData]);
+
+  // Cleanup effect to match AirBeam hook structure
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  });
 
   return {
     isConnected,
