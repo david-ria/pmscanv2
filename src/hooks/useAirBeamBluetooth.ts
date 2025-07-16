@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { AirBeamData, AirBeamDevice } from '@/lib/airbeam/types';
 import { parseAirBeamMessage } from '@/lib/airbeam/dataParser';
 import { exponentialBackoff } from '@/lib/pmscan/utils';
@@ -11,10 +11,13 @@ export function useAirBeamBluetooth() {
   const [device, setDevice] = useState<AirBeamDevice | null>(null);
   const [currentData, setCurrentData] = useState<AirBeamData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
 
   const connectionManager = globalConnectionManager;
 
   const handleData = useCallback((event: Event) => {
+    if (!isMountedRef.current) return;
+    
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target?.value) {
       const textDecoder = new TextDecoder();
@@ -31,13 +34,18 @@ export function useAirBeamBluetooth() {
 
   const onDeviceConnected = useCallback(
     async (server: BluetoothRemoteGATTServer) => {
+      if (!isMountedRef.current) return;
+      
       try {
         const info = await connectionManager.initializeDevice(handleData);
+        if (!isMountedRef.current) return;
+        
         setDevice(info);
         setIsConnected(true);
         setIsConnecting(false);
         setError(null);
       } catch (err) {
+        if (!isMountedRef.current) return;
         console.error('❌ Error initializing AirBeam:', err);
         setError('Failed to initialize device');
         setIsConnecting(false);
@@ -47,13 +55,14 @@ export function useAirBeamBluetooth() {
   );
 
   const onDeviceDisconnected = useCallback(() => {
+    if (!isMountedRef.current) return;
     connectionManager.onDisconnected();
     setIsConnected(false);
     setDevice((prev) => (prev ? { ...prev, connected: false } : null));
   }, []);
 
   const connect = useCallback(() => {
-    if (!connectionManager.shouldAutoConnect()) return;
+    if (!isMountedRef.current || !connectionManager.shouldAutoConnect()) return;
 
     exponentialBackoff(
       10,
@@ -61,6 +70,7 @@ export function useAirBeamBluetooth() {
       () => connectionManager.connect(),
       (server) => onDeviceConnected(server),
       () => {
+        if (!isMountedRef.current) return;
         logger.debug('❌ Failed to reconnect.');
         setError('Failed to reconnect');
         setIsConnecting(false);
@@ -69,11 +79,15 @@ export function useAirBeamBluetooth() {
   }, [onDeviceConnected]);
 
   const requestDevice = useCallback(async () => {
+    if (!isMountedRef.current) return;
+    
     try {
       setError(null);
       setIsConnecting(true);
 
       const dev = await connectionManager.requestDevice();
+      if (!isMountedRef.current) return;
+      
       dev.addEventListener('gattserverdisconnected', () => {
         logger.debug('🔌 AirBeam Device disconnected');
         onDeviceDisconnected();
@@ -82,6 +96,7 @@ export function useAirBeamBluetooth() {
 
       connect();
     } catch (err) {
+      if (!isMountedRef.current) return;
       console.error('❌ Error requesting AirBeam device:', err);
       setError(
         err instanceof Error ? err.message : 'Failed to connect to device'
@@ -91,45 +106,52 @@ export function useAirBeamBluetooth() {
   }, [connect, onDeviceDisconnected]);
 
   const disconnect = useCallback(async () => {
+    if (!isMountedRef.current) return;
     await connectionManager.disconnect();
     setIsConnected(false);
     setDevice(null);
     setCurrentData(null);
   }, []);
 
+  // Initialize connection status on mount
   useEffect(() => {
-    let isMounted = true;
+    if (!connectionManager || !isMountedRef.current) return;
     
-    if (!connectionManager || !handleData) return;
-    
-    if (connectionManager.isConnected()) {
-      setIsConnected(true);
-      connectionManager
-        .reestablishEventListeners(handleData)
-        .then((deviceInfo) => {
-          if (!isMounted) return;
+    const checkConnection = async () => {
+      try {
+        if (connectionManager.isConnected()) {
+          if (!isMountedRef.current) return;
+          setIsConnected(true);
+          
+          const deviceInfo = await connectionManager.reestablishEventListeners(handleData);
+          if (!isMountedRef.current) return;
+          
           if (deviceInfo) {
             setDevice(deviceInfo);
             logger.debug('🔄 Restored existing AirBeam connection');
           }
-        })
-        .catch((err) => {
-          if (!isMounted) return;
-          console.error('❌ Failed to restore connection:', err);
-          setError('Failed to restore connection');
-        });
-    } else {
-      if (isMounted) {
-        setIsConnected(false);
-        setDevice(null);
-        setCurrentData(null);
+        } else {
+          if (!isMountedRef.current) return;
+          setIsConnected(false);
+          setDevice(null);
+          setCurrentData(null);
+        }
+      } catch (err) {
+        if (!isMountedRef.current) return;
+        console.error('❌ Failed to restore connection:', err);
+        setError('Failed to restore connection');
       }
-    }
-    
-    return () => {
-      isMounted = false;
     };
-  }, []); // Remove handleData from dependencies to prevent comparison issues
+    
+    checkConnection();
+  }, []); // Completely empty dependency array
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   return {
     isConnected,
