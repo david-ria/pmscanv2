@@ -9,6 +9,7 @@ export interface RecordingEntry {
     activity: string;
   };
   automaticContext?: string;
+  timestamp: Date;
   weatherDataId?: string; // Still needed for recording, will be moved to mission level
 }
 

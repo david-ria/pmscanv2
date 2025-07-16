@@ -4,9 +4,11 @@ import * as logger from '@/utils/logger';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
-import { useWeatherData } from '@/hooks/useWeatherData';
+import { useWeatherService } from '@/hooks/useWeatherService';
 import { MODEL_LABELS } from '@/lib/recordingConstants';
 import { supabase } from '@/integrations/supabase/client';
+import { useStorageSettings } from '@/hooks/useStorage';
+import { STORAGE_KEYS } from '@/services/storageService';
 import {
   DEFAULT_AUTO_CONTEXT_RULES,
   AutoContextRule,
@@ -42,18 +44,18 @@ interface AutoContextSettings {
   customRules?: AutoContextRule[]; // Allow custom rules
 }
 
+const DEFAULT_SETTINGS: AutoContextSettings = {
+  enabled: false,
+  mlEnabled: false,
+  highAccuracy: false,
+  overrideContext: false,
+};
+
 export function useAutoContext() {
-  const [settings, setSettings] = useState<AutoContextSettings>(() => {
-    const saved = localStorage.getItem('autoContextSettings');
-    return saved
-      ? JSON.parse(saved)
-      : {
-          enabled: false,
-          mlEnabled: false,
-          highAccuracy: false,
-          overrideContext: false,
-        };
-  });
+  const { settings, updateSettings } = useStorageSettings(
+    STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
+    DEFAULT_SETTINGS
+  );
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
@@ -66,23 +68,13 @@ export function useAutoContext() {
     settings.highAccuracy ?? false
   );
   
-  const { weatherData } = useWeatherData();
-
-  const updateSettings = useCallback(
-    (newSettings: Partial<AutoContextSettings>) => {
-      setSettings((prev) => ({ ...prev, ...newSettings }));
-    },
-    []
-  );
+  const { weatherData } = useWeatherService();
 
   const toggleEnabled = useCallback(() => {
-    setSettings((prev) => ({ ...prev, enabled: !prev.enabled }));
-  }, []);
+    updateSettings({ enabled: !settings.enabled });
+  }, [settings.enabled, updateSettings]);
 
-  // Save settings to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('autoContextSettings', JSON.stringify(settings));
-  }, [settings]);
+  // Save settings to localStorage whenever they change - handled by useStorageSettings
 
   // Load WiFi SSIDs from user profile
   useEffect(() => {
@@ -100,11 +92,10 @@ export function useAutoContext() {
           .single();
 
         if (!error && data) {
-          setSettings((prev) => ({
-            ...prev,
-            homeWifiSSID: data.home_wifi_ssid || prev.homeWifiSSID,
-            workWifiSSID: data.work_wifi_ssid || prev.workWifiSSID,
-          }));
+          updateSettings({
+            homeWifiSSID: data.home_wifi_ssid || settings.homeWifiSSID,
+            workWifiSSID: data.work_wifi_ssid || settings.workWifiSSID,
+          });
         }
       } catch (err) {
         console.error('Failed to load profile SSIDs', err);

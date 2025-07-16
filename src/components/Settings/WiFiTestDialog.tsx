@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { TestTube, Wifi } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { wifiTestService } from '@/services/wifiTestService';
 
 interface WiFiTestDialogProps {
   children: React.ReactNode;
@@ -25,18 +26,18 @@ export function WiFiTestDialog({ children }: WiFiTestDialogProps) {
   const [testWifi, setTestWifi] = useState('');
 
   const handleSetTestWifi = () => {
-    // Store the test WiFi SSID in localStorage for mock detection
-    localStorage.setItem('mock_wifi_ssid', testWifi);
+    const testWifiValue = 'TestHomeWiFi';
+    wifiTestService.setTestWifi(testWifiValue);
 
     toast({
       title: t('settings.wifiTest.set'),
-      description: t('settings.wifiTest.setDescription', { ssid: testWifi }),
+      description: t('settings.wifiTest.setDescription', { ssid: testWifiValue }),
     });
     setIsOpen(false);
   };
 
   const handleClearTestWifi = () => {
-    localStorage.removeItem('mock_wifi_ssid');
+    wifiTestService.clearTestWifi();
     setTestWifi('');
 
     toast({

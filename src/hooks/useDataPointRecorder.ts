@@ -81,6 +81,7 @@ export function useDataPointRecorder({
         location,
         context,
         automaticContext,
+        timestamp: new Date(),
         weatherDataId,
       };
 

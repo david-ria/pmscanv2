@@ -13,6 +13,7 @@ import { Settings, TestTube, Wifi } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useToast } from '@/hooks/use-toast';
+import { wifiTestService } from '@/services/wifiTestService';
 import {
   Dialog,
   DialogContent,
@@ -39,7 +40,7 @@ export function AutoContextControl() {
   };
 
   const handleSetTestWifi = () => {
-    localStorage.setItem('mock_wifi_ssid', testWifi);
+    wifiTestService.setTestWifi(testWifi);
     toast({
       title: 'Test WiFi Set',
       description: `Now simulating connection to: ${testWifi}`,
@@ -48,7 +49,7 @@ export function AutoContextControl() {
   };
 
   const handleClearTestWifi = () => {
-    localStorage.removeItem('mock_wifi_ssid');
+    wifiTestService.clearTestWifi();
     toast({
       title: 'Test WiFi Cleared',
       description: 'No longer simulating any specific WiFi network.',
