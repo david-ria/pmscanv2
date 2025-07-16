@@ -42,7 +42,7 @@ export function useRecordingState() {
 
   const addDataPoint = useCallback((entry: RecordingEntry) => {
     setRecordingData((prev) => {
-      const updated = [...prev, entry];
+      const updated = [entry, ...prev];
       logger.debug('📊 Recording data updated, total points:', updated.length);
       return updated;
     });
