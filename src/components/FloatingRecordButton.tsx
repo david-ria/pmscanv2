@@ -66,6 +66,7 @@ export function FloatingRecordButton({
 
   const confirmStartRecording = () => {
     setShowFrequencyDialog(false);
+    setShowConnectionDialog(false); // Close connection dialog when recording starts
     startRecording(recordingFrequency);
     toast({
       title: t('realTime.recording'),
