@@ -130,6 +130,25 @@ export default function RealTime() {
     autoContextEnabled,
   ]);
 
+  // Real-time autocontext effect - updates immediately when toggled or data changes
+  useEffect(() => {
+    if (autoContextEnabled && currentData) {
+      const automaticContext = determineContext({
+        pmData: currentData,
+        location: latestLocation || undefined,
+        speed: 0,
+        isMoving: false,
+      });
+      
+      if (automaticContext) {
+        updateLatestContext(automaticContext);
+      }
+    } else if (!autoContextEnabled) {
+      // Clear context when disabled
+      updateLatestContext('');
+    }
+  }, [autoContextEnabled, currentData, latestLocation, determineContext, updateLatestContext]);
+
   // Check alerts whenever new data comes in
   useEffect(() => {
     if (currentData) {
