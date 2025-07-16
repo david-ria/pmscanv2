@@ -12,6 +12,7 @@ import {
   MapPin,
   Bluetooth,
   Cloud,
+  Wind,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +25,7 @@ import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordin
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useGPS } from '@/hooks/useGPS';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
+import { useAirQualityLogging } from '@/hooks/useAirQualityLogging';
 import { LucideIcon } from 'lucide-react';
 
 interface MenuSection {
@@ -64,6 +66,9 @@ export function useMenuSections({
 
   // Get weather logging state
   const { isEnabled: weatherLoggingEnabled, setEnabled: setWeatherLoggingEnabled } = useWeatherLogging();
+  
+  // Get air quality logging state
+  const { isEnabled: airQualityLoggingEnabled, setEnabled: setAirQualityLoggingEnabled } = useAirQualityLogging();
 
   // Get PMScan and GPS status
   const {
@@ -226,6 +231,15 @@ export function useMenuSections({
            toggle: {
              checked: weatherLoggingEnabled,
              onCheckedChange: setWeatherLoggingEnabled,
+           },
+         },
+         {
+           icon: Wind,
+           label: t('sensors.airQuality'),
+           badge: null,
+           toggle: {
+             checked: airQualityLoggingEnabled,
+             onCheckedChange: setAirQualityLoggingEnabled,
            },
          },
       ],

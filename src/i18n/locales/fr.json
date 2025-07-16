@@ -41,6 +41,7 @@
     "pmscan": "Capteur PMSCAN",
     "gps": "GPS",
     "weather": "Données Météo",
+    "airQuality": "Données Qualité de l'Air",
     "connected": "Connecté"
   },
   "loading": {
