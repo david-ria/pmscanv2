@@ -22,8 +22,10 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
+import { useAirBeamBluetooth } from '@/hooks/useAirBeamBluetooth';
 import { useGPS } from '@/hooks/useGPS';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
+import { useSensorSelection } from '@/contexts/SensorSelectionContext';
 import { LucideIcon } from 'lucide-react';
 
 interface MenuSection {
@@ -68,9 +70,15 @@ export function useMenuSections({
   // Get PMScan and GPS status
   const {
     isConnected: isPMScanConnected,
-    requestDevice,
-    disconnect,
+    requestDevice: requestPMScanDevice,
+    disconnect: disconnectPMScan,
   } = usePMScanBluetooth();
+  const {
+    isConnected: isAirBeamConnected,
+    requestDevice: requestAirBeamDevice,
+    disconnect: disconnectAirBeam,
+  } = useAirBeamBluetooth();
+  const { setSensor } = useSensorSelection();
   const { locationEnabled, requestLocationPermission } = useGPS();
 
   const handleProfileClick = () => {
@@ -202,10 +210,24 @@ export function useMenuSections({
           label: t('sensors.pmscan'),
           badge: isPMScanConnected ? t('sensors.connected') : null,
           action: () => {
+            setSensor('pmscan');
             if (isPMScanConnected) {
-              disconnect();
+              disconnectPMScan();
             } else {
-              requestDevice();
+              requestPMScanDevice();
+            }
+          },
+        },
+        {
+          icon: Smartphone,
+          label: t('sensors.airbeam'),
+          badge: isAirBeamConnected ? t('sensors.connected') : null,
+          action: () => {
+            setSensor('airbeam');
+            if (isAirBeamConnected) {
+              disconnectAirBeam();
+            } else {
+              requestAirBeamDevice();
             }
           },
         },
