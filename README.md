@@ -74,12 +74,16 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-trick
 
 ## Debug logging
 
-Verbose logging can be enabled while developing by setting the `VITE_LOG_LEVEL`
-environment variable. When set to `debug` (or when running in `vite`'s default
-development mode) additional debug messages will be printed. Example:
+Use the `VITE_LOG_LEVEL` environment variable to control console output.
+
+- `VITE_LOG_LEVEL=debug` enables verbose debug messages.
+- `VITE_LOG_LEVEL=info` (or leaving it unset) disables debug output, even when
+  running `npm run dev`.
+
+Example to run the development server without debug logs:
 
 ```sh
-VITE_LOG_LEVEL=debug npm run dev
+VITE_LOG_LEVEL=info npm run dev
 ```
 
 Note that when React's `StrictMode` is enabled (the default in development),
@@ -88,7 +92,8 @@ doesn't occur in production.
 
 Leaving the log level set to `debug` while a recording is running can generate a
 large amount of console output. If memory usage becomes an issue, lower the
-level by setting `VITE_LOG_LEVEL=info` or unset it entirely.
+level by setting `VITE_LOG_LEVEL=info` or unset it entirely. Set
+`VITE_LOG_LEVEL=debug` during production builds if verbose logs are required.
 
 ## Supabase configuration
 
