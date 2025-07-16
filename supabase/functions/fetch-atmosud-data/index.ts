@@ -9,6 +9,7 @@ const corsHeaders = {
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const atmosudApiKey = Deno.env.get('ATMOSUD_API_KEY');
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -57,14 +58,18 @@ serve(async (req) => {
     
     // Try to fetch from Atmosud observations API
     // The API might require specific parameters or authentication
+    const atmosudHeaders: HeadersInit = {
+      'Accept': 'application/json',
+      'User-Agent': 'Air Quality App'
+    };
+    
+    if (atmosudApiKey) {
+      atmosudHeaders['Authorization'] = `Bearer ${atmosudApiKey}`;
+    }
+
     const atmosudResponse = await fetch(
       `https://api.atmosud.org/observations/stations/nearest?lat=${latitude}&lng=${longitude}&limit=5`,
-      {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Air Quality App'
-        }
-      }
+      { headers: atmosudHeaders }
     );
 
     if (!atmosudResponse.ok) {
@@ -73,12 +78,7 @@ serve(async (req) => {
       // Try alternative endpoint for measurements
       const measurementsResponse = await fetch(
         `https://api.atmosud.org/observations/measurements/latest?lat=${latitude}&lng=${longitude}&pollutants=NO2,O3`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Air Quality App'
-          }
-        }
+        { headers: atmosudHeaders }
       );
 
       if (!measurementsResponse.ok) {
@@ -128,12 +128,7 @@ serve(async (req) => {
       // Try to get recent measurements from the nearest station
       const stationMeasurementsResponse = await fetch(
         `https://api.atmosud.org/observations/stations/${nearestStation.id}/measurements/latest?pollutants=NO2,O3`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Air Quality App'
-          }
-        }
+        { headers: atmosudHeaders }
       );
 
       if (stationMeasurementsResponse.ok) {

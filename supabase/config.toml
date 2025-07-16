@@ -3,6 +3,9 @@ project_id = "shydpfwuvnlzdzbubmgb"
 [functions.get-mapbox-token]
 verify_jwt = false
 
+[functions.fetch-atmosud-data]
+verify_jwt = false
+
 [functions.send-group-invitation]
 verify_jwt = true
 
