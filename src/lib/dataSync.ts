@@ -8,6 +8,45 @@ import { saveMissionLocally } from './missionManager';
 import { MissionData } from './dataStorage';
 import * as logger from '@/utils/logger';
 
+// Function to fetch weather data for a mission
+async function fetchWeatherForMission(mission: MissionData): Promise<string | null> {
+  try {
+    // Get the first measurement with location data
+    const measurementWithLocation = mission.measurements.find(
+      m => m.latitude && m.longitude
+    );
+
+    if (!measurementWithLocation?.latitude || !measurementWithLocation?.longitude) {
+      logger.debug('❌ Cannot fetch weather for mission: no location data');
+      return null;
+    }
+
+    // Fetch weather data
+    const { data, error } = await supabase.functions.invoke('fetch-weather', {
+      body: {
+        latitude: measurementWithLocation.latitude,
+        longitude: measurementWithLocation.longitude,
+        timestamp: mission.startTime.toISOString(),
+      },
+    });
+
+    if (error) {
+      logger.error('❌ Error fetching weather data for mission:', error);
+      return null;
+    }
+
+    if (data?.weatherData) {
+      logger.debug('✅ Weather data fetched for mission:', mission.id);
+      return data.weatherData.id;
+    }
+
+    return null;
+  } catch (error) {
+    logger.error('❌ Error in weather fetch for mission:', error);
+    return null;
+  }
+}
+
 // Function to fetch air quality data for a mission
 async function fetchAirQualityForMission(mission: MissionData): Promise<string | null> {
   try {
@@ -67,6 +106,12 @@ export async function syncPendingMissions(): Promise<void> {
     if (!mission) continue;
 
     try {
+      // Fetch weather data for the mission if not already present
+      let weatherDataId = mission.weatherDataId;
+      if (!weatherDataId) {
+        weatherDataId = await fetchWeatherForMission(mission);
+      }
+
       // Fetch air quality data for the mission if not already present
       let airQualityDataId = mission.airQualityDataId;
       if (!airQualityDataId) {
@@ -109,7 +154,7 @@ export async function syncPendingMissions(): Promise<void> {
           activity_context: mission.activityContext,
           recording_frequency: mission.recordingFrequency,
           shared: mission.shared,
-          weather_data_id: mission.weatherDataId,
+          weather_data_id: weatherDataId,
           air_quality_data_id: airQualityDataId,
         })
         .select()

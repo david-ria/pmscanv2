@@ -35,12 +35,28 @@ export default function History() {
     handleDelete,
     handleExport,
     handleShare,
+    handleEnrichMissions,
   } = useMissionManagement();
 
-  // Load missions on component mount
+  // Load missions on component mount and enrich missing data
   useEffect(() => {
     loadMissions();
   }, [loadMissions]);
+
+  // Enrich missions with missing weather/air quality data on first load
+  useEffect(() => {
+    if (missions.length > 0 && navigator.onLine) {
+      // Check if any missions are missing weather data
+      const missionsNeedingEnrichment = missions.filter(
+        m => m.synced && (!m.weatherDataId || !m.airQualityDataId)
+      );
+      
+      if (missionsNeedingEnrichment.length > 0) {
+        console.log(`Found ${missionsNeedingEnrichment.length} missions that need enrichment`);
+        handleEnrichMissions();
+      }
+    }
+  }, [missions, handleEnrichMissions]);
 
   // Filter missions based on selected date and period
   const filteredMissions = useMemo(() => {
