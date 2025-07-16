@@ -175,15 +175,6 @@ export default function RealTime() {
     };
   }, []);
 
-  // Auto-open frequency dialog when device connects for the first time
-  useEffect(() => {
-    if (isConnected && !isRecording && !hasShownFrequencyDialog) {
-      setShowFrequencyDialog(true);
-      setHasShownFrequencyDialog(true);
-      logger.debug('🎯 Auto-opening frequency dialog after device connection');
-    }
-  }, [isConnected, isRecording, hasShownFrequencyDialog]);
-
   // Reset frequency dialog flag when device disconnects
   useEffect(() => {
     if (!isConnected) {
