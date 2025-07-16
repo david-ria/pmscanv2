@@ -22,6 +22,8 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
+import { useAirBeamBluetooth } from '@/hooks/useAirBeamBluetooth';
+import { useSensor } from '@/contexts/SensorContext';
 import { useGPS } from '@/hooks/useGPS';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import { LucideIcon } from 'lucide-react';
@@ -63,14 +65,20 @@ export function useMenuSections({
   } = useBackgroundRecordingIntegration();
 
   // Get weather logging state
-  const { isEnabled: weatherLoggingEnabled, setEnabled: setWeatherLoggingEnabled } = useWeatherLogging();
-
-  // Get PMScan and GPS status
   const {
-    isConnected: isPMScanConnected,
+    isEnabled: weatherLoggingEnabled,
+    setEnabled: setWeatherLoggingEnabled,
+  } = useWeatherLogging();
+
+  // Get sensor connection hooks based on selected sensor
+  const { sensorType, setSensorType } = useSensor();
+  const bluetooth =
+    sensorType === 'airBeam' ? useAirBeamBluetooth() : usePMScanBluetooth();
+  const {
+    isConnected: isSensorConnected,
     requestDevice,
     disconnect,
-  } = usePMScanBluetooth();
+  } = bluetooth;
   const { locationEnabled, requestLocationPermission } = useGPS();
 
   const handleProfileClick = () => {
@@ -199,15 +207,21 @@ export function useMenuSections({
       items: [
         {
           icon: Bluetooth,
-          label: t('sensors.pmscan'),
-          badge: isPMScanConnected ? t('sensors.connected') : null,
+          label: sensorType === 'airBeam' ? 'AirBeam' : t('sensors.pmscan'),
+          badge: isSensorConnected ? t('sensors.connected') : null,
           action: () => {
-            if (isPMScanConnected) {
+            if (isSensorConnected) {
               disconnect();
             } else {
               requestDevice();
             }
           },
+        },
+        {
+          icon: Activity,
+          label: sensorType === 'airBeam' ? t('sensors.pmscan') : 'AirBeam',
+          action: () =>
+            setSensorType(sensorType === 'airBeam' ? 'pmScan' : 'airBeam'),
         },
         {
           icon: MapPin,
@@ -217,17 +231,17 @@ export function useMenuSections({
             if (!locationEnabled) {
               requestLocationPermission();
             }
-           },
-         },
-         {
-           icon: Cloud,
-           label: t('sensors.weather'),
-           badge: null,
-           toggle: {
-             checked: weatherLoggingEnabled,
-             onCheckedChange: setWeatherLoggingEnabled,
-           },
-         },
+          },
+        },
+        {
+          icon: Cloud,
+          label: t('sensors.weather'),
+          badge: null,
+          toggle: {
+            checked: weatherLoggingEnabled,
+            onCheckedChange: setWeatherLoggingEnabled,
+          },
+        },
       ],
     },
   ];
