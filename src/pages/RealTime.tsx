@@ -132,6 +132,12 @@ export default function RealTime() {
 
   // Real-time autocontext effect - updates immediately when toggled or data changes
   useEffect(() => {
+    console.log('Autocontext effect triggered:', { 
+      autoContextEnabled, 
+      hasCurrentData: !!currentData, 
+      latestLocation 
+    });
+    
     if (autoContextEnabled && currentData) {
       const automaticContext = determineContext({
         pmData: currentData,
@@ -140,8 +146,13 @@ export default function RealTime() {
         isMoving: false,
       });
       
+      console.log('Determined context:', automaticContext);
+      
       if (automaticContext) {
         updateLatestContext(automaticContext);
+      } else {
+        // Fallback context when no specific context is determined
+        updateLatestContext('Indoor');
       }
     } else if (!autoContextEnabled) {
       // Clear context when disabled
