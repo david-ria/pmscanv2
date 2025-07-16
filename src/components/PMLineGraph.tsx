@@ -90,7 +90,7 @@ export function PMLineGraph({ data, className }: PMLineGraphProps) {
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
-          margin={{ top: 5, right: 5, left: 5, bottom: 60 }}
+          margin={{ top: 5, right: 5, left: 0, bottom: 80 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
@@ -106,7 +106,7 @@ export function PMLineGraph({ data, className }: PMLineGraphProps) {
           />
           <YAxis
             tick={{ fontSize: 12 }}
-            width={40}
+            width={30}
           />
           <Tooltip
             formatter={formatTooltip}
