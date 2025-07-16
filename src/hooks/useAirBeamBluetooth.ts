@@ -6,7 +6,7 @@ import { globalConnectionManager } from '@/lib/airbeam/globalConnectionManager';
 import * as logger from '@/utils/logger';
 
 export function useAirBeamBluetooth() {
-  // Early stability check
+  // Always call hooks in the same order
   const [isInitialized, setIsInitialized] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -15,7 +15,7 @@ export function useAirBeamBluetooth() {
   const [error, setError] = useState<string | null>(null);
   const isMountedRef = useRef(true);
   
-  // Early return if not properly initialized
+  // Check if connection manager is available after all hooks are called
   if (!globalConnectionManager) {
     return {
       isConnected: false,
