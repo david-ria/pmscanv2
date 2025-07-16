@@ -10,6 +10,7 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const atmosudApiKey = Deno.env.get('ATMOSUD_API_KEY');
+const openWeatherApiKey = Deno.env.get('OPENWEATHERMAP_API_KEY');
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -35,7 +36,7 @@ serve(async (req) => {
     const { data: existingData } = await supabase
       .from('air_quality_data')
       .select('*')
-      .eq('data_source', 'atmosud')
+      .in('data_source', ['atmosud', 'openweathermap'])
       .gte('timestamp', oneHourAgo.toISOString())
       .lte('timestamp', requestTime.toISOString())
       .gte('latitude', latitude - 0.05) // ~5km radius
@@ -105,14 +106,51 @@ serve(async (req) => {
         );
 
         if (!atmosudResponse.ok) {
-          console.error('All Atmosud API endpoints failed. Status:', atmosudResponse.status);
+          console.error('All Atmosud API endpoints failed. Trying OpenWeatherMap as fallback...');
+          
+          // Fallback to OpenWeatherMap Air Pollution API
+          if (openWeatherApiKey) {
+            console.log('Using OpenWeatherMap Air Pollution API for Marseille coordinates:', latitude, longitude);
+            
+            const owmResponse = await fetch(
+              `https://api.openweathermap.org/data/2.5/air_pollution?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}`
+            );
+            
+            if (owmResponse.ok) {
+              const owmData = await owmResponse.json();
+              console.log('OpenWeatherMap Air Pollution response:', owmData);
+              
+              const airQualityRecord = await processOpenWeatherMapData(owmData, latitude, longitude, requestTime);
+              
+              if (airQualityRecord) {
+                const { data: savedData, error: saveError } = await supabase
+                  .from('air_quality_data')
+                  .insert(airQualityRecord)
+                  .select()
+                  .single();
+
+                if (saveError) {
+                  console.error('Error saving OpenWeatherMap air quality data:', saveError);
+                } else {
+                  console.log('OpenWeatherMap air quality data saved successfully:', savedData.id);
+                  return new Response(
+                    JSON.stringify({ airQualityData: savedData }),
+                    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                  );
+                }
+              }
+            } else {
+              console.error('OpenWeatherMap API also failed:', owmResponse.status, owmResponse.statusText);
+            }
+          }
+          
           return new Response(
             JSON.stringify({ 
-              error: 'All Atmosud API endpoints failed',
+              error: 'All air quality API endpoints failed',
               details: {
-                status: atmosudResponse.status,
-                statusText: atmosudResponse.statusText,
-                apiKey: !!atmosudApiKey
+                atmosudStatus: atmosudResponse.status,
+                atmosudStatusText: atmosudResponse.statusText,
+                hasOpenWeatherKey: !!openWeatherApiKey
               }
             }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -291,6 +329,39 @@ async function processStationData(data: any, station: any, timestamp: Date) {
     };
   } catch (error) {
     console.error('Error processing station data:', error);
+    return null;
+  }
+}
+
+async function processOpenWeatherMapData(data: any, latitude: number, longitude: number, timestamp: Date) {
+  try {
+    console.log('Processing OpenWeatherMap data:', data);
+    
+    if (!data || !data.list || !Array.isArray(data.list) || data.list.length === 0) {
+      console.error('Invalid OpenWeatherMap response structure');
+      return null;
+    }
+
+    const pollution = data.list[0];
+    if (!pollution || !pollution.components) {
+      console.error('No pollution components found in OpenWeatherMap response');
+      return null;
+    }
+
+    const components = pollution.components;
+    
+    return {
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      timestamp: timestamp.toISOString(),
+      no2_value: components.no2 ? parseFloat(components.no2) : null,
+      o3_value: components.o3 ? parseFloat(components.o3) : null,
+      station_name: 'OpenWeatherMap',
+      station_id: 'owm',
+      data_source: 'openweathermap'
+    };
+  } catch (error) {
+    console.error('Error processing OpenWeatherMap data:', error);
     return null;
   }
 }
