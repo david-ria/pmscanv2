@@ -11,6 +11,12 @@ export default function Analysis() {
   const [selectedPeriod, setSelectedPeriod] = useState<
     'day' | 'week' | 'month' | 'year'
   >('week');
+  
+  // State for breakdown data from PollutionBreakdownChart
+  const [breakdownData, setBreakdownData] = useState<any[]>([]);
+  const [pmType, setPmType] = useState<'pm1' | 'pm25' | 'pm10'>('pm25');
+  const [breakdownType, setBreakdownType] = useState<string>('activity');
+
   const {
     missions,
     statisticalAnalysis,
@@ -18,6 +24,16 @@ export default function Analysis() {
     loading,
     regenerateAnalysis,
   } = useAnalysisLogic(selectedDate, selectedPeriod);
+
+  const handleBreakdownDataChange = (data: {
+    breakdownData: any[];
+    pmType: 'pm1' | 'pm25' | 'pm10';
+    breakdownType: string;
+  }) => {
+    setBreakdownData(data.breakdownData);
+    setPmType(data.pmType);
+    setBreakdownType(data.breakdownType);
+  };
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
@@ -41,6 +57,7 @@ export default function Analysis() {
         missions={missions}
         selectedPeriod={selectedPeriod}
         selectedDate={selectedDate}
+        onBreakdownDataChange={handleBreakdownDataChange}
       />
 
       {/* Statistical Analysis Report */}
@@ -48,6 +65,11 @@ export default function Analysis() {
         statisticalAnalysis={statisticalAnalysis}
         loading={loading}
         onRegenerate={regenerateAnalysis}
+        selectedPeriod={selectedPeriod}
+        selectedDate={selectedDate}
+        breakdownData={breakdownData}
+        pmType={pmType}
+        breakdownType={breakdownType}
       />
     </div>
   );

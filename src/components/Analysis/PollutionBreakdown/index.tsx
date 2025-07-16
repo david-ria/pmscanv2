@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 import { MissionData } from '@/lib/dataStorage';
@@ -13,6 +13,11 @@ interface PollutionBreakdownChartProps {
   missions: MissionData[];
   selectedPeriod: 'day' | 'week' | 'month' | 'year';
   selectedDate: Date;
+  onBreakdownDataChange?: (data: {
+    breakdownData: any[];
+    pmType: PMType;
+    breakdownType: BreakdownType;
+  }) => void;
 }
 
 type BreakdownType = 'location' | 'activity' | 'autocontext';
@@ -22,6 +27,7 @@ export const PollutionBreakdownChart = ({
   missions,
   selectedPeriod,
   selectedDate,
+  onBreakdownDataChange,
 }: PollutionBreakdownChartProps) => {
   const { t } = useTranslation();
   const [breakdownType, setBreakdownType] = useState<BreakdownType>('activity');
@@ -36,6 +42,17 @@ export const PollutionBreakdownChart = ({
   );
 
   const whoThreshold = getWHOThreshold(pmType, selectedPeriod, t);
+
+  // Notify parent component of breakdown data changes
+  useEffect(() => {
+    if (onBreakdownDataChange) {
+      onBreakdownDataChange({
+        breakdownData,
+        pmType,
+        breakdownType,
+      });
+    }
+  }, [breakdownData, pmType, breakdownType, onBreakdownDataChange]);
 
   return (
     <Card className="mb-6">

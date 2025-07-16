@@ -316,7 +316,23 @@
     "whoThreshold": "seuil OMS",
     "noWHOThreshold": "Pas de seuil OMS",
     "whoThresholdDaily": "Seuil OMS journalier: {{value}} μg/m³",
-    "whoThresholdAnnual": "Seuil OMS annuel: {{value}} μg/m³"
+    "whoThresholdAnnual": "Seuil OMS annuel: {{value}} μg/m³",
+    "emailRequired": "Email requis",
+    "emailRequiredDescription": "Veuillez saisir une adresse email valide pour envoyer le rapport.",
+    "invalidEmail": "Email invalide",
+    "invalidEmailDescription": "Veuillez saisir une adresse email valide.",
+    "exportFailed": "Échec de l'export",
+    "exportFailedDescription": "Une erreur s'est produite lors de la génération du rapport.",
+    "exportReportDescription": "Choisissez comment recevoir votre rapport d'analyse détaillé incluant le graphique et les statistiques.",
+    "download": "Télécharger",
+    "sendByEmail": "Envoyer par email",
+    "downloadDescription": "Le rapport PDF sera téléchargé directement sur votre appareil.",
+    "emailAddress": "Adresse email",
+    "enterEmailAddress": "Saisissez votre adresse email",
+    "sending": "Envoi...",
+    "generating": "Génération...",
+    "sendEmail": "Envoyer par email",
+    "downloadPDF": "Télécharger PDF"
   },
   "modals": {
     "recordingFrequency": {

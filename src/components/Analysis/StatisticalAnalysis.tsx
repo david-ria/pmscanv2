@@ -1,20 +1,72 @@
+import { useState } from 'react';
 import { RefreshCw, BarChart3, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
+import { ExportReportDialog } from './ExportReportDialog';
+import { generateAnalysisReport, downloadPDF } from '@/lib/pdfExport';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+interface BreakdownData {
+  name: string;
+  percentage: number;
+  avgPM: number;
+  color: string;
+  exposure: number;
+}
 
 interface StatisticalAnalysisProps {
   statisticalAnalysis: string;
   loading: boolean;
   onRegenerate: () => void;
+  // Export data
+  selectedPeriod: 'day' | 'week' | 'month' | 'year';
+  selectedDate: Date;
+  breakdownData: BreakdownData[];
+  pmType: 'pm1' | 'pm25' | 'pm10';
+  breakdownType: string;
 }
 
 export const StatisticalAnalysis = ({
   statisticalAnalysis,
   loading,
   onRegenerate,
+  selectedPeriod,
+  selectedDate,
+  breakdownData,
+  pmType,
+  breakdownType,
 }: StatisticalAnalysisProps) => {
   const { t } = useTranslation();
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+
+  const handleExport = async (method: 'download' | 'email', email?: string) => {
+    setExportLoading(true);
+    try {
+      const exportData = {
+        selectedPeriod,
+        selectedDate,
+        statisticalAnalysis,
+        breakdownData,
+        pmType,
+        breakdownType,
+      };
+
+      const pdfBlob = await generateAnalysisReport(exportData);
+      
+      if (method === 'download') {
+        const filename = `rapport-analyse-${format(selectedDate, 'yyyy-MM-dd', { locale: fr })}.pdf`;
+        downloadPDF(pdfBlob, filename);
+      } else if (method === 'email' && email) {
+        // TODO: Implement email sending functionality
+        console.log('Email functionality not implemented yet');
+      }
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   if (!statisticalAnalysis) return null;
 
@@ -55,11 +107,24 @@ export const StatisticalAnalysis = ({
               {statisticalAnalysis}
             </div>
             <div className="flex gap-2 mt-4">
-              <Button variant="outline" size="sm" className="flex-1">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+                onClick={() => setExportDialogOpen(true)}
+                disabled={exportLoading}
+              >
                 <Download className="h-3 w-3 mr-2" />
                 {t('analysis.exportReport')}
               </Button>
             </div>
+            
+            <ExportReportDialog
+              open={exportDialogOpen}
+              onOpenChange={setExportDialogOpen}
+              onExport={handleExport}
+              loading={exportLoading}
+            />
           </>
         )}
       </CardContent>
