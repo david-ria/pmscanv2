@@ -126,12 +126,6 @@ export function useAutoContext() {
 
   // Real WiFi detection function
   const getCurrentWifiSSID = useCallback((): string => {
-    // Check for test WiFi SSID from localStorage first (for testing only)
-    const testWifi = localStorage.getItem('mock_wifi_ssid');
-    if (testWifi) {
-      return testWifi;
-    }
-
     // In a real implementation, this would use Capacitor's Network plugin
     // For now, we'll return a generic value when online (represents any WiFi connection)
     return navigator.onLine ? 'WiFi-Connected' : '';
@@ -154,11 +148,12 @@ export function useAutoContext() {
     }
   }, []);
 
-  // Mock function to get cellular signal strength
+  // Real cellular signal detection
   const getCellularSignal = useCallback((): boolean => {
     // In a real implementation, this would use device APIs
-    return navigator.onLine;
-  }, []);
+    // For now, detect if online but not connected to WiFi
+    return navigator.onLine && !getCurrentWifiSSID();
+  }, [getCurrentWifiSSID]);
 
   // Check if a location is within an area
   const isInsideArea = useCallback(

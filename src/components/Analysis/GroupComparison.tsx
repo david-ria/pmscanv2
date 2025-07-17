@@ -50,44 +50,21 @@ export const GroupComparison = ({
 
     setLoading(true);
     try {
-      // For now, we'll simulate group data since there's no actual group system in Supabase yet
-      // In a real implementation, you would fetch from group_shared_statistics table
+      // Fetch real group statistics from database
+      const { data, error } = await supabase
+        .from('group_shared_statistics')
+        .select('*')
+        .eq('group_id', activeGroup.id)
+        .eq('date', selectedDate.toISOString().split('T')[0])
+        .order('avg_pm25', { ascending: false });
 
-      // Simulate some group members with different exposure patterns
-      const mockGroupStats: GroupStatistics[] = [
-        {
-          user_id: 'user-1',
-          avg_pm25: userStats.averagePM25 * 0.8, // 20% less exposed
-          avg_pm10: userStats.averagePM25 * 1.5 * 0.8,
-          avg_pm1: userStats.averagePM25 * 0.6 * 0.8,
-          total_duration_minutes: userStats.totalExposureMinutes * 1.2,
-          total_measurements: 150,
-          max_pm25: userStats.maxPM25 * 0.7,
-          date: selectedDate.toISOString().split('T')[0],
-        },
-        {
-          user_id: 'user-2',
-          avg_pm25: userStats.averagePM25 * 1.3, // 30% more exposed
-          avg_pm10: userStats.averagePM25 * 1.5 * 1.3,
-          avg_pm1: userStats.averagePM25 * 0.6 * 1.3,
-          total_duration_minutes: userStats.totalExposureMinutes * 0.9,
-          total_measurements: 200,
-          max_pm25: userStats.maxPM25 * 1.4,
-          date: selectedDate.toISOString().split('T')[0],
-        },
-        {
-          user_id: 'user-3',
-          avg_pm25: userStats.averagePM25 * 0.9, // 10% less exposed
-          avg_pm10: userStats.averagePM25 * 1.5 * 0.9,
-          avg_pm1: userStats.averagePM25 * 0.6 * 0.9,
-          total_duration_minutes: userStats.totalExposureMinutes * 1.1,
-          total_measurements: 120,
-          max_pm25: userStats.maxPM25 * 0.85,
-          date: selectedDate.toISOString().split('T')[0],
-        },
-      ];
+      if (error) {
+        console.error('Error fetching group statistics:', error);
+        setGroupStats([]);
+        return;
+      }
 
-      setGroupStats(mockGroupStats);
+      setGroupStats(data || []);
     } catch (error) {
       console.error('Error loading group statistics:', error);
     } finally {

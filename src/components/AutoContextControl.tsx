@@ -9,11 +9,11 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Settings, TestTube, Wifi } from 'lucide-react';
+import { Settings, Wifi } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useToast } from '@/hooks/use-toast';
-import { wifiTestService } from '@/services/wifiTestService';
+
 import {
   Dialog,
   DialogContent,
@@ -28,7 +28,7 @@ export function AutoContextControl() {
   const { toast } = useToast();
   const [showSettings, setShowSettings] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
-  const [testWifi, setTestWifi] = useState('');
+  
 
   useEffect(() => {
     setTempSettings(settings);
@@ -39,22 +39,6 @@ export function AutoContextControl() {
     setShowSettings(false);
   };
 
-  const handleSetTestWifi = () => {
-    wifiTestService.setTestWifi(testWifi);
-    toast({
-      title: 'Test WiFi Set',
-      description: `Now simulating connection to: ${testWifi}`,
-    });
-    setTestWifi('');
-  };
-
-  const handleClearTestWifi = () => {
-    wifiTestService.clearTestWifi();
-    toast({
-      title: 'Test WiFi Cleared',
-      description: 'No longer simulating any specific WiFi network.',
-    });
-  };
 
   return (
     <Card>
@@ -107,41 +91,6 @@ export function AutoContextControl() {
                     />
                   </div>
 
-                  <div className="border-t pt-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TestTube className="h-4 w-4" />
-                      <Label className="text-sm font-medium">
-                        Test WiFi Detection
-                      </Label>
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        value={testWifi}
-                        onChange={(e) => setTestWifi(e.target.value)}
-                        placeholder="Enter WiFi name to simulate"
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSetTestWifi}
-                        disabled={!testWifi.trim()}
-                      >
-                        Set
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleClearTestWifi}
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Simulate being connected to a specific WiFi network for
-                      testing auto-context.
-                    </p>
-                  </div>
                   <div className="flex items-center gap-2">
                     <Switch
                       id="ml-enabled"

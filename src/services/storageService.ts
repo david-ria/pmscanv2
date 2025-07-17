@@ -18,7 +18,6 @@ export const STORAGE_KEYS = {
   // Map and context
   MAP_STATE: 'mapState',
   WIFI_TIME_TRACKING: 'wifiTimeTracking',
-  MOCK_WIFI_SSID: 'mock_wifi_ssid',
   
   // Group settings
   ACTIVE_GROUP_ID: 'activeGroupId',
