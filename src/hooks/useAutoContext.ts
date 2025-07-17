@@ -133,7 +133,12 @@ export function useAutoContext() {
     }
 
     // In a real implementation, this would use Capacitor's Network plugin
-    // For now, we'll return a mock value only if online
+    // For debugging: simulate no WiFi when moving to test outdoor rules
+    const mockMovement = localStorage.getItem('mock_movement_state');
+    if (mockMovement === 'driving' || mockMovement === 'walking') {
+      return ''; // No WiFi when moving
+    }
+    
     return navigator.onLine ? 'MockWiFi' : '';
   }, []);
 
@@ -339,20 +344,47 @@ export function useAutoContext() {
         return '';
       }
 
-      const { location, speed = 0 } = inputs;
+      const { location, speed: inputSpeed = 0 } = inputs;
       const currentHour = new Date().getHours();
 
       // Get current WiFi without updating state
       const newWifiSSID = getCurrentWifiSSID();
+      
+      // Enhanced mock movement detection for testing
+      const mockMovement = localStorage.getItem('mock_movement_state');
+      let speed = inputSpeed;
+      let isMoving = inputSpeed > 1;
+      
+      // Override with mock data for testing
+      if (mockMovement === 'driving') {
+        speed = 30; // 30 m/s = ~60 km/h
+        isMoving = true;
+      } else if (mockMovement === 'walking') {
+        speed = 1.5; // 1.5 m/s = ~5 km/h
+        isMoving = true;
+      } else if (mockMovement === 'cycling') {
+        speed = 8; // 8 m/s = ~30 km/h  
+        isMoving = true;
+      }
+
+      logger.debug(`🔍 AutoContext evaluation:`, {
+        wifiSSID: newWifiSSID,
+        homeWifi: settings.homeWifiSSID,
+        workWifi: settings.workWifiSSID,
+        speed,
+        isMoving,
+        mockMovement,
+        location: location ? `${location.latitude}, ${location.longitude}` : 'none'
+      });
 
       const gpsQuality =
         location && location.accuracy && location.accuracy < 50
           ? 'good'
           : 'poor';
 
-      const isCarConnected = false; // await isConnectedToCarBluetooth();
+      // Enhanced car detection for testing
+      const isCarConnected = mockMovement === 'driving'; // await isConnectedToCarBluetooth();
       const cellularSignal = getCellularSignal();
-      const isMoving = speed > 1;
 
       let insideHomeArea = false;
       let insideWorkArea = false;
@@ -424,6 +456,15 @@ export function useAutoContext() {
 
       let state = evaluateAutoContextRules(rulesToUse, evaluationData);
 
+      logger.debug(`📋 AutoContext rule result: "${state}"`, {
+        evaluationData: {
+          wifi: evaluationData.wifi,
+          movement: evaluationData.movement,
+          location: evaluationData.location,
+          connectivity: evaluationData.connectivity
+        }
+      });
+
       // Apply ML model if enabled and available
       if (settings.mlEnabled && model) {
         try {
@@ -442,8 +483,10 @@ export function useAutoContext() {
       // Override ML predictions for car bluetooth detection (highest priority)
       if (isCarConnected && speed > 5) {
         state = 'Driving';
+        logger.debug(`🚗 Override context to Driving due to car bluetooth + speed`);
       }
 
+      logger.debug(`✅ Final AutoContext result: "${state}"`);
       return state;
     },
     [
