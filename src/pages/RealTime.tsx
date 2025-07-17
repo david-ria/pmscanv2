@@ -4,7 +4,6 @@ import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
 import { ContextSelectors } from '@/components/RecordingControls/ContextSelectors';
 import { AutoContextDisplay } from '@/components/AutoContextDisplay';
-import { AutoContextTester } from '@/components/AutoContextTester';
 import { DataLogger } from '@/components/DataLogger';
 import { WeatherCard } from '@/components/WeatherCard';
 import { RecordingFrequencyDialog } from '@/components/RecordingControls/RecordingFrequencyDialog';
@@ -276,11 +275,6 @@ export default function RealTime() {
       {/* Auto Context Display - separate from manual tags */}
       <div className="mb-4">
         <AutoContextDisplay />
-      </div>
-
-      {/* AutoContext Testing Interface */}
-      <div className="mb-4">
-        <AutoContextTester />
       </div>
 
       {/* Data Logger */}

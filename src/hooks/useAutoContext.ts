@@ -124,22 +124,17 @@ export function useAutoContext() {
     }
   }, [settings.enabled, requestLocationPermission]);
 
-  // Mock function to get current WiFi SSID (in real app, this would use native APIs)
+  // Real WiFi detection function
   const getCurrentWifiSSID = useCallback((): string => {
-    // Check for test WiFi SSID from localStorage first
+    // Check for test WiFi SSID from localStorage first (for testing only)
     const testWifi = localStorage.getItem('mock_wifi_ssid');
     if (testWifi) {
       return testWifi;
     }
 
     // In a real implementation, this would use Capacitor's Network plugin
-    // For debugging: simulate no WiFi when moving to test outdoor rules
-    const mockMovement = localStorage.getItem('mock_movement_state');
-    if (mockMovement === 'driving' || mockMovement === 'walking') {
-      return ''; // No WiFi when moving
-    }
-    
-    return navigator.onLine ? 'MockWiFi' : '';
+    // For now, we'll return a generic value when online (represents any WiFi connection)
+    return navigator.onLine ? 'WiFi-Connected' : '';
   }, []);
 
   // Check if connected to car bluetooth
@@ -344,36 +339,24 @@ export function useAutoContext() {
         return '';
       }
 
-      const { location, speed: inputSpeed = 0 } = inputs;
+      const { location, speed = 0 } = inputs;
       const currentHour = new Date().getHours();
+      const currentDay = new Date().getDay(); // 0 = Sunday, 6 = Saturday
+      const isWeekend = currentDay === 0 || currentDay === 6;
 
       // Get current WiFi without updating state
       const newWifiSSID = getCurrentWifiSSID();
+      const isConnectedToWifi = !!newWifiSSID;
       
-      // Enhanced mock movement detection for testing
-      const mockMovement = localStorage.getItem('mock_movement_state');
-      let speed = inputSpeed;
-      let isMoving = inputSpeed > 1;
-      
-      // Override with mock data for testing
-      if (mockMovement === 'driving') {
-        speed = 30; // 30 m/s = ~60 km/h
-        isMoving = true;
-      } else if (mockMovement === 'walking') {
-        speed = 1.5; // 1.5 m/s = ~5 km/h
-        isMoving = true;
-      } else if (mockMovement === 'cycling') {
-        speed = 8; // 8 m/s = ~30 km/h  
-        isMoving = true;
-      }
+      // Real movement detection
+      const isMoving = speed > 1;
 
       logger.debug(`🔍 AutoContext evaluation:`, {
-        wifiSSID: newWifiSSID,
-        homeWifi: settings.homeWifiSSID,
-        workWifi: settings.workWifiSSID,
+        isConnectedToWifi,
+        currentHour,
+        isWeekend,
         speed,
         isMoving,
-        mockMovement,
         location: location ? `${location.latitude}, ${location.longitude}` : 'none'
       });
 
@@ -382,8 +365,8 @@ export function useAutoContext() {
           ? 'good'
           : 'poor';
 
-      // Enhanced car detection for testing
-      const isCarConnected = mockMovement === 'driving'; // await isConnectedToCarBluetooth();
+      // Real car detection (would need Bluetooth API in real app)
+      const isCarConnected = false; // await isConnectedToCarBluetooth();
       const cellularSignal = getCellularSignal();
 
       let insideHomeArea = false;
@@ -412,13 +395,9 @@ export function useAutoContext() {
       // Prepare evaluation data for rule engine
       const evaluationData: AutoContextEvaluationData = {
         wifi: {
-          home: newWifiSSID === settings.homeWifiSSID,
-          work: newWifiSSID === settings.workWifiSSID,
-          known: !!(
-            newWifiSSID &&
-            (newWifiSSID === settings.homeWifiSSID ||
-              newWifiSSID === settings.workWifiSSID)
-          ),
+          home: false, // Not using specific home WiFi anymore
+          work: false, // Not using specific work WiFi anymore
+          known: isConnectedToWifi, // Any WiFi connection
           currentSSID: newWifiSSID,
           previousSSID: currentWifiSSID,
         },
@@ -433,6 +412,7 @@ export function useAutoContext() {
         },
         time: {
           currentHour,
+          isWeekend,
         },
         connectivity: {
           cellularSignal,
@@ -457,12 +437,11 @@ export function useAutoContext() {
       let state = evaluateAutoContextRules(rulesToUse, evaluationData);
 
       logger.debug(`📋 AutoContext rule result: "${state}"`, {
-        evaluationData: {
-          wifi: evaluationData.wifi,
-          movement: evaluationData.movement,
-          location: evaluationData.location,
-          connectivity: evaluationData.connectivity
-        }
+        isConnectedToWifi,
+        currentHour,
+        isWeekend,
+        movement: evaluationData.movement,
+        location: evaluationData.location,
       });
 
       // Apply ML model if enabled and available

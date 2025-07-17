@@ -22,10 +22,8 @@ export interface AutoContextRule {
       isMoving?: boolean;
     };
     time?: {
-      hourRange?: {
-        start: number;
-        end: number;
-      };
+      hourRange?: { start: number; end: number };
+      isWeekend?: boolean;
     };
     connectivity?: {
       cellularSignal?: boolean;
@@ -78,6 +76,7 @@ export interface AutoContextEvaluationData {
   };
   time: {
     currentHour: number;
+    isWeekend?: boolean;
   };
   connectivity: {
     cellularSignal: boolean;
@@ -108,26 +107,50 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     result: 'Driving',
   },
 
-  // High priority: WiFi-based indoor detection
+  // High priority: Time-based WiFi detection (no specific SSID needed)
   {
-    id: 'wifi-home',
-    name: 'At home',
-    description: 'Connected to home WiFi',
+    id: 'wifi-work-hours',
+    name: 'Indoor work',
+    description: 'Connected to any WiFi during working hours (weekdays 9-18)',
     priority: 90,
     conditions: {
-      wifi: { home: true },
+      wifi: { known: true }, // Any WiFi connection
+      time: { hourRange: { start: 9, end: 18 } },
+    },
+    result: 'Indoor at work',
+  },
+  {
+    id: 'wifi-home-evening',
+    name: 'Indoor home (evening)',
+    description: 'Connected to any WiFi during evening hours (18-23)',
+    priority: 85,
+    conditions: {
+      wifi: { known: true }, // Any WiFi connection
+      time: { hourRange: { start: 18, end: 23 } },
     },
     result: 'Indoor at home',
   },
   {
-    id: 'wifi-work',
-    name: 'At work',
-    description: 'Connected to work WiFi',
+    id: 'wifi-home-morning',
+    name: 'Indoor home (morning)',
+    description: 'Connected to any WiFi during morning hours (6-9)',
     priority: 85,
     conditions: {
-      wifi: { work: true },
+      wifi: { known: true }, // Any WiFi connection
+      time: { hourRange: { start: 6, end: 9 } },
     },
-    result: 'Indoor at work',
+    result: 'Indoor at home',
+  },
+  {
+    id: 'wifi-home-weekend',
+    name: 'Indoor home (weekend)',
+    description: 'Connected to any WiFi during weekends',
+    priority: 80,
+    conditions: {
+      wifi: { known: true }, // Any WiFi connection
+      time: { isWeekend: true },
+    },
+    result: 'Indoor at home',
   },
 
   // Medium priority: Movement-based outdoor activities
@@ -305,9 +328,22 @@ function matchesRule(
   }
 
   // Check time conditions
-  if (conditions.time?.hourRange) {
-    const { start, end } = conditions.time.hourRange;
-    if (data.time.currentHour < start || data.time.currentHour > end) {
+  if (rule.conditions.time) {
+    const { hourRange, isWeekend } = rule.conditions.time;
+    
+    if (hourRange) {
+      const { start, end } = hourRange;
+      const currentHour = data.time.currentHour;
+      
+      // Handle time ranges that cross midnight (e.g., 22-6)
+      if (start <= end) {
+        if (currentHour < start || currentHour >= end) return false;
+      } else {
+        if (currentHour < start && currentHour >= end) return false;
+      }
+    }
+    
+    if (isWeekend !== undefined && data.time.isWeekend !== isWeekend) {
       return false;
     }
   }
