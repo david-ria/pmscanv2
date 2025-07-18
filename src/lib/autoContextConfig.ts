@@ -107,7 +107,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     result: 'Driving',
   },
 
-  // High priority: Time-based WiFi detection (no specific SSID needed)
+  // High priority: WiFi-based context detection
   {
     id: 'wifi-work-hours',
     name: 'Indoor work',
@@ -115,14 +115,17 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 90,
     conditions: {
       wifi: { known: true }, // Any WiFi connection
-      time: { hourRange: { start: 9, end: 18 } },
+      time: { 
+        hourRange: { start: 9, end: 18 },
+        isWeekend: false // Only apply during weekdays
+      },
     },
     result: 'Indoor at work',
   },
   {
     id: 'wifi-home-evening',
     name: 'Indoor home (evening)',
-    description: 'Connected to any WiFi during evening hours (18-23)',
+    description: 'Connected to any WiFi during evening hours (after 18:00)',
     priority: 85,
     conditions: {
       wifi: { known: true }, // Any WiFi connection
@@ -133,11 +136,11 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
   {
     id: 'wifi-home-morning',
     name: 'Indoor home (morning)',
-    description: 'Connected to any WiFi during morning hours (6-9)',
+    description: 'Connected to any WiFi during morning hours (before 9:00)',
     priority: 85,
     conditions: {
       wifi: { known: true }, // Any WiFi connection
-      time: { hourRange: { start: 6, end: 9 } },
+      time: { hourRange: { start: 0, end: 9 } },
     },
     result: 'Indoor at home',
   },
@@ -145,7 +148,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     id: 'wifi-home-weekend',
     name: 'Indoor home (weekend)',
     description: 'Connected to any WiFi during weekends',
-    priority: 80,
+    priority: 85,
     conditions: {
       wifi: { known: true }, // Any WiFi connection
       time: { isWeekend: true },
