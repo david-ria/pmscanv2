@@ -90,7 +90,7 @@ export function PMLineGraph({ data, className }: PMLineGraphProps) {
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
-          margin={{ top: 5, right: 5, left: 0, bottom: 80 }}
+          margin={{ top: 5, right: 5, left: 0, bottom: 120 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
