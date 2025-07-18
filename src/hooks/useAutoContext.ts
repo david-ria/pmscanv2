@@ -51,7 +51,7 @@ const DEFAULT_SETTINGS: AutoContextSettings = {
   overrideContext: false,
 };
 
-export function useAutoContext() {
+export function useAutoContext(enableActiveScanning: boolean = true) {
   const { settings, updateSettings } = useStorageSettings(
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
     DEFAULT_SETTINGS
@@ -512,7 +512,7 @@ export function useAutoContext() {
 
   // Separate effect to handle WiFi state updates - runs periodically instead of constantly
   useEffect(() => {
-    if (!settings.enabled) return;
+    if (!settings.enabled || !enableActiveScanning) return;
 
     const checkWifiStatus = () => {
       const newWifiSSID = getCurrentWifiSSID();
@@ -533,7 +533,7 @@ export function useAutoContext() {
     const interval = setInterval(checkWifiStatus, 10000);
 
     return () => clearInterval(interval);
-  }, [settings.enabled, getCurrentWifiSSID, currentWifiSSID, trackWifiByTime, classifyWifiByTimePattern]);
+  }, [settings.enabled, enableActiveScanning, getCurrentWifiSSID, currentWifiSSID, trackWifiByTime, classifyWifiByTimePattern]);
 
   // Separate function to update context (called from RealTime component)
   const updateLatestContext = useCallback((context: string) => {

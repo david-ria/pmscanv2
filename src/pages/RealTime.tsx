@@ -40,14 +40,6 @@ export default function RealTime() {
     usePMScanBluetooth();
 
   const {
-    latestLocation,
-    locationEnabled,
-    requestLocationPermission,
-  } = useAutoContext();
-  
-  const { weatherData, fetchWeatherData } = useWeatherData();
-  
-  const {
     isRecording,
     addDataPoint,
     missionContext,
@@ -56,6 +48,14 @@ export default function RealTime() {
     startRecording,
     currentMissionId,
   } = useRecordingContext();
+
+  const {
+    latestLocation,
+    locationEnabled,
+    requestLocationPermission,
+  } = useAutoContext(isRecording); // Only scan when recording
+  
+  const { weatherData, fetchWeatherData } = useWeatherData();
   
   const { getEventsByMission } = useEvents();
   const [currentEvents, setCurrentEvents] = useState<any[]>([]);
