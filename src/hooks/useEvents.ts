@@ -25,27 +25,37 @@ export function useEvents() {
     setIsLoading(true);
     try {
       if (!user) {
+        console.error('No user found when trying to create event');
         throw new Error('User must be logged in to create events');
       }
+
+      console.log('Creating event with user:', user.id);
+      console.log('Event data:', eventData);
 
       const eventWithUser = {
         ...eventData,
         created_by: user.id,
       };
+
+      console.log('Final event data to insert:', eventWithUser);
       const { data, error } = await supabase
         .from('events')
         .insert([eventWithUser])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error when creating event:', error);
+        throw error;
+      }
 
+      console.log('Event created successfully:', data);
       return data;
     } catch (error) {
-      console.error('Error creating event:', error);
+      console.error('Error creating event - full error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save event. Please try again.',
+        description: `Failed to save event: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
       });
       throw error;
