@@ -7,6 +7,7 @@ import { AutoContextDisplay } from '@/components/AutoContextDisplay';
 import { DataLogger } from '@/components/DataLogger';
 import { WeatherCard } from '@/components/WeatherCard';
 import { RecordingFrequencyDialog } from '@/components/RecordingControls/RecordingFrequencyDialog';
+import { RecordingButton } from '@/components/RecordingControls/RecordingButton';
 
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingContext } from '@/contexts/RecordingContext';
@@ -260,6 +261,17 @@ export default function RealTime() {
       {/* Air Quality Cards */}
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
 
+      {/* Recording Button with Event Button */}
+      <div className="mb-4 flex justify-center">
+        <RecordingButton
+          isRecording={isRecording}
+          onClick={() => {
+            // This would need to be connected to actual recording functionality
+            logger.debug('Recording button clicked from RealTime page');
+          }}
+          recordingFrequency={recordingFrequency}
+        />
+      </div>
 
       {/* Context Selectors */}
       <div className="mb-4">
