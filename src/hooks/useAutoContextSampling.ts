@@ -17,12 +17,12 @@ export function useAutoContextSampling({
   const [currentAutoContext, setCurrentAutoContext] = useState<string>('');
   const { determineContext, updateLatestContext, isEnabled: autoContextEnabled } = useAutoContext();
 
-  const updateContextIfNeeded = useCallback((
+  const updateContextIfNeeded = useCallback(async (
     pmData?: PMScanData,
     location?: LocationData,
     speed: number = 0,
     isMoving: boolean = false
-  ): string => {
+  ): Promise<string> => {
     if (!autoContextEnabled) {
       return '';
     }
@@ -39,7 +39,7 @@ export function useAutoContextSampling({
     lastContextUpdateTime.current = new Date();
 
     // Determine context
-    const automaticContext = determineContext({
+    const automaticContext = await determineContext({
       pmData,
       location,
       speed,
@@ -55,7 +55,7 @@ export function useAutoContextSampling({
     return currentAutoContext;
   }, [autoContextEnabled, recordingFrequency, determineContext, updateLatestContext, currentAutoContext]);
 
-  const forceContextUpdate = useCallback((
+  const forceContextUpdate = useCallback(async (
     pmData?: PMScanData,
     location?: LocationData,
     speed: number = 0,
@@ -65,7 +65,7 @@ export function useAutoContextSampling({
       return;
     }
 
-    const automaticContext = determineContext({
+    const automaticContext = await determineContext({
       pmData,
       location,
       speed,

@@ -9,6 +9,8 @@ import { MODEL_LABELS } from '@/lib/recordingConstants';
 import { supabase } from '@/integrations/supabase/client';
 import { useStorageSettings } from '@/hooks/useStorage';
 import { STORAGE_KEYS } from '@/services/storageService';
+import { Capacitor } from '@capacitor/core';
+import { BleClient } from '@capacitor-community/bluetooth-le';
 import {
   DEFAULT_AUTO_CONTEXT_RULES,
   AutoContextRule,
@@ -169,16 +171,56 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
   // Check if connected to car bluetooth
   const isConnectedToCarBluetooth = useCallback(async (): Promise<boolean> => {
     try {
-      // Check if Web Bluetooth API is available (limited browser support)
-      if (!('bluetooth' in navigator)) {
+      // Only use Bluetooth on native platforms
+      if (!Capacitor.isNativePlatform()) {
+        logger.debug('Bluetooth: Not available on web platform');
         return false;
       }
 
-      // For now, return false as Web Bluetooth getDevices() is not widely supported
-      // In a real mobile app, this would use native Bluetooth APIs
-      return false;
+      // Initialize BLE if not already done
+      await BleClient.initialize();
+
+      // Check if Bluetooth is enabled
+      const isEnabled = await BleClient.isEnabled();
+      if (!isEnabled) {
+        logger.debug('Bluetooth: Not enabled');
+        return false;
+      }
+
+      // Get connected devices
+      const connectedDevices = await BleClient.getConnectedDevices([]);
+      
+      // Check if any connected device appears to be a car
+      const carDevices = connectedDevices.filter(device => {
+        const name = device.name?.toLowerCase() || '';
+        // Common car bluetooth identifiers
+        return name.includes('car') || 
+               name.includes('auto') || 
+               name.includes('vehicle') ||
+               name.includes('honda') ||
+               name.includes('toyota') ||
+               name.includes('ford') ||
+               name.includes('bmw') ||
+               name.includes('audi') ||
+               name.includes('mercedes') ||
+               name.includes('volkswagen') ||
+               name.includes('nissan') ||
+               name.includes('mazda') ||
+               name.includes('hyundai') ||
+               name.includes('kia') ||
+               name.includes('lexus') ||
+               name.includes('acura') ||
+               name.includes('infiniti');
+      });
+
+      const isCarConnected = carDevices.length > 0;
+      if (isCarConnected) {
+        logger.debug('Bluetooth: Car device connected', carDevices[0].name);
+      }
+      
+      return isCarConnected;
     } catch (error) {
-      // Bluetooth not available or permission denied
+      logger.error('Bluetooth: Error checking car connection', error);
       return false;
     }
   }, []);
@@ -364,7 +406,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
 
   // Pure context determination function without side effects
   const determineContext = useCallback(
-    (inputs: AutoContextInputs): string => {
+    async (inputs: AutoContextInputs): Promise<string> => {
       if (!settings.enabled) {
         return '';
       }
@@ -396,8 +438,8 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
           ? 'good'
           : 'poor';
 
-      // Real car detection (would need Bluetooth API in real app)
-      const isCarConnected = false; // await isConnectedToCarBluetooth();
+      // Real car detection using Bluetooth API
+      const isCarConnected = await isConnectedToCarBluetooth();
       const cellularSignal = getCellularSignal();
 
       let insideHomeArea = false;
@@ -505,6 +547,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
       getCurrentWifiSSID,
       getCellularSignal,
       isInsideArea,
+      isConnectedToCarBluetooth,
       model,
       convertToTensor,
     ]

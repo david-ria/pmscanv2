@@ -99,22 +99,27 @@ export default function RealTime() {
         );
 
         // Update context at recording frequency and get the current context
-        const automaticContext = updateContextIfNeeded(
-          currentData,
-          latestLocation || undefined,
-          0, // Would need to calculate from GPS data
-          false // Would need to determine from sensors
-        );
+        const handleContextAndDataPoint = async () => {
+          const automaticContext = await updateContextIfNeeded(
+            currentData,
+            latestLocation || undefined,
+            0, // Would need to calculate from GPS data
+            false // Would need to determine from sensors
+          );
 
-        // DO NOT override user's manual activity selection
-        // Auto context should be separate from manual tags
+          // DO NOT override user's manual activity selection
+          // Auto context should be separate from manual tags
 
-        addDataPoint(
-          currentData,
-          latestLocation || undefined,
-          missionContext,
-          automaticContext
-        );
+          addDataPoint(
+            currentData,
+            latestLocation || undefined,
+            missionContext,
+            automaticContext
+          );
+        };
+
+        handleContextAndDataPoint();
+        
         lastDataRef.current = {
           pm25: currentData.pm25,
           timestamp: currentTimestamp,
