@@ -37,15 +37,8 @@ export function EventButton({}: EventButtonProps) {
   const [eventType, setEventType] = useState<string>('');
   const [comment, setComment] = useState('');
 
-  console.log('🎯 EventButton rendering, isRecording:', isRecording);
-  console.log('🎯 EventButton currentMissionId:', currentMissionId);
-  console.log('🎯 EventButton user:', user);
 
   const handleSaveEvent = async () => {
-    console.log('🎯 Starting handleSaveEvent');
-    console.log('🎯 Event type:', eventType);
-    console.log('🎯 Comment:', comment);
-    console.log('🎯 Current mission ID:', currentMissionId);
     if (!eventType) {
       toast({
         title: 'Missing Information',

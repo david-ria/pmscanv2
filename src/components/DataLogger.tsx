@@ -59,8 +59,6 @@ export function DataLogger({
   const { latestContext, isEnabled: autoContextEnabled } = useAutoContext();
   const [isMinimized, setIsMinimized] = useState(false);
   
-  // Debug logging to see autocontext state
-  console.log('DataLogger autocontext state:', { autoContextEnabled, latestContext });
 
   // Use actual recording data instead of managing separate log
   const displayData = recordingData.slice(0, 100).map((entry, index) => ({
