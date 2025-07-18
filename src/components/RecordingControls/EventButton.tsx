@@ -27,6 +27,7 @@ interface EventButtonProps {
 }
 
 export function EventButton({ isRecording }: EventButtonProps) {
+  console.log('🎯 EventButton rendering, isRecording:', isRecording);
   const { t } = useTranslation();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -154,151 +155,154 @@ export function EventButton({ isRecording }: EventButtonProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-12 w-12 rounded-full border-2"
-          disabled={!isRecording}
-        >
-          <MapPin className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
-      
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <div>
+      <div>DEBUG: EventButton rendered, isRecording: {isRecording.toString()}</div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-12 w-12 rounded-full border-2"
+            disabled={!isRecording}
+          >
             <MapPin className="h-5 w-5" />
-            Record Event
-          </DialogTitle>
-        </DialogHeader>
+          </Button>
+        </DialogTrigger>
+        
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Record Event
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Camera Section */}
-          <div className="space-y-4">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Camera className="h-4 w-4" />
-              Photo (Optional)
-            </Label>
+          <div className="space-y-6">
+            {/* Camera Section */}
+            <div className="space-y-4">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                Photo (Optional)
+              </Label>
 
-            {showCamera ? (
-              <div className="space-y-4">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full rounded-lg"
-                />
-                <div className="flex gap-2 justify-center">
-                  <Button onClick={capturePhoto} size="sm">
-                    Capture Photo
-                  </Button>
-                  <Button onClick={stopCamera} variant="outline" size="sm">
-                    Cancel
+              {showCamera ? (
+                <div className="space-y-4">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full rounded-lg"
+                  />
+                  <div className="flex gap-2 justify-center">
+                    <Button onClick={capturePhoto} size="sm">
+                      Capture Photo
+                    </Button>
+                    <Button onClick={stopCamera} variant="outline" size="sm">
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : photoPreview ? (
+                <div className="space-y-2">
+                  <img 
+                    src={photoPreview} 
+                    alt="Event photo" 
+                    className="w-full rounded-lg max-h-48 object-cover"
+                  />
+                  <Button 
+                    onClick={() => {
+                      setPhoto(null);
+                      setPhotoPreview('');
+                    }}
+                    variant="outline" 
+                    size="sm"
+                    className="w-full"
+                  >
+                    Remove Photo
                   </Button>
                 </div>
-              </div>
-            ) : photoPreview ? (
-              <div className="space-y-2">
-                <img 
-                  src={photoPreview} 
-                  alt="Event photo" 
-                  className="w-full rounded-lg max-h-48 object-cover"
-                />
-                <Button 
-                  onClick={() => {
-                    setPhoto(null);
-                    setPhotoPreview('');
-                  }}
-                  variant="outline" 
-                  size="sm"
-                  className="w-full"
-                >
-                  Remove Photo
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <Button onClick={handleTakePhoto} variant="outline" size="sm">
-                  <Camera className="h-4 w-4 mr-2" />
-                  Take Photo
-                </Button>
-                <Button 
-                  onClick={() => fileInputRef.current?.click()} 
-                  variant="outline" 
-                  size="sm"
-                >
-                  Upload File
-                </Button>
-              </div>
-            )}
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={handleTakePhoto} variant="outline" size="sm">
+                    <Camera className="h-4 w-4 mr-2" />
+                    Take Photo
+                  </Button>
+                  <Button 
+                    onClick={() => fileInputRef.current?.click()} 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    Upload File
+                  </Button>
+                </div>
+              )}
 
-            <Input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <canvas ref={canvasRef} className="hidden" />
-          </div>
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
 
-          {/* Event Type Selection */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Type className="h-4 w-4" />
-              Event Type *
-            </Label>
-            <Select value={eventType} onValueChange={setEventType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select event type..." />
-              </SelectTrigger>
-              <SelectContent>
-                {EVENT_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    <span className="flex items-center gap-2">
-                      <span>{type.icon}</span>
-                      <span>{type.label}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Event Type Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Type className="h-4 w-4" />
+                Event Type *
+              </Label>
+              <Select value={eventType} onValueChange={setEventType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select event type..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <span className="flex items-center gap-2">
+                        <span>{type.icon}</span>
+                        <span>{type.label}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Comment */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Comment (Optional)
-            </Label>
-            <Textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Add any additional details about this event..."
-              rows={3}
-            />
-          </div>
+            {/* Comment */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Comment (Optional)
+              </Label>
+              <Textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Add any additional details about this event..."
+                rows={3}
+              />
+            </div>
 
-          {/* Status Badge */}
-          <div className="flex justify-center">
-            <Badge variant="outline" className="text-xs">
-              {new Date().toLocaleTimeString()} • Recording Session
-            </Badge>
-          </div>
+            {/* Status Badge */}
+            <div className="flex justify-center">
+              <Badge variant="outline" className="text-xs">
+                {new Date().toLocaleTimeString()} • Recording Session
+              </Badge>
+            </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-4">
-            <Button onClick={handleCancel} variant="outline" className="flex-1">
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEvent} className="flex-1">
-              Save Event
-            </Button>
+            {/* Actions */}
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleCancel} variant="outline" className="flex-1">
+                Cancel
+              </Button>
+              <Button onClick={handleSaveEvent} className="flex-1">
+                Save Event
+              </Button>
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
