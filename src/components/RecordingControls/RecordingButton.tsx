@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
 import * as logger from '@/utils/logger';
+import { EventButton } from './EventButton';
 
 interface RecordingButtonProps {
   isRecording: boolean;
@@ -33,7 +34,7 @@ export function RecordingButton({
   return (
     <div className="space-y-4">
       {/* Recording Control */}
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center gap-4">
         <button
           onClick={handleClick}
           className={cn(
@@ -51,6 +52,9 @@ export function RecordingButton({
             <Play className="h-6 w-6" />
           )}
         </button>
+        
+        {/* Event Button */}
+        <EventButton isRecording={isRecording} />
       </div>
 
       {/* Status */}
