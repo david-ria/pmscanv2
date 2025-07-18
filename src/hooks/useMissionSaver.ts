@@ -11,7 +11,8 @@ export function useMissionSaver() {
     locationContext?: string,
     activityContext?: string,
     recordingFrequency?: string,
-    shared?: boolean
+    shared?: boolean,
+    missionId?: string
   ) => {
     if (!recordingStartTime) {
       throw new Error('Aucun enregistrement en cours à sauvegarder');
@@ -30,7 +31,8 @@ export function useMissionSaver() {
       locationContext,
       activityContext,
       recordingFrequency,
-      shared
+      shared,
+      missionId
     );
 
     // Save mission locally so it appears in history

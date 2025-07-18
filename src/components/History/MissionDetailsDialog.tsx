@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { MissionData } from '@/lib/dataStorage';
 import { WeatherInfo } from '@/components/WeatherInfo';
 import { AirQualityInfo } from '@/components/AirQualityInfo';
 import { useTranslation } from 'react-i18next';
+import { useEvents } from '@/hooks/useEvents';
 
 interface MissionDetailsDialogProps {
   mission: MissionData | null;
@@ -26,6 +27,15 @@ export function MissionDetailsDialog({
   onOpenChange,
 }: MissionDetailsDialogProps) {
   const { t } = useTranslation();
+  const { getEventsByMission } = useEvents();
+  const [events, setEvents] = useState<any[]>([]);
+
+  // Load events for this mission
+  useEffect(() => {
+    if (mission && open) {
+      getEventsByMission(mission.id).then(setEvents);
+    }
+  }, [mission, open, getEventsByMission]);
 
   if (!mission) return null;
 
@@ -329,6 +339,49 @@ export function MissionDetailsDialog({
               </div>
             </CardContent>
           </Card>
+
+          {/* Events Section */}
+          {events.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Events</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {events.map((event, index) => (
+                    <div key={event.id || index} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">
+                            {event.event_type === 'stop' && '🛑'}
+                            {event.event_type === 'warning' && '⚠️'}
+                            {event.event_type === 'info' && 'ℹ️'}
+                            {event.event_type === 'location' && '📍'}
+                            {event.event_type === 'activity' && '🏃'}
+                            {event.event_type === 'weather' && '🌤️'}
+                          </span>
+                          <span className="font-medium capitalize">
+                            {event.event_type.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {new Date(event.timestamp).toLocaleTimeString()}
+                        </Badge>
+                      </div>
+                      {event.comment && (
+                        <p className="text-sm text-muted-foreground">{event.comment}</p>
+                      )}
+                      {event.latitude && event.longitude && (
+                        <p className="text-xs text-muted-foreground">
+                          📍 {event.latitude.toFixed(6)}, {event.longitude.toFixed(6)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </DialogContent>
     </Dialog>

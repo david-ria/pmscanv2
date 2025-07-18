@@ -160,7 +160,8 @@ export function useRecordingData() {
         locationContext,
         activityContext,
         recordingFrequency,
-        shared
+        shared,
+        currentMissionId || undefined
       );
 
       // Clear crash recovery data since mission was properly saved
@@ -177,6 +178,7 @@ export function useRecordingData() {
       saveMissionHelper,
       clearRecoveryData,
       clearRecordingData,
+      currentMissionId,
     ]
   );
 

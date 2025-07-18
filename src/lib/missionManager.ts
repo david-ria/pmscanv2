@@ -26,7 +26,8 @@ export function createMissionFromRecording(
   locationContext?: string,
   activityContext?: string,
   recordingFrequency?: string,
-  shared?: boolean
+  shared?: boolean,
+  missionId?: string
 ): MissionData {
   const measurementData: MeasurementData[] = measurements.map((m) => ({
     id: crypto.randomUUID(),
@@ -63,7 +64,7 @@ export function createMissionFromRecording(
   const maxPm25 = Math.max(...pm25Values);
 
   const mission: MissionData = {
-    id: crypto.randomUUID(),
+    id: missionId || crypto.randomUUID(),
     name: missionName,
     startTime,
     endTime,
