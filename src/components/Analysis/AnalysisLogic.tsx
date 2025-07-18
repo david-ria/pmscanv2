@@ -14,6 +14,7 @@ import {
 } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import * as logger from '@/utils/logger';
+import { useEvents } from '@/hooks/useEvents';
 
 interface AnalysisData {
   totalMissions: number;
@@ -31,6 +32,16 @@ interface ActivityData {
   measurements: number;
 }
 
+interface EventAnalysisData {
+  eventType: string;
+  eventCount: number;
+  avgPM25DuringEvent: number;
+  avgPM10DuringEvent: number;
+  avgPM1DuringEvent: number;
+  avgPM25AroundEvent: number; // Average PM in 5 minutes before/after
+  eventImpact: number; // Percentage increase compared to baseline
+}
+
 export const useAnalysisLogic = (
   selectedDate: Date,
   selectedPeriod: 'day' | 'week' | 'month' | 'year'
@@ -42,7 +53,9 @@ export const useAnalysisLogic = (
   const [loading, setLoading] = useState(false);
   const [analysisGenerated, setAnalysisGenerated] = useState(false);
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
+  const [eventAnalysisData, setEventAnalysisData] = useState<EventAnalysisData[]>([]);
   const { toast } = useToast();
+  const { getEventsByMission } = useEvents();
 
   const loadMissions = useCallback(async () => {
     try {
@@ -118,6 +131,121 @@ export const useAnalysisLogic = (
       setActivityData([]);
     }
   }, [missions, selectedDate, selectedPeriod, t]);
+
+  const loadEventAnalysis = useCallback(async () => {
+    try {
+      const filtered = filteredMissions();
+      if (filtered.length === 0) {
+        setEventAnalysisData([]);
+        return;
+      }
+
+      const eventTypeMap = new Map<string, {
+        events: any[];
+        pmMeasurements: { pm1: number; pm25: number; pm10: number; timestamp: Date }[];
+        surroundingPmMeasurements: { pm1: number; pm25: number; pm10: number; timestamp: Date }[];
+      }>();
+
+      // Load events for each mission and analyze PM levels
+      for (const mission of filtered) {
+        try {
+          const events = await getEventsByMission(mission.id);
+          
+          for (const event of events) {
+            const eventType = event.event_type || 'unknown';
+            const eventTime = new Date(event.timestamp);
+            
+            if (!eventTypeMap.has(eventType)) {
+              eventTypeMap.set(eventType, {
+                events: [],
+                pmMeasurements: [],
+                surroundingPmMeasurements: []
+              });
+            }
+            
+            const eventData = eventTypeMap.get(eventType)!;
+            eventData.events.push(event);
+            
+            // Find measurements within 2 minutes of the event
+            const eventWindowMs = 2 * 60 * 1000; // 2 minutes
+            const surroundingWindowMs = 5 * 60 * 1000; // 5 minutes for baseline
+            
+            const eventMeasurements = mission.measurements.filter(m => {
+              const measurementTime = new Date(m.timestamp);
+              const timeDiff = Math.abs(measurementTime.getTime() - eventTime.getTime());
+              return timeDiff <= eventWindowMs;
+            });
+            
+            const surroundingMeasurements = mission.measurements.filter(m => {
+              const measurementTime = new Date(m.timestamp);
+              const timeDiff = Math.abs(measurementTime.getTime() - eventTime.getTime());
+              return timeDiff > eventWindowMs && timeDiff <= surroundingWindowMs;
+            });
+            
+            eventMeasurements.forEach(m => {
+              eventData.pmMeasurements.push({
+                pm1: m.pm1,
+                pm25: m.pm25,
+                pm10: m.pm10,
+                timestamp: new Date(m.timestamp)
+              });
+            });
+            
+            surroundingMeasurements.forEach(m => {
+              eventData.surroundingPmMeasurements.push({
+                pm1: m.pm1,
+                pm25: m.pm25,
+                pm10: m.pm10,
+                timestamp: new Date(m.timestamp)
+              });
+            });
+          }
+        } catch (error) {
+          console.error(`Error loading events for mission ${mission.id}:`, error);
+        }
+      }
+
+      // Calculate analysis for each event type
+      const analysisResults: EventAnalysisData[] = Array.from(eventTypeMap.entries()).map(([eventType, data]) => {
+        const avgPM25DuringEvent = data.pmMeasurements.length > 0
+          ? data.pmMeasurements.reduce((sum, m) => sum + m.pm25, 0) / data.pmMeasurements.length
+          : 0;
+        
+        const avgPM10DuringEvent = data.pmMeasurements.length > 0
+          ? data.pmMeasurements.reduce((sum, m) => sum + m.pm10, 0) / data.pmMeasurements.length
+          : 0;
+        
+        const avgPM1DuringEvent = data.pmMeasurements.length > 0
+          ? data.pmMeasurements.reduce((sum, m) => sum + m.pm1, 0) / data.pmMeasurements.length
+          : 0;
+        
+        const avgPM25AroundEvent = data.surroundingPmMeasurements.length > 0
+          ? data.surroundingPmMeasurements.reduce((sum, m) => sum + m.pm25, 0) / data.surroundingPmMeasurements.length
+          : 0;
+        
+        const eventImpact = avgPM25AroundEvent > 0
+          ? ((avgPM25DuringEvent - avgPM25AroundEvent) / avgPM25AroundEvent) * 100
+          : 0;
+
+        return {
+          eventType,
+          eventCount: data.events.length,
+          avgPM25DuringEvent,
+          avgPM10DuringEvent,
+          avgPM1DuringEvent,
+          avgPM25AroundEvent,
+          eventImpact
+        };
+      });
+
+      // Sort by impact (highest first)
+      analysisResults.sort((a, b) => b.eventImpact - a.eventImpact);
+      setEventAnalysisData(analysisResults);
+    } catch (error) {
+      console.error('Error loading event analysis:', error);
+      setEventAnalysisData([]);
+    }
+  }, [missions, selectedDate, selectedPeriod, getEventsByMission]);
 
   // Filter missions based on selected date and period
   const filteredMissions = () => {
@@ -387,12 +515,26 @@ ${filtered
   )
   .join('\n')}
 
+🎯 ANALYSE DES ÉVÉNEMENTS:
+${eventAnalysisData.length > 0 
+  ? eventAnalysisData.map(event => 
+      `• ${event.eventType.toUpperCase()} (${event.eventCount} événements):
+  - PM2.5 pendant l'événement: ${event.avgPM25DuringEvent.toFixed(1)} μg/m³
+  - PM2.5 en conditions normales: ${event.avgPM25AroundEvent.toFixed(1)} μg/m³
+  - Impact: ${event.eventImpact > 0 ? '+' : ''}${event.eventImpact.toFixed(1)}% ${event.eventImpact > 50 ? '🔴' : event.eventImpact > 20 ? '🟡' : '🟢'}
+  - Détail: PM1=${event.avgPM1DuringEvent.toFixed(1)}, PM10=${event.avgPM10DuringEvent.toFixed(1)} μg/m³`
+    ).join('\n\n')
+  : "• Aucun événement enregistré pendant cette période"}
+
 💡 RECOMMANDATIONS:
 ${
   avgPM25 > 15 || avgPM10 > 45
     ? "• Limitez les activités extérieures intenses\n• Consultez les prévisions de qualité de l'air\n• Considérez un purificateur d'air intérieur"
     : "• Qualité de l'air acceptable\n• Continuez le monitoring pour détecter les variations\n• Maintenez une bonne ventilation intérieure"
-}`;
+}
+${eventAnalysisData.some(e => e.eventImpact > 50) 
+  ? "\n• ⚠️ Certains événements ont un impact majeur sur la qualité de l'air\n• Évitez ces activités ou améliorez la ventilation" 
+  : ""}`;
 
       setStatisticalAnalysis(analysisText);
       setDataPoints({
@@ -428,8 +570,9 @@ ${
     if (missions.length > 0 && !loading) {
       generateAnalysis();
       loadActivityData();
+      loadEventAnalysis();
     }
-  }, [missions, selectedDate, selectedPeriod, loading, generateAnalysis, loadActivityData]);
+  }, [missions, selectedDate, selectedPeriod, loading, generateAnalysis, loadActivityData, loadEventAnalysis]);
 
   const regenerateAnalysis = () => {
     setAnalysisGenerated(false);
@@ -443,6 +586,7 @@ ${
     loading,
     analysisGenerated,
     activityData,
+    eventAnalysisData,
     regenerateAnalysis,
   };
 };
