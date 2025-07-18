@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { RecordingFrequencyDialog } from './RecordingControls/RecordingFrequencyDialog';
 import { MissionDetailsDialog } from './RecordingControls/MissionDetailsDialog';
 import { ConnectionDialog } from './ConnectionDialog';
+import { EventButton } from './RecordingControls/EventButton';
 import { useDialogs } from '@/hooks/useDialog';
 import { ConnectionStatus, PMScanDevice, LocationData } from '@/types/PMScan';
 
@@ -215,6 +216,9 @@ export function FloatingRecordButton({
           <Play className="h-6 w-6" />
         )}
       </button>
+
+      {/* Event Button - positioned next to record button */}
+      <EventButton isRecording={isRecording} />
 
       <RecordingFrequencyDialog
         open={dialogs.frequency}

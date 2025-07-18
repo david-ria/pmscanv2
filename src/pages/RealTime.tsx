@@ -261,17 +261,6 @@ export default function RealTime() {
       {/* Air Quality Cards */}
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
 
-      {/* Recording Button with Event Button */}
-      <div className="mb-4 flex justify-center items-center gap-3">
-        <RecordingButton
-          isRecording={isRecording}
-          onClick={() => {
-            // This would need to be connected to actual recording functionality
-            logger.debug('Recording button clicked from RealTime page');
-          }}
-          recordingFrequency={recordingFrequency}
-        />
-      </div>
 
       {/* Context Selectors */}
       <div className="mb-4">
