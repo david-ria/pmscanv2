@@ -1,8 +1,23 @@
 import { MissionData } from './dataStorage';
 import { storeCSVForSync } from '@/hooks/useCrashRecovery';
+import { EventData } from '@/hooks/useEvents';
 import * as logger from '@/utils/logger';
 
-export function exportMissionToCSV(mission: MissionData): void {
+export async function exportMissionToCSV(mission: MissionData): Promise<void> {
+  // Get events for this mission from localStorage
+  const getEventsForMission = (missionId: string): EventData[] => {
+    try {
+      const localEvents = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
+      return localEvents.sort((a: EventData, b: EventData) => 
+        new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime()
+      );
+    } catch (error) {
+      logger.debug('Error fetching local events for export:', error);
+      return [];
+    }
+  };
+
+  const events = getEventsForMission(mission.id);
   const headers = [
     'Timestamp',
     'PM1 (µg/m³)',
@@ -16,26 +31,46 @@ export function exportMissionToCSV(mission: MissionData): void {
     'Location Context',
     'Activity Context',
     'Auto Context',
+    'Event Type',
+    'Event Comment',
   ];
 
-  const rows = mission.measurements.map((m) => [
-    (m.timestamp instanceof Date
-      ? m.timestamp
-      : new Date(m.timestamp)
-    ).toISOString(),
-    m.pm1.toFixed(1),
-    m.pm25.toFixed(1),
-    m.pm10.toFixed(1),
-    m.temperature?.toFixed(1) || '',
-    m.humidity?.toFixed(1) || '',
-    m.latitude?.toFixed(6) || '',
-    m.longitude?.toFixed(6) || '',
-    m.accuracy?.toFixed(0) || '',
-    m.locationContext || mission.locationContext || '',
-    m.activityContext || mission.activityContext || '',
-    m.automaticContext || '',
-    // Weather data is now at mission level, not per measurement
-  ]);
+  const rows = mission.measurements.map((m) => {
+    const measurementTime = m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp);
+    
+    // Find events that occurred around this measurement time (within 30 seconds)
+    const nearbyEvents = events.filter(event => {
+      const eventTime = new Date(event.timestamp || 0);
+      const timeDiff = Math.abs(measurementTime.getTime() - eventTime.getTime());
+      return timeDiff <= 30000; // 30 seconds
+    });
+    
+    // Get the closest event if any
+    const closestEvent = nearbyEvents.length > 0 
+      ? nearbyEvents.reduce((closest, current) => {
+          const closestDiff = Math.abs(measurementTime.getTime() - new Date(closest.timestamp || 0).getTime());
+          const currentDiff = Math.abs(measurementTime.getTime() - new Date(current.timestamp || 0).getTime());
+          return currentDiff < closestDiff ? current : closest;
+        })
+      : null;
+
+    return [
+      measurementTime.toISOString(),
+      m.pm1.toFixed(1),
+      m.pm25.toFixed(1),
+      m.pm10.toFixed(1),
+      m.temperature?.toFixed(1) || '',
+      m.humidity?.toFixed(1) || '',
+      m.latitude?.toFixed(6) || '',
+      m.longitude?.toFixed(6) || '',
+      m.accuracy?.toFixed(0) || '',
+      m.locationContext || mission.locationContext || '',
+      m.activityContext || mission.activityContext || '',
+      m.automaticContext || '',
+      closestEvent?.event_type || '',
+      closestEvent?.comment || '',
+    ];
+  });
 
   const csvContent = [headers, ...rows]
     .map((row) => row.map((field) => `"${field}"`).join(','))

@@ -4,7 +4,7 @@ import { RecordingEntry } from '@/types/recording';
 import * as logger from '@/utils/logger';
 
 export function useMissionSaver() {
-  const saveMission = useCallback((
+  const saveMission = useCallback(async (
     recordingData: RecordingEntry[],
     recordingStartTime: Date | null,
     missionName: string,
@@ -37,7 +37,7 @@ export function useMissionSaver() {
     dataStorage.saveMissionLocally(mission);
 
     // Export to CSV immediately
-    dataStorage.exportMissionToCSV(mission);
+    await dataStorage.exportMissionToCSV(mission);
 
     logger.debug(
       '📁 Mission saved locally and exported to CSV. Will sync to database later.'

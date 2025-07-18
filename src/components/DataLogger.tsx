@@ -81,7 +81,7 @@ export function DataLogger({
   };
 
 
-  const exportRawData = () => {
+  const exportRawData = async () => {
     if (displayData.length === 0) return;
 
     const headers = [

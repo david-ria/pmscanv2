@@ -95,7 +95,7 @@ export function useCrashRecovery() {
               );
 
               // Export to CSV only, don't try to sync to avoid duplicates
-              dataStorage.exportMissionToCSV(mission);
+              await dataStorage.exportMissionToCSV(mission);
               logger.debug('✅ Crash recovery mission exported as CSV');
             } catch (error) {
               console.error('Failed to save crash recovery mission:', error);

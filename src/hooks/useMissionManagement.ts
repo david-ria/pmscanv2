@@ -79,9 +79,9 @@ export function useMissionManagement() {
   );
 
   const handleExport = useCallback(
-    (mission: MissionData) => {
+    async (mission: MissionData) => {
       try {
-        dataStorage.exportMissionToCSV(mission);
+        await dataStorage.exportMissionToCSV(mission);
         toast({
           title: 'Export réussi',
           description: `"${mission.name}" exporté en CSV`,
