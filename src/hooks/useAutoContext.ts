@@ -126,11 +126,44 @@ export function useAutoContext() {
 
   // Real WiFi detection function
   const getCurrentWifiSSID = useCallback((): string => {
-    // For now, we'll simulate WiFi connection when online
-    // In a real app, this would use Capacitor's Network plugin to get actual SSID
-    const isOnWifi = navigator.onLine;
-    console.log('WiFi detection - isOnline:', navigator.onLine, 'simulating WiFi:', isOnWifi);
-    return isOnWifi ? 'GenericWiFi' : '';
+    // Check if we're online first
+    if (!navigator.onLine) {
+      console.log('WiFi detection - offline, no connection');
+      return '';
+    }
+
+    // Try to use Network Information API to detect connection type
+    const connection = (navigator as any).connection || 
+                      (navigator as any).mozConnection || 
+                      (navigator as any).webkitConnection;
+    
+    if (connection) {
+      const connectionType = connection.type;
+      const effectiveType = connection.effectiveType;
+      
+      console.log('Network connection details:', {
+        type: connectionType,
+        effectiveType: effectiveType,
+        downlink: connection.downlink,
+        rtt: connection.rtt
+      });
+      
+      // Check if connection type indicates WiFi
+      if (connectionType === 'wifi' || 
+          connectionType === 'ethernet' || 
+          (effectiveType && ['4g', '3g'].includes(effectiveType) && connection.downlink > 1)) {
+        console.log('WiFi detection - detected WiFi/high-speed connection');
+        return 'WiFi-Connection'; // Generic WiFi name since we can't get SSID
+      } else if (connectionType === 'cellular') {
+        console.log('WiFi detection - detected cellular connection');
+        return '';
+      }
+    }
+    
+    // Fallback: if Network Information API not available, 
+    // assume WiFi if online (better than nothing)
+    console.log('WiFi detection - Network API not available, assuming WiFi if online');
+    return navigator.onLine ? 'WiFi-Connection' : '';
   }, []);
 
   // Check if connected to car bluetooth
