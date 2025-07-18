@@ -14,6 +14,19 @@ import { WeatherInfo } from '@/components/WeatherInfo';
 import { AirQualityInfo } from '@/components/AirQualityInfo';
 import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
+import { 
+  Calendar, 
+  MapPin, 
+  Cigarette, 
+  Truck, 
+  Car, 
+  Hammer, 
+  Flame, 
+  Wind, 
+  Factory, 
+  ChefHat,
+  AlertCircle
+} from 'lucide-react';
 
 interface MissionDetailsDialogProps {
   mission: MissionData | null;
@@ -33,7 +46,11 @@ export function MissionDetailsDialog({
   // Load events for this mission
   useEffect(() => {
     if (mission && open) {
-      getEventsByMission(mission.id).then(setEvents);
+      console.log('Loading events for mission:', mission.id);
+      getEventsByMission(mission.id).then((loadedEvents) => {
+        console.log('Loaded events:', loadedEvents);
+        setEvents(loadedEvents);
+      });
     }
   }, [mission, open, getEventsByMission]);
 
@@ -344,40 +361,87 @@ export function MissionDetailsDialog({
           {events.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Events</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Recorded Events ({events.length})
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {events.map((event, index) => (
-                    <div key={event.id || index} className="border rounded-lg p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">
-                            {event.event_type === 'stop' && '🛑'}
-                            {event.event_type === 'warning' && '⚠️'}
-                            {event.event_type === 'info' && 'ℹ️'}
-                            {event.event_type === 'location' && '📍'}
-                            {event.event_type === 'activity' && '🏃'}
-                            {event.event_type === 'weather' && '🌤️'}
-                          </span>
-                          <span className="font-medium capitalize">
-                            {event.event_type.replace('_', ' ')}
-                          </span>
+                  {events.map((event, index) => {
+                    const getEventIcon = (type: string) => {
+                      switch (type) {
+                        case 'smoker': return <Cigarette className="h-4 w-4 text-red-500" />;
+                        case 'truck': return <Truck className="h-4 w-4 text-blue-500" />;
+                        case 'traffic': return <Car className="h-4 w-4 text-yellow-500" />;
+                        case 'construction': return <Hammer className="h-4 w-4 text-orange-500" />;
+                        case 'fire': return <Flame className="h-4 w-4 text-red-500" />;
+                        case 'dust': return <Wind className="h-4 w-4 text-gray-500" />;
+                        case 'industrial': return <Factory className="h-4 w-4 text-purple-500" />;
+                        case 'cooking': return <ChefHat className="h-4 w-4 text-green-500" />;
+                        default: return <AlertCircle className="h-4 w-4 text-blue-500" />;
+                      }
+                    };
+
+                    const getEventLabel = (type: string) => {
+                      switch (type) {
+                        case 'smoker': return 'Smoker';
+                        case 'truck': return 'Truck';
+                        case 'traffic': return 'Heavy Traffic';
+                        case 'construction': return 'Construction';
+                        case 'fire': return 'Fire/Smoke';
+                        case 'dust': return 'Dust';
+                        case 'industrial': return 'Industrial Activity';
+                        case 'cooking': return 'Cooking/BBQ';
+                        default: return 'Other Event';
+                      }
+                    };
+
+                    return (
+                      <div key={event.id || index} className="border rounded-lg p-3 space-y-2 bg-card">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {getEventIcon(event.event_type)}
+                            <span className="font-medium">
+                              {getEventLabel(event.event_type)}
+                            </span>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {new Date(event.timestamp).toLocaleTimeString()}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className="text-xs">
-                          {new Date(event.timestamp).toLocaleTimeString()}
-                        </Badge>
+                        {event.comment && (
+                          <p className="text-sm text-muted-foreground pl-6">{event.comment}</p>
+                        )}
+                        {event.latitude && event.longitude && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground pl-6">
+                            <MapPin className="h-3 w-3" />
+                            <span>{event.latitude.toFixed(6)}, {event.longitude.toFixed(6)}</span>
+                          </div>
+                        )}
                       </div>
-                      {event.comment && (
-                        <p className="text-sm text-muted-foreground">{event.comment}</p>
-                      )}
-                      {event.latitude && event.longitude && (
-                        <p className="text-xs text-muted-foreground">
-                          📍 {event.latitude.toFixed(6)}, {event.longitude.toFixed(6)}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Debug info for events (temporary) */}
+          {events.length === 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Events
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  No events recorded for this mission. Debug info: Mission ID = {mission.id}
+                </p>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  <p>Check console for event loading details</p>
                 </div>
               </CardContent>
             </Card>
