@@ -55,7 +55,9 @@ export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) 
   const eventMarkers = events
     .map((event) => {
       // Find the data point closest to the event time
-      const eventTime = event.timestamp.getTime();
+      // Ensure timestamp is a Date object
+      const eventTimestamp = event.timestamp instanceof Date ? event.timestamp : new Date(event.timestamp);
+      const eventTime = eventTimestamp.getTime();
       let closestIndex = -1;
       let minTimeDiff = Infinity;
       
@@ -75,7 +77,7 @@ export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) 
         return {
           ...event,
           chartPosition: chartIndex,
-          timeString: event.timestamp.toLocaleTimeString('fr-FR', {
+          timeString: eventTimestamp.toLocaleTimeString('fr-FR', {
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit',
