@@ -13,6 +13,13 @@ interface RecordingEntry {
   location?: LocationData;
 }
 
+interface EventData {
+  id: string;
+  timestamp: Date;
+  event_type: string;
+  comment?: string;
+}
+
 interface MapGraphToggleProps {
   showGraph: boolean;
   onToggleView: (showGraph: boolean) => void;
@@ -20,6 +27,7 @@ interface MapGraphToggleProps {
   latestLocation: LocationData | null;
   currentData: PMScanData | null;
   recordingData: RecordingEntry[];
+  events?: EventData[];
   isRecording: boolean;
   device: PMScanDevice | null;
   isConnected: boolean;
@@ -36,6 +44,7 @@ export function MapGraphToggle({
   latestLocation,
   currentData,
   recordingData,
+  events = [],
   isRecording,
   device,
   isConnected,
@@ -84,7 +93,7 @@ export function MapGraphToggle({
       {/* Content Area */}
       <div className="h-[45vh] relative">
         {showGraph ? (
-          <PMLineGraph data={recordingData} className="h-full" />
+          <PMLineGraph data={recordingData} events={events} className="h-full" />
         ) : (
           <>
             {isOnline ? (

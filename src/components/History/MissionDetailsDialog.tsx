@@ -235,7 +235,7 @@ export function MissionDetailsDialog({
             </CardHeader>
             <CardContent>
               <div className="h-64">
-                <PMLineGraph data={graphData} className="h-full" />
+                <PMLineGraph data={graphData} events={events} className="h-full" />
               </div>
             </CardContent>
           </Card>

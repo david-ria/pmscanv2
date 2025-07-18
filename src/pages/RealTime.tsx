@@ -18,6 +18,7 @@ import { useWeatherData } from '@/hooks/useWeatherData';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { useEvents } from '@/hooks/useEvents';
 
 export default function RealTime() {
   useEffect(() => {
@@ -53,7 +54,11 @@ export default function RealTime() {
     recordingData,
     updateMissionContext,
     startRecording,
+    currentMissionId,
   } = useRecordingContext();
+  
+  const { getEventsByMission } = useEvents();
+  const [currentEvents, setCurrentEvents] = useState<any[]>([]);
   
   const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
     recordingFrequency,
@@ -189,6 +194,15 @@ export default function RealTime() {
     };
   }, []);
 
+  // Fetch events for the current mission
+  useEffect(() => {
+    if (currentMissionId) {
+      getEventsByMission(currentMissionId).then(setCurrentEvents);
+    } else {
+      setCurrentEvents([]);
+    }
+  }, [currentMissionId, getEventsByMission]);
+
   // Reset frequency dialog flag when device disconnects
   useEffect(() => {
     if (!isConnected) {
@@ -232,6 +246,7 @@ export default function RealTime() {
         latestLocation={latestLocation}
         currentData={currentData}
         recordingData={recordingData}
+        events={currentEvents}
         isRecording={isRecording}
         device={device}
         isConnected={isConnected}

@@ -8,8 +8,17 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  ReferenceLine,
+  ReferenceArea,
 } from 'recharts';
 import { PMScanData } from '@/lib/pmscan/types';
+
+interface EventData {
+  id: string;
+  timestamp: Date;
+  event_type: string;
+  comment?: string;
+}
 
 interface PMLineGraphProps {
   data: Array<{
@@ -20,10 +29,11 @@ interface PMLineGraphProps {
       accuracy?: number;
     };
   }>;
+  events?: EventData[];
   className?: string;
 }
 
-export function PMLineGraph({ data, className }: PMLineGraphProps) {
+export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) {
   // Transform data for the chart
   const chartData = data
     .map((entry, index) => ({
@@ -40,6 +50,41 @@ export function PMLineGraph({ data, className }: PMLineGraphProps) {
       humidity: entry.pmData.humidity,
     }))
     .slice(-50); // Show last 50 data points
+
+  // Process events to find their position on the chart
+  const eventMarkers = events
+    .map((event) => {
+      // Find the data point closest to the event time
+      const eventTime = event.timestamp.getTime();
+      let closestIndex = -1;
+      let minTimeDiff = Infinity;
+      
+      data.forEach((entry, index) => {
+        const entryTime = entry.pmData.timestamp.getTime();
+        const timeDiff = Math.abs(entryTime - eventTime);
+        if (timeDiff < minTimeDiff) {
+          minTimeDiff = timeDiff;
+          closestIndex = index;
+        }
+      });
+      
+      // Only include events that are within the displayed range
+      const displayedStartIndex = Math.max(0, data.length - 50);
+      if (closestIndex >= displayedStartIndex && closestIndex < data.length) {
+        const chartIndex = closestIndex - displayedStartIndex + 1;
+        return {
+          ...event,
+          chartPosition: chartIndex,
+          timeString: event.timestamp.toLocaleTimeString('fr-FR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }),
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
 
   const formatTooltip = (value: any, name: string) => {
     if (name === 'PM1' || name === 'PM25' || name === 'PM10') {
@@ -146,6 +191,23 @@ export function PMLineGraph({ data, className }: PMLineGraphProps) {
             dot={{ fill: '#3b82f6', strokeWidth: 1, r: 3 }}
             activeDot={{ r: 5, stroke: '#3b82f6' }}
           />
+          {/* Event markers */}
+          {eventMarkers.map((event: any) => (
+            <ReferenceLine
+              key={event.id}
+              x={event.chartPosition}
+              stroke="#f97316"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              label={{
+                value: event.event_type,
+                position: 'top',
+                fontSize: 10,
+                fill: '#f97316',
+                textAnchor: 'middle',
+              }}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
     </div>
