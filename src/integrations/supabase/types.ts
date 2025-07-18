@@ -56,6 +56,56 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          accuracy: number | null
+          comment: string | null
+          created_at: string
+          event_type: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          mission_id: string
+          photo_url: string | null
+          timestamp: string
+          updated_at: string
+        }
+        Insert: {
+          accuracy?: number | null
+          comment?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          mission_id: string
+          photo_url?: string | null
+          timestamp?: string
+          updated_at?: string
+        }
+        Update: {
+          accuracy?: number | null
+          comment?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          mission_id?: string
+          photo_url?: string | null
+          timestamp?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_events_mission_id"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fitness_activities: {
         Row: {
           activity_type: string

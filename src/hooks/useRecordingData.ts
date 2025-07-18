@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useRecordingState } from './useRecordingState';
@@ -15,6 +15,8 @@ import {
 import * as logger from '@/utils/logger';
 
 export function useRecordingData() {
+  // Track current mission ID when recording starts
+  const [currentMissionId, setCurrentMissionId] = useState<string | null>(null);
   // All hooks must be called in the same order every time
   const recordingState = useRecordingState();
 
@@ -119,6 +121,10 @@ export function useRecordingData() {
 
   const startRecording = useCallback(
     async (frequency: string = '10s') => {
+      // Generate a new mission ID when recording starts
+      const newMissionId = crypto.randomUUID();
+      setCurrentMissionId(newMissionId);
+      
       startRecordingState(frequency);
       setGlobalRecording(true);
 
@@ -133,6 +139,7 @@ export function useRecordingData() {
   const stopRecording = useCallback(async () => {
     stopRecordingState();
     setGlobalRecording(false);
+    setCurrentMissionId(null);
 
     // Disable background recording when stopping
     await disableRecordingBackground();
@@ -179,6 +186,7 @@ export function useRecordingData() {
       isRecording,
       recordingFrequency,
       missionContext,
+      currentMissionId,
       startRecording,
       stopRecording,
       addDataPoint,
@@ -192,6 +200,7 @@ export function useRecordingData() {
       isRecording,
       recordingFrequency,
       missionContext,
+      currentMissionId,
       startRecording,
       stopRecording,
       addDataPoint,

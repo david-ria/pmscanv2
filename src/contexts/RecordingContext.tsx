@@ -9,6 +9,7 @@ interface RecordingContextType {
     location: string;
     activity: string;
   };
+  currentMissionId: string | null;
   startRecording: (frequency?: string) => void;
   stopRecording: () => void;
   addDataPoint: (
@@ -90,6 +91,7 @@ export function useRecordingContext() {
       isRecording: false,
       recordingFrequency: '10s',
       missionContext: { location: '', activity: '' },
+      currentMissionId: null,
       startRecording: () => {},
       stopRecording: () => {},
       addDataPoint: () => {},

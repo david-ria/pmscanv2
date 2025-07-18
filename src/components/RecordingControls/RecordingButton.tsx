@@ -54,7 +54,7 @@ export function RecordingButton({
         </button>
         
         {/* Event Button */}
-        <EventButton isRecording={isRecording} />
+        <EventButton />
       </div>
 
       {/* Status */}

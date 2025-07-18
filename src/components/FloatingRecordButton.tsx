@@ -218,7 +218,7 @@ export function FloatingRecordButton({
       </button>
 
       {/* Event Button - positioned next to record button */}
-      <EventButton isRecording={isRecording} />
+      <EventButton />
 
       <RecordingFrequencyDialog
         open={dialogs.frequency}

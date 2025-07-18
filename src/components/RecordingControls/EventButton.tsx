@@ -1,14 +1,16 @@
-import { MapPin, Camera, Type, MessageSquare } from 'lucide-react';
+import { MapPin, Type, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { useEvents } from '@/hooks/useEvents';
+import { useRecordingContext } from '@/contexts/RecordingContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const EVENT_TYPES = [
   { value: 'smoker', label: 'Smoker', icon: '🚬' },
@@ -22,90 +24,22 @@ const EVENT_TYPES = [
   { value: 'other', label: 'Other', icon: '📍' }
 ];
 
-interface EventButtonProps {
-  isRecording: boolean;
-}
+interface EventButtonProps {}
 
-export function EventButton({ isRecording }: EventButtonProps) {
-  console.log('🎯 EventButton rendering, isRecording:', isRecording);
+export function EventButton({}: EventButtonProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { createEvent, isLoading } = useEvents();
+  const { isRecording, currentMissionId } = useRecordingContext();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [eventType, setEventType] = useState<string>('');
   const [comment, setComment] = useState('');
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  const [showCamera, setShowCamera] = useState(false);
 
-  const handleTakePhoto = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } // Use back camera on mobile
-      });
-      setCameraStream(stream);
-      setShowCamera(true);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      toast({
-        title: 'Camera Error',
-        description: 'Could not access camera. Please use file upload instead.',
-        variant: 'destructive'
-      });
-    }
-  };
+  console.log('🎯 EventButton rendering, isRecording:', isRecording);
 
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const video = videoRef.current;
-      const context = canvas.getContext('2d');
-      
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      if (context) {
-        context.drawImage(video, 0, 0);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const file = new File([blob], 'event-photo.jpg', { type: 'image/jpeg' });
-            setPhoto(file);
-            setPhotoPreview(canvas.toDataURL());
-            stopCamera();
-          }
-        }, 'image/jpeg', 0.8);
-      }
-    }
-  };
 
-  const stopCamera = () => {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
-      setCameraStream(null);
-    }
-    setShowCamera(false);
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setPhoto(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPhotoPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSaveEvent = () => {
+  const handleSaveEvent = async () => {
     if (!eventType) {
       toast({
         title: 'Missing Information',
@@ -115,43 +49,70 @@ export function EventButton({ isRecording }: EventButtonProps) {
       return;
     }
 
-    const eventData = {
-      id: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
-      type: eventType,
-      comment: comment.trim(),
-      photo: photo,
-      location: null, // Could be enhanced with GPS coordinates
-    };
+    if (!currentMissionId) {
+      toast({
+        title: 'No Active Recording',
+        description: 'Please start a recording session first.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-    // Store the event (this could be enhanced to save to local storage or database)
-    const events = JSON.parse(localStorage.getItem('recorded-events') || '[]');
-    events.push(eventData);
-    localStorage.setItem('recorded-events', JSON.stringify(events));
+    try {
+      // Get current location if available
+      let latitude: number | undefined;
+      let longitude: number | undefined;
+      let accuracy: number | undefined;
 
-    const selectedEventType = EVENT_TYPES.find(et => et.value === eventType);
-    
-    toast({
-      title: 'Event Recorded',
-      description: `${selectedEventType?.icon} ${selectedEventType?.label} event saved`,
-    });
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 5000,
+              maximumAge: 60000
+            });
+          });
+          latitude = position.coords.latitude;
+          longitude = position.coords.longitude;
+          accuracy = position.coords.accuracy;
+        } catch (error) {
+          console.log('Could not get location:', error);
+        }
+      }
 
-    // Reset form
-    setEventType('');
-    setComment('');
-    setPhoto(null);
-    setPhotoPreview('');
-    setOpen(false);
-    stopCamera();
+      const eventData = {
+        mission_id: currentMissionId,
+        event_type: eventType,
+        comment: comment.trim() || undefined,
+        latitude,
+        longitude,
+        accuracy,
+        timestamp: new Date().toISOString(),
+      };
+
+      await createEvent(eventData);
+
+      const selectedEventType = EVENT_TYPES.find(et => et.value === eventType);
+      
+      toast({
+        title: 'Event Recorded',
+        description: `${selectedEventType?.icon} ${selectedEventType?.label} event saved`,
+      });
+
+      // Reset form
+      setEventType('');
+      setComment('');
+      setOpen(false);
+    } catch (error) {
+      console.error('Error saving event:', error);
+    }
   };
 
   const handleCancel = () => {
     setEventType('');
     setComment('');
-    setPhoto(null);
-    setPhotoPreview('');
     setOpen(false);
-    stopCamera();
   };
 
   return (
@@ -163,7 +124,7 @@ export function EventButton({ isRecording }: EventButtonProps) {
             variant="outline"
             size="icon"
             className="h-12 w-12 rounded-full border-2"
-            disabled={!isRecording}
+            disabled={!isRecording || isLoading}
           >
             <MapPin className="h-5 w-5" />
           </Button>
@@ -228,8 +189,8 @@ export function EventButton({ isRecording }: EventButtonProps) {
               <Button onClick={handleCancel} variant="outline" className="flex-1">
                 Cancel
               </Button>
-              <Button onClick={handleSaveEvent} className="flex-1">
-                Save Event
+              <Button onClick={handleSaveEvent} className="flex-1" disabled={isLoading}>
+                {isLoading ? 'Saving...' : 'Save Event'}
               </Button>
             </div>
           </div>
