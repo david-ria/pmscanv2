@@ -101,6 +101,9 @@ export function saveMissionLocally(mission: MissionData): void {
 
     saveLocalMissions(missions);
 
+    // Save any pending events for this mission
+    savePendingEventsForMission(mission.id);
+
     // Add to pending sync if not already synced
     if (!mission.synced) {
       addToPendingSync(mission.id);
@@ -110,6 +113,28 @@ export function saveMissionLocally(mission: MissionData): void {
     throw new Error(
       'Impossible de sauvegarder la mission localement. Mémoire insuffisante.'
     );
+  }
+}
+
+function savePendingEventsForMission(missionId: string): void {
+  try {
+    const pendingEvents = JSON.parse(localStorage.getItem('pending_events') || '[]');
+    const eventsForMission = pendingEvents.filter((event: any) => event.mission_id === missionId);
+    
+    if (eventsForMission.length > 0) {
+      // Store events for this mission separately
+      const existingMissionEvents = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
+      const updatedEvents = [...existingMissionEvents, ...eventsForMission];
+      localStorage.setItem(`mission_events_${missionId}`, JSON.stringify(updatedEvents));
+      
+      // Remove these events from pending
+      const remainingPending = pendingEvents.filter((event: any) => event.mission_id !== missionId);
+      localStorage.setItem('pending_events', JSON.stringify(remainingPending));
+      
+      console.log(`Saved ${eventsForMission.length} events for mission ${missionId}`);
+    }
+  } catch (error) {
+    console.error('Failed to save pending events for mission:', error);
   }
 }
 

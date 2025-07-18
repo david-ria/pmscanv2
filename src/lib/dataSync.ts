@@ -47,6 +47,47 @@ async function fetchWeatherForMission(mission: MissionData): Promise<string | nu
   }
 }
 
+// Function to sync events for a mission
+async function syncEventsForMission(missionId: string): Promise<void> {
+  try {
+    const missionEvents = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
+    
+    if (missionEvents.length === 0) return;
+
+    const currentUser = await supabase.auth.getUser();
+    if (!currentUser.data.user) return;
+
+    // Insert events into database
+    const eventsToInsert = missionEvents.map((event: any) => ({
+      id: event.id,
+      mission_id: missionId,
+      event_type: event.event_type,
+      comment: event.comment,
+      photo_url: event.photo_url,
+      latitude: event.latitude,
+      longitude: event.longitude,
+      accuracy: event.accuracy,
+      created_by: currentUser.data.user.id,
+      timestamp: event.timestamp,
+    }));
+
+    const { error } = await supabase
+      .from('events')
+      .upsert(eventsToInsert);
+
+    if (error) {
+      logger.error(`❌ Error syncing events for mission ${missionId}:`, error);
+      return;
+    }
+
+    // Clear local events for this mission after successful sync
+    localStorage.removeItem(`mission_events_${missionId}`);
+    logger.debug(`✅ Synced ${missionEvents.length} events for mission ${missionId}`);
+  } catch (error) {
+    logger.error(`❌ Error in syncEventsForMission for ${missionId}:`, error);
+  }
+}
+
 // Function to fetch air quality data for a mission
 async function fetchAirQualityForMission(mission: MissionData): Promise<string | null> {
   try {
@@ -185,6 +226,9 @@ export async function syncPendingMissions(): Promise<void> {
         .upsert(measurementsToInsert);
 
       if (measurementsError) throw measurementsError;
+
+      // Sync events for this mission
+      await syncEventsForMission(mission.id);
 
       // Mark as synced locally
       mission.synced = true;

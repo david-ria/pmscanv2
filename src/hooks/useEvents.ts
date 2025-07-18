@@ -32,25 +32,27 @@ export function useEvents() {
       console.log('Creating event with user:', user.id);
       console.log('Event data:', eventData);
 
-      const eventWithUser = {
+      // Store the event locally first, since the mission doesn't exist in DB yet
+      const localEvent = {
+        id: crypto.randomUUID(),
         ...eventData,
         created_by: user.id,
+        timestamp: eventData.timestamp || new Date().toISOString(),
       };
 
-      console.log('Final event data to insert:', eventWithUser);
-      const { data, error } = await supabase
-        .from('events')
-        .insert([eventWithUser])
-        .select()
-        .single();
+      // Store in localStorage to associate with mission when it's saved
+      const existingEvents = JSON.parse(localStorage.getItem('pending_events') || '[]');
+      existingEvents.push(localEvent);
+      localStorage.setItem('pending_events', JSON.stringify(existingEvents));
 
-      if (error) {
-        console.error('Supabase error when creating event:', error);
-        throw error;
-      }
-
-      console.log('Event created successfully:', data);
-      return data;
+      console.log('Event stored locally:', localEvent);
+      
+      toast({
+        title: 'Event Recorded',
+        description: 'Event has been recorded and will be saved with the mission.',
+      });
+      
+      return localEvent;
     } catch (error) {
       console.error('Error creating event - full error:', error);
       toast({
@@ -86,23 +88,45 @@ export function useEvents() {
   const getEventsByMission = async (missionId: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // First try to get from database
+      const { data: dbEvents, error } = await supabase
         .from('events')
         .select('*')
         .eq('mission_id', missionId)
         .order('timestamp', { ascending: true });
 
-      if (error) throw error;
+      let events = [];
+      
+      if (!error && dbEvents) {
+        events = dbEvents;
+      }
 
-      return data;
+      // Also get any local events for this mission
+      const localEvents = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
+      
+      // Combine and deduplicate events
+      const allEvents = [...events, ...localEvents];
+      const uniqueEvents = allEvents.filter((event, index, self) => 
+        index === self.findIndex(e => e.id === event.id)
+      );
+
+      return uniqueEvents.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     } catch (error) {
       console.error('Error fetching events:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load events.',
-        variant: 'destructive',
-      });
-      return [];
+      
+      // Fallback to local storage only
+      try {
+        const localEvents = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
+        return localEvents.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      } catch (localError) {
+        console.error('Error fetching local events:', localError);
+        toast({
+          title: 'Error',
+          description: 'Failed to load events.',
+          variant: 'destructive',
+        });
+        return [];
+      }
     } finally {
       setIsLoading(false);
     }
