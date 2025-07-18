@@ -123,7 +123,6 @@ export default function RealTime() {
     addDataPoint,
     missionContext,
     updateContextIfNeeded,
-    autoContextEnabled,
   ]);
 
   // Initial autocontext effect - runs only when autocontext is toggled
