@@ -61,6 +61,7 @@ export type Database = {
           accuracy: number | null
           comment: string | null
           created_at: string
+          created_by: string | null
           event_type: string
           id: string
           latitude: number | null
@@ -74,6 +75,7 @@ export type Database = {
           accuracy?: number | null
           comment?: string | null
           created_at?: string
+          created_by?: string | null
           event_type: string
           id?: string
           latitude?: number | null
@@ -87,6 +89,7 @@ export type Database = {
           accuracy?: number | null
           comment?: string | null
           created_at?: string
+          created_by?: string | null
           event_type?: string
           id?: string
           latitude?: number | null

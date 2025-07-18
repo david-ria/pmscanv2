@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface EventData {
   id?: string;
@@ -11,19 +12,29 @@ export interface EventData {
   latitude?: number;
   longitude?: number;
   accuracy?: number;
+  created_by?: string;
   timestamp?: string;
 }
 
 export function useEvents() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const createEvent = async (eventData: Omit<EventData, 'id'>) => {
+  const createEvent = async (eventData: Omit<EventData, 'id' | 'created_by'>) => {
     setIsLoading(true);
     try {
+      if (!user) {
+        throw new Error('User must be logged in to create events');
+      }
+
+      const eventWithUser = {
+        ...eventData,
+        created_by: user.id,
+      };
       const { data, error } = await supabase
         .from('events')
-        .insert([eventData])
+        .insert([eventWithUser])
         .select()
         .single();
 
