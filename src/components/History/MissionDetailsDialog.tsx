@@ -233,7 +233,7 @@ export function MissionDetailsDialog({
             <CardHeader>
               <CardTitle className="text-lg">{t('realTime.graph')}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <div className="h-96">
                 <PMLineGraph data={graphData} events={events} className="h-full" />
               </div>
