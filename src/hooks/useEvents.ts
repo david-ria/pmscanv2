@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -85,7 +85,7 @@ export function useEvents() {
     return publicUrl;
   };
 
-  const getEventsByMission = async (missionId: string) => {
+  const getEventsByMission = useCallback(async (missionId: string) => {
     setIsLoading(true);
     try {
       // First try to get from database
@@ -130,7 +130,7 @@ export function useEvents() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   return {
     createEvent,
