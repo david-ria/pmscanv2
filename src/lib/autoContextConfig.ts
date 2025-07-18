@@ -107,6 +107,18 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     result: 'Driving',
   },
 
+  // High priority: Speed-based driving detection
+  {
+    id: 'driving-speed',
+    name: 'Driving (speed)',
+    description: 'High speed movement (>15 km/h) indicates driving',
+    priority: 95,
+    conditions: {
+      movement: { speed: { min: 15 } },
+    },
+    result: 'Driving',
+  },
+
   // High priority: WiFi-based context detection
   {
     id: 'wifi-work-hours',
