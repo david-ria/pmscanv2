@@ -162,7 +162,7 @@ export function MissionDetailsDialog({
                 </div>
               )}
             </div>
-            <div className="text-right">
+            <div className="text-right pr-8">
               <div
                 className={`text-2xl font-bold ${getQualityColor(mission.avgPm25)}`}
               >
