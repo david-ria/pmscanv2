@@ -10,6 +10,8 @@ import {
 import { locationKeys, activityCategories } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
+import { useLocationActivityMappings } from '@/hooks/useLocationActivityMappings';
+import { useEffect } from 'react';
 
 interface ContextSelectorsProps {
   selectedLocation: string;
@@ -29,17 +31,47 @@ export function ContextSelectors({
   const { t } = useTranslation();
   const { getCurrentLocations, getCurrentActivities, isGroupMode } =
     useGroupSettings();
+  const { locations: dbLocations, getActivitiesForLocation, loading } = 
+    useLocationActivityMappings();
 
-  // Use group locations if in group mode, otherwise use default locations
+  // Use group locations if in group mode, otherwise use database-driven locations
   const locations = isGroupMode
     ? getCurrentLocations()
-    : locationKeys.map((key) => ({ name: t(`locations.${key}`) }));
-  const activities = isGroupMode
-    ? getCurrentActivities()
-    : activityCategories.map(({ key }) => ({
-        key,
-        name: t(`activities.${key}`),
-      }));
+    : dbLocations.map((loc) => ({ name: loc.label, key: loc.key }));
+
+  // Get activities based on selected location
+  const getAvailableActivities = () => {
+    if (isGroupMode) {
+      return getCurrentActivities();
+    }
+    
+    if (!selectedLocation) {
+      return []; // No activities until location is selected
+    }
+
+    // Find location key from selected location label
+    const selectedLocationKey = dbLocations.find(loc => loc.label === selectedLocation)?.key;
+    if (!selectedLocationKey) {
+      return [];
+    }
+
+    return getActivitiesForLocation(selectedLocationKey).map(activity => ({
+      key: activity.key,
+      name: activity.label,
+    }));
+  };
+
+  const activities = getAvailableActivities();
+
+  // Clear activity selection when location changes and current activity is not available
+  useEffect(() => {
+    if (!isGroupMode && selectedLocation && selectedActivity) {
+      const availableActivityLabels = activities.map(a => a.name);
+      if (!availableActivityLabels.includes(selectedActivity)) {
+        onActivityChange('');
+      }
+    }
+  }, [selectedLocation, activities, selectedActivity, onActivityChange, isGroupMode]);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -58,9 +90,9 @@ export function ContextSelectors({
             <SelectValue placeholder={t('realTime.noLocation')} />
           </SelectTrigger>
           <SelectContent>
-            {locations.map((location, index) => (
+            {locations.map((location) => (
               <SelectItem
-                key={isGroupMode ? location.name : locationKeys[index]}
+                key={isGroupMode ? location.name : location.key}
                 value={location.name}
               >
                 {location.name}
@@ -80,9 +112,19 @@ export function ContextSelectors({
             </Badge>
           )}
         </div>
-        <Select value={selectedActivity} onValueChange={onActivityChange}>
+        <Select 
+          value={selectedActivity} 
+          onValueChange={onActivityChange}
+          disabled={!isGroupMode && !selectedLocation}
+        >
           <SelectTrigger className="h-11">
-            <SelectValue placeholder={t('realTime.noActivity')} />
+            <SelectValue 
+              placeholder={
+                !isGroupMode && !selectedLocation 
+                  ? "Select location first" 
+                  : t('realTime.noActivity')
+              } 
+            />
           </SelectTrigger>
           <SelectContent>
             {activities.map((activity) => (

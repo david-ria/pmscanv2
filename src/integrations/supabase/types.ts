@@ -433,6 +433,36 @@ export type Database = {
         }
         Relationships: []
       }
+      location_activity_mappings: {
+        Row: {
+          activity_key: string
+          activity_label: string
+          created_at: string
+          id: string
+          location_key: string
+          location_label: string
+          updated_at: string
+        }
+        Insert: {
+          activity_key: string
+          activity_label: string
+          created_at?: string
+          id?: string
+          location_key: string
+          location_label: string
+          updated_at?: string
+        }
+        Update: {
+          activity_key?: string
+          activity_label?: string
+          created_at?: string
+          id?: string
+          location_key?: string
+          location_label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       measurements: {
         Row: {
           accuracy: number | null
