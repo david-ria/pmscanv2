@@ -477,18 +477,30 @@ export function useAutoContext() {
     ]
   );
 
-  // Separate effect to handle WiFi state updates
+  // Separate effect to handle WiFi state updates - runs periodically instead of constantly
   useEffect(() => {
-    const newWifiSSID = getCurrentWifiSSID();
-    if (newWifiSSID !== currentWifiSSID) {
-      setPreviousWifiSSID(currentWifiSSID);
-      setCurrentWifiSSID(newWifiSSID);
-      
-      // Track WiFi usage patterns for automatic home/work detection
-      const wifiTracking = trackWifiByTime(newWifiSSID);
-      classifyWifiByTimePattern(wifiTracking);
-    }
-  }, [getCurrentWifiSSID, currentWifiSSID, trackWifiByTime, classifyWifiByTimePattern]);
+    if (!settings.enabled) return;
+
+    const checkWifiStatus = () => {
+      const newWifiSSID = getCurrentWifiSSID();
+      if (newWifiSSID !== currentWifiSSID) {
+        setPreviousWifiSSID(currentWifiSSID);
+        setCurrentWifiSSID(newWifiSSID);
+        
+        // Track WiFi usage patterns for automatic home/work detection
+        const wifiTracking = trackWifiByTime(newWifiSSID);
+        classifyWifiByTimePattern(wifiTracking);
+      }
+    };
+
+    // Check WiFi status immediately
+    checkWifiStatus();
+
+    // Set up interval to check WiFi status every 10 seconds instead of every render
+    const interval = setInterval(checkWifiStatus, 10000);
+
+    return () => clearInterval(interval);
+  }, [settings.enabled, getCurrentWifiSSID, currentWifiSSID, trackWifiByTime, classifyWifiByTimePattern]);
 
   // Separate function to update context (called from RealTime component)
   const updateLatestContext = useCallback((context: string) => {

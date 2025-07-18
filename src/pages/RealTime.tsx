@@ -13,6 +13,7 @@ import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useAlerts } from '@/contexts/AlertContext';
 import { useAutoContext } from '@/hooks/useAutoContext';
+import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useToast } from '@/hooks/use-toast';
@@ -38,19 +39,12 @@ export default function RealTime() {
     usePMScanBluetooth();
 
   const {
-    determineContext,
-    updateLatestContext,
-    isEnabled: autoContextEnabled,
     latestLocation,
     locationEnabled,
     requestLocationPermission,
   } = useAutoContext();
   
   const { weatherData, fetchWeatherData } = useWeatherData();
-  
-  useEffect(() => {
-    logger.debug('RealTime: useAutoContext completed successfully');
-  }, []);
   
   const {
     isRecording,
@@ -60,6 +54,15 @@ export default function RealTime() {
     updateMissionContext,
     startRecording,
   } = useRecordingContext();
+  
+  const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
+    recordingFrequency,
+    isRecording,
+  });
+  
+  useEffect(() => {
+    logger.debug('RealTime: useAutoContext completed successfully');
+  }, []);
   const { checkAlerts } = useAlerts();
 
   // Initialize with current mission context if already recording
@@ -90,20 +93,13 @@ export default function RealTime() {
           latestLocation
         );
 
-        // Determine automatic context if enabled
-        const automaticContext = autoContextEnabled
-          ? determineContext({
-              pmData: currentData,
-              location: latestLocation || undefined,
-              speed: 0, // Would need to calculate from GPS data
-              isMoving: false, // Would need to determine from sensors
-            })
-          : '';
-
-        // Update context state separately
-        if (automaticContext) {
-          updateLatestContext(automaticContext);
-        }
+        // Update context at recording frequency and get the current context
+        const automaticContext = updateContextIfNeeded(
+          currentData,
+          latestLocation || undefined,
+          0, // Would need to calculate from GPS data
+          false // Would need to determine from sensors
+        );
 
         // DO NOT override user's manual activity selection
         // Auto context should be separate from manual tags
@@ -126,12 +122,11 @@ export default function RealTime() {
     latestLocation,
     addDataPoint,
     missionContext,
-    determineContext,
-    updateLatestContext,
+    updateContextIfNeeded,
     autoContextEnabled,
   ]);
 
-  // Real-time autocontext effect - updates immediately when toggled or data changes
+  // Initial autocontext effect - runs only when autocontext is toggled
   useEffect(() => {
     console.log('Autocontext effect triggered:', { 
       autoContextEnabled, 
@@ -140,26 +135,15 @@ export default function RealTime() {
     });
     
     if (autoContextEnabled && currentData) {
-      const automaticContext = determineContext({
-        pmData: currentData,
-        location: latestLocation || undefined,
-        speed: 0,
-        isMoving: false,
-      });
-      
-      console.log('Determined context:', automaticContext);
-      
-      if (automaticContext) {
-        updateLatestContext(automaticContext);
-      } else {
-        // Fallback context when no specific context is determined
-        updateLatestContext('Indoor');
-      }
-    } else if (!autoContextEnabled) {
-      // Clear context when disabled
-      updateLatestContext('');
+      // Force an immediate context update when autocontext is enabled
+      forceContextUpdate(
+        currentData,
+        latestLocation || undefined,
+        0,
+        false
+      );
     }
-  }, [autoContextEnabled, currentData, latestLocation, determineContext, updateLatestContext]);
+  }, [autoContextEnabled, forceContextUpdate]); // Only run when autocontext is toggled
 
   // Check alerts whenever new data comes in
   useEffect(() => {
