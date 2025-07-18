@@ -262,7 +262,7 @@ export default function RealTime() {
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
 
       {/* Recording Button with Event Button */}
-      <div className="mb-4 flex justify-center">
+      <div className="mb-4 flex justify-center items-center gap-3">
         <RecordingButton
           isRecording={isRecording}
           onClick={() => {
