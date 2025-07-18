@@ -187,7 +187,7 @@ export function FloatingRecordButton({
   };
 
   return (
-    <div className={cn('flex items-center gap-4', className)}>
+    <div className={cn('flex items-center gap-4 justify-end', className)}>
       {/* Chronometer - only show when recording */}
       {isRecording && (
         <div className="flex items-center gap-2 bg-card px-3 py-2 rounded-lg border shadow-sm">

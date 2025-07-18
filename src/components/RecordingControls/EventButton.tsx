@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 
 const EVENT_TYPES = [
   { value: 'smoker', label: 'Smoker', icon: '🚬' },
@@ -116,86 +117,86 @@ export function EventButton({}: EventButtonProps) {
   };
 
   return (
-    <div>
-      <div>DEBUG: EventButton rendered, isRecording: {isRecording.toString()}</div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-12 w-12 rounded-full border-2"
-            disabled={!isRecording || isLoading}
-          >
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button
+          className={cn(
+            'h-16 w-16 rounded-full flex items-center justify-center transition-all duration-200',
+            'hover:scale-105 active:scale-95 shadow-xl',
+            'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-2xl',
+            !isRecording && 'opacity-50 cursor-not-allowed'
+          )}
+          disabled={!isRecording || isLoading}
+          type="button"
+        >
+          <MapPin className="h-6 w-6" />
+        </button>
+      </DialogTrigger>
+      
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-          </Button>
-        </DialogTrigger>
-        
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Record Event
-            </DialogTitle>
-          </DialogHeader>
+            Record Event
+          </DialogTitle>
+        </DialogHeader>
 
-          <div className="space-y-6">
-
-            {/* Event Type Selection */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <Type className="h-4 w-4" />
-                Event Type *
-              </Label>
-              <Select value={eventType} onValueChange={setEventType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select event type..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {EVENT_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <span className="flex items-center gap-2">
-                        <span>{type.icon}</span>
-                        <span>{type.label}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Comment */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Comment (Optional)
-              </Label>
-              <Textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Add any additional details about this event..."
-                rows={3}
-              />
-            </div>
-
-            {/* Status Badge */}
-            <div className="flex justify-center">
-              <Badge variant="outline" className="text-xs">
-                {new Date().toLocaleTimeString()} • Recording Session
-              </Badge>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2 pt-4">
-              <Button onClick={handleCancel} variant="outline" className="flex-1">
-                Cancel
-              </Button>
-              <Button onClick={handleSaveEvent} className="flex-1" disabled={isLoading}>
-                {isLoading ? 'Saving...' : 'Save Event'}
-              </Button>
-            </div>
+        <div className="space-y-6">
+          {/* Event Type Selection */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Type className="h-4 w-4" />
+              Event Type *
+            </Label>
+            <Select value={eventType} onValueChange={setEventType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select event type..." />
+              </SelectTrigger>
+              <SelectContent>
+                {EVENT_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    <span className="flex items-center gap-2">
+                      <span>{type.icon}</span>
+                      <span>{type.label}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+
+          {/* Comment */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Comment (Optional)
+            </Label>
+            <Textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Add any additional details about this event..."
+              rows={3}
+            />
+          </div>
+
+          {/* Status Badge */}
+          <div className="flex justify-center">
+            <Badge variant="outline" className="text-xs">
+              {new Date().toLocaleTimeString()} • Recording Session
+            </Badge>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-4">
+            <Button onClick={handleCancel} variant="outline" className="flex-1">
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEvent} className="flex-1" disabled={isLoading}>
+              {isLoading ? 'Saving...' : 'Save Event'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
