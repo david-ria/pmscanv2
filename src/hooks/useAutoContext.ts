@@ -126,9 +126,11 @@ export function useAutoContext() {
 
   // Real WiFi detection function
   const getCurrentWifiSSID = useCallback((): string => {
-    // In a real implementation, this would use Capacitor's Network plugin
-    // For now, we'll return a generic value when online (represents any WiFi connection)
-    return navigator.onLine ? 'WiFi-Connected' : '';
+    // For now, we'll simulate WiFi connection when online
+    // In a real app, this would use Capacitor's Network plugin to get actual SSID
+    const isOnWifi = navigator.onLine;
+    console.log('WiFi detection - isOnline:', navigator.onLine, 'simulating WiFi:', isOnWifi);
+    return isOnWifi ? 'GenericWiFi' : '';
   }, []);
 
   // Check if connected to car bluetooth
@@ -346,7 +348,8 @@ export function useAutoContext() {
       // Real movement detection
       const isMoving = speed > 1;
 
-      logger.debug(`🔍 AutoContext evaluation:`, {
+      console.log(`🔍 AutoContext evaluation:`, {
+        newWifiSSID,
         isConnectedToWifi,
         currentHour,
         isWeekend,
@@ -431,12 +434,10 @@ export function useAutoContext() {
 
       let state = evaluateAutoContextRules(rulesToUse, evaluationData);
 
-      logger.debug(`📋 AutoContext rule result: "${state}"`, {
-        isConnectedToWifi,
-        currentHour,
-        isWeekend,
-        movement: evaluationData.movement,
-        location: evaluationData.location,
+      console.log(`📋 AutoContext rule result: "${state}"`, {
+        evaluationData,
+        rulesCount: rulesToUse.length,
+        firstFewRules: rulesToUse.slice(0, 3).map(r => ({ id: r.id, priority: r.priority, result: r.result }))
       });
 
       // Apply ML model if enabled and available
@@ -460,7 +461,7 @@ export function useAutoContext() {
         logger.debug(`🚗 Override context to Driving due to car bluetooth + speed`);
       }
 
-      logger.debug(`✅ Final AutoContext result: "${state}"`);
+      console.log(`✅ Final AutoContext result: "${state}"`);
       return state;
     },
     [

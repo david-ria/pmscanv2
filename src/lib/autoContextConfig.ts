@@ -189,12 +189,55 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     result: 'Outdoor walking',
   },
 
+  // Time-based fallback rules (no WiFi dependency)
+  {
+    id: 'time-work-hours',
+    name: 'Work hours',
+    description: 'During typical work hours on weekdays',
+    priority: 60,
+    conditions: {
+      time: { hourRange: { start: 9, end: 18 }, isWeekend: false },
+    },
+    result: 'At work',
+  },
+  {
+    id: 'time-evening-home',
+    name: 'Evening at home',
+    description: 'Evening hours suggest home',
+    priority: 58,
+    conditions: {
+      time: { hourRange: { start: 18, end: 23 } },
+    },
+    result: 'At home',
+  },
+  {
+    id: 'time-morning-home',
+    name: 'Morning at home',
+    description: 'Early morning hours suggest home',
+    priority: 58,
+    conditions: {
+      time: { hourRange: { start: 6, end: 9 } },
+    },
+    result: 'At home',
+  },
+  {
+    id: 'time-weekend-home',
+    name: 'Weekend at home',
+    description: 'Weekend time suggests home',
+    priority: 55,
+    conditions: {
+      time: { isWeekend: true },
+      movement: { speed: { max: 5 } },
+    },
+    result: 'At home',
+  },
+
   // Lower priority: Area-based detection
   {
     id: 'gps-home-outdoor',
     name: 'Outdoor at home',
     description: 'Good GPS in home area without home WiFi',
-    priority: 60,
+    priority: 50,
     conditions: {
       location: { insideHome: true, gpsQuality: 'good' },
       wifi: { home: false },
@@ -206,7 +249,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     id: 'gps-work-outdoor',
     name: 'Outdoor at work',
     description: 'Good GPS in work area without work WiFi',
-    priority: 55,
+    priority: 45,
     conditions: {
       location: { insideWork: true, gpsQuality: 'good' },
       wifi: { work: false },
@@ -220,7 +263,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     id: 'generic-outdoor',
     name: 'Generic outdoor',
     description: 'Good GPS outside known areas',
-    priority: 50,
+    priority: 40,
     conditions: {
       location: { insideHome: false, insideWork: false, gpsQuality: 'good' },
     },
