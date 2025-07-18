@@ -35,24 +35,34 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
     'Event Comment',
   ];
 
-  const rows = mission.measurements.map((m) => {
-    const measurementTime = m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp);
+  // Create a map of which measurement each event should be assigned to
+  const eventAssignments = new Map<string, EventData>();
+  
+  events.forEach(event => {
+    const eventTime = new Date(event.timestamp || 0);
+    let closestMeasurement = null;
+    let closestTimeDiff = Infinity;
     
-    // Find events that occurred around this measurement time (within 30 seconds)
-    const nearbyEvents = events.filter(event => {
-      const eventTime = new Date(event.timestamp || 0);
-      const timeDiff = Math.abs(measurementTime.getTime() - eventTime.getTime());
-      return timeDiff <= 30000; // 30 seconds
+    mission.measurements.forEach((measurement, index) => {
+      const measurementTime = measurement.timestamp instanceof Date ? measurement.timestamp : new Date(measurement.timestamp);
+      const timeDiff = Math.abs(eventTime.getTime() - measurementTime.getTime());
+      
+      if (timeDiff < closestTimeDiff && timeDiff <= 30000) { // Within 30 seconds
+        closestTimeDiff = timeDiff;
+        closestMeasurement = index;
+      }
     });
     
-    // Get the closest event if any
-    const closestEvent = nearbyEvents.length > 0 
-      ? nearbyEvents.reduce((closest, current) => {
-          const closestDiff = Math.abs(measurementTime.getTime() - new Date(closest.timestamp || 0).getTime());
-          const currentDiff = Math.abs(measurementTime.getTime() - new Date(current.timestamp || 0).getTime());
-          return currentDiff < closestDiff ? current : closest;
-        })
-      : null;
+    if (closestMeasurement !== null) {
+      eventAssignments.set(closestMeasurement.toString(), event);
+    }
+  });
+
+  const rows = mission.measurements.map((m, index) => {
+    const measurementTime = m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp);
+    
+    // Get the event assigned to this specific measurement
+    const assignedEvent = eventAssignments.get(index.toString());
 
     return [
       measurementTime.toISOString(),
@@ -67,8 +77,8 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
       m.locationContext || mission.locationContext || '',
       m.activityContext || mission.activityContext || '',
       m.automaticContext || '',
-      closestEvent?.event_type || '',
-      closestEvent?.comment || '',
+      assignedEvent?.event_type || '',
+      assignedEvent?.comment || '',
     ];
   });
 
