@@ -34,59 +34,70 @@ interface PMLineGraphProps {
 }
 
 export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) {
-  // Transform data for the chart
-  const chartData = data
-    .map((entry, index) => ({
-      time: index + 1, // Simple index for now
-      timestamp: entry.pmData.timestamp.toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      }),
-      PM1: entry.pmData.pm1,
-      PM25: entry.pmData.pm25,
-      PM10: entry.pmData.pm10,
-      temp: entry.pmData.temp,
-      humidity: entry.pmData.humidity,
-    }))
-    .slice(-50); // Show last 50 data points
+  // Transform data for the chart - ensure proper chronological ordering
+  const chartData = React.useMemo(() => {
+    if (!data || data.length === 0) return [];
+    
+    return data
+      // Sort by timestamp to ensure chronological order (oldest to newest)
+      .sort((a, b) => a.pmData.timestamp.getTime() - b.pmData.timestamp.getTime())
+      // Take the last 50 data points for performance
+      .slice(-50)
+      // Transform to chart format with sequential indices for X-axis
+      .map((entry, index) => ({
+        time: index + 1, // Sequential index for X-axis (left to right)
+        timestamp: entry.pmData.timestamp.toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }),
+        fullTimestamp: entry.pmData.timestamp, // Keep full timestamp for calculations
+        PM1: entry.pmData.pm1,
+        PM25: entry.pmData.pm25,
+        PM10: entry.pmData.pm10,
+        temp: entry.pmData.temp,
+        humidity: entry.pmData.humidity,
+      }));
+  }, [data]); // Re-compute when data changes for real-time updates
 
   // Process events to find their position on the chart
-  const eventMarkers = events
-    .map((event) => {
-      // Find the data point closest to the event time
-      // Ensure timestamp is a Date object
-      const eventTimestamp = event.timestamp instanceof Date ? event.timestamp : new Date(event.timestamp);
-      const eventTime = eventTimestamp.getTime();
-      let closestIndex = -1;
-      let minTimeDiff = Infinity;
-      
-      data.forEach((entry, index) => {
-        const entryTime = entry.pmData.timestamp.getTime();
-        const timeDiff = Math.abs(entryTime - eventTime);
-        if (timeDiff < minTimeDiff) {
-          minTimeDiff = timeDiff;
-          closestIndex = index;
+  const eventMarkers = React.useMemo(() => {
+    if (!events.length || !chartData.length) return [];
+    
+    return events
+      .map((event) => {
+        // Ensure timestamp is a Date object
+        const eventTimestamp = event.timestamp instanceof Date ? event.timestamp : new Date(event.timestamp);
+        const eventTime = eventTimestamp.getTime();
+        let closestIndex = -1;
+        let minTimeDiff = Infinity;
+        
+        // Find closest data point in the chartData (which is already sorted and sliced)
+        chartData.forEach((entry, index) => {
+          const entryTime = entry.fullTimestamp.getTime();
+          const timeDiff = Math.abs(entryTime - eventTime);
+          if (timeDiff < minTimeDiff) {
+            minTimeDiff = timeDiff;
+            closestIndex = index;
+          }
+        });
+        
+        // If we found a close match within the displayed data
+        if (closestIndex >= 0) {
+          return {
+            ...event,
+            chartPosition: closestIndex + 1, // chartData uses 1-based indexing for time
+            timeString: eventTimestamp.toLocaleTimeString('fr-FR', {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            }),
+          };
         }
-      });
-      
-      // Only include events that are within the displayed range
-      const displayedStartIndex = Math.max(0, data.length - 50);
-      if (closestIndex >= displayedStartIndex && closestIndex < data.length) {
-        const chartIndex = closestIndex - displayedStartIndex + 1;
-        return {
-          ...event,
-          chartPosition: chartIndex,
-          timeString: eventTimestamp.toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          }),
-        };
-      }
-      return null;
-    })
-    .filter(Boolean);
+        return null;
+      })
+      .filter(Boolean);
+  }, [events, chartData]);
 
   const formatTooltip = (value: any, name: string) => {
     if (name === 'PM1' || name === 'PM25' || name === 'PM10') {
