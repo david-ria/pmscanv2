@@ -23,7 +23,7 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
     name: 'Home',
     icon: '🏠',
     description: 'At home location',
-    allowedActivities: ['rest', 'work', 'indoor', 'cooking', 'cleaning']
+    allowedActivities: ['rest', 'work', 'indoor', 'cooking', 'cleaning', 'bricolage']
   },
   {
     id: 'office',
@@ -224,6 +224,13 @@ export const DEFAULT_ACTIVITIES: ActivityType[] = [
     icon: '🧘',
     description: 'Relaxing outdoors',
     availableAt: ['park']
+  },
+  {
+    id: 'bricolage',
+    name: 'Bricolage',
+    icon: '🔨',
+    description: 'DIY and home improvement activities',
+    availableAt: ['home']
   }
 ];
 
