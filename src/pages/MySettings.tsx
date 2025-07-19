@@ -15,16 +15,13 @@ import { Badge } from '@/components/ui/badge';
 import {
   useUserLocations,
   useUserActivities,
-  useUserAlarms,
   useUserEvents,
   UserLocation,
   UserActivity,
-  UserAlarm,
   UserEvent,
 } from '@/hooks/useUserSettings';
 import { LocationDialog } from '@/components/Settings/LocationDialog';
 import { ActivityDialog } from '@/components/Settings/ActivityDialog';
-import { AlarmDialog } from '@/components/Settings/AlarmDialog';
 import { EventDialog } from '@/components/Settings/EventDialog';
 import { MenuPageHeader } from '@/components/MenuPageHeader';
 import { useTranslation } from 'react-i18next';
@@ -41,12 +38,10 @@ export default function MySettings() {
     loading: activitiesLoading,
     deleteActivity,
   } = useUserActivities();
-  const { alarms, loading: alarmsLoading, deleteAlarm } = useUserAlarms();
   const { events, loading: eventsLoading, deleteEvent } = useUserEvents();
 
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
-  const [alarmDialogOpen, setAlarmDialogOpen] = useState(false);
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
 
   const [editingLocation, setEditingLocation] = useState<
@@ -55,7 +50,6 @@ export default function MySettings() {
   const [editingActivity, setEditingActivity] = useState<
     UserActivity | undefined
   >();
-  const [editingAlarm, setEditingAlarm] = useState<UserAlarm | undefined>();
   const [editingEvent, setEditingEvent] = useState<UserEvent | undefined>();
 
   const handleEditLocation = (location: UserLocation) => {
@@ -66,11 +60,6 @@ export default function MySettings() {
   const handleEditActivity = (activity: UserActivity) => {
     setEditingActivity(activity);
     setActivityDialogOpen(true);
-  };
-
-  const handleEditAlarm = (alarm: UserAlarm) => {
-    setEditingAlarm(alarm);
-    setAlarmDialogOpen(true);
   };
 
   const handleEditEvent = (event: UserEvent) => {
@@ -88,11 +77,6 @@ export default function MySettings() {
     setEditingActivity(undefined);
   };
 
-  const handleCloseAlarmDialog = () => {
-    setAlarmDialogOpen(false);
-    setEditingAlarm(undefined);
-  };
-
   const handleCloseEventDialog = () => {
     setEventDialogOpen(false);
     setEditingEvent(undefined);
@@ -107,36 +91,24 @@ export default function MySettings() {
         />
 
         <Tabs defaultValue="locations" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 h-auto">
+          <TabsList className="grid w-full grid-cols-3 h-auto">
             <TabsTrigger
               value="locations"
               className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 text-xs sm:text-sm"
             >
               <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">
-                {t('mySettings.tabs.locations')}
+                {t('mySettings.tabs.locations')} & {t('mySettings.tabs.activities')}
               </span>
               <span className="sm:hidden">Lieux</span>
             </TabsTrigger>
             <TabsTrigger
-              value="activities"
+              value="autocontext"
               className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 text-xs sm:text-sm"
             >
               <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">
-                {t('mySettings.tabs.activities')}
-              </span>
-              <span className="sm:hidden">Act.</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="alarms"
-              className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 text-xs sm:text-sm"
-            >
-              <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">
-                {t('mySettings.tabs.alarms')}
-              </span>
-              <span className="sm:hidden">Alarm.</span>
+              <span className="hidden sm:inline">Auto Context</span>
+              <span className="sm:hidden">Auto</span>
             </TabsTrigger>
             <TabsTrigger
               value="events"
@@ -150,222 +122,175 @@ export default function MySettings() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="locations" className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-semibold">
-                {t('mySettings.sections.locations')}
-              </h2>
-              <Button onClick={() => setLocationDialogOpen(true)} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">
-                  {t('mySettings.actions.addLocation')}
-                </span>
-                <span className="sm:hidden">Ajouter</span>
-              </Button>
-            </div>
-
-            {locationsLoading ? (
-              <div>{t('common.loading')}</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {locations.map((location) => (
-                  <Card key={location.id}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          {location.name}
-                        </span>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditLocation(location)}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteLocation(location.id)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {location.description && (
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {location.description}
-                        </p>
-                      )}
-                      {location.latitude && location.longitude && (
-                        <p className="text-xs text-muted-foreground">
-                          {location.latitude.toFixed(4)},{' '}
-                          {location.longitude.toFixed(4)}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+          <TabsContent value="locations" className="space-y-6">
+            {/* Locations Section */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-semibold">
+                  {t('mySettings.sections.locations')}
+                </h2>
+                <Button onClick={() => setLocationDialogOpen(true)} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">
+                    {t('mySettings.actions.addLocation')}
+                  </span>
+                  <span className="sm:hidden">Ajouter</span>
+                </Button>
               </div>
-            )}
-          </TabsContent>
 
-          <TabsContent value="activities" className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-semibold">
-                {t('mySettings.sections.activities')}
-              </h2>
-              <Button onClick={() => setActivityDialogOpen(true)} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">
-                  {t('mySettings.actions.addActivity')}
-                </span>
-                <span className="sm:hidden">Ajouter</span>
-              </Button>
+              {locationsLoading ? (
+                <div>{t('common.loading')}</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {locations.map((location) => (
+                    <Card key={location.id}>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center justify-between">
+                          <span className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            {location.name}
+                          </span>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditLocation(location)}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteLocation(location.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {location.description && (
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {location.description}
+                          </p>
+                        )}
+                        {location.latitude && location.longitude && (
+                          <p className="text-xs text-muted-foreground">
+                            {location.latitude.toFixed(4)},{' '}
+                            {location.longitude.toFixed(4)}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {activitiesLoading ? (
-              <div>{t('common.loading')}</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {activities.map((activity) => (
-                  <Card key={activity.id}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <Activity className="h-4 w-4" />
-                          {activity.name}
-                        </span>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditActivity(activity)}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteActivity(activity.id)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {activity.description && (
-                        <p className="text-sm text-muted-foreground">
-                          {activity.description}
-                        </p>
-                      )}
-                      {activity.icon && (
-                        <Badge variant="outline" className="mt-2">
-                          {activity.icon}
-                        </Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+            {/* Activities Section */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-semibold">
+                  {t('mySettings.sections.activities')}
+                </h2>
+                <Button onClick={() => setActivityDialogOpen(true)} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">
+                    {t('mySettings.actions.addActivity')}
+                  </span>
+                  <span className="sm:hidden">Ajouter</span>
+                </Button>
               </div>
-            )}
-          </TabsContent>
 
-          <TabsContent value="alarms" className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-semibold">
-                {t('mySettings.sections.alarms')}
-              </h2>
-              <Button onClick={() => setAlarmDialogOpen(true)} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">
-                  {t('mySettings.actions.addAlarm')}
-                </span>
-                <span className="sm:hidden">Ajouter</span>
-              </Button>
-            </div>
-
-            {alarmsLoading ? (
-              <div>{t('common.loading')}</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {alarms.map((alarm) => (
-                  <Card key={alarm.id}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <Bell className="h-4 w-4" />
-                          {alarm.name}
-                        </span>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditAlarm(alarm)}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteAlarm(alarm.id)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {alarm.pm1_threshold && (
-                          <div className="text-sm">
-                            PM1: {alarm.pm1_threshold} μg/m³
+              {activitiesLoading ? (
+                <div>{t('common.loading')}</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {activities.map((activity) => (
+                    <Card key={activity.id}>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center justify-between">
+                          <span className="flex items-center gap-2">
+                            <Activity className="h-4 w-4" />
+                            {activity.name}
+                          </span>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditActivity(activity)}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteActivity(activity.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {activity.description && (
+                          <p className="text-sm text-muted-foreground">
+                            {activity.description}
+                          </p>
                         )}
-                        {alarm.pm25_threshold && (
-                          <div className="text-sm">
-                            PM2.5: {alarm.pm25_threshold} μg/m³
-                          </div>
-                        )}
-                        {alarm.pm10_threshold && (
-                          <div className="text-sm">
-                            PM10: {alarm.pm10_threshold} μg/m³
-                          </div>
-                        )}
-                        <div className="flex gap-2">
-                          <Badge
-                            variant={alarm.enabled ? 'default' : 'secondary'}
-                          >
-                            {alarm.enabled ? 'Enabled' : 'Disabled'}
+                        {activity.icon && (
+                          <Badge variant="outline" className="mt-2">
+                            {activity.icon}
                           </Badge>
-                          <Badge variant="outline">
-                            {alarm.notification_frequency}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
+
+          <TabsContent value="autocontext" className="space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold">Auto Context Rules</h2>
+              <Button disabled size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Add Rule (Coming Soon)</span>
+                <span className="sm:hidden">Ajouter</span>
+              </Button>
+            </div>
+            
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                Auto context rules automatically detect your location and activity based on:
+              </p>
+              <ul className="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
+                <li>WiFi networks (home/work detection)</li>
+                <li>GPS location and movement speed</li>
+                <li>Time of day and day of week</li>
+                <li>Bluetooth connections (car detection)</li>
+                <li>Weather conditions</li>
+              </ul>
+              <p className="text-sm text-muted-foreground mt-2">
+                Custom rule creation will be available in a future update.
+              </p>
+            </div>
+          </TabsContent>
+
 
           <TabsContent value="events" className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-semibold">My Events</h2>
+              <h2 className="text-lg sm:text-xl font-semibold">{t('mySettings.sections.events')}</h2>
               <Button onClick={() => setEventDialogOpen(true)} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Add Event</span>
+                <span className="hidden sm:inline">{t('mySettings.actions.addEvent')}</span>
                 <span className="sm:hidden">Ajouter</span>
               </Button>
             </div>
 
             {eventsLoading ? (
-              <div>Loading events...</div>
+              <div>{t('common.loading')}</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {events.map((event) => (
@@ -440,12 +365,6 @@ export default function MySettings() {
           open={activityDialogOpen}
           onOpenChange={handleCloseActivityDialog}
           activity={editingActivity}
-        />
-
-        <AlarmDialog
-          open={alarmDialogOpen}
-          onOpenChange={handleCloseAlarmDialog}
-          alarm={editingAlarm}
         />
 
         <EventDialog
