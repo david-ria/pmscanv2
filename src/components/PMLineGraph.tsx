@@ -41,9 +41,7 @@ export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) 
     return data
       // Sort by timestamp to ensure chronological order (oldest to newest)
       .sort((a, b) => a.pmData.timestamp.getTime() - b.pmData.timestamp.getTime())
-      // Take the last 50 data points for performance
-      .slice(-50)
-      // Transform to chart format with sequential indices for X-axis
+      // Show all data points for full recording view
       .map((entry, index) => ({
         time: index + 1, // Sequential index for X-axis (left to right)
         timestamp: entry.pmData.timestamp.toLocaleTimeString('fr-FR', {
@@ -64,6 +62,8 @@ export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) 
   const eventMarkers = React.useMemo(() => {
     if (!events.length || !chartData.length) return [];
     
+    console.log('Processing events for chart:', events.length, 'events, ', chartData.length, 'data points');
+    
     return events
       .map((event) => {
         // Ensure timestamp is a Date object
@@ -72,7 +72,7 @@ export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) 
         let closestIndex = -1;
         let minTimeDiff = Infinity;
         
-        // Find closest data point in the chartData (which is already sorted and sliced)
+        // Find closest data point in the chartData
         chartData.forEach((entry, index) => {
           const entryTime = entry.fullTimestamp.getTime();
           const timeDiff = Math.abs(entryTime - eventTime);
@@ -82,8 +82,9 @@ export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) 
           }
         });
         
-        // If we found a close match within the displayed data
-        if (closestIndex >= 0) {
+        // Allow events within 60 seconds of data points
+        if (closestIndex >= 0 && minTimeDiff < 60000) {
+          console.log('Event matched to chart:', event.event_type, 'at position', closestIndex + 1);
           return {
             ...event,
             chartPosition: closestIndex + 1, // chartData uses 1-based indexing for time
@@ -94,6 +95,7 @@ export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) 
             }),
           };
         }
+        console.log('Event not matched:', event.event_type, 'time diff:', minTimeDiff);
         return null;
       })
       .filter(Boolean);
@@ -158,8 +160,9 @@ export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) 
             textAnchor="end"
             height={60}
             tickFormatter={(value, index) => {
-              // Show every 5th tick to avoid crowding
-              return index % 5 === 0 ? chartData[index]?.timestamp || '' : '';
+              // Show fewer ticks for larger datasets to avoid crowding
+              const interval = Math.max(1, Math.floor(chartData.length / 10));
+              return index % interval === 0 ? chartData[index]?.timestamp || '' : '';
             }}
           />
           <YAxis
