@@ -100,11 +100,32 @@ export default function RealTime() {
 
         // Update context at recording frequency and get the current context
         const handleContextAndDataPoint = async () => {
+          // Calculate speed and movement from GPS data
+          let speed = 0;
+          let isMoving = false;
+          
+          if (latestLocation) {
+            const { updateLocationHistory } = await import('@/utils/speedCalculator');
+            const speedData = updateLocationHistory(
+              latestLocation.latitude,
+              latestLocation.longitude,
+              latestLocation.timestamp
+            );
+            speed = speedData.speed;
+            isMoving = speedData.isMoving;
+            
+            console.log('🏃 Movement detection:', {
+              speed: `${speed} km/h`,
+              isMoving,
+              location: `${latestLocation.latitude}, ${latestLocation.longitude}`
+            });
+          }
+          
           const automaticContext = await updateContextIfNeeded(
             currentData,
             latestLocation || undefined,
-            0, // Would need to calculate from GPS data
-            false // Would need to determine from sensors
+            speed,
+            isMoving
           );
 
           // DO NOT override user's manual activity selection
@@ -134,6 +155,16 @@ export default function RealTime() {
     missionContext,
     updateContextIfNeeded,
   ]);
+
+  // Clear location history when recording starts for fresh speed calculations
+  useEffect(() => {
+    if (isRecording) {
+      import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
+        clearLocationHistory();
+        console.log('🏃 Cleared location history for new recording session');
+      });
+    }
+  }, [isRecording]);
 
   // Initial autocontext effect - runs only when autocontext is toggled
   useEffect(() => {

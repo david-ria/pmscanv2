@@ -92,14 +92,37 @@ export interface AutoContextEvaluationData {
   };
 }
 
-// Streamlined rules with conflicts removed
+// Streamlined rules with conflicts removed and better driving detection
 export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
-  // Highest priority: Car bluetooth (overrides everything when driving)
+  // Highest priority: Speed-based driving detection (most reliable)
   {
-    id: 'driving-car',
-    name: 'Driving',
-    description: 'Car bluetooth connected with movement',
+    id: 'driving-high-speed',
+    name: 'High-speed driving',
+    description: 'Very high speed movement (>30 km/h) indicates driving',
     priority: 100,
+    conditions: {
+      movement: { speed: { min: 30 } },
+    },
+    result: 'Driving',
+  },
+  
+  {
+    id: 'driving-medium-speed',
+    name: 'Medium-speed driving',
+    description: 'Medium speed movement (>20 km/h) indicates vehicle transport',
+    priority: 95,
+    conditions: {
+      movement: { speed: { min: 20 } },
+    },
+    result: 'Driving',
+  },
+
+  // Car bluetooth detection (when available)
+  {
+    id: 'driving-car-bluetooth',
+    name: 'Car bluetooth driving',
+    description: 'Car bluetooth connected with movement',
+    priority: 90,
     conditions: {
       connectivity: { carBluetooth: true },
       movement: { speed: { min: 5 } },
@@ -107,190 +130,164 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     result: 'Driving',
   },
 
-  // High priority: Speed-based driving detection
+  // Medium-high priority: Outdoor movement
   {
-    id: 'driving-speed',
-    name: 'Driving (speed)',
-    description: 'High speed movement (>15 km/h) indicates driving',
-    priority: 95,
+    id: 'outdoor-cycling',
+    name: 'Cycling',
+    description: 'Medium speed outdoor movement (8-19 km/h)',
+    priority: 85,
     conditions: {
-      movement: { speed: { min: 15 } },
+      location: { gpsQuality: 'good' },
+      movement: { speed: { min: 8, max: 19 } },
     },
-    result: 'Driving',
+    result: 'Outdoor cycling',
+  },
+  
+  {
+    id: 'outdoor-walking',
+    name: 'Walking',
+    description: 'Slow outdoor movement (2-7 km/h)',
+    priority: 80,
+    conditions: {
+      location: { gpsQuality: 'good' },
+      movement: { speed: { min: 2, max: 7 } },
+    },
+    result: 'Outdoor walking',
   },
 
-  // High priority: WiFi-based context detection
+  // WiFi-based detection with time restrictions (LOWER priority than movement)
   {
     id: 'wifi-work-hours',
     name: 'Indoor work',
-    description: 'Connected to any WiFi during working hours (weekdays 9-18)',
-    priority: 90,
+    description: 'Connected to WiFi during working hours (weekdays 9-18), stationary',
+    priority: 70,
     conditions: {
-      wifi: { known: true }, // Any WiFi connection
+      wifi: { known: true },
       time: { 
         hourRange: { start: 9, end: 18 },
-        isWeekend: false // Only apply during weekdays
+        isWeekend: false
       },
+      movement: { speed: { max: 2 } }, // Must be stationary
     },
     result: 'Indoor at work',
   },
   {
     id: 'wifi-home-evening',
     name: 'Indoor home (evening)',
-    description: 'Connected to any WiFi during evening hours (after 18:00)',
-    priority: 85,
+    description: 'Connected to WiFi during evening hours (after 18:00), stationary',
+    priority: 65,
     conditions: {
-      wifi: { known: true }, // Any WiFi connection
+      wifi: { known: true },
       time: { hourRange: { start: 18, end: 23 } },
+      movement: { speed: { max: 2 } }, // Must be stationary
     },
     result: 'Indoor at home',
   },
   {
     id: 'wifi-home-morning',
     name: 'Indoor home (morning)',
-    description: 'Connected to any WiFi during morning hours (before 9:00)',
-    priority: 85,
+    description: 'Connected to WiFi during morning hours (before 9:00), stationary',
+    priority: 65,
     conditions: {
-      wifi: { known: true }, // Any WiFi connection
-      time: { hourRange: { start: 0, end: 9 } },
+      wifi: { known: true },
+      time: { hourRange: { start: 6, end: 9 } },
+      movement: { speed: { max: 2 } }, // Must be stationary
     },
     result: 'Indoor at home',
   },
   {
     id: 'wifi-home-weekend',
     name: 'Indoor home (weekend)',
-    description: 'Connected to any WiFi during weekends',
-    priority: 85,
+    description: 'Connected to WiFi during weekends, stationary',
+    priority: 60,
     conditions: {
-      wifi: { known: true }, // Any WiFi connection
+      wifi: { known: true },
       time: { isWeekend: true },
+      movement: { speed: { max: 2 } }, // Must be stationary
     },
     result: 'Indoor at home',
   },
 
-  // Medium priority: Movement-based outdoor activities
+  // Lower priority: General outdoor activities
   {
-    id: 'outdoor-transport',
-    name: 'High-speed transport',
-    description: 'High speed movement without car bluetooth',
-    priority: 75,
+    id: 'outdoor-stationary',
+    name: 'Outdoor stationary',
+    description: 'Good GPS signal, stationary, no WiFi',
+    priority: 55,
     conditions: {
       location: { gpsQuality: 'good' },
-      movement: { speed: { min: 25 } },
-      connectivity: { carBluetooth: false },
+      movement: { speed: { max: 2 } },
+      wifi: { known: false }, // No WiFi connection
     },
-    result: 'Outdoor transport',
-  },
-  {
-    id: 'outdoor-cycling',
-    name: 'Cycling',
-    description: 'Medium speed outdoor movement',
-    priority: 70,
-    conditions: {
-      location: { gpsQuality: 'good' },
-      movement: { speed: { min: 8, max: 24 } },
-    },
-    result: 'Outdoor cycling',
-  },
-  {
-    id: 'outdoor-walking',
-    name: 'Walking',
-    description: 'Slow outdoor movement',
-    priority: 65,
-    conditions: {
-      location: { gpsQuality: 'good' },
-      movement: { speed: { max: 7 } },
-    },
-    result: 'Outdoor walking',
+    result: 'Outdoor',
   },
 
-  // Time-based fallback rules (no WiFi dependency)
+  // Time-based fallback rules (very low priority)
   {
     id: 'time-work-hours',
     name: 'Work hours',
-    description: 'During typical work hours on weekdays',
-    priority: 60,
+    description: 'During work hours on weekdays, stationary',
+    priority: 45,
     conditions: {
       time: { hourRange: { start: 9, end: 18 }, isWeekend: false },
+      movement: { speed: { max: 2 } },
     },
     result: 'At work',
   },
   {
     id: 'time-evening-home',
     name: 'Evening at home',
-    description: 'Evening hours suggest home',
-    priority: 58,
+    description: 'Evening hours, stationary',
+    priority: 40,
     conditions: {
       time: { hourRange: { start: 18, end: 23 } },
+      movement: { speed: { max: 2 } },
     },
     result: 'At home',
   },
   {
     id: 'time-morning-home',
     name: 'Morning at home',
-    description: 'Early morning hours suggest home',
-    priority: 58,
-    conditions: {
-      time: { hourRange: { start: 6, end: 9 } },
-    },
-    result: 'At home',
-  },
-  {
-    id: 'time-weekend-home',
-    name: 'Weekend at home',
-    description: 'Weekend time suggests home',
-    priority: 55,
-    conditions: {
-      time: { isWeekend: true },
-      movement: { speed: { max: 5 } },
-    },
-    result: 'At home',
-  },
-
-  // Lower priority: Area-based detection
-  {
-    id: 'gps-home-outdoor',
-    name: 'Outdoor at home',
-    description: 'Good GPS in home area without home WiFi',
-    priority: 50,
-    conditions: {
-      location: { insideHome: true, gpsQuality: 'good' },
-      wifi: { home: false },
-      movement: { speed: { max: 5 } },
-    },
-    result: 'Outdoor at home',
-  },
-  {
-    id: 'gps-work-outdoor',
-    name: 'Outdoor at work',
-    description: 'Good GPS in work area without work WiFi',
-    priority: 45,
-    conditions: {
-      location: { insideWork: true, gpsQuality: 'good' },
-      wifi: { work: false },
-      movement: { speed: { max: 5 } },
-    },
-    result: 'Outdoor at work',
-  },
-
-  // Fallback rules
-  {
-    id: 'generic-outdoor',
-    name: 'Generic outdoor',
-    description: 'Good GPS outside known areas',
+    description: 'Early morning hours, stationary',
     priority: 40,
     conditions: {
-      location: { insideHome: false, insideWork: false, gpsQuality: 'good' },
+      time: { hourRange: { start: 6, end: 9 } },
+      movement: { speed: { max: 2 } },
+    },
+    result: 'At home',
+  },
+
+  // Fallback rules (lowest priority)
+  {
+    id: 'generic-indoor-wifi',
+    name: 'Generic indoor (WiFi)',
+    description: 'Connected to WiFi, stationary',
+    priority: 30,
+    conditions: {
+      wifi: { known: true },
+      movement: { speed: { max: 2 } },
+    },
+    result: 'Indoor',
+  },
+  {
+    id: 'generic-outdoor-moving',
+    name: 'Generic outdoor (moving)',
+    description: 'Moving with good GPS, no WiFi',
+    priority: 25,
+    conditions: {
+      location: { gpsQuality: 'good' },
+      movement: { isMoving: true },
+      wifi: { known: false },
     },
     result: 'Outdoor',
   },
   {
-    id: 'generic-indoor',
-    name: 'Generic indoor',
-    description: 'Default indoor when conditions unclear',
+    id: 'generic-unknown',
+    name: 'Unknown context',
+    description: 'Cannot determine context',
     priority: 10,
     conditions: {},
-    result: 'Indoor',
+    result: 'Unknown',
   },
 ];
 

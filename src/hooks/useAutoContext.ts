@@ -151,30 +151,32 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
       });
       
       // Check if connection type indicates WiFi
-      if (connectionType === 'wifi' || 
-          connectionType === 'ethernet' || 
-          (effectiveType && ['4g', '3g'].includes(effectiveType) && connection.downlink > 1)) {
-        console.log('WiFi detection - detected WiFi/high-speed connection');
-        return 'WiFi-Connection'; // Generic WiFi name since we can't get SSID
+      if (connectionType === 'wifi' || connectionType === 'ethernet') {
+        console.log('WiFi detection - detected WiFi connection');
+        return 'WiFi-Connection';
       } else if (connectionType === 'cellular') {
         console.log('WiFi detection - detected cellular connection');
         return '';
+      } else if (effectiveType && ['4g', '3g'].includes(effectiveType)) {
+        // High-speed connection but unclear type - be conservative
+        console.log('WiFi detection - high-speed connection, type unclear');
+        return ''; // Don't assume WiFi
       }
     }
     
-    // Fallback: if Network Information API not available, 
-    // assume WiFi if online (better than nothing)
-    console.log('WiFi detection - Network API not available, assuming WiFi if online');
-    return navigator.onLine ? 'WiFi-Connection' : '';
+    // Fallback: don't assume WiFi if we can't detect it properly
+    console.log('WiFi detection - Network API not available or inconclusive, not assuming WiFi');
+    return '';
   }, []);
 
-  // Check if connected to car bluetooth
+  // Check if connected to car bluetooth (or simulate driving detection on web)
   const isConnectedToCarBluetooth = useCallback(async (): Promise<boolean> => {
     try {
       // Only use Bluetooth on native platforms
       if (!Capacitor.isNativePlatform()) {
-        logger.debug('Bluetooth: Not available on web platform');
-        return false;
+        // On web platforms, use speed-based detection as a proxy for driving
+        logger.debug('Bluetooth: Web platform - using speed-based car detection');
+        return false; // Let speed detection handle it
       }
 
       // Initialize BLE if not already done
@@ -530,8 +532,15 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
         }
       }
 
-      // Override ML predictions for car bluetooth detection (highest priority)
-      if (isCarConnected && speed > 5) {
+      // Override for high-speed movement detection (enhanced driving detection)
+      if (speed > 15) { // 15 km/h or higher indicates likely vehicle transport
+        if (speed > 25) {
+          state = 'Driving'; // High confidence driving
+        } else {
+          state = 'Transport'; // Could be bus, bike, etc.
+        }
+        logger.debug(`🚗 Override context to ${state} due to speed: ${speed} km/h`);
+      } else if (isCarConnected && speed > 5) {
         state = 'Driving';
         logger.debug(`🚗 Override context to Driving due to car bluetooth + speed`);
       }
