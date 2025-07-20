@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getGroupConfig, type GroupConfig } from '@/lib/groupConfigs';
+import { getGroupConfig, type GroupConfig, type GroupThreshold, type GroupAlarm } from '@/lib/groupConfigs';
 import { useToast } from '@/hooks/use-toast';
 import * as logger from '@/utils/logger';
+import { DEFAULT_THRESHOLDS } from '@/config/constants';
+import { DEFAULT_LOCATIONS, DEFAULT_ACTIVITIES, getLocationName, getActivityName } from '@/lib/locationsActivities';
 
 export const useGroupSettings = () => {
   const [searchParams] = useSearchParams();
@@ -112,12 +114,54 @@ export const useGroupSettings = () => {
   };
 
   // Helper to get current thresholds (group or default)
-  const getCurrentThresholds = () => {
+  const getCurrentThresholds = (): GroupThreshold[] => {
     if (activeGroup) {
       return activeGroup.thresholds;
     }
-    // Return empty array if no group - components should handle their own defaults
-    return [];
+    // Return default thresholds when not in group mode
+    return [
+      {
+        name: 'Good',
+        pm25_min: 0,
+        pm25_max: DEFAULT_THRESHOLDS.pm25.good,
+        pm10_min: 0,
+        pm10_max: DEFAULT_THRESHOLDS.pm10.good,
+        pm1_min: 0,
+        pm1_max: DEFAULT_THRESHOLDS.pm1.good,
+        color: '#22c55e',
+        enabled: true,
+      },
+      {
+        name: 'Moderate',
+        pm25_min: DEFAULT_THRESHOLDS.pm25.good,
+        pm25_max: DEFAULT_THRESHOLDS.pm25.moderate,
+        pm10_min: DEFAULT_THRESHOLDS.pm10.good,
+        pm10_max: DEFAULT_THRESHOLDS.pm10.moderate,
+        pm1_min: DEFAULT_THRESHOLDS.pm1.good,
+        pm1_max: DEFAULT_THRESHOLDS.pm1.moderate,
+        color: '#eab308',
+        enabled: true,
+      },
+      {
+        name: 'Poor',
+        pm25_min: DEFAULT_THRESHOLDS.pm25.moderate,
+        pm25_max: DEFAULT_THRESHOLDS.pm25.poor,
+        pm10_min: DEFAULT_THRESHOLDS.pm10.moderate,
+        pm10_max: DEFAULT_THRESHOLDS.pm10.poor,
+        pm1_min: DEFAULT_THRESHOLDS.pm1.moderate,
+        pm1_max: DEFAULT_THRESHOLDS.pm1.poor,
+        color: '#f97316',
+        enabled: true,
+      },
+      {
+        name: 'Very Poor',
+        pm25_min: DEFAULT_THRESHOLDS.pm25.poor,
+        pm10_min: DEFAULT_THRESHOLDS.pm10.poor,
+        pm1_min: DEFAULT_THRESHOLDS.pm1.poor,
+        color: '#ef4444',
+        enabled: true,
+      },
+    ];
   };
 
   // Helper to get current settings (group or default)
@@ -125,14 +169,43 @@ export const useGroupSettings = () => {
     if (activeGroup) {
       return activeGroup.settings;
     }
-    // Return null if no group - components should handle their own defaults
-    return null;
+    // Return default settings when not in group mode
+    return {
+      pm25_threshold: DEFAULT_THRESHOLDS.pm25.moderate,
+      pm10_threshold: DEFAULT_THRESHOLDS.pm10.moderate,
+      pm1_threshold: DEFAULT_THRESHOLDS.pm1.moderate,
+      alarm_enabled: true,
+      auto_share_stats: false,
+      notification_frequency: 'immediate' as const,
+      location_auto_detect: false,
+      activity_auto_suggest: false,
+      event_notifications: true,
+      weekly_reports: false,
+    };
   };
 
-  const getCurrentAlarms = () => {
+  const getCurrentAlarms = (): GroupAlarm[] => {
     if (activeGroup) {
       return activeGroup.alarms;
     }
+    // Return default alarm when not in group mode
+    return [
+      {
+        name: 'Air Quality Alert',
+        pm25_threshold: DEFAULT_THRESHOLDS.pm25.moderate,
+        pm10_threshold: DEFAULT_THRESHOLDS.pm10.moderate,
+        pm1_threshold: DEFAULT_THRESHOLDS.pm1.moderate,
+        enabled: false, // Disabled by default for individual users
+        notification_frequency: 'immediate',
+      },
+    ];
+  };
+
+  const getCurrentEvents = () => {
+    if (activeGroup) {
+      return activeGroup.events;
+    }
+    // Return empty array for events when not in group mode (no default events needed)
     return [];
   };
 
@@ -140,21 +213,23 @@ export const useGroupSettings = () => {
     if (activeGroup) {
       return activeGroup.locations;
     }
-    return [];
+    // Return default locations when not in group mode
+    return DEFAULT_LOCATIONS.map((loc) => ({ 
+      name: loc.name, 
+      description: loc.description 
+    }));
   };
 
   const getCurrentActivities = () => {
     if (activeGroup) {
       return activeGroup.activities;
     }
-    return [];
-  };
-
-  const getCurrentEvents = () => {
-    if (activeGroup) {
-      return activeGroup.events;
-    }
-    return [];
+    // Return default activities when not in group mode
+    return DEFAULT_ACTIVITIES.map((activity) => ({ 
+      name: activity.name, 
+      description: activity.description,
+      icon: activity.icon 
+    }));
   };
 
   return {
