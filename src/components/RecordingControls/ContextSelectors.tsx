@@ -37,7 +37,7 @@ export function ContextSelectors({
   const { getCurrentLocations, getCurrentActivities, isGroupMode } =
     useGroupSettings();
 
-  // Use group locations if in group mode, otherwise use static locations
+  // Use group locations if in group mode, otherwise use static DEFAULT_LOCATIONS as fallback
   const locations = isGroupMode
     ? getCurrentLocations()
     : DEFAULT_LOCATIONS.map((loc) => ({ 
