@@ -275,6 +275,13 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
     }
     
     console.log('Generated context periods:', periods);
+    console.log('Periods details:', periods.map(p => ({
+      label: p.label,
+      start: p.start,
+      end: p.end,
+      duration: p.end - p.start,
+      pm25Average: p.pm25Average.toFixed(1)
+    })));
     return periods;
   }, [chartData, highlightContextType, missionContext, getContextColor]);
 
