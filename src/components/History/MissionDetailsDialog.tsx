@@ -44,8 +44,48 @@ export function MissionDetailsDialog({
   const { getEventsByMission } = useEvents();
   const [events, setEvents] = useState<any[]>([]);
   
-  // Context highlighting state
-  const [selectedContextType, setSelectedContextType] = useState<'none' | 'location' | 'activity' | 'autocontext'>('none');
+  // Context highlighting state - automatically select first available context
+  const [selectedContextType, setSelectedContextType] = useState<'none' | 'location' | 'activity' | 'autocontext'>(() => {
+    if (!mission) return 'none';
+    
+    // Check for available contexts and auto-select the first one
+    const hasLocationContext = !!(mission.locationContext || 
+      mission.measurements.some(m => m.locationContext));
+    const hasActivityContext = !!(mission.activityContext || 
+      mission.measurements.some(m => m.activityContext));
+    const hasAutoContext = mission.measurements.some(m => 
+      m.automaticContext && m.automaticContext !== 'unknown');
+    
+    // Auto-select first available context type
+    if (hasLocationContext) return 'location';
+    if (hasActivityContext) return 'activity'; 
+    if (hasAutoContext) return 'autocontext';
+    
+    return 'none';
+  });
+
+  // Auto-select context type when mission changes
+  useEffect(() => {
+    if (mission) {
+      const hasLocationContext = !!(mission.locationContext || 
+        mission.measurements.some(m => m.locationContext));
+      const hasActivityContext = !!(mission.activityContext || 
+        mission.measurements.some(m => m.activityContext));
+      const hasAutoContext = mission.measurements.some(m => 
+        m.automaticContext && m.automaticContext !== 'unknown');
+      
+      // Auto-select first available context type
+      if (hasLocationContext) {
+        setSelectedContextType('location');
+      } else if (hasActivityContext) {
+        setSelectedContextType('activity');
+      } else if (hasAutoContext) {
+        setSelectedContextType('autocontext');
+      } else {
+        setSelectedContextType('none');
+      }
+    }
+  }, [mission]);
 
   // Load events for this mission
   useEffect(() => {

@@ -93,7 +93,12 @@ export function MapGraphToggle({
       {/* Content Area */}
       <div className="h-[45vh] relative">
         {showGraph ? (
-          <PMLineGraph data={recordingData} events={events} className="h-full" />
+          <PMLineGraph 
+            data={recordingData} 
+            events={events} 
+            className="h-full"
+            highlightContextType="location"
+          />
         ) : (
           <>
             {isOnline ? (
