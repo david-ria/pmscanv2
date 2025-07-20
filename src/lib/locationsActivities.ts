@@ -23,7 +23,7 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
     name: 'Home',
     icon: '🏠',
     description: 'At home location',
-    allowedActivities: ['rest', 'work', 'indoor', 'cooking', 'cleaning', 'bricolage']
+    allowedActivities: ['rest', 'work', 'indoor', 'cooking', 'cleaning', 'DIY']
   },
   {
     id: 'office',
@@ -40,18 +40,18 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
     allowedActivities: ['indoor', 'studying', 'classroom', 'sport']
   },
   {
-    id: 'park',
-    name: 'Park',
+    id: 'indoor',
+    name: 'Indoor',
     icon: '🌳',
-    description: 'In a park or green space',
-    allowedActivities: ['walking', 'cycling', 'sport', 'outdoor', 'jogging', 'relaxing']
+    description: 'Indoor air different than work and home',
+    allowedActivities: ['shopping', 'parking', 'underground', 'outdoor', 'jogging', 'relaxing']
   },
   {
-    id: 'mainStreet',
-    name: 'Main street',
+    id: 'Outdoor',
+    name: 'Outdoor',
     icon: '🏙️',
-    description: 'On main streets or city center',
-    allowedActivities: ['walking', 'shopping', 'outdoor', 'waiting']
+    description: 'Outdoor activities in open air',
+    allowedActivities: ['walking', 'cycling', 'outdoor', 'jogging']
   },
   {
     id: 'transport',
@@ -226,11 +226,18 @@ export const DEFAULT_ACTIVITIES: ActivityType[] = [
     availableAt: ['park']
   },
   {
-    id: 'bricolage',
-    name: 'Bricolage',
+    id: 'DIY',
+    name: 'DIY',
     icon: '🔨',
     description: 'DIY and home improvement activities',
     availableAt: ['home']
+  },
+  {
+    id: 'Parking',
+    name: 'Parking',
+    icon: '🚗',
+    description: 'Underground parking',
+    availableAt: ['indoor']
   }
 ];
 
