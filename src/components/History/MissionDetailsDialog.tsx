@@ -136,6 +136,54 @@ export function MissionDetailsDialog({
     },
   };
 
+  // Calculate context-based averages
+  const calculateContextAverages = (contextType: 'location' | 'activity' | 'autocontext') => {
+    const contextMap = new Map<string, { pm1: number[], pm25: number[], pm10: number[] }>();
+    
+    mission.measurements.forEach((measurement) => {
+      let contextValue: string | undefined;
+      
+      switch (contextType) {
+        case 'location':
+          contextValue = measurement.locationContext || mission.locationContext;
+          break;
+        case 'activity':
+          contextValue = measurement.activityContext || mission.activityContext;
+          break;
+        case 'autocontext':
+          contextValue = measurement.automaticContext;
+          break;
+      }
+      
+      if (contextValue && contextValue !== 'unknown') {
+        if (!contextMap.has(contextValue)) {
+          contextMap.set(contextValue, { pm1: [], pm25: [], pm10: [] });
+        }
+        const context = contextMap.get(contextValue)!;
+        context.pm1.push(measurement.pm1);
+        context.pm25.push(measurement.pm25);
+        context.pm10.push(measurement.pm10);
+      }
+    });
+    
+    const averages: Record<string, { pm1: number, pm25: number, pm10: number }> = {};
+    contextMap.forEach((values, context) => {
+      averages[context] = {
+        pm1: values.pm1.length > 0 ? values.pm1.reduce((sum, val) => sum + val, 0) / values.pm1.length : 0,
+        pm25: values.pm25.length > 0 ? values.pm25.reduce((sum, val) => sum + val, 0) / values.pm25.length : 0,
+        pm10: values.pm10.length > 0 ? values.pm10.reduce((sum, val) => sum + val, 0) / values.pm10.length : 0,
+      };
+    });
+    
+    return averages;
+  };
+
+  const contextStats = {
+    location: calculateContextAverages('location'),
+    activity: calculateContextAverages('activity'),
+    autocontext: calculateContextAverages('autocontext'),
+  };
+
   const getQualityColor = (pm25: number) => {
     if (pm25 <= 12) return 'text-air-good';
     if (pm25 <= 35) return 'text-air-moderate';
@@ -284,112 +332,154 @@ export function MissionDetailsDialog({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* PM1 Stats */}
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm text-muted-foreground">
-                    PM1.0 (µg/m³)
-                  </h4>
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {t('history.average')}:
-                      </span>
-                      <span className="text-sm font-medium">
-                        {stats.pm1.avg.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {t('history.minimum')}:
-                      </span>
-                      <span className="text-sm font-medium">
-                        {stats.pm1.min.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {t('history.maximum')}:
-                      </span>
-                      <span className="text-sm font-medium">
-                        {stats.pm1.max.toFixed(1)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* PM2.5 Stats */}
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm text-muted-foreground">
-                    PM2.5 (µg/m³)
-                  </h4>
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {t('history.average')}:
-                      </span>
-                      <span
-                        className={`text-sm font-medium ${getQualityColor(stats.pm25.avg)}`}
-                      >
-                        {stats.pm25.avg.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {t('history.minimum')}:
-                      </span>
-                      <span
-                        className={`text-sm font-medium ${getQualityColor(stats.pm25.min)}`}
-                      >
-                        {stats.pm25.min.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {t('history.maximum')}:
-                      </span>
-                      <span
-                        className={`text-sm font-medium ${getQualityColor(stats.pm25.max)}`}
-                      >
-                        {stats.pm25.max.toFixed(1)}
-                      </span>
+              {/* Overall Statistics */}
+              <div className="mb-6">
+                <h4 className="font-medium text-sm text-muted-foreground mb-3">
+                  Overall Averages
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* PM1 Stats */}
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm text-muted-foreground">
+                      PM1.0 (µg/m³)
+                    </h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {t('history.average')}:
+                        </span>
+                        <span className="text-sm font-medium">
+                          {stats.pm1.avg.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {t('history.minimum')}:
+                        </span>
+                        <span className="text-sm font-medium">
+                          {stats.pm1.min.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {t('history.maximum')}:
+                        </span>
+                        <span className="text-sm font-medium">
+                          {stats.pm1.max.toFixed(1)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* PM10 Stats */}
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm text-muted-foreground">
-                    PM10 (µg/m³)
-                  </h4>
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {t('history.average')}:
-                      </span>
-                      <span className="text-sm font-medium">
-                        {stats.pm10.avg.toFixed(1)}
-                      </span>
+                  {/* PM2.5 Stats */}
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm text-muted-foreground">
+                      PM2.5 (µg/m³)
+                    </h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {t('history.average')}:
+                        </span>
+                        <span
+                          className={`text-sm font-medium ${getQualityColor(stats.pm25.avg)}`}
+                        >
+                          {stats.pm25.avg.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {t('history.minimum')}:
+                        </span>
+                        <span
+                          className={`text-sm font-medium ${getQualityColor(stats.pm25.min)}`}
+                        >
+                          {stats.pm25.min.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {t('history.maximum')}:
+                        </span>
+                        <span
+                          className={`text-sm font-medium ${getQualityColor(stats.pm25.max)}`}
+                        >
+                          {stats.pm25.max.toFixed(1)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {t('history.minimum')}:
-                      </span>
-                      <span className="text-sm font-medium">
-                        {stats.pm10.min.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {t('history.maximum')}:
-                      </span>
-                      <span className="text-sm font-medium">
-                        {stats.pm10.max.toFixed(1)}
-                      </span>
+                  </div>
+
+                  {/* PM10 Stats */}
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm text-muted-foreground">
+                      PM10 (µg/m³)
+                    </h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {t('history.average')}:
+                        </span>
+                        <span className="text-sm font-medium">
+                          {stats.pm10.avg.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {t('history.minimum')}:
+                        </span>
+                        <span className="text-sm font-medium">
+                          {stats.pm10.min.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {t('history.maximum')}:
+                        </span>
+                        <span className="text-sm font-medium">
+                          {stats.pm10.max.toFixed(1)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+
+              {/* Context-based Statistics */}
+              {Object.entries(contextStats).map(([contextType, stats]) => {
+                if (Object.keys(stats).length === 0) return null;
+                
+                return (
+                  <div key={contextType} className="mb-6">
+                    <h4 className="font-medium text-sm text-muted-foreground mb-3 capitalize">
+                      Averages by {contextType}
+                    </h4>
+                    <div className="grid grid-cols-1 gap-4">
+                      {Object.entries(stats).map(([context, values]) => (
+                        <div key={context} className="border rounded-lg p-3 bg-card">
+                          <h5 className="font-medium text-sm mb-2 capitalize">{context}</h5>
+                          <div className="grid grid-cols-3 gap-4 text-xs">
+                            <div className="text-center">
+                              <div className="text-muted-foreground">PM1.0</div>
+                              <div className="font-medium">{values.pm1.toFixed(1)} µg/m³</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-muted-foreground">PM2.5</div>
+                              <div className={`font-medium ${getQualityColor(values.pm25)}`}>
+                                {values.pm25.toFixed(1)} µg/m³
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-muted-foreground">PM10</div>
+                              <div className="font-medium">{values.pm10.toFixed(1)} µg/m³</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
 
