@@ -74,7 +74,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
   const { weatherData } = useWeatherService();
   
   // Hook pour les capteurs de détection des transports souterrains
-  const { sensorData, updateGPSAccuracy, detectUndergroundActivity, startSensorListening, stopSensorListening } = useSensorData();
+  const { sensorData, updateGPSAccuracy, updateAltitudeFromGPS, detectUndergroundActivity, startSensorListening, stopSensorListening } = useSensorData();
 
   const toggleEnabled = useCallback(() => {
     updateSettings({ enabled: !settings.enabled });
@@ -454,8 +454,11 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
           ? 'good'
           : 'poor';
       
-      // Mise à jour de la précision GPS pour les capteurs
+      // Mise à jour de la précision GPS et altitude pour les capteurs
       updateGPSAccuracy(location?.accuracy);
+      if (location?.altitude !== undefined) {
+        updateAltitudeFromGPS(location.altitude);
+      }
       
       // NOUVELLE LOGIQUE : Détection des transports souterrains
       // Si forte imprécision GPS (>100m ou pas de signal), utiliser le modèle de capteurs
