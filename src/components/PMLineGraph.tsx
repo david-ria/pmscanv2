@@ -129,12 +129,31 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
     chartData.forEach((entry, index) => {
       const { context } = entry;
       
+      // Debug logging
+      if (index === 0) {
+        console.log('PMLineGraph context debug:', {
+          highlightContextType,
+          measurementContext: context,
+          missionContext,
+          sampleEntry: entry
+        });
+      }
+      
       // Get context value from measurement level first, then fall back to mission level
       const contextValue = 
         highlightContextType === 'location' ? (context?.locationContext || missionContext?.locationContext) :
         highlightContextType === 'activity' ? (context?.activityContext || missionContext?.activityContext) :
         highlightContextType === 'autocontext' ? context?.automaticContext :
         undefined;
+      
+      // Debug logging for context values
+      if (index < 3) {
+        console.log(`Entry ${index} context:`, {
+          contextValue,
+          measurementLevel: context,
+          missionLevel: missionContext
+        });
+      }
       
       if (contextValue && contextValue !== 'unknown') {
         if (currentStart === -1 || currentLabel !== contextValue) {
@@ -178,6 +197,7 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       });
     }
     
+    console.log('Generated context periods:', periods);
     return periods;
   }, [chartData, highlightContextType, missionContext]);
 
@@ -301,15 +321,22 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
               />
               <ReferenceLine
                 x={period.start + (period.end - period.start) / 2}
-                stroke={period.color}
+                stroke="transparent"
                 strokeWidth={0}
                 label={{
                   value: period.label,
                   position: 'top',
-                  fontSize: 11,
+                  fontSize: 12,
                   fill: period.color,
                   textAnchor: 'middle',
                   fontWeight: 'bold',
+                  offset: 10,
+                  style: {
+                    textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
+                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    padding: '2px 4px',
+                    borderRadius: '4px'
+                  }
                 }}
               />
             </React.Fragment>
