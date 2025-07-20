@@ -391,7 +391,7 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
                   fill: '#ef4444',
                   textAnchor: 'middle',
                   fontWeight: 'bold',
-                  offset: -25,
+                  offset: 5,
                   style: {
                     textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
                     fontWeight: 'bold'
@@ -409,7 +409,7 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
                   fill: period.color,
                   textAnchor: 'middle',
                   fontWeight: 'bold',
-                  offset: -5,
+                  offset: 25,
                   style: {
                     textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
                     fontWeight: 'bold'
