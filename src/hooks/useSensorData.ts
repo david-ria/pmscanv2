@@ -3,7 +3,7 @@ import { Motion } from '@capacitor/motion';
 import * as logger from '@/utils/logger';
 
 interface SensorData {
-  barometer_relativeAltitude?: number;
+  barometer_relativeAltitude?: number; // Altitude relative depuis le début du trajet
   magnetometer_x?: number;
   magnetometer_y?: number;
   magnetometer_z?: number;
@@ -15,6 +15,9 @@ interface SensorData {
   rotationRate_x?: number;
   rotationRate_y?: number;
   rotationRate_z?: number;
+  // Données de référence pour calculs relatifs
+  referenceAltitude?: number;
+  referencePressure?: number;
 }
 
 interface GPSAccuracy {
@@ -95,29 +98,58 @@ export function useSensorData() {
     }
   }, []);
 
-  // Utiliser l'altitude GPS haute précision pour le baromètre
-  const updateAltitudeFromGPS = useCallback((altitude?: number) => {
-    if (altitude !== undefined) {
+  // Initialiser la référence d'altitude (surface) avant de descendre underground
+  const initializeReference = useCallback((gpsAltitude?: number) => {
+    setSensorData(prev => ({
+      ...prev,
+      referenceAltitude: gpsAltitude || 0,
+      barometer_relativeAltitude: 0 // Commencer à 0 relativement à la surface
+    }));
+    logger.debug('📍 Référence altitude initialisée:', gpsAltitude || 'sans GPS');
+  }, []);
+
+  // Calculer l'altitude relative basée sur les changements d'accélération verticale
+  const updateRelativeAltitude = useCallback(() => {
+    setSensorData(prev => {
+      if (!prev.acceleration_z || prev.barometer_relativeAltitude === undefined) return prev;
+      
+      // Intégration simple de l'accélération pour estimer le changement d'altitude
+      // (approximation : changements verticaux significatifs = changements d'étage)
+      const verticalChange = Math.abs(prev.acceleration_z) > 2 ? 
+        (prev.acceleration_z > 0 ? 0.5 : -0.5) : 0; // Descente/montée détectée
+      
+      const newRelativeAlt = (prev.barometer_relativeAltitude || 0) + verticalChange;
+      
+      return {
+        ...prev,
+        barometer_relativeAltitude: Math.max(-20, Math.min(5, newRelativeAlt)) // Limiter entre -20m et +5m
+      };
+    });
+  }, []);
+
+  // Mise à jour GPS seulement en surface (quand disponible)
+  const updateAltitudeFromGPS = useCallback((altitude?: number, accuracy?: number) => {
+    // Ne utiliser le GPS que si la précision est bonne (surface)
+    if (altitude !== undefined && accuracy && accuracy < 20) {
       setSensorData(prev => ({
         ...prev,
-        // Utiliser l'altitude GPS comme approximation du baromètre
-        barometer_relativeAltitude: altitude
+        referenceAltitude: altitude,
+        // Reset l'altitude relative si on revient en surface avec bon GPS
+        barometer_relativeAltitude: 0
       }));
+      logger.debug('🛰️ Altitude GPS mise à jour (surface):', altitude);
     }
   }, []);
 
-  // Fallback simulation uniquement si pas de données réelles
-  const updateSimulatedSensors = useCallback((altitude?: number) => {
+  // Simulation minimale seulement si aucune donnée réelle
+  const updateSimulatedSensors = useCallback(() => {
     setSensorData(prev => ({
       ...prev,
-      // N'utiliser la simulation que si pas de données réelles
+      // Simulation uniquement pour tester sans capteurs
       ...(!prev.magnetometer_x && {
         magnetometer_x: Math.random() * 20 - 10,
         magnetometer_y: Math.random() * -60 + 10,
         magnetometer_z: Math.random() * 40 + 10
-      }),
-      ...(!prev.barometer_relativeAltitude && altitude && {
-        barometer_relativeAltitude: altitude
       })
     }));
   }, []);
@@ -156,6 +188,14 @@ export function useSensorData() {
     }
   }, []);
 
+  // Effet pour mettre à jour l'altitude relative automatiquement
+  useEffect(() => {
+    if (isListening && sensorData.acceleration_z !== undefined) {
+      const interval = setInterval(updateRelativeAltitude, 1000); // Mise à jour chaque seconde
+      return () => clearInterval(interval);
+    }
+  }, [isListening, sensorData.acceleration_z, updateRelativeAltitude]);
+
   useEffect(() => {
     return () => {
       stopSensorListening();
@@ -171,6 +211,8 @@ export function useSensorData() {
     updateSimulatedSensors,
     updateAltitudeFromGPS,
     updateGPSAccuracy,
-    detectUndergroundActivity
+    detectUndergroundActivity,
+    initializeReference,
+    updateRelativeAltitude
   };
 }

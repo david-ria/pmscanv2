@@ -74,7 +74,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
   const { weatherData } = useWeatherService();
   
   // Hook pour les capteurs de détection des transports souterrains
-  const { sensorData, updateGPSAccuracy, updateAltitudeFromGPS, detectUndergroundActivity, startSensorListening, stopSensorListening } = useSensorData();
+  const { sensorData, updateGPSAccuracy, updateAltitudeFromGPS, detectUndergroundActivity, startSensorListening, stopSensorListening, initializeReference } = useSensorData();
 
   const toggleEnabled = useCallback(() => {
     updateSettings({ enabled: !settings.enabled });
@@ -454,20 +454,24 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
           ? 'good'
           : 'poor';
       
-      // Mise à jour de la précision GPS et altitude pour les capteurs
+      // Gestion intelligente GPS vs capteurs pour underground
       updateGPSAccuracy(location?.accuracy);
-      if (location?.altitude !== undefined) {
-        updateAltitudeFromGPS(location.altitude);
-      }
       
-      // NOUVELLE LOGIQUE : Détection des transports souterrains
-      // Si forte imprécision GPS (>100m ou pas de signal), utiliser le modèle de capteurs
+      const hasGoodGPS = location?.accuracy && location.accuracy < 20;
       const hasLowGPSAccuracy = !location?.accuracy || location.accuracy > 100;
       
+      // Initialiser la référence quand on a un bon GPS (surface)
+      if (hasGoodGPS && location?.altitude !== undefined) {
+        updateAltitudeFromGPS(location.altitude, location.accuracy);
+        initializeReference(location.altitude);
+      }
+      
+      // LOGIQUE PRINCIPALE : Détection des transports souterrains
+      // Si perte GPS (underground), utiliser le modèle de capteurs
       if (hasLowGPSAccuracy && settings.enabled) {
         const undergroundActivity = detectUndergroundActivity(sensorData);
         if (undergroundActivity !== 'unknown') {
-          logger.debug(`🚇 Transport souterrain détecté: ${undergroundActivity} (GPS accuracy: ${location?.accuracy || 'none'})`);
+          logger.debug(`🚇 Transport souterrain détecté: ${undergroundActivity} (GPS accuracy: ${location?.accuracy || 'none'}, altitude relative: ${sensorData.barometer_relativeAltitude})`);
           
           // Mapper les activités détectées vers les contextes de l'app
           switch (undergroundActivity) {
