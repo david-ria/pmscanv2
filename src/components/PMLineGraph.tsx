@@ -162,7 +162,8 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       start: number; 
       end: number; 
       label: string; 
-      color: string 
+      color: string;
+      pm25Average: number;
     }> = [];
     
     let currentStart = -1;
@@ -201,12 +202,19 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
         if (currentStart === -1 || currentLabel !== contextValue) {
           // Start new period or different context
           if (currentStart !== -1) {
+            // Calculate PM2.5 average for the previous period
+            const periodData = chartData.slice(currentStart - 1, index);
+            const pm25Average = periodData.length > 0 
+              ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
+              : 0;
+            
             // Close previous period
             periods.push({
               start: currentStart,
               end: index,
               label: currentLabel,
-              color: getContextColor(highlightContextType, currentLabel)
+              color: getContextColor(highlightContextType, currentLabel),
+              pm25Average
             });
           }
           currentStart = index + 1;
@@ -214,12 +222,19 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
         }
       } else {
         if (currentStart !== -1) {
+          // Calculate PM2.5 average for the current period
+          const periodData = chartData.slice(currentStart - 1, index);
+          const pm25Average = periodData.length > 0 
+            ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
+            : 0;
+          
           // Close current period
           periods.push({
             start: currentStart,
             end: index,
             label: currentLabel,
-            color: getContextColor(highlightContextType, currentLabel)
+            color: getContextColor(highlightContextType, currentLabel),
+            pm25Average
           });
           currentStart = -1;
         }
@@ -228,11 +243,18 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
     
     // Handle case where period goes to the end
     if (currentStart !== -1) {
+      // Calculate PM2.5 average for the final period
+      const periodData = chartData.slice(currentStart - 1);
+      const pm25Average = periodData.length > 0 
+        ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
+        : 0;
+      
       periods.push({
         start: currentStart,
         end: chartData.length,
         label: currentLabel,
-        color: getContextColor(highlightContextType, currentLabel)
+        color: getContextColor(highlightContextType, currentLabel),
+        pm25Average
       });
     }
     
@@ -357,6 +379,24 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
                 stroke={period.color}
                 strokeOpacity={0.4}
                 strokeWidth={1}
+              />
+              <ReferenceLine
+                x={period.start + (period.end - period.start) / 2}
+                stroke="transparent"
+                strokeWidth={0}
+                label={{
+                  value: `${period.pm25Average.toFixed(1)} µg/m³`,
+                  position: 'top',
+                  fontSize: 10,
+                  fill: '#ef4444',
+                  textAnchor: 'middle',
+                  fontWeight: 'bold',
+                  offset: -25,
+                  style: {
+                    textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
+                    fontWeight: 'bold'
+                  }
+                }}
               />
               <ReferenceLine
                 x={period.start + (period.end - period.start) / 2}
