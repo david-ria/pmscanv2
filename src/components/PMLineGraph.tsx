@@ -36,14 +36,10 @@ interface PMLineGraphProps {
   }>;
   events?: EventData[];
   className?: string;
-  highlightedContexts?: {
-    location?: string;
-    activity?: string;
-    autoContext?: string;
-  };
+  highlightContextType?: 'location' | 'activity' | 'autocontext';
 }
 
-export function PMLineGraph({ data, events = [], className, highlightedContexts }: PMLineGraphProps) {
+export function PMLineGraph({ data, events = [], className, highlightContextType }: PMLineGraphProps) {
   // Transform data for the chart - ensure proper chronological ordering
   const chartData = React.useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -112,52 +108,72 @@ export function PMLineGraph({ data, events = [], className, highlightedContexts 
       .filter(Boolean);
   }, [events, chartData]);
 
-  // Generate highlighted areas based on context selection
-  const highlightedAreas = React.useMemo(() => {
-    if (!highlightedContexts || !chartData.length) return [];
+  // Generate highlighted areas and labels based on context type selection
+  const contextPeriods = React.useMemo(() => {
+    if (!highlightContextType || !chartData.length) return [];
     
-    const areas: Array<{ start: number; end: number; type: string }> = [];
+    const periods: Array<{ 
+      start: number; 
+      end: number; 
+      label: string; 
+      color: string 
+    }> = [];
+    
     let currentStart = -1;
-    let currentType = '';
+    let currentLabel = '';
     
     chartData.forEach((entry, index) => {
       const { context } = entry;
-      const isHighlighted = 
-        (highlightedContexts.location && context?.locationContext === highlightedContexts.location) ||
-        (highlightedContexts.activity && context?.activityContext === highlightedContexts.activity) ||
-        (highlightedContexts.autoContext && context?.automaticContext === highlightedContexts.autoContext);
+      const contextValue = 
+        highlightContextType === 'location' ? context?.locationContext :
+        highlightContextType === 'activity' ? context?.activityContext :
+        highlightContextType === 'autocontext' ? context?.automaticContext :
+        undefined;
       
-      const contextType = highlightedContexts.location ? 'location' :
-                         highlightedContexts.activity ? 'activity' : 'autoContext';
-      
-      if (isHighlighted) {
-        if (currentStart === -1) {
-          currentStart = index + 1; // chartData uses 1-based indexing
-          currentType = contextType;
+      if (contextValue && contextValue !== 'unknown') {
+        if (currentStart === -1 || currentLabel !== contextValue) {
+          // Start new period or different context
+          if (currentStart !== -1) {
+            // Close previous period
+            periods.push({
+              start: currentStart,
+              end: index,
+              label: currentLabel,
+              color: highlightContextType === 'location' ? '#22c55e' :
+                     highlightContextType === 'activity' ? '#ef4444' : '#3b82f6'
+            });
+          }
+          currentStart = index + 1;
+          currentLabel = contextValue;
         }
       } else {
         if (currentStart !== -1) {
-          areas.push({
+          // Close current period
+          periods.push({
             start: currentStart,
-            end: index, // End at previous index
-            type: currentType
+            end: index,
+            label: currentLabel,
+            color: highlightContextType === 'location' ? '#22c55e' :
+                   highlightContextType === 'activity' ? '#ef4444' : '#3b82f6'
           });
           currentStart = -1;
         }
       }
     });
     
-    // Handle case where highlight goes to the end
+    // Handle case where period goes to the end
     if (currentStart !== -1) {
-      areas.push({
+      periods.push({
         start: currentStart,
         end: chartData.length,
-        type: currentType
+        label: currentLabel,
+        color: highlightContextType === 'location' ? '#22c55e' :
+               highlightContextType === 'activity' ? '#ef4444' : '#3b82f6'
       });
     }
     
-    return areas;
-  }, [chartData, highlightedContexts]);
+    return periods;
+  }, [chartData, highlightContextType]);
 
   const formatTooltip = (value: any, name: string) => {
     if (name === 'PM1' || name === 'PM25' || name === 'PM10') {
@@ -265,18 +281,32 @@ export function PMLineGraph({ data, events = [], className, highlightedContexts 
             dot={{ fill: '#3b82f6', strokeWidth: 1, r: 3 }}
             activeDot={{ r: 5, stroke: '#3b82f6' }}
           />
-          {/* Context highlighted areas */}
-          {highlightedAreas.map((area, index) => (
-            <ReferenceArea
-              key={`highlight-${index}`}
-              x1={area.start}
-              x2={area.end}
-              fill={area.type === 'location' ? '#22c55e' : area.type === 'activity' ? '#ef4444' : '#3b82f6'}
-              fillOpacity={0.1}
-              stroke={area.type === 'location' ? '#22c55e' : area.type === 'activity' ? '#ef4444' : '#3b82f6'}
-              strokeOpacity={0.3}
-              strokeWidth={1}
-            />
+          {/* Context highlighted areas with labels */}
+          {contextPeriods.map((period, index) => (
+            <React.Fragment key={`period-${index}`}>
+              <ReferenceArea
+                x1={period.start}
+                x2={period.end}
+                fill={period.color}
+                fillOpacity={0.15}
+                stroke={period.color}
+                strokeOpacity={0.4}
+                strokeWidth={1}
+              />
+              <ReferenceLine
+                x={period.start + (period.end - period.start) / 2}
+                stroke={period.color}
+                strokeWidth={0}
+                label={{
+                  value: period.label,
+                  position: 'top',
+                  fontSize: 11,
+                  fill: period.color,
+                  textAnchor: 'middle',
+                  fontWeight: 'bold',
+                }}
+              />
+            </React.Fragment>
           ))}
           
           {/* Event markers */}

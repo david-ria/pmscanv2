@@ -44,10 +44,8 @@ export function MissionDetailsDialog({
   const { getEventsByMission } = useEvents();
   const [events, setEvents] = useState<any[]>([]);
   
-  // Context filtering state
-  const [selectedLocation, setSelectedLocation] = useState<string>('all');
-  const [selectedActivity, setSelectedActivity] = useState<string>('all');
-  const [selectedAutoContext, setSelectedAutoContext] = useState<string>('all');
+  // Context highlighting state
+  const [selectedContextType, setSelectedContextType] = useState<'none' | 'location' | 'activity' | 'autocontext'>('none');
 
   // Load events for this mission
   useEffect(() => {
@@ -247,23 +245,15 @@ export function MissionDetailsDialog({
             <CardContent className="space-y-4">
               <GraphContextSelector
                 mission={mission}
-                selectedLocation={selectedLocation}
-                onLocationChange={setSelectedLocation}
-                selectedActivity={selectedActivity}
-                onActivityChange={setSelectedActivity}
-                selectedAutoContext={selectedAutoContext}
-                onAutoContextChange={setSelectedAutoContext}
+                selectedContextType={selectedContextType}
+                onContextTypeChange={setSelectedContextType}
               />
               <div className="h-96">
                 <PMLineGraph 
                   data={graphData} 
                   events={events} 
                   className="h-full"
-                  highlightedContexts={{
-                    location: selectedLocation !== 'all' ? selectedLocation : undefined,
-                    activity: selectedActivity !== 'all' ? selectedActivity : undefined,
-                    autoContext: selectedAutoContext !== 'all' ? selectedAutoContext : undefined,
-                  }}
+                  highlightContextType={selectedContextType !== 'none' ? selectedContextType : undefined}
                 />
               </div>
             </CardContent>
