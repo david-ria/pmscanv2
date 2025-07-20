@@ -61,32 +61,45 @@ export function MissionDetailsDialog({
   if (!mission) return null;
 
   // Convert mission measurements to the format expected by PMLineGraph
-  const graphData = mission.measurements.map((measurement) => ({
-    pmData: {
-      pm1: measurement.pm1,
-      pm25: measurement.pm25,
-      pm10: measurement.pm10,
-      temp: measurement.temperature || 0,
-      humidity: measurement.humidity || 0,
-      battery: 100, // Default values since these aren't stored in missions
-      charging: false,
-      timestamp: measurement.timestamp,
-    },
-    location:
-      measurement.latitude && measurement.longitude
-        ? {
-            latitude: measurement.latitude,
-            longitude: measurement.longitude,
-            accuracy: measurement.accuracy || 0,
-            timestamp: measurement.timestamp,
-          }
-        : undefined,
-    context: {
-      locationContext: measurement.locationContext || mission.locationContext,
-      activityContext: measurement.activityContext || mission.activityContext,
-      automaticContext: measurement.automaticContext,
-    },
-  }));
+  const graphData = mission.measurements.map((measurement, index) => {
+    // Debug logging for the first few measurements
+    if (index < 3) {
+      console.log(`Measurement ${index} context data:`, {
+        measurementLocationContext: measurement.locationContext,
+        measurementActivityContext: measurement.activityContext,
+        measurementAutomaticContext: measurement.automaticContext,
+        missionLocationContext: mission.locationContext,
+        missionActivityContext: mission.activityContext,
+      });
+    }
+    
+    return {
+      pmData: {
+        pm1: measurement.pm1,
+        pm25: measurement.pm25,
+        pm10: measurement.pm10,
+        temp: measurement.temperature || 0,
+        humidity: measurement.humidity || 0,
+        battery: 100, // Default values since these aren't stored in missions
+        charging: false,
+        timestamp: measurement.timestamp,
+      },
+      location:
+        measurement.latitude && measurement.longitude
+          ? {
+              latitude: measurement.latitude,
+              longitude: measurement.longitude,
+              accuracy: measurement.accuracy || 0,
+              timestamp: measurement.timestamp,
+            }
+          : undefined,
+      context: {
+        locationContext: measurement.locationContext || mission.locationContext,
+        activityContext: measurement.activityContext || mission.activityContext,
+        automaticContext: measurement.automaticContext,
+      },
+    };
+  });
 
   // Get track points for the map (only measurements with location data)
   const trackPoints = mission.measurements

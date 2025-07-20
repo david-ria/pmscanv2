@@ -466,11 +466,13 @@ export type Database = {
       measurements: {
         Row: {
           accuracy: number | null
+          activity_context: string | null
           automatic_context: string | null
           created_at: string
           humidity: number | null
           id: string
           latitude: number | null
+          location_context: string | null
           longitude: number | null
           mission_id: string
           pm1: number
@@ -481,11 +483,13 @@ export type Database = {
         }
         Insert: {
           accuracy?: number | null
+          activity_context?: string | null
           automatic_context?: string | null
           created_at?: string
           humidity?: number | null
           id?: string
           latitude?: number | null
+          location_context?: string | null
           longitude?: number | null
           mission_id: string
           pm1: number
@@ -496,11 +500,13 @@ export type Database = {
         }
         Update: {
           accuracy?: number | null
+          activity_context?: string | null
           automatic_context?: string | null
           created_at?: string
           humidity?: number | null
           id?: string
           latitude?: number | null
+          location_context?: string | null
           longitude?: number | null
           mission_id?: string
           pm1?: number
