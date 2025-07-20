@@ -7,11 +7,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { locationKeys, activityCategories } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
-import { useLocationActivityMappings } from '@/hooks/useLocationActivityMappings';
 import { useEffect } from 'react';
+import { 
+  DEFAULT_LOCATIONS, 
+  DEFAULT_ACTIVITIES, 
+  getActivitiesForLocation,
+  getLocationName,
+  getActivityName 
+} from '@/lib/locationsActivities';
 
 interface ContextSelectorsProps {
   selectedLocation: string;
@@ -31,13 +36,14 @@ export function ContextSelectors({
   const { t } = useTranslation();
   const { getCurrentLocations, getCurrentActivities, isGroupMode } =
     useGroupSettings();
-  const { locations: dbLocations, getActivitiesForLocation, loading } = 
-    useLocationActivityMappings();
 
-  // Use group locations if in group mode, otherwise use database-driven locations
+  // Use group locations if in group mode, otherwise use static locations
   const locations = isGroupMode
     ? getCurrentLocations()
-    : dbLocations.map((loc) => ({ name: loc.label, key: loc.key }));
+    : DEFAULT_LOCATIONS.map((loc) => ({ 
+        name: getLocationName(loc.id, t), 
+        key: loc.id 
+      }));
 
   // Get activities based on selected location
   const getAvailableActivities = () => {
@@ -49,15 +55,21 @@ export function ContextSelectors({
       return []; // No activities until location is selected
     }
 
-    // Find location key from selected location label
-    const selectedLocationKey = dbLocations.find(loc => loc.label === selectedLocation)?.key;
-    if (!selectedLocationKey) {
+    // Find location by name (translated name back to id)
+    const selectedLocationData = DEFAULT_LOCATIONS.find(loc => 
+      getLocationName(loc.id, t) === selectedLocation
+    );
+    
+    if (!selectedLocationData) {
       return [];
     }
 
-    return getActivitiesForLocation(selectedLocationKey).map(activity => ({
-      key: activity.key,
-      name: activity.label,
+    // Get activities for this location from static data
+    const locationActivities = getActivitiesForLocation(selectedLocationData.id);
+    
+    return locationActivities.map(activity => ({
+      key: activity.id,
+      name: getActivityName(activity.id, t),
     }));
   };
 
