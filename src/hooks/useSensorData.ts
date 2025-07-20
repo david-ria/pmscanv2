@@ -141,33 +141,30 @@ export function useSensorData() {
     }
   }, []);
 
-  // Simulation minimale seulement si aucune donnée réelle
-  const updateSimulatedSensors = useCallback(() => {
-    setSensorData(prev => ({
-      ...prev,
-      // Simulation uniquement pour tester sans capteurs
-      ...(!prev.magnetometer_x && {
-        magnetometer_x: Math.random() * 20 - 10,
-        magnetometer_y: Math.random() * -60 + 10,
-        magnetometer_z: Math.random() * 40 + 10
-      })
-    }));
-  }, []);
+  // Aucune simulation - seulement données réelles ou unknown
 
   const updateGPSAccuracy = useCallback((accuracy?: number) => {
     const isLowAccuracy = !accuracy || accuracy > 50; // Considérer comme imprécis si > 50m
     setGpsAccuracy({ accuracy, isLowAccuracy });
   }, []);
 
-  // Fonction de détection d'activité basée sur votre modèle
+  // Fonction de détection d'activité stricte - aucune simulation
   const detectUndergroundActivity = useCallback((measure: SensorData): string => {
-    const alt = measure.barometer_relativeAltitude || 0;
-    const magX = measure.magnetometer_x || 0;
-    const magY = measure.magnetometer_y || 0;
-    const magZ = measure.magnetometer_z || 0;
-    const gravZ = measure.gravity_z || 0;
-    const totalAccZ = measure.totalAcceleration_z || 0;
+    const alt = measure.barometer_relativeAltitude;
+    const magX = measure.magnetometer_x;
+    const magY = measure.magnetometer_y;
+    const magZ = measure.magnetometer_z;
+    const gravZ = measure.gravity_z;
+    const totalAccZ = measure.totalAcceleration_z;
 
+    // Vérifier que TOUTES les données nécessaires sont disponibles
+    if (alt === undefined || magX === undefined || magY === undefined || 
+        magZ === undefined || gravZ === undefined || totalAccZ === undefined) {
+      logger.debug('❌ Données capteurs insuffisantes pour détection underground');
+      return "unknown";
+    }
+
+    // Appliquer le modèle seulement avec des données réelles
     if (alt > -4 && magX > 5 && magY < -40 && magZ > 30 && totalAccZ < -1) {
       return "escalator";
     }
@@ -208,7 +205,6 @@ export function useSensorData() {
     isListening,
     startSensorListening,
     stopSensorListening,
-    updateSimulatedSensors,
     updateAltitudeFromGPS,
     updateGPSAccuracy,
     detectUndergroundActivity,
