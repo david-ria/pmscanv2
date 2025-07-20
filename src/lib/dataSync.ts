@@ -217,6 +217,8 @@ export async function syncPendingMissions(): Promise<void> {
         latitude: m.latitude,
         longitude: m.longitude,
         accuracy: m.accuracy,
+        location_context: m.locationContext,
+        activity_context: m.activityContext,
         automatic_context: m.automaticContext,
         // weather_data_id removed - now at mission level
       }));
