@@ -309,7 +309,7 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
-          margin={{ top: 40, right: 5, left: 0, bottom: 120 }}
+          margin={{ top: 100, right: 5, left: 0, bottom: 120 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
