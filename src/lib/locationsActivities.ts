@@ -243,8 +243,13 @@ export const DEFAULT_ACTIVITIES: ActivityType[] = [
 
 // Helper function to get activities available for a specific location
 export function getActivitiesForLocation(locationId: string): ActivityType[] {
+  // Find the location first
+  const location = DEFAULT_LOCATIONS.find(loc => loc.id === locationId);
+  if (!location) return [];
+  
+  // Return activities that are in the location's allowedActivities list
   return DEFAULT_ACTIVITIES.filter(activity => 
-    activity.availableAt.includes(locationId)
+    location.allowedActivities.includes(activity.id)
   );
 }
 
