@@ -59,6 +59,13 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
     icon: '🚗',
     description: 'In vehicle or public transport',
     allowedActivities: ['transport', 'driving', 'bus', 'train', 'metro', 'undergroundTransport']
+  },
+  {
+    id: 'underground',
+    name: 'Underground',
+    icon: '🚇',
+    description: 'Underground transport (metro, subway)',
+    allowedActivities: ['undergroundTransport', 'escalator', 'stairs', 'stairsToOutside', 'standPlatform', 'stand']
   }
 ];
 
@@ -238,6 +245,42 @@ export const DEFAULT_ACTIVITIES: ActivityType[] = [
     icon: '🚗',
     description: 'Underground parking',
     availableAt: ['indoor']
+  },
+  // Nouvelles activités détectées par le modèle de transport souterrain
+  {
+    id: 'escalator',
+    name: 'Escalator',
+    icon: '⬆️',
+    description: 'Using escalator in underground transport',
+    availableAt: ['underground']
+  },
+  {
+    id: 'stairs',
+    name: 'Stairs',
+    icon: '🪜',
+    description: 'Using stairs in underground transport',
+    availableAt: ['underground']
+  },
+  {
+    id: 'stairsToOutside',
+    name: 'Stairs to outside',
+    icon: '🚪',
+    description: 'Using stairs from underground to surface',
+    availableAt: ['underground']
+  },
+  {
+    id: 'stand',
+    name: 'Stand',
+    icon: '🧍',
+    description: 'Standing in underground transport',
+    availableAt: ['underground']
+  },
+  {
+    id: 'standPlatform',
+    name: 'Stand platform',
+    icon: '🚉',
+    description: 'Standing on underground platform',
+    availableAt: ['underground']
   }
 ];
 

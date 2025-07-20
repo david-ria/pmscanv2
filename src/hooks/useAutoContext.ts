@@ -18,6 +18,7 @@ import {
   evaluateAutoContextRules,
   AutoContextConfig,
 } from '@/lib/autoContextConfig';
+import { useSensorData } from '@/hooks/useSensorData';
 
 interface AutoContextInputs {
   pmData?: PMScanData;
@@ -71,6 +72,9 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
   );
   
   const { weatherData } = useWeatherService();
+  
+  // Hook pour les capteurs de détection des transports souterrains
+  const { sensorData, updateGPSAccuracy, detectUndergroundActivity, startSensorListening, stopSensorListening } = useSensorData();
 
   const toggleEnabled = useCallback(() => {
     updateSettings({ enabled: !settings.enabled });
@@ -123,8 +127,18 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
       requestLocationPermission().catch((err) => {
         console.error('Failed to request location permission', err);
       });
+      
+      // Activer les capteurs pour la détection des transports souterrains
+      startSensorListening().catch((err) => {
+        console.error('Failed to start sensor listening', err);
+      });
+    } else {
+      // Désactiver les capteurs quand l'auto-contexte est désactivé
+      stopSensorListening().catch((err) => {
+        console.error('Failed to stop sensor listening', err);
+      });
     }
-  }, [settings.enabled, requestLocationPermission]);
+  }, [settings.enabled, requestLocationPermission, startSensorListening, stopSensorListening]);
 
   // Real WiFi detection function
   const getCurrentWifiSSID = useCallback((): string => {
@@ -439,6 +453,33 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
         location && location.accuracy && location.accuracy < 50
           ? 'good'
           : 'poor';
+      
+      // Mise à jour de la précision GPS pour les capteurs
+      updateGPSAccuracy(location?.accuracy);
+      
+      // NOUVELLE LOGIQUE : Détection des transports souterrains
+      // Si forte imprécision GPS (>100m ou pas de signal), utiliser le modèle de capteurs
+      const hasLowGPSAccuracy = !location?.accuracy || location.accuracy > 100;
+      
+      if (hasLowGPSAccuracy && settings.enabled) {
+        const undergroundActivity = detectUndergroundActivity(sensorData);
+        if (undergroundActivity !== 'unknown') {
+          logger.debug(`🚇 Transport souterrain détecté: ${undergroundActivity} (GPS accuracy: ${location?.accuracy || 'none'})`);
+          
+          // Mapper les activités détectées vers les contextes de l'app
+          switch (undergroundActivity) {
+            case 'escalator':
+            case 'stairs':
+            case 'stairs to outside':
+              return 'Underground Transport';
+            case 'stand':
+            case 'stand platform':
+              return 'Underground Station';
+            default:
+              return 'Underground';
+          }
+        }
+      }
 
       // Real car detection using Bluetooth API
       const isCarConnected = await isConnectedToCarBluetooth();
