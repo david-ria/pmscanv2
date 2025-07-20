@@ -367,55 +367,67 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
             activeDot={{ r: 5, stroke: '#3b82f6' }}
           />
           {/* Context highlighted areas with labels */}
-          {contextPeriods.map((period, index) => (
-            <React.Fragment key={`period-${index}`}>
-              <ReferenceArea
-                x1={period.start}
-                x2={period.end}
-                fill={period.color}
-                fillOpacity={0.15}
-                stroke={period.color}
-                strokeOpacity={0.4}
-                strokeWidth={1}
-              />
-              <ReferenceLine
-                x={period.start + (period.end - period.start) / 2}
-                stroke="transparent"
-                strokeWidth={0}
-                label={{
-                  value: `${period.pm25Average.toFixed(1)} µg/m³`,
-                  position: 'top',
-                  fontSize: 10,
-                  fill: '#ef4444',
-                  textAnchor: 'middle',
-                  fontWeight: 'bold',
-                  offset: 5,
-                  style: {
-                    textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
-                    fontWeight: 'bold'
-                  }
-                }}
-              />
-              <ReferenceLine
-                x={period.start + (period.end - period.start) / 2}
-                stroke="transparent"
-                strokeWidth={0}
-                label={{
-                  value: period.label,
-                  position: 'top',
-                  fontSize: 12,
-                  fill: period.color,
-                  textAnchor: 'middle',
-                  fontWeight: 'bold',
-                  offset: 25,
-                  style: {
-                    textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
-                    fontWeight: 'bold'
-                  }
-                }}
-              />
-            </React.Fragment>
-          ))}
+          {contextPeriods.map((period, index) => {
+            const periodWidth = period.end - period.start;
+            const centerX = period.start + periodWidth / 2;
+            const isShortPeriod = periodWidth < 20; // Consider periods less than 20 data points as short
+            
+            // Calculate staggered positioning for overlapping labels
+            const verticalOffset = index % 2 === 0 ? 5 : 45;
+            const labelOffset = index % 2 === 0 ? 25 : 65;
+            
+            return (
+              <React.Fragment key={`period-${index}`}>
+                <ReferenceArea
+                  x1={period.start}
+                  x2={period.end}
+                  fill={period.color}
+                  fillOpacity={0.15}
+                  stroke={period.color}
+                  strokeOpacity={0.4}
+                  strokeWidth={1}
+                />
+                {/* PM25 average label */}
+                <ReferenceLine
+                  x={centerX}
+                  stroke="transparent"
+                  strokeWidth={0}
+                  label={{
+                    value: `${period.pm25Average.toFixed(1)} µg/m³`,
+                    position: 'top',
+                    fontSize: 10,
+                    fill: '#ef4444',
+                    textAnchor: 'middle',
+                    fontWeight: 'bold',
+                    offset: verticalOffset,
+                    style: {
+                      textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
+                      fontWeight: 'bold'
+                    }
+                  }}
+                />
+                {/* Context label */}
+                <ReferenceLine
+                  x={centerX}
+                  stroke="transparent"
+                  strokeWidth={0}
+                  label={{
+                    value: period.label,
+                    position: 'top',
+                    fontSize: 12,
+                    fill: period.color,
+                    textAnchor: 'middle',
+                    fontWeight: 'bold',
+                    offset: labelOffset,
+                    style: {
+                      textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
+                      fontWeight: 'bold'
+                    }
+                  }}
+                />
+              </React.Fragment>
+            );
+          })}
           
           {/* Event markers */}
           {eventMarkers.map((event: any) => (
