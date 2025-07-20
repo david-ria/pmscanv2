@@ -28,12 +28,22 @@ interface PMLineGraphProps {
       longitude: number;
       accuracy?: number;
     };
+    context?: {
+      locationContext?: string;
+      activityContext?: string;
+      automaticContext?: string;
+    };
   }>;
   events?: EventData[];
   className?: string;
+  highlightedContexts?: {
+    location?: string;
+    activity?: string;
+    autoContext?: string;
+  };
 }
 
-export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) {
+export function PMLineGraph({ data, events = [], className, highlightedContexts }: PMLineGraphProps) {
   // Transform data for the chart - ensure proper chronological ordering
   const chartData = React.useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -55,6 +65,7 @@ export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) 
         PM10: entry.pmData.pm10,
         temp: entry.pmData.temp,
         humidity: entry.pmData.humidity,
+        context: entry.context,
       }));
   }, [data]); // Re-compute when data changes for real-time updates
 
@@ -100,6 +111,53 @@ export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) 
       })
       .filter(Boolean);
   }, [events, chartData]);
+
+  // Generate highlighted areas based on context selection
+  const highlightedAreas = React.useMemo(() => {
+    if (!highlightedContexts || !chartData.length) return [];
+    
+    const areas: Array<{ start: number; end: number; type: string }> = [];
+    let currentStart = -1;
+    let currentType = '';
+    
+    chartData.forEach((entry, index) => {
+      const { context } = entry;
+      const isHighlighted = 
+        (highlightedContexts.location && context?.locationContext === highlightedContexts.location) ||
+        (highlightedContexts.activity && context?.activityContext === highlightedContexts.activity) ||
+        (highlightedContexts.autoContext && context?.automaticContext === highlightedContexts.autoContext);
+      
+      const contextType = highlightedContexts.location ? 'location' :
+                         highlightedContexts.activity ? 'activity' : 'autoContext';
+      
+      if (isHighlighted) {
+        if (currentStart === -1) {
+          currentStart = index + 1; // chartData uses 1-based indexing
+          currentType = contextType;
+        }
+      } else {
+        if (currentStart !== -1) {
+          areas.push({
+            start: currentStart,
+            end: index, // End at previous index
+            type: currentType
+          });
+          currentStart = -1;
+        }
+      }
+    });
+    
+    // Handle case where highlight goes to the end
+    if (currentStart !== -1) {
+      areas.push({
+        start: currentStart,
+        end: chartData.length,
+        type: currentType
+      });
+    }
+    
+    return areas;
+  }, [chartData, highlightedContexts]);
 
   const formatTooltip = (value: any, name: string) => {
     if (name === 'PM1' || name === 'PM25' || name === 'PM10') {
@@ -207,6 +265,20 @@ export function PMLineGraph({ data, events = [], className }: PMLineGraphProps) 
             dot={{ fill: '#3b82f6', strokeWidth: 1, r: 3 }}
             activeDot={{ r: 5, stroke: '#3b82f6' }}
           />
+          {/* Context highlighted areas */}
+          {highlightedAreas.map((area, index) => (
+            <ReferenceArea
+              key={`highlight-${index}`}
+              x1={area.start}
+              x2={area.end}
+              fill={area.type === 'location' ? '#22c55e' : area.type === 'activity' ? '#ef4444' : '#3b82f6'}
+              fillOpacity={0.1}
+              stroke={area.type === 'location' ? '#22c55e' : area.type === 'activity' ? '#ef4444' : '#3b82f6'}
+              strokeOpacity={0.3}
+              strokeWidth={1}
+            />
+          ))}
+          
           {/* Event markers */}
           {eventMarkers.map((event: any) => (
             <ReferenceLine

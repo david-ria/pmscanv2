@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapboxMap } from '@/components/MapboxMap';
 import { PMLineGraph } from '@/components/PMLineGraph';
+import { GraphContextSelector } from './GraphContextSelector';
 import { MissionData } from '@/lib/dataStorage';
 import { WeatherInfo } from '@/components/WeatherInfo';
 import { AirQualityInfo } from '@/components/AirQualityInfo';
@@ -42,6 +43,11 @@ export function MissionDetailsDialog({
   const { t } = useTranslation();
   const { getEventsByMission } = useEvents();
   const [events, setEvents] = useState<any[]>([]);
+  
+  // Context filtering state
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [selectedActivity, setSelectedActivity] = useState<string>('');
+  const [selectedAutoContext, setSelectedAutoContext] = useState<string>('');
 
   // Load events for this mission
   useEffect(() => {
@@ -77,6 +83,11 @@ export function MissionDetailsDialog({
             timestamp: measurement.timestamp,
           }
         : undefined,
+    context: {
+      locationContext: measurement.locationContext,
+      activityContext: measurement.activityContext,
+      automaticContext: measurement.automaticContext,
+    },
   }));
 
   // Get track points for the map (only measurements with location data)
@@ -233,9 +244,27 @@ export function MissionDetailsDialog({
             <CardHeader>
               <CardTitle className="text-lg">{t('realTime.graph')}</CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="space-y-4">
+              <GraphContextSelector
+                mission={mission}
+                selectedLocation={selectedLocation}
+                onLocationChange={setSelectedLocation}
+                selectedActivity={selectedActivity}
+                onActivityChange={setSelectedActivity}
+                selectedAutoContext={selectedAutoContext}
+                onAutoContextChange={setSelectedAutoContext}
+              />
               <div className="h-96">
-                <PMLineGraph data={graphData} events={events} className="h-full" />
+                <PMLineGraph 
+                  data={graphData} 
+                  events={events} 
+                  className="h-full"
+                  highlightedContexts={{
+                    location: selectedLocation || undefined,
+                    activity: selectedActivity || undefined,
+                    autoContext: selectedAutoContext || undefined,
+                  }}
+                />
               </div>
             </CardContent>
           </Card>
