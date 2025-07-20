@@ -44,7 +44,7 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
     name: 'Indoor',
     icon: '🌳',
     description: 'Indoor air different than work and home',
-    allowedActivities: ['shopping', 'parking', 'underground', 'outdoor', 'jogging', 'relaxing']
+    allowedActivities: ['shopping', 'Parking', 'undergroundTransport', 'outdoor', 'jogging', 'relaxing']
   },
   {
     id: 'Outdoor',
