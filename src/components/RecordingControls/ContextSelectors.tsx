@@ -41,7 +41,7 @@ export function ContextSelectors({
   const locations = isGroupMode
     ? getCurrentLocations()
     : DEFAULT_LOCATIONS.map((loc) => ({ 
-        name: getLocationName(loc.id, t), 
+        name: loc.name, // Use direct name instead of translation
         key: loc.id 
       }));
 
@@ -55,9 +55,9 @@ export function ContextSelectors({
       return []; // No activities until location is selected
     }
 
-    // Find location by name (translated name back to id)
+    // Find location by name 
     const selectedLocationData = DEFAULT_LOCATIONS.find(loc => 
-      getLocationName(loc.id, t) === selectedLocation
+      loc.name === selectedLocation
     );
     
     if (!selectedLocationData) {
@@ -69,7 +69,7 @@ export function ContextSelectors({
     
     return locationActivities.map(activity => ({
       key: activity.id,
-      name: getActivityName(activity.id, t),
+      name: activity.name, // Use direct name instead of translation
     }));
   };
 
