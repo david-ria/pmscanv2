@@ -191,52 +191,30 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
         highlightContextType === 'autocontext' ? context?.automaticContext :
         undefined;
       
-      // Only create periods for actual context values, not transitions
-      if (!contextValue || contextValue === 'unknown') {
-        // This is a transition - close current period if exists
-        if (currentLabel !== '') {
-          const periodData = chartData.slice(currentStart - 1, index);
-          const pm25Average = periodData.length > 0 
-            ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
-            : 0;
-          
-          periods.push({
-            start: currentStart,
-            end: position,
-            label: currentLabel,
-            color: currentColor,
-            pm25Average
-          });
-          currentLabel = '';
-          currentColor = '';
-        }
-        return; // Skip transition periods
+      // Handle context changes or missing values
+      let label = '';
+      let color = '';
+      
+      if (contextValue && contextValue !== 'unknown') {
+        label = contextValue;
+        color = getContextColor(highlightContextType, contextValue);
       }
       
-      // Determine label and color for actual context values
-      let label = contextValue;
-      let color = getContextColor(highlightContextType, contextValue);
-      
       // Debug logging for context values
-      if (index < 3) {
-        console.log(`Measurement ${index} context data:`, {
-          measurementLocationContext: context?.locationContext,
-          measurementActivityContext: context?.activityContext,
-          measurementAutomaticContext: context?.automaticContext,
-          missionLocationContext: missionContext?.locationContext,
-          missionActivityContext: missionContext?.activityContext
-        });
+      if (index < 5) {
         console.log(`Entry ${index} context:`, {
           contextValue,
-          measurementLevel: context,
-          missionLevel: missionContext
+          label,
+          currentLabel,
+          position,
+          currentStart
         });
       }
       
       // Check if we need to close current period and start a new one
       if (currentLabel !== label) {
-        // Close previous period if it exists
-        if (currentLabel !== '') {
+        // Close previous period if it exists and has valid data
+        if (currentLabel !== '' && currentStart < position) {
           const periodData = chartData.slice(currentStart - 1, index);
           const pm25Average = periodData.length > 0 
             ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
@@ -251,15 +229,21 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
           });
         }
         
-        // Start new period
-        currentStart = position;
-        currentLabel = label;
-        currentColor = color;
+        // Start new period only if we have a valid label
+        if (label !== '') {
+          currentStart = position;
+          currentLabel = label;
+          currentColor = color;
+        } else {
+          // Reset tracking for unknown periods
+          currentLabel = '';
+          currentColor = '';
+        }
       }
     });
     
     // Handle the final period
-    if (currentLabel !== '') {
+    if (currentLabel !== '' && currentStart <= chartData.length) {
       const periodData = chartData.slice(currentStart - 1);
       const pm25Average = periodData.length > 0 
         ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
@@ -280,6 +264,7 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       start: p.start,
       end: p.end,
       duration: p.end - p.start,
+      dataPoints: p.end - p.start,
       pm25Average: p.pm25Average.toFixed(1)
     })));
     return periods;
