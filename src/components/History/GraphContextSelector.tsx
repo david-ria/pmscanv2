@@ -19,6 +19,19 @@ export function GraphContextSelector({
 }: GraphContextSelectorProps) {
   const { t } = useTranslation();
 
+  // Debug: Check what context data we have
+  React.useEffect(() => {
+    console.log('Mission context data:', {
+      missionLocation: mission.locationContext,
+      missionActivity: mission.activityContext,
+      measurementContexts: mission.measurements.slice(0, 5).map(m => ({
+        locationContext: m.locationContext,
+        activityContext: m.activityContext,
+        automaticContext: m.automaticContext
+      }))
+    });
+  }, [mission]);
+
   return (
     <div className="p-4 bg-card rounded-lg border">
       <div className="space-y-3">

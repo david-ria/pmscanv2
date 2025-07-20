@@ -37,9 +37,13 @@ interface PMLineGraphProps {
   events?: EventData[];
   className?: string;
   highlightContextType?: 'location' | 'activity' | 'autocontext';
+  missionContext?: {
+    locationContext?: string;
+    activityContext?: string;
+  };
 }
 
-export function PMLineGraph({ data, events = [], className, highlightContextType }: PMLineGraphProps) {
+export function PMLineGraph({ data, events = [], className, highlightContextType, missionContext }: PMLineGraphProps) {
   // Transform data for the chart - ensure proper chronological ordering
   const chartData = React.useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -124,9 +128,11 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
     
     chartData.forEach((entry, index) => {
       const { context } = entry;
+      
+      // Get context value from measurement level first, then fall back to mission level
       const contextValue = 
-        highlightContextType === 'location' ? context?.locationContext :
-        highlightContextType === 'activity' ? context?.activityContext :
+        highlightContextType === 'location' ? (context?.locationContext || missionContext?.locationContext) :
+        highlightContextType === 'activity' ? (context?.activityContext || missionContext?.activityContext) :
         highlightContextType === 'autocontext' ? context?.automaticContext :
         undefined;
       
@@ -173,7 +179,7 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
     }
     
     return periods;
-  }, [chartData, highlightContextType]);
+  }, [chartData, highlightContextType, missionContext]);
 
   const formatTooltip = (value: any, name: string) => {
     if (name === 'PM1' || name === 'PM25' || name === 'PM10') {

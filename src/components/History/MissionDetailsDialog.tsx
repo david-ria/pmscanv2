@@ -82,8 +82,8 @@ export function MissionDetailsDialog({
           }
         : undefined,
     context: {
-      locationContext: measurement.locationContext,
-      activityContext: measurement.activityContext,
+      locationContext: measurement.locationContext || mission.locationContext,
+      activityContext: measurement.activityContext || mission.activityContext,
       automaticContext: measurement.automaticContext,
     },
   }));
@@ -254,6 +254,10 @@ export function MissionDetailsDialog({
                   events={events} 
                   className="h-full"
                   highlightContextType={selectedContextType !== 'none' ? selectedContextType : undefined}
+                  missionContext={{
+                    locationContext: mission.locationContext,
+                    activityContext: mission.activityContext,
+                  }}
                 />
               </div>
             </CardContent>
