@@ -30,16 +30,6 @@ export function createMissionFromRecording(
   missionId?: string
 ): MissionData {
   const measurementData: MeasurementData[] = measurements.map((m, index) => {
-    // Debug logging for context data
-    if (index < 3) {
-      console.log(`Creating measurement ${index} with context:`, {
-        contextObject: m.context,
-        locationFromContext: m.context?.location,
-        activityFromContext: m.context?.activity,
-        automaticContext: m.automaticContext
-      });
-    }
-    
     return {
       id: crypto.randomUUID(),
       timestamp:
@@ -54,10 +44,10 @@ export function createMissionFromRecording(
       latitude: m.location?.latitude,
       longitude: m.location?.longitude,
       accuracy: m.location?.accuracy,
+      // Individual measurement context takes precedence
       locationContext: m.context?.location,
       activityContext: m.context?.activity,
       automaticContext: m.automaticContext,
-      // weatherDataId removed - now at mission level
     };
   });
 

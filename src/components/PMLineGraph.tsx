@@ -174,17 +174,7 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       const { context } = entry;
       const position = index + 1;
       
-      // Debug logging
-      if (index === 0) {
-        console.log('PMLineGraph context debug:', {
-          highlightContextType,
-          measurementContext: context,
-          missionContext,
-          sampleEntry: entry
-        });
-      }
-      
-      // Get context value from measurement level first, then fall back to mission level
+      // Get context value - prioritize measurement level, fallback to mission level
       const contextValue = 
         highlightContextType === 'location' ? (context?.locationContext || missionContext?.locationContext) :
         highlightContextType === 'activity' ? (context?.activityContext || missionContext?.activityContext) :
@@ -200,14 +190,14 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
         color = getContextColor(highlightContextType, contextValue);
       }
       
-      // Debug logging for context values
-      if (index < 5) {
-        console.log(`Entry ${index} context:`, {
-          contextValue,
-          label,
-          currentLabel,
-          position,
-          currentStart
+      // Debug context processing
+      if (index < 3) {
+        console.log(`Processing entry ${index}:`, {
+          measurementContext: context,
+          missionContext,
+          selectedContextType: highlightContextType,
+          resolvedValue: contextValue,
+          finalLabel: label
         });
       }
       
