@@ -191,10 +191,31 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
         highlightContextType === 'autocontext' ? context?.automaticContext :
         undefined;
       
-      // Determine label and color for this position
-      let label = contextValue && contextValue !== 'unknown' ? contextValue : 'Transition';
-      let color = contextValue && contextValue !== 'unknown' ? 
-        getContextColor(highlightContextType, contextValue) : '#6b7280';
+      // Only create periods for actual context values, not transitions
+      if (!contextValue || contextValue === 'unknown') {
+        // This is a transition - close current period if exists
+        if (currentLabel !== '') {
+          const periodData = chartData.slice(currentStart - 1, index);
+          const pm25Average = periodData.length > 0 
+            ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
+            : 0;
+          
+          periods.push({
+            start: currentStart,
+            end: position,
+            label: currentLabel,
+            color: currentColor,
+            pm25Average
+          });
+          currentLabel = '';
+          currentColor = '';
+        }
+        return; // Skip transition periods
+      }
+      
+      // Determine label and color for actual context values
+      let label = contextValue;
+      let color = getContextColor(highlightContextType, contextValue);
       
       // Debug logging for context values
       if (index < 3) {
