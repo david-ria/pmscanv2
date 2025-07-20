@@ -4,7 +4,7 @@ import { getGroupConfig, type GroupConfig, type GroupThreshold, type GroupAlarm 
 import { useToast } from '@/hooks/use-toast';
 import * as logger from '@/utils/logger';
 import { DEFAULT_THRESHOLDS } from '@/config/constants';
-import { DEFAULT_LOCATIONS, DEFAULT_ACTIVITIES, getLocationName, getActivityName } from '@/lib/locationsActivities';
+import { DEFAULT_LOCATIONS, DEFAULT_ACTIVITIES } from '@/lib/locationsActivities';
 
 export const useGroupSettings = () => {
   const [searchParams] = useSearchParams();
