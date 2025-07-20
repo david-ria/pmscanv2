@@ -23,6 +23,20 @@ export function useMissionSaver() {
     }
 
     const endTime = new Date();
+    
+    // Debug logging for recording data
+    console.log('🔍 Mission saving - recording data sample:', {
+      totalEntries: recordingData.length,
+      firstThreeEntries: recordingData.slice(0, 3).map((entry, index) => ({
+        index,
+        context: entry.context,
+        locationFromContext: entry.context?.location,
+        activityFromContext: entry.context?.activity,
+        automaticContext: entry.automaticContext,
+        timestamp: entry.timestamp
+      }))
+    });
+    
     const mission = dataStorage.createMissionFromRecording(
       recordingData,
       missionName,

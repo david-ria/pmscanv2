@@ -71,6 +71,8 @@ export function formatDatabaseMission(dbMission: {
     latitude?: number;
     longitude?: number;
     accuracy?: number;
+    location_context?: string;
+    activity_context?: string;
     automatic_context?: string;
   }>;
 }): MissionData {
@@ -103,6 +105,8 @@ export function formatDatabaseMission(dbMission: {
         latitude: m.latitude,
         longitude: m.longitude,
         accuracy: m.accuracy,
+        locationContext: m.location_context,
+        activityContext: m.activity_context,
         automaticContext: m.automatic_context,
       })) || [],
     synced: true,
