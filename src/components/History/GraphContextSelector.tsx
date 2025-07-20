@@ -92,7 +92,7 @@ export function GraphContextSelector({
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <MapPin className="h-4 w-4" />
           <span>{t('realTime.location')}</span>
-          {selectedLocation && (
+          {selectedLocation && selectedLocation !== 'all' && (
             <Badge variant="outline" className="text-xs">
               {getContextPeriods('location', selectedLocation)} période(s)
             </Badge>
@@ -103,7 +103,7 @@ export function GraphContextSelector({
             <SelectValue placeholder="Toutes les localisations" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Toutes les localisations</SelectItem>
+            <SelectItem value="all">Toutes les localisations</SelectItem>
             {availableLocations.map((location) => (
               <SelectItem key={location} value={location}>
                 {location}
@@ -117,7 +117,7 @@ export function GraphContextSelector({
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Activity className="h-4 w-4" />
           <span>{t('realTime.activity')}</span>
-          {selectedActivity && (
+          {selectedActivity && selectedActivity !== 'all' && (
             <Badge variant="outline" className="text-xs">
               {getContextPeriods('activity', selectedActivity)} période(s)
             </Badge>
@@ -128,7 +128,7 @@ export function GraphContextSelector({
             <SelectValue placeholder="Toutes les activités" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Toutes les activités</SelectItem>
+            <SelectItem value="all">Toutes les activités</SelectItem>
             {availableActivities.map((activity) => (
               <SelectItem key={activity} value={activity}>
                 {activity}
@@ -142,7 +142,7 @@ export function GraphContextSelector({
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Brain className="h-4 w-4" />
           <span>Auto-contexte</span>
-          {selectedAutoContext && (
+          {selectedAutoContext && selectedAutoContext !== 'all' && (
             <Badge variant="outline" className="text-xs">
               {getContextPeriods('auto', selectedAutoContext)} période(s)
             </Badge>
@@ -153,7 +153,7 @@ export function GraphContextSelector({
             <SelectValue placeholder="Tous les auto-contextes" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tous les auto-contextes</SelectItem>
+            <SelectItem value="all">Tous les auto-contextes</SelectItem>
             {availableAutoContexts.map((autoContext) => (
               <SelectItem key={autoContext} value={autoContext}>
                 {autoContext}

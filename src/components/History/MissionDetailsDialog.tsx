@@ -45,9 +45,9 @@ export function MissionDetailsDialog({
   const [events, setEvents] = useState<any[]>([]);
   
   // Context filtering state
-  const [selectedLocation, setSelectedLocation] = useState<string>('');
-  const [selectedActivity, setSelectedActivity] = useState<string>('');
-  const [selectedAutoContext, setSelectedAutoContext] = useState<string>('');
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
+  const [selectedActivity, setSelectedActivity] = useState<string>('all');
+  const [selectedAutoContext, setSelectedAutoContext] = useState<string>('all');
 
   // Load events for this mission
   useEffect(() => {
@@ -260,9 +260,9 @@ export function MissionDetailsDialog({
                   events={events} 
                   className="h-full"
                   highlightedContexts={{
-                    location: selectedLocation || undefined,
-                    activity: selectedActivity || undefined,
-                    autoContext: selectedAutoContext || undefined,
+                    location: selectedLocation !== 'all' ? selectedLocation : undefined,
+                    activity: selectedActivity !== 'all' ? selectedActivity : undefined,
+                    autoContext: selectedAutoContext !== 'all' ? selectedAutoContext : undefined,
                   }}
                 />
               </div>
