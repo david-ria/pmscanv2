@@ -219,6 +219,13 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       
       // Debug logging for context values
       if (index < 3) {
+        console.log(`Measurement ${index} context data:`, {
+          measurementLocationContext: context?.locationContext,
+          measurementActivityContext: context?.activityContext,
+          measurementAutomaticContext: context?.automaticContext,
+          missionLocationContext: missionContext?.locationContext,
+          missionActivityContext: missionContext?.activityContext
+        });
         console.log(`Entry ${index} context:`, {
           contextValue,
           measurementLevel: context,
