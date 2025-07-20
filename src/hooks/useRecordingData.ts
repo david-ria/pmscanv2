@@ -153,12 +153,13 @@ export function useRecordingData() {
       recordingFrequency?: string,
       shared?: boolean
     ) => {
+      // Don't pass locationContext and activityContext to preserve individual measurement contexts
       const mission = saveMissionHelper(
         recordingData,
         recordingStartTime,
         missionName,
-        locationContext,
-        activityContext,
+        undefined, // Don't override individual measurement contexts
+        undefined, // Don't override individual measurement contexts
         recordingFrequency,
         shared,
         currentMissionId || undefined
