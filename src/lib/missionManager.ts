@@ -29,25 +29,37 @@ export function createMissionFromRecording(
   shared?: boolean,
   missionId?: string
 ): MissionData {
-  const measurementData: MeasurementData[] = measurements.map((m) => ({
-    id: crypto.randomUUID(),
-    timestamp:
-      m.pmData.timestamp instanceof Date
-        ? m.pmData.timestamp
-        : new Date(m.pmData.timestamp),
-    pm1: m.pmData.pm1,
-    pm25: m.pmData.pm25,
-    pm10: m.pmData.pm10,
-    temperature: m.pmData.temp,
-    humidity: m.pmData.humidity,
-    latitude: m.location?.latitude,
-    longitude: m.location?.longitude,
-    accuracy: m.location?.accuracy,
-    locationContext: m.context?.location,
-    activityContext: m.context?.activity,
-    automaticContext: m.automaticContext,
-    // weatherDataId removed - now at mission level
-  }));
+  const measurementData: MeasurementData[] = measurements.map((m, index) => {
+    // Debug logging for context data
+    if (index < 3) {
+      console.log(`Creating measurement ${index} with context:`, {
+        contextObject: m.context,
+        locationFromContext: m.context?.location,
+        activityFromContext: m.context?.activity,
+        automaticContext: m.automaticContext
+      });
+    }
+    
+    return {
+      id: crypto.randomUUID(),
+      timestamp:
+        m.pmData.timestamp instanceof Date
+          ? m.pmData.timestamp
+          : new Date(m.pmData.timestamp),
+      pm1: m.pmData.pm1,
+      pm25: m.pmData.pm25,
+      pm10: m.pmData.pm10,
+      temperature: m.pmData.temp,
+      humidity: m.pmData.humidity,
+      latitude: m.location?.latitude,
+      longitude: m.location?.longitude,
+      accuracy: m.location?.accuracy,
+      locationContext: m.context?.location,
+      activityContext: m.context?.activity,
+      automaticContext: m.automaticContext,
+      // weatherDataId removed - now at mission level
+    };
+  });
 
   // Get weather data for the mission (use first measurement's weather data if available)
   const missionWeatherDataId = measurements.find(m => m.weatherDataId)?.weatherDataId;

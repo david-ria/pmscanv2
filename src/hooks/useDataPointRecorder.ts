@@ -85,6 +85,14 @@ export function useDataPointRecorder({
         weatherDataId,
       };
 
+      // Debug logging for context data
+      logger.debug('🔍 Creating recording entry with context:', {
+        context,
+        contextLocation: context?.location,
+        contextActivity: context?.activity,
+        automaticContext
+      });
+
       // Store data for background processing if background mode is enabled
       if (getBackgroundRecording()) {
         storeBackgroundData(pmDataWithUniqueTimestamp, location, context, weatherDataId);
