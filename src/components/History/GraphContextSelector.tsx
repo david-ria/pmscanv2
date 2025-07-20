@@ -19,17 +19,20 @@ export function GraphContextSelector({
 }: GraphContextSelectorProps) {
   const { t } = useTranslation();
 
-  // Debug: Check what context data we have
-  React.useEffect(() => {
-    console.log('Mission context data:', {
-      missionLocation: mission.locationContext,
-      missionActivity: mission.activityContext,
-      measurementContexts: mission.measurements.slice(0, 5).map(m => ({
-        locationContext: m.locationContext,
-        activityContext: m.activityContext,
-        automaticContext: m.automaticContext
-      }))
-    });
+  // Check what context data is available
+  const availableContexts = React.useMemo(() => {
+    const hasLocationContext = !!(mission.locationContext || 
+      mission.measurements.some(m => m.locationContext));
+    const hasActivityContext = !!(mission.activityContext || 
+      mission.measurements.some(m => m.activityContext));
+    const hasAutoContext = mission.measurements.some(m => 
+      m.automaticContext && m.automaticContext !== 'unknown');
+    
+    return {
+      location: hasLocationContext,
+      activity: hasActivityContext,
+      autocontext: hasAutoContext
+    };
   }, [mission]);
 
   return (
@@ -38,6 +41,12 @@ export function GraphContextSelector({
         <h4 className="text-sm font-medium text-muted-foreground">
           Mise en évidence des contextes
         </h4>
+        
+        {!availableContexts.location && !availableContexts.activity && !availableContexts.autocontext && (
+          <p className="text-xs text-muted-foreground italic">
+            Aucune donnée de contexte disponible pour cette mission
+          </p>
+        )}
         
         <RadioGroup
           value={selectedContextType}
@@ -51,21 +60,24 @@ export function GraphContextSelector({
             </Label>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="location" id="location" />
-            <Label htmlFor="location" className="cursor-pointer text-sm">
+            <RadioGroupItem value="location" id="location" disabled={!availableContexts.location} />
+            <Label htmlFor="location" className={`cursor-pointer text-sm ${!availableContexts.location ? 'text-muted-foreground/50' : ''}`}>
               {t('analysis.location')}
+              {!availableContexts.location && <span className="text-xs ml-1">(indisponible)</span>}
             </Label>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="activity" id="activity" />
-            <Label htmlFor="activity" className="cursor-pointer text-sm">
+            <RadioGroupItem value="activity" id="activity" disabled={!availableContexts.activity} />
+            <Label htmlFor="activity" className={`cursor-pointer text-sm ${!availableContexts.activity ? 'text-muted-foreground/50' : ''}`}>
               {t('analysis.activity')}
+              {!availableContexts.activity && <span className="text-xs ml-1">(indisponible)</span>}
             </Label>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="autocontext" id="autocontext" />
-            <Label htmlFor="autocontext" className="cursor-pointer text-sm">
+            <RadioGroupItem value="autocontext" id="autocontext" disabled={!availableContexts.autocontext} />
+            <Label htmlFor="autocontext" className={`cursor-pointer text-sm ${!availableContexts.autocontext ? 'text-muted-foreground/50' : ''}`}>
               {t('analysis.autocontext')}
+              {!availableContexts.autocontext && <span className="text-xs ml-1">(indisponible)</span>}
             </Label>
           </div>
         </RadioGroup>

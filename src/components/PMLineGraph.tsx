@@ -326,17 +326,11 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
                 label={{
                   value: period.label,
                   position: 'top',
-                  fontSize: 12,
+                  fontSize: 11,
                   fill: period.color,
                   textAnchor: 'middle',
                   fontWeight: 'bold',
-                  offset: 10,
-                  style: {
-                    textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
-                    backgroundColor: 'rgba(255,255,255,0.8)',
-                    padding: '2px 4px',
-                    borderRadius: '4px'
-                  }
+                  offset: 20,
                 }}
               />
             </React.Fragment>
