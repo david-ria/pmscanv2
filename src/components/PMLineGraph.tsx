@@ -112,6 +112,48 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       .filter(Boolean);
   }, [events, chartData]);
 
+  // Color mapping for different activities and locations
+  const getContextColor = React.useCallback((contextType: string, contextValue: string): string => {
+    if (contextType === 'activity') {
+      const activityColors: Record<string, string> = {
+        'indoor': '#8b5cf6', // purple
+        'outdoor': '#22c55e', // green
+        'transport': '#ef4444', // red
+        'walking': '#3b82f6', // blue
+        'cycling': '#f59e0b', // amber
+        'driving': '#dc2626', // red-600
+        'train': '#7c3aed', // violet
+        'bus': '#ea580c', // orange
+        'metro': '#9333ea', // purple-600
+        'undergroundTransport': '#6366f1', // indigo
+        'sport': '#059669', // emerald
+        'rest': '#64748b', // slate
+        'work': '#0891b2', // cyan
+        'meeting': '#e11d48', // rose
+        'shopping': '#db2777', // pink
+        'cooking': '#84cc16', // lime
+        'cleaning': '#06b6d4', // cyan-500
+        'studying': '#8b5cf6', // purple-500
+        'jogging': '#10b981', // emerald-500
+      };
+      return activityColors[contextValue.toLowerCase()] || '#6b7280'; // gray fallback
+    } else if (contextType === 'location') {
+      const locationColors: Record<string, string> = {
+        'home': '#22c55e', // green
+        'office': '#3b82f6', // blue
+        'school': '#f59e0b', // amber
+        'indoor': '#8b5cf6', // purple
+        'outdoor': '#10b981', // emerald
+        'transport': '#ef4444', // red
+        'underground': '#6366f1', // indigo
+        'park': '#84cc16', // lime
+        'mainstreet': '#64748b', // slate
+      };
+      return locationColors[contextValue.toLowerCase()] || '#6b7280'; // gray fallback
+    }
+    return '#3b82f6'; // blue fallback for autocontext
+  }, []);
+
   // Generate highlighted areas and labels based on context type selection
   const contextPeriods = React.useMemo(() => {
     if (!highlightContextType || !chartData.length) return [];
@@ -164,8 +206,7 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
               start: currentStart,
               end: index,
               label: currentLabel,
-              color: highlightContextType === 'location' ? '#22c55e' :
-                     highlightContextType === 'activity' ? '#ef4444' : '#3b82f6'
+              color: getContextColor(highlightContextType, currentLabel)
             });
           }
           currentStart = index + 1;
@@ -178,8 +219,7 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
             start: currentStart,
             end: index,
             label: currentLabel,
-            color: highlightContextType === 'location' ? '#22c55e' :
-                   highlightContextType === 'activity' ? '#ef4444' : '#3b82f6'
+            color: getContextColor(highlightContextType, currentLabel)
           });
           currentStart = -1;
         }
@@ -192,14 +232,13 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
         start: currentStart,
         end: chartData.length,
         label: currentLabel,
-        color: highlightContextType === 'location' ? '#22c55e' :
-               highlightContextType === 'activity' ? '#ef4444' : '#3b82f6'
+        color: getContextColor(highlightContextType, currentLabel)
       });
     }
     
     console.log('Generated context periods:', periods);
     return periods;
-  }, [chartData, highlightContextType, missionContext]);
+  }, [chartData, highlightContextType, missionContext, getContextColor]);
 
   const formatTooltip = (value: any, name: string) => {
     if (name === 'PM1' || name === 'PM25' || name === 'PM10') {
@@ -250,7 +289,7 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
-          margin={{ top: 5, right: 5, left: 0, bottom: 120 }}
+          margin={{ top: 40, right: 5, left: 0, bottom: 120 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
@@ -326,11 +365,15 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
                 label={{
                   value: period.label,
                   position: 'top',
-                  fontSize: 11,
+                  fontSize: 12,
                   fill: period.color,
                   textAnchor: 'middle',
                   fontWeight: 'bold',
-                  offset: 20,
+                  offset: -5,
+                  style: {
+                    textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
+                    fontWeight: 'bold'
+                  }
                 }}
               />
             </React.Fragment>
