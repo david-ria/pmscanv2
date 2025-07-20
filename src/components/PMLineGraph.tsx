@@ -166,11 +166,13 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       pm25Average: number;
     }> = [];
     
-    let currentStart = -1;
+    let currentStart = 1;
     let currentLabel = '';
+    let currentColor = '';
     
     chartData.forEach((entry, index) => {
       const { context } = entry;
+      const position = index + 1;
       
       // Debug logging
       if (index === 0) {
@@ -189,6 +191,11 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
         highlightContextType === 'autocontext' ? context?.automaticContext :
         undefined;
       
+      // Determine label and color for this position
+      let label = contextValue && contextValue !== 'unknown' ? contextValue : 'Transition';
+      let color = contextValue && contextValue !== 'unknown' ? 
+        getContextColor(highlightContextType, contextValue) : '#6b7280';
+      
       // Debug logging for context values
       if (index < 3) {
         console.log(`Entry ${index} context:`, {
@@ -198,52 +205,33 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
         });
       }
       
-      if (contextValue && contextValue !== 'unknown') {
-        if (currentStart === -1 || currentLabel !== contextValue) {
-          // Start new period or different context
-          if (currentStart !== -1) {
-            // Calculate PM2.5 average for the previous period
-            const periodData = chartData.slice(currentStart - 1, index);
-            const pm25Average = periodData.length > 0 
-              ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
-              : 0;
-            
-            // Close previous period
-            periods.push({
-              start: currentStart,
-              end: index,
-              label: currentLabel,
-              color: getContextColor(highlightContextType, currentLabel),
-              pm25Average
-            });
-          }
-          currentStart = index + 1;
-          currentLabel = contextValue;
-        }
-      } else {
-        if (currentStart !== -1) {
-          // Calculate PM2.5 average for the current period
+      // Check if we need to close current period and start a new one
+      if (currentLabel !== label) {
+        // Close previous period if it exists
+        if (currentLabel !== '') {
           const periodData = chartData.slice(currentStart - 1, index);
           const pm25Average = periodData.length > 0 
             ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
             : 0;
           
-          // Close current period
           periods.push({
             start: currentStart,
-            end: index,
+            end: position,
             label: currentLabel,
-            color: getContextColor(highlightContextType, currentLabel),
+            color: currentColor,
             pm25Average
           });
-          currentStart = -1;
         }
+        
+        // Start new period
+        currentStart = position;
+        currentLabel = label;
+        currentColor = color;
       }
     });
     
-    // Handle case where period goes to the end
-    if (currentStart !== -1) {
-      // Calculate PM2.5 average for the final period
+    // Handle the final period
+    if (currentLabel !== '') {
       const periodData = chartData.slice(currentStart - 1);
       const pm25Average = periodData.length > 0 
         ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
@@ -251,9 +239,9 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       
       periods.push({
         start: currentStart,
-        end: chartData.length,
+        end: chartData.length + 1,
         label: currentLabel,
-        color: getContextColor(highlightContextType, currentLabel),
+        color: currentColor,
         pm25Average
       });
     }
