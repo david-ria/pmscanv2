@@ -174,22 +174,13 @@ export const usePollutionBreakdownData = (
         }
       });
 
-      // Calculate total exposure time for percentage calculation
-      const totalExposure = Array.from(dataMap.values()).reduce(
-        (sum, item) => sum + item.totalExposure,
-        0
-      );
-
-      return Array.from(dataMap.entries())
+      // First, get entries with PM data and sort them
+      const validEntries = Array.from(dataMap.entries())
         .map(([key, data]) => {
           const avgPM =
             data.totalExposure > 0 ? data.weightedPM / data.totalExposure : 0;
           return {
             name: key,
-            percentage:
-              totalExposure > 0
-                ? (data.totalExposure / totalExposure) * 100
-                : 0,
             avgPM: avgPM,
             color: data.color,
             exposure: data.totalExposure,
@@ -198,6 +189,20 @@ export const usePollutionBreakdownData = (
         .filter((item) => item.avgPM > 0) // Only show categories with PM data
         .sort((a, b) => b.avgPM - a.avgPM) // Sort by PM concentration
         .slice(0, 5); // Show top 5
+
+      // Calculate total exposure time only for valid entries that will be displayed
+      const totalExposure = validEntries.reduce(
+        (sum, item) => sum + item.exposure,
+        0
+      );
+
+      return validEntries.map((entry) => ({
+        ...entry,
+        percentage:
+          totalExposure > 0
+            ? (entry.exposure / totalExposure) * 100
+            : 0,
+      }));
     };
 
     return getBreakdownData();
