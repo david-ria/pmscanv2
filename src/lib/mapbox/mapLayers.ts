@@ -62,7 +62,8 @@ export const addTrackLayers = (map: mapboxgl.Map, thresholds: any) => {
         ],
         'circle-color': createMapStyleExpression(thresholds),
         'circle-stroke-width': 0,
-        'circle-opacity': 0.8,
+        'circle-stroke-color': 'transparent',
+        'circle-opacity': 1,
       },
     });
   }
