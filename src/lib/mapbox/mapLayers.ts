@@ -152,4 +152,8 @@ export const updateLayerStyles = (map: mapboxgl.Map, thresholds: any) => {
     'circle-color',
     createMapStyleExpression(thresholds)
   );
+  
+  // Ensure stroke properties remain disabled
+  map.setPaintProperty('track-points', 'circle-stroke-width', 0);
+  map.setPaintProperty('track-points', 'circle-stroke-color', 'transparent');
 };
