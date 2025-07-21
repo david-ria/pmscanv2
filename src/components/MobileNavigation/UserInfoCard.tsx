@@ -5,6 +5,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 
+/**
+ * User information card component for mobile navigation
+ * 
+ * Displays current user information, connection status, and active group
+ * when in group mode. Optimized for mobile touch interfaces.
+ */
 export function UserInfoCard() {
   const { user } = useAuth();
   const { t } = useTranslation();

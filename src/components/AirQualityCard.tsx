@@ -64,11 +64,15 @@ export function AirQualityCard({ data, className }: AirQualityCardProps) {
 
   const quality = getAirQualityLevel(data.pm25, data.pm10, data.pm1);
 
+  // Create header actions with proper semantic color usage
   const headerActions = (
     <Badge
       variant="secondary"
-      className="text-white font-medium"
-      style={{ backgroundColor: quality.color }}
+      className="font-medium"
+      style={{ 
+        backgroundColor: quality.color,
+        color: quality.level === 'good' ? 'hsl(var(--primary-foreground))' : 'white'
+      }}
     >
       {quality.label}
     </Badge>

@@ -121,7 +121,8 @@ export function EventButton({}: EventButtonProps) {
           className={cn(
             'h-16 w-16 rounded-full flex items-center justify-center transition-all duration-200',
             'hover:scale-105 active:scale-95 shadow-xl',
-            'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-2xl',
+            'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-2xl',
+            'touch-manipulation', // Better mobile touch handling
             !isRecording && 'opacity-50 cursor-not-allowed'
           )}
           disabled={!isRecording || isLoading}
@@ -131,7 +132,7 @@ export function EventButton({}: EventButtonProps) {
         </button>
       </DialogTrigger>
       
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full mx-4 sm:mx-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />

@@ -41,7 +41,7 @@ export function MenuItem({
   return (
     <TooltipProvider>
       <div
-        className="flex items-center justify-between px-4 py-4 hover:bg-accent/50 transition-colors rounded-lg min-h-[48px] touch-manipulation"
+        className="flex items-center justify-between px-4 py-4 hover:bg-accent/50 transition-colors rounded-lg min-h-[48px] touch-manipulation active:bg-accent/70"
         onClick={handleClick}
         style={{ cursor: toggle ? 'default' : 'pointer' }}
       >

@@ -22,7 +22,7 @@ export function LanguageSelector({ label, badge }: LanguageSelectorProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="flex items-center justify-between px-4 py-4 hover:bg-accent/50 transition-colors cursor-pointer rounded-lg min-h-[48px] touch-manipulation">
+        <div className="flex items-center justify-between px-4 py-4 hover:bg-accent/50 transition-colors cursor-pointer rounded-lg min-h-[48px] touch-manipulation active:bg-accent/70">
           <div className="flex items-center gap-4">
             <Languages className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <span className="text-sm text-foreground leading-tight">
