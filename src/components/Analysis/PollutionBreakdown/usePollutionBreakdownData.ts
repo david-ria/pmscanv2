@@ -123,36 +123,54 @@ export const usePollutionBreakdownData = (
             dataMap.set(context, existing);
           });
         } else {
-          let key = '';
+          // For location and activity, aggregate from measurements like autocontext
+          const contextMap = new Map<
+            string,
+            { totalExposure: number; weightedPM: number }
+          >();
 
-          switch (breakdownType) {
-            case 'location':
-              key = mission.locationContext || 'Inconnue';
-              console.log('Location breakdown - Mission:', mission.name, 'locationContext:', mission.locationContext);
-              break;
-            case 'activity':
-              key = mission.activityContext || 'Inconnue';
-              console.log('Activity breakdown - Mission:', mission.name, 'activityContext:', mission.activityContext);
-              break;
-          }
+          mission.measurements.forEach((measurement) => {
+            let contextValue = '';
+            
+            switch (breakdownType) {
+              case 'location':
+                contextValue = measurement.locationContext || 'Inconnue';
+                break;
+              case 'activity':
+                contextValue = measurement.activityContext || 'Inconnue';
+                break;
+            }
 
-          const pmValue =
-            pmType === 'pm1'
-              ? mission.avgPm1
-              : pmType === 'pm25'
-                ? mission.avgPm25
-                : mission.avgPm10;
+            const pmValue =
+              pmType === 'pm1'
+                ? measurement.pm1
+                : pmType === 'pm25'
+                  ? measurement.pm25
+                  : measurement.pm10;
 
-          const existing = dataMap.get(key) || {
-            totalExposure: 0,
-            weightedPM: 0,
-            color: getColorForKey(key),
-          };
+            const existing = contextMap.get(contextValue) || {
+              totalExposure: 0,
+              weightedPM: 0,
+            };
+            // Assume each measurement represents equal time exposure
+            const measurementDuration =
+              mission.durationMinutes / mission.measurements.length;
+            existing.totalExposure += measurementDuration;
+            existing.weightedPM += pmValue * measurementDuration;
+            contextMap.set(contextValue, existing);
+          });
 
-          existing.totalExposure += mission.durationMinutes;
-          existing.weightedPM += pmValue * mission.durationMinutes;
-
-          dataMap.set(key, existing);
+          // Add each context from this mission to the main dataMap
+          contextMap.forEach((data, context) => {
+            const existing = dataMap.get(context) || {
+              totalExposure: 0,
+              weightedPM: 0,
+              color: getColorForKey(context),
+            };
+            existing.totalExposure += data.totalExposure;
+            existing.weightedPM += data.weightedPM;
+            dataMap.set(context, existing);
+          });
         }
       });
 
