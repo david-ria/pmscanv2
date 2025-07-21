@@ -224,7 +224,10 @@
       "totalExposure": "Exposition totale",
       "averagePM25": "Moyenne PM2.5",
       "pm25AboveWHO": "PM2.5 > OMS (15)",
-      "pm10AboveWHO": "PM10 > OMS (45)"
+      "pm10AboveWHO": "PM10 > OMS (45)",
+      "pm25AboveAvg": "PM2.5 > Moyenne",
+      "pm10AboveAvg": "PM10 > Moyenne",
+      "pm1AboveAvg": "PM1 > Moyenne"
     }
   },
   "analysis": {
