@@ -70,6 +70,7 @@ export const usePollutionBreakdownData = (
     // Calculate breakdown data based on type and PM selection
     const getBreakdownData = () => {
       const filtered = filteredMissions();
+      console.log('Pollution breakdown - Total missions:', missions.length, 'Filtered missions:', filtered.length, 'Breakdown type:', breakdownType);
       if (filtered.length === 0) return [];
 
       const dataMap = new Map<
@@ -127,9 +128,11 @@ export const usePollutionBreakdownData = (
           switch (breakdownType) {
             case 'location':
               key = mission.locationContext || 'Inconnue';
+              console.log('Location breakdown - Mission:', mission.name, 'locationContext:', mission.locationContext);
               break;
             case 'activity':
               key = mission.activityContext || 'Inconnue';
+              console.log('Activity breakdown - Mission:', mission.name, 'activityContext:', mission.activityContext);
               break;
           }
 
