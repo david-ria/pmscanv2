@@ -37,21 +37,6 @@ export function useHistoryStats(filteredMissions: MissionData[]) {
           value: '0 min',
           color: 'default' as const,
         },
-        {
-          label: t('history.stats.pm25AboveAvg'),
-          value: '0 min',
-          color: 'default' as const,
-        },
-        {
-          label: t('history.stats.pm10AboveAvg'),
-          value: '0 min',
-          color: 'default' as const,
-        },
-        {
-          label: t('history.stats.pm1AboveAvg'),
-          value: '0 min',
-          color: 'default' as const,
-        },
       ];
     }
 
@@ -62,12 +47,6 @@ export function useHistoryStats(filteredMissions: MissionData[]) {
     const avgPm25 =
       filteredMissions.reduce((sum, m) => sum + m.avgPm25, 0) /
       filteredMissions.length;
-    const avgPm10 =
-      filteredMissions.reduce((sum, m) => sum + m.avgPm10, 0) /
-      filteredMissions.length;
-    const avgPm1 =
-      filteredMissions.reduce((sum, m) => sum + m.avgPm1, 0) /
-      filteredMissions.length;
 
     // Calculate time above WHO thresholds
     const timeAboveWHO_PM25 = filteredMissions.reduce((sum, m) => {
@@ -76,19 +55,6 @@ export function useHistoryStats(filteredMissions: MissionData[]) {
 
     const timeAboveWHO_PM10 = filteredMissions.reduce((sum, m) => {
       return m.avgPm10 > 45 ? sum + m.durationMinutes : sum;
-    }, 0);
-
-    // Calculate time above average values
-    const timeAboveAvg_PM25 = filteredMissions.reduce((sum, m) => {
-      return m.avgPm25 > avgPm25 ? sum + m.durationMinutes : sum;
-    }, 0);
-
-    const timeAboveAvg_PM10 = filteredMissions.reduce((sum, m) => {
-      return m.avgPm10 > avgPm10 ? sum + m.durationMinutes : sum;
-    }, 0);
-
-    const timeAboveAvg_PM1 = filteredMissions.reduce((sum, m) => {
-      return m.avgPm1 > avgPm1 ? sum + m.durationMinutes : sum;
     }, 0);
 
     const getColorFromPm25 = (pm25: number) => {
@@ -126,21 +92,6 @@ export function useHistoryStats(filteredMissions: MissionData[]) {
         label: t('history.stats.pm10AboveWHO'),
         value: formatDuration(timeAboveWHO_PM10),
         color: getColorFromTime(timeAboveWHO_PM10, totalDuration),
-      },
-      {
-        label: t('history.stats.pm25AboveAvg'),
-        value: formatDuration(timeAboveAvg_PM25),
-        color: getColorFromTime(timeAboveAvg_PM25, totalDuration),
-      },
-      {
-        label: t('history.stats.pm10AboveAvg'),
-        value: formatDuration(timeAboveAvg_PM10),
-        color: getColorFromTime(timeAboveAvg_PM10, totalDuration),
-      },
-      {
-        label: t('history.stats.pm1AboveAvg'),
-        value: formatDuration(timeAboveAvg_PM1),
-        color: getColorFromTime(timeAboveAvg_PM1, totalDuration),
       },
     ];
   }, [filteredMissions, t]);
