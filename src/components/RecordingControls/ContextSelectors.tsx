@@ -52,7 +52,11 @@ export function ContextSelectors({
     }
     
     if (!selectedLocation) {
-      return []; // No activities until location is selected
+      // Show all activities if no location is selected (for flexibility)
+      return DEFAULT_ACTIVITIES.map(activity => ({
+        key: activity.id,
+        name: activity.name,
+      }));
     }
 
     // Find location by ID first, then by name for backwards compatibility
@@ -75,11 +79,15 @@ export function ContextSelectors({
 
   const activities = getAvailableActivities();
 
-  // Clear activity selection when location changes and current activity is not available
+  // Clear activity selection when location changes and current activity is not available for that location
   useEffect(() => {
     if (!isGroupMode && selectedLocation && selectedActivity) {
       const availableActivityLabels = activities.map(a => a.name);
-      if (!availableActivityLabels.includes(selectedActivity)) {
+      const availableActivityIds = activities.map(a => a.key || a.name);
+      
+      // Check if the selected activity is valid for the current location (by name or ID)
+      if (!availableActivityLabels.includes(selectedActivity) && !availableActivityIds.includes(selectedActivity)) {
+        console.log(`🔄 Activity "${selectedActivity}" not available for location "${selectedLocation}". Available activities:`, availableActivityLabels);
         onActivityChange('');
       }
     }
@@ -127,16 +135,10 @@ export function ContextSelectors({
         <Select 
           value={selectedActivity} 
           onValueChange={onActivityChange}
-          disabled={!isGroupMode && !selectedLocation}
+          disabled={false}
         >
           <SelectTrigger className="h-11">
-            <SelectValue 
-              placeholder={
-                !isGroupMode && !selectedLocation 
-                  ? "Select location first" 
-                  : t('realTime.noActivity')
-              } 
-            />
+            <SelectValue placeholder={t('realTime.noActivity')} />
           </SelectTrigger>
           <SelectContent>
             {activities.map((activity) => (
