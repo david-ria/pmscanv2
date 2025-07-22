@@ -426,19 +426,28 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
           })}
           
           {/* Event markers */}
-          {eventMarkers.map((event: any) => (
+          {eventMarkers.map((event: any, eventIndex: number) => (
             <ReferenceLine
               key={event.id}
               x={event.chartPosition}
               stroke="#f97316"
-              strokeWidth={2}
-              strokeDasharray="5 5"
+              strokeWidth={3}
+              strokeDasharray="3 3"
               label={{
                 value: event.event_type,
                 position: 'top',
-                fontSize: 10,
+                fontSize: 11,
                 fill: '#f97316',
                 textAnchor: 'middle',
+                fontWeight: 'bold',
+                offset: 80 + (eventIndex * 15), // Stagger vertically to avoid overlap
+                angle: -90, // Rotate text vertically
+                style: {
+                  textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
+                  fontWeight: 'bold',
+                  writingMode: 'vertical-lr',
+                  textOrientation: 'mixed'
+                }
               }}
             />
           ))}
