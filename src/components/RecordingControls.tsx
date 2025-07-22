@@ -161,12 +161,18 @@ export function RecordingControls({
         selectedLocation={selectedLocation}
         onLocationChange={(location) => {
           setSelectedLocation(location);
-          updateMissionContext(location, selectedActivity);
+          // Only update mission context if recording to avoid conflicts
+          if (contextIsRecording) {
+            updateMissionContext(location, selectedActivity);
+          }
         }}
         selectedActivity={selectedActivity}
         onActivityChange={(activity) => {
           setSelectedActivity(activity);
-          updateMissionContext(selectedLocation, activity);
+          // Only update mission context if recording to avoid conflicts
+          if (contextIsRecording) {
+            updateMissionContext(selectedLocation, activity);
+          }
         }}
         isRecording={contextIsRecording}
       />

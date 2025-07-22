@@ -199,23 +199,15 @@ export default function RealTime() {
     }
   }, [latestLocation, fetchWeatherData]);
 
-  // Update mission context when location or activity changes
+  // Initialize local state from mission context on mount only
   useEffect(() => {
-    updateMissionContext(selectedLocation, selectedActivity);
-  }, [selectedLocation, selectedActivity, updateMissionContext]);
-
-  // Keep local state in sync with mission context
-  useEffect(() => {
-    if (missionContext.location !== selectedLocation) {
+    if (missionContext.location && !selectedLocation) {
       setSelectedLocation(missionContext.location);
     }
-  }, [missionContext.location]);
-
-  useEffect(() => {
-    if (missionContext.activity !== selectedActivity) {
+    if (missionContext.activity && !selectedActivity) {
       setSelectedActivity(missionContext.activity);
     }
-  }, [missionContext.activity]);
+  }, []); // Empty dependency array - only run on mount
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
