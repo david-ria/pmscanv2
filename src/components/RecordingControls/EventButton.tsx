@@ -12,18 +12,7 @@ import { useEvents } from '@/hooks/useEvents';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-
-const EVENT_TYPES = [
-  { value: 'smoker', label: 'Smoker', icon: '🚬' },
-  { value: 'truck', label: 'Truck', icon: '🚛' },
-  { value: 'traffic', label: 'Heavy Traffic', icon: '🚗' },
-  { value: 'construction', label: 'Construction', icon: '🏗️' },
-  { value: 'fire', label: 'Fire/Smoke', icon: '🔥' },
-  { value: 'dust', label: 'Dust', icon: '💨' },
-  { value: 'industrial', label: 'Industrial Activity', icon: '🏭' },
-  { value: 'cooking', label: 'Cooking/BBQ', icon: '🔥' },
-  { value: 'other', label: 'Other', icon: '📍' }
-];
+import { EVENT_TYPES } from '@/utils/eventTypes';
 
 interface EventButtonProps {}
 

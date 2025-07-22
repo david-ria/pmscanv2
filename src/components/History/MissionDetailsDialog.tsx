@@ -17,6 +17,7 @@ import { AirQualityInfo } from '@/components/AirQualityInfo';
 import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
 import { formatDateTime, formatDurationHHMM } from '@/utils/timeFormat';
+import { getEventLabel } from '@/utils/eventTypes';
 import { downloadPDF } from '@/lib/pdfExport';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -739,19 +740,7 @@ export function MissionDetailsDialog({
                       }
                     };
 
-                    const getEventLabel = (type: string) => {
-                      switch (type) {
-                        case 'smoker': return 'Smoker';
-                        case 'truck': return 'Truck';
-                        case 'traffic': return 'Heavy Traffic';
-                        case 'construction': return 'Construction';
-                        case 'fire': return 'Fire/Smoke';
-                        case 'dust': return 'Dust';
-                        case 'industrial': return 'Industrial Activity';
-                        case 'cooking': return 'Cooking/BBQ';
-                        default: return 'Other Event';
-                      }
-                    };
+                    // Now using centralized getEventLabel function
 
                     return (
                       <div key={event.id || index} className="border rounded-lg p-3 space-y-2 bg-card">
