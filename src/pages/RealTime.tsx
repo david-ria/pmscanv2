@@ -134,7 +134,7 @@ export default function RealTime() {
           addDataPoint(
             currentData,
             latestLocation || undefined,
-            missionContext,
+            { location: selectedLocation, activity: selectedActivity },
             automaticContext
           );
         };
@@ -152,7 +152,8 @@ export default function RealTime() {
     currentData,
     latestLocation,
     addDataPoint,
-    missionContext,
+    selectedLocation,
+    selectedActivity,
     updateContextIfNeeded,
   ]);
 
