@@ -350,7 +350,7 @@ export function MissionDetailsDialog({
                 selectedContextType={selectedContextType}
                 onContextTypeChange={setSelectedContextType}
               />
-              <div className="h-96">
+              <div className="h-[500px]">
                 <PMLineGraph 
                   data={graphData} 
                   events={events} 
