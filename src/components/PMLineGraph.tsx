@@ -426,31 +426,43 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
           })}
           
           {/* Event markers */}
-          {eventMarkers.map((event: any, eventIndex: number) => (
-            <ReferenceLine
-              key={event.id}
-              x={event.chartPosition}
-              stroke="#f97316"
-              strokeWidth={3}
-              strokeDasharray="3 3"
-              label={{
-                value: event.event_type,
-                position: 'top',
-                fontSize: 11,
-                fill: '#f97316',
-                textAnchor: 'middle',
-                fontWeight: 'bold',
-                offset: 80 + (eventIndex * 15), // Stagger vertically to avoid overlap
-                angle: -90, // Rotate text vertically
-                style: {
-                  textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
-                  fontWeight: 'bold',
-                  writingMode: 'vertical-lr',
-                  textOrientation: 'mixed'
-                }
-              }}
-            />
-          ))}
+          {eventMarkers.map((event: any, eventIndex: number) => {
+            const eventType = event.event_type || event._type || 'Event';
+            const displayLabel = eventType === 'undefined' ? 'Event' : eventType;
+            
+            return (
+              <React.Fragment key={event.id}>
+                {/* Event line */}
+                <ReferenceLine
+                  x={event.chartPosition}
+                  stroke="#f97316"
+                  strokeWidth={3}
+                  strokeDasharray="3 3"
+                />
+                {/* Event label positioned above the line */}
+                <ReferenceLine
+                  x={event.chartPosition}
+                  stroke="transparent"
+                  strokeWidth={0}
+                  label={{
+                    value: displayLabel,
+                    position: 'top',
+                    fontSize: 12,
+                    fill: '#f97316',
+                    textAnchor: 'start',
+                    fontWeight: 'bold',
+                    offset: 100 + (eventIndex * 20),
+                    style: {
+                      textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
+                      fontWeight: 'bold',
+                      transform: 'rotate(-90deg)',
+                      transformOrigin: 'center'
+                    }
+                  }}
+                />
+              </React.Fragment>
+            );
+          })}
         </LineChart>
       </ResponsiveContainer>
     </div>
