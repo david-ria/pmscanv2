@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { MapboxMap } from '@/components/MapboxMap';
 import { PMLineGraph } from '@/components/PMLineGraph';
 import { GraphContextSelector } from './GraphContextSelector';
@@ -16,6 +17,10 @@ import { AirQualityInfo } from '@/components/AirQualityInfo';
 import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
 import { formatDateTime, formatDuration } from '@/utils/timeFormat';
+import { downloadPDF } from '@/lib/pdfExport';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Calendar, 
   MapPin, 
@@ -27,7 +32,10 @@ import {
   Wind, 
   Factory, 
   ChefHat,
-  AlertCircle
+  AlertCircle,
+  Download,
+  Image as ImageIcon,
+  FileText
 } from 'lucide-react';
 
 interface MissionDetailsDialogProps {
@@ -42,8 +50,13 @@ export function MissionDetailsDialog({
   onOpenChange,
 }: MissionDetailsDialogProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const { getEventsByMission } = useEvents();
   const [events, setEvents] = useState<any[]>([]);
+  
+  // Refs for capturing content
+  const graphRef = useRef<HTMLDivElement>(null);
+  const missionContentRef = useRef<HTMLDivElement>(null);
   
   // Context highlighting state - automatically select first available context
   const [selectedContextType, setSelectedContextType] = useState<'none' | 'location' | 'activity' | 'autocontext'>(() => {
@@ -250,6 +263,155 @@ export function MissionDetailsDialog({
     return 'text-air-very-poor';
   };
 
+  // Export functions
+  const saveGraphAsImage = async () => {
+    if (!graphRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(graphRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+      });
+      
+      const link = document.createElement('a');
+      link.download = `${mission.name}_graph_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+      
+      toast({
+        title: "Graph saved",
+        description: "Graph image has been downloaded successfully",
+      });
+    } catch (error) {
+      console.error('Error saving graph:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save graph image",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const exportMissionReport = async () => {
+    if (!missionContentRef.current) return;
+
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      let yPosition = 20;
+
+      // Title
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Mission Report', pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 15;
+
+      // Mission details
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`Mission: ${mission.name}`, 20, yPosition);
+      yPosition += 8;
+
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Date: ${formatDateTime(mission.startTime)}`, 20, yPosition);
+      yPosition += 5;
+      pdf.text(`Duration: ${formatDuration(mission.durationMinutes)}`, 20, yPosition);
+      yPosition += 5;
+      pdf.text(`Measurements: ${mission.measurementsCount}`, 20, yPosition);
+      yPosition += 5;
+      
+      if (mission.locationContext && mission.activityContext) {
+        pdf.text(`Context: ${mission.locationContext} • ${mission.activityContext}`, 20, yPosition);
+        yPosition += 5;
+      }
+      yPosition += 10;
+
+      // Overall statistics
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Overall Statistics', 20, yPosition);
+      yPosition += 8;
+
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`PM1.0: Avg ${stats.pm1.avg.toFixed(1)} µg/m³ (Min: ${stats.pm1.min.toFixed(1)}, Max: ${stats.pm1.max.toFixed(1)})`, 20, yPosition);
+      yPosition += 5;
+      pdf.text(`PM2.5: Avg ${stats.pm25.avg.toFixed(1)} µg/m³ (Min: ${stats.pm25.min.toFixed(1)}, Max: ${stats.pm25.max.toFixed(1)})`, 20, yPosition);
+      yPosition += 5;
+      pdf.text(`PM10: Avg ${stats.pm10.avg.toFixed(1)} µg/m³ (Min: ${stats.pm10.min.toFixed(1)}, Max: ${stats.pm10.max.toFixed(1)})`, 20, yPosition);
+      yPosition += 15;
+
+      // Context statistics
+      Object.entries(contextStats).forEach(([contextType, stats]) => {
+        if (Object.keys(stats).length === 0) return;
+        
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`Statistics by ${contextType}`, 20, yPosition);
+        yPosition += 8;
+
+        Object.entries(stats).forEach(([context, values]) => {
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'normal');
+          pdf.text(`${context} (${formatDuration(values.timeSpent)}):`, 25, yPosition);
+          yPosition += 4;
+          pdf.text(`  PM1.0: ${values.pm1.toFixed(1)} µg/m³, PM2.5: ${values.pm25.toFixed(1)} µg/m³, PM10: ${values.pm10.toFixed(1)} µg/m³`, 25, yPosition);
+          yPosition += 6;
+        });
+        yPosition += 5;
+      });
+
+      // Events
+      if (events.length > 0) {
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`Recorded Events (${events.length})`, 20, yPosition);
+        yPosition += 8;
+
+        events.forEach((event) => {
+          if (yPosition > 250) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'normal');
+          const eventTime = new Date(event.timestamp).toLocaleString();
+          pdf.text(`${eventTime} - ${event.event_type || 'Event'}`, 25, yPosition);
+          yPosition += 4;
+          
+          if (event.comment) {
+            pdf.text(`  Comment: ${event.comment}`, 25, yPosition);
+            yPosition += 4;
+          }
+          
+          if (event.latitude && event.longitude) {
+            pdf.text(`  Location: ${event.latitude.toFixed(6)}, ${event.longitude.toFixed(6)}`, 25, yPosition);
+            yPosition += 4;
+          }
+          yPosition += 2;
+        });
+      }
+
+      // Save PDF
+      const blob = pdf.output('blob');
+      downloadPDF(blob, `${mission.name}_report_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      toast({
+        title: "Report exported",
+        description: "Mission report has been downloaded successfully",
+      });
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export mission report",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Get the first location for map centering (if available)
   const firstLocation = mission.measurements.find(
@@ -258,7 +420,7 @@ export function MissionDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" ref={missionContentRef}>
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -290,15 +452,37 @@ export function MissionDetailsDialog({
                 </div>
               )}
             </div>
-            <div className="text-right pr-8">
-              <div
-                className={`text-2xl font-bold ${getQualityColor(mission.avgPm25)}`}
-              >
-                {Math.round(mission.avgPm25)}
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div
+                  className={`text-2xl font-bold ${getQualityColor(mission.avgPm25)}`}
+                >
+                  {Math.round(mission.avgPm25)}
+                </div>
+                <div className="text-xs text-muted-foreground">µg/m³ PM2.5</div>
+                <div className="text-xs text-muted-foreground">
+                  {mission.measurementsCount} {t('history.measurements')}
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground">µg/m³ PM2.5</div>
-              <div className="text-xs text-muted-foreground">
-                {mission.measurementsCount} {t('history.measurements')}
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={exportMissionReport}
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Export Report
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={saveGraphAsImage}
+                  className="flex items-center gap-2"
+                >
+                  <ImageIcon className="h-4 w-4" />
+                  Save Graph
+                </Button>
               </div>
             </div>
           </div>
@@ -350,7 +534,7 @@ export function MissionDetailsDialog({
                 selectedContextType={selectedContextType}
                 onContextTypeChange={setSelectedContextType}
               />
-              <div className="h-[500px]">
+              <div className="h-[500px]" ref={graphRef}>
                 <PMLineGraph 
                   data={graphData} 
                   events={events} 
