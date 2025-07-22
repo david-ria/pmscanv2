@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 export function MobileNavigationFooter() {
   const { t } = useTranslation();
-  const appVersion = "V1.2.4"; // Version incrémentielle
+  const appVersion = "V1.1"; // Version incrémentielle
 
   return (
     <div className="p-4 border-t border-border">

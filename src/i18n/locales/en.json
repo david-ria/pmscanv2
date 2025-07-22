@@ -11,7 +11,7 @@
   "settings": {
     "title": "Settings",
     "subtitle": "Configuration and account",
-    "appVersion": "PMSCAN v1.0.0",
+    "appVersion": "PMSCAN v1.1",
     "dataSync": "Data sync. 2 min"
   },
   "account": {

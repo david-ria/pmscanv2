@@ -6,7 +6,7 @@
 // Application metadata
 export const APP_CONFIG = {
   name: 'PM Air Quality Monitor',
-  version: '1.0.0',
+  version: '1.1',
   description: 'Professional air quality monitoring application',
   author: 'Air Quality Team',
 } as const;
