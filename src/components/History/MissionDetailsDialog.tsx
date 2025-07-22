@@ -16,7 +16,7 @@ import { WeatherInfo } from '@/components/WeatherInfo';
 import { AirQualityInfo } from '@/components/AirQualityInfo';
 import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
-import { formatDateTime, formatDuration } from '@/utils/timeFormat';
+import { formatDateTime, formatDurationHHMM } from '@/utils/timeFormat';
 import { downloadPDF } from '@/lib/pdfExport';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -317,7 +317,7 @@ export function MissionDetailsDialog({
       pdf.setFont('helvetica', 'normal');
       pdf.text(`Date: ${formatDateTime(mission.startTime)}`, 20, yPosition);
       yPosition += 5;
-      pdf.text(`Duration: ${formatDuration(mission.durationMinutes)}`, 20, yPosition);
+      pdf.text(`Duration: ${formatDurationHHMM(mission.durationMinutes)}`, 20, yPosition);
       yPosition += 5;
       pdf.text(`Measurements: ${mission.measurementsCount}`, 20, yPosition);
       yPosition += 5;
@@ -355,7 +355,7 @@ export function MissionDetailsDialog({
         Object.entries(stats).forEach(([context, values]) => {
           pdf.setFontSize(10);
           pdf.setFont('helvetica', 'normal');
-          pdf.text(`${context} (${formatDuration(values.timeSpent)}):`, 25, yPosition);
+          pdf.text(`${context} (${formatDurationHHMM(values.timeSpent)}):`, 25, yPosition);
           yPosition += 4;
           pdf.text(`  PM1.0: ${values.pm1.toFixed(1)} µg/m³, PM2.5: ${values.pm25.toFixed(1)} µg/m³, PM10: ${values.pm10.toFixed(1)} µg/m³`, 25, yPosition);
           yPosition += 6;
@@ -428,7 +428,7 @@ export function MissionDetailsDialog({
               <div className="flex items-center gap-2 mt-1">
                 <p className="text-sm text-muted-foreground">
                   {formatDateTime(mission.startTime)} •{' '}
-                  {formatDuration(mission.durationMinutes)}
+                  {formatDurationHHMM(mission.durationMinutes)}
                 </p>
                 {!mission.synced && (
                   <Badge variant="outline" className="text-xs">
@@ -685,7 +685,7 @@ export function MissionDetailsDialog({
                            <div className="flex items-center justify-between mb-2">
                              <h5 className="font-medium text-sm capitalize">{context}</h5>
                              <div className="text-xs text-muted-foreground">
-                               {formatDuration(values.timeSpent)}
+                                {formatDurationHHMM(values.timeSpent)}
                              </div>
                            </div>
                            <div className="grid grid-cols-3 gap-4 text-xs">
