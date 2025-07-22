@@ -90,10 +90,10 @@ export function formatDuration(minutes: number): string {
 }
 
 /**
- * Format duration in hh:mm format
+ * Format duration in 00h00m format
  */
 export function formatDurationHHMM(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, '0')}h${mins.toString().padStart(2, '0')}m`;
 }
