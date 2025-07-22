@@ -10,7 +10,10 @@ interface BackgroundRecordingOptions {
 }
 
 export function useBackgroundRecording() {
-  const [isBackgroundEnabled, setIsBackgroundEnabled] = useState(false);
+  const [isBackgroundEnabled, setIsBackgroundEnabled] = useState(() => {
+    const stored = localStorage.getItem('pmscan-background-enabled');
+    return stored ? JSON.parse(stored) : false;
+  });
   const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
   const [serviceWorkerRegistration, setServiceWorkerRegistration] =
     useState<ServiceWorkerRegistration | null>(null);
@@ -197,6 +200,7 @@ export function useBackgroundRecording() {
       }, options.syncInterval);
 
       setIsBackgroundEnabled(true);
+      localStorage.setItem('pmscan-background-enabled', 'true');
       logger.debug('🎯 Background recording enabled');
 
       showNotification(
@@ -222,6 +226,7 @@ export function useBackgroundRecording() {
       }
 
       setIsBackgroundEnabled(false);
+      localStorage.setItem('pmscan-background-enabled', 'false');
       logger.debug('🛑 Background recording disabled');
 
       showNotification(
