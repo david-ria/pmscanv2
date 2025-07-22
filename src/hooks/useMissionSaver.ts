@@ -28,14 +28,18 @@ export function useMissionSaver() {
       : new Date();
     
     // Debug logging for context flow
-    logger.debug('🔍 Mission saving - context analysis:', {
+    console.log('🔍 Mission saving - context analysis:', {
       totalEntries: recordingData.length,
       missionContext: { locationContext, activityContext },
       contextDistribution: recordingData.reduce((acc, entry) => {
         const key = `${entry.context?.location || 'unknown'}-${entry.context?.activity || 'unknown'}`;
         acc[key] = (acc[key] || 0) + 1;
         return acc;
-      }, {} as Record<string, number>)
+      }, {} as Record<string, number>),
+      sampleEntries: recordingData.slice(0, 3).map(entry => ({
+        context: entry.context,
+        automaticContext: entry.automaticContext
+      }))
     });
     
     const mission = dataStorage.createMissionFromRecording(

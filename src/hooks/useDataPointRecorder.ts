@@ -95,7 +95,7 @@ export function useDataPointRecorder({
       };
 
       // Debug recording entry creation
-      logger.debug('📊 Recording entry created:', {
+      console.log('📊 Recording entry context debug:', {
         hasContext: !!context,
         location: context?.location,
         activity: context?.activity,
