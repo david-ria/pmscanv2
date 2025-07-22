@@ -7,6 +7,7 @@ import { getBackgroundRecording } from '@/lib/pmscan/globalConnectionManager';
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import * as logger from '@/utils/logger';
+import { logTimestamp } from '@/utils/timestampDebug';
 
 interface UseDataPointRecorderProps {
   isRecording: boolean;
@@ -54,12 +55,20 @@ export function useDataPointRecorder({
       const currentTime = new Date();
       lastRecordedTime.current = currentTime;
       updateLastRecordedTime(currentTime);
+      
+      // Debug timestamp creation
+      logTimestamp({
+        component: 'DataPointRecorder',
+        operation: 'createRecordingTimestamp',
+        timestamp: currentTime,
+        source: 'useDataPointRecorder.addDataPoint',
+        metadata: { frequency: recordingFrequency }
+      });
 
-      // Use a unique timestamp for each data point
-      const uniqueTimestamp = new Date();
-      const pmDataWithUniqueTimestamp = {
+      // Use the current recorded time as the definitive timestamp
+      const pmDataWithTimestamp = {
         ...pmData,
-        timestamp: uniqueTimestamp,
+        timestamp: currentTime, // Use single, consistent timestamp
       };
 
       // Fetch weather data only if enabled and location is available
@@ -69,7 +78,7 @@ export function useDataPointRecorder({
           weatherDataId = await getWeatherForMeasurement(
             location.latitude,
             location.longitude,
-            uniqueTimestamp
+            currentTime
           );
         } catch (error) {
           logger.debug('⚠️ Failed to fetch weather data for measurement:', error);
@@ -77,11 +86,11 @@ export function useDataPointRecorder({
       }
 
       const entry: RecordingEntry = {
-        pmData: pmDataWithUniqueTimestamp,
+        pmData: pmDataWithTimestamp,
         location,
         context,
         automaticContext,
-        timestamp: new Date(),
+        timestamp: currentTime, // Use single, consistent timestamp
         weatherDataId,
       };
 
@@ -91,12 +100,12 @@ export function useDataPointRecorder({
         location: context?.location,
         activity: context?.activity,
         automaticContext,
-        timestamp: uniqueTimestamp.toISOString()
+        timestamp: currentTime.toISOString()
       });
 
       // Store data for background processing if background mode is enabled
       if (getBackgroundRecording()) {
-        storeBackgroundData(pmDataWithUniqueTimestamp, location, context, weatherDataId);
+        storeBackgroundData(pmDataWithTimestamp, location, context, weatherDataId);
       }
 
       // Add to recording data

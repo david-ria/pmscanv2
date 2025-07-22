@@ -9,6 +9,7 @@ import { WeatherInfo } from '@/components/WeatherInfo';
 import { AirQualityInfo } from '@/components/AirQualityInfo';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
+import { formatDuration } from '@/utils/timeFormat';
 
 interface MissionCardProps {
   mission: MissionData;
@@ -35,14 +36,6 @@ export function MissionCard({
     return 'text-air-very-poor';
   };
 
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${mins}min`;
-    }
-    return `${mins} min`;
-  };
 
   const formatDate = (date: Date) => {
     const now = new Date();

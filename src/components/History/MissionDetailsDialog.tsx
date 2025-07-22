@@ -15,6 +15,7 @@ import { WeatherInfo } from '@/components/WeatherInfo';
 import { AirQualityInfo } from '@/components/AirQualityInfo';
 import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
+import { formatDateTime, formatDuration } from '@/utils/timeFormat';
 import { 
   Calendar, 
   MapPin, 
@@ -249,24 +250,6 @@ export function MissionDetailsDialog({
     return 'text-air-very-poor';
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${mins}min`;
-    }
-    return `${mins} min`;
-  };
 
   // Get the first location for map centering (if available)
   const firstLocation = mission.measurements.find(
@@ -282,7 +265,7 @@ export function MissionDetailsDialog({
               <DialogTitle className="text-xl">{mission.name}</DialogTitle>
               <div className="flex items-center gap-2 mt-1">
                 <p className="text-sm text-muted-foreground">
-                  {formatDate(mission.startTime)} •{' '}
+                  {formatDateTime(mission.startTime)} •{' '}
                   {formatDuration(mission.durationMinutes)}
                 </p>
                 {!mission.synced && (

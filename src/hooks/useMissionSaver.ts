@@ -22,7 +22,10 @@ export function useMissionSaver() {
       throw new Error('Aucune donnée enregistrée pour créer la mission');
     }
 
-    const endTime = new Date();
+    // Use the timestamp of the last recorded data point as end time
+    const endTime = recordingData.length > 0 
+      ? recordingData[recordingData.length - 1].timestamp 
+      : new Date();
     
     // Debug logging for context flow
     logger.debug('🔍 Mission saving - context analysis:', {

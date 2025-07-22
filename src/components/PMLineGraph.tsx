@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatTime } from '@/utils/timeFormat';
 import {
   LineChart,
   Line,
@@ -53,12 +54,9 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       .sort((a, b) => a.pmData.timestamp.getTime() - b.pmData.timestamp.getTime())
       // Show all data points for full recording view
       .map((entry, index) => ({
-        time: index + 1, // Sequential index for X-axis (left to right)
-        timestamp: entry.pmData.timestamp.toLocaleTimeString('fr-FR', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        }),
+        time: entry.pmData.timestamp.getTime(), // Use actual timestamp for X-axis
+        sequentialIndex: index + 1, // Keep sequential index for fallback
+        timestamp: formatTime(entry.pmData.timestamp),
         fullTimestamp: entry.pmData.timestamp, // Keep full timestamp for calculations
         PM1: entry.pmData.pm1,
         PM25: entry.pmData.pm25,
@@ -95,15 +93,11 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
         
         // Allow events within 60 seconds of data points
         if (closestIndex >= 0 && minTimeDiff < 60000) {
-          console.log('Event matched to chart:', event.event_type, 'at position', closestIndex + 1);
+          console.log('Event matched to chart:', event.event_type, 'at position', chartData[closestIndex].time);
           return {
             ...event,
-            chartPosition: closestIndex + 1, // chartData uses 1-based indexing for time
-            timeString: eventTimestamp.toLocaleTimeString('fr-FR', {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            }),
+            chartPosition: chartData[closestIndex].time, // Use actual timestamp
+            timeString: formatTime(eventTimestamp),
           };
         }
         console.log('Event not matched:', event.event_type, 'time diff:', minTimeDiff);
@@ -154,25 +148,25 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
     return '#3b82f6'; // blue fallback for autocontext
   }, []);
 
-  // Generate highlighted areas and labels based on context type selection
-  const contextPeriods = React.useMemo(() => {
-    if (!highlightContextType || !chartData.length) return [];
-    
-    const periods: Array<{ 
-      start: number; 
-      end: number; 
-      label: string; 
-      color: string;
-      pm25Average: number;
-    }> = [];
-    
-    let currentStart = 1;
+    // Generate highlighted areas and labels based on context type selection
+    const contextPeriods = React.useMemo(() => {
+      if (!highlightContextType || !chartData.length) return [];
+      
+      const periods: Array<{ 
+        start: number; 
+        end: number; 
+        label: string; 
+        color: string;
+        pm25Average: number;
+      }> = [];
+      
+      let currentStart = chartData[0].time;
     let currentLabel = '';
     let currentColor = '';
     
     chartData.forEach((entry, index) => {
       const { context } = entry;
-      const position = index + 1;
+      const position = entry.time;
       
       // Get context value - prioritize measurement level, fallback to mission level
       const contextValue = 
@@ -233,15 +227,17 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
     });
     
     // Handle the final period
-    if (currentLabel !== '' && currentStart <= chartData.length) {
-      const periodData = chartData.slice(currentStart - 1);
+    if (currentLabel !== '' && chartData.length > 0) {
+      const lastTimestamp = chartData[chartData.length - 1].time;
+      const periodStartIndex = chartData.findIndex(entry => entry.time >= currentStart);
+      const periodData = chartData.slice(periodStartIndex);
       const pm25Average = periodData.length > 0 
         ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
         : 0;
       
       periods.push({
         start: currentStart,
-        end: chartData.length + 1,
+        end: lastTimestamp + (lastTimestamp - chartData[Math.max(0, chartData.length - 2)].time), // Estimate end
         label: currentLabel,
         color: currentColor,
         pm25Average
@@ -314,14 +310,15 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey="time"
+            type="number"
+            scale="time"
+            domain={['dataMin', 'dataMax']}
             tick={{ fontSize: 10 }}
             angle={-45}
             textAnchor="end"
             height={60}
-            tickFormatter={(value, index) => {
-              // Show fewer ticks for larger datasets to avoid crowding
-              const interval = Math.max(1, Math.floor(chartData.length / 10));
-              return index % interval === 0 ? chartData[index]?.timestamp || '' : '';
+            tickFormatter={(value) => {
+              return formatTime(new Date(value));
             }}
           />
           <YAxis
@@ -331,8 +328,7 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
           <Tooltip
             formatter={formatTooltip}
             labelFormatter={(label) => {
-              const dataPoint = chartData[label - 1];
-              return dataPoint ? `Temps: ${dataPoint.timestamp}` : '';
+              return `Temps: ${formatTime(new Date(label))}`;
             }}
             contentStyle={{
               backgroundColor: 'hsl(var(--card))',
