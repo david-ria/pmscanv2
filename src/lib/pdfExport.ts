@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { formatDurationHHMM } from '@/utils/timeFormat';
 
 interface BreakdownData {
   name: string;
@@ -73,7 +74,7 @@ export const generateAnalysisReport = async (data: ExportData): Promise<Blob> =>
       pdf.text(item.name, 20, yPosition);
       pdf.text(`${item.percentage.toFixed(1)}%`, 80, yPosition);
       pdf.text(`${Math.round(item.avgPM)}`, 130, yPosition);
-      pdf.text(`${Math.round(item.exposure)}`, 170, yPosition);
+      pdf.text(formatDurationHHMM(item.exposure), 170, yPosition);
       yPosition += 6;
     });
     yPosition += 15;

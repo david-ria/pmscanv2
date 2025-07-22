@@ -4,6 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { useTranslation } from 'react-i18next';
+import { formatDurationHHMM } from '@/utils/timeFormat';
 
 interface ActivityData {
   activity: string;
@@ -77,7 +78,7 @@ export const ActivityAnalysis = ({
                     <span>
                       {showActivityExposure
                         ? `${activity.cumulativeDose.toFixed(1)} µg·h/m³`
-                        : `${Math.round(activity.timeSpent / 60)}h ${activity.timeSpent % 60}min`}
+                        : formatDurationHHMM(activity.timeSpent)}
                     </span>
                     <span className="text-xs">
                       {activity.measurements} {t('analysis.measurements')}

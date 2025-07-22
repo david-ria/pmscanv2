@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
+import { formatDurationHHMM } from '@/utils/timeFormat';
 
 interface DataSummaryHeaderProps {
   dataPoints: {
@@ -26,14 +27,6 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
     );
   }
 
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h${mins > 0 ? ` ${mins}min` : ''}`;
-    }
-    return `${mins}min`;
-  };
 
   const getPM25BackgroundColor = (pm25: number) => {
     if (pm25 <= 12) return 'bg-green-50 dark:bg-green-900/20';
@@ -75,7 +68,7 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
 
           <div className="flex items-center gap-1 bg-muted/50 px-3 py-1 rounded-lg">
             <span className="font-bold text-foreground text-lg">
-              {formatDuration(dataPoints.totalExposureMinutes)}
+              {formatDurationHHMM(dataPoints.totalExposureMinutes)}
             </span>
             <span className="text-muted-foreground text-xs">
               Temps d'exposition
@@ -84,7 +77,7 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
 
           <div className="flex items-center gap-1 bg-muted/50 px-3 py-1 rounded-lg">
             <span className="font-bold text-foreground text-lg">
-              {formatDuration(dataPoints.timeAboveWHO)}
+              {formatDurationHHMM(dataPoints.timeAboveWHO)}
             </span>
             <span className="text-muted-foreground text-xs">
               Min {'>'}seuil OMS
