@@ -55,9 +55,9 @@ export function ContextSelectors({
       return []; // No activities until location is selected
     }
 
-    // Find location by name 
+    // Find location by ID first, then by name for backwards compatibility
     const selectedLocationData = DEFAULT_LOCATIONS.find(loc => 
-      loc.name === selectedLocation
+      loc.id === selectedLocation || loc.name === selectedLocation
     );
     
     if (!selectedLocationData) {
@@ -104,8 +104,8 @@ export function ContextSelectors({
           <SelectContent>
             {locations.map((location) => (
               <SelectItem
-                key={isGroupMode ? location.name : location.key}
-                value={location.name}
+                key={location.key || location.name}
+                value={location.key || location.name} // Use ID if available, fallback to name
               >
                 {location.name}
               </SelectItem>
@@ -141,8 +141,8 @@ export function ContextSelectors({
           <SelectContent>
             {activities.map((activity) => (
               <SelectItem
-                key={isGroupMode ? activity.name : activity.key}
-                value={activity.name}
+                key={activity.key || activity.name}
+                value={activity.key || activity.name} // Use ID if available, fallback to name
               >
                 {activity.name}
               </SelectItem>

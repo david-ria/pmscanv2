@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
+import { StandardEvent, normalizeEvent, eventToStorageFormat, sortEventsByTimestamp } from '@/utils/eventUtils';
+
+// Export legacy interface for backwards compatibility
 export interface EventData {
   id?: string;
   mission_id: string;
@@ -21,7 +24,7 @@ export function useEvents() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const createEvent = async (eventData: Omit<EventData, 'id' | 'created_by'>) => {
+  const createEvent = async (eventData: Partial<StandardEvent>) => {
     setIsLoading(true);
     try {
       if (!user) {
@@ -32,27 +35,26 @@ export function useEvents() {
       console.log('Creating event with user:', user.id);
       console.log('Event data:', eventData);
 
-      // Store the event locally first, since the mission doesn't exist in DB yet
-      const localEvent = {
-        id: crypto.randomUUID(),
+      // Normalize event data to ensure consistency
+      const normalizedEvent = normalizeEvent({
         ...eventData,
-        created_by: user.id,
-        timestamp: eventData.timestamp || new Date().toISOString(),
-      };
+        createdBy: user.id,
+        timestamp: eventData.timestamp || new Date(),
+      });
 
-      // Store in localStorage to associate with mission when it's saved
+      // Store event locally using consistent format
       const existingEvents = JSON.parse(localStorage.getItem('pending_events') || '[]');
-      existingEvents.push(localEvent);
+      existingEvents.push(eventToStorageFormat(normalizedEvent));
       localStorage.setItem('pending_events', JSON.stringify(existingEvents));
 
-      console.log('Event stored locally:', localEvent);
+      console.log('Event stored locally:', normalizedEvent);
       
       toast({
         title: 'Event Recorded',
         description: 'Event has been recorded and will be saved with the mission.',
       });
       
-      return localEvent;
+      return normalizedEvent;
     } catch (error) {
       console.error('Error creating event - full error:', error);
       toast({
@@ -95,14 +97,15 @@ export function useEvents() {
         .eq('mission_id', missionId)
         .order('timestamp', { ascending: true });
 
-      let events = [];
+      let events: StandardEvent[] = [];
       
       if (!error && dbEvents) {
-        events = dbEvents;
+        events = dbEvents.map(normalizeEvent);
       }
 
       // Also get any local events for this mission
-      const localEvents = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
+      const localEventsRaw = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
+      const localEvents = localEventsRaw.map(normalizeEvent);
       
       // Combine and deduplicate events
       const allEvents = [...events, ...localEvents];
@@ -110,14 +113,15 @@ export function useEvents() {
         index === self.findIndex(e => e.id === event.id)
       );
 
-      return uniqueEvents.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      return sortEventsByTimestamp(uniqueEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
       
       // Fallback to local storage only
       try {
-        const localEvents = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
-        return localEvents.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        const localEventsRaw = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
+        const localEvents = localEventsRaw.map(normalizeEvent);
+        return sortEventsByTimestamp(localEvents);
       } catch (localError) {
         console.error('Error fetching local events:', localError);
         toast({

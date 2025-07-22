@@ -81,13 +81,13 @@ export function EventButton({}: EventButtonProps) {
       }
 
       const eventData = {
-        mission_id: currentMissionId,
-        event_type: eventType,
+        missionId: currentMissionId,
+        eventType: eventType,
         comment: comment.trim() || undefined,
         latitude,
         longitude,
         accuracy,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(), // Use Date object instead of ISO string
       };
 
       await createEvent(eventData);

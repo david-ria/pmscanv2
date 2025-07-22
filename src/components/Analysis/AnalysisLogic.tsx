@@ -152,7 +152,7 @@ export const useAnalysisLogic = (
           const events = await getEventsByMission(mission.id);
           
           for (const event of events) {
-            const eventType = event.event_type || 'unknown';
+            const eventType = event.eventType || 'unknown';
             const eventTime = new Date(event.timestamp);
             
             if (!eventTypeMap.has(eventType)) {
