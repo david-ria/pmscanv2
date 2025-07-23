@@ -35,6 +35,7 @@ export function useRecordingState() {
 
   const stopRecording = useCallback(() => {
     setIsRecording(false);
+    // Keep recordingStartTime for mission saving - will be cleared when data is cleared
 
     // Clear global recording state to allow disconnection
     setGlobalRecording(false);
@@ -50,7 +51,7 @@ export function useRecordingState() {
 
   const clearRecordingData = useCallback(() => {
     setRecordingData([]);
-    recordingStartTime.current = null;
+    recordingStartTime.current = null; // Clear start time when data is cleared
     lastRecordedTime.current = null;
   }, []);
 

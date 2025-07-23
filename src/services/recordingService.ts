@@ -81,7 +81,7 @@ class RecordingService {
     this.state = {
       ...this.state,
       isRecording: false,
-      recordingStartTime: null,
+      // Keep recordingStartTime for mission saving - will be cleared when data is cleared
     };
 
     setGlobalRecording(false);
@@ -134,6 +134,7 @@ class RecordingService {
     this.state = {
       ...this.state,
       recordingData: [],
+      recordingStartTime: null, // Clear start time when data is cleared
     };
 
     this.notify();
