@@ -465,6 +465,7 @@ export function MissionDetailsDialog({
                   {mission.measurementsCount} {t('history.measurements')}
                 </div>
               </div>
+              {/* Hidden for now
               <div className="flex flex-col gap-2">
                 <Button
                   variant="outline"
@@ -485,6 +486,7 @@ export function MissionDetailsDialog({
                   Save Graph
                 </Button>
               </div>
+              */}
             </div>
           </div>
         </DialogHeader>
