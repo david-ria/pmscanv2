@@ -22,9 +22,10 @@ export function useMissionSaver() {
       throw new Error('Aucune donnée enregistrée pour créer la mission');
     }
 
-    // Use the timestamp of the last recorded data point as end time
+    // Use the timestamp of the most recent data point as end time
+    // recordingData is ordered with newest first, so [0] is the most recent
     const endTime = recordingData.length > 0 
-      ? recordingData[recordingData.length - 1].timestamp 
+      ? recordingData[0].timestamp 
       : new Date();
     
     // Debug logging for context flow
