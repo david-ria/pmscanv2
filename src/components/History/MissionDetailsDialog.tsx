@@ -380,7 +380,7 @@ export function MissionDetailsDialog({
           pdf.setFontSize(10);
           pdf.setFont('helvetica', 'normal');
           const eventTime = new Date(event.timestamp).toLocaleString();
-          pdf.text(`${eventTime} - ${event.event_type || 'Event'}`, 25, yPosition);
+          pdf.text(`${eventTime} - ${event.eventType || 'Event'}`, 25, yPosition);
           yPosition += 4;
           
           if (event.comment) {
@@ -748,9 +748,9 @@ export function MissionDetailsDialog({
                       <div key={event.id || index} className="border rounded-lg p-3 space-y-2 bg-card">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            {getEventIcon(event.event_type)}
+                            {getEventIcon(event.eventType)}
                             <span className="font-medium">
-                              {getEventLabel(event.event_type)}
+                              {getEventLabel(event.eventType)}
                             </span>
                           </div>
                           <Badge variant="outline" className="text-xs">
