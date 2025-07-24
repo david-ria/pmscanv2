@@ -1,4 +1,3 @@
-// Lazy load Mapbox CSS only when needed
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -10,43 +9,17 @@ import { Toaster } from '@/components/ui/toaster';
 import App from './App.tsx';
 import './index.css';
 import './i18n/config';
-import { preloadCriticalChunks } from '@/utils/performanceOptimizations';
 
-// Optimized QueryClient configuration
+// Simple QueryClient configuration
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 1000 * 60 * 5, // 5 minutes
       retry: 1,
       refetchOnWindowFocus: false,
     },
   },
 });
-
-// Lazy load Mapbox CSS when needed
-const loadMapboxCSS = () => {
-  if (!document.querySelector('link[href*="mapbox-gl"]')) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://api.mapbox.com/mapbox-gl-js/v3.13.0/mapbox-gl.css';
-    document.head.appendChild(link);
-  }
-};
-
-// Load Mapbox CSS on first user interaction or route change to map
-if (typeof window !== 'undefined') {
-  const events = ['click', 'scroll', 'keydown'];
-  const loadOnce = () => {
-    loadMapboxCSS();
-    events.forEach(event => window.removeEventListener(event, loadOnce));
-  };
-  events.forEach(event => window.addEventListener(event, loadOnce, { once: true }));
-  
-  // Preload critical chunks after initial load
-  window.addEventListener('load', () => {
-    preloadCriticalChunks();
-  }, { once: true });
-}
 
 createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
