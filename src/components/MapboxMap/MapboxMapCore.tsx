@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, memo, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
@@ -30,7 +30,7 @@ interface MapboxMapCoreProps {
   className?: string;
 }
 
-export const MapboxMapCore = ({
+const MapboxMapCoreComponent = ({
   currentLocation,
   pmData,
   trackPoints = [],
@@ -127,8 +127,8 @@ export const MapboxMapCore = ({
     updateLayerStyles(map.current, thresholds);
   }, [thresholds]);
 
-  // Toggle between satellite and map view
-  const handleToggleMapStyle = () => {
+  // Toggle between satellite and map view - memoized for performance
+  const handleToggleMapStyle = useCallback(() => {
     if (!map.current) return;
 
     toggleMapStyle(
@@ -138,7 +138,7 @@ export const MapboxMapCore = ({
       thresholds,
       setIsSatellite
     );
-  };
+  }, [isSatellite, trackPoints, thresholds]);
 
   if (error) {
     return (
@@ -178,3 +178,17 @@ export const MapboxMapCore = ({
     </div>
   );
 };
+
+// Memoized component for better performance
+export const MapboxMapCore = memo(MapboxMapCoreComponent, (prevProps, nextProps) => {
+  // Custom comparison for better performance
+  return (
+    prevProps.currentLocation?.longitude === nextProps.currentLocation?.longitude &&
+    prevProps.currentLocation?.latitude === nextProps.currentLocation?.latitude &&
+    prevProps.pmData?.pm25 === nextProps.pmData?.pm25 &&
+    prevProps.pmData?.pm10 === nextProps.pmData?.pm10 &&
+    prevProps.trackPoints?.length === nextProps.trackPoints?.length &&
+    prevProps.isRecording === nextProps.isRecording &&
+    prevProps.className === nextProps.className
+  );
+});
