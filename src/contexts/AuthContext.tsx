@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
+import { getAuthClient, safeAuthAction } from '@/lib/supabaseAuth';
 
 interface AuthContextType {
   user: User | null;
@@ -23,17 +24,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Dynamically import supabase to avoid initialization issues
     let subscription: any;
+    let mounted = true;
     
     const initAuth = async () => {
       try {
-        const { supabase } = await import('@/integrations/supabase/client');
+        console.log('Starting auth initialization...');
+        
+        const client = await getAuthClient();
+        if (!mounted || !client) {
+          console.error('Auth client not available or component unmounted');
+          if (mounted) setLoading(false);
+          return;
+        }
+        
+        console.log('Auth client ready, setting up listeners...');
         
         // Set up auth state listener
         const {
           data: { subscription: sub },
-        } = supabase.auth.onAuthStateChange((event, session) => {
+        } = client.auth.onAuthStateChange((event: string, session: Session | null) => {
+          if (!mounted) return;
           console.log('Auth state change:', event, !!session?.user);
           setSession(session);
           setUser(session?.user ?? null);
@@ -43,20 +54,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         subscription = sub;
 
         // Check for existing session
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('Initial session check:', !!session?.user);
+        const { data: { session }, error } = await client.auth.getSession();
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('Session check error:', error);
+        } else {
+          console.log('Initial session check:', !!session?.user);
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       } catch (error) {
-        console.error('Auth initialization error:', error);
-        setLoading(false);
+        console.error('Auth initialization failed:', error);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     initAuth();
 
     return () => {
+      mounted = false;
       if (subscription) {
         subscription.unsubscribe();
       }
@@ -64,59 +85,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      return { error };
-    } catch (importError) {
-      return { error: importError };
-    }
+    const { error } = await safeAuthAction(
+      async (client) => {
+        const result = await client.auth.signInWithPassword({ email, password });
+        if (result.error) throw result.error;
+        return result;
+      }
+    );
+    return { error };
   };
 
   const signUp = async (email: string, password: string, metadata?: any) => {
-    try {
-      const { supabase } = await import('@/integrations/supabase/client');
-      const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/`;
 
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: metadata,
-        },
-      });
-      return { error };
-    } catch (importError) {
-      return { error: importError };
-    }
+    const { error } = await safeAuthAction(
+      async (client) => {
+        const result = await client.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: redirectUrl,
+            data: metadata,
+          },
+        });
+        if (result.error) throw result.error;
+        return result;
+      }
+    );
+    return { error };
   };
 
   const signOut = async () => {
-    try {
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error signing out:', error);
+    await safeAuthAction(
+      async (client) => {
+        const result = await client.auth.signOut();
+        if (result.error) {
+          console.error('Error signing out:', result.error);
+        }
+        return result;
       }
-    } catch (importError) {
-      console.error('Error importing supabase during signOut:', importError);
-    }
+    );
   };
 
   const updatePassword = async (newPassword: string) => {
-    try {
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-      return { error };
-    } catch (importError) {
-      return { error: importError };
-    }
+    const { error } = await safeAuthAction(
+      async (client) => {
+        const result = await client.auth.updateUser({
+          password: newPassword,
+        });
+        if (result.error) throw result.error;
+        return result;
+      }
+    );
+    return { error };
   };
 
   const value = {
