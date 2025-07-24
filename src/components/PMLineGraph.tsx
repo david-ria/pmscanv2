@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useCallback } from 'react';
+import React from 'react';
 import { formatTime } from '@/utils/timeFormat';
 import {
   LineChart,
@@ -42,10 +42,9 @@ interface PMLineGraphProps {
     locationContext?: string;
     activityContext?: string;
   };
-  hideTitle?: boolean;
 }
 
-const PMLineGraphComponent = ({ data, events = [], className, highlightContextType, missionContext, hideTitle = false }: PMLineGraphProps) => {
+export function PMLineGraph({ data, events = [], className, highlightContextType, missionContext }: PMLineGraphProps) {
   // Transform data for the chart - ensure proper chronological ordering
   const chartData = React.useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -294,17 +293,15 @@ const PMLineGraphComponent = ({ data, events = [], className, highlightContextTy
 
   return (
     <div className={`bg-card border border-border rounded-lg p-4 ${className}`}>
-      {!hideTitle && (
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-foreground">
-            Évolution des particules fines (µg/m³)
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {chartData.length} points de données • Dernière mesure:{' '}
-            {chartData[chartData.length - 1]?.timestamp}
-          </p>
-        </div>
-      )}
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-foreground">
+          Évolution des particules fines (µg/m³)
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          {chartData.length} points de données • Dernière mesure:{' '}
+          {chartData[chartData.length - 1]?.timestamp}
+        </p>
+      </div>
 
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
@@ -471,27 +468,4 @@ const PMLineGraphComponent = ({ data, events = [], className, highlightContextTy
       </ResponsiveContainer>
     </div>
   );
-};
-
-// Memoized component for better performance
-export const PMLineGraph = memo(PMLineGraphComponent, (prevProps, nextProps) => {
-  // Custom comparison for better performance
-  const dataChanged = prevProps.data?.length !== nextProps.data?.length ||
-    prevProps.data?.some((item, index) => 
-      item.pmData.timestamp.getTime() !== nextProps.data?.[index]?.pmData.timestamp.getTime() ||
-      item.pmData.pm25 !== nextProps.data?.[index]?.pmData.pm25 ||
-      item.pmData.pm10 !== nextProps.data?.[index]?.pmData.pm10
-    );
-
-  const eventsChanged = prevProps.events?.length !== nextProps.events?.length ||
-    prevProps.events?.some((event, index) => 
-      event.id !== nextProps.events?.[index]?.id ||
-      event.timestamp.getTime() !== nextProps.events?.[index]?.timestamp.getTime()
-    );
-
-  return !dataChanged && 
-         !eventsChanged && 
-         prevProps.highlightContextType === nextProps.highlightContextType &&
-         prevProps.className === nextProps.className &&
-         prevProps.hideTitle === nextProps.hideTitle;
-});
+}

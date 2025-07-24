@@ -1,4 +1,3 @@
-import React, { memo, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { PMScanData } from '@/lib/pmscan/types';
 import { useTranslation } from 'react-i18next';
@@ -9,33 +8,12 @@ interface AirQualityCardsProps {
   isConnected: boolean;
 }
 
-const AirQualityCards = memo(function AirQualityCards({
+export function AirQualityCards({
   currentData,
   isConnected,
 }: AirQualityCardsProps) {
   const { t } = useTranslation();
   const { getAirQualityLevel } = useThresholds();
-
-  // Memoize quality calculations to prevent unnecessary recalculations
-  const qualityData = useMemo(() => {
-    if (!currentData) return null;
-    
-    return {
-      pm1: {
-        value: Math.round(currentData.pm1),
-        quality: getAirQualityLevel(currentData.pm1, 'pm1')
-      },
-      pm25: {
-        value: Math.round(currentData.pm25),
-        quality: getAirQualityLevel(currentData.pm25, 'pm25')
-      },
-      pm10: {
-        value: Math.round(currentData.pm10),
-        quality: getAirQualityLevel(currentData.pm10, 'pm10')
-      },
-      timestamp: currentData.timestamp.toLocaleTimeString()
-    };
-  }, [currentData, getAirQualityLevel]);
 
   if (!isConnected || !currentData) {
     return (
@@ -84,7 +62,9 @@ const AirQualityCards = memo(function AirQualityCards({
     );
   }
 
-  if (!qualityData) return null;
+  const pm25Quality = getAirQualityLevel(currentData.pm25, 'pm25');
+  const pm1Quality = getAirQualityLevel(currentData.pm1, 'pm1');
+  const pm10Quality = getAirQualityLevel(currentData.pm10, 'pm10');
 
   return (
     <>
@@ -93,14 +73,14 @@ const AirQualityCards = memo(function AirQualityCards({
         <Card className={`text-center relative overflow-hidden`}>
           <div
             className="absolute inset-0 opacity-10"
-            style={{ backgroundColor: `hsl(var(--${qualityData.pm1.quality.color}))` }}
+            style={{ backgroundColor: `hsl(var(--${pm1Quality.color}))` }}
           />
           <CardContent className="p-4 relative">
             <div
               className="text-3xl font-bold mb-1"
-              style={{ color: `hsl(var(--${qualityData.pm1.quality.color}))` }}
+              style={{ color: `hsl(var(--${pm1Quality.color}))` }}
             >
-              {qualityData.pm1.value}
+              {Math.round(currentData.pm1)}
             </div>
             <div className="text-sm font-medium text-muted-foreground">PM1</div>
             <div className="text-xs text-muted-foreground">μg/m³</div>
@@ -111,14 +91,14 @@ const AirQualityCards = memo(function AirQualityCards({
         <Card className="text-center relative overflow-hidden">
           <div
             className="absolute inset-0 opacity-20"
-            style={{ backgroundColor: `hsl(var(--${qualityData.pm25.quality.color}))` }}
+            style={{ backgroundColor: `hsl(var(--${pm25Quality.color}))` }}
           />
           <CardContent className="p-4 relative">
             <div
               className="text-3xl font-bold mb-1"
-              style={{ color: `hsl(var(--${qualityData.pm25.quality.color}))` }}
+              style={{ color: `hsl(var(--${pm25Quality.color}))` }}
             >
-              {qualityData.pm25.value}
+              {Math.round(currentData.pm25)}
             </div>
             <div className="text-sm font-medium text-muted-foreground">
               PM2.5
@@ -127,11 +107,11 @@ const AirQualityCards = memo(function AirQualityCards({
             <div
               className="text-xs font-medium px-2 py-1 rounded-full"
               style={{
-                backgroundColor: `hsl(var(--${qualityData.pm25.quality.color}) / 0.2)`,
-                color: `hsl(var(--${qualityData.pm25.quality.color}))`,
+                backgroundColor: `hsl(var(--${pm25Quality.color}) / 0.2)`,
+                color: `hsl(var(--${pm25Quality.color}))`,
               }}
             >
-              {t(`realTime.airQuality.${qualityData.pm25.quality.level}`)}
+              {t(`realTime.airQuality.${pm25Quality.level}`)}
             </div>
           </CardContent>
         </Card>
@@ -140,14 +120,14 @@ const AirQualityCards = memo(function AirQualityCards({
         <Card className={`text-center relative overflow-hidden`}>
           <div
             className="absolute inset-0 opacity-10"
-            style={{ backgroundColor: `hsl(var(--${qualityData.pm10.quality.color}))` }}
+            style={{ backgroundColor: `hsl(var(--${pm10Quality.color}))` }}
           />
           <CardContent className="p-4 relative">
             <div
               className="text-3xl font-bold mb-1"
-              style={{ color: `hsl(var(--${qualityData.pm10.quality.color}))` }}
+              style={{ color: `hsl(var(--${pm10Quality.color}))` }}
             >
-              {qualityData.pm10.value}
+              {Math.round(currentData.pm10)}
             </div>
             <div className="text-sm font-medium text-muted-foreground">
               PM10
@@ -160,10 +140,8 @@ const AirQualityCards = memo(function AirQualityCards({
       {/* Real-time Status */}
       <div className="text-center text-xs text-muted-foreground mb-4">
         {t('realTime.lastMeasurement')} :{' '}
-        {qualityData.timestamp}
+        {currentData.timestamp.toLocaleTimeString()}
       </div>
     </>
   );
-});
-
-export { AirQualityCards };
+}

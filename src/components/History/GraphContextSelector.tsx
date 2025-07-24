@@ -36,40 +36,52 @@ export function GraphContextSelector({
   }, [mission]);
 
   return (
-    <div className="space-y-3">
-      {!availableContexts.location && !availableContexts.activity && !availableContexts.autocontext && (
-        <p className="text-xs text-muted-foreground italic text-center">
-          Aucune donnée de contexte disponible pour cette mission
-        </p>
-      )}
-      
-      <RadioGroup
-        value={selectedContextType}
-        onValueChange={(value) => onContextTypeChange(value as ContextType)}
-        className="flex flex-row justify-center gap-2 sm:gap-6"
-      >
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="location" id="location" disabled={!availableContexts.location} />
-          <Label htmlFor="location" className={`cursor-pointer text-sm ${!availableContexts.location ? 'text-muted-foreground/50' : ''}`}>
-            {t('analysis.location')}
-            {!availableContexts.location && <span className="text-xs ml-1">(indisponible)</span>}
-          </Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="activity" id="activity" disabled={!availableContexts.activity} />
-          <Label htmlFor="activity" className={`cursor-pointer text-sm ${!availableContexts.activity ? 'text-muted-foreground/50' : ''}`}>
-            {t('analysis.activity')}
-            {!availableContexts.activity && <span className="text-xs ml-1">(indisponible)</span>}
-          </Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="autocontext" id="autocontext" disabled={!availableContexts.autocontext} />
-          <Label htmlFor="autocontext" className={`cursor-pointer text-sm ${!availableContexts.autocontext ? 'text-muted-foreground/50' : ''}`}>
-            auto
-            {!availableContexts.autocontext && <span className="text-xs ml-1">(indisponible)</span>}
-          </Label>
-        </div>
-      </RadioGroup>
+    <div className="p-4 bg-card rounded-lg border">
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium text-muted-foreground">
+          Mise en évidence des contextes
+        </h4>
+        
+        {!availableContexts.location && !availableContexts.activity && !availableContexts.autocontext && (
+          <p className="text-xs text-muted-foreground italic">
+            Aucune donnée de contexte disponible pour cette mission
+          </p>
+        )}
+        
+        <RadioGroup
+          value={selectedContextType}
+          onValueChange={(value) => onContextTypeChange(value as ContextType)}
+          className="flex flex-row justify-center gap-2 sm:gap-6"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="none" id="none" />
+            <Label htmlFor="none" className="cursor-pointer text-sm">
+              Aucun
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="location" id="location" disabled={!availableContexts.location} />
+            <Label htmlFor="location" className={`cursor-pointer text-sm ${!availableContexts.location ? 'text-muted-foreground/50' : ''}`}>
+              {t('analysis.location')}
+              {!availableContexts.location && <span className="text-xs ml-1">(indisponible)</span>}
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="activity" id="activity" disabled={!availableContexts.activity} />
+            <Label htmlFor="activity" className={`cursor-pointer text-sm ${!availableContexts.activity ? 'text-muted-foreground/50' : ''}`}>
+              {t('analysis.activity')}
+              {!availableContexts.activity && <span className="text-xs ml-1">(indisponible)</span>}
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="autocontext" id="autocontext" disabled={!availableContexts.autocontext} />
+            <Label htmlFor="autocontext" className={`cursor-pointer text-sm ${!availableContexts.autocontext ? 'text-muted-foreground/50' : ''}`}>
+              {t('analysis.autocontext')}
+              {!availableContexts.autocontext && <span className="text-xs ml-1">(indisponible)</span>}
+            </Label>
+          </div>
+        </RadioGroup>
+      </div>
     </div>
   );
 }

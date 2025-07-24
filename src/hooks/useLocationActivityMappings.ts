@@ -46,7 +46,7 @@ export function useLocationActivityMappings() {
         new Map(
           data?.map(item => [item.location_key, { key: item.location_key, label: item.location_label }]) || []
         ).values()
-      ) as LocationOption[];
+      );
       setLocations(uniqueLocations);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch mappings');

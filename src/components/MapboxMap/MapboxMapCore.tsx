@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, memo, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
@@ -30,7 +30,7 @@ interface MapboxMapCoreProps {
   className?: string;
 }
 
-const MapboxMapCoreComponent = ({
+export const MapboxMapCore = ({
   currentLocation,
   pmData,
   trackPoints = [],
@@ -100,26 +100,9 @@ const MapboxMapCoreComponent = ({
 
   // Update track visualization when trackPoints change
   useEffect(() => {
-    if (!map.current || loading) return;
-    
-    // Ensure the map is loaded and sources exist before updating track data
-    if (map.current.isStyleLoaded() && map.current.getSource('track-points')) {
-      updateTrackData(map.current, trackPoints, isRecording);
-    } else {
-      // If map isn't ready yet, wait for it to load
-      const handleStyleLoad = () => {
-        if (map.current && map.current.getSource('track-points')) {
-          updateTrackData(map.current, trackPoints, isRecording);
-        }
-      };
-      
-      if (map.current.isStyleLoaded()) {
-        handleStyleLoad();
-      } else {
-        map.current.once('styledata', handleStyleLoad);
-      }
-    }
-  }, [trackPoints, isRecording, loading]);
+    if (!map.current) return;
+    updateTrackData(map.current, trackPoints, isRecording);
+  }, [trackPoints, isRecording]);
 
   // Update map styling when thresholds change
   useEffect(() => {
@@ -127,8 +110,8 @@ const MapboxMapCoreComponent = ({
     updateLayerStyles(map.current, thresholds);
   }, [thresholds]);
 
-  // Toggle between satellite and map view - memoized for performance
-  const handleToggleMapStyle = useCallback(() => {
+  // Toggle between satellite and map view
+  const handleToggleMapStyle = () => {
     if (!map.current) return;
 
     toggleMapStyle(
@@ -138,7 +121,7 @@ const MapboxMapCoreComponent = ({
       thresholds,
       setIsSatellite
     );
-  }, [isSatellite, trackPoints, thresholds]);
+  };
 
   if (error) {
     return (
@@ -178,17 +161,3 @@ const MapboxMapCoreComponent = ({
     </div>
   );
 };
-
-// Memoized component for better performance
-export const MapboxMapCore = memo(MapboxMapCoreComponent, (prevProps, nextProps) => {
-  // Custom comparison for better performance
-  return (
-    prevProps.currentLocation?.longitude === nextProps.currentLocation?.longitude &&
-    prevProps.currentLocation?.latitude === nextProps.currentLocation?.latitude &&
-    prevProps.pmData?.pm25 === nextProps.pmData?.pm25 &&
-    prevProps.pmData?.pm10 === nextProps.pmData?.pm10 &&
-    prevProps.trackPoints?.length === nextProps.trackPoints?.length &&
-    prevProps.isRecording === nextProps.isRecording &&
-    prevProps.className === nextProps.className
-  );
-});

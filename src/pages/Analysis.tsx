@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { DateFilter } from '@/components/DateFilter';
-import { LazyPollutionBreakdown } from '@/components/Analysis/LazyPollutionBreakdown';
-import { LazyStatisticalAnalysis } from '@/components/Analysis/LazyStatisticalAnalysis';
+import { StatisticalAnalysis } from '@/components/Analysis/StatisticalAnalysis';
+import { DataSummary } from '@/components/Analysis/DataSummary';
+import { GroupComparison } from '@/components/Analysis/GroupComparison';
+import { PollutionBreakdownChart } from '@/components/Analysis/PollutionBreakdown';
 import { useAnalysisLogic } from '@/components/Analysis/AnalysisLogic';
 
 export default function Analysis() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<
     'day' | 'week' | 'month' | 'year'
-  >('day');
+  >('week');
   
   // State for breakdown data from PollutionBreakdownChart
   const [breakdownData, setBreakdownData] = useState<any[]>([]);
@@ -51,7 +53,7 @@ export default function Analysis() {
 
 
       {/* Pollution Breakdown Chart */}
-      <LazyPollutionBreakdown
+      <PollutionBreakdownChart
         missions={missions}
         selectedPeriod={selectedPeriod}
         selectedDate={selectedDate}
@@ -59,7 +61,7 @@ export default function Analysis() {
       />
 
       {/* Statistical Analysis Report */}
-      <LazyStatisticalAnalysis
+      <StatisticalAnalysis
         statisticalAnalysis={statisticalAnalysis}
         loading={loading}
         onRegenerate={regenerateAnalysis}

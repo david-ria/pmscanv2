@@ -79,12 +79,12 @@ export const useUserLocations = () => {
     location: Omit<UserLocation, 'id' | 'user_id' | 'created_at' | 'updated_at'>
   ) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Not authenticated');
 
       const { error } = await supabase.from('user_locations').insert({
         ...location,
-        user_id: user.id,
+        user_id: user.user.id,
       });
 
       if (error) throw error;
@@ -198,12 +198,12 @@ export const useUserActivities = () => {
     activity: Omit<UserActivity, 'id' | 'user_id' | 'created_at' | 'updated_at'>
   ) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Not authenticated');
 
       const { error } = await supabase.from('user_activities').insert({
         ...activity,
-        user_id: user.id,
+        user_id: user.user.id,
       });
 
       if (error) throw error;
@@ -317,12 +317,12 @@ export const useUserAlarms = () => {
     alarm: Omit<UserAlarm, 'id' | 'user_id' | 'created_at' | 'updated_at'>
   ) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Not authenticated');
 
       const { error } = await supabase.from('user_alarms').insert({
         ...alarm,
-        user_id: user.id,
+        user_id: user.user.id,
       });
 
       if (error) throw error;
@@ -436,12 +436,12 @@ export const useUserEvents = () => {
     event: Omit<UserEvent, 'id' | 'user_id' | 'created_at' | 'updated_at'>
   ) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Not authenticated');
 
       const { error } = await supabase.from('user_events').insert({
         ...event,
-        user_id: user.id,
+        user_id: user.user.id,
       });
 
       if (error) throw error;

@@ -453,65 +453,6 @@ export const useAnalysisLogic = (
         return total + mission.avgPm10 * durationHours;
       }, 0);
 
-      // Calculate cumulative dose breakdown by context
-      const contextDoseBreakdown = {
-        location: { pm25: 0, pm10: 0, count: 0 },
-        activity: { pm25: 0, pm10: 0, count: 0 },
-        autocontext: { pm25: 0, pm10: 0, count: 0 }
-      };
-
-      // Detailed breakdown by specific contexts
-      const detailedContextBreakdown = new Map<string, {
-        pm1: number; pm25: number; pm10: number; 
-        exposure: number; count: number; type: string;
-      }>();
-
-      filtered.forEach(mission => {
-        const durationHours = mission.durationMinutes / 60;
-        const dosePM25 = mission.avgPm25 * durationHours;
-        const dosePM10 = mission.avgPm10 * durationHours;
-
-        // Determine context based on mission data
-        if (mission.locationContext && mission.locationContext !== 'Unknown') {
-          contextDoseBreakdown.location.pm25 += dosePM25;
-          contextDoseBreakdown.location.pm10 += dosePM10;
-          contextDoseBreakdown.location.count++;
-        } else if (mission.activityContext && mission.activityContext !== 'Unknown') {
-          contextDoseBreakdown.activity.pm25 += dosePM25;
-          contextDoseBreakdown.activity.pm10 += dosePM10;
-          contextDoseBreakdown.activity.count++;
-        } else {
-          contextDoseBreakdown.autocontext.pm25 += dosePM25;
-          contextDoseBreakdown.autocontext.pm10 += dosePM10;
-          contextDoseBreakdown.autocontext.count++;
-        }
-
-        // Add to detailed breakdown
-        mission.measurements?.forEach(measurement => {
-          const contexts = [
-            { name: measurement.locationContext, type: 'location' },
-            { name: measurement.activityContext, type: 'activity' },
-            { name: measurement.automaticContext, type: 'autocontext' }
-          ];
-
-          contexts.forEach(({ name, type }) => {
-            if (name && name !== 'Unknown' && name !== 'Inconnue') {
-              const key = `${name} (${type})`;
-              const existing = detailedContextBreakdown.get(key) || {
-                pm1: 0, pm25: 0, pm10: 0, exposure: 0, count: 0, type
-              };
-              const measurementDuration = mission.durationMinutes / mission.measurements.length;
-              existing.pm1 += measurement.pm1 * measurementDuration / 60;
-              existing.pm25 += measurement.pm25 * measurementDuration / 60;
-              existing.pm10 += measurement.pm10 * measurementDuration / 60;
-              existing.exposure += measurementDuration;
-              existing.count++;
-              detailedContextBreakdown.set(key, existing);
-            }
-          });
-        });
-      });
-
       // Create comprehensive statistical summary
       const exposureHours = (totalExposureMinutes / 60).toFixed(1);
       const whoExceedancePercentage_PM25 =
@@ -527,88 +468,44 @@ export const useAnalysisLogic = (
       const getAirQualityStatus = () => {
         const worstPM = Math.max(avgPM25, avgPM10 / 3); // Normalize PM10 for comparison
         if (worstPM <= 12)
-          return `✅ ${t('analysis.airQuality.good')}`;
+          return "✅ Qualité de l'air bonne - Toutes les particules dans les normes";
         if (worstPM <= 35)
-          return `⚠️ ${t('analysis.airQuality.moderate')}`;
+          return "⚠️ Qualité de l'air modérée - Surveillance recommandée";
         if (worstPM <= 55)
-          return `🔶 ${t('analysis.airQuality.poor')}`;
-        return `🔴 ${t('analysis.airQuality.veryPoor')}`;
+          return "🔶 Qualité de l'air mauvaise - Précautions nécessaires";
+        return "🔴 Qualité de l'air très mauvaise - Éviter l'exposition prolongée";
       };
 
       const analysisText = `📊 ANALYSE STATISTIQUE COMPLÈTE - ${timeframeText.toUpperCase()}
 
-🔢 ${t('analysis.statisticalReport.dataSummary')}:
-• ${t('analysis.statisticalReport.missionsCount')}: ${filtered.length}
-• ${t('analysis.statisticalReport.totalExposureTime')}: ${Math.round(totalExposureMinutes)} ${t('analysis.statisticalReport.minutes')} (${exposureHours} ${t('analysis.statisticalReport.hours')})
+🔢 RÉSUMÉ DES DONNÉES:
+• Nombre de missions: ${filtered.length}
+• Temps d'exposition total: ${Math.round(totalExposureMinutes)} minutes (${exposureHours} heures)
 
-🌫️ ${t('analysis.statisticalReport.particleAverages')}:
-• PM1.0: ${avgPM1.toFixed(1)} μg/m³ (${t('analysis.statisticalReport.max')}: ${maxPM1.toFixed(1)} μg/m³)
-• PM2.5: ${avgPM25.toFixed(1)} μg/m³ (${t('analysis.statisticalReport.max')}: ${maxPM25.toFixed(1)} μg/m³)
-• PM10: ${avgPM10.toFixed(1)} μg/m³ (${t('analysis.statisticalReport.max')}: ${maxPM10.toFixed(1)} μg/m³)
+🌫️ PARTICULES FINES (MOYENNES):
+• PM1.0: ${avgPM1.toFixed(1)} μg/m³ (max: ${maxPM1.toFixed(1)} μg/m³)
+• PM2.5: ${avgPM25.toFixed(1)} μg/m³ (max: ${maxPM25.toFixed(1)} μg/m³)
+• PM10: ${avgPM10.toFixed(1)} μg/m³ (max: ${maxPM10.toFixed(1)} μg/m³)
 
-💨 ${t('analysis.statisticalReport.cumulativeDose')}:
+💨 DOSE CUMULÉE INHALÉE:
 • PM2.5: ${totalCumulativeDosePM25.toFixed(1)} μg·h/m³
 • PM10: ${totalCumulativeDosePM10.toFixed(1)} μg·h/m³
-• ${t('analysis.statisticalReport.doseFormula')}
+• Formule: Dose = ∑(Concentration × Temps d'exposition)
 
-📍 ${t('analysis.statisticalReport.cumulativeDoseByContext')}:
-${contextDoseBreakdown.location.count > 0 ? `• ${t('analysis.location')}: PM2.5=${contextDoseBreakdown.location.pm25.toFixed(1)}, PM10=${contextDoseBreakdown.location.pm10.toFixed(1)} μg·h/m³ (${contextDoseBreakdown.location.count} missions)` : ''}
-${contextDoseBreakdown.activity.count > 0 ? `• ${t('analysis.activity')}: PM2.5=${contextDoseBreakdown.activity.pm25.toFixed(1)}, PM10=${contextDoseBreakdown.activity.pm10.toFixed(1)} μg·h/m³ (${contextDoseBreakdown.activity.count} missions)` : ''}
-${contextDoseBreakdown.autocontext.count > 0 ? `• ${t('analysis.autocontext')}: PM2.5=${contextDoseBreakdown.autocontext.pm25.toFixed(1)}, PM10=${contextDoseBreakdown.autocontext.pm10.toFixed(1)} μg·h/m³ (${contextDoseBreakdown.autocontext.count} missions)` : ''}
+⚠️ SEUILS OMS (Organisation Mondiale de la Santé):
+• PM2.5 > 15 μg/m³: ${timeAboveWHO_PM25.toFixed(0)} min (${whoExceedancePercentage_PM25}% du temps)
+• PM10 > 45 μg/m³: ${timeAboveWHO_PM10.toFixed(0)} min (${whoExceedancePercentage_PM10}% du temps)
+• PM1.0: Pas de seuil OMS défini (particules ultrafines)
 
-🔍 ${t('analysis.statisticalReport.detailedContextBreakdown')}:
-${Array.from(detailedContextBreakdown.entries())
-  .sort((a, b) => b[1].pm25 - a[1].pm25)
-  .slice(0, 8)
-  .map(([context, data]) => {
-    const avgPM1 = data.exposure > 0 ? (data.pm1 / (data.exposure / 60)).toFixed(1) : '0';
-    const avgPM25 = data.exposure > 0 ? (data.pm25 / (data.exposure / 60)).toFixed(1) : '0';
-    const avgPM10 = data.exposure > 0 ? (data.pm10 / (data.exposure / 60)).toFixed(1) : '0';
-    const exposureMin = Math.round(data.exposure);
-    const dose = data.pm25.toFixed(1);
-    return `• ${context}: ${exposureMin}min | PM1=${avgPM1}, PM2.5=${avgPM25}, PM10=${avgPM10} μg/m³ | Dose=${dose} μg·h/m³`;
-  }).join('\n')}
+📋 CLASSIFICATION DES PARTICULES:
+• PM1.0: Particules ultrafines - Pénètrent profondément dans les alvéoles
+• PM2.5: Particules fines - Atteignent les voies respiratoires inférieures
+• PM10: Particules grossières - Affectent principalement les voies supérieures
 
-📊 ${t('analysis.statisticalReport.exposurePatterns')}:
-${(() => {
-  const timeRanges = {
-    morning: { start: 6, end: 12, dose: 0, time: 0 },
-    afternoon: { start: 12, end: 18, dose: 0, time: 0 },
-    evening: { start: 18, end: 22, dose: 0, time: 0 },
-    night: { start: 22, end: 6, dose: 0, time: 0 }
-  };
-  
-  filtered.forEach(mission => {
-    const startHour = new Date(mission.startTime).getHours();
-    const durationHours = mission.durationMinutes / 60;
-    const dose = mission.avgPm25 * durationHours;
-    
-    Object.entries(timeRanges).forEach(([period, range]) => {
-      if ((startHour >= range.start && startHour < range.end) || 
-          (period === 'night' && (startHour >= 22 || startHour < 6))) {
-        range.dose += dose;
-        range.time += mission.durationMinutes;
-      }
-    });
-  });
-  
-  return Object.entries(timeRanges)
-    .filter(([_, data]) => data.time > 0)
-    .sort((a, b) => b[1].dose - a[1].dose)
-    .map(([period, data]) => 
-      `• ${period.charAt(0).toUpperCase() + period.slice(1)}: ${Math.round(data.time)}min, ${data.dose.toFixed(1)} μg·h/m³`
-    ).join('\n');
-})()}
-
-⚠️ ${t('analysis.statisticalReport.whoThresholds')}:
-• PM2.5 > 15 μg/m³: ${timeAboveWHO_PM25.toFixed(0)} min (${whoExceedancePercentage_PM25}% ${t('analysis.statisticalReport.ofTime')})
-• PM10 > 45 μg/m³: ${timeAboveWHO_PM10.toFixed(0)} min (${whoExceedancePercentage_PM10}% ${t('analysis.statisticalReport.ofTime')})
-• PM1.0: ${t('analysis.statisticalReport.noWhoThresholdPM1')}
-
-📈 ${t('analysis.statisticalReport.globalAssessment')}:
+📈 ÉVALUATION GLOBALE:
 ${getAirQualityStatus()}
 
-🏆 ${t('analysis.statisticalReport.mostExposedMissions')}:
+🏆 MISSIONS LES PLUS EXPOSÉES (PM2.5):
 ${filtered
   .sort((a, b) => (b.avgPm25 || 0) - (a.avgPm25 || 0))
   .slice(0, 3)
@@ -618,25 +515,25 @@ ${filtered
   )
   .join('\n')}
 
-🎯 ${t('analysis.statisticalReport.eventAnalysis')}:
+🎯 ANALYSE DES ÉVÉNEMENTS:
 ${eventAnalysisData.length > 0 
   ? eventAnalysisData.map(event => 
-      `• ${event.eventType.toUpperCase()} (${event.eventCount} ${t('analysis.statisticalReport.events')}):
-  - PM2.5 ${t('analysis.statisticalReport.duringEvent')}: ${event.avgPM25DuringEvent.toFixed(1)} μg/m³
-  - PM2.5 ${t('analysis.statisticalReport.normalConditions')}: ${event.avgPM25AroundEvent.toFixed(1)} μg/m³
-  - ${t('analysis.statisticalReport.impact')}: ${event.eventImpact > 0 ? '+' : ''}${event.eventImpact.toFixed(1)}% ${event.eventImpact > 50 ? '🔴' : event.eventImpact > 20 ? '🟡' : '🟢'}
-  - ${t('analysis.statisticalReport.detail')}: PM1=${event.avgPM1DuringEvent.toFixed(1)}, PM10=${event.avgPM10DuringEvent.toFixed(1)} μg/m³`
+      `• ${event.eventType.toUpperCase()} (${event.eventCount} événements):
+  - PM2.5 pendant l'événement: ${event.avgPM25DuringEvent.toFixed(1)} μg/m³
+  - PM2.5 en conditions normales: ${event.avgPM25AroundEvent.toFixed(1)} μg/m³
+  - Impact: ${event.eventImpact > 0 ? '+' : ''}${event.eventImpact.toFixed(1)}% ${event.eventImpact > 50 ? '🔴' : event.eventImpact > 20 ? '🟡' : '🟢'}
+  - Détail: PM1=${event.avgPM1DuringEvent.toFixed(1)}, PM10=${event.avgPM10DuringEvent.toFixed(1)} μg/m³`
     ).join('\n\n')
-  : `• ${t('analysis.statisticalReport.noEventData')}`}
+  : "• Aucun événement enregistré pendant cette période"}
 
-💡 ${t('analysis.statisticalReport.healthRecommendations')}:
+💡 RECOMMANDATIONS:
 ${
   avgPM25 > 15 || avgPM10 > 45
-    ? `• ${t('analysis.statisticalReport.limitOutdoorActivities')}\n• ${t('analysis.statisticalReport.regularlyCheckAirQuality')}\n• ${t('analysis.statisticalReport.avoidBusyRoads')}\n• ${t('analysis.statisticalReport.goodVentilation')}`
-    : `• ${t('analysis.statisticalReport.wearMask')}\n• ${t('analysis.statisticalReport.regularlyCheckAirQuality')}\n• ${t('analysis.statisticalReport.goodVentilation')}`
+    ? "• Limitez les activités extérieures intenses\n• Consultez les prévisions de qualité de l'air\n• Considérez un purificateur d'air intérieur"
+    : "• Qualité de l'air acceptable\n• Continuez le monitoring pour détecter les variations\n• Maintenez une bonne ventilation intérieure"
 }
 ${eventAnalysisData.some(e => e.eventImpact > 50) 
-  ? `\n• ⚠️ ${t('analysis.statisticalReport.avoidBusyRoads')}\n• ${t('analysis.statisticalReport.goodVentilation')}` 
+  ? "\n• ⚠️ Certains événements ont un impact majeur sur la qualité de l'air\n• Évitez ces activités ou améliorez la ventilation" 
   : ""}`;
 
       setStatisticalAnalysis(analysisText);

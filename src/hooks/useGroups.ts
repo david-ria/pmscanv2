@@ -104,15 +104,15 @@ export const useGroups = () => {
 
   const createGroup = useCallback(async (name: string, description?: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('groups')
         .insert({
           name,
           description,
-          created_by: user.id,
+          created_by: user.user.id,
         })
         .select()
         .single();
@@ -191,14 +191,14 @@ export const useGroups = () => {
 
   const leaveGroup = useCallback(async (groupId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Not authenticated');
 
       const { error } = await supabase
         .from('group_memberships')
         .delete()
         .eq('group_id', groupId)
-        .eq('user_id', user.id);
+        .eq('user_id', user.user.id);
 
       if (error) throw error;
 
