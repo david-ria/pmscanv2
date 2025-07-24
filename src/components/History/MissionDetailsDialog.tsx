@@ -555,6 +555,7 @@ export function MissionDetailsDialog({
                     locationContext: mission.locationContext,
                     activityContext: mission.activityContext,
                   }}
+                  hideTitle={true}
                 />
               </div>
             </CardContent>
