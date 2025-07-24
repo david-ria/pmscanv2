@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getSafeSession } from '@/lib/authUtils';
 
 interface AuthContextType {
   user: any;
@@ -32,8 +33,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         });
 
-        // Then get current session
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Then get current session safely
+        const { data: { session }, error } = await getSafeSession();
         
         if (isMounted) {
           if (error) {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { getSafeUser } from '@/lib/authUtils';
 import * as tf from '@tensorflow/tfjs';
 import * as logger from '@/utils/logger';
 import { PMScanData } from '@/lib/pmscan/types';
@@ -88,7 +89,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
       try {
         const {
           data: { user },
-        } = await supabase.auth.getUser();
+        } = await getSafeUser();
         if (!user) return;
 
         const { data, error } = await supabase
@@ -352,7 +353,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
       try {
         const {
           data: { user },
-        } = await supabase.auth.getUser();
+        } = await getSafeUser();
         if (!user) return;
 
         const { error } = await supabase

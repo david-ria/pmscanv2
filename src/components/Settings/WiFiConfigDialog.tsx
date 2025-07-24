@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { getSafeUser } from '@/lib/authUtils';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +16,6 @@ import {
 import { Wifi, Home, Building2 } from 'lucide-react';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 interface WiFiConfigDialogProps {
   children: React.ReactNode;
@@ -41,7 +42,7 @@ export function WiFiConfigDialog({ children }: WiFiConfigDialogProps) {
       // Save to database
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } = await getSafeUser();
       if (user) {
         const { error } = await supabase
           .from('profiles')

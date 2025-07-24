@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getSafeUser } from '@/lib/authUtils';
 
 export interface Group {
   id: string;
@@ -57,7 +58,7 @@ export const useGroups = () => {
       // Get current user first
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } = await getSafeUser();
       if (!user) throw new Error('Not authenticated');
 
       // First fetch groups
@@ -104,15 +105,15 @@ export const useGroups = () => {
 
   const createGroup = useCallback(async (name: string, description?: string) => {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('Not authenticated');
+      const { data: { user } } = await getSafeUser();
+      if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('groups')
         .insert({
           name,
           description,
-          created_by: user.user.id,
+          created_by: user.id,
         })
         .select()
         .single();
@@ -191,14 +192,14 @@ export const useGroups = () => {
 
   const leaveGroup = useCallback(async (groupId: string) => {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('Not authenticated');
+      const { data: { user } } = await getSafeUser();
+      if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase
         .from('group_memberships')
         .delete()
         .eq('group_id', groupId)
-        .eq('user_id', user.user.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
