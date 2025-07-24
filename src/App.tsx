@@ -56,23 +56,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => {
   const { user, loading } = useAuth();
 
-  // Add debugging for standalone mode
-  useEffect(() => {
-    console.log('App render - User:', !!user, 'Loading:', loading);
-    console.log('Window context:', window.self === window.top ? 'standalone' : 'iframe');
-    
-    // Additional debug info
-    console.log('Location:', window.location.href);
-    console.log('Auth state:', { user: !!user, loading });
-  }, [user, loading]);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">
-            Initialisation de l'authentification...
+            Chargement de l'application...
           </p>
         </div>
       </div>
