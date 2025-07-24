@@ -6,8 +6,12 @@ interface BreakdownData {
   name: string;
   percentage: number;
   avgPM: number;
+  avgPM1: number;
+  avgPM25: number;
+  avgPM10: number;
   color: string;
   exposure: number;
+  cumulativeDose: number;
 }
 
 interface WHOThreshold {
@@ -53,19 +57,27 @@ export const PollutionSummaryTable = ({
             />
             <div className="flex-1 min-w-0">
               <div className="font-medium text-sm">{item.name}</div>
-              <div className="text-xs text-muted-foreground break-words">
-                {Math.round(item.exposure)} {t('analysis.minutes')} • PM
-                {pmType.replace('pm', '')}: {Math.round(item.avgPM)} μg/m³
+              <div className="text-xs text-muted-foreground break-words space-y-1">
+                <div>
+                  {Math.round(item.exposure)} {t('analysis.minutes')} • {(item.exposure / 60).toFixed(1)}h exposure
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span>PM1: {Math.round(item.avgPM1)} μg/m³</span>
+                  <span>PM2.5: {Math.round(item.avgPM25)} μg/m³</span>
+                  <span>PM10: {Math.round(item.avgPM10)} μg/m³</span>
+                </div>
+                <div>
+                  Dose: {item.cumulativeDose.toFixed(1)} μg·h/m³
+                </div>
                 {whoThreshold.value && (
-                  <span
-                    className={`block sm:inline sm:ml-2 ${exceedsWHO ? 'text-red-600' : 'text-green-600'}`}
+                  <div
+                    className={`${exceedsWHO ? 'text-red-600' : 'text-green-600'}`}
                   >
-                    (
                     {exceedsWHO
                       ? t('analysis.exceeds')
                       : t('analysis.complies')}{' '}
-                    {t('analysis.whoThreshold')}: {whoThreshold.value} μg/m³)
-                  </span>
+                    {t('analysis.whoThreshold')}: {whoThreshold.value} μg/m³
+                  </div>
                 )}
               </div>
             </div>

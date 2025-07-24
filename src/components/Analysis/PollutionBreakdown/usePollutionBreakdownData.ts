@@ -20,8 +20,12 @@ interface BreakdownData {
   name: string;
   percentage: number;
   avgPM: number;
+  avgPM1: number;
+  avgPM25: number;
+  avgPM10: number;
   color: string;
   exposure: number;
+  cumulativeDose: number;
 }
 
 export const usePollutionBreakdownData = (
@@ -78,6 +82,9 @@ export const usePollutionBreakdownData = (
         {
           totalExposure: number;
           weightedPM: number;
+          weightedPM1: number;
+          weightedPM25: number;
+          weightedPM10: number;
           color: string;
         }
       >();
@@ -87,7 +94,7 @@ export const usePollutionBreakdownData = (
         if (breakdownType === 'autocontext') {
           const contextMap = new Map<
             string,
-            { totalExposure: number; weightedPM: number }
+            { totalExposure: number; weightedPM: number; weightedPM1: number; weightedPM25: number; weightedPM10: number }
           >();
 
           mission.measurements.forEach((measurement) => {
@@ -102,12 +109,18 @@ export const usePollutionBreakdownData = (
             const existing = contextMap.get(autoContext) || {
               totalExposure: 0,
               weightedPM: 0,
+              weightedPM1: 0,
+              weightedPM25: 0,
+              weightedPM10: 0,
             };
             // Assume each measurement represents equal time exposure
             const measurementDuration =
               mission.durationMinutes / mission.measurements.length;
             existing.totalExposure += measurementDuration;
             existing.weightedPM += pmValue * measurementDuration;
+            existing.weightedPM1 += measurement.pm1 * measurementDuration;
+            existing.weightedPM25 += measurement.pm25 * measurementDuration;
+            existing.weightedPM10 += measurement.pm10 * measurementDuration;
             contextMap.set(autoContext, existing);
           });
 
@@ -116,17 +129,23 @@ export const usePollutionBreakdownData = (
             const existing = dataMap.get(context) || {
               totalExposure: 0,
               weightedPM: 0,
+              weightedPM1: 0,
+              weightedPM25: 0,
+              weightedPM10: 0,
               color: getColorForKey(context),
             };
             existing.totalExposure += data.totalExposure;
             existing.weightedPM += data.weightedPM;
+            existing.weightedPM1 += data.weightedPM1;
+            existing.weightedPM25 += data.weightedPM25;
+            existing.weightedPM10 += data.weightedPM10;
             dataMap.set(context, existing);
           });
         } else {
           // For location and activity, aggregate from measurements like autocontext
           const contextMap = new Map<
             string,
-            { totalExposure: number; weightedPM: number }
+            { totalExposure: number; weightedPM: number; weightedPM1: number; weightedPM25: number; weightedPM10: number }
           >();
 
           mission.measurements.forEach((measurement) => {
@@ -151,12 +170,18 @@ export const usePollutionBreakdownData = (
             const existing = contextMap.get(contextValue) || {
               totalExposure: 0,
               weightedPM: 0,
+              weightedPM1: 0,
+              weightedPM25: 0,
+              weightedPM10: 0,
             };
             // Assume each measurement represents equal time exposure
             const measurementDuration =
               mission.durationMinutes / mission.measurements.length;
             existing.totalExposure += measurementDuration;
             existing.weightedPM += pmValue * measurementDuration;
+            existing.weightedPM1 += measurement.pm1 * measurementDuration;
+            existing.weightedPM25 += measurement.pm25 * measurementDuration;
+            existing.weightedPM10 += measurement.pm10 * measurementDuration;
             contextMap.set(contextValue, existing);
           });
 
@@ -165,10 +190,16 @@ export const usePollutionBreakdownData = (
             const existing = dataMap.get(context) || {
               totalExposure: 0,
               weightedPM: 0,
+              weightedPM1: 0,
+              weightedPM25: 0,
+              weightedPM10: 0,
               color: getColorForKey(context),
             };
             existing.totalExposure += data.totalExposure;
             existing.weightedPM += data.weightedPM;
+            existing.weightedPM1 += data.weightedPM1;
+            existing.weightedPM25 += data.weightedPM25;
+            existing.weightedPM10 += data.weightedPM10;
             dataMap.set(context, existing);
           });
         }
@@ -179,11 +210,24 @@ export const usePollutionBreakdownData = (
         .map(([key, data]) => {
           const avgPM =
             data.totalExposure > 0 ? data.weightedPM / data.totalExposure : 0;
+          const avgPM1 =
+            data.totalExposure > 0 ? data.weightedPM1 / data.totalExposure : 0;
+          const avgPM25 =
+            data.totalExposure > 0 ? data.weightedPM25 / data.totalExposure : 0;
+          const avgPM10 =
+            data.totalExposure > 0 ? data.weightedPM10 / data.totalExposure : 0;
+          const exposureHours = data.totalExposure / 60;
+          const cumulativeDose = avgPM25 * exposureHours; // Using PM2.5 for dose calculation
+          
           return {
             name: key,
             avgPM: avgPM,
+            avgPM1: avgPM1,
+            avgPM25: avgPM25,
+            avgPM10: avgPM10,
             color: data.color,
             exposure: data.totalExposure,
+            cumulativeDose: cumulativeDose,
           };
         })
         .filter((item) => item.avgPM > 0) // Only show categories with PM data
