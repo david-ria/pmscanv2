@@ -30,7 +30,7 @@ export const getAuthClient = async () => {
   initPromise = new Promise(async (resolve, reject) => {
     try {
       const { getSupabaseClient } = await import('@/integrations/supabase/client');
-      const supabase = getSupabaseClient();
+      const supabase = await getSupabaseClient();
       
       if (!supabase) {
         throw new Error('Supabase client not available');
