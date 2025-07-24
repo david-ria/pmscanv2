@@ -46,11 +46,7 @@ export default defineConfig(async ({ mode }) => {
             'chart-vendor': ['recharts'],
             'map-vendor': ['mapbox-gl'],
             'query-vendor': ['@tanstack/react-query'],
-            'supabase-vendor': ['@supabase/supabase-js'],
-            // App chunks
-            'analysis': ['/src/pages/Analysis.tsx', '/src/components/Analysis'],
-            'history': ['/src/pages/History.tsx', '/src/components/History'],
-            'groups': ['/src/pages/Groups.tsx', '/src/components/Groups']
+            'supabase-vendor': ['@supabase/supabase-js']
           }
         }
       },
