@@ -67,7 +67,8 @@ export default defineConfig(async ({ mode }) => {
         'mapbox-gl',
         'recharts',
         '@supabase/supabase-js',
-        'long'
+        'long',
+        'seedrandom'
       ],
       // Exclude heavy optional dependencies from pre-bundling
       exclude: ['@tensorflow/tfjs']
