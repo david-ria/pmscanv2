@@ -30,9 +30,9 @@ export function LanguageSelector({ label, badge }: LanguageSelectorProps) {
         </div>
         {badge && (
           <DropdownMenuTrigger asChild>
-            <Badge variant="secondary" className="text-xs ml-2 flex-shrink-0 cursor-pointer hover:bg-secondary/80 transition-colors">
+            <button className="text-xs ml-2 flex-shrink-0 cursor-pointer hover:bg-secondary/80 transition-colors rounded-md px-2 py-1 bg-secondary text-secondary-foreground">
               {badge}
-            </Badge>
+            </button>
           </DropdownMenuTrigger>
         )}
       </div>
