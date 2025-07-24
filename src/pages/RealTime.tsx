@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import * as logger from '@/utils/logger';
-import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
+import { OptimizedPMDisplay } from '@/components/RealTime/OptimizedPMDisplay';
 import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
 import { ContextSelectors } from '@/components/RecordingControls/ContextSelectors';
 import { AutoContextDisplay } from '@/components/AutoContextDisplay';
@@ -81,6 +81,47 @@ export default function RealTime() {
   // Add data to recording when new data comes in - with deduplication
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
 
+  // Memoize the context handler to prevent unnecessary re-creation
+  const handleContextAndDataPoint = useCallback(async (data: typeof currentData, location: typeof latestLocation) => {
+    if (!data) return;
+    
+    // Calculate speed and movement from GPS data
+    let speed = 0;
+    let isMoving = false;
+    
+    if (location) {
+      const { updateLocationHistory } = await import('@/utils/speedCalculator');
+      const speedData = updateLocationHistory(
+        location.latitude,
+        location.longitude,
+        location.timestamp
+      );
+      speed = speedData.speed;
+      isMoving = speedData.isMoving;
+      
+      // Use rate-limited logging to reduce console spam
+      logger.rateLimitedDebug('movement', 2000, '🏃 Movement detection:', {
+        speed: `${speed} km/h`,
+        isMoving,
+        location: `${location.latitude}, ${location.longitude}`
+      });
+    }
+    
+    const automaticContext = await updateContextIfNeeded(
+      data,
+      location || undefined,
+      speed,
+      isMoving
+    );
+
+    addDataPoint(
+      data,
+      location || undefined,
+      { location: selectedLocation, activity: selectedActivity },
+      automaticContext
+    );
+  }, [updateContextIfNeeded, addDataPoint, selectedLocation, selectedActivity]);
+
   useEffect(() => {
     if (isRecording && currentData) {
       // Prevent duplicate data points by checking if this is actually new data
@@ -98,48 +139,7 @@ export default function RealTime() {
           latestLocation
         );
 
-        // Update context at recording frequency and get the current context
-        const handleContextAndDataPoint = async () => {
-          // Calculate speed and movement from GPS data
-          let speed = 0;
-          let isMoving = false;
-          
-          if (latestLocation) {
-            const { updateLocationHistory } = await import('@/utils/speedCalculator');
-            const speedData = updateLocationHistory(
-              latestLocation.latitude,
-              latestLocation.longitude,
-              latestLocation.timestamp
-            );
-            speed = speedData.speed;
-            isMoving = speedData.isMoving;
-            
-            console.log('🏃 Movement detection:', {
-              speed: `${speed} km/h`,
-              isMoving,
-              location: `${latestLocation.latitude}, ${latestLocation.longitude}`
-            });
-          }
-          
-          const automaticContext = await updateContextIfNeeded(
-            currentData,
-            latestLocation || undefined,
-            speed,
-            isMoving
-          );
-
-          // DO NOT override user's manual activity selection
-          // Auto context should be separate from manual tags
-
-          addDataPoint(
-            currentData,
-            latestLocation || undefined,
-            { location: selectedLocation, activity: selectedActivity },
-            automaticContext
-          );
-        };
-
-        handleContextAndDataPoint();
+        handleContextAndDataPoint(currentData, latestLocation);
         
         lastDataRef.current = {
           pm25: currentData.pm25,
@@ -151,10 +151,7 @@ export default function RealTime() {
     isRecording,
     currentData,
     latestLocation,
-    addDataPoint,
-    selectedLocation,
-    selectedActivity,
-    updateContextIfNeeded,
+    handleContextAndDataPoint,
   ]);
 
   // Clear location history when recording starts for fresh speed calculations
@@ -186,12 +183,26 @@ export default function RealTime() {
     }
   }, [autoContextEnabled, forceContextUpdate]); // Only run when autocontext is toggled
 
-  // Check alerts whenever new data comes in
+  // Throttle alert checking to reduce CPU usage
+  const throttledCheckAlerts = useCallback(
+    (pm1: number, pm25: number, pm10: number) => {
+      // Only check alerts if values changed significantly (>1 μg/m³)
+      const lastCheck = lastDataRef.current;
+      if (lastCheck && 
+          Math.abs(pm25 - lastCheck.pm25) < 1) {
+        return; // Skip if change is minimal
+      }
+      checkAlerts(pm1, pm25, pm10);
+    },
+    [checkAlerts]
+  );
+
+  // Check alerts whenever new data comes in (throttled)
   useEffect(() => {
     if (currentData) {
-      checkAlerts(currentData.pm1, currentData.pm25, currentData.pm10);
+      throttledCheckAlerts(currentData.pm1, currentData.pm25, currentData.pm10);
     }
-  }, [currentData, checkAlerts]);
+  }, [currentData, throttledCheckAlerts]);
 
   // Fetch weather data when location changes
   useEffect(() => {
@@ -240,7 +251,7 @@ export default function RealTime() {
   }, [isConnected]);
 
   // Handle frequency dialog confirmation
-  const handleFrequencyConfirm = async () => {
+  const handleFrequencyConfirm = useCallback(async () => {
     try {
       setShowFrequencyDialog(false);
       await startRecording(recordingFrequency);
@@ -263,7 +274,13 @@ export default function RealTime() {
         variant: 'destructive',
       });
     }
-  };
+  }, [recordingFrequency, startRecording, toast, t]);
+
+  // Memoize mission context object to prevent unnecessary re-renders
+  const memoizedMissionContext = useMemo(() => ({
+    location: selectedLocation,
+    activity: selectedActivity,
+  }), [selectedLocation, selectedActivity]);
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
@@ -285,8 +302,8 @@ export default function RealTime() {
         locationEnabled={locationEnabled}
       />
 
-      {/* Air Quality Cards */}
-      <AirQualityCards currentData={currentData} isConnected={isConnected} />
+      {/* Air Quality Cards - Optimized */}
+      <OptimizedPMDisplay currentData={currentData} isConnected={isConnected} />
 
 
       {/* Context Selectors */}
@@ -310,10 +327,7 @@ export default function RealTime() {
         isRecording={isRecording}
         currentData={currentData}
         currentLocation={latestLocation}
-        missionContext={{
-          location: selectedLocation,
-          activity: selectedActivity,
-        }}
+        missionContext={memoizedMissionContext}
         className="mb-4"
       />
 
