@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import * as logger from '@/utils/logger';
-import { OptimizedPMDisplay } from '@/components/RealTime/OptimizedPMDisplay';
+import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
 import { ContextSelectors } from '@/components/RecordingControls/ContextSelectors';
 import { AutoContextDisplay } from '@/components/AutoContextDisplay';
@@ -302,8 +302,8 @@ export default function RealTime() {
         locationEnabled={locationEnabled}
       />
 
-      {/* Air Quality Cards - Optimized */}
-      <OptimizedPMDisplay currentData={currentData} isConnected={isConnected} />
+      {/* Air Quality Cards */}
+      <AirQualityCards currentData={currentData} isConnected={isConnected} />
 
 
       {/* Context Selectors */}

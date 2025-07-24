@@ -25,7 +25,7 @@ const OptimizedPMDisplay = memo(function OptimizedPMDisplay({
     
     const now = Date.now();
     if (now - lastUpdateRef.current < 500) { // Max 2 updates per second
-      return null; // Skip this update
+      return lastUpdateRef.current > 0 ? 'skip' : null; // Return 'skip' if we've had data before
     }
     
     lastUpdateRef.current = now;
@@ -43,12 +43,12 @@ const OptimizedPMDisplay = memo(function OptimizedPMDisplay({
     };
   }, [currentData, getAirQualityLevel]);
 
-  // Use previous data if throttled data is null
-  const displayDataRef = useRef(throttledData);
-  const displayData = throttledData || displayDataRef.current;
+  // Use previous data if throttled data is 'skip'
+  const displayDataRef = useRef<any>(null);
+  const displayData = throttledData === 'skip' ? displayDataRef.current : throttledData;
   
   useEffect(() => {
-    if (throttledData) {
+    if (throttledData && throttledData !== 'skip') {
       displayDataRef.current = throttledData;
     }
   }, [throttledData]);
