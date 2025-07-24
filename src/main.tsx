@@ -10,6 +10,7 @@ import { Toaster } from '@/components/ui/toaster';
 import App from './App.tsx';
 import './index.css';
 import './i18n/config';
+import { preloadCriticalChunks } from '@/utils/performanceOptimizations';
 
 // Optimized QueryClient configuration
 const queryClient = new QueryClient({
@@ -40,6 +41,11 @@ if (typeof window !== 'undefined') {
     events.forEach(event => window.removeEventListener(event, loadOnce));
   };
   events.forEach(event => window.addEventListener(event, loadOnce, { once: true }));
+  
+  // Preload critical chunks after initial load
+  window.addEventListener('load', () => {
+    preloadCriticalChunks();
+  }, { once: true });
 }
 
 createRoot(document.getElementById('root')!).render(

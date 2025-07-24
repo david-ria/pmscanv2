@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   PieChart,
   Pie,
@@ -23,7 +24,7 @@ interface PollutionPieChartProps {
   pmType: PMType;
 }
 
-export const PollutionPieChart = ({
+export const PollutionPieChart = memo(({
   breakdownData,
   pmType,
 }: PollutionPieChartProps) => {
@@ -63,4 +64,6 @@ export const PollutionPieChart = ({
       </PieChart>
     </ResponsiveContainer>
   );
-};
+});
+
+PollutionPieChart.displayName = 'PollutionPieChart';

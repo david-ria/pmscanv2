@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { DateFilter } from '@/components/DateFilter';
-import { StatisticalAnalysis } from '@/components/Analysis/StatisticalAnalysis';
-import { DataSummary } from '@/components/Analysis/DataSummary';
-import { GroupComparison } from '@/components/Analysis/GroupComparison';
-import { PollutionBreakdownChart } from '@/components/Analysis/PollutionBreakdown';
+import { LazyPollutionBreakdown } from '@/components/Analysis/LazyPollutionBreakdown';
+import { LazyStatisticalAnalysis } from '@/components/Analysis/LazyStatisticalAnalysis';
 import { useAnalysisLogic } from '@/components/Analysis/AnalysisLogic';
 
 export default function Analysis() {
@@ -53,7 +51,7 @@ export default function Analysis() {
 
 
       {/* Pollution Breakdown Chart */}
-      <PollutionBreakdownChart
+      <LazyPollutionBreakdown
         missions={missions}
         selectedPeriod={selectedPeriod}
         selectedDate={selectedDate}
@@ -61,7 +59,7 @@ export default function Analysis() {
       />
 
       {/* Statistical Analysis Report */}
-      <StatisticalAnalysis
+      <LazyStatisticalAnalysis
         statisticalAnalysis={statisticalAnalysis}
         loading={loading}
         onRegenerate={regenerateAnalysis}

@@ -36,20 +36,48 @@ export default defineConfig(async ({ mode }) => {
     },
     build: {
       // Optimize chunk size and splitting
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            // Vendor chunks
-            'react-vendor': ['react', 'react-dom'],
-            'router-vendor': ['react-router-dom'],
-            'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-popover', '@radix-ui/react-select'],
-            'chart-vendor': ['recharts'],
-            'map-vendor': ['mapbox-gl'],
-            'query-vendor': ['@tanstack/react-query'],
-            'supabase-vendor': ['@supabase/supabase-js']
+        rollupOptions: {
+          output: {
+            manualChunks: (id: string) => {
+              // Vendor chunks
+              if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+                return 'react-vendor';
+              }
+              if (id.includes('node_modules/react-router-dom')) {
+                return 'router-vendor';
+              }
+              if (id.includes('node_modules/@radix-ui')) {
+                return 'ui-vendor';
+              }
+              if (id.includes('node_modules/recharts')) {
+                return 'chart-vendor';
+              }
+              if (id.includes('node_modules/mapbox-gl')) {
+                return 'map-vendor';
+              }
+              if (id.includes('node_modules/@tanstack/react-query')) {
+                return 'query-vendor';
+              }
+              if (id.includes('node_modules/@supabase/supabase-js')) {
+                return 'supabase-vendor';
+              }
+              // Heavy analysis components
+              if (id.includes('src/components/Analysis')) {
+                return 'analysis-components';
+              }
+              // Other large dependencies
+              if (id.includes('node_modules/date-fns') || 
+                  id.includes('node_modules/i18next') ||
+                  id.includes('node_modules/react-i18next')) {
+                return 'utils-vendor';
+              }
+              // Default vendor chunk for other node_modules
+              if (id.includes('node_modules')) {
+                return 'vendor';
+              }
+            }
           }
-        }
-      },
+        },
       // Enable minification and compression with esbuild (default)
       minify: mode === 'production',
       // Optimize assets
