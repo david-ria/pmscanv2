@@ -10,7 +10,7 @@ export default function Analysis() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<
     'day' | 'week' | 'month' | 'year'
-  >('week');
+  >('day');
   
   // State for breakdown data from PollutionBreakdownChart
   const [breakdownData, setBreakdownData] = useState<any[]>([]);
