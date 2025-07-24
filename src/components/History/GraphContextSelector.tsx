@@ -70,7 +70,7 @@ export function GraphContextSelector({
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="autocontext" id="autocontext" disabled={!availableContexts.autocontext} />
             <Label htmlFor="autocontext" className={`cursor-pointer text-sm ${!availableContexts.autocontext ? 'text-muted-foreground/50' : ''}`}>
-              {t('analysis.autocontext')}
+              auto
               {!availableContexts.autocontext && <span className="text-xs ml-1">(indisponible)</span>}
             </Label>
           </div>
