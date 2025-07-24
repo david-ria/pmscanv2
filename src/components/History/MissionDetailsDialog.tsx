@@ -423,10 +423,37 @@ export function MissionDetailsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" ref={missionContentRef}>
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
               <DialogTitle className="text-xl">{mission.name}</DialogTitle>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-3">
+                {/* Hidden export buttons for now
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exportMissionReport}
+                    className="flex items-center gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Export Report
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={saveGraphAsImage}
+                    className="flex items-center gap-2"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    Save Graph
+                  </Button>
+                </div>
+                */}
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
                 <p className="text-sm text-muted-foreground">
                   {formatDateTime(mission.startTime)} •{' '}
                   {formatDurationHHMM(mission.durationMinutes)}
@@ -437,56 +464,32 @@ export function MissionDetailsDialog({
                   </Badge>
                 )}
               </div>
-              {mission.locationContext && mission.activityContext && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {mission.locationContext} • {mission.activityContext}
-                </p>
-              )}
-              {mission.weatherDataId && (
-                <div className="mt-2">
-                  <WeatherInfo weatherDataId={mission.weatherDataId} />
+
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className={`text-lg font-bold ${getQualityColor(mission.avgPm25)}`}>
+                    {Math.round(mission.avgPm25)} μg/m³
+                  </div>
+                  <div className="text-xs text-muted-foreground">PM2.5</div>
                 </div>
-              )}
-              {mission.airQualityDataId && (
-                <div className="mt-2">
-                  <AirQualityInfo airQualityDataId={mission.airQualityDataId} />
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div
-                  className={`text-2xl font-bold ${getQualityColor(mission.avgPm25)}`}
-                >
-                  {Math.round(mission.avgPm25)}
-                </div>
-                <div className="text-xs text-muted-foreground">µg/m³ PM2.5</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   {mission.measurementsCount} {t('history.measurements')}
                 </div>
               </div>
-              {/* Hidden for now
-              <div className="flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={exportMissionReport}
-                  className="flex items-center gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  Export Report
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={saveGraphAsImage}
-                  className="flex items-center gap-2"
-                >
-                  <ImageIcon className="h-4 w-4" />
-                  Save Graph
-                </Button>
-              </div>
-              */}
+
+              {mission.locationContext && mission.activityContext && (
+                <p className="text-xs text-muted-foreground">
+                  {mission.locationContext} • {mission.activityContext}
+                </p>
+              )}
+
+              {mission.weatherDataId && (
+                <WeatherInfo weatherDataId={mission.weatherDataId} />
+              )}
+
+              {mission.airQualityDataId && (
+                <AirQualityInfo airQualityDataId={mission.airQualityDataId} />
+              )}
             </div>
           </div>
         </DialogHeader>
