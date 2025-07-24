@@ -774,25 +774,6 @@ export function MissionDetailsDialog({
             </Card>
           )}
           
-          {/* Debug info for events (temporary) */}
-          {events.length === 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Events
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  No events recorded for this mission. Debug info: Mission ID = {mission.id}
-                </p>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  <p>Check console for event loading details</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </DialogContent>
     </Dialog>
