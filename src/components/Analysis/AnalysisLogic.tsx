@@ -453,6 +453,34 @@ export const useAnalysisLogic = (
         return total + mission.avgPm10 * durationHours;
       }, 0);
 
+      // Calculate cumulative dose breakdown by context
+      const contextDoseBreakdown = {
+        location: { pm25: 0, pm10: 0, count: 0 },
+        activity: { pm25: 0, pm10: 0, count: 0 },
+        autocontext: { pm25: 0, pm10: 0, count: 0 }
+      };
+
+      filtered.forEach(mission => {
+        const durationHours = mission.durationMinutes / 60;
+        const dosePM25 = mission.avgPm25 * durationHours;
+        const dosePM10 = mission.avgPm10 * durationHours;
+
+        // Determine context based on mission data
+        if (mission.locationContext && mission.locationContext !== 'Unknown') {
+          contextDoseBreakdown.location.pm25 += dosePM25;
+          contextDoseBreakdown.location.pm10 += dosePM10;
+          contextDoseBreakdown.location.count++;
+        } else if (mission.activityContext && mission.activityContext !== 'Unknown') {
+          contextDoseBreakdown.activity.pm25 += dosePM25;
+          contextDoseBreakdown.activity.pm10 += dosePM10;
+          contextDoseBreakdown.activity.count++;
+        } else {
+          contextDoseBreakdown.autocontext.pm25 += dosePM25;
+          contextDoseBreakdown.autocontext.pm10 += dosePM10;
+          contextDoseBreakdown.autocontext.count++;
+        }
+      });
+
       // Create comprehensive statistical summary
       const exposureHours = (totalExposureMinutes / 60).toFixed(1);
       const whoExceedancePercentage_PM25 =
@@ -491,6 +519,11 @@ export const useAnalysisLogic = (
 • PM2.5: ${totalCumulativeDosePM25.toFixed(1)} μg·h/m³
 • PM10: ${totalCumulativeDosePM10.toFixed(1)} μg·h/m³
 • ${t('analysis.statisticalReport.doseFormula')}
+
+📍 ${t('analysis.statisticalReport.cumulativeDoseByContext')}:
+${contextDoseBreakdown.location.count > 0 ? `• ${t('analysis.location')}: PM2.5=${contextDoseBreakdown.location.pm25.toFixed(1)}, PM10=${contextDoseBreakdown.location.pm10.toFixed(1)} μg·h/m³ (${contextDoseBreakdown.location.count} missions)` : ''}
+${contextDoseBreakdown.activity.count > 0 ? `• ${t('analysis.activity')}: PM2.5=${contextDoseBreakdown.activity.pm25.toFixed(1)}, PM10=${contextDoseBreakdown.activity.pm10.toFixed(1)} μg·h/m³ (${contextDoseBreakdown.activity.count} missions)` : ''}
+${contextDoseBreakdown.autocontext.count > 0 ? `• ${t('analysis.autocontext')}: PM2.5=${contextDoseBreakdown.autocontext.pm25.toFixed(1)}, PM10=${contextDoseBreakdown.autocontext.pm10.toFixed(1)} μg·h/m³ (${contextDoseBreakdown.autocontext.count} missions)` : ''}
 
 ⚠️ ${t('analysis.statisticalReport.whoThresholds')}:
 • PM2.5 > 15 μg/m³: ${timeAboveWHO_PM25.toFixed(0)} min (${whoExceedancePercentage_PM25}% ${t('analysis.statisticalReport.ofTime')})
