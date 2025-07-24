@@ -54,12 +54,6 @@ export function GraphContextSelector({
           className="flex flex-row justify-center gap-2 sm:gap-6"
         >
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="none" id="none" />
-            <Label htmlFor="none" className="cursor-pointer text-sm">
-              Aucun
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
             <RadioGroupItem value="location" id="location" disabled={!availableContexts.location} />
             <Label htmlFor="location" className={`cursor-pointer text-sm ${!availableContexts.location ? 'text-muted-foreground/50' : ''}`}>
               {t('analysis.location')}
