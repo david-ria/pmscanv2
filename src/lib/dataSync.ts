@@ -7,7 +7,6 @@ import {
 import { saveMissionLocally } from './missionManager';
 import { MissionData } from './dataStorage';
 import * as logger from '@/utils/logger';
-import { getSafeUser } from '@/lib/authUtils';
 
 // Function to fetch weather data for a mission
 async function fetchWeatherForMission(mission: MissionData): Promise<string | null> {
@@ -55,7 +54,7 @@ async function syncEventsForMission(missionId: string): Promise<void> {
     
     if (missionEvents.length === 0) return;
 
-    const currentUser = await getSafeUser();
+    const currentUser = await supabase.auth.getUser();
     if (!currentUser.data.user) return;
 
     // Insert events into database
@@ -183,7 +182,7 @@ export async function syncPendingMissions(): Promise<void> {
         .from('missions')
         .upsert({
           id: mission.id,
-          user_id: (await getSafeUser()).data.user?.id,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
           name: mission.name,
           start_time: mission.startTime.toISOString(),
           end_time: mission.endTime.toISOString(),

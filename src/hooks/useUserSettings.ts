@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { getSafeUser } from '@/lib/authUtils';
 
 export interface UserLocation {
   id: string;
@@ -80,7 +79,7 @@ export const useUserLocations = () => {
     location: Omit<UserLocation, 'id' | 'user_id' | 'created_at' | 'updated_at'>
   ) => {
     try {
-      const { data: { user } } = await getSafeUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase.from('user_locations').insert({
@@ -199,7 +198,7 @@ export const useUserActivities = () => {
     activity: Omit<UserActivity, 'id' | 'user_id' | 'created_at' | 'updated_at'>
   ) => {
     try {
-      const { data: { user } } = await getSafeUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase.from('user_activities').insert({
@@ -318,7 +317,7 @@ export const useUserAlarms = () => {
     alarm: Omit<UserAlarm, 'id' | 'user_id' | 'created_at' | 'updated_at'>
   ) => {
     try {
-      const { data: { user } } = await getSafeUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase.from('user_alarms').insert({
@@ -437,7 +436,7 @@ export const useUserEvents = () => {
     event: Omit<UserEvent, 'id' | 'user_id' | 'created_at' | 'updated_at'>
   ) => {
     try {
-      const { data: { user } } = await getSafeUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase.from('user_events').insert({
