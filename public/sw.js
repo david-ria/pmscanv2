@@ -5,13 +5,17 @@ const DATA_STORE = 'pmscan-background-data';
 // Install event
 self.addEventListener('install', (event) => {
   console.log('🔧 Service Worker installing...');
-  self.skipWaiting();
+  // Don't auto-activate to prevent conflicts
+  // self.skipWaiting();
 });
 
 // Activate event
 self.addEventListener('activate', (event) => {
   console.log('🚀 Service Worker activating...');
-  event.waitUntil(self.clients.claim());
+  // Only claim clients if we're in the right context
+  if (self.location.hostname !== 'localhost' && !self.location.hostname.includes('lovableproject.com')) {
+    event.waitUntil(self.clients.claim());
+  }
 });
 
 // Background sync for data collection

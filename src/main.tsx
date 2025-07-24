@@ -45,6 +45,13 @@ if (typeof window !== 'undefined') {
   // Preload critical chunks after initial load
   window.addEventListener('load', () => {
     preloadCriticalChunks();
+    
+    // Register service worker only in production and not in iframe
+    if (process.env.NODE_ENV === 'production' && window.self === window.top) {
+      navigator.serviceWorker?.register('/sw.js')
+        .then(reg => console.log('SW registered:', reg))
+        .catch(err => console.log('SW registration failed:', err));
+    }
   }, { once: true });
 }
 

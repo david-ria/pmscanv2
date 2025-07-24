@@ -8,7 +8,7 @@ import { RecordingProvider } from '@/contexts/RecordingContext';
 import { CrashRecoveryInitializer } from '@/components/CrashRecoveryInitializer';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useAuth } from '@/contexts/AuthContext';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 
 // Lazy load pages for better performance and code splitting
 const RealTime = lazy(() => import('./pages/RealTime'));
@@ -55,6 +55,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => {
   const { user, loading } = useAuth();
+
+  // Add debugging for standalone mode
+  useEffect(() => {
+    console.log('App render - User:', !!user, 'Loading:', loading);
+    console.log('Window context:', window.self === window.top ? 'standalone' : 'iframe');
+  }, [user, loading]);
 
   if (loading) {
     return (
