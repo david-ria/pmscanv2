@@ -281,6 +281,8 @@
       "max": "max",
       "cumulativeDose": "CUMULATIVE INHALED DOSE",
       "cumulativeDoseByContext": "Breakdown by context",
+      "detailedContextBreakdown": "DETAILED SUMMARY",
+      "exposurePatterns": "EXPOSURE PATTERNS BY TIME",
       "doseFormula": "Formula: Dose = ∑(Concentration × Exposure time)",
       "whoThresholds": "WHO THRESHOLDS (World Health Organization)",
       "noWhoThresholdPM1": "No WHO threshold defined (ultrafine particles)",

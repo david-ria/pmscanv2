@@ -282,6 +282,8 @@
       "max": "max",
       "cumulativeDose": "DOSE CUMULÉE INHALÉE",
       "cumulativeDoseByContext": "Répartition par contexte",
+      "detailedContextBreakdown": "RÉSUMÉ DÉTAILLÉ",
+      "exposurePatterns": "SCHÉMAS D'EXPOSITION PAR TEMPS",
       "doseFormula": "Formule: Dose = ∑(Concentration × Temps d'exposition)",
       "whoThresholds": "SEUILS OMS (Organisation Mondiale de la Santé)",
       "noWhoThresholdPM1": "Pas de seuil OMS défini (particules ultrafines)",

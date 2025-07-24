@@ -460,6 +460,12 @@ export const useAnalysisLogic = (
         autocontext: { pm25: 0, pm10: 0, count: 0 }
       };
 
+      // Detailed breakdown by specific contexts
+      const detailedContextBreakdown = new Map<string, {
+        pm1: number; pm25: number; pm10: number; 
+        exposure: number; count: number; type: string;
+      }>();
+
       filtered.forEach(mission => {
         const durationHours = mission.durationMinutes / 60;
         const dosePM25 = mission.avgPm25 * durationHours;
@@ -479,6 +485,31 @@ export const useAnalysisLogic = (
           contextDoseBreakdown.autocontext.pm10 += dosePM10;
           contextDoseBreakdown.autocontext.count++;
         }
+
+        // Add to detailed breakdown
+        mission.measurements?.forEach(measurement => {
+          const contexts = [
+            { name: measurement.locationContext, type: 'location' },
+            { name: measurement.activityContext, type: 'activity' },
+            { name: measurement.automaticContext, type: 'autocontext' }
+          ];
+
+          contexts.forEach(({ name, type }) => {
+            if (name && name !== 'Unknown' && name !== 'Inconnue') {
+              const key = `${name} (${type})`;
+              const existing = detailedContextBreakdown.get(key) || {
+                pm1: 0, pm25: 0, pm10: 0, exposure: 0, count: 0, type
+              };
+              const measurementDuration = mission.durationMinutes / mission.measurements.length;
+              existing.pm1 += measurement.pm1 * measurementDuration / 60;
+              existing.pm25 += measurement.pm25 * measurementDuration / 60;
+              existing.pm10 += measurement.pm10 * measurementDuration / 60;
+              existing.exposure += measurementDuration;
+              existing.count++;
+              detailedContextBreakdown.set(key, existing);
+            }
+          });
+        });
       });
 
       // Create comprehensive statistical summary
@@ -524,6 +555,50 @@ export const useAnalysisLogic = (
 ${contextDoseBreakdown.location.count > 0 ? `• ${t('analysis.location')}: PM2.5=${contextDoseBreakdown.location.pm25.toFixed(1)}, PM10=${contextDoseBreakdown.location.pm10.toFixed(1)} μg·h/m³ (${contextDoseBreakdown.location.count} missions)` : ''}
 ${contextDoseBreakdown.activity.count > 0 ? `• ${t('analysis.activity')}: PM2.5=${contextDoseBreakdown.activity.pm25.toFixed(1)}, PM10=${contextDoseBreakdown.activity.pm10.toFixed(1)} μg·h/m³ (${contextDoseBreakdown.activity.count} missions)` : ''}
 ${contextDoseBreakdown.autocontext.count > 0 ? `• ${t('analysis.autocontext')}: PM2.5=${contextDoseBreakdown.autocontext.pm25.toFixed(1)}, PM10=${contextDoseBreakdown.autocontext.pm10.toFixed(1)} μg·h/m³ (${contextDoseBreakdown.autocontext.count} missions)` : ''}
+
+🔍 ${t('analysis.statisticalReport.detailedContextBreakdown')}:
+${Array.from(detailedContextBreakdown.entries())
+  .sort((a, b) => b[1].pm25 - a[1].pm25)
+  .slice(0, 8)
+  .map(([context, data]) => {
+    const avgPM1 = data.exposure > 0 ? (data.pm1 / (data.exposure / 60)).toFixed(1) : '0';
+    const avgPM25 = data.exposure > 0 ? (data.pm25 / (data.exposure / 60)).toFixed(1) : '0';
+    const avgPM10 = data.exposure > 0 ? (data.pm10 / (data.exposure / 60)).toFixed(1) : '0';
+    const exposureMin = Math.round(data.exposure);
+    const dose = data.pm25.toFixed(1);
+    return `• ${context}: ${exposureMin}min | PM1=${avgPM1}, PM2.5=${avgPM25}, PM10=${avgPM10} μg/m³ | Dose=${dose} μg·h/m³`;
+  }).join('\n')}
+
+📊 ${t('analysis.statisticalReport.exposurePatterns')}:
+${(() => {
+  const timeRanges = {
+    morning: { start: 6, end: 12, dose: 0, time: 0 },
+    afternoon: { start: 12, end: 18, dose: 0, time: 0 },
+    evening: { start: 18, end: 22, dose: 0, time: 0 },
+    night: { start: 22, end: 6, dose: 0, time: 0 }
+  };
+  
+  filtered.forEach(mission => {
+    const startHour = new Date(mission.startTime).getHours();
+    const durationHours = mission.durationMinutes / 60;
+    const dose = mission.avgPm25 * durationHours;
+    
+    Object.entries(timeRanges).forEach(([period, range]) => {
+      if ((startHour >= range.start && startHour < range.end) || 
+          (period === 'night' && (startHour >= 22 || startHour < 6))) {
+        range.dose += dose;
+        range.time += mission.durationMinutes;
+      }
+    });
+  });
+  
+  return Object.entries(timeRanges)
+    .filter(([_, data]) => data.time > 0)
+    .sort((a, b) => b[1].dose - a[1].dose)
+    .map(([period, data]) => 
+      `• ${period.charAt(0).toUpperCase() + period.slice(1)}: ${Math.round(data.time)}min, ${data.dose.toFixed(1)} μg·h/m³`
+    ).join('\n');
+})()}
 
 ⚠️ ${t('analysis.statisticalReport.whoThresholds')}:
 • PM2.5 > 15 μg/m³: ${timeAboveWHO_PM25.toFixed(0)} min (${whoExceedancePercentage_PM25}% ${t('analysis.statisticalReport.ofTime')})
