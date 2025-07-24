@@ -199,7 +199,8 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
       if (currentLabel !== label) {
         // Close previous period if it exists and has valid data
         if (currentLabel !== '' && currentStart < position) {
-          const periodData = chartData.slice(currentStart - 1, index);
+          const periodStartIndex = chartData.findIndex(entry => entry.time >= currentStart);
+          const periodData = chartData.slice(periodStartIndex, index);
           const pm25Average = periodData.length > 0 
             ? periodData.reduce((sum, entry) => sum + entry.PM25, 0) / periodData.length 
             : 0;
