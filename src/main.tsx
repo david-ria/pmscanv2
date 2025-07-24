@@ -10,11 +10,10 @@ import App from './App.tsx';
 import './index.css';
 import './i18n/config';
 
-// Simple QueryClient configuration
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 300000,
       retry: 1,
       refetchOnWindowFocus: false,
     },
