@@ -50,15 +50,8 @@ export default defineConfig(async ({ mode }) => {
           }
         }
       },
-      // Enable minification and compression
-      minify: 'terser' as const,
-      terserOptions: {
-        compress: {
-          drop_console: mode === 'production',
-          drop_debugger: mode === 'production',
-          pure_funcs: mode === 'production' ? ['console.log', 'console.debug'] : []
-        }
-      },
+      // Enable minification and compression with esbuild (default)
+      minify: mode === 'production',
       // Optimize assets
       assetsInlineLimit: 4096,
       // Enable source maps for debugging but optimized for size
