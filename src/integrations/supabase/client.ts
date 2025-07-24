@@ -9,22 +9,44 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Lazy initialization to prevent timing issues
 let supabaseClient: any = null;
+let isInitialized = false;
 
-// Initialize client with error handling
-const createSupabaseClient = () => {
+// Safe client getter that handles initialization
+export const getSupabaseClient = () => {
+  if (supabaseClient && isInitialized) {
+    return supabaseClient;
+  }
+  
+  if (typeof window === 'undefined') {
+    return null; // No client in SSR
+  }
+
   try {
-    return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
-        storage: typeof window !== 'undefined' ? localStorage : undefined,
+        storage: localStorage,
         persistSession: true,
         autoRefreshToken: true,
       }
     });
+    isInitialized = true;
+    return supabaseClient;
   } catch (error) {
     console.error('Failed to create Supabase client:', error);
     return null;
   }
 };
 
-export const supabase = supabaseClient || createSupabaseClient();
+// Legacy export for compatibility - but this should not be used directly
+export const supabase = new Proxy({} as any, {
+  get(target, prop) {
+    const client = getSupabaseClient();
+    if (!client) {
+      console.warn('Supabase client not initialized yet. Use getSupabaseClient() instead.');
+      return undefined;
+    }
+    return client[prop];
+  }
+});

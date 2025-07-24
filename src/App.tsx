@@ -60,6 +60,10 @@ const App = () => {
   useEffect(() => {
     console.log('App render - User:', !!user, 'Loading:', loading);
     console.log('Window context:', window.self === window.top ? 'standalone' : 'iframe');
+    
+    // Additional debug info
+    console.log('Location:', window.location.href);
+    console.log('Auth state:', { user: !!user, loading });
   }, [user, loading]);
 
   if (loading) {
@@ -68,7 +72,7 @@ const App = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">
-            Chargement de l'application...
+            Initialisation de l'authentification...
           </p>
         </div>
       </div>
