@@ -66,10 +66,15 @@ export default defineConfig(async ({ mode }) => {
         '@tanstack/react-query',
         'mapbox-gl',
         'recharts',
-        '@supabase/supabase-js'
+        '@supabase/supabase-js',
+        'long'
       ],
       // Exclude heavy optional dependencies from pre-bundling
       exclude: ['@tensorflow/tfjs']
+    },
+    // Handle CommonJS dependencies
+    define: {
+      global: 'globalThis'
     },
     test: {
       environment: 'jsdom',
