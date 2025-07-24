@@ -100,9 +100,26 @@ export const MapboxMapCore = ({
 
   // Update track visualization when trackPoints change
   useEffect(() => {
-    if (!map.current) return;
-    updateTrackData(map.current, trackPoints, isRecording);
-  }, [trackPoints, isRecording]);
+    if (!map.current || loading) return;
+    
+    // Ensure the map is loaded and sources exist before updating track data
+    if (map.current.isStyleLoaded() && map.current.getSource('track-points')) {
+      updateTrackData(map.current, trackPoints, isRecording);
+    } else {
+      // If map isn't ready yet, wait for it to load
+      const handleStyleLoad = () => {
+        if (map.current && map.current.getSource('track-points')) {
+          updateTrackData(map.current, trackPoints, isRecording);
+        }
+      };
+      
+      if (map.current.isStyleLoaded()) {
+        handleStyleLoad();
+      } else {
+        map.current.once('styledata', handleStyleLoad);
+      }
+    }
+  }, [trackPoints, isRecording, loading]);
 
   // Update map styling when thresholds change
   useEffect(() => {
