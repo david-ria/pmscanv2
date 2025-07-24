@@ -532,7 +532,12 @@ export function MissionDetailsDialog({
           {/* Graph Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t('realTime.graph')}</CardTitle>
+              <CardTitle className="text-lg">
+                Évolution des particules fines (μg/m³)
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {mission.measurementsCount} points de données • Dernière mesure: {new Date(mission.measurements[mission.measurements.length - 1]?.timestamp || Date.now()).toLocaleTimeString()}
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <GraphContextSelector
