@@ -639,6 +639,36 @@ export type Database = {
         }
         Relationships: []
       }
+      role_audit_log: {
+        Row: {
+          change_reason: string | null
+          changed_by: string
+          created_at: string
+          id: string
+          new_role: Database["public"]["Enums"]["app_role"]
+          old_role: Database["public"]["Enums"]["app_role"] | null
+          target_user_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_by: string
+          created_at?: string
+          id?: string
+          new_role: Database["public"]["Enums"]["app_role"]
+          old_role?: Database["public"]["Enums"]["app_role"] | null
+          target_user_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_by?: string
+          created_at?: string
+          id?: string
+          new_role?: Database["public"]["Enums"]["app_role"]
+          old_role?: Database["public"]["Enums"]["app_role"] | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       user_activities: {
         Row: {
           created_at: string
@@ -866,6 +896,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      elevate_user_role: {
+        Args:
+          | {
+              target_user_id: string
+              new_role: Database["public"]["Enums"]["app_role"]
+            }
+          | {
+              target_user_id: string
+              new_role: Database["public"]["Enums"]["app_role"]
+              change_reason?: string
+            }
+        Returns: boolean
+      }
       get_user_group_ids: {
         Args: { _user_id: string }
         Returns: string[]
@@ -879,6 +922,10 @@ export type Database = {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
+        Returns: boolean
+      }
+      initialize_super_admin: {
+        Args: { target_user_email: string }
         Returns: boolean
       }
       is_group_admin: {

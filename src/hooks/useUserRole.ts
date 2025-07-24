@@ -1,28 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { checkUserRole, type UserRole } from '@/utils/roleValidation';
 
-export type UserRole = 'super_admin' | 'admin' | 'moderator' | 'user' | null;
+export type { UserRole } from '@/utils/roleValidation';
 
 export function useUserRole() {
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<UserRole>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchUserRole = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.rpc('get_user_role', {
-        _user_id: user?.id,
-      });
+    if (!user?.id) {
+      setUserRole(null);
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
-      if (error) {
-        console.error('Error fetching user role:', error);
-        setUserRole('user'); // Default to user role
+    try {
+      setError(null);
+      const result = await checkUserRole(user.id);
+      
+      if (result.success) {
+        setUserRole(result.role || 'user');
       } else {
-        setUserRole(data || 'user');
+        console.error('Error fetching user role:', result.error);
+        setError(result.error || 'Failed to fetch user role');
+        setUserRole('user'); // Default to user role on error
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Unexpected error fetching user role:', error);
+      setError('Unexpected error occurred');
       setUserRole('user');
     } finally {
       setLoading(false);
@@ -62,6 +72,7 @@ export function useUserRole() {
   return {
     userRole,
     loading,
+    error,
     isSuperAdmin,
     isAdmin,
     isModerator,
