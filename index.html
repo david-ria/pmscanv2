@@ -14,8 +14,41 @@
     <link rel="dns-prefetch" href="https://api.mapbox.com">
     <link rel="dns-prefetch" href="https://shydpfwuvnlzdzbubmgb.supabase.co">
     
-    <!-- Critical CSS for LCP optimization -->
+    <!-- Critical CSS for immediate rendering -->
     <style>
+      /* Essential CSS variables for immediate rendering */
+      :root {
+        --background: 0 0% 99%;
+        --foreground: 215 25% 27%;
+        --primary: 142 76% 36%;
+        --muted-foreground: 215.4 16.3% 46.9%;
+        --border: 214.3 31.8% 91.4%;
+      }
+      
+      /* Critical typography for H1 and large text */
+      h1.text-lg, .text-lg { 
+        font-size: 1.125rem; 
+        line-height: 1.75rem;
+      }
+      
+      h1.text-xl, .text-xl { 
+        font-size: 1.25rem; 
+        line-height: 1.75rem;
+      }
+      
+      h1.text-2xl, .text-2xl { 
+        font-size: 1.5rem; 
+        line-height: 2rem;
+      }
+      
+      .font-bold { font-weight: 700; }
+      .font-semibold { font-weight: 600; }
+      
+      /* Critical color utilities */
+      .text-foreground { color: hsl(var(--foreground)); }
+      .text-primary { color: hsl(var(--primary)); }
+      .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+      
       /* Prevent layout shift by setting initial container styles */
       #root {
         min-height: 100vh;
