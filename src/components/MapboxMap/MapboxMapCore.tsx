@@ -123,9 +123,10 @@ export const MapboxMapCore = ({
       return;
     }
 
-    // Only auto-load if user has previously interacted with the map
+    // Auto-load if user has previously interacted with the map OR if recording is active
     const shouldAutoLoad = localStorage.getItem('mapbox-user-preference') === 'enabled';
-    if (shouldAutoLoad && !mapboxLoaded && !userRequested && !isRecording) {
+    if ((shouldAutoLoad || isRecording) && !mapboxLoaded && !loading) {
+      console.debug('[PERF] 🔄 Auto-loading map for recording or returning user...');
       handleLoadMap();
     }
   }, [autoLoadOnRecording, isRecording, mapboxLoaded, userRequested, loading]);
