@@ -108,7 +108,6 @@ export default defineConfig(async ({ mode }) => {
             
             // Heavy feature chunks
             bluetooth: ['@capacitor-community/bluetooth-le'],
-            capacitor: ['@capacitor/core', '@capacitor/android', '@capacitor/ios', '@capacitor/motion'],
             tensorflow: ['@tensorflow/tfjs'],
             pdf: ['jspdf', '@types/jspdf', 'html2canvas'],
             
