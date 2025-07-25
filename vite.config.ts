@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => {
               const module = id.split('node_modules/')[1].split('/')[0];
               
               // 1. Core React ecosystem - Keep together to avoid initialization issues
-              if (['react', 'react-dom', 'react-router-dom', 'react-hook-form', '@hookform/resolvers'].includes(module)) {
+              if (['react', 'react-dom', 'react-router-dom', 'react-hook-form', '@hookform/resolvers', 'lucide-react'].includes(module)) {
                 return 'vendor-react';
               }
               
@@ -104,7 +104,7 @@ export default defineConfig(({ mode }) => {
               }
               
               // 9. Utilities
-              if (['date-fns', 'clsx', 'class-variance-authority', 'tailwind-merge', 'lucide-react'].includes(module)) {
+              if (['date-fns', 'clsx', 'class-variance-authority', 'tailwind-merge'].includes(module)) {
                 return 'vendor-utils';
               }
               
