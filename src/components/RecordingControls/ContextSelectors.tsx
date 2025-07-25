@@ -94,7 +94,7 @@ export function ContextSelectors({
   }, [selectedLocation, activities, selectedActivity, onActivityChange, isGroupMode]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 context-selector">
+    <div className="context-selector gap-4">
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <MapPin className="h-4 w-4" />

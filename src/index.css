@@ -157,17 +157,26 @@ All colors MUST be HSL.
 
 /* Specific height reservations for common dynamic elements */
 .context-selector {
-  min-height: 6rem; /* Reserve space for location/activity selectors */
+  min-height: 7.5rem; /* Increased to accommodate labels, badges, and select components */
   /* Stable grid to prevent layout shifts */
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
 }
 
+/* Reserve space for individual selector components */
+.context-selector > div {
+  min-height: 5rem; /* Reserve space for label + select component */
+}
+
 @media (min-width: 640px) {
   .context-selector {
     grid-template-columns: repeat(2, 1fr);
-    min-height: 5rem;
+    min-height: 5.5rem; /* Slightly increased for side-by-side layout */
+  }
+  
+  .context-selector > div {
+    min-height: 4.5rem; /* Reduced when side by side */
   }
 }
 
@@ -193,4 +202,13 @@ All colors MUST be HSL.
   min-height: 2rem; /* Increased from 1.5rem */
   display: flex;
   align-items: center;
+}
+
+/* Stable select component heights to prevent layout shifts */
+.context-selector [data-radix-select-trigger] {
+  min-height: 2.75rem; /* Consistent height for select triggers */
+}
+
+.context-selector .space-y-2 {
+  min-height: 5rem; /* Reserve space for label + select + possible badge */
 }
