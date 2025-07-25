@@ -356,50 +356,53 @@ export default function RealTime() {
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-      {/* Map/Graph Toggle Section - Optimized for LCP */}
-      <Suspense fallback={
-        <div className="mb-4">
-          <div className="flex flex-col items-center justify-center h-64 text-center space-y-4 bg-card p-6 rounded-lg border">
-            <div className="p-4 rounded-full bg-primary/10">
-              <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 01.553-.894L9 2l6 3 6-3v11.382a1 1 0 01-.553.894L15 17l-6-3z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2 text-foreground">Interactive Map</h3>
-              <p className="text-sm text-muted-foreground mb-4 font-medium">
-                Load the map to visualize air quality data and track your location
-              </p>
-              <p className="text-xs text-muted-foreground/70 mb-4">
-                ~2MB • Loads on demand
-              </p>
-            </div>
+      {/* Critical LCP content - render immediately without any delays */}
+      <div className="mb-4">
+        <div className="flex flex-col items-center justify-center h-64 text-center space-y-4 bg-card p-6 rounded-lg border">
+          <div className="p-4 rounded-full bg-primary/10">
+            <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 01.553-.894L9 2l6 3 6-3v11.382a1 1 0 01-.553.894L15 17l-6-3z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2 text-foreground">Interactive Map</h3>
+            <p className="text-sm text-muted-foreground mb-4 font-medium">
+              Load the map to visualize air quality data and track your location
+            </p>
+            <p className="text-xs text-muted-foreground/70 mb-4">
+              ~2MB • Loads on demand
+            </p>
+          </div>
+          {isHydrated ? (
+            <Suspense fallback={
+              <div className="px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium animate-pulse">
+                Load Map
+              </div>
+            }>
+              <MapGraphToggle
+                showGraph={showGraph}
+                onToggleView={setShowGraph}
+                isOnline={isOnline}
+                latestLocation={latestLocation}
+                currentData={currentData}
+                recordingData={recordingData}
+                events={currentEvents}
+                isRecording={isRecording}
+                device={device}
+                isConnected={isConnected}
+                onConnect={requestDevice}
+                onDisconnect={disconnect}
+                onRequestLocationPermission={requestLocationPermission}
+                locationEnabled={locationEnabled}
+              />
+            </Suspense>
+          ) : (
             <div className="px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium animate-pulse">
-              <svg className="h-4 w-4 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 01.553-.894L9 2l6 3 6-3v11.382a1 1 0 01-.553.894L15 17l-6-3z" />
-              </svg>
               Load Map
             </div>
-          </div>
+          )}
         </div>
-      }>
-        <MapGraphToggle
-          showGraph={showGraph}
-          onToggleView={setShowGraph}
-          isOnline={isOnline}
-          latestLocation={latestLocation}
-          currentData={currentData}
-          recordingData={recordingData}
-          events={currentEvents}
-          isRecording={isRecording}
-          device={device}
-          isConnected={isConnected}
-          onConnect={requestDevice}
-          onDisconnect={disconnect}
-          onRequestLocationPermission={requestLocationPermission}
-          locationEnabled={locationEnabled}
-        />
-      </Suspense>
+      </div>
 
       {/* Air Quality Cards - Critical for LCP */}
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
