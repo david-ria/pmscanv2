@@ -11,8 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Calendar, Lock, Save } from 'lucide-react';
 import { MenuPageHeader } from '@/components/MenuPageHeader';
-import { format } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+// Use optimized date utilities
+import { format, fr, enUS } from '@/lib/dateUtils';
 
 interface Profile {
   id: string;

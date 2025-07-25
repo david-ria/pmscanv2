@@ -162,53 +162,21 @@ export const loadTensorFlow = async () => {
 };
 
 /**
- * Date utilities dynamic import - Individual functions to reduce bundle
+ * Date utilities dynamic import - Individual ESM functions to reduce bundle
  */
 export const loadDateUtils = async () => {
   if (moduleCache.has('date-fns')) {
     return moduleCache.get('date-fns');
   }
 
-  console.debug('[PERF] Loading date utilities (individual functions)...');
+  console.debug('[PERF] Loading date utilities (ESM optimized)...');
   trackImport('date-fns');
   
-  // Import only the specific date-fns functions we need
-  const [
-    { format },
-    { parseISO },
-    { subDays },
-    { startOfDay },
-    { endOfDay },
-    { isAfter },
-    { isBefore },
-    { differenceInHours },
-    { differenceInMinutes }
-  ] = await Promise.all([
-    import('date-fns/format'),
-    import('date-fns/parseISO'),
-    import('date-fns/subDays'),
-    import('date-fns/startOfDay'),
-    import('date-fns/endOfDay'),
-    import('date-fns/isAfter'),
-    import('date-fns/isBefore'),
-    import('date-fns/differenceInHours'),
-    import('date-fns/differenceInMinutes')
-  ]);
-  
-  const dateFns = {
-    format,
-    parseISO,
-    subDays,
-    startOfDay,
-    endOfDay,
-    isAfter,
-    isBefore,
-    differenceInHours,
-    differenceInMinutes
-  };
+  // Import our optimized date utilities instead of full date-fns
+  const dateFns = await import('@/lib/dateUtils');
   
   moduleCache.set('date-fns', dateFns);
-  console.debug('[PERF] Date utilities loaded (optimized)');
+  console.debug('[PERF] Date utilities loaded (ESM optimized)');
   
   return dateFns;
 };

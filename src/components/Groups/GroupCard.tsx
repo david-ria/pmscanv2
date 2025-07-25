@@ -41,7 +41,7 @@ import { EditGroupDialog } from './EditGroupDialog';
 import { GroupSettingsDialog } from './GroupSettingsDialog';
 import { GroupCustomThresholdsDialog } from './GroupCustomThresholdsDialog';
 import { Link } from 'react-router-dom';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from '@/lib/dateUtils';
 
 interface GroupCardProps {
   group: Group;

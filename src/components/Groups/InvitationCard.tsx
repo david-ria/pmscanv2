@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useGroupInvitations, GroupInvitation } from '@/hooks/useGroups';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from '@/lib/dateUtils';
 
 interface InvitationCardProps {
   invitation: GroupInvitation;
