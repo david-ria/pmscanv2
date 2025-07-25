@@ -26,20 +26,20 @@ export const loadMapboxGL = async () => {
 
   console.debug('[PERF] Loading Mapbox GL dynamically...');
   trackImport('mapbox-gl');
-  const [mapboxgl] = await Promise.all([
-    import('mapbox-gl'),
-    import('mapbox-gl/dist/mapbox-gl.css') // Load CSS alongside JS
-  ]);
   
-  const mapbox = mapboxgl.default;
+  // Load CSS first, then JS
+  await import('mapbox-gl/dist/mapbox-gl.css');
+  const mapboxModule = await import('mapbox-gl');
+  
+  const mapbox = mapboxModule.default;
   moduleCache.set('mapbox-gl', mapbox);
-  console.debug('[PERF] Mapbox GL loaded');
+  console.debug('[PERF] Mapbox GL and CSS loaded');
   
   return mapbox;
 };
 
 /**
- * Supabase client dynamic import
+ * Supabase client dynamic import - uses shared singleton
  */
 export const loadSupabaseClient = async () => {
   if (moduleCache.has('supabase-client')) {
@@ -48,20 +48,11 @@ export const loadSupabaseClient = async () => {
 
   console.debug('[PERF] Loading Supabase client dynamically...');
   trackImport('supabase');
-  const { createClient } = await import('@supabase/supabase-js');
+  
+  // Use the existing shared client instead of creating a new one
+  const { supabase } = await import('@/integrations/supabase/client');
 
-  const SUPABASE_URL = "https://shydpfwuvnlzdzbubmgb.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoeWRwZnd1dm5semR6YnVibWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5NzM1MjcsImV4cCI6MjA2NzU0OTUyN30.l_PAPBy1hlb4J-amKx7qPJ1lPIFseA9GznwL6CcyaQQ";
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      storage: localStorage,
-      persistSession: true,
-      autoRefreshToken: true,
-    }
-  });
-
-  const client = { createClient, supabase };
+  const client = { supabase };
   moduleCache.set('supabase-client', client);
   console.debug('[PERF] Supabase client loaded');
   
