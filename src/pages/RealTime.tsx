@@ -9,6 +9,7 @@ import { useAlerts } from '@/contexts/AlertContext';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useWeatherData } from '@/hooks/useWeatherData';
+import { useGPS } from '@/hooks/useGPS';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
@@ -70,11 +71,15 @@ export default function RealTime() {
     currentMissionId,
   } = useRecordingContext();
 
-  const {
-    latestLocation,
-    locationEnabled,
-    requestLocationPermission,
-  } = useAutoContext(isRecording && !showCriticalOnly); // Only scan when recording and ready
+  // GPS for recording - independent of auto-context
+  const { 
+    locationEnabled, 
+    latestLocation, 
+    requestLocationPermission 
+  } = useGPS(true); // Always enabled for recording
+
+  // Auto-context for additional features (optional)
+  const autoContextResult = useAutoContext(isRecording && !showCriticalOnly);
   
   const { weatherData, fetchWeatherData } = useWeatherData();
   
@@ -238,6 +243,15 @@ export default function RealTime() {
       setSelectedActivity(missionContext.activity);
     }
   }, []); // Empty dependency array - only run on mount
+
+  // Request GPS permission when app loads
+  useEffect(() => {
+    if (!locationEnabled) {
+      requestLocationPermission().catch((err) => {
+        console.log('GPS permission request failed:', err);
+      });
+    }
+  }, [locationEnabled, requestLocationPermission]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
