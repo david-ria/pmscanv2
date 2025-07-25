@@ -53,11 +53,74 @@ export default defineConfig(async ({ mode }) => {
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
           manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router-dom'],
-            ui: ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-tabs'],
+            // Core vendor chunk - always needed
+            vendor: ['react', 'react-dom'],
+            
+            // Router chunk - needed for navigation
+            router: ['react-router-dom'],
+            
+            // React Query for data fetching
+            query: ['@tanstack/react-query'],
+            
+            // UI library chunks - split by usage frequency
+            'ui-core': [
+              '@radix-ui/react-dialog', 
+              '@radix-ui/react-select', 
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-toast',
+              '@radix-ui/react-tooltip',
+              '@radix-ui/react-popover'
+            ],
+            'ui-forms': [
+              '@radix-ui/react-checkbox',
+              '@radix-ui/react-radio-group',
+              '@radix-ui/react-switch',
+              '@radix-ui/react-slider',
+              '@radix-ui/react-label',
+              'react-hook-form',
+              '@hookform/resolvers',
+              'zod'
+            ],
+            'ui-advanced': [
+              '@radix-ui/react-accordion',
+              '@radix-ui/react-alert-dialog',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-navigation-menu',
+              '@radix-ui/react-menubar',
+              '@radix-ui/react-context-menu',
+              '@radix-ui/react-hover-card',
+              '@radix-ui/react-scroll-area',
+              '@radix-ui/react-separator',
+              '@radix-ui/react-collapsible',
+              '@radix-ui/react-toggle',
+              '@radix-ui/react-toggle-group'
+            ],
+            
+            // Feature-specific chunks
             charts: ['recharts'],
             mapbox: ['mapbox-gl'],
             supabase: ['@supabase/supabase-js'],
+            
+            // Utility chunks
+            utils: ['clsx', 'class-variance-authority', 'tailwind-merge'],
+            date: ['date-fns'],
+            i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+            
+            // Heavy feature chunks
+            bluetooth: ['@capacitor-community/bluetooth-le'],
+            capacitor: ['@capacitor/core', '@capacitor/android', '@capacitor/ios', '@capacitor/motion'],
+            tensorflow: ['@tensorflow/tfjs'],
+            pdf: ['jspdf', '@types/jspdf', 'html2canvas'],
+            
+            // Theme and styling
+            theme: ['next-themes'],
+            carousel: ['embla-carousel-react'],
+            notifications: ['sonner'],
+            
+            // Split by route to enable route-based code splitting
+            'route-analysis': [],
+            'route-groups': [],
+            'route-settings': [],
           },
         },
       },
