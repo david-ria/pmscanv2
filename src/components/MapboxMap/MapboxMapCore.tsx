@@ -25,6 +25,7 @@ interface MapboxMapCoreProps {
   }>;
   isRecording?: boolean;
   className?: string;
+  autoLoadOnRecording?: boolean;
 }
 
 export const MapboxMapCore = ({
@@ -33,6 +34,7 @@ export const MapboxMapCore = ({
   trackPoints = [],
   isRecording = false,
   className,
+  autoLoadOnRecording = false,
 }: MapboxMapCoreProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
@@ -108,14 +110,23 @@ export const MapboxMapCore = ({
     }
   };
 
-  // Auto-initialize only if user has previously requested the map
+  // Auto-load map when recording starts if autoLoadOnRecording is enabled
   useEffect(() => {
+    if (autoLoadOnRecording && isRecording && !mapboxLoaded && !userRequested && !loading) {
+      console.debug('[PERF] 🎬 Recording started - auto-loading map...');
+      handleLoadMap();
+      return;
+    }
+
     // Only auto-load if user has previously interacted with the map
     const shouldAutoLoad = localStorage.getItem('mapbox-user-preference') === 'enabled';
     if (shouldAutoLoad && !mapboxLoaded && !userRequested) {
       handleLoadMap();
     }
+  }, [autoLoadOnRecording, isRecording, mapboxLoaded, userRequested, loading]);
 
+  // Cleanup effect
+  useEffect(() => {
     return () => {
       if (map.current) {
         try {

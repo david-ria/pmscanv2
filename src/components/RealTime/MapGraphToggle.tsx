@@ -154,6 +154,7 @@ export function MapGraphToggle({
                 trackPoints={trackPoints}
                 isRecording={isRecording}
                 className="h-full w-full"
+                autoLoadOnRecording={isRecording}
               />
             )}
           </>
