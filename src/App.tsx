@@ -2,7 +2,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import { AppProviders } from '@/components/AppProviders';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
@@ -61,9 +61,20 @@ const App = () => {
 };
 
 const AppRoutes = () => {
-  // Import useAuth hook from the already loaded context
-  const { useAuth } = require('@/contexts/AuthContext');
-  const { user, loading } = useAuth();
+  // Import useAuth hook using dynamic import
+  const [authHook, setAuthHook] = useState<any>(null);
+  
+  useEffect(() => {
+    import('@/contexts/AuthContext').then(({ useAuth }) => {
+      setAuthHook(() => useAuth);
+    });
+  }, []);
+  
+  if (!authHook) {
+    return <LoadingSpinner />;
+  }
+  
+  const { user, loading } = authHook();
 
   if (loading) {
     return <LoadingSpinner />;
