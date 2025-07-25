@@ -23,6 +23,8 @@
         --primary: 142 76% 36%;
         --muted-foreground: 215.4 16.3% 46.9%;
         --border: 214.3 31.8% 91.4%;
+        --card: 0 0% 100%;
+        --muted: 210 40% 96.1%;
       }
       
       /* Critical typography for H1 and large text */
@@ -48,6 +50,42 @@
       .text-foreground { color: hsl(var(--foreground)); }
       .text-primary { color: hsl(var(--primary)); }
       .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+      
+      /* Critical layout utilities */
+      .bg-background { background-color: hsl(var(--background)); }
+      .bg-card { background-color: hsl(var(--card)); }
+      .bg-muted { background-color: hsl(var(--muted)); }
+      .border-border { border-color: hsl(var(--border)); }
+      .min-h-screen { min-height: 100vh; }
+      .fixed { position: fixed; }
+      .top-0 { top: 0; }
+      .left-0 { left: 0; }
+      .right-0 { right: 0; }
+      .z-50 { z-index: 50; }
+      .border-b { border-bottom-width: 1px; }
+      .flex { display: flex; }
+      .items-center { align-items: center; }
+      .justify-between { justify-content: space-between; }
+      .gap-3 { gap: 0.75rem; }
+      .h-14 { height: 3.5rem; }
+      .h-9 { height: 2.25rem; }
+      .w-9 { width: 2.25rem; }
+      .px-4 { padding-left: 1rem; padding-right: 1rem; }
+      .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+      .pt-14 { padding-top: 3.5rem; }
+      .pb-20 { padding-bottom: 5rem; }
+      .p-4 { padding: 1rem; }
+      .mb-1 { margin-bottom: 0.25rem; }
+      .max-w-7xl { max-width: 80rem; }
+      .mx-auto { margin-left: auto; margin-right: auto; }
+      .rounded { border-radius: 0.25rem; }
+      .rounded-lg { border-radius: 0.5rem; }
+      .rounded-full { border-radius: 9999px; }
+      .border { border-width: 1px; }
+      .text-center { text-align: center; }
+      .text-xs { font-size: 0.75rem; line-height: 1rem; }
+      .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+      .space-y-6 > * + * { margin-top: 1.5rem; }
       
       /* Prevent layout shift by setting initial container styles */
       #root {
@@ -104,13 +142,60 @@
 
   <body>
     <div id="root">
-      <!-- Loading fallback for better perceived performance -->
-      <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background-color: hsl(var(--background, 0 0% 100%));">
-        <div style="text-align: center; color: hsl(var(--muted-foreground, 0 0% 45%));">
-          <div style="width: 40px; height: 40px; border: 3px solid hsl(var(--border, 0 0% 90%)); border-top: 3px solid hsl(var(--primary, 0 0% 9%)); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
-          Loading AirSentinels...
-        </div>
+      <!-- Static HTML for immediate rendering (SSR-like) -->
+      <div class="min-h-screen bg-background">
+        <!-- Static Header -->
+        <header class="fixed top-0 left-0 right-0 bg-background border-b border-border z-50">
+          <div class="flex items-center justify-between h-14 px-4 max-w-7xl mx-auto">
+            <div class="flex items-center gap-3">
+              <div class="h-9 w-9 bg-muted rounded"></div>
+              <h1 class="text-lg font-bold text-foreground">AirSentinels</h1>
+            </div>
+            <div class="h-9 w-9 bg-muted rounded-full"></div>
+          </div>
+        </header>
+        
+        <!-- Static Main Content -->
+        <main class="pt-14 pb-20 px-4 max-w-7xl mx-auto">
+          <div class="space-y-6 py-6">
+            <!-- Static Air Quality Cards placeholders -->
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-card border border-border rounded-lg p-4 text-center">
+                <div class="text-xs text-muted-foreground mb-1">PM2.5</div>
+                <div class="text-lg font-bold text-foreground">--</div>
+                <div class="text-xs text-muted-foreground">μg/m³</div>
+              </div>
+              <div class="bg-card border border-border rounded-lg p-4 text-center">
+                <div class="text-xs text-muted-foreground mb-1">PM10</div>
+                <div class="text-lg font-bold text-foreground">--</div>
+                <div class="text-xs text-muted-foreground">μg/m³</div>
+              </div>
+              <div class="bg-card border border-border rounded-lg p-4 text-center">
+                <div class="text-xs text-muted-foreground mb-1">Quality</div>
+                <div class="text-lg font-bold text-foreground">--</div>
+              </div>
+            </div>
+            
+            <!-- Static connection status -->
+            <div class="text-center text-sm text-muted-foreground p-4 bg-muted/20 rounded-lg">
+              Connect your PM sensor to start measurements
+            </div>
+          </div>
+        </main>
       </div>
+      
+      <!-- JavaScript fallback for loading -->
+      <script>
+        // Hide static content when React takes over
+        document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+            var staticContent = document.querySelector('#root > div');
+            if (staticContent && window.React) {
+              staticContent.style.display = 'none';
+            }
+          }, 100);
+        });
+      </script>
     </div>
     <script type="module" src="/src/main.tsx"></script>
     
