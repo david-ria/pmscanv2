@@ -1,5 +1,4 @@
-import mapboxgl from 'mapbox-gl';
-import { supabase } from '@/integrations/supabase/client';
+import { loadMapboxGL, loadSupabaseClient } from '@/lib/dynamicImports';
 import { LocationData } from '@/types/PMScan';
 import { addTrackDataSources, addTrackLayers } from './mapLayers';
 import { addTrackPointEventListeners } from './mapEventHandlers';
@@ -13,17 +12,25 @@ export const initializeMap = async (
   thresholds: any,
   onLoad: () => void,
   onError: (error: string) => void
-): Promise<mapboxgl.Map | null> => {
+): Promise<any | null> => {
   try {
     logger.debug('🗺️ Starting map initialization...');
     logger.debug('🗺️ Container element:', container);
     logger.debug('🗺️ Current location:', currentLocation);
 
-    logger.debug('🗺️ Step 1: Requesting Mapbox token from edge function...');
+    logger.debug('🗺️ Step 1: Loading Mapbox GL and Supabase dynamically...');
+    const [mapboxgl, supabaseModule] = await Promise.all([
+      loadMapboxGL(),
+      loadSupabaseClient()
+    ]);
+
+    const { supabase } = supabaseModule;
+
+    logger.debug('🗺️ Step 2: Requesting Mapbox token from edge function...');
     const { data, error: tokenError } =
       await supabase.functions.invoke('get-mapbox-token');
 
-    logger.debug('🗺️ Step 2: Edge function response received:', {
+    logger.debug('🗺️ Step 3: Edge function response received:', {
       data,
       error: tokenError,
     });
@@ -43,7 +50,7 @@ export const initializeMap = async (
     logger.debug('🗺️ ✅ Successfully received Mapbox token');
     logger.debug('🗺️ Token length:', data.token?.length);
 
-    logger.debug('🗺️ Step 3: Setting Mapbox access token...');
+    logger.debug('🗺️ Step 4: Setting Mapbox access token...');
     mapboxgl.accessToken = data.token;
 
     logger.debug('🗺️ Step 4: Determining map initial state...');
