@@ -2,10 +2,11 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Suspense, lazy, useState, useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { AppProviders } from '@/components/AppProviders';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { preloadCriticalChunks, preloadRouteChunks } from '@/utils/dynamicImports';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Lazy load page components for code splitting
 const RealTime = lazy(() => import('./pages/RealTime'));
@@ -89,16 +90,9 @@ const App = () => {
 };
 
 const AppRoutes = () => {
-  // Import useAuth hook using dynamic import
-  const [authHook, setAuthHook] = useState<any>(null);
   const location = useLocation();
+  const { user, loading } = useAuth();
   
-  useEffect(() => {
-    import('@/contexts/AuthContext').then(({ useAuth }) => {
-      setAuthHook(() => useAuth);
-    });
-  }, []);
-
   // Preload route-specific chunks when route changes
   useEffect(() => {
     if ('requestIdleCallback' in window) {
@@ -107,12 +101,6 @@ const AppRoutes = () => {
       setTimeout(() => preloadRouteChunks(location.pathname), 50);
     }
   }, [location.pathname]);
-  
-  if (!authHook) {
-    return <MinimalSkeleton />;
-  }
-  
-  const { user, loading } = authHook();
 
   if (loading) {
     return <MinimalSkeleton />;
