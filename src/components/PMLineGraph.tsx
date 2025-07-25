@@ -37,6 +37,7 @@ interface PMLineGraphProps {
   }>;
   events?: EventData[];
   className?: string;
+  hideTitle?: boolean;
   highlightContextType?: 'location' | 'activity' | 'autocontext';
   missionContext?: {
     locationContext?: string;
@@ -44,7 +45,7 @@ interface PMLineGraphProps {
   };
 }
 
-export function PMLineGraph({ data, events = [], className, highlightContextType, missionContext }: PMLineGraphProps) {
+export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext }: PMLineGraphProps) {
   // Transform data for the chart - ensure proper chronological ordering
   const chartData = React.useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -293,15 +294,17 @@ export function PMLineGraph({ data, events = [], className, highlightContextType
 
   return (
     <div className={`bg-card border border-border rounded-lg p-4 ${className}`}>
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-foreground">
-          Évolution des particules fines (µg/m³)
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          {chartData.length} points de données • Dernière mesure:{' '}
-          {chartData[chartData.length - 1]?.timestamp}
-        </p>
-      </div>
+      {!hideTitle && (
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-foreground">
+            Évolution des particules fines (µg/m³)
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {chartData.length} points de données • Dernière mesure:{' '}
+            {chartData[chartData.length - 1]?.timestamp}
+          </p>
+        </div>
+      )}
 
       <ResponsiveContainer width="100%" height="100%">
         <LineChart

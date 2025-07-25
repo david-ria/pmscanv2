@@ -529,7 +529,12 @@ export function MissionDetailsDialog({
           {/* Graph Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{t('realTime.graph')}</CardTitle>
+              <div>
+                <CardTitle className="text-lg">Évolution des particules fines (µg/m³)</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {mission.measurementsCount} points de données • Dernière mesure: {formatDateTime(mission.endTime)}
+                </p>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <GraphContextSelector
@@ -542,6 +547,7 @@ export function MissionDetailsDialog({
                   data={graphData} 
                   events={events} 
                   className="h-full"
+                  hideTitle={true}
                   highlightContextType={selectedContextType}
                   missionContext={{
                     locationContext: mission.locationContext,
