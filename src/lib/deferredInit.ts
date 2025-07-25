@@ -209,19 +209,199 @@ export const initErrorReporting = () => {
 };
 
 /**
+ * Defer GPS/location services initialization
+ */
+export const initLocationServices = () => {
+  deferredInit.addTask({
+    name: 'location-services',
+    priority: 'medium',
+    task: async () => {
+      if ('geolocation' in navigator) {
+        // Preload GPS hook for faster access when needed
+        await import('@/hooks/useGPS');
+        console.debug('[PERF] Location services initialized');
+      }
+    },
+    timeout: 2000
+  });
+};
+
+/**
+ * Defer theme system initialization (beyond basic theme)
+ */
+export const initAdvancedTheme = () => {
+  deferredInit.addTask({
+    name: 'advanced-theme',
+    priority: 'low',
+    task: async () => {
+      // Initialize theme transitions and advanced features
+      const style = document.createElement('style');
+      style.textContent = `
+        :root {
+          --transition-theme: color 200ms ease, background-color 200ms ease, border-color 200ms ease;
+        }
+        * {
+          transition: var(--transition-theme);
+        }
+      `;
+      document.head.appendChild(style);
+      console.debug('[PERF] Advanced theme features initialized');
+    },
+    timeout: 3000
+  });
+};
+
+/**
+ * Defer notification system initialization
+ */
+export const initNotifications = () => {
+  deferredInit.addTask({
+    name: 'notifications',
+    priority: 'medium',
+    task: async () => {
+      // Check and request notification permissions if needed
+      if ('Notification' in window && Notification.permission === 'default') {
+        // Don't request immediately, just prepare the system
+        console.debug('[PERF] Notification system ready (permission not requested)');
+      }
+      
+      // Preload notification components
+      await import('@/hooks/useNotifications');
+      console.debug('[PERF] Notification system initialized');
+    },
+    timeout: 2000
+  });
+};
+
+/**
+ * Defer internationalization for non-default languages
+ */
+export const initI18nExtended = () => {
+  deferredInit.addTask({
+    name: 'i18n-extended',
+    priority: 'low',
+    task: async () => {
+      // Preload additional language resources
+      const currentLang = localStorage.getItem('i18nextLng') || 'en';
+      if (currentLang !== 'en') {
+        try {
+          // Dynamically load non-English language packs
+          const { loadI18nUtils } = await import('@/lib/dynamicImports');
+          await loadI18nUtils();
+          console.debug(`[PERF] Extended i18n loaded for language: ${currentLang}`);
+        } catch (error) {
+          console.debug('[PERF] Extended i18n loading failed, using fallback');
+        }
+      }
+    },
+    timeout: 4000
+  });
+};
+
+/**
+ * Defer sensor calibration and background tasks
+ */
+export const initSensorBackgroundTasks = () => {
+  deferredInit.addTask({
+    name: 'sensor-background',
+    priority: 'medium',
+    task: async () => {
+      // Initialize sensor calibration and background monitoring
+      await import('@/hooks/useBackgroundRecording');
+      await import('@/hooks/useSensorData');
+      console.debug('[PERF] Sensor background tasks initialized');
+    },
+    timeout: 3000
+  });
+};
+
+/**
+ * Defer data sync and storage optimization
+ */
+export const initDataSync = () => {
+  deferredInit.addTask({
+    name: 'data-sync',
+    priority: 'low',
+    task: async () => {
+      // Initialize data synchronization and cleanup
+      await import('@/lib/dataSync');
+      await import('@/services/storageService');
+      
+      // Clean up old data if needed
+      const storage = await import('@/hooks/useStorage');
+      // Future: Implement data cleanup logic
+      
+      console.debug('[PERF] Data sync and storage optimization initialized');
+    },
+    timeout: 5000
+  });
+};
+
+/**
+ * Defer performance monitoring
+ */
+export const initPerformanceMonitoring = () => {
+  deferredInit.addTask({
+    name: 'performance-monitoring',
+    priority: 'low',
+    task: async () => {
+      // Initialize performance monitoring and metrics collection
+      if ('performance' in window && 'mark' in performance) {
+        performance.mark('app-fully-initialized');
+        
+        // Log key performance metrics
+        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+        if (navigation) {
+          const metrics = {
+            domContentLoaded: Math.round(navigation.domContentLoadedEventEnd - navigation.fetchStart),
+            firstPaint: Math.round(navigation.loadEventEnd - navigation.fetchStart),
+            totalLoadTime: Math.round(navigation.loadEventEnd - navigation.fetchStart)
+          };
+          console.debug('[PERF] Performance metrics:', metrics);
+        }
+      }
+      
+      // Initialize bundle analyzer if in development
+      if (process.env.NODE_ENV === 'development') {
+        const { checkBundleUsage } = await import('@/lib/bundleAnalyzer');
+        (window as any).checkBundleUsage = checkBundleUsage;
+      }
+      
+      console.debug('[PERF] Performance monitoring initialized');
+    },
+    timeout: 6000
+  });
+};
+
+/**
  * Initialize all non-critical features
  */
 export const initNonEssentialFeatures = () => {
-  console.debug('[PERF] Scheduling non-essential feature initialization...');
+  console.debug('[PERF] 🚀 Scheduling non-essential feature initialization...');
   
-  // Schedule all deferred tasks
-  initErrorReporting();  // High priority - error handling
-  initBluetooth();       // Medium priority - sensor connectivity  
-  initCharts();          // Medium priority - data visualization
-  initAnalytics();       // Low priority - tracking
-  initMap();             // Low priority - maps
-  initServiceWorker();   // Low priority - offline support
+  // Schedule all deferred tasks in priority order
+  
+  // High priority - essential for functionality but not blocking
+  initErrorReporting();       // Error handling
+  
+  // Medium priority - enhances UX but not critical for first paint
+  initLocationServices();     // GPS/location services
+  initNotifications();        // Notification system
+  initSensorBackgroundTasks(); // Sensor calibration
+  initBluetooth();           // Bluetooth connectivity
+  initCharts();              // Data visualization
+  
+  // Low priority - nice-to-have features
+  initAdvancedTheme();       // Theme transitions
+  initI18nExtended();        // Additional languages
+  initDataSync();            // Data synchronization
+  initAnalytics();           // Usage tracking
+  initMap();                 // Map preloading
+  initServiceWorker();       // Offline support
+  initPerformanceMonitoring(); // Performance metrics
   
   // Start the deferred initialization process
   deferredInit.start();
+  
+  console.debug('[PERF] ✅ Non-essential feature scheduling complete');
 };
