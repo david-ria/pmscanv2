@@ -15,11 +15,32 @@ const queryClient = new QueryClient({
   },
 });
 
-// Lazy load i18n only when needed
-const initializeI18n = () => import('./i18n/config');
+// Defer non-critical initializations to idle time
+const deferNonCriticalWork = () => {
+  // Use requestIdleCallback to defer heavy work off main thread
+  const scheduleWork = (work: () => void) => {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(work, { timeout: 2000 });
+    } else {
+      // Fallback for browsers without requestIdleCallback
+      setTimeout(work, 0);
+    }
+  };
 
-// Initialize i18n asynchronously
-initializeI18n();
+  // Defer i18n initialization
+  scheduleWork(() => {
+    import('./i18n/config').catch(console.warn);
+  });
+
+  // Defer any analytics or monitoring setup
+  scheduleWork(() => {
+    // Future: Initialize analytics here
+    console.debug('[PERF] Non-critical services initialized');
+  });
+};
+
+// Schedule non-critical work for idle time
+deferNonCriticalWork();
 
 createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
