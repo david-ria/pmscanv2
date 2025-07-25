@@ -110,11 +110,16 @@ export const MapboxMapCore = ({
     }
   };
 
-  // Auto-load map when recording starts if autoLoadOnRecording is enabled
+  // Auto-load map only after frequency selection (when recording is truly confirmed)
   useEffect(() => {
-    if (autoLoadOnRecording && isRecording && !mapboxLoaded && !loading) {
-      console.debug('[PERF] 🎬 Recording started - auto-loading map...');
+    const recordingConfirmed = localStorage.getItem('recording-confirmed') === 'true';
+    
+    // Only load map if recording is active AND frequency has been selected
+    if (autoLoadOnRecording && isRecording && recordingConfirmed && !mapboxLoaded && !loading) {
+      console.debug('[PERF] 🎬 Recording confirmed after frequency selection - auto-loading map...');
       handleLoadMap();
+      // Clear the flag after use
+      localStorage.removeItem('recording-confirmed');
       return;
     }
 

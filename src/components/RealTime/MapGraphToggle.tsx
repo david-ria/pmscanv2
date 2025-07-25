@@ -108,6 +108,45 @@ export function MapGraphToggle({
                   <p>{t('realTime.connectionRequired')}</p>
                 </div>
               </div>
+            ) : !isRecording ? (
+              <div className="h-full relative rounded-lg overflow-hidden border border-border bg-gradient-to-br from-muted/30 to-muted/60">
+                {/* CSS-based fake map */}
+                <div className="absolute inset-0">
+                  {/* Street grid pattern */}
+                  <div className="absolute inset-0 opacity-20">
+                    {/* Horizontal lines */}
+                    {Array.from({ length: 8 }, (_, i) => (
+                      <div 
+                        key={`h-${i}`}
+                        className="absolute h-px bg-muted-foreground/30 w-full"
+                        style={{ top: `${12.5 + i * 12.5}%` }}
+                      />
+                    ))}
+                    {/* Vertical lines */}
+                    {Array.from({ length: 6 }, (_, i) => (
+                      <div 
+                        key={`v-${i}`}
+                        className="absolute w-px bg-muted-foreground/30 h-full"
+                        style={{ left: `${16.6 + i * 16.6}%` }}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Fake building blocks */}
+                  <div className="absolute top-[20%] left-[25%] w-8 h-6 bg-muted-foreground/20 rounded-sm"></div>
+                  <div className="absolute top-[35%] right-[30%] w-10 h-8 bg-muted-foreground/20 rounded-sm"></div>
+                  <div className="absolute bottom-[40%] left-[40%] w-6 h-10 bg-muted-foreground/20 rounded-sm"></div>
+                  <div className="absolute bottom-[25%] right-[25%] w-12 h-6 bg-muted-foreground/20 rounded-sm"></div>
+                </div>
+                
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg border">
+                    <p className="text-sm text-muted-foreground text-center">
+                      {t('realTime.mapWillLoadWhenRecording')}
+                    </p>
+                  </div>
+                </div>
+              </div>
             ) : (
               <MapboxMap
                 currentLocation={latestLocation}
