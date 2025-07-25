@@ -11,10 +11,6 @@ import App from './App.tsx';
 import './index.css';
 import './i18n/config';
 
-// Preload critical modules to improve initial performance
-import('@/hooks/usePMScanBluetooth');
-import('@/components/RealTime/AirQualityCards');
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
