@@ -88,12 +88,18 @@ export default defineConfig(({ mode }) => {
                 '@radix-ui/react-radio-group',
                 '@radix-ui/react-switch',
                 '@radix-ui/react-slider',
-                '@radix-ui/react-label',
+                '@radix-ui/react-label'
+              ].includes(module)) {
+                return 'vendor-ui-forms';
+              }
+              
+              // 4.5. Form libraries - Separate chunk to avoid React dependency issues
+              if ([
                 'react-hook-form',
                 '@hookform/resolvers',
                 'zod'
               ].includes(module)) {
-                return 'vendor-ui-forms';
+                return 'vendor-form-libs';
               }
               
               // 5. UI Advanced - Less frequently used UI components
