@@ -105,7 +105,7 @@ const AirQualityCards = memo(function AirQualityCards({
           </Card>
         </div>
 
-        <div className="text-center text-sm text-muted-foreground mb-4 p-4 bg-muted/20 rounded-lg">
+        <div className="text-center text-sm text-muted-foreground mb-4 p-4 bg-muted/20 rounded-lg air-quality-status">
           {t('realTime.connectSensor')}
         </div>
       </>

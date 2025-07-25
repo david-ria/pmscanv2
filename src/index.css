@@ -149,3 +149,31 @@ All colors MUST be HSL.
     animation: slow-pulse 2s ease-in-out infinite;
   }
 }
+
+/* Layout shift prevention - Reserve space for dynamic content */
+.mb-4 {
+  min-height: 3rem; /* Reserve space to prevent layout shift */
+}
+
+/* Specific height reservations for common dynamic elements */
+.context-selector {
+  min-height: 5rem; /* Reserve space for location/activity selectors */
+}
+
+.air-quality-status {
+  min-height: 2.5rem; /* Reserve space for status messages */
+}
+
+.recording-controls {
+  min-height: 4rem; /* Reserve space for recording button area */
+}
+
+/* Prevent layout shift in dropdown content */
+.dropdown-content {
+  min-height: 2rem;
+}
+
+/* Auto-context display area */
+.auto-context-display {
+  min-height: 1.5rem;
+}

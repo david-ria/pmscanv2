@@ -346,7 +346,7 @@ export default function RealTime() {
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
 
       {/* Context Selectors - Lazy loaded */}
-      <div className="mb-4">
+      <div className="mb-4 context-selector">
         <Suspense fallback={<div className="h-20 bg-muted/20 rounded-lg animate-pulse" />}>
           <ContextSelectors
             selectedLocation={selectedLocation}
@@ -359,7 +359,7 @@ export default function RealTime() {
       </div>
 
       {/* Auto Context Display - Lazy loaded */}
-      <div className="mb-4">
+      <div className="mb-4 auto-context-display">
         <Suspense fallback={<div className="h-16 bg-muted/20 rounded-lg animate-pulse" />}>
           <AutoContextDisplay />
         </Suspense>
