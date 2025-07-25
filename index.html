@@ -184,9 +184,9 @@
         </main>
       </div>
       
-      <!-- JavaScript fallback for loading -->
-      <script>
-        // Hide static content when React takes over
+      <!-- JavaScript fallback - non-critical, can be deferred -->
+      <script defer>
+        // Hide static content when React takes over (non-critical)
         document.addEventListener('DOMContentLoaded', function() {
           setTimeout(function() {
             var staticContent = document.querySelector('#root > div');
@@ -197,7 +197,7 @@
         });
       </script>
     </div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx" defer></script>
     
     <!-- Add performance optimizations -->
     <style>
