@@ -8,6 +8,7 @@ interface BreakdownData {
   avgPM: number;
   color: string;
   exposure: number;
+  cumulativeDose: number;
 }
 
 interface WHOThreshold {
@@ -55,7 +56,7 @@ export const PollutionSummaryTable = ({
               <div className="font-medium text-sm">{item.name}</div>
               <div className="text-xs text-muted-foreground break-words">
                 {Math.round(item.exposure)} {t('analysis.minutes')} • PM
-                {pmType.replace('pm', '')}: {Math.round(item.avgPM)} μg/m³
+                {pmType.replace('pm', '')}: {Math.round(item.avgPM)} μg/m³ • {t('analysis.cumulativeDose')}: {item.cumulativeDose.toFixed(1)} μg·h/m³
                 {whoThreshold.value && (
                   <span
                     className={`block sm:inline sm:ml-2 ${exceedsWHO ? 'text-red-600' : 'text-green-600'}`}

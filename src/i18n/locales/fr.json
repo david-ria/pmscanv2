@@ -364,7 +364,12 @@
       "recommendations": "RECOMMANDATIONS",
       "recommendationsHigh": "• Limitez les activités extérieures intenses\n• Consultez les prévisions de qualité de l'air\n• Considérez un purificateur d'air intérieur",
       "recommendationsGood": "• Qualité de l'air acceptable\n• Continuez le monitoring pour détecter les variations\n• Maintenez une bonne ventilation intérieure",
-      "eventImpactWarning": "⚠️ Certains événements ont un impact majeur sur la qualité de l'air\n• Évitez ces activités ou améliorez la ventilation"
+      "eventImpactWarning": "⚠️ Certains événements ont un impact majeur sur la qualité de l'air\n• Évitez ces activités ou améliorez la ventilation",
+      "contextualAnalysis": "ANALYSE CONTEXTUELLE",
+      "locationAnalysis": "ANALYSE PAR LOCALISATION",
+      "activityAnalysis": "ANALYSE PAR ACTIVITÉ", 
+      "autoContextAnalysis": "ANALYSE PAR CONTEXTE AUTOMATIQUE",
+      "noContextData": "Aucune donnée contextuelle disponible"
     }
   },
   "modals": {

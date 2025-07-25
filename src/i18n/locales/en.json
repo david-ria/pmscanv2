@@ -346,7 +346,12 @@
       "recommendations": "RECOMMENDATIONS",
       "recommendationsHigh": "• Limit intense outdoor activities\n• Check air quality forecasts\n• Consider an indoor air purifier",
       "recommendationsGood": "• Acceptable air quality\n• Continue monitoring to detect variations\n• Maintain good indoor ventilation",
-      "eventImpactWarning": "⚠️ Some events have a major impact on air quality\n• Avoid these activities or improve ventilation"
+      "eventImpactWarning": "⚠️ Some events have a major impact on air quality\n• Avoid these activities or improve ventilation",
+      "contextualAnalysis": "CONTEXTUAL ANALYSIS",
+      "locationAnalysis": "LOCATION ANALYSIS",
+      "activityAnalysis": "ACTIVITY ANALYSIS",
+      "autoContextAnalysis": "AUTO CONTEXT ANALYSIS", 
+      "noContextData": "No contextual data available"
     }
   },
   "modals": {

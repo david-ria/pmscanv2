@@ -476,6 +476,106 @@ export const useAnalysisLogic = (
         return `🔴 ${t('analysis.airQuality.veryPoor')}`;
       };
 
+      // Generate contextual analysis with cumulative dose per context
+      const generateContextualAnalysis = (missions: MissionData[]) => {
+        const contextMaps = {
+          location: new Map<string, { exposure: number; dose: number; avgPM: number }>(),
+          activity: new Map<string, { exposure: number; dose: number; avgPM: number }>(),
+          autocontext: new Map<string, { exposure: number; dose: number; avgPM: number }>()
+        };
+
+        missions.forEach(mission => {
+          mission.measurements.forEach(measurement => {
+            const measurementDuration = mission.durationMinutes / mission.measurements.length;
+            const measurementDurationHours = measurementDuration / 60;
+            const dose = measurement.pm25 * measurementDurationHours;
+
+            // Location context
+            const location = measurement.locationContext || 'Inconnue';
+            const locationData = contextMaps.location.get(location) || { exposure: 0, dose: 0, avgPM: 0 };
+            locationData.exposure += measurementDuration;
+            locationData.dose += dose;
+            locationData.avgPM += measurement.pm25 * measurementDuration;
+            contextMaps.location.set(location, locationData);
+
+            // Activity context
+            const activity = measurement.activityContext || 'Inconnue';
+            const activityData = contextMaps.activity.get(activity) || { exposure: 0, dose: 0, avgPM: 0 };
+            activityData.exposure += measurementDuration;
+            activityData.dose += dose;
+            activityData.avgPM += measurement.pm25 * measurementDuration;
+            contextMaps.activity.set(activity, activityData);
+
+            // Auto context
+            if (measurement.automaticContext && measurement.automaticContext !== 'unknown') {
+              const autoContext = measurement.automaticContext;
+              const autoData = contextMaps.autocontext.get(autoContext) || { exposure: 0, dose: 0, avgPM: 0 };
+              autoData.exposure += measurementDuration;
+              autoData.dose += dose;
+              autoData.avgPM += measurement.pm25 * measurementDuration;
+              contextMaps.autocontext.set(autoContext, autoData);
+            }
+          });
+        });
+
+        let analysis = '';
+
+        // Location analysis
+        const locationEntries = Array.from(contextMaps.location.entries())
+          .map(([name, data]) => ({ 
+            name, 
+            ...data, 
+            avgPM: data.exposure > 0 ? data.avgPM / data.exposure : 0 
+          }))
+          .filter(entry => entry.exposure > 0)
+          .sort((a, b) => b.dose - a.dose);
+
+        if (locationEntries.length > 0) {
+          analysis += `🏠 ${t('analysis.report.locationAnalysis')}:\n`;
+          locationEntries.slice(0, 3).forEach((entry, i) => {
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg·h/m³ (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
+          });
+          analysis += '\n';
+        }
+
+        // Activity analysis
+        const activityEntries = Array.from(contextMaps.activity.entries())
+          .map(([name, data]) => ({ 
+            name, 
+            ...data, 
+            avgPM: data.exposure > 0 ? data.avgPM / data.exposure : 0 
+          }))
+          .filter(entry => entry.exposure > 0)
+          .sort((a, b) => b.dose - a.dose);
+
+        if (activityEntries.length > 0) {
+          analysis += `🏃 ${t('analysis.report.activityAnalysis')}:\n`;
+          activityEntries.slice(0, 3).forEach((entry, i) => {
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg·h/m³ (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
+          });
+          analysis += '\n';
+        }
+
+        // Auto context analysis
+        const autoEntries = Array.from(contextMaps.autocontext.entries())
+          .map(([name, data]) => ({ 
+            name, 
+            ...data, 
+            avgPM: data.exposure > 0 ? data.avgPM / data.exposure : 0 
+          }))
+          .filter(entry => entry.exposure > 0)
+          .sort((a, b) => b.dose - a.dose);
+
+        if (autoEntries.length > 0) {
+          analysis += `🤖 ${t('analysis.report.autoContextAnalysis')}:\n`;
+          autoEntries.slice(0, 3).forEach((entry, i) => {
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg·h/m³ (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
+          });
+        }
+
+        return analysis || `• ${t('analysis.report.noContextData')}`;
+      };
+
       const analysisText = `📊 ${t('analysis.report.title')} - ${timeframeText.toUpperCase()}
 
 🔢 ${t('analysis.report.dataSummary')}:
@@ -520,6 +620,9 @@ ${eventAnalysisData.length > 0
   - ${t('analysis.report.detail')}: PM1=${event.avgPM1DuringEvent.toFixed(1)}, PM10=${event.avgPM10DuringEvent.toFixed(1)} μg/m³`
     ).join('\n\n')
   : `• ${t('analysis.report.noEventsRecorded')}`}
+
+📍 ${t('analysis.report.contextualAnalysis')}:
+${generateContextualAnalysis(filtered)}
 
 💡 ${t('analysis.report.recommendations')}:
 ${
