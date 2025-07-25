@@ -54,76 +54,168 @@ export default defineConfig(({ mode }) => {
           },
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
-          manualChunks: {
-            // Core vendor chunk - always needed
-            vendor: ['react', 'react-dom'],
+          manualChunks: (id) => {
+            // Extract package name from node_modules path
+            if (id.includes('node_modules')) {
+              const module = id.split('node_modules/')[1].split('/')[0];
+              
+              // 1. Core React ecosystem - Most critical, loaded first
+              if (['react', 'react-dom', 'react-router-dom'].includes(module)) {
+                return 'vendor-react';
+              }
+              
+              // 2. Data fetching & state management - Used across app
+              if (['@tanstack', '@supabase'].some(pkg => module.startsWith(pkg))) {
+                return 'vendor-data';
+              }
+              
+              // 3. UI Foundation - Radix core components (most used)
+              if ([
+                '@radix-ui/react-dialog',
+                '@radix-ui/react-select', 
+                '@radix-ui/react-tabs',
+                '@radix-ui/react-toast',
+                '@radix-ui/react-tooltip',
+                '@radix-ui/react-button',
+                '@radix-ui/react-slot'
+              ].includes(module)) {
+                return 'vendor-ui-core';
+              }
+              
+              // 4. UI Forms - Form-related components
+              if ([
+                '@radix-ui/react-checkbox',
+                '@radix-ui/react-radio-group',
+                '@radix-ui/react-switch',
+                '@radix-ui/react-slider',
+                '@radix-ui/react-label',
+                'react-hook-form',
+                '@hookform/resolvers',
+                'zod'
+              ].includes(module)) {
+                return 'vendor-ui-forms';
+              }
+              
+              // 5. UI Advanced - Less frequently used UI components
+              if (module.startsWith('@radix-ui/')) {
+                return 'vendor-ui-advanced';
+              }
+              
+              // 6. Charts & Visualization - Large but only for specific routes
+              if (['recharts', 'victory-vendor'].includes(module)) {
+                return 'vendor-charts';
+              }
+              
+              // 7. Maps - Heavy, loaded on demand
+              if (['mapbox-gl'].includes(module)) {
+                return 'vendor-maps';
+              }
+              
+              // 8. AI/ML - Very heavy, used sparingly
+              if (['@tensorflow'].some(pkg => module.startsWith(pkg))) {
+                return 'vendor-ai';
+              }
+              
+              // 9. PDF & Export - Used occasionally
+              if (['jspdf', 'html2canvas'].includes(module)) {
+                return 'vendor-export';
+              }
+              
+              // 10. Bluetooth & Hardware - Mobile/device specific
+              if (['@capacitor'].some(pkg => module.startsWith(pkg))) {
+                return 'vendor-hardware';
+              }
+              
+              // 11. Date & Utilities - Lightweight utilities
+              if (['date-fns', 'clsx', 'class-variance-authority', 'tailwind-merge'].includes(module)) {
+                return 'vendor-utils';
+              }
+              
+              // 12. Internationalization - Used globally but can be split
+              if (['i18next', 'react-i18next', 'i18next-browser-languagedetector'].includes(module)) {
+                return 'vendor-i18n';
+              }
+              
+              // 13. Theme & Styling - Small but used globally
+              if (['next-themes', 'sonner', 'vaul'].includes(module)) {
+                return 'vendor-theme';
+              }
+              
+              // 14. Animation & Interaction - Used for enhanced UX
+              if (['embla-carousel-react', 'cmdk', 'input-otp'].includes(module)) {
+                return 'vendor-interaction';
+              }
+              
+              // 15. Lucide icons - Used throughout but can be chunked
+              if (module === 'lucide-react') {
+                return 'vendor-icons';
+              }
+              
+              // 16. Everything else - Fallback for other dependencies
+              return 'vendor-misc';
+            }
             
-            // Router chunk - needed for navigation
-            router: ['react-router-dom'],
+            // Application code splitting by route/feature
+            if (id.includes('/pages/Analysis')) {
+              return 'route-analysis';
+            }
+            if (id.includes('/pages/Groups')) {
+              return 'route-groups';
+            }
+            if (id.includes('/pages/MySettings') || id.includes('/pages/Profile') || id.includes('/pages/CustomThresholds') || id.includes('/pages/CustomAlerts')) {
+              return 'route-settings';
+            }
+            if (id.includes('/pages/History')) {
+              return 'route-history';
+            }
+            if (id.includes('/pages/RealTime')) {
+              return 'route-realtime';
+            }
+            if (id.includes('/pages/Auth')) {
+              return 'route-auth';
+            }
             
-            // React Query for data fetching
-            query: ['@tanstack/react-query'],
+            // Feature-based splitting
+            if (id.includes('/components/MapboxMap') || id.includes('/lib/mapbox')) {
+              return 'feature-maps';
+            }
+            if (id.includes('/components/Analysis') || id.includes('/hooks/useHistoryStats')) {
+              return 'feature-analysis';
+            }
+            if (id.includes('/components/Groups') || id.includes('/hooks/useGroups')) {
+              return 'feature-groups';
+            }
+            if (id.includes('/lib/pmscan') || id.includes('/components/PMScan')) {
+              return 'feature-bluetooth';
+            }
+            if (id.includes('/components/RealTime') || id.includes('/hooks/useWeather') || id.includes('/hooks/useAirQuality')) {
+              return 'feature-realtime';
+            }
             
-            // UI library chunks - split by usage frequency
-            'ui-core': [
-              '@radix-ui/react-dialog', 
-              '@radix-ui/react-select', 
-              '@radix-ui/react-tabs',
-              '@radix-ui/react-toast',
-              '@radix-ui/react-tooltip',
-              '@radix-ui/react-popover'
-            ],
-            'ui-forms': [
-              '@radix-ui/react-checkbox',
-              '@radix-ui/react-radio-group',
-              '@radix-ui/react-switch',
-              '@radix-ui/react-slider',
-              '@radix-ui/react-label',
-              'react-hook-form',
-              '@hookform/resolvers',
-              'zod'
-            ],
-            'ui-advanced': [
-              '@radix-ui/react-accordion',
-              '@radix-ui/react-alert-dialog',
-              '@radix-ui/react-dropdown-menu',
-              '@radix-ui/react-navigation-menu',
-              '@radix-ui/react-menubar',
-              '@radix-ui/react-context-menu',
-              '@radix-ui/react-hover-card',
-              '@radix-ui/react-scroll-area',
-              '@radix-ui/react-separator',
-              '@radix-ui/react-collapsible',
-              '@radix-ui/react-toggle',
-              '@radix-ui/react-toggle-group'
-            ],
-            
-            // Feature-specific chunks
-            charts: ['recharts'],
-            mapbox: ['mapbox-gl'],
-            supabase: ['@supabase/supabase-js'],
-            
-            // Utility chunks
-            utils: ['clsx', 'class-variance-authority', 'tailwind-merge'],
-            date: ['date-fns'],
-            i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
-            
-            // Heavy feature chunks
-            bluetooth: ['@capacitor-community/bluetooth-le'],
-            tensorflow: ['@tensorflow/tfjs'],
-            pdf: ['jspdf', 'html2canvas'],
-            
-            // Theme and styling
-            theme: ['next-themes'],
-            carousel: ['embla-carousel-react'],
-            notifications: ['sonner'],
-            
-            // Split by route to enable route-based code splitting
-            'route-analysis': [],
-            'route-groups': [],
-            'route-settings': [],
+            // Return undefined for main chunk
+            return undefined;
           },
         },
+      },
+      // Optimize dependency pre-bundling
+      optimizeDeps: {
+        include: [
+          // Core dependencies that should always be pre-bundled
+          'react',
+          'react-dom',
+          'react-router-dom',
+          'clsx',
+          'tailwind-merge'
+        ],
+        exclude: [
+          // Heavy dependencies that should remain as separate chunks
+          'mapbox-gl',
+          'recharts',
+          '@tensorflow/tfjs',
+          'jspdf',
+          'html2canvas',
+          '@capacitor-community/bluetooth-le'
+        ]
       },
       // Optimize assets for caching and TTFB
       assetsInlineLimit: 4096, // Inline small assets as base64
@@ -133,8 +225,8 @@ export default defineConfig(({ mode }) => {
       minify: 'esbuild',
       // Target modern browsers for better optimization
       target: 'es2022',
-      // Optimize chunk size warnings
-      chunkSizeWarningLimit: 1000,
+      // Optimize chunk size warnings - higher due to more strategic splitting
+      chunkSizeWarningLimit: 800,
     },
     test: {
       environment: 'jsdom',
