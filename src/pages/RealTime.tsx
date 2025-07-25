@@ -268,6 +268,13 @@ export default function RealTime() {
     }
   }, [isConnected]);
 
+  // Clear recording-confirmed flag when recording stops
+  useEffect(() => {
+    if (!isRecording) {
+      localStorage.removeItem('recording-confirmed');
+    }
+  }, [isRecording]);
+
   // Handle the complete recording workflow: BT → Frequency → Map
   const handleStartRecordingWorkflow = async () => {
     // Step 1: First ensure BT device is connected
@@ -343,8 +350,8 @@ export default function RealTime() {
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-      {/* Map/Graph Section - Fast placeholder until recording confirmed */}
-      {localStorage.getItem('recording-confirmed') === 'true' ? (
+      {/* Map/Graph Section - Show MapGraphToggle when recording is active */}
+      {isRecording || localStorage.getItem('recording-confirmed') === 'true' ? (
         <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
           <MapGraphToggle
             showGraph={showGraph}
