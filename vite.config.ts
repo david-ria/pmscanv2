@@ -39,6 +39,10 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       rollupOptions: {
+        external: (id) => {
+          // Don't externalize React - it needs to be bundled properly
+          return false;
+        },
         output: {
           // Enable content-hash filenames for better caching
           assetFileNames: (assetInfo: PreRenderedAsset) => {
@@ -55,109 +59,66 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
           manualChunks: (id) => {
-            // Extract package name from node_modules path
+            // Simplified chunking to avoid React initialization issues
             if (id.includes('node_modules')) {
               const module = id.split('node_modules/')[1].split('/')[0];
               
-              // 1. Core React ecosystem - Most critical, loaded first
-              if (['react', 'react-dom', 'react-router-dom'].includes(module)) {
+              // 1. Core React ecosystem - Keep together to avoid initialization issues
+              if (['react', 'react-dom', 'react-router-dom', 'react-hook-form', '@hookform/resolvers'].includes(module)) {
                 return 'vendor-react';
               }
               
-              // 2. Data fetching & state management - Used across app
-              if (['@tanstack', '@supabase'].some(pkg => module.startsWith(pkg))) {
+              // 2. Data & State management
+              if (['@tanstack', '@supabase', 'zod'].some(pkg => module.startsWith(pkg))) {
                 return 'vendor-data';
               }
               
-              // 3. UI Foundation - Radix core components (most used)
-              if ([
-                '@radix-ui/react-dialog',
-                '@radix-ui/react-select', 
-                '@radix-ui/react-tabs',
-                '@radix-ui/react-toast',
-                '@radix-ui/react-tooltip',
-                '@radix-ui/react-button',
-                '@radix-ui/react-slot'
-              ].includes(module)) {
-                return 'vendor-ui-core';
-              }
-              
-              // 4. UI Forms - Form-related components
-              if ([
-                '@radix-ui/react-checkbox',
-                '@radix-ui/react-radio-group',
-                '@radix-ui/react-switch',
-                '@radix-ui/react-slider',
-                '@radix-ui/react-label'
-              ].includes(module)) {
-                return 'vendor-ui-forms';
-              }
-              
-              // 4.5. Form libraries - Separate chunk to avoid React dependency issues
-              if ([
-                'react-hook-form',
-                '@hookform/resolvers',
-                'zod'
-              ].includes(module)) {
-                return 'vendor-form-libs';
-              }
-              
-              // 5. UI Advanced - Less frequently used UI components
+              // 3. UI Components - Radix UI
               if (module.startsWith('@radix-ui/')) {
-                return 'vendor-ui-advanced';
+                return 'vendor-ui';
               }
               
-              // 6. Charts & Visualization - Large but only for specific routes
-              if (['recharts', 'victory-vendor'].includes(module)) {
+              // 4. Charts & Visualization
+              if (['recharts'].includes(module)) {
                 return 'vendor-charts';
               }
               
-              // 7. Maps - Heavy, loaded on demand
+              // 5. Maps
               if (['mapbox-gl'].includes(module)) {
                 return 'vendor-maps';
               }
               
-              // 8. AI/ML - Very heavy, used sparingly
+              // 6. AI/ML
               if (['@tensorflow'].some(pkg => module.startsWith(pkg))) {
                 return 'vendor-ai';
               }
               
-              // 9. PDF & Export - Used occasionally
+              // 7. Export utilities
               if (['jspdf', 'html2canvas'].includes(module)) {
                 return 'vendor-export';
               }
               
-              // 10. Bluetooth & Hardware - Mobile/device specific
+              // 8. Hardware/Bluetooth
               if (['@capacitor'].some(pkg => module.startsWith(pkg))) {
                 return 'vendor-hardware';
               }
               
-              // 11. Date & Utilities - Lightweight utilities
-              if (['date-fns', 'clsx', 'class-variance-authority', 'tailwind-merge'].includes(module)) {
+              // 9. Utilities
+              if (['date-fns', 'clsx', 'class-variance-authority', 'tailwind-merge', 'lucide-react'].includes(module)) {
                 return 'vendor-utils';
               }
               
-              // 12. Internationalization - Used globally but can be split
+              // 10. i18n
               if (['i18next', 'react-i18next', 'i18next-browser-languagedetector'].includes(module)) {
                 return 'vendor-i18n';
               }
               
-              // 13. Theme & Styling - Small but used globally
-              if (['next-themes', 'sonner', 'vaul'].includes(module)) {
+              // 11. Theme & UI enhancements
+              if (['next-themes', 'sonner', 'vaul', 'embla-carousel-react', 'cmdk', 'input-otp'].includes(module)) {
                 return 'vendor-theme';
               }
               
-              // 14. Animation & Interaction - Used for enhanced UX
-              if (['embla-carousel-react', 'cmdk', 'input-otp'].includes(module)) {
-                return 'vendor-interaction';
-              }
-              
-              // 15. Lucide icons - Used throughout but can be chunked
-              if (module === 'lucide-react') {
-                return 'vendor-icons';
-              }
-              
-              // 16. Everything else - Fallback for other dependencies
+              // 12. Everything else
               return 'vendor-misc';
             }
             
