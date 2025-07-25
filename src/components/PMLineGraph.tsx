@@ -48,7 +48,7 @@ interface PMLineGraphProps {
 export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext }: PMLineGraphProps) {
   // Transform data for the chart - ensure proper chronological ordering
   const chartData = React.useMemo(() => {
-    if (!data || data.length === 0) return [];
+    if (!data || !Array.isArray(data) || data.length === 0) return [];
     
     return data
       // Sort by timestamp to ensure chronological order (oldest to newest)
@@ -70,7 +70,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
 
   // Process events to find their position on the chart
   const eventMarkers = React.useMemo(() => {
-    if (!events.length || !chartData.length) return [];
+    if (!Array.isArray(events) || !events.length || !Array.isArray(chartData) || !chartData.length) return [];
     
     console.log('Processing events for chart:', events.length, 'events, ', chartData.length, 'data points');
     

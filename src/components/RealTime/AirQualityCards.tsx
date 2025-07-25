@@ -19,18 +19,26 @@ const AirQualityCards = memo(function AirQualityCards({
 
   // Memoize quality calculations to avoid recalculation on every render
   const qualityData = useMemo(() => {
-    if (!currentData) return null;
+    // Add defensive checks for currentData
+    if (!currentData || typeof currentData !== 'object') return null;
+    
+    // Ensure all required properties exist and are numbers
+    const pm25 = typeof currentData.pm25 === 'number' ? currentData.pm25 : 0;
+    const pm1 = typeof currentData.pm1 === 'number' ? currentData.pm1 : 0;
+    const pm10 = typeof currentData.pm10 === 'number' ? currentData.pm10 : 0;
     
     return {
-      pm25: getAirQualityLevel(currentData.pm25, 'pm25'),
-      pm1: getAirQualityLevel(currentData.pm1, 'pm1'),
-      pm10: getAirQualityLevel(currentData.pm10, 'pm10'),
+      pm25: getAirQualityLevel(pm25, 'pm25'),
+      pm1: getAirQualityLevel(pm1, 'pm1'),
+      pm10: getAirQualityLevel(pm10, 'pm10'),
       roundedValues: {
-        pm1: Math.round(currentData.pm1),
-        pm25: Math.round(currentData.pm25),
-        pm10: Math.round(currentData.pm10),
+        pm1: Math.round(pm1),
+        pm25: Math.round(pm25),
+        pm10: Math.round(pm10),
       },
-      timestamp: currentData.timestamp.toLocaleTimeString(),
+      timestamp: currentData.timestamp instanceof Date 
+        ? currentData.timestamp.toLocaleTimeString() 
+        : new Date().toLocaleTimeString(),
     };
   }, [currentData, getAirQualityLevel]);
 

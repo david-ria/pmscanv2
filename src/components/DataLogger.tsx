@@ -60,18 +60,25 @@ export function DataLogger({
   const [isMinimized, setIsMinimized] = useState(false);
   
 
-  // Use actual recording data instead of managing separate log
-  const displayData = recordingData.slice(0, 100).map((entry, index) => ({
-    id: index.toString(),
-    timestamp: entry.pmData.timestamp,
-    pmData: entry.pmData,
-    location: entry.location,
-    missionContext: entry.context,
-    automaticContext: entry.automaticContext,
-  }));
+  // Use actual recording data instead of managing separate log with defensive checks
+  const displayData = Array.isArray(recordingData) 
+    ? recordingData.slice(0, 100).map((entry, index) => {
+        // Ensure entry exists and has required properties
+        if (!entry || !entry.pmData) return null;
+        
+        return {
+          id: index.toString(),
+          timestamp: entry.pmData.timestamp instanceof Date ? entry.pmData.timestamp : new Date(),
+          pmData: entry.pmData,
+          location: entry.location,
+          missionContext: entry.context,
+          automaticContext: entry.automaticContext,
+        };
+      }).filter(Boolean)  // Remove null entries
+    : [];
 
   // Get the most recent autocontext from recording data if available
-  const currentAutoContext = displayData.length > 0 && displayData[0].automaticContext 
+  const currentAutoContext = Array.isArray(displayData) && displayData.length > 0 && displayData[0]?.automaticContext 
     ? displayData[0].automaticContext 
     : latestContext;
 

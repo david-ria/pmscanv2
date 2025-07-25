@@ -15,7 +15,10 @@ const queryClient = new QueryClient({
   },
 });
 
-// Defer non-critical initializations to idle time
+// Initialize i18n immediately for proper app functionality
+import './i18n/config';
+
+// Defer only non-critical work to idle time
 const deferNonCriticalWork = () => {
   // Use requestIdleCallback to defer heavy work off main thread
   const scheduleWork = (work: () => void) => {
@@ -27,12 +30,7 @@ const deferNonCriticalWork = () => {
     }
   };
 
-  // Defer i18n initialization
-  scheduleWork(() => {
-    import('./i18n/config').catch(console.warn);
-  });
-
-  // Defer any analytics or monitoring setup
+  // Defer analytics or monitoring setup
   scheduleWork(() => {
     // Future: Initialize analytics here
     console.debug('[PERF] Non-critical services initialized');
