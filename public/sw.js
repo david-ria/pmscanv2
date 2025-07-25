@@ -1,6 +1,15 @@
-// Service Worker for background data collection
-const CACHE_NAME = 'pmscan-v1';
+// Service Worker for background data collection with caching optimization
+const CACHE_NAME = 'pmscan-v2';
+const STATIC_CACHE = 'pmscan-static-v2';
 const DATA_STORE = 'pmscan-background-data';
+
+// Assets to cache with long-term expiration
+const STATIC_ASSETS = [
+  '/assets/js/',
+  '/assets/css/',
+  '/assets/images/',
+  '/assets/fonts/'
+];
 
 // Install event
 self.addEventListener('install', (event) => {
@@ -11,7 +20,43 @@ self.addEventListener('install', (event) => {
 // Activate event
 self.addEventListener('activate', (event) => {
   console.log('🚀 Service Worker activating...');
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.delete(CACHE_NAME).then(() => self.clients.claim())
+  );
+});
+
+// Fetch event - implement cache-first strategy for static assets
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Only handle GET requests
+  if (request.method !== 'GET') return;
+  
+  // Check if this is a static asset with hash in filename
+  const isStaticAsset = /\/assets\/.*\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|eot|ttf|otf)/.test(url.pathname);
+  
+  if (isStaticAsset) {
+    // Cache-first strategy for hashed static assets (immutable)
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        
+        return fetch(request).then((response) => {
+          // Only cache successful responses
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        });
+      })
+    );
+  }
 });
 
 // Background sync for data collection

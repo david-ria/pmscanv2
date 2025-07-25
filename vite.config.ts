@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 import type { PluginOption } from 'vite';
+import type { PreRenderedAsset } from 'rollup';
 
 // https://vitejs.dev/config/
 export default defineConfig(async ({ mode }) => {
@@ -37,6 +38,20 @@ export default defineConfig(async ({ mode }) => {
     build: {
       rollupOptions: {
         output: {
+          // Enable content-hash filenames for better caching
+          assetFileNames: (assetInfo: PreRenderedAsset) => {
+            const info = assetInfo.name!.split('.');
+            const ext = info[info.length - 1];
+            if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+              return `assets/images/[name]-[hash][extname]`;
+            }
+            if (/woff2?|eot|ttf|otf/i.test(ext)) {
+              return `assets/fonts/[name]-[hash][extname]`;
+            }
+            return `assets/[name]-[hash][extname]`;
+          },
+          chunkFileNames: 'assets/js/[name]-[hash].js',
+          entryFileNames: 'assets/js/[name]-[hash].js',
           manualChunks: {
             vendor: ['react', 'react-dom', 'react-router-dom'],
             ui: ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-tabs'],
@@ -46,6 +61,10 @@ export default defineConfig(async ({ mode }) => {
           },
         },
       },
+      // Optimize assets for caching
+      assetsInlineLimit: 4096, // Inline small assets as base64
+      cssCodeSplit: true, // Split CSS into separate files with hashes
+      sourcemap: false, // Disable source maps in production for better performance
     },
     test: {
       environment: 'jsdom',

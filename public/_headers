@@ -1,0 +1,22 @@
+/assets/js/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/css/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Service worker should not be cached
+/sw.js
+  Cache-Control: no-cache
+
+# Main HTML should have short cache
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
