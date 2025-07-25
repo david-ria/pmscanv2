@@ -14,8 +14,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
 
-// Import MapGraphToggle directly since it contains LCP element
-import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
+// Import lightweight placeholder for fast LCP
+import { MapPlaceholder } from '@/components/RealTime/MapPlaceholder';
+// Lazy load heavy map component only after frequency selection
+const MapGraphToggle = lazy(() => 
+  import('@/components/RealTime/MapGraphToggle').then(module => ({ 
+    default: module.MapGraphToggle 
+  }))
+);
 const ContextSelectors = lazy(() => 
   import('@/components/RecordingControls/ContextSelectors').then(module => ({ 
     default: module.ContextSelectors 
@@ -309,23 +315,33 @@ export default function RealTime() {
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-      {/* Map/Graph Toggle Section - Direct render for LCP */}
-      <MapGraphToggle
-        showGraph={showGraph}
-        onToggleView={setShowGraph}
-        isOnline={isOnline}
-        latestLocation={latestLocation}
-        currentData={currentData}
-        recordingData={recordingData}
-        events={currentEvents}
-        isRecording={isRecording}
-        device={device}
-        isConnected={isConnected}
-        onConnect={requestDevice}
-        onDisconnect={disconnect}
-        onRequestLocationPermission={requestLocationPermission}
-        locationEnabled={locationEnabled}
-      />
+      {/* Map/Graph Section - Fast placeholder until recording confirmed */}
+      {localStorage.getItem('recording-confirmed') === 'true' ? (
+        <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
+          <MapGraphToggle
+            showGraph={showGraph}
+            onToggleView={setShowGraph}
+            isOnline={isOnline}
+            latestLocation={latestLocation}
+            currentData={currentData}
+            recordingData={recordingData}
+            events={currentEvents}
+            isRecording={isRecording}
+            device={device}
+            isConnected={isConnected}
+            onConnect={requestDevice}
+            onDisconnect={disconnect}
+            onRequestLocationPermission={requestLocationPermission}
+            locationEnabled={locationEnabled}
+          />
+        </Suspense>
+      ) : (
+        <MapPlaceholder
+          showGraph={showGraph}
+          onToggleView={setShowGraph}
+          isOnline={isOnline}
+        />
+      )}
 
       {/* Air Quality Cards - Critical for LCP */}
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
