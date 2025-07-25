@@ -212,3 +212,20 @@ All colors MUST be HSL.
 .context-selector .space-y-2 {
   min-height: 5rem; /* Reserve space for label + select + possible badge */
 }
+
+/* Fix skeleton loading CLS issues */
+.animate-pulse.h-20 {
+  height: 5rem !important;
+  min-height: 5rem !important;
+}
+
+.animate-pulse.h-32 {
+  height: 8rem !important;
+  min-height: 8rem !important;
+}
+
+/* Ensure skeleton elements maintain consistent spacing */
+.animate-pulse.mb-4 {
+  margin-bottom: 1rem !important;
+  min-height: inherit !important;
+}
