@@ -423,7 +423,7 @@ export function MissionDetailsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" ref={missionContentRef}>
         <DialogHeader>
-          <div className="flex items-center justify-between">
+          <div className="space-y-4">
             <div>
               <DialogTitle className="text-xl">{mission.name}</DialogTitle>
               <div className="flex items-center gap-2 mt-1">
@@ -442,51 +442,38 @@ export function MissionDetailsDialog({
                   {mission.locationContext} • {mission.activityContext}
                 </p>
               )}
-              {mission.weatherDataId && (
-                <div className="mt-2">
-                  <WeatherInfo weatherDataId={mission.weatherDataId} />
+            </div>
+            
+            {/* Mission Stats - Mobile Friendly Layout */}
+            <div className="flex flex-wrap items-center gap-4 p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="text-center">
+                  <div
+                    className={`text-2xl font-bold ${getQualityColor(mission.avgPm25)}`}
+                  >
+                    {Math.round(mission.avgPm25)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">µg/m³ PM2.5</div>
                 </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold">
+                    {mission.measurementsCount}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {t('history.measurements')}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Weather and Air Quality Info */}
+            <div className="space-y-2">
+              {mission.weatherDataId && (
+                <WeatherInfo weatherDataId={mission.weatherDataId} />
               )}
               {mission.airQualityDataId && (
-                <div className="mt-2">
-                  <AirQualityInfo airQualityDataId={mission.airQualityDataId} />
-                </div>
+                <AirQualityInfo airQualityDataId={mission.airQualityDataId} />
               )}
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div
-                  className={`text-2xl font-bold ${getQualityColor(mission.avgPm25)}`}
-                >
-                  {Math.round(mission.avgPm25)}
-                </div>
-                <div className="text-xs text-muted-foreground">µg/m³ PM2.5</div>
-                <div className="text-xs text-muted-foreground">
-                  {mission.measurementsCount} {t('history.measurements')}
-                </div>
-              </div>
-              {/* Hidden for now
-              <div className="flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={exportMissionReport}
-                  className="flex items-center gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  Export Report
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={saveGraphAsImage}
-                  className="flex items-center gap-2"
-                >
-                  <ImageIcon className="h-4 w-4" />
-                  Save Graph
-                </Button>
-              </div>
-              */}
             </div>
           </div>
         </DialogHeader>
