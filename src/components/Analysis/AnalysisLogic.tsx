@@ -592,13 +592,13 @@ export const useAnalysisLogic = (
 • PM10: ${totalCumulativeDosePM10.toFixed(1)} μg·h/m³
 • ${t('analysis.report.doseFormula')}: Dose = ∑(Concentration × ${t('analysis.report.exposureTime')})
 
+📍 ${t('analysis.report.contextualAnalysis')}:
+${generateContextualAnalysis(filtered)}
+
 ⚠️ ${t('analysis.report.whoThresholds')}:
 • PM2.5 > 15 μg/m³: ${timeAboveWHO_PM25.toFixed(0)} min (${whoExceedancePercentage_PM25}% ${t('analysis.report.ofTime')})
 • PM10 > 45 μg/m³: ${timeAboveWHO_PM10.toFixed(0)} min (${whoExceedancePercentage_PM10}% ${t('analysis.report.ofTime')})
 • PM1.0: ${t('analysis.report.noWhoThresholdPM1')}
-
-📈 ${t('analysis.report.globalEvaluation')}:
-${getAirQualityStatus()}
 
 🏆 ${t('analysis.report.highestExposureMissions')} (PM2.5):
 ${filtered
@@ -621,8 +621,8 @@ ${eventAnalysisData.length > 0
     ).join('\n\n')
   : `• ${t('analysis.report.noEventsRecorded')}`}
 
-📍 ${t('analysis.report.contextualAnalysis')}:
-${generateContextualAnalysis(filtered)}
+📈 ${t('analysis.report.globalEvaluation')}:
+${getAirQualityStatus()}
 
 💡 ${t('analysis.report.recommendations')}:
 ${
