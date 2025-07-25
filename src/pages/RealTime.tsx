@@ -11,7 +11,8 @@ import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
+// Lazy load translations to avoid blocking main thread
+// Translation will be loaded dynamically when component is ready
 import { useEvents } from '@/hooks/useEvents';
 
 // Lazy load heavy components to reduce initial bundle size
@@ -64,7 +65,20 @@ export default function RealTime() {
   );
   const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
 
-  const { t } = useTranslation();
+  // Lazy load translation to reduce main thread blocking
+  const [t, setT] = useState<(key: string, options?: any) => string>(() => (key: string) => key);
+  
+  useEffect(() => {
+    if (!showCriticalOnly) {
+      (async () => {
+        const { ensureI18nLoaded } = await import('@/lib/i18nLoader');
+        await ensureI18nLoaded();
+        const { useTranslation } = await import('react-i18next');
+        const { t: translateFn } = useTranslation();
+        setT(() => translateFn);
+      })();
+    }
+  }, [showCriticalOnly]);
   const { toast } = useToast();
   const { currentData, isConnected, device, error, requestDevice, disconnect } =
     usePMScanBluetooth();
@@ -305,7 +319,8 @@ export default function RealTime() {
         {/* Critical content only - fastest LCP */}
         <div className="text-center p-8">
           <h1 className="text-2xl font-semibold mb-2">AirSentinels</h1>
-          <p className="text-muted-foreground">Loading air quality data...</p>
+          <p className="text-muted-foreground">Chargement des données de qualité de l'air...</p>
+          <div className="mt-4 w-8 h-8 bg-primary/20 rounded-full animate-pulse mx-auto" />
         </div>
       </div>
     );

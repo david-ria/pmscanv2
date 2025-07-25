@@ -209,18 +209,35 @@ export const initErrorReporting = () => {
 };
 
 /**
+ * Initialize main thread optimizer
+ */
+export const initMainThreadOptimizer = () => {
+  deferredInit.addTask({
+    name: 'main-thread-optimizer',
+    priority: 'high',
+    task: async () => {
+      // Load optimizer immediately for critical performance
+      await import('@/lib/mainThreadOptimizer');
+      console.debug('[PERF] Main Thread Optimizer loaded');
+    },
+    timeout: 500
+  });
+};
+
+/**
  * Initialize all non-critical features
  */
 export const initNonEssentialFeatures = () => {
   console.debug('[PERF] Scheduling non-essential feature initialization...');
   
-  // Schedule all deferred tasks
-  initErrorReporting();  // High priority - error handling
-  initBluetooth();       // Medium priority - sensor connectivity  
-  initCharts();          // Medium priority - data visualization
-  initAnalytics();       // Low priority - tracking
-  initMap();             // Low priority - maps
-  initServiceWorker();   // Low priority - offline support
+  // Schedule all deferred tasks in order of priority
+  initMainThreadOptimizer(); // Highest priority - performance
+  initErrorReporting();      // High priority - error handling
+  initBluetooth();          // Medium priority - sensor connectivity  
+  initCharts();             // Medium priority - data visualization
+  initAnalytics();          // Low priority - tracking
+  initMap();                // Low priority - maps
+  initServiceWorker();      // Low priority - offline support
   
   // Start the deferred initialization process
   deferredInit.start();
