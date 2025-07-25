@@ -158,11 +158,14 @@ export default function RealTime() {
             speed = speedData.speed;
             isMoving = speedData.isMoving;
             
-            console.log('🏃 Movement detection:', {
-              speed: `${speed} km/h`,
-              isMoving,
-              location: `${latestLocation.latitude}, ${latestLocation.longitude}`
-            });
+            // Calculate speed and movement from GPS data (development logging only)
+            if (process.env.NODE_ENV === 'development' && latestLocation) {
+              console.log('🏃 Movement detection:', {
+                speed: `${speed} km/h`,
+                isMoving,
+                location: `${latestLocation.latitude}, ${latestLocation.longitude}`
+              });
+            }
           }
           
           const automaticContext = await updateContextIfNeeded(
@@ -207,14 +210,16 @@ export default function RealTime() {
     if (isRecording && !showCriticalOnly) {
       import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
         clearLocationHistory();
-        console.log('🏃 Cleared location history for new recording session');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🏃 Cleared location history for new recording session');
+        }
       });
     }
   }, [isRecording, showCriticalOnly]);
 
   // Initial autocontext effect - runs only when autocontext is toggled
   useEffect(() => {
-    if (!showCriticalOnly) {
+    if (!showCriticalOnly && process.env.NODE_ENV === 'development') {
       console.log('Autocontext effect triggered:', { 
         autoContextEnabled, 
         hasCurrentData: !!currentData, 

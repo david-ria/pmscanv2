@@ -48,6 +48,10 @@ All colors MUST be HSL.
     --air-very-poor: 262 52% 47%;
     --air-very-poor-foreground: 0 0% 98%;
 
+    /* System overlays and modals */
+    --overlay: 0 0% 0%;
+    --overlay-foreground: 0 0% 98%;
+
     /* Environmental gradients */
     --gradient-air-quality: linear-gradient(
       135deg,
@@ -135,97 +139,122 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
-  /* Custom slow pulse animation for recording button */
+  /* Performance-optimized animations */
   @keyframes slow-pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.6;
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
   }
   
-  .animate-slow-pulse {
-    animation: slow-pulse 2s ease-in-out infinite;
+  @keyframes fade-in {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
-}
-
-/* Layout shift prevention - Reserve space for dynamic content */
-.mb-4 {
-  min-height: 2.5rem; /* Reserve space to prevent layout shift */
-}
-
-/* Specific height reservations for common dynamic elements */
-.context-selector {
-  min-height: 7.5rem; /* Increased to accommodate labels, badges, and select components */
-  /* Stable grid to prevent layout shifts */
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-/* Reserve space for individual selector components */
-.context-selector > div {
-  min-height: 5rem; /* Reserve space for label + select component */
-}
-
-@media (min-width: 640px) {
+  
+  @keyframes scale-in {
+    0% { transform: scale(0.95); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  @keyframes slide-in-right {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(0); }
+  }
+  
+  /* Utility classes */
+  .animate-slow-pulse { animation: slow-pulse 2s ease-in-out infinite; }
+  .animate-fade-in { animation: fade-in 0.3s ease-out; }
+  .animate-scale-in { animation: scale-in 0.2s ease-out; }
+  .animate-slide-in-right { animation: slide-in-right 0.3s ease-out; }
+  
+  /* Performance-focused component styles */
+  .air-quality-gradient {
+    background: var(--gradient-air-quality);
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .card-elevated {
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-medium);
+    border-radius: var(--radius);
+  }
+  
+  .header-gradient {
+    background: var(--gradient-header);
+  }
+  
+  /* Layout optimization - Prevent CLS */
+  .layout-stable {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .content-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  
+  @media (min-width: 640px) {
+    .content-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  
+  @media (min-width: 1024px) {
+    .content-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  
+  /* Component-specific stable layouts */
+  .air-quality-card {
+    min-height: 8rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .recording-section {
+    min-height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
   .context-selector {
-    grid-template-columns: repeat(2, 1fr);
-    min-height: 5.5rem; /* Slightly increased for side-by-side layout */
+    min-height: 5rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
-  .context-selector > div {
-    min-height: 4.5rem; /* Reduced when side by side */
+  @media (min-width: 640px) {
+    .context-selector {
+      grid-template-columns: repeat(2, 1fr);
+      min-height: 4rem;
+    }
   }
-}
-
-.air-quality-status {
-  min-height: 3rem; /* Reserve space for status messages */
-  /* Stable layout */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.recording-controls {
-  min-height: 4rem; /* Reserve space for recording button area */
-}
-
-/* Prevent layout shift in dropdown content */
-.dropdown-content {
-  min-height: 2rem;
-}
-
-/* Auto-context display area */
-.auto-context-display {
-  min-height: 2rem; /* Increased from 1.5rem */
-  display: flex;
-  align-items: center;
-}
-
-/* Stable select component heights to prevent layout shifts */
-.context-selector [data-radix-select-trigger] {
-  min-height: 2.75rem; /* Consistent height for select triggers */
-}
-
-.context-selector .space-y-2 {
-  min-height: 5rem; /* Reserve space for label + select + possible badge */
-}
-
-/* Fix skeleton loading CLS issues */
-.animate-pulse.h-20 {
-  height: 5rem !important;
-  min-height: 5rem !important;
-}
-
-.animate-pulse.h-32 {
-  height: 8rem !important;
-  min-height: 8rem !important;
-}
-
-/* Ensure skeleton elements maintain consistent spacing */
-.animate-pulse.mb-4 {
-  margin-bottom: 1rem !important;
-  min-height: inherit !important;
+  
+  /* Interactive elements */
+  .interactive-hover {
+    transition: all 0.2s ease;
+  }
+  
+  .interactive-hover:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-medium);
+  }
+  
+  /* Loading states */
+  .skeleton-pulse {
+    background: linear-gradient(90deg, 
+      hsl(var(--muted)), 
+      hsl(var(--muted) / 0.8), 
+      hsl(var(--muted))
+    );
+    background-size: 200% 100%;
+    animation: pulse-background 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-background {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 }
