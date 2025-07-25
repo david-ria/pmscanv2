@@ -69,22 +69,25 @@ function OptimizedMap() {
     }
   };
 
-  // Show loading button before map is requested
+  // Show loading button before map is requested - optimized for LCP
   if (!mapLoaded && !loading) {
     return (
       <Card className="p-6">
         <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
           <div className="p-4 rounded-full bg-primary/10">
-            <MapIcon className="h-8 w-8 text-primary" />
+            <MapIcon className="h-8 w-8 text-primary" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="font-semibold mb-2">Interactive Map</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Click to load the interactive map (~2MB)
+            <h3 className="font-semibold mb-2 text-foreground">Interactive Map</h3>
+            <p className="text-sm text-muted-foreground mb-4 font-medium">
+              Load the map to visualize air quality data and track your location
+            </p>
+            <p className="text-xs text-muted-foreground/70 mb-4">
+              ~2MB • Loads on demand
             </p>
           </div>
-          <Button onClick={handleLoadMap}>
-            <MapIcon className="h-4 w-4 mr-2" />
+          <Button onClick={handleLoadMap} className="font-medium">
+            <MapIcon className="h-4 w-4 mr-2" aria-hidden="true" />
             Load Map
           </Button>
         </div>
