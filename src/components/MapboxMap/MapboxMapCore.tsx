@@ -110,22 +110,17 @@ export const MapboxMapCore = ({
     }
   };
 
-  // Auto-load map only after frequency selection (when recording is truly confirmed)
+  // Auto-load map when recording starts if autoLoadOnRecording is enabled
   useEffect(() => {
-    const recordingConfirmed = localStorage.getItem('recording-confirmed') === 'true';
-    
-    // Only load map if recording is active AND frequency has been selected
-    if (autoLoadOnRecording && isRecording && recordingConfirmed && !mapboxLoaded && !loading) {
-      console.debug('[PERF] 🎬 Recording confirmed after frequency selection - auto-loading map...');
+    if (autoLoadOnRecording && isRecording && !mapboxLoaded && !userRequested && !loading) {
+      console.debug('[PERF] 🎬 Recording started - auto-loading map...');
       handleLoadMap();
-      // Clear the flag after use
-      localStorage.removeItem('recording-confirmed');
       return;
     }
 
     // Only auto-load if user has previously interacted with the map
     const shouldAutoLoad = localStorage.getItem('mapbox-user-preference') === 'enabled';
-    if (shouldAutoLoad && !mapboxLoaded && !userRequested && !isRecording) {
+    if (shouldAutoLoad && !mapboxLoaded && !userRequested) {
       handleLoadMap();
     }
   }, [autoLoadOnRecording, isRecording, mapboxLoaded, userRequested, loading]);
@@ -197,7 +192,7 @@ export const MapboxMapCore = ({
     );
   };
 
-  // Save user preference when they first load the map or when recording starts
+  // Save user preference when they first load the map
   const handleUserMapLoad = () => {
     localStorage.setItem('mapbox-user-preference', 'enabled');
     handleLoadMap();
@@ -228,8 +223,8 @@ export const MapboxMapCore = ({
     );
   }
 
-  // Show map load button if map hasn't been requested yet AND not recording
-  if (!userRequested && !mapboxLoaded && !isRecording) {
+  // Show map load button if map hasn't been requested yet
+  if (!userRequested && !mapboxLoaded) {
     return (
       <Card className={`p-6 ${className || ''}`}>
         <div className="flex flex-col items-center justify-center h-full text-center space-y-4">

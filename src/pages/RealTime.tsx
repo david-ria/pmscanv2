@@ -277,16 +277,11 @@ export default function RealTime() {
     }
   }, [isConnected]);
 
-  // Handle frequency dialog confirmation - this is when recording truly starts
+  // Handle frequency dialog confirmation
   const handleFrequencyConfirm = async () => {
     try {
       setShowFrequencyDialog(false);
-      
-      // Start recording with selected frequency
       await startRecording(recordingFrequency);
-      
-      // Set flag that recording has been confirmed (this will trigger map loading)
-      localStorage.setItem('recording-confirmed', 'true');
 
       toast({
         title: t('notifications.recordingStarted'),
@@ -295,9 +290,9 @@ export default function RealTime() {
         }),
       });
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`🎬 Recording started with frequency: ${recordingFrequency}`);
-      }
+      logger.debug(
+        `🎬 Recording started with frequency: ${recordingFrequency}`
+      );
     } catch (error) {
       logger.error('Failed to start recording:', error);
       toast({
