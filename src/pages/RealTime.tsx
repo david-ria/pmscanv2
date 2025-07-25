@@ -11,8 +11,7 @@ import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useToast } from '@/hooks/use-toast';
-// Lazy load translations to avoid blocking main thread
-// Translation will be loaded dynamically when component is ready
+import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
 
 // Lazy load heavy components to reduce initial bundle size
@@ -65,20 +64,7 @@ export default function RealTime() {
   );
   const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
 
-  // Lazy load translation to reduce main thread blocking
-  const [t, setT] = useState<(key: string, options?: any) => string>(() => (key: string) => key);
-  
-  useEffect(() => {
-    if (!showCriticalOnly) {
-      (async () => {
-        const { ensureI18nLoaded } = await import('@/lib/i18nLoader');
-        await ensureI18nLoaded();
-        const { useTranslation } = await import('react-i18next');
-        const { t: translateFn } = useTranslation();
-        setT(() => translateFn);
-      })();
-    }
-  }, [showCriticalOnly]);
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { currentData, isConnected, device, error, requestDevice, disconnect } =
     usePMScanBluetooth();

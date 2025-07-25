@@ -15,42 +15,23 @@ const queryClient = new QueryClient({
   },
 });
 
-// Initialize i18n asynchronously to reduce TBT
-// i18n will be loaded dynamically when needed
+// Initialize i18n immediately for proper app functionality
+import './i18n/config';
 
 // Defer non-essential initialization until after critical rendering
 const scheduleNonEssentialWork = () => {
   // Import and initialize non-critical features only when browser is idle
   if ('requestIdleCallback' in window) {
     requestIdleCallback(async () => {
-      const [
-        { initNonEssentialFeatures },
-        { initI18nDeferred }
-      ] = await Promise.all([
-        import('@/lib/deferredInit'),
-        import('@/lib/i18nLoader')
-      ]);
-      
-      // Initialize i18n first (high priority)
-      initI18nDeferred();
-      
-      // Then other features
+      const { initNonEssentialFeatures } = await import('@/lib/deferredInit');
       initNonEssentialFeatures();
-    }, { timeout: 1000 });
+    }, { timeout: 3000 });
   } else {
     // Fallback for browsers without requestIdleCallback
     setTimeout(async () => {
-      const [
-        { initNonEssentialFeatures },
-        { initI18nDeferred }
-      ] = await Promise.all([
-        import('@/lib/deferredInit'),
-        import('@/lib/i18nLoader')
-      ]);
-      
-      initI18nDeferred();
+      const { initNonEssentialFeatures } = await import('@/lib/deferredInit');
       initNonEssentialFeatures();
-    }, 16); // One frame delay
+    }, 100);
   }
 };
 
