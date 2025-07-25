@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-// Use optimized date utilities
-import { format, fr } from '@/lib/dateUtils';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { formatDurationHHMM } from '@/utils/timeFormat';
 
 interface BreakdownData {

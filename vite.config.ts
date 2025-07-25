@@ -39,10 +39,6 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       rollupOptions: {
-        external: (id) => {
-          // Don't externalize React - it needs to be bundled properly
-          return false;
-        },
         output: {
           // Enable content-hash filenames for better caching
           assetFileNames: (assetInfo: PreRenderedAsset) => {
@@ -58,131 +54,76 @@ export default defineConfig(({ mode }) => {
           },
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
-          manualChunks: (id) => {
-            // Simplified chunking to avoid React initialization issues
-            if (id.includes('node_modules')) {
-              const module = id.split('node_modules/')[1].split('/')[0];
-              
-              // 1. Core React ecosystem - Keep together to avoid initialization issues
-              if (['react', 'react-dom', 'react-router-dom', 'react-hook-form', '@hookform/resolvers', 'lucide-react'].includes(module)) {
-                return 'vendor-react';
-              }
-              
-              // 2. Data & State management
-              if (['@tanstack', '@supabase', 'zod'].some(pkg => module.startsWith(pkg))) {
-                return 'vendor-data';
-              }
-              
-              // 3. UI Components - Radix UI
-              if (module.startsWith('@radix-ui/')) {
-                return 'vendor-ui';
-              }
-              
-              // 4. Charts & Visualization
-              if (['recharts'].includes(module)) {
-                return 'vendor-charts';
-              }
-              
-              // 5. Maps
-              if (['mapbox-gl'].includes(module)) {
-                return 'vendor-maps';
-              }
-              
-              // 6. AI/ML
-              if (['@tensorflow'].some(pkg => module.startsWith(pkg))) {
-                return 'vendor-ai';
-              }
-              
-              // 7. Export utilities
-              if (['jspdf', 'html2canvas'].includes(module)) {
-                return 'vendor-export';
-              }
-              
-              // 8. Hardware/Bluetooth
-              if (['@capacitor'].some(pkg => module.startsWith(pkg))) {
-                return 'vendor-hardware';
-              }
-              
-              // 9. Utilities
-              if (['date-fns', 'clsx', 'class-variance-authority', 'tailwind-merge'].includes(module)) {
-                return 'vendor-utils';
-              }
-              
-              // 10. i18n
-              if (['i18next', 'react-i18next', 'i18next-browser-languagedetector'].includes(module)) {
-                return 'vendor-i18n';
-              }
-              
-              // 11. Theme & UI enhancements
-              if (['next-themes', 'sonner', 'vaul', 'embla-carousel-react', 'cmdk', 'input-otp'].includes(module)) {
-                return 'vendor-theme';
-              }
-              
-              // 12. Everything else
-              return 'vendor-misc';
-            }
+          manualChunks: {
+            // Core vendor chunk - always needed
+            vendor: ['react', 'react-dom'],
             
-            // Application code splitting by route/feature
-            if (id.includes('/pages/Analysis')) {
-              return 'route-analysis';
-            }
-            if (id.includes('/pages/Groups')) {
-              return 'route-groups';
-            }
-            if (id.includes('/pages/MySettings') || id.includes('/pages/Profile') || id.includes('/pages/CustomThresholds') || id.includes('/pages/CustomAlerts')) {
-              return 'route-settings';
-            }
-            if (id.includes('/pages/History')) {
-              return 'route-history';
-            }
-            if (id.includes('/pages/RealTime')) {
-              return 'route-realtime';
-            }
-            if (id.includes('/pages/Auth')) {
-              return 'route-auth';
-            }
+            // Router chunk - needed for navigation
+            router: ['react-router-dom'],
             
-            // Feature-based splitting
-            if (id.includes('/components/MapboxMap') || id.includes('/lib/mapbox')) {
-              return 'feature-maps';
-            }
-            if (id.includes('/components/Analysis') || id.includes('/hooks/useHistoryStats')) {
-              return 'feature-analysis';
-            }
-            if (id.includes('/components/Groups') || id.includes('/hooks/useGroups')) {
-              return 'feature-groups';
-            }
-            if (id.includes('/lib/pmscan') || id.includes('/components/PMScan')) {
-              return 'feature-bluetooth';
-            }
-            if (id.includes('/components/RealTime') || id.includes('/hooks/useWeather') || id.includes('/hooks/useAirQuality')) {
-              return 'feature-realtime';
-            }
+            // React Query for data fetching
+            query: ['@tanstack/react-query'],
             
-            // Return undefined for main chunk
-            return undefined;
+            // UI library chunks - split by usage frequency
+            'ui-core': [
+              '@radix-ui/react-dialog', 
+              '@radix-ui/react-select', 
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-toast',
+              '@radix-ui/react-tooltip',
+              '@radix-ui/react-popover'
+            ],
+            'ui-forms': [
+              '@radix-ui/react-checkbox',
+              '@radix-ui/react-radio-group',
+              '@radix-ui/react-switch',
+              '@radix-ui/react-slider',
+              '@radix-ui/react-label',
+              'react-hook-form',
+              '@hookform/resolvers',
+              'zod'
+            ],
+            'ui-advanced': [
+              '@radix-ui/react-accordion',
+              '@radix-ui/react-alert-dialog',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-navigation-menu',
+              '@radix-ui/react-menubar',
+              '@radix-ui/react-context-menu',
+              '@radix-ui/react-hover-card',
+              '@radix-ui/react-scroll-area',
+              '@radix-ui/react-separator',
+              '@radix-ui/react-collapsible',
+              '@radix-ui/react-toggle',
+              '@radix-ui/react-toggle-group'
+            ],
+            
+            // Feature-specific chunks
+            charts: ['recharts'],
+            mapbox: ['mapbox-gl'],
+            supabase: ['@supabase/supabase-js'],
+            
+            // Utility chunks
+            utils: ['clsx', 'class-variance-authority', 'tailwind-merge'],
+            date: ['date-fns'],
+            i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+            
+            // Heavy feature chunks
+            bluetooth: ['@capacitor-community/bluetooth-le'],
+            tensorflow: ['@tensorflow/tfjs'],
+            pdf: ['jspdf', 'html2canvas'],
+            
+            // Theme and styling
+            theme: ['next-themes'],
+            carousel: ['embla-carousel-react'],
+            notifications: ['sonner'],
+            
+            // Split by route to enable route-based code splitting
+            'route-analysis': [],
+            'route-groups': [],
+            'route-settings': [],
           },
         },
-      },
-      // Optimize dependency pre-bundling
-      optimizeDeps: {
-        include: [
-          // Core dependencies that should always be pre-bundled
-          'react',
-          'react-dom',
-          'react-router-dom',
-          'clsx',
-          'tailwind-merge'
-        ],
-        exclude: [
-          // Heavy dependencies that should remain as separate chunks
-          'mapbox-gl',
-          'recharts',
-          '@tensorflow/tfjs',
-          'jspdf',
-          'html2canvas',
-          '@capacitor-community/bluetooth-le'
-        ]
       },
       // Optimize assets for caching and TTFB
       assetsInlineLimit: 4096, // Inline small assets as base64
@@ -192,8 +133,8 @@ export default defineConfig(({ mode }) => {
       minify: 'esbuild',
       // Target modern browsers for better optimization
       target: 'es2022',
-      // Optimize chunk size warnings - higher due to more strategic splitting
-      chunkSizeWarningLimit: 800,
+      // Optimize chunk size warnings
+      chunkSizeWarningLimit: 1000,
     },
     test: {
       environment: 'jsdom',

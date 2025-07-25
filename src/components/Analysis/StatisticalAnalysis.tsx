@@ -7,8 +7,8 @@ import { ExportReportDialog } from './ExportReportDialog';
 import { useDialog } from '@/hooks/useDialog';
 import { useNotifications } from '@/hooks/useNotifications';
 import { generateAnalysisReport, downloadPDF } from '@/lib/pdfExport';
-// Use optimized date utilities
-import { format, fr } from '@/lib/dateUtils';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface BreakdownData {
   name: string;
