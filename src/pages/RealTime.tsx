@@ -14,12 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
 
-// Lazy load heavy components to reduce initial bundle size
-const MapGraphToggle = lazy(() => 
-  import('@/components/RealTime/MapGraphToggle').then(module => ({ 
-    default: module.MapGraphToggle 
-  }))
-);
+// Import MapGraphToggle directly since it contains LCP element
+import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
 const ContextSelectors = lazy(() => 
   import('@/components/RecordingControls/ContextSelectors').then(module => ({ 
     default: module.ContextSelectors 
@@ -42,19 +38,8 @@ const RecordingFrequencyDialog = lazy(() =>
 );
 
 export default function RealTime() {
-  // Immediate render state - no delays
-  const [showCriticalOnly, setShowCriticalOnly] = useState(true);
-  
-  useEffect(() => {
-    logger.debug('RealTime: Component initializing');
-    
-    // Load critical content immediately, then rest after paint
-    const timer = setTimeout(() => {
-      setShowCriticalOnly(false);
-    }, 16); // After one frame
-    
-    return () => clearTimeout(timer);
-  }, []);
+  // Render immediately - no artificial delays
+  const [showCriticalOnly, setShowCriticalOnly] = useState(false);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
@@ -324,25 +309,23 @@ export default function RealTime() {
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-      {/* Map/Graph Toggle Section - Lazy loaded */}
-      <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
-        <MapGraphToggle
-          showGraph={showGraph}
-          onToggleView={setShowGraph}
-          isOnline={isOnline}
-          latestLocation={latestLocation}
-          currentData={currentData}
-          recordingData={recordingData}
-          events={currentEvents}
-          isRecording={isRecording}
-          device={device}
-          isConnected={isConnected}
-          onConnect={requestDevice}
-          onDisconnect={disconnect}
-          onRequestLocationPermission={requestLocationPermission}
-          locationEnabled={locationEnabled}
-        />
-      </Suspense>
+      {/* Map/Graph Toggle Section - Direct render for LCP */}
+      <MapGraphToggle
+        showGraph={showGraph}
+        onToggleView={setShowGraph}
+        isOnline={isOnline}
+        latestLocation={latestLocation}
+        currentData={currentData}
+        recordingData={recordingData}
+        events={currentEvents}
+        isRecording={isRecording}
+        device={device}
+        isConnected={isConnected}
+        onConnect={requestDevice}
+        onDisconnect={disconnect}
+        onRequestLocationPermission={requestLocationPermission}
+        locationEnabled={locationEnabled}
+      />
 
       {/* Air Quality Cards - Critical for LCP */}
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
