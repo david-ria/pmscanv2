@@ -1,15 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { loadMapboxGL } from '@/lib/dynamicImports';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, AlertTriangle, Map as MapIcon } from 'lucide-react';
 import { LocationData } from '@/types/PMScan';
 import { useThresholds } from '@/contexts/ThresholdContext';
-import { initializeMap } from '@/lib/mapbox/mapInitializer';
-import { createLocationMarker } from '@/lib/mapbox/mapMarker';
-import { updateTrackData, updateLayerStyles } from '@/lib/mapbox/mapLayers';
-import { toggleMapStyle } from '@/lib/mapbox/mapStyleToggle';
-import { MapboxMapControls } from './MapboxMapControls';
+
+// Dynamic imports - no static imports for mapbox or related modules
+// These will be loaded only when the map is actually requested
 
 interface MapboxMapCoreProps {
   currentLocation?: LocationData | null;
@@ -37,26 +35,64 @@ export const MapboxMapCore = ({
   className,
 }: MapboxMapCoreProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const marker = useRef<mapboxgl.Marker | null>(null);
-  const [loading, setLoading] = useState(true);
+  const map = useRef<any>(null);
+  const marker = useRef<any>(null);
+  const [mapboxLoaded, setMapboxLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSatellite, setIsSatellite] = useState(false);
+  const [userRequested, setUserRequested] = useState(false);
   const { thresholds, getAirQualityLevel } = useThresholds();
 
-  // Initialize map (only once)
-  useEffect(() => {
-    const initMap = async () => {
-      if (!mapContainer.current || map.current) return; // Prevent re-initialization
+  // Lazy load mapbox modules and utilities
+  const loadMapboxModules = async () => {
+    const [
+      { initializeMap },
+      { createLocationMarker },
+      { updateTrackData, updateLayerStyles },
+      { toggleMapStyle },
+      MapboxMapControls
+    ] = await Promise.all([
+      import('@/lib/mapbox/mapInitializer'),
+      import('@/lib/mapbox/mapMarker'),
+      import('@/lib/mapbox/mapLayers'),
+      import('@/lib/mapbox/mapStyleToggle'),
+      import('./MapboxMapControls').then(m => m.MapboxMapControls)
+    ]);
+    
+    return {
+      initializeMap,
+      createLocationMarker,
+      updateTrackData,
+      updateLayerStyles,
+      toggleMapStyle,
+      MapboxMapControls
+    };
+  };
 
-      setLoading(true);
-      setError(null);
+  // Handler for user-initiated map loading
+  const handleLoadMap = async () => {
+    if (!mapContainer.current || map.current || loading) return;
 
-      const mapInstance = await initializeMap(
+    setLoading(true);
+    setError(null);
+    setUserRequested(true);
+
+    try {
+      console.debug('[PERF] 🗺️ User requested map - loading Mapbox GL...');
+      
+      // Load all mapbox modules dynamically
+      const modules = await loadMapboxModules();
+      
+      const mapInstance = await modules.initializeMap(
         mapContainer.current,
         currentLocation,
         thresholds,
-        () => setLoading(false),
+        () => {
+          setLoading(false);
+          setMapboxLoaded(true);
+          console.debug('[PERF] ✅ Mapbox GL fully loaded and initialized');
+        },
         (errorMsg) => {
           setError(errorMsg);
           setLoading(false);
@@ -64,14 +100,25 @@ export const MapboxMapCore = ({
       );
 
       map.current = mapInstance;
-    };
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load map';
+      setError(errorMsg);
+      setLoading(false);
+      console.error('[PERF] ❌ Failed to load Mapbox GL:', err);
+    }
+  };
 
-    initMap();
+  // Auto-initialize only if user has previously requested the map
+  useEffect(() => {
+    // Only auto-load if user has previously interacted with the map
+    const shouldAutoLoad = localStorage.getItem('mapbox-user-preference') === 'enabled';
+    if (shouldAutoLoad && !mapboxLoaded && !userRequested) {
+      handleLoadMap();
+    }
 
     return () => {
       if (map.current) {
         try {
-          // Check if map is still valid before removing
           if (map.current.getContainer()) {
             map.current.remove();
           }
@@ -82,37 +129,49 @@ export const MapboxMapCore = ({
         }
       }
     };
-  }, []); // Empty dependency array - only run once
+  }, []);
 
-  // Update marker when location changes
+  // Update marker when location changes (only if map is loaded)
   useEffect(() => {
-    if (!map.current || !currentLocation) return;
+    if (!map.current || !currentLocation || !mapboxLoaded) return;
 
-    marker.current = createLocationMarker(
-      map.current,
-      currentLocation,
-      pmData,
-      getAirQualityLevel,
-      marker.current
-    );
-  }, [currentLocation, pmData, getAirQualityLevel]);
+    (async () => {
+      const { createLocationMarker } = await import('@/lib/mapbox/mapMarker');
+      marker.current = createLocationMarker(
+        map.current,
+        currentLocation,
+        pmData,
+        getAirQualityLevel,
+        marker.current
+      );
+    })();
+  }, [currentLocation, pmData, getAirQualityLevel, mapboxLoaded]);
 
-  // Update track visualization when trackPoints change
+  // Update track visualization when trackPoints change (only if map is loaded)
   useEffect(() => {
-    if (!map.current) return;
-    updateTrackData(map.current, trackPoints, isRecording);
-  }, [trackPoints, isRecording]);
+    if (!map.current || !mapboxLoaded) return;
+    
+    (async () => {
+      const { updateTrackData } = await import('@/lib/mapbox/mapLayers');
+      updateTrackData(map.current, trackPoints, isRecording);
+    })();
+  }, [trackPoints, isRecording, mapboxLoaded]);
 
-  // Update map styling when thresholds change
+  // Update map styling when thresholds change (only if map is loaded)
   useEffect(() => {
-    if (!map.current) return;
-    updateLayerStyles(map.current, thresholds);
-  }, [thresholds]);
+    if (!map.current || !mapboxLoaded) return;
+    
+    (async () => {
+      const { updateLayerStyles } = await import('@/lib/mapbox/mapLayers');
+      updateLayerStyles(map.current, thresholds);
+    })();
+  }, [thresholds, mapboxLoaded]);
 
   // Toggle between satellite and map view
-  const handleToggleMapStyle = () => {
-    if (!map.current) return;
+  const handleToggleMapStyle = async () => {
+    if (!map.current || !mapboxLoaded) return;
 
+    const { toggleMapStyle } = await import('@/lib/mapbox/mapStyleToggle');
     toggleMapStyle(
       map.current,
       isSatellite,
@@ -122,15 +181,58 @@ export const MapboxMapCore = ({
     );
   };
 
+  // Save user preference when they first load the map
+  const handleUserMapLoad = () => {
+    localStorage.setItem('mapbox-user-preference', 'enabled');
+    handleLoadMap();
+  };
+
   if (error) {
     return (
       <Card className={`p-6 ${className || ''}`}>
         <div className="flex flex-col items-center justify-center h-full text-center">
           <AlertTriangle className="h-8 w-8 text-destructive mb-3" />
-          <p className="text-sm text-muted-foreground mb-2">{error}</p>
-          <Badge variant="destructive" className="text-xs">
-            Map Unavailable
-          </Badge>
+          <p className="text-sm text-muted-foreground mb-4">{error}</p>
+          <Button 
+            variant="outline" 
+            onClick={handleLoadMap}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Retrying...
+              </>
+            ) : (
+              'Retry Map Load'
+            )}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  // Show map load button if map hasn't been requested yet
+  if (!userRequested && !mapboxLoaded) {
+    return (
+      <Card className={`p-6 ${className || ''}`}>
+        <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+          <div className="p-4 rounded-full bg-primary/10">
+            <MapIcon className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2">Interactive Map</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Load the map to visualize air quality data and track your location
+            </p>
+            <Badge variant="secondary" className="text-xs mb-4">
+              ~2MB • Loads on demand
+            </Badge>
+          </div>
+          <Button onClick={handleUserMapLoad}>
+            <MapIcon className="h-4 w-4 mr-2" />
+            Load Map
+          </Button>
         </div>
       </Card>
     );
@@ -142,7 +244,10 @@ export const MapboxMapCore = ({
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading map...</p>
+            <p className="text-sm text-muted-foreground">Loading interactive map...</p>
+            <Badge variant="secondary" className="text-xs">
+              Loading Mapbox GL (~2MB)
+            </Badge>
           </div>
         </div>
       )}
@@ -152,11 +257,22 @@ export const MapboxMapCore = ({
         className="w-full h-full rounded-lg overflow-hidden"
       />
 
-      <MapboxMapControls
-        isSatellite={isSatellite}
-        onToggleMapStyle={handleToggleMapStyle}
-        currentLocation={currentLocation}
-      />
+      {mapboxLoaded && (
+        <React.Suspense fallback={<div>Loading controls...</div>}>
+          {/* Lazy load controls only when map is ready */}
+          <LazyMapControls
+            isSatellite={isSatellite}
+            onToggleMapStyle={handleToggleMapStyle}
+            currentLocation={currentLocation}
+          />
+        </React.Suspense>
+      )}
     </div>
   );
 };
+
+// Lazy-loaded map controls component
+const LazyMapControls = React.lazy(async () => {
+  const { MapboxMapControls } = await import('./MapboxMapControls');
+  return { default: MapboxMapControls };
+});

@@ -131,6 +131,7 @@ export const loadPDFLibrary = async () => {
   }
 
   console.debug('[PERF] Loading PDF libraries...');
+  trackImport('pdf');
   const [jsPDF, html2canvas] = await Promise.all([
     import('jspdf'),
     import('html2canvas')
@@ -152,6 +153,7 @@ export const loadTensorFlow = async () => {
   }
 
   console.debug('[PERF] Loading TensorFlow...');
+  trackImport('tensorflow');
   const tf = await import('@tensorflow/tfjs');
   moduleCache.set('tensorflow', tf);
   console.debug('[PERF] TensorFlow loaded');
@@ -168,6 +170,7 @@ export const loadDateUtils = async () => {
   }
 
   console.debug('[PERF] Loading date utilities (individual functions)...');
+  trackImport('date-fns');
   
   // Import only the specific date-fns functions we need
   const [
@@ -219,6 +222,7 @@ export const loadBluetoothLE = async () => {
   }
 
   console.debug('[PERF] Loading Bluetooth LE...');
+  trackImport('bluetooth-le');
   const bluetoothLE = await import('@capacitor-community/bluetooth-le');
   moduleCache.set('bluetooth-le', bluetoothLE);
   console.debug('[PERF] Bluetooth LE loaded');
@@ -244,6 +248,7 @@ export const loadFormValidation = async () => {
   }
 
   console.debug('[PERF] Loading form validation...');
+  trackImport('forms');
   const [hookForm, zod] = await Promise.all([
     import('react-hook-form'),
     import('zod')
