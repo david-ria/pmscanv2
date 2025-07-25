@@ -268,6 +268,34 @@ export default function RealTime() {
     }
   }, [isConnected]);
 
+  // Handle the complete recording workflow: BT → Frequency → Map
+  const handleStartRecordingWorkflow = async () => {
+    // Step 1: First ensure BT device is connected
+    if (!isConnected) {
+      try {
+        await requestDevice(); // This will open BT device selection
+        // After connection, the frequency dialog will show automatically via useEffect
+      } catch (error) {
+        toast({
+          title: t('notifications.error'),
+          description: 'Failed to connect to PMScan device',
+          variant: 'destructive',
+        });
+      }
+    } else {
+      // If already connected, show frequency dialog directly
+      setShowFrequencyDialog(true);
+    }
+  };
+
+  // Show frequency dialog automatically after BT connection
+  useEffect(() => {
+    if (isConnected && !hasShownFrequencyDialog && !isRecording) {
+      setShowFrequencyDialog(true);
+      setHasShownFrequencyDialog(true);
+    }
+  }, [isConnected, hasShownFrequencyDialog, isRecording]);
+
   // Handle frequency dialog confirmation - this is when recording truly starts
   const handleFrequencyConfirm = async () => {
     try {
@@ -344,7 +372,7 @@ export default function RealTime() {
           isConnected={isConnected}
           onConnect={requestDevice}
           onDisconnect={disconnect}
-          onStartRecording={() => setShowFrequencyDialog(true)}
+          onStartRecording={handleStartRecordingWorkflow}
           locationEnabled={locationEnabled}
           latestLocation={latestLocation}
         />

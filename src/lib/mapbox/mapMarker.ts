@@ -77,8 +77,13 @@ export const createLocationMarker = (
   // Create marker using dynamic Mapbox instance
   let marker = null;
   if ((map as any)._createMarker && (map as any)._createPopup) {
+    // Get color based on PM2.5 quality if data is available
+    const markerColor = pmData 
+      ? getQualityColor(pmData.pm25, getAirQualityLevel)
+      : '#6b7280'; // Gray for no data
+      
     marker = (map as any)._createMarker({
-      color: pmData ? '#3b82f6' : '#6b7280',
+      color: markerColor,
       scale: 0.8,
     })
       .setLngLat([longitude, latitude])
