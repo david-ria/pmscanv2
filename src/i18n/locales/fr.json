@@ -332,7 +332,40 @@
     "sending": "Envoi...",
     "generating": "Génération...",
     "sendEmail": "Envoyer par email",
-    "downloadPDF": "Télécharger PDF"
+    "downloadPDF": "Télécharger PDF",
+    "airQuality": {
+      "good": "Qualité de l'air bonne - Toutes les particules dans les normes",
+      "moderate": "Qualité de l'air modérée - Surveillance recommandée",
+      "poor": "Qualité de l'air mauvaise - Précautions nécessaires",
+      "veryPoor": "Qualité de l'air très mauvaise - Éviter l'exposition prolongée"
+    },
+    "report": {
+      "title": "ANALYSE STATISTIQUE COMPLÈTE",
+      "dataSummary": "RÉSUMÉ DES DONNÉES",
+      "missionCount": "Nombre de missions",
+      "totalExposureTime": "Temps d'exposition total",
+      "hours": "heures",
+      "particleAverages": "PARTICULES FINES (MOYENNES)",
+      "cumulativeDose": "DOSE CUMULÉE INHALÉE",
+      "doseFormula": "Formule",
+      "exposureTime": "Temps d'exposition",
+      "whoThresholds": "SEUILS OMS (Organisation Mondiale de la Santé)",
+      "ofTime": "du temps",
+      "noWhoThresholdPM1": "Pas de seuil OMS défini (particules ultrafines)",
+      "globalEvaluation": "ÉVALUATION GLOBALE",
+      "highestExposureMissions": "MISSIONS LES PLUS EXPOSÉES",
+      "eventAnalysis": "ANALYSE DES ÉVÉNEMENTS",
+      "events": "événements",
+      "duringEvent": "pendant l'événement",
+      "normalConditions": "en conditions normales",
+      "impact": "Impact",
+      "detail": "Détail",
+      "noEventsRecorded": "Aucun événement enregistré pendant cette période",
+      "recommendations": "RECOMMANDATIONS",
+      "recommendationsHigh": "• Limitez les activités extérieures intenses\n• Consultez les prévisions de qualité de l'air\n• Considérez un purificateur d'air intérieur",
+      "recommendationsGood": "• Qualité de l'air acceptable\n• Continuez le monitoring pour détecter les variations\n• Maintenez une bonne ventilation intérieure",
+      "eventImpactWarning": "⚠️ Certains événements ont un impact majeur sur la qualité de l'air\n• Évitez ces activités ou améliorez la ventilation"
+    }
   },
   "modals": {
     "recordingFrequency": {

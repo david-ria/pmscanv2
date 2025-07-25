@@ -468,44 +468,39 @@ export const useAnalysisLogic = (
       const getAirQualityStatus = () => {
         const worstPM = Math.max(avgPM25, avgPM10 / 3); // Normalize PM10 for comparison
         if (worstPM <= 12)
-          return "✅ Qualité de l'air bonne - Toutes les particules dans les normes";
+          return `✅ ${t('analysis.airQuality.good')}`;
         if (worstPM <= 35)
-          return "⚠️ Qualité de l'air modérée - Surveillance recommandée";
+          return `⚠️ ${t('analysis.airQuality.moderate')}`;
         if (worstPM <= 55)
-          return "🔶 Qualité de l'air mauvaise - Précautions nécessaires";
-        return "🔴 Qualité de l'air très mauvaise - Éviter l'exposition prolongée";
+          return `🔶 ${t('analysis.airQuality.poor')}`;
+        return `🔴 ${t('analysis.airQuality.veryPoor')}`;
       };
 
-      const analysisText = `📊 ANALYSE STATISTIQUE COMPLÈTE - ${timeframeText.toUpperCase()}
+      const analysisText = `📊 ${t('analysis.report.title')} - ${timeframeText.toUpperCase()}
 
-🔢 RÉSUMÉ DES DONNÉES:
-• Nombre de missions: ${filtered.length}
-• Temps d'exposition total: ${Math.round(totalExposureMinutes)} minutes (${exposureHours} heures)
+🔢 ${t('analysis.report.dataSummary')}:
+• ${t('analysis.report.missionCount')}: ${filtered.length}
+• ${t('analysis.report.totalExposureTime')}: ${Math.round(totalExposureMinutes)} ${t('analysis.minutes')} (${exposureHours} ${t('analysis.report.hours')})
 
-🌫️ PARTICULES FINES (MOYENNES):
+🌫️ ${t('analysis.report.particleAverages')}:
 • PM1.0: ${avgPM1.toFixed(1)} μg/m³ (max: ${maxPM1.toFixed(1)} μg/m³)
 • PM2.5: ${avgPM25.toFixed(1)} μg/m³ (max: ${maxPM25.toFixed(1)} μg/m³)
 • PM10: ${avgPM10.toFixed(1)} μg/m³ (max: ${maxPM10.toFixed(1)} μg/m³)
 
-💨 DOSE CUMULÉE INHALÉE:
+💨 ${t('analysis.report.cumulativeDose')}:
 • PM2.5: ${totalCumulativeDosePM25.toFixed(1)} μg·h/m³
 • PM10: ${totalCumulativeDosePM10.toFixed(1)} μg·h/m³
-• Formule: Dose = ∑(Concentration × Temps d'exposition)
+• ${t('analysis.report.doseFormula')}: Dose = ∑(Concentration × ${t('analysis.report.exposureTime')})
 
-⚠️ SEUILS OMS (Organisation Mondiale de la Santé):
-• PM2.5 > 15 μg/m³: ${timeAboveWHO_PM25.toFixed(0)} min (${whoExceedancePercentage_PM25}% du temps)
-• PM10 > 45 μg/m³: ${timeAboveWHO_PM10.toFixed(0)} min (${whoExceedancePercentage_PM10}% du temps)
-• PM1.0: Pas de seuil OMS défini (particules ultrafines)
+⚠️ ${t('analysis.report.whoThresholds')}:
+• PM2.5 > 15 μg/m³: ${timeAboveWHO_PM25.toFixed(0)} min (${whoExceedancePercentage_PM25}% ${t('analysis.report.ofTime')})
+• PM10 > 45 μg/m³: ${timeAboveWHO_PM10.toFixed(0)} min (${whoExceedancePercentage_PM10}% ${t('analysis.report.ofTime')})
+• PM1.0: ${t('analysis.report.noWhoThresholdPM1')}
 
-📋 CLASSIFICATION DES PARTICULES:
-• PM1.0: Particules ultrafines - Pénètrent profondément dans les alvéoles
-• PM2.5: Particules fines - Atteignent les voies respiratoires inférieures
-• PM10: Particules grossières - Affectent principalement les voies supérieures
-
-📈 ÉVALUATION GLOBALE:
+📈 ${t('analysis.report.globalEvaluation')}:
 ${getAirQualityStatus()}
 
-🏆 MISSIONS LES PLUS EXPOSÉES (PM2.5):
+🏆 ${t('analysis.report.highestExposureMissions')} (PM2.5):
 ${filtered
   .sort((a, b) => (b.avgPm25 || 0) - (a.avgPm25 || 0))
   .slice(0, 3)
@@ -515,25 +510,25 @@ ${filtered
   )
   .join('\n')}
 
-🎯 ANALYSE DES ÉVÉNEMENTS:
+🎯 ${t('analysis.report.eventAnalysis')}:
 ${eventAnalysisData.length > 0 
   ? eventAnalysisData.map(event => 
-      `• ${event.eventType.toUpperCase()} (${event.eventCount} événements):
-  - PM2.5 pendant l'événement: ${event.avgPM25DuringEvent.toFixed(1)} μg/m³
-  - PM2.5 en conditions normales: ${event.avgPM25AroundEvent.toFixed(1)} μg/m³
-  - Impact: ${event.eventImpact > 0 ? '+' : ''}${event.eventImpact.toFixed(1)}% ${event.eventImpact > 50 ? '🔴' : event.eventImpact > 20 ? '🟡' : '🟢'}
-  - Détail: PM1=${event.avgPM1DuringEvent.toFixed(1)}, PM10=${event.avgPM10DuringEvent.toFixed(1)} μg/m³`
+      `• ${event.eventType.toUpperCase()} (${event.eventCount} ${t('analysis.report.events')}):
+  - PM2.5 ${t('analysis.report.duringEvent')}: ${event.avgPM25DuringEvent.toFixed(1)} μg/m³
+  - PM2.5 ${t('analysis.report.normalConditions')}: ${event.avgPM25AroundEvent.toFixed(1)} μg/m³
+  - ${t('analysis.report.impact')}: ${event.eventImpact > 0 ? '+' : ''}${event.eventImpact.toFixed(1)}% ${event.eventImpact > 50 ? '🔴' : event.eventImpact > 20 ? '🟡' : '🟢'}
+  - ${t('analysis.report.detail')}: PM1=${event.avgPM1DuringEvent.toFixed(1)}, PM10=${event.avgPM10DuringEvent.toFixed(1)} μg/m³`
     ).join('\n\n')
-  : "• Aucun événement enregistré pendant cette période"}
+  : `• ${t('analysis.report.noEventsRecorded')}`}
 
-💡 RECOMMANDATIONS:
+💡 ${t('analysis.report.recommendations')}:
 ${
   avgPM25 > 15 || avgPM10 > 45
-    ? "• Limitez les activités extérieures intenses\n• Consultez les prévisions de qualité de l'air\n• Considérez un purificateur d'air intérieur"
-    : "• Qualité de l'air acceptable\n• Continuez le monitoring pour détecter les variations\n• Maintenez une bonne ventilation intérieure"
+    ? t('analysis.report.recommendationsHigh')
+    : t('analysis.report.recommendationsGood')
 }
 ${eventAnalysisData.some(e => e.eventImpact > 50) 
-  ? "\n• ⚠️ Certains événements ont un impact majeur sur la qualité de l'air\n• Évitez ces activités ou améliorez la ventilation" 
+  ? `\n• ${t('analysis.report.eventImpactWarning')}` 
   : ""}`;
 
       setStatisticalAnalysis(analysisText);

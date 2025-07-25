@@ -314,7 +314,40 @@
     "whoThreshold": "WHO threshold",
     "noWHOThreshold": "No WHO threshold",
     "whoThresholdDaily": "Daily WHO threshold: {{value}} μg/m³",
-    "whoThresholdAnnual": "Annual WHO threshold: {{value}} μg/m³"
+    "whoThresholdAnnual": "Annual WHO threshold: {{value}} μg/m³",
+    "airQuality": {
+      "good": "Good air quality - All particles within standards",
+      "moderate": "Moderate air quality - Monitoring recommended",
+      "poor": "Poor air quality - Precautions necessary",
+      "veryPoor": "Very poor air quality - Avoid prolonged exposure"
+    },
+    "report": {
+      "title": "COMPLETE STATISTICAL ANALYSIS",
+      "dataSummary": "DATA SUMMARY",
+      "missionCount": "Number of missions",
+      "totalExposureTime": "Total exposure time",
+      "hours": "hours",
+      "particleAverages": "FINE PARTICLES (AVERAGES)",
+      "cumulativeDose": "CUMULATIVE INHALED DOSE",
+      "doseFormula": "Formula",
+      "exposureTime": "Exposure time",
+      "whoThresholds": "WHO THRESHOLDS (World Health Organization)",
+      "ofTime": "of time",
+      "noWhoThresholdPM1": "No WHO threshold defined (ultrafine particles)",
+      "globalEvaluation": "GLOBAL EVALUATION",
+      "highestExposureMissions": "HIGHEST EXPOSURE MISSIONS",
+      "eventAnalysis": "EVENT ANALYSIS",
+      "events": "events",
+      "duringEvent": "during event",
+      "normalConditions": "in normal conditions",
+      "impact": "Impact",
+      "detail": "Detail",
+      "noEventsRecorded": "No events recorded during this period",
+      "recommendations": "RECOMMENDATIONS",
+      "recommendationsHigh": "• Limit intense outdoor activities\n• Check air quality forecasts\n• Consider an indoor air purifier",
+      "recommendationsGood": "• Acceptable air quality\n• Continue monitoring to detect variations\n• Maintain good indoor ventilation",
+      "eventImpactWarning": "⚠️ Some events have a major impact on air quality\n• Avoid these activities or improve ventilation"
+    }
   },
   "modals": {
     "recordingFrequency": {
