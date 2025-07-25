@@ -11,7 +11,18 @@ import App from './App.tsx';
 import './index.css';
 import './i18n/config';
 
-const queryClient = new QueryClient();
+// Preload critical modules to improve initial performance
+import('@/hooks/usePMScanBluetooth');
+import('@/components/RealTime/AirQualityCards');
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    },
+  },
+});
 
 createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>

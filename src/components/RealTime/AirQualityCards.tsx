@@ -2,20 +2,38 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PMScanData } from '@/lib/pmscan/types';
 import { useTranslation } from 'react-i18next';
 import { useThresholds } from '@/contexts/ThresholdContext';
+import { memo, useMemo } from 'react';
 
 interface AirQualityCardsProps {
   currentData: PMScanData | null;
   isConnected: boolean;
 }
 
-export function AirQualityCards({
+const AirQualityCards = memo(function AirQualityCards({
   currentData,
   isConnected,
 }: AirQualityCardsProps) {
   const { t } = useTranslation();
   const { getAirQualityLevel } = useThresholds();
 
-  if (!isConnected || !currentData) {
+  // Memoize quality calculations to avoid recalculation on every render
+  const qualityData = useMemo(() => {
+    if (!currentData) return null;
+    
+    return {
+      pm25: getAirQualityLevel(currentData.pm25, 'pm25'),
+      pm1: getAirQualityLevel(currentData.pm1, 'pm1'),
+      pm10: getAirQualityLevel(currentData.pm10, 'pm10'),
+      roundedValues: {
+        pm1: Math.round(currentData.pm1),
+        pm25: Math.round(currentData.pm25),
+        pm10: Math.round(currentData.pm10),
+      },
+      timestamp: currentData.timestamp.toLocaleTimeString(),
+    };
+  }, [currentData, getAirQualityLevel]);
+
+  if (!isConnected || !currentData || !qualityData) {
     return (
       <>
         <div className="grid grid-cols-3 gap-3 mb-4">
@@ -62,9 +80,7 @@ export function AirQualityCards({
     );
   }
 
-  const pm25Quality = getAirQualityLevel(currentData.pm25, 'pm25');
-  const pm1Quality = getAirQualityLevel(currentData.pm1, 'pm1');
-  const pm10Quality = getAirQualityLevel(currentData.pm10, 'pm10');
+  const { pm25: pm25Quality, pm1: pm1Quality, pm10: pm10Quality, roundedValues, timestamp } = qualityData;
 
   return (
     <>
@@ -80,7 +96,7 @@ export function AirQualityCards({
               className="text-3xl font-bold mb-1"
               style={{ color: `hsl(var(--${pm1Quality.color}))` }}
             >
-              {Math.round(currentData.pm1)}
+              {roundedValues.pm1}
             </div>
             <div className="text-sm font-medium text-muted-foreground">PM1</div>
             <div className="text-xs text-muted-foreground">μg/m³</div>
@@ -98,7 +114,7 @@ export function AirQualityCards({
               className="text-3xl font-bold mb-1"
               style={{ color: `hsl(var(--${pm25Quality.color}))` }}
             >
-              {Math.round(currentData.pm25)}
+              {roundedValues.pm25}
             </div>
             <div className="text-sm font-medium text-muted-foreground">
               PM2.5
@@ -127,7 +143,7 @@ export function AirQualityCards({
               className="text-3xl font-bold mb-1"
               style={{ color: `hsl(var(--${pm10Quality.color}))` }}
             >
-              {Math.round(currentData.pm10)}
+              {roundedValues.pm10}
             </div>
             <div className="text-sm font-medium text-muted-foreground">
               PM10
@@ -139,9 +155,10 @@ export function AirQualityCards({
 
       {/* Real-time Status */}
       <div className="text-center text-xs text-muted-foreground mb-4">
-        {t('realTime.lastMeasurement')} :{' '}
-        {currentData.timestamp.toLocaleTimeString()}
+        {t('realTime.lastMeasurement')} : {timestamp}
       </div>
     </>
   );
-}
+});
+
+export { AirQualityCards };

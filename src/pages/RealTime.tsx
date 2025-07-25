@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
@@ -21,9 +21,15 @@ import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
 
 export default function RealTime() {
+  const [isPageReady, setIsPageReady] = useState(false);
+  
   useEffect(() => {
     logger.debug('RealTime: Component initializing');
     logger.debug('RealTime: About to call useAutoContext');
+    
+    // Mark page as ready after initial render to improve LCP
+    const timer = setTimeout(() => setIsPageReady(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -53,7 +59,7 @@ export default function RealTime() {
     latestLocation,
     locationEnabled,
     requestLocationPermission,
-  } = useAutoContext(isRecording); // Only scan when recording
+  } = useAutoContext(isRecording && isPageReady); // Only scan when recording and page is ready
   
   const { weatherData, fetchWeatherData } = useWeatherData();
   
@@ -62,7 +68,7 @@ export default function RealTime() {
   
   const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
     recordingFrequency,
-    isRecording,
+    isRecording: isRecording && isPageReady,
   });
   
   useEffect(() => {

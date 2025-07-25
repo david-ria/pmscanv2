@@ -184,37 +184,53 @@ export function usePMScanBluetooth() {
 
   // Check for existing connection on component mount and re-establish event listeners
   useEffect(() => {
+    let mounted = true;
     const manager = connectionManager;
 
-    if (manager.isConnected()) {
-      setIsConnected(true);
+    // Use requestIdleCallback for non-critical connection check to improve LCP
+    const idleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 0));
+    
+    idleCallback(() => {
+      if (!mounted) return;
+      
+      if (manager.isConnected()) {
+        setIsConnected(true);
 
-      // Re-establish event listeners for the existing connection
-      manager
-        .reestablishEventListeners(
-          handleRTData,
-          handleIMData,
-          handleBatteryData,
-          handleChargingData
-        )
-        .then((deviceInfo) => {
-          if (deviceInfo) {
-            setDevice(deviceInfo);
-            logger.debug(
-              '🔄 Restored existing PMScan connection with event listeners'
-            );
-          }
-        })
-        .catch((error) => {
-          console.error('❌ Failed to restore connection:', error);
-          setError('Failed to restore connection');
-        });
-    } else {
-      // Ensure state is clean if no connection exists
-      setIsConnected(false);
-      setDevice(null);
-      setCurrentData(null);
-    }
+        // Re-establish event listeners for the existing connection
+        manager
+          .reestablishEventListeners(
+            handleRTData,
+            handleIMData,
+            handleBatteryData,
+            handleChargingData
+          )
+          .then((deviceInfo) => {
+            if (!mounted) return;
+            if (deviceInfo) {
+              setDevice(deviceInfo);
+              logger.debug(
+                '🔄 Restored existing PMScan connection with event listeners'
+              );
+            }
+          })
+          .catch((error) => {
+            if (!mounted) return;
+            console.error('❌ Failed to restore connection:', error);
+            setError('Failed to restore connection');
+          });
+      } else {
+        // Ensure state is clean if no connection exists
+        if (mounted) {
+          setIsConnected(false);
+          setDevice(null);
+          setCurrentData(null);
+        }
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
   }, [handleRTData, handleIMData, handleBatteryData, handleChargingData]);
 
   return {
