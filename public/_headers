@@ -1,22 +1,54 @@
+# Optimized caching strategy for TTFB optimization
+
+# Static assets - Long-term caching with immutable
 /assets/js/*.js
   Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
 
 /assets/css/*.css
   Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
 
 /assets/images/*
   Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
 
 /assets/fonts/*
   Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+  Access-Control-Allow-Origin: *
 
 # Service worker should not be cached
 /sw.js
-  Cache-Control: no-cache
+  Cache-Control: no-cache, no-store, must-revalidate
+  X-Content-Type-Options: nosniff
 
-# Main HTML should have short cache
+# HTML resources - Optimized for bfcache and TTFB
 /
   Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
 
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# API responses - Short cache with revalidation
+/api/*
+  Cache-Control: public, max-age=60, must-revalidate
+  X-Content-Type-Options: nosniff
+
+# Manifest and service worker related
+/*.json
+  Cache-Control: public, max-age=86400
+  X-Content-Type-Options: nosniff
+
+# Enable compression for all text-based resources
+/*
+  X-Content-Type-Options: nosniff
+  Vary: Accept-Encoding

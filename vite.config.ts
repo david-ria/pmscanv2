@@ -5,7 +5,7 @@ import type { PluginOption } from 'vite';
 import type { PreRenderedAsset } from 'rollup';
 
 // https://vitejs.dev/config/
-export default defineConfig(async ({ mode }) => {
+export default defineConfig(({ mode }) => {
   const plugins: PluginOption[] = [react()];
 
   // Note: componentTagger temporarily disabled to prevent console errors
@@ -26,6 +26,8 @@ export default defineConfig(async ({ mode }) => {
     server: {
       host: '::',
       port: 8080,
+      // Enable HTTP/2 for development (requires HTTPS setup)
+      // https: true, // Can be enabled with SSL certificates
     },
     plugins,
     resolve: {
@@ -123,10 +125,16 @@ export default defineConfig(async ({ mode }) => {
           },
         },
       },
-      // Optimize assets for caching
+      // Optimize assets for caching and TTFB
       assetsInlineLimit: 4096, // Inline small assets as base64
       cssCodeSplit: true, // Split CSS into separate files with hashes
       sourcemap: false, // Disable source maps in production for better performance
+      // Enable compression and minification
+      minify: 'esbuild',
+      // Target modern browsers for better optimization
+      target: 'es2022',
+      // Optimize chunk size warnings
+      chunkSizeWarningLimit: 1000,
     },
     test: {
       environment: 'jsdom',
