@@ -150,6 +150,7 @@
     "graph": "Graph",
     "satellite": "Satellite",
     "connectionRequired": "Connection required for map view",
+    "mapWillLoadWhenRecording": "Map will load when recording starts",
     "connectSensor": "Connect your PMScan sensor to see real-time data",
     "lastMeasurement": "Last measurement",
     "airQuality": {
