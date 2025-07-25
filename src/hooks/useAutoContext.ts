@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import * as tf from '@tensorflow/tfjs';
+// Lazy load TensorFlow to reduce initial bundle size
 import * as logger from '@/utils/logger';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
@@ -63,7 +63,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
   const [latestContext, setLatestContext] = useState<string>('');
-  const [model, setModel] = useState<tf.LayersModel | null>(null);
+  const [model, setModel] = useState<any | null>(null);
   const homeCountsKey = 'homeWifiCounts';
   const workCountsKey = 'workWifiCounts';
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(
@@ -113,12 +113,17 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
 
   useEffect(() => {
     if (settings.mlEnabled && !model) {
-      tf.loadLayersModel('/model/model.json')
-        .then(setModel)
-        .catch((err) => {
-          console.error('Failed to load ML model', err);
-          setModel(null);
-        });
+      // Lazy load TensorFlow only when ML is enabled
+      import('@tensorflow/tfjs').then(tf => {
+        tf.loadLayersModel('/model/model.json')
+          .then(setModel)
+          .catch((err) => {
+            console.error('Failed to load ML model', err);
+            setModel(null);
+          });
+      }).catch(err => {
+        console.error('Failed to load TensorFlow', err);
+      });
     }
   }, [settings.mlEnabled, model]);
 
@@ -157,29 +162,35 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
       const connectionType = connection.type;
       const effectiveType = connection.effectiveType;
       
-      console.log('Network connection details:', {
-        type: connectionType,
-        effectiveType: effectiveType,
-        downlink: connection.downlink,
-        rtt: connection.rtt
-      });
+      // Use rate-limited logging to prevent excessive console spam
+      logger.rateLimitedDebug(
+        'autocontext.network',
+        30000, // Log at most once every 30 seconds
+        'Network connection details:',
+        {
+          type: connectionType,
+          effectiveType: effectiveType,
+          downlink: connection.downlink,
+          rtt: connection.rtt
+        }
+      );
       
       // Check if connection type indicates WiFi
       if (connectionType === 'wifi' || connectionType === 'ethernet') {
-        console.log('WiFi detection - detected WiFi connection');
+        logger.rateLimitedDebug('autocontext.wifi', 30000, 'WiFi detection - detected WiFi connection');
         return 'WiFi-Connection';
       } else if (connectionType === 'cellular') {
-        console.log('WiFi detection - detected cellular connection');
+        logger.rateLimitedDebug('autocontext.cellular', 30000, 'WiFi detection - detected cellular connection');
         return '';
       } else if (effectiveType && ['4g', '3g'].includes(effectiveType)) {
         // High-speed connection but unclear type - be conservative
-        console.log('WiFi detection - high-speed connection, type unclear');
+        logger.rateLimitedDebug('autocontext.highspeed', 30000, 'WiFi detection - high-speed connection, type unclear');
         return ''; // Don't assume WiFi
       }
     }
     
     // Fallback: don't assume WiFi if we can't detect it properly
-    console.log('WiFi detection - Network API not available or inconclusive, not assuming WiFi');
+    logger.rateLimitedDebug('autocontext.fallback', 30000, 'WiFi detection - Network API not available or inconclusive, not assuming WiFi');
     return '';
   }, []);
 
@@ -274,7 +285,8 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
   );
 
   const convertToTensor = useCallback(
-    (inputs: AutoContextInputs): tf.Tensor => {
+    async (inputs: AutoContextInputs): Promise<any> => {
+      const tf = await import('@tensorflow/tfjs');
       const { location, speed = 0, isMoving = false } = inputs;
       const wifiId =
         currentWifiSSID === settings.homeWifiSSID
@@ -568,9 +580,10 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
       // Apply ML model if enabled and available
       if (settings.mlEnabled && model) {
         try {
+          const tf = await import('@tensorflow/tfjs');
           const mlState = tf.tidy(() => {
             const tensor = convertToTensor({ ...inputs, isMoving });
-            const prediction = model.predict(tensor) as tf.Tensor;
+            const prediction = model.predict(tensor) as any;
             const index = prediction.argMax(-1).dataSync()[0];
             return MODEL_LABELS[index];
           });
