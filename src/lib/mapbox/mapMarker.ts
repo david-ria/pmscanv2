@@ -1,6 +1,8 @@
-import mapboxgl from 'mapbox-gl';
 import { LocationData } from '@/types/PMScan';
 import { getQualityColor } from './mapStyles';
+
+// Dynamic import types for better tree shaking
+type MapboxMap = any;
 
 interface PMData {
   pm1: number;
@@ -10,15 +12,15 @@ interface PMData {
 }
 
 export const createLocationMarker = (
-  map: mapboxgl.Map,
+  map: MapboxMap,
   currentLocation: LocationData,
   pmData: PMData | null,
   getAirQualityLevel: (
     value: number,
     type: string
   ) => { level: string; color: string },
-  existingMarker?: mapboxgl.Marker | null
-): mapboxgl.Marker => {
+  existingMarker?: any | null
+): any => {
   const { longitude, latitude } = currentLocation;
 
   // Remove existing marker
@@ -72,14 +74,17 @@ export const createLocationMarker = (
 
   popupContent += '</div>';
 
-  // Create new marker
-  const marker = new mapboxgl.Marker({
-    color: pmData ? '#3b82f6' : '#6b7280',
-    scale: 0.8,
-  })
-    .setLngLat([longitude, latitude])
-    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent))
-    .addTo(map);
+  // Create marker using dynamic Mapbox instance
+  let marker = null;
+  if ((map as any)._createMarker && (map as any)._createPopup) {
+    marker = (map as any)._createMarker({
+      color: pmData ? '#3b82f6' : '#6b7280',
+      scale: 0.8,
+    })
+      .setLngLat([longitude, latitude])
+      .setPopup((map as any)._createPopup({ offset: 25 }).setHTML(popupContent))
+      .addTo(map);
+  }
 
   // Center map on new location
   map.flyTo({

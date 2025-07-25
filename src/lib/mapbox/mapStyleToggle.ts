@@ -1,9 +1,11 @@
-import mapboxgl from 'mapbox-gl';
 import { MAP_STYLES, createMapStyleExpression } from './mapStyles';
 import { reAddEventListeners } from './mapEventHandlers';
 
+// Dynamic import types for better tree shaking
+type MapboxMap = any;
+
 export const toggleMapStyle = (
-  map: mapboxgl.Map,
+  map: MapboxMap,
   isSatellite: boolean,
   trackPoints: Array<{
     longitude: number;

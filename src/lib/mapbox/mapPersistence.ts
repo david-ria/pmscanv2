@@ -1,4 +1,5 @@
-import mapboxgl from 'mapbox-gl';
+// Dynamic import types for better tree shaking  
+type MapboxMap = any;
 
 interface MapState {
   center: [number, number];
@@ -8,7 +9,7 @@ interface MapState {
 
 const MAP_STATE_KEY = 'pmscan_map_state';
 
-export const saveMapState = (map: mapboxgl.Map) => {
+export const saveMapState = (map: MapboxMap) => {
   try {
     const state: MapState = {
       center: [map.getCenter().lng, map.getCenter().lat],
@@ -41,7 +42,7 @@ export const loadMapState = (): MapState | null => {
   return null;
 };
 
-export const setupMapStatePersistence = (map: mapboxgl.Map) => {
+export const setupMapStatePersistence = (map: MapboxMap) => {
   // Save state when the map stops moving
   const saveState = () => saveMapState(map);
 

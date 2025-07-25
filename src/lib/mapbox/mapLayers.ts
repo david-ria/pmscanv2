@@ -1,7 +1,9 @@
-import mapboxgl from 'mapbox-gl';
 import { createMapStyleExpression } from './mapStyles';
 
-export const addTrackDataSources = (map: mapboxgl.Map) => {
+// Dynamic import types for better tree shaking
+type MapboxMap = any;
+
+export const addTrackDataSources = (map: MapboxMap) => {
   // Add data sources for track visualization only if they don't exist
   if (!map.getSource('track-line')) {
     map.addSource('track-line', {
@@ -28,7 +30,7 @@ export const addTrackDataSources = (map: mapboxgl.Map) => {
   }
 };
 
-export const addTrackLayers = (map: mapboxgl.Map, thresholds: any) => {
+export const addTrackLayers = (map: MapboxMap, thresholds: any) => {
   // Add track line layer only if it doesn't exist
   if (!map.getLayer('track-line')) {
     map.addLayer({
@@ -70,7 +72,7 @@ export const addTrackLayers = (map: mapboxgl.Map, thresholds: any) => {
 };
 
 export const updateTrackData = (
-  map: mapboxgl.Map,
+  map: MapboxMap,
   trackPoints: Array<{
     longitude: number;
     latitude: number;
@@ -96,7 +98,7 @@ export const updateTrackData = (
   }));
 
   // Update track points
-  (map.getSource('track-points') as mapboxgl.GeoJSONSource).setData({
+  (map.getSource('track-points') as any).setData({
     type: 'FeatureCollection',
     features,
   });
@@ -107,7 +109,7 @@ export const updateTrackData = (
       point.longitude,
       point.latitude,
     ]);
-    (map.getSource('track-line') as mapboxgl.GeoJSONSource).setData({
+    (map.getSource('track-line') as any).setData({
       type: 'Feature',
       properties: {},
       geometry: {
@@ -123,7 +125,8 @@ export const updateTrackData = (
       point.longitude,
       point.latitude,
     ]);
-    const bounds = new mapboxgl.LngLatBounds();
+    // Create bounds dynamically through map instance
+    const bounds = (map as any)._createBounds ? (map as any)._createBounds() : null;
 
     if (coordinates.length === 1) {
       // For single point, center on it with a reasonable zoom
@@ -131,19 +134,21 @@ export const updateTrackData = (
       map.setZoom(15);
     } else {
       // For multiple points, fit bounds
-      coordinates.forEach((coord) => {
-        bounds.extend(coord as [number, number]);
-      });
+      if (bounds) {
+        coordinates.forEach((coord) => {
+          bounds.extend(coord as [number, number]);
+        });
 
-      map.fitBounds(bounds, {
-        padding: 50,
-        duration: 1000,
-      });
+        map.fitBounds(bounds, {
+          padding: 50,
+          duration: 1000,
+        });
+      }
     }
   }
 };
 
-export const updateLayerStyles = (map: mapboxgl.Map, thresholds: any) => {
+export const updateLayerStyles = (map: MapboxMap, thresholds: any) => {
   if (!map.getLayer('track-points')) return;
 
   // Update the circle color expression with new thresholds

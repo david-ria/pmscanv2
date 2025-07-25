@@ -1,6 +1,7 @@
-import mapboxgl from 'mapbox-gl';
+// Dynamic import types for better tree shaking
+type MapboxMap = any;
 
-export const addTrackPointEventListeners = (map: mapboxgl.Map) => {
+export const addTrackPointEventListeners = (map: MapboxMap) => {
   // Add hover effects for track points
   map.on('mouseenter', 'track-points', (e) => {
     map.getCanvas().style.cursor = 'pointer';
@@ -12,10 +13,10 @@ export const addTrackPointEventListeners = (map: mapboxgl.Map) => {
         { hovered: true }
       );
 
-      // Show popup with PM data
+      // Show popup with PM data - Popup will be created dynamically by the parent
       const properties = feature.properties;
-      if (properties) {
-        const popup = new mapboxgl.Popup({
+      if (properties && (map as any)._dynamicPopup) {
+        const popup = (map as any)._dynamicPopup({
           offset: 25,
           closeButton: false,
         })
@@ -54,7 +55,7 @@ export const addTrackPointEventListeners = (map: mapboxgl.Map) => {
   });
 };
 
-export const reAddEventListeners = (map: mapboxgl.Map) => {
+export const reAddEventListeners = (map: MapboxMap) => {
   // Re-add event listeners after style change
   map.on('mouseenter', 'track-points', (e) => {
     map.getCanvas().style.cursor = 'pointer';
@@ -67,8 +68,8 @@ export const reAddEventListeners = (map: mapboxgl.Map) => {
       );
 
       const properties = feature.properties;
-      if (properties) {
-        const popup = new mapboxgl.Popup({
+      if (properties && (map as any)._dynamicPopup) {
+        const popup = (map as any)._dynamicPopup({
           offset: 25,
           closeButton: false,
         })
