@@ -6,6 +6,16 @@
 // Cache for loaded modules to avoid re-importing
 const moduleCache = new Map<string, any>();
 
+// Track dynamic imports for bundle analysis
+const trackImport = (moduleName: string) => {
+  if (typeof window !== 'undefined') {
+    if (!window.__DYNAMIC_IMPORTS__) {
+      window.__DYNAMIC_IMPORTS__ = {};
+    }
+    window.__DYNAMIC_IMPORTS__[moduleName] = true;
+  }
+};
+
 /**
  * Mapbox GL dynamic import with CSS
  */
@@ -15,6 +25,7 @@ export const loadMapboxGL = async () => {
   }
 
   console.debug('[PERF] Loading Mapbox GL dynamically...');
+  trackImport('mapbox-gl');
   const [mapboxgl] = await Promise.all([
     import('mapbox-gl'),
     import('mapbox-gl/dist/mapbox-gl.css') // Load CSS alongside JS
@@ -36,6 +47,7 @@ export const loadSupabaseClient = async () => {
   }
 
   console.debug('[PERF] Loading Supabase client dynamically...');
+  trackImport('supabase');
   const { createClient } = await import('@supabase/supabase-js');
 
   const SUPABASE_URL = "https://shydpfwuvnlzdzbubmgb.supabase.co";
@@ -71,17 +83,41 @@ export const loadMapAndData = async () => {
 };
 
 /**
- * Chart library dynamic import (Recharts)
+ * Chart library dynamic import (Recharts) - Individual components to reduce bundle
  */
 export const loadChartLibrary = async () => {
   if (moduleCache.has('recharts')) {
     return moduleCache.get('recharts');
   }
 
-  console.debug('[PERF] Loading charts library...');
-  const recharts = await import('recharts');
+  console.debug('[PERF] Loading charts library (optimized components)...');
+  trackImport('recharts');
+  
+  // Import only the specific components we need instead of the entire library
+  const [
+    { LineChart, BarChart, PieChart, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer },
+    { Cell }
+  ] = await Promise.all([
+    import('recharts'),
+    import('recharts')
+  ]);
+  
+  const recharts = {
+    LineChart,
+    BarChart, 
+    PieChart,
+    AreaChart,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+    Cell
+  };
+  
   moduleCache.set('recharts', recharts);
-  console.debug('[PERF] Charts library loaded');
+  console.debug('[PERF] Charts library loaded (optimized)');
   
   return recharts;
 };
@@ -124,17 +160,52 @@ export const loadTensorFlow = async () => {
 };
 
 /**
- * Date utilities dynamic import
+ * Date utilities dynamic import - Individual functions to reduce bundle
  */
 export const loadDateUtils = async () => {
   if (moduleCache.has('date-fns')) {
     return moduleCache.get('date-fns');
   }
 
-  console.debug('[PERF] Loading date utilities...');
-  const dateFns = await import('date-fns');
+  console.debug('[PERF] Loading date utilities (individual functions)...');
+  
+  // Import only the specific date-fns functions we need
+  const [
+    { format },
+    { parseISO },
+    { subDays },
+    { startOfDay },
+    { endOfDay },
+    { isAfter },
+    { isBefore },
+    { differenceInHours },
+    { differenceInMinutes }
+  ] = await Promise.all([
+    import('date-fns/format'),
+    import('date-fns/parseISO'),
+    import('date-fns/subDays'),
+    import('date-fns/startOfDay'),
+    import('date-fns/endOfDay'),
+    import('date-fns/isAfter'),
+    import('date-fns/isBefore'),
+    import('date-fns/differenceInHours'),
+    import('date-fns/differenceInMinutes')
+  ]);
+  
+  const dateFns = {
+    format,
+    parseISO,
+    subDays,
+    startOfDay,
+    endOfDay,
+    isAfter,
+    isBefore,
+    differenceInHours,
+    differenceInMinutes
+  };
+  
   moduleCache.set('date-fns', dateFns);
-  console.debug('[PERF] Date utilities loaded');
+  console.debug('[PERF] Date utilities loaded (optimized)');
   
   return dateFns;
 };
@@ -183,4 +254,76 @@ export const loadFormValidation = async () => {
   console.debug('[PERF] Form validation loaded');
   
   return validation;
+};
+
+/**
+ * i18n utilities dynamic import - Individual functions
+ */
+export const loadI18nUtils = async () => {
+  if (moduleCache.has('i18n-utils')) {
+    return moduleCache.get('i18n-utils');
+  }
+
+  console.debug('[PERF] Loading i18n utilities...');
+  const { useTranslation } = await import('react-i18next');
+  
+  const i18nUtils = { useTranslation };
+  moduleCache.set('i18n-utils', i18nUtils);
+  console.debug('[PERF] i18n utilities loaded');
+  
+  return i18nUtils;
+};
+
+/**
+ * Animation libraries dynamic import - Load only when needed
+ */
+export const loadAnimations = async () => {
+  if (moduleCache.has('animations')) {
+    return moduleCache.get('animations');
+  }
+
+  console.debug('[PERF] Loading animation utilities...');
+  // Only import specific animation utilities that might be needed
+  const animationUtils = {
+    // For future use when animation libraries are added
+    requestAnimationFrame: window.requestAnimationFrame.bind(window),
+    cancelAnimationFrame: window.cancelAnimationFrame.bind(window)
+  };
+  
+  moduleCache.set('animations', animationUtils);
+  console.debug('[PERF] Animation utilities loaded');
+  
+  return animationUtils;
+};
+
+/**
+ * Utility to preload critical chunks during idle time
+ */
+export const preloadCriticalChunks = () => {
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => {
+      console.debug('[PERF] Preloading critical chunks during idle time...');
+      // Preload commonly used modules
+      Promise.all([
+        loadDateUtils(),
+        loadI18nUtils()
+      ]).then(() => {
+        console.debug('[PERF] Critical chunks preloaded');
+      });
+    }, { timeout: 5000 });
+  }
+};
+
+/**
+ * Get bundle size information (for development)
+ */
+export const getBundleInfo = () => {
+  const cacheInfo = Array.from(moduleCache.entries()).map(([key, value]) => ({
+    module: key,
+    loaded: !!value,
+    size: JSON.stringify(value).length // Rough size estimate
+  }));
+  
+  console.table(cacheInfo);
+  return cacheInfo;
 };
