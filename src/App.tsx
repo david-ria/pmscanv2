@@ -32,13 +32,30 @@ const CrashRecoveryInitializer = lazy(() =>
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
 
-// Loading fallback component
-const LoadingSpinner = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-      <p className="text-muted-foreground">Chargement...</p>
-    </div>
+// Import skeleton screens
+const AppLayoutSkeleton = lazy(() => 
+  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.AppLayoutSkeleton }))
+);
+const RealTimePageSkeleton = lazy(() => 
+  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.RealTimePageSkeleton }))
+);
+const HistoryPageSkeleton = lazy(() => 
+  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.HistoryPageSkeleton }))
+);
+const AnalysisPageSkeleton = lazy(() => 
+  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.AnalysisPageSkeleton }))
+);
+const GroupsPageSkeleton = lazy(() => 
+  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.GroupsPageSkeleton }))
+);
+const ProfilePageSkeleton = lazy(() => 
+  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.ProfilePageSkeleton }))
+);
+
+// Minimal fallback for critical loading states
+const MinimalSkeleton = () => (
+  <div className="min-h-screen bg-background animate-pulse flex items-center justify-center">
+    <div className="w-8 h-8 bg-muted rounded animate-pulse" />
   </div>
 );
 
@@ -49,7 +66,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <div className="relative min-h-screen">
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
             <AppProviders>
               <AppRoutes />
             </AppProviders>
@@ -71,13 +88,13 @@ const AppRoutes = () => {
   }, []);
   
   if (!authHook) {
-    return <LoadingSpinner />;
+    return <MinimalSkeleton />;
   }
   
   const { user, loading } = authHook();
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <MinimalSkeleton />;
   }
 
   return (
@@ -85,7 +102,7 @@ const AppRoutes = () => {
       <Route
         path="/auth"
         element={
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={<MinimalSkeleton />}>
             {!user ? <Auth /> : <Navigate to="/" replace />}
           </Suspense>
         }
@@ -94,7 +111,7 @@ const AppRoutes = () => {
         path="/*"
         element={
           user ? (
-            <Suspense fallback={<LoadingSpinner />}>
+            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
               <RecordingProvider>
                 <CrashRecoveryInitializer />
                 <div className="min-h-screen bg-background">
@@ -104,7 +121,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/" 
                         element={
-                          <Suspense fallback={<LoadingSpinner />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><RealTimePageSkeleton /></Suspense>}>
                             <RealTime />
                           </Suspense>
                         } 
@@ -112,7 +129,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/history" 
                         element={
-                          <Suspense fallback={<LoadingSpinner />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><HistoryPageSkeleton /></Suspense>}>
                             <History />
                           </Suspense>
                         } 
@@ -120,7 +137,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/analysis" 
                         element={
-                          <Suspense fallback={<LoadingSpinner />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AnalysisPageSkeleton /></Suspense>}>
                             <Analysis />
                           </Suspense>
                         } 
@@ -128,7 +145,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/groups" 
                         element={
-                          <Suspense fallback={<LoadingSpinner />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><GroupsPageSkeleton /></Suspense>}>
                             <Groups />
                           </Suspense>
                         } 
@@ -136,7 +153,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/profile" 
                         element={
-                          <Suspense fallback={<LoadingSpinner />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
                             <Profile />
                           </Suspense>
                         } 
@@ -144,7 +161,7 @@ const AppRoutes = () => {
                       <Route
                         path="/custom-thresholds"
                         element={
-                          <Suspense fallback={<LoadingSpinner />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
                             <CustomThresholds />
                           </Suspense>
                         }
@@ -152,7 +169,7 @@ const AppRoutes = () => {
                       <Route
                         path="/custom-alerts"
                         element={
-                          <Suspense fallback={<LoadingSpinner />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
                             <CustomAlerts />
                           </Suspense>
                         }
@@ -160,7 +177,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/my-settings" 
                         element={
-                          <Suspense fallback={<LoadingSpinner />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
                             <MySettings />
                           </Suspense>
                         } 
@@ -168,7 +185,7 @@ const AppRoutes = () => {
                       <Route 
                         path="*" 
                         element={
-                          <Suspense fallback={<LoadingSpinner />}>
+                          <Suspense fallback={<MinimalSkeleton />}>
                             <NotFound />
                           </Suspense>
                         } 

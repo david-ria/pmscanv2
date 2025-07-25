@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PMScanData } from '@/lib/pmscan/types';
 import { useTranslation } from 'react-i18next';
 import { useThresholds } from '@/contexts/ThresholdContext';
@@ -33,7 +34,30 @@ const AirQualityCards = memo(function AirQualityCards({
     };
   }, [currentData, getAirQualityLevel]);
 
-  if (!isConnected || !currentData || !qualityData) {
+  // Show skeleton while loading/connecting
+  if (!isConnected && !currentData) {
+    return (
+      <>
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="text-center">
+              <CardContent className="p-4">
+                <Skeleton className="h-9 w-12 mx-auto mb-2" />
+                <Skeleton className="h-4 w-8 mx-auto mb-1" />
+                <Skeleton className="h-3 w-10 mx-auto" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="text-center mb-4">
+          <Skeleton className="h-4 w-48 mx-auto" />
+        </div>
+      </>
+    );
+  }
+
+  // Show "no data" state when connected but no data
+  if (!currentData || !qualityData) {
     return (
       <>
         <div className="grid grid-cols-3 gap-3 mb-4">
