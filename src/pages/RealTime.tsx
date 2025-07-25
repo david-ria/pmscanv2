@@ -42,33 +42,18 @@ const RecordingFrequencyDialog = lazy(() =>
 );
 
 export default function RealTime() {
-  const [isPageReady, setIsPageReady] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
+  // Immediate render state - no delays
+  const [showCriticalOnly, setShowCriticalOnly] = useState(true);
   
   useEffect(() => {
     logger.debug('RealTime: Component initializing');
     
-    // Use startTransition to mark updates as non-urgent
-    startTransition(() => {
-      setIsPageReady(true);
-    });
+    // Load critical content immediately, then rest after paint
+    const timer = setTimeout(() => {
+      setShowCriticalOnly(false);
+    }, 16); // After one frame
     
-    // Defer hydration of heavy components to improve initial render
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => {
-        startTransition(() => {
-          setIsHydrated(true);
-        });
-      }, { timeout: 1000 });
-    } else {
-      // Fallback for browsers without requestIdleCallback  
-      const timer = setTimeout(() => {
-        startTransition(() => {
-          setIsHydrated(true);
-        });
-      }, 50);
-      return () => clearTimeout(timer);
-    }
+    return () => clearTimeout(timer);
   }, []);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -98,7 +83,7 @@ export default function RealTime() {
     latestLocation,
     locationEnabled,
     requestLocationPermission,
-  } = useAutoContext(isRecording && isPageReady); // Only scan when recording and page is ready
+  } = useAutoContext(isRecording && !showCriticalOnly); // Only scan when recording and ready
   
   const { weatherData, fetchWeatherData } = useWeatherData();
   
@@ -107,7 +92,7 @@ export default function RealTime() {
   
   const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
     recordingFrequency,
-    isRecording: isRecording && isPageReady,
+    isRecording: isRecording && !showCriticalOnly,
   });
   
   useEffect(() => {
@@ -127,7 +112,7 @@ export default function RealTime() {
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
 
   useEffect(() => {
-    if (isRecording && currentData && isPageReady) {
+    if (isRecording && currentData && !showCriticalOnly) {
       // Prevent duplicate data points by checking if this is actually new data
       const currentTimestamp = currentData.timestamp.getTime();
       const isDuplicate =
@@ -200,22 +185,22 @@ export default function RealTime() {
     selectedLocation,
     selectedActivity,
     updateContextIfNeeded,
-    isPageReady,
+    showCriticalOnly,
   ]);
 
   // Clear location history when recording starts for fresh speed calculations
   useEffect(() => {
-    if (isRecording && isPageReady) {
+    if (isRecording && !showCriticalOnly) {
       import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
         clearLocationHistory();
         console.log('🏃 Cleared location history for new recording session');
       });
     }
-  }, [isRecording, isPageReady]);
+  }, [isRecording, showCriticalOnly]);
 
   // Initial autocontext effect - runs only when autocontext is toggled
   useEffect(() => {
-    if (isPageReady) {
+    if (!showCriticalOnly) {
       console.log('Autocontext effect triggered:', { 
         autoContextEnabled, 
         hasCurrentData: !!currentData, 
@@ -232,21 +217,21 @@ export default function RealTime() {
         );
       }
     }
-  }, [autoContextEnabled, forceContextUpdate, isPageReady]); // Only run when autocontext is toggled
+  }, [autoContextEnabled, forceContextUpdate, showCriticalOnly]); // Only run when autocontext is toggled
 
   // Check alerts whenever new data comes in
   useEffect(() => {
-    if (currentData && isPageReady) {
+    if (currentData && !showCriticalOnly) {
       checkAlerts(currentData.pm1, currentData.pm25, currentData.pm10);
     }
-  }, [currentData, checkAlerts, isPageReady]);
+  }, [currentData, checkAlerts, showCriticalOnly]);
 
   // Fetch weather data when location changes
   useEffect(() => {
-    if (latestLocation && isPageReady) {
+    if (latestLocation && !showCriticalOnly) {
       fetchWeatherData(latestLocation);
     }
-  }, [latestLocation, fetchWeatherData, isPageReady]);
+  }, [latestLocation, fetchWeatherData, showCriticalOnly]);
 
   // Initialize local state from mission context on mount only
   useEffect(() => {
@@ -273,12 +258,12 @@ export default function RealTime() {
 
   // Fetch events for the current mission
   useEffect(() => {
-    if (currentMissionId && isPageReady) {
+    if (currentMissionId && !showCriticalOnly) {
       getEventsByMission(currentMissionId).then(setCurrentEvents);
     } else {
       setCurrentEvents([]);
     }
-  }, [currentMissionId, getEventsByMission, isPageReady]);
+  }, [currentMissionId, getEventsByMission, showCriticalOnly]);
 
   // Reset frequency dialog flag when device disconnects
   useEffect(() => {
@@ -313,17 +298,15 @@ export default function RealTime() {
     }
   };
 
-  // Early return with minimal UI if not hydrated - Critical for LCP
-  if (!isHydrated) {
+  // Critical path: Show only essential content first
+  if (showCriticalOnly) {
     return (
       <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-        {/* Air Quality Cards - Critical for LCP, show immediately */}
-        <AirQualityCards currentData={currentData} isConnected={isConnected} />
-        
-        {/* Loading placeholders for other components */}
-        <div className="h-64 bg-muted/10 rounded-lg animate-pulse mb-4" />
-        <div className="h-20 bg-muted/10 rounded-lg animate-pulse mb-4" />
-        <div className="h-16 bg-muted/10 rounded-lg animate-pulse mb-4" />
+        {/* Critical content only - fastest LCP */}
+        <div className="text-center p-8">
+          <h1 className="text-2xl font-semibold mb-2">AirSentinels</h1>
+          <p className="text-muted-foreground">Loading air quality data...</p>
+        </div>
       </div>
     );
   }
