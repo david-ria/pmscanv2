@@ -340,6 +340,13 @@ export default function RealTime() {
           showGraph={showGraph}
           onToggleView={setShowGraph}
           isOnline={isOnline}
+          device={device}
+          isConnected={isConnected}
+          onConnect={requestDevice}
+          onDisconnect={disconnect}
+          onStartRecording={() => setShowFrequencyDialog(true)}
+          locationEnabled={locationEnabled}
+          latestLocation={latestLocation}
         />
       )}
 

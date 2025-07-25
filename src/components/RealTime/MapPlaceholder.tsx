@@ -1,14 +1,35 @@
 import { Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SimpleRecordButton } from './SimpleRecordButton';
 import { useTranslation } from 'react-i18next';
+import { PMScanDevice } from '@/lib/pmscan/types';
+import { LocationData } from '@/types/PMScan';
 
 interface MapPlaceholderProps {
   showGraph: boolean;
   onToggleView: (showGraph: boolean) => void;
   isOnline: boolean;
+  device: PMScanDevice | null;
+  isConnected: boolean;
+  onConnect: () => void;
+  onDisconnect: () => void;
+  onStartRecording: () => void;
+  locationEnabled: boolean;
+  latestLocation: LocationData | null;
 }
 
-export function MapPlaceholder({ showGraph, onToggleView, isOnline }: MapPlaceholderProps) {
+export function MapPlaceholder({ 
+  showGraph, 
+  onToggleView, 
+  isOnline,
+  device,
+  isConnected,
+  onConnect,
+  onDisconnect,
+  onStartRecording,
+  locationEnabled,
+  latestLocation
+}: MapPlaceholderProps) {
   const { t } = useTranslation();
 
   return (
@@ -38,13 +59,21 @@ export function MapPlaceholder({ showGraph, onToggleView, isOnline }: MapPlaceho
       </div>
 
       {/* Simple placeholder content */}
-      <div className="h-[45vh] flex items-center justify-center bg-muted/20 border border-border rounded-lg">
-        <div className="text-center">
-          <Map className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">
-            {t('realTime.mapWillLoadWhenRecording')}
-          </p>
+      <div className="h-[45vh] relative">
+        <div className="h-full flex items-center justify-center bg-muted/20 border border-border rounded-lg">
+          <div className="text-center">
+            <Map className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              {t('realTime.mapWillLoadWhenRecording')}
+            </p>
+          </div>
         </div>
+
+        {/* Simple Record Button */}
+        <SimpleRecordButton
+          onStartRecording={onStartRecording}
+          className="absolute bottom-4 right-4 z-10"
+        />
       </div>
     </div>
   );
