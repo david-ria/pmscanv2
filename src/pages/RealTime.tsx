@@ -1,385 +1,102 @@
-import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
+import { useState, useEffect } from 'react';
 import * as logger from '@/utils/logger';
-import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
-
-// Import critical hooks immediately for core functionality
-import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
-import { useRecordingContext } from '@/contexts/RecordingContext';
-import { useAlerts } from '@/contexts/AlertContext';
-import { useAutoContext } from '@/hooks/useAutoContext';
-import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
-import { useWeatherData } from '@/hooks/useWeatherData';
-import { frequencyOptionKeys } from '@/lib/recordingConstants';
-import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
-import { useEvents } from '@/hooks/useEvents';
-
-// Lazy load heavy components to reduce initial bundle size
-const MapGraphToggle = lazy(() => 
-  import('@/components/RealTime/MapGraphToggle').then(module => ({ 
-    default: module.MapGraphToggle 
-  }))
-);
-const ContextSelectors = lazy(() => 
-  import('@/components/RecordingControls/ContextSelectors').then(module => ({ 
-    default: module.ContextSelectors 
-  }))
-);
-const AutoContextDisplay = lazy(() => 
-  import('@/components/AutoContextDisplay').then(module => ({ 
-    default: module.AutoContextDisplay 
-  }))
-);
-const DataLogger = lazy(() => 
-  import('@/components/DataLogger').then(module => ({ 
-    default: module.DataLogger 
-  }))
-);
-const RecordingFrequencyDialog = lazy(() => 
-  import('@/components/RecordingControls/RecordingFrequencyDialog').then(module => ({ 
-    default: module.RecordingFrequencyDialog 
-  }))
-);
 
 export default function RealTime() {
-  // Immediate render state - no delays
-  const [showCriticalOnly, setShowCriticalOnly] = useState(true);
+  const [showStaticOnly, setShowStaticOnly] = useState(true);
   
   useEffect(() => {
-    logger.debug('RealTime: Component initializing');
-    
-    // Load critical content immediately, then rest after paint
-    const timer = setTimeout(() => {
-      setShowCriticalOnly(false);
-    }, 16); // After one frame
-    
-    return () => clearTimeout(timer);
+    logger.debug('RealTime: Static placeholder only');
   }, []);
 
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [showGraph, setShowGraph] = useState(false);
-  const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
-  const [recordingFrequency, setRecordingFrequency] = useState(
-    frequencyOptionKeys[0].value
-  );
-  const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
-
-  const { t } = useTranslation();
-  const { toast } = useToast();
-  const { currentData, isConnected, device, error, requestDevice, disconnect } =
-    usePMScanBluetooth();
-
-  const {
-    isRecording,
-    addDataPoint,
-    missionContext,
-    recordingData,
-    updateMissionContext,
-    startRecording,
-    currentMissionId,
-  } = useRecordingContext();
-
-  const {
-    latestLocation,
-    locationEnabled,
-    requestLocationPermission,
-  } = useAutoContext(isRecording && !showCriticalOnly); // Only scan when recording and ready
-  
-  const { weatherData, fetchWeatherData } = useWeatherData();
-  
-  const { getEventsByMission } = useEvents();
-  const [currentEvents, setCurrentEvents] = useState<any[]>([]);
-  
-  const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
-    recordingFrequency,
-    isRecording: isRecording && !showCriticalOnly,
-  });
-  
-  useEffect(() => {
-    logger.debug('RealTime: useAutoContext completed successfully');
-  }, []);
-  const { checkAlerts } = useAlerts();
-
-  // Initialize with current mission context if already recording
-  const [selectedLocation, setSelectedLocation] = useState(
-    missionContext.location
-  );
-  const [selectedActivity, setSelectedActivity] = useState(
-    missionContext.activity
-  );
-
-  // Add data to recording when new data comes in - with deduplication
-  const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
-
-  useEffect(() => {
-    if (isRecording && currentData && !showCriticalOnly) {
-      // Prevent duplicate data points by checking if this is actually new data
-      const currentTimestamp = currentData.timestamp.getTime();
-      const isDuplicate =
-        lastDataRef.current &&
-        lastDataRef.current.pm25 === currentData.pm25 &&
-        Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
-
-      if (!isDuplicate) {
-        logger.rateLimitedDebug(
-          'realTime.addData',
-          5000,
-          'Adding data point with location:',
-          latestLocation
-        );
-
-        // Update context at recording frequency and get the current context
-        const handleContextAndDataPoint = async () => {
-          // Calculate speed and movement from GPS data
-          let speed = 0;
-          let isMoving = false;
-          
-          if (latestLocation) {
-            const { updateLocationHistory } = await import('@/utils/speedCalculator');
-            const speedData = updateLocationHistory(
-              latestLocation.latitude,
-              latestLocation.longitude,
-              latestLocation.timestamp
-            );
-            speed = speedData.speed;
-            isMoving = speedData.isMoving;
-            
-            console.log('🏃 Movement detection:', {
-              speed: `${speed} km/h`,
-              isMoving,
-              location: `${latestLocation.latitude}, ${latestLocation.longitude}`
-            });
-          }
-          
-          const automaticContext = await updateContextIfNeeded(
-            currentData,
-            latestLocation || undefined,
-            speed,
-            isMoving
-          );
-
-          // DO NOT override user's manual activity selection
-          // Auto context should be separate from manual tags
-
-          addDataPoint(
-            currentData,
-            latestLocation || undefined,
-            { location: selectedLocation, activity: selectedActivity },
-            automaticContext
-          );
-        };
-
-        handleContextAndDataPoint();
-        
-        lastDataRef.current = {
-          pm25: currentData.pm25,
-          timestamp: currentTimestamp,
-        };
-      }
-    }
-  }, [
-    isRecording,
-    currentData,
-    latestLocation,
-    addDataPoint,
-    selectedLocation,
-    selectedActivity,
-    updateContextIfNeeded,
-    showCriticalOnly,
-  ]);
-
-  // Clear location history when recording starts for fresh speed calculations
-  useEffect(() => {
-    if (isRecording && !showCriticalOnly) {
-      import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
-        clearLocationHistory();
-        console.log('🏃 Cleared location history for new recording session');
-      });
-    }
-  }, [isRecording, showCriticalOnly]);
-
-  // Initial autocontext effect - runs only when autocontext is toggled
-  useEffect(() => {
-    if (!showCriticalOnly) {
-      console.log('Autocontext effect triggered:', { 
-        autoContextEnabled, 
-        hasCurrentData: !!currentData, 
-        latestLocation 
-      });
-      
-      if (autoContextEnabled && currentData) {
-        // Force an immediate context update when autocontext is enabled
-        forceContextUpdate(
-          currentData,
-          latestLocation || undefined,
-          0,
-          false
-        );
-      }
-    }
-  }, [autoContextEnabled, forceContextUpdate, showCriticalOnly]); // Only run when autocontext is toggled
-
-  // Check alerts whenever new data comes in
-  useEffect(() => {
-    if (currentData && !showCriticalOnly) {
-      checkAlerts(currentData.pm1, currentData.pm25, currentData.pm10);
-    }
-  }, [currentData, checkAlerts, showCriticalOnly]);
-
-  // Fetch weather data when location changes
-  useEffect(() => {
-    if (latestLocation && !showCriticalOnly) {
-      fetchWeatherData(latestLocation);
-    }
-  }, [latestLocation, fetchWeatherData, showCriticalOnly]);
-
-  // Initialize local state from mission context on mount only
-  useEffect(() => {
-    if (missionContext.location && !selectedLocation) {
-      setSelectedLocation(missionContext.location);
-    }
-    if (missionContext.activity && !selectedActivity) {
-      setSelectedActivity(missionContext.activity);
-    }
-  }, []); // Empty dependency array - only run on mount
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  // Fetch events for the current mission
-  useEffect(() => {
-    if (currentMissionId && !showCriticalOnly) {
-      getEventsByMission(currentMissionId).then(setCurrentEvents);
-    } else {
-      setCurrentEvents([]);
-    }
-  }, [currentMissionId, getEventsByMission, showCriticalOnly]);
-
-  // Reset frequency dialog flag when device disconnects
-  useEffect(() => {
-    if (!isConnected) {
-      setHasShownFrequencyDialog(false);
-    }
-  }, [isConnected]);
-
-  // Handle frequency dialog confirmation
-  const handleFrequencyConfirm = async () => {
-    try {
-      setShowFrequencyDialog(false);
-      await startRecording(recordingFrequency);
-
-      toast({
-        title: t('notifications.recordingStarted'),
-        description: t('notifications.recordingStartedDesc', {
-          frequency: recordingFrequency,
-        }),
-      });
-
-      logger.debug(
-        `🎬 Recording started with frequency: ${recordingFrequency}`
-      );
-    } catch (error) {
-      logger.error('Failed to start recording:', error);
-      toast({
-        title: t('notifications.error'),
-        description: t('notifications.recordingStartError'),
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // Critical path: Show only essential content first
-  if (showCriticalOnly) {
-    return (
-      <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-        {/* Critical content only - fastest LCP */}
-        <div className="text-center p-8">
-          <h1 className="text-2xl font-semibold mb-2">AirSentinels</h1>
-          <p className="text-muted-foreground">Loading air quality data...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Static placeholder - zero hooks, zero processing, zero intelligence
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-      {/* Map/Graph Toggle Section - Lazy loaded */}
-      <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
-        <MapGraphToggle
-          showGraph={showGraph}
-          onToggleView={setShowGraph}
-          isOnline={isOnline}
-          latestLocation={latestLocation}
-          currentData={currentData}
-          recordingData={recordingData}
-          events={currentEvents}
-          isRecording={isRecording}
-          device={device}
-          isConnected={isConnected}
-          onConnect={requestDevice}
-          onDisconnect={disconnect}
-          onRequestLocationPermission={requestLocationPermission}
-          locationEnabled={locationEnabled}
-        />
-      </Suspense>
-
-      {/* Air Quality Cards - Critical for LCP */}
-      <AirQualityCards currentData={currentData} isConnected={isConnected} />
-
-      {/* Context Selectors - Lazy loaded */}
-      <div className="mb-4 context-selector">
-        <Suspense fallback={<div className="h-20 bg-muted/20 rounded-lg animate-pulse" />}>
-          <ContextSelectors
-            selectedLocation={selectedLocation}
-            onLocationChange={setSelectedLocation}
-            selectedActivity={selectedActivity}
-            onActivityChange={setSelectedActivity}
-            isRecording={isRecording}
-          />
-        </Suspense>
+      {/* Static Air Quality placeholder */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+        <div className="bg-card rounded-lg border p-3">
+          <h3 className="text-xs font-medium text-muted-foreground mb-1">PM1</h3>
+          <p className="text-lg font-semibold">--</p>
+          <p className="text-xs text-muted-foreground">μg/m³</p>
+        </div>
+        <div className="bg-card rounded-lg border p-3">
+          <h3 className="text-xs font-medium text-muted-foreground mb-1">PM2.5</h3>
+          <p className="text-lg font-semibold">--</p>
+          <p className="text-xs text-muted-foreground">μg/m³</p>
+        </div>
+        <div className="bg-card rounded-lg border p-3">
+          <h3 className="text-xs font-medium text-muted-foreground mb-1">PM10</h3>
+          <p className="text-lg font-semibold">--</p>
+          <p className="text-xs text-muted-foreground">μg/m³</p>
+        </div>
+        <div className="bg-card rounded-lg border p-3">
+          <h3 className="text-xs font-medium text-muted-foreground mb-1">Status</h3>
+          <p className="text-sm font-medium">Ready</p>
+        </div>
       </div>
 
-      {/* Auto Context Display - Lazy loaded */}
-      <div className="mb-4 auto-context-display">
-        <Suspense fallback={<div className="h-16 bg-muted/20 rounded-lg animate-pulse" />}>
-          <AutoContextDisplay />
-        </Suspense>
+      {/* Toggle buttons placeholder */}
+      <div className="flex items-center justify-center mb-3">
+        <div className="flex bg-muted p-1 rounded-lg">
+          <button className="px-3 py-1.5 text-sm bg-background rounded text-foreground flex items-center gap-2">
+            <div className="w-4 h-4 bg-muted-foreground/30 rounded"></div>
+            Map
+          </button>
+          <button className="px-3 py-1.5 text-sm text-muted-foreground flex items-center gap-2">
+            <div className="w-4 h-4 bg-muted-foreground/30 rounded"></div>
+            Graph
+          </button>
+        </div>
       </div>
 
-      {/* Data Logger - Lazy loaded */}
-      <Suspense fallback={<div className="h-32 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
-        <DataLogger
-          isRecording={isRecording}
-          currentData={currentData}
-          currentLocation={latestLocation}
-          missionContext={{
-            location: selectedLocation,
-            activity: selectedActivity,
-          }}
-          className="mb-4"
-        />
-      </Suspense>
+      {/* Static fake map */}
+      <div className="h-[45vh] relative mb-4">
+        <div className="h-full relative rounded-lg overflow-hidden border border-border bg-gradient-to-br from-muted/30 to-muted/60">
+          <div className="absolute inset-0">
+            {/* Street grid pattern */}
+            <div className="absolute inset-0 opacity-20">
+              {Array.from({ length: 8 }, (_, i) => (
+                <div 
+                  key={`h-${i}`}
+                  className="absolute h-px bg-muted-foreground/30 w-full"
+                  style={{ top: `${12.5 + i * 12.5}%` }}
+                />
+              ))}
+              {Array.from({ length: 6 }, (_, i) => (
+                <div 
+                  key={`v-${i}`}
+                  className="absolute w-px bg-muted-foreground/30 h-full"
+                  style={{ left: `${16.6 + i * 16.6}%` }}
+                />
+              ))}
+            </div>
+            
+            {/* Fake building blocks */}
+            <div className="absolute top-[20%] left-[25%] w-8 h-6 bg-muted-foreground/20 rounded-sm"></div>
+            <div className="absolute top-[35%] right-[30%] w-10 h-8 bg-muted-foreground/20 rounded-sm"></div>
+            <div className="absolute bottom-[40%] left-[40%] w-6 h-10 bg-muted-foreground/20 rounded-sm"></div>
+            <div className="absolute bottom-[25%] right-[25%] w-12 h-6 bg-muted-foreground/20 rounded-sm"></div>
+          </div>
+          
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg border">
+              <p className="text-sm text-muted-foreground text-center">
+                Connect sensor to start recording
+              </p>
+            </div>
+          </div>
+          
+          {/* Static record button */}
+          <div className="absolute bottom-4 right-4">
+            <button className="w-14 h-14 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-6 h-6 bg-white/90 rounded-full"></div>
+            </button>
+          </div>
+        </div>
+      </div>
 
-      {/* Recording Frequency Dialog - Lazy loaded */}
-      <Suspense fallback={null}>
-        <RecordingFrequencyDialog
-          open={showFrequencyDialog}
-          onOpenChange={setShowFrequencyDialog}
-          recordingFrequency={recordingFrequency}
-          onFrequencyChange={setRecordingFrequency}
-          onConfirm={handleFrequencyConfirm}
-        />
-      </Suspense>
+      {/* Static placeholders for other sections */}
+      <div className="h-16 bg-muted/10 rounded-lg mb-4"></div>
+      <div className="h-20 bg-muted/10 rounded-lg mb-4"></div>
     </div>
   );
 }
