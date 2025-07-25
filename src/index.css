@@ -152,16 +152,31 @@ All colors MUST be HSL.
 
 /* Layout shift prevention - Reserve space for dynamic content */
 .mb-4 {
-  min-height: 3rem; /* Reserve space to prevent layout shift */
+  min-height: 2.5rem; /* Reserve space to prevent layout shift */
 }
 
 /* Specific height reservations for common dynamic elements */
 .context-selector {
-  min-height: 5rem; /* Reserve space for location/activity selectors */
+  min-height: 6rem; /* Reserve space for location/activity selectors */
+  /* Stable grid to prevent layout shifts */
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .context-selector {
+    grid-template-columns: repeat(2, 1fr);
+    min-height: 5rem;
+  }
 }
 
 .air-quality-status {
-  min-height: 2.5rem; /* Reserve space for status messages */
+  min-height: 3rem; /* Reserve space for status messages */
+  /* Stable layout */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .recording-controls {
@@ -175,5 +190,7 @@ All colors MUST be HSL.
 
 /* Auto-context display area */
 .auto-context-display {
-  min-height: 1.5rem;
+  min-height: 2rem; /* Increased from 1.5rem */
+  display: flex;
+  align-items: center;
 }

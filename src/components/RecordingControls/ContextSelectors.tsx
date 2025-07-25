@@ -106,7 +106,7 @@ export function ContextSelectors({
           )}
         </div>
         <Select value={selectedLocation} onValueChange={onLocationChange}>
-          <SelectTrigger className="h-11">
+          <SelectTrigger className="h-11 bg-background">
             <SelectValue placeholder={t('realTime.noLocation')} />
           </SelectTrigger>
           <SelectContent>
@@ -137,7 +137,7 @@ export function ContextSelectors({
           onValueChange={onActivityChange}
           disabled={false}
         >
-          <SelectTrigger className="h-11">
+          <SelectTrigger className="h-11 bg-background">
             <SelectValue placeholder={t('realTime.noActivity')} />
           </SelectTrigger>
           <SelectContent>
