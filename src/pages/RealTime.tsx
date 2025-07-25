@@ -54,13 +54,21 @@ export default function RealTime() {
     });
     
     // Defer hydration of heavy components to improve initial render
-    const timer = setTimeout(() => {
-      startTransition(() => {
-        setIsHydrated(true);
-      });
-    }, 50); // Reduced from 100ms for better UX
-    
-    return () => clearTimeout(timer);
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => {
+        startTransition(() => {
+          setIsHydrated(true);
+        });
+      }, { timeout: 1000 });
+    } else {
+      // Fallback for browsers without requestIdleCallback  
+      const timer = setTimeout(() => {
+        startTransition(() => {
+          setIsHydrated(true);
+        });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
