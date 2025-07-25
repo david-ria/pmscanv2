@@ -60,8 +60,8 @@ export function MissionDetailsDialog({
   const missionContentRef = useRef<HTMLDivElement>(null);
   
   // Context highlighting state - automatically select first available context
-  const [selectedContextType, setSelectedContextType] = useState<'none' | 'location' | 'activity' | 'autocontext'>(() => {
-    if (!mission) return 'none';
+  const [selectedContextType, setSelectedContextType] = useState<'location' | 'activity' | 'autocontext'>(() => {
+    if (!mission) return 'location';
     
     // Check for available contexts and auto-select the first one
     const hasLocationContext = !!(mission.locationContext || 
@@ -76,7 +76,7 @@ export function MissionDetailsDialog({
     if (hasActivityContext) return 'activity'; 
     if (hasAutoContext) return 'autocontext';
     
-    return 'none';
+    return 'location';
   });
 
   // Auto-select context type when mission changes
@@ -97,7 +97,7 @@ export function MissionDetailsDialog({
       } else if (hasAutoContext) {
         setSelectedContextType('autocontext');
       } else {
-        setSelectedContextType('none');
+        setSelectedContextType('location');
       }
     }
   }, [mission]);
@@ -542,7 +542,7 @@ export function MissionDetailsDialog({
                   data={graphData} 
                   events={events} 
                   className="h-full"
-                  highlightContextType={selectedContextType !== 'none' ? selectedContextType : undefined}
+                  highlightContextType={selectedContextType}
                   missionContext={{
                     locationContext: mission.locationContext,
                     activityContext: mission.activityContext,
