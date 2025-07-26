@@ -8,12 +8,11 @@ interface SimpleRecordButtonProps {
 
 export function SimpleRecordButton({ onStartRecording, className }: SimpleRecordButtonProps) {
   return (
-    <Button
+    <button
       onClick={onStartRecording}
-      size="lg"
-      className={`rounded-full h-16 w-16 shadow-lg relative ${className}`}
+      className={`rounded-full h-16 w-16 shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center transition-colors ${className}`}
     >
-      <div className="w-4 h-4 bg-white rounded-full shadow-sm relative z-10" />
-    </Button>
+      <div className="w-4 h-4 bg-white rounded-full" />
+    </button>
   );
 }
