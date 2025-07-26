@@ -45,9 +45,9 @@ const RecordingFrequencyDialog = lazy(() =>
 );
 
 export default function RealTime() {
-  // Render immediately - no artificial delays
-  const [showCriticalOnly, setShowCriticalOnly] = useState(false);
-
+  // Fast LCP - defer heavy initialization
+  const [initialized, setInitialized] = useState(false);
+  
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
@@ -55,9 +55,19 @@ export default function RealTime() {
     frequencyOptionKeys[0].value
   );
   const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
+  const [currentEvents, setCurrentEvents] = useState<any[]>([]);
 
   const { t } = useTranslation();
   const { toast } = useToast();
+
+  // Initialize heavy hooks after first paint using startTransition
+  useEffect(() => {
+    startTransition(() => {
+      setInitialized(true);
+    });
+  }, []);
+
+  // Only initialize heavy hooks after critical render
   const { currentData, isConnected, device, error, requestDevice, disconnect } =
     usePMScanBluetooth();
 
@@ -71,29 +81,21 @@ export default function RealTime() {
     currentMissionId,
   } = useRecordingContext();
 
-  // GPS for recording - independent of auto-context
   const { 
     locationEnabled, 
     latestLocation, 
     requestLocationPermission 
-  } = useGPS(true); // Always enabled for recording
+  } = useGPS(true);
 
-  // Auto-context for additional features (optional)
-  const autoContextResult = useAutoContext(isRecording && !showCriticalOnly);
-  
+  const autoContextResult = useAutoContext(isRecording && initialized);
   const { weatherData, fetchWeatherData } = useWeatherData();
-  
   const { getEventsByMission } = useEvents();
-  const [currentEvents, setCurrentEvents] = useState<any[]>([]);
   
   const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
     recordingFrequency,
-    isRecording: isRecording && !showCriticalOnly,
+    isRecording: isRecording && initialized,
   });
   
-  useEffect(() => {
-    logger.debug('RealTime: useAutoContext completed successfully');
-  }, []);
   const { checkAlerts } = useAlerts();
 
   // Restore last selected location/activity from localStorage for recording persistence
@@ -110,7 +112,7 @@ export default function RealTime() {
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
 
   useEffect(() => {
-    if (isRecording && currentData && !showCriticalOnly) {
+    if (isRecording && currentData && initialized) {
       // Prevent duplicate data points by checking if this is actually new data
       const currentTimestamp = currentData.timestamp.getTime();
       const isDuplicate =
@@ -186,12 +188,12 @@ export default function RealTime() {
     selectedLocation,
     selectedActivity,
     updateContextIfNeeded,
-    showCriticalOnly,
+    initialized,
   ]);
 
   // Clear location history when recording starts for fresh speed calculations
   useEffect(() => {
-    if (isRecording && !showCriticalOnly) {
+    if (isRecording && initialized) {
       import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
         clearLocationHistory();
         if (process.env.NODE_ENV === 'development') {
@@ -199,11 +201,11 @@ export default function RealTime() {
         }
       });
     }
-  }, [isRecording, showCriticalOnly]);
+  }, [isRecording, initialized]);
 
   // Initial autocontext effect - runs only when autocontext is toggled
   useEffect(() => {
-    if (!showCriticalOnly && process.env.NODE_ENV === 'development') {
+    if (initialized && process.env.NODE_ENV === 'development') {
       console.log('Autocontext effect triggered:', { 
         autoContextEnabled, 
         hasCurrentData: !!currentData, 
@@ -220,21 +222,21 @@ export default function RealTime() {
         );
       }
     }
-  }, [autoContextEnabled, forceContextUpdate, showCriticalOnly]); // Only run when autocontext is toggled
+  }, [autoContextEnabled, forceContextUpdate, initialized]); // Only run when autocontext is toggled
 
   // Check alerts whenever new data comes in
   useEffect(() => {
-    if (currentData && !showCriticalOnly) {
+    if (currentData && initialized) {
       checkAlerts(currentData.pm1, currentData.pm25, currentData.pm10);
     }
-  }, [currentData, checkAlerts, showCriticalOnly]);
+  }, [currentData, checkAlerts, initialized]);
 
   // Fetch weather data when location changes
   useEffect(() => {
-    if (latestLocation && !showCriticalOnly) {
+    if (latestLocation && initialized) {
       fetchWeatherData(latestLocation);
     }
-  }, [latestLocation, fetchWeatherData, showCriticalOnly]);
+  }, [latestLocation, fetchWeatherData, initialized]);
 
   // Persist location/activity selections to localStorage for recording persistence
   useEffect(() => {
@@ -273,12 +275,12 @@ export default function RealTime() {
 
   // Fetch events for the current mission
   useEffect(() => {
-    if (currentMissionId && !showCriticalOnly) {
+    if (currentMissionId && initialized) {
       getEventsByMission(currentMissionId).then(setCurrentEvents);
     } else {
       setCurrentEvents([]);
     }
-  }, [currentMissionId, getEventsByMission, showCriticalOnly]);
+  }, [currentMissionId, getEventsByMission, initialized]);
 
   // Reset frequency dialog flag when device disconnects
   useEffect(() => {
@@ -354,7 +356,7 @@ export default function RealTime() {
   };
 
   // Critical path: Show only essential content first
-  if (showCriticalOnly) {
+  if (!initialized) {
     return (
       <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
         {/* Critical content only - fastest LCP */}
