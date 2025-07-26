@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { LocationData } from '@/types/PMScan';
+import { parseFrequencyToMs } from '@/lib/recordingUtils';
 import * as logger from '@/utils/logger';
 
-export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
+export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, recordingFrequency?: string) {
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [latestLocation, setLatestLocation] = useState<LocationData | null>(
     null
@@ -38,10 +39,18 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
       return;
     }
 
+    // Calculate appropriate cache time based on recording frequency
+    let cacheTime = 60000; // Default 60 seconds
+    if (recordingFrequency) {
+      const frequencyMs = parseFrequencyToMs(recordingFrequency);
+      // Cache location data for at least the recording frequency duration
+      cacheTime = Math.max(frequencyMs, 30000); // Minimum 30 seconds
+    }
+
     const options: PositionOptions = {
       enableHighAccuracy: highAccuracy,
       timeout: 60000, // 60 seconds - very long timeout
-      maximumAge: 60000, // Cache for 60 seconds to reduce requests
+      maximumAge: cacheTime, // Cache based on recording frequency
     };
 
     const handleSuccess = (position: GeolocationPosition) => {
@@ -102,7 +111,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
 
     watchIdRef.current = id;
     setWatchId(id);
-  }, [enabled, highAccuracy]);
+  }, [enabled, highAccuracy, recordingFrequency]);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
     logger.debug('🧭 GPS: Permission request initiated...');
@@ -227,7 +236,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false) {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [enabled, locationEnabled, highAccuracy]);
+  }, [enabled, locationEnabled, highAccuracy, recordingFrequency]);
 
   // Cleanup on unmount
   useEffect(() => {

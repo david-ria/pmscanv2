@@ -87,7 +87,7 @@ export default function RealTime() {
     locationEnabled, 
     latestLocation, 
     requestLocationPermission 
-  } = useGPS(true);
+  } = useGPS(true, false, recordingFrequency);
 
   // Only initialize autocontext if the user has enabled it
   const { settings: autoContextSettings } = useStorageSettings(
