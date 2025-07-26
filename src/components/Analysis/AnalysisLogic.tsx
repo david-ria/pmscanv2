@@ -566,7 +566,8 @@ export const useAnalysisLogic = (
         if (locationEntries.length > 0) {
           analysis += `🏠 ${t('analysis.report.locationAnalysis')}:\n`;
           locationEntries.slice(0, 3).forEach((entry, i) => {
-            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
+            const respiratoryRate = getRespiratoryRate(undefined, entry.name, undefined);
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³, débit=${respiratoryRate} m³/h)\n`;
           });
           analysis += '\n';
         }
@@ -584,7 +585,8 @@ export const useAnalysisLogic = (
         if (activityEntries.length > 0) {
           analysis += `🏃 ${t('analysis.report.activityAnalysis')}:\n`;
           activityEntries.slice(0, 3).forEach((entry, i) => {
-            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
+            const respiratoryRate = getRespiratoryRate(entry.name, undefined, undefined);
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³, débit=${respiratoryRate} m³/h)\n`;
           });
           analysis += '\n';
         }
@@ -602,7 +604,8 @@ export const useAnalysisLogic = (
         if (autoEntries.length > 0) {
           analysis += `🤖 ${t('analysis.report.autoContextAnalysis')}:\n`;
           autoEntries.slice(0, 3).forEach((entry, i) => {
-            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
+            const respiratoryRate = getRespiratoryRate(undefined, undefined, entry.name);
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³, débit=${respiratoryRate} m³/h)\n`;
           });
         }
 

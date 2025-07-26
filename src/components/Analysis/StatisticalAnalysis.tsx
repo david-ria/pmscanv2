@@ -106,6 +106,26 @@ export const StatisticalAnalysis = ({
           </div>
         ) : (
           <>
+            {/* Formula explanation */}
+            <div className="bg-muted/20 p-4 rounded-lg border-l-4 border-primary/30 mb-6">
+              <div className="text-sm space-y-2">
+                <div className="font-medium text-foreground flex items-center gap-2">
+                  💡 {t('analysis.doseCalculation.title')}
+                </div>
+                <div className="text-muted-foreground">
+                  <strong>{t('analysis.doseCalculation.formula')}:</strong> Dose inhalée (µg) = Concentration × Temps × Débit respiratoire
+                </div>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div>• <strong>Concentration:</strong> Particules PM en µg/m³</div>
+                  <div>• <strong>Temps:</strong> Durée d'exposition en heures</div>
+                  <div>• <strong>Débit respiratoire:</strong> Variable selon l'activité (0.4-3.5 m³/h)</div>
+                </div>
+                <div className="text-xs text-muted-foreground/80 italic">
+                  {t('analysis.doseCalculation.explanation')}
+                </div>
+              </div>
+            </div>
+            
             <div className="whitespace-pre-line text-sm text-foreground leading-relaxed font-mono">
               {statisticalAnalysis}
             </div>
