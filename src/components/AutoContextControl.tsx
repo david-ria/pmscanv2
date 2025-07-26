@@ -24,7 +24,7 @@ import {
 
 export function AutoContextControl() {
   const { settings, updateSettings, toggleEnabled, isEnabled } =
-    useAutoContext();
+    useAutoContext(false); // Don't start active scanning from the control component
   const { toast } = useToast();
   const [showSettings, setShowSettings] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
