@@ -69,17 +69,11 @@ export function MapPlaceholder({
           </div>
         </div>
 
-        {/* Start text and Record Button */}
-        <div className="absolute bottom-4 right-4 z-10 flex items-center gap-4">
-          {/* Start text */}
-          <div className="flex items-center gap-2 bg-card px-3 py-2 rounded-lg border shadow-sm">
-            <span className="text-sm font-medium text-muted-foreground">
-              Start
-            </span>
-          </div>
-          
-          <SimpleRecordButton onStartRecording={onStartRecording} />
-        </div>
+        {/* Simple Record Button */}
+        <SimpleRecordButton
+          onStartRecording={onStartRecording}
+          className="absolute bottom-4 right-4 z-10"
+        />
       </div>
     </div>
   );
