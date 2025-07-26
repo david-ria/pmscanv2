@@ -8,6 +8,8 @@ import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useAlerts } from '@/contexts/AlertContext';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
+import { useStorageSettings } from '@/hooks/useStorage';
+import { STORAGE_KEYS } from '@/services/storageService';
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { useGPS } from '@/hooks/useGPS';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
@@ -87,7 +89,12 @@ export default function RealTime() {
     requestLocationPermission 
   } = useGPS(true);
 
-  const autoContextResult = useAutoContext(isRecording && initialized);
+  // Only initialize autocontext if the user has enabled it
+  const { settings: autoContextSettings } = useStorageSettings(
+    STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
+    { enabled: false }
+  );
+  const autoContextResult = useAutoContext(isRecording && initialized && autoContextSettings.enabled);
   const { weatherData, fetchWeatherData } = useWeatherData();
   const { getEventsByMission } = useEvents();
   
