@@ -114,6 +114,16 @@ export const MapboxMapCore = ({
   useEffect(() => {
     const recordingConfirmed = localStorage.getItem('recording-confirmed') === 'true';
     
+    console.debug('[PERF] 🗺️ Map auto-load check:', {
+      autoLoadOnRecording,
+      isRecording,
+      recordingConfirmed,
+      trackPointsLength: trackPoints.length,
+      mapboxLoaded,
+      loading,
+      userRequested
+    });
+    
     // Only load map if recording is active AND frequency has been selected
     if (autoLoadOnRecording && isRecording && recordingConfirmed && !mapboxLoaded && !loading) {
       console.debug('[PERF] 🎬 Recording confirmed after frequency selection - auto-loading map...');
@@ -123,9 +133,9 @@ export const MapboxMapCore = ({
       return;
     }
 
-    // Auto-load for historical data viewing (when trackPoints exist)
+    // Auto-load for historical data viewing (when trackPoints exist and not recording)
     if (trackPoints.length > 0 && !isRecording && !mapboxLoaded && !loading) {
-      console.debug('[PERF] 📊 Historical data detected - auto-loading map...');
+      console.debug('[PERF] 📊 Historical data detected - auto-loading map for', trackPoints.length, 'points...');
       handleLoadMap();
       return;
     }
@@ -236,8 +246,8 @@ export const MapboxMapCore = ({
     );
   }
 
-  // Show map load button if map hasn't been requested yet AND not recording
-  if (!userRequested && !mapboxLoaded && !isRecording) {
+  // Show map load button if map hasn't been loaded yet AND not recording AND no track points
+  if (!mapboxLoaded && !isRecording && trackPoints.length === 0) {
     return (
       <Card className={`p-6 ${className || ''}`}>
         <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
