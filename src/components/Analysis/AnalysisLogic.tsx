@@ -15,6 +15,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import * as logger from '@/utils/logger';
 import { useEvents } from '@/hooks/useEvents';
+import { getRespiratoryRate } from '@/lib/respiratoryRates';
 
 interface AnalysisData {
   totalMissions: number;
@@ -27,9 +28,10 @@ interface AnalysisData {
 interface ActivityData {
   activity: string;
   timeSpent: number;
-  cumulativeDose: number; // In µg·h/m³
+  cumulativeDose: number; // In µg (inhaled dose)
   averageExposure: number;
   measurements: number;
+  respiratoryRate: number; // In m³/h
 }
 
 interface EventAnalysisData {
@@ -87,26 +89,37 @@ export const useAnalysisLogic = (
           totalPM25: number;
           cumulativeDose: number;
           measurements: number;
+          respiratoryRate: number;
         }
       >();
 
       filtered.forEach((mission) => {
         const activity =
           mission.activityContext || t('analysis.unknownActivity');
+        const respiratoryRate = getRespiratoryRate(
+          mission.activityContext,
+          mission.locationContext,
+          undefined // No automatic context at mission level
+        );
+        
         const existing = activityMap.get(activity) || {
           totalDuration: 0,
           totalPM25: 0,
           cumulativeDose: 0,
           measurements: 0,
+          respiratoryRate: respiratoryRate,
         };
 
         const durationHours = mission.durationMinutes / 60; // Convert minutes to hours
-        const dose = mission.avgPm25 * durationHours; // Ci × Δti formula
+        // Real inhaled dose: Concentration × Time × Respiratory Rate
+        const dose = mission.avgPm25 * durationHours * respiratoryRate; // µg
 
         existing.totalDuration += mission.durationMinutes;
         existing.totalPM25 += mission.avgPm25 * mission.durationMinutes; // Weight by duration
-        existing.cumulativeDose += dose; // Cumulative dose in µg·h/m³
+        existing.cumulativeDose += dose; // Cumulative dose in µg (inhaled)
         existing.measurements += mission.measurementsCount;
+        // Keep the same respiratory rate for consistency within activity
+        existing.respiratoryRate = respiratoryRate;
 
         activityMap.set(activity, existing);
       });
@@ -116,10 +129,11 @@ export const useAnalysisLogic = (
         ([activity, data]) => ({
           activity,
           timeSpent: data.totalDuration,
-          cumulativeDose: data.cumulativeDose, // Total cumulative dose for this activity
+          cumulativeDose: data.cumulativeDose, // Total cumulative dose for this activity in µg
           averageExposure:
             data.totalDuration > 0 ? data.totalPM25 / data.totalDuration : 0,
           measurements: data.measurements,
+          respiratoryRate: data.respiratoryRate,
         })
       );
 
@@ -442,15 +456,25 @@ export const useAnalysisLogic = (
         return total;
       }, 0);
 
-      // Calculate total cumulative dose for all missions
+      // Calculate total cumulative inhaled dose for all missions
       const totalCumulativeDosePM25 = filtered.reduce((total, mission) => {
         const durationHours = mission.durationMinutes / 60;
-        return total + mission.avgPm25 * durationHours;
+        const respiratoryRate = getRespiratoryRate(
+          mission.activityContext,
+          mission.locationContext,
+          undefined
+        );
+        return total + mission.avgPm25 * durationHours * respiratoryRate;
       }, 0);
 
       const totalCumulativeDosePM10 = filtered.reduce((total, mission) => {
         const durationHours = mission.durationMinutes / 60;
-        return total + mission.avgPm10 * durationHours;
+        const respiratoryRate = getRespiratoryRate(
+          mission.activityContext,
+          mission.locationContext,
+          undefined
+        );
+        return total + mission.avgPm10 * durationHours * respiratoryRate;
       }, 0);
 
       // Create comprehensive statistical summary
@@ -488,7 +512,16 @@ export const useAnalysisLogic = (
           mission.measurements.forEach(measurement => {
             const measurementDuration = mission.durationMinutes / mission.measurements.length;
             const measurementDurationHours = measurementDuration / 60;
-            const dose = measurement.pm25 * measurementDurationHours;
+            
+            // Get respiratory rate based on measurement context
+            const respiratoryRate = getRespiratoryRate(
+              measurement.activityContext,
+              measurement.locationContext,
+              measurement.automaticContext
+            );
+            
+            // Real inhaled dose: Concentration × Time × Respiratory Rate
+            const dose = measurement.pm25 * measurementDurationHours * respiratoryRate;
 
             // Location context
             const location = measurement.locationContext || 'Inconnue';
@@ -533,7 +566,7 @@ export const useAnalysisLogic = (
         if (locationEntries.length > 0) {
           analysis += `🏠 ${t('analysis.report.locationAnalysis')}:\n`;
           locationEntries.slice(0, 3).forEach((entry, i) => {
-            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg·h/m³ (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
           });
           analysis += '\n';
         }
@@ -551,7 +584,7 @@ export const useAnalysisLogic = (
         if (activityEntries.length > 0) {
           analysis += `🏃 ${t('analysis.report.activityAnalysis')}:\n`;
           activityEntries.slice(0, 3).forEach((entry, i) => {
-            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg·h/m³ (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
           });
           analysis += '\n';
         }
@@ -569,7 +602,7 @@ export const useAnalysisLogic = (
         if (autoEntries.length > 0) {
           analysis += `🤖 ${t('analysis.report.autoContextAnalysis')}:\n`;
           autoEntries.slice(0, 3).forEach((entry, i) => {
-            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg·h/m³ (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³)\n`;
           });
         }
 
@@ -587,10 +620,10 @@ export const useAnalysisLogic = (
 • PM2.5: ${avgPM25.toFixed(1)} μg/m³ (max: ${maxPM25.toFixed(1)} μg/m³)
 • PM10: ${avgPM10.toFixed(1)} μg/m³ (max: ${maxPM10.toFixed(1)} μg/m³)
 
-💨 ${t('analysis.report.cumulativeDose')}:
-• PM2.5: ${totalCumulativeDosePM25.toFixed(1)} μg·h/m³
-• PM10: ${totalCumulativeDosePM10.toFixed(1)} μg·h/m³
-• ${t('analysis.report.doseFormula')}: Dose = ∑(Concentration × ${t('analysis.report.exposureTime')})
+💨 ${t('analysis.report.inhaledDose')}:
+• PM2.5: ${totalCumulativeDosePM25.toFixed(1)} μg
+• PM10: ${totalCumulativeDosePM10.toFixed(1)} μg
+• ${t('analysis.report.doseFormula')}: Dose = ∑(Concentration × ${t('analysis.report.exposureTime')} × ${t('analysis.report.respiratoryRate')})
 
 📍 ${t('analysis.report.contextualAnalysis')}:
 ${generateContextualAnalysis(filtered)}
