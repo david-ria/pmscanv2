@@ -1,4 +1,4 @@
-import { Play, Square, Clock } from 'lucide-react';
+import { Play, Square, Clock, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -38,7 +38,7 @@ export function RecordingButton({
         <button
           onClick={handleClick}
           className={cn(
-            'h-16 w-16 rounded-full flex items-center justify-center transition-all duration-200',
+            'h-16 w-16 rounded-full flex items-center justify-center transition-all duration-200 relative',
             'hover:scale-105 active:scale-95',
             isRecording
               ? 'bg-destructive text-destructive-foreground animate-pulse shadow-lg'
@@ -46,11 +46,31 @@ export function RecordingButton({
           )}
           type="button"
         >
-          {isRecording ? (
-            <Square className="h-6 w-6" />
-          ) : (
-            <Play className="h-6 w-6" />
-          )}
+          {/* Record icon overlay */}
+          <div className="absolute inset-0 rounded-full flex items-center justify-center">
+            <Circle 
+              className={cn(
+                "h-8 w-8",
+                isRecording ? "text-destructive-foreground/30" : "text-primary-foreground/30"
+              )} 
+              fill="currentColor" 
+            />
+            <div 
+              className={cn(
+                "absolute h-3 w-3 rounded-full",
+                isRecording ? "bg-destructive-foreground" : "bg-primary-foreground"
+              )}
+            />
+          </div>
+          
+          {/* Play/Stop icon */}
+          <div className="relative z-10">
+            {isRecording ? (
+              <Square className="h-6 w-6" />
+            ) : (
+              <Play className="h-6 w-6" />
+            )}
+          </div>
         </button>
         
         {/* Event Button */}
