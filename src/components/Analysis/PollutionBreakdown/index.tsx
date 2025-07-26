@@ -89,6 +89,30 @@ export const PollutionBreakdownChart = ({
                 {whoThreshold.label}
               </div>
             </div>
+            
+            {/* Formula explanation */}
+            <div className="bg-muted/20 p-3 rounded-lg border-l-4 border-primary/30">
+              <div className="text-xs text-muted-foreground space-y-1">
+                <div className="font-medium text-foreground">
+                  💡 {t('analysis.doseCalculation.title')}
+                </div>
+                <div>
+                  <strong>{t('analysis.doseCalculation.formula')}:</strong> Dose inhalée (µg) = Concentration × Temps × Débit respiratoire
+                </div>
+                <div>
+                  • <strong>Concentration:</strong> PM{pmType.replace('pm', '')} en µg/m³
+                </div>
+                <div>
+                  • <strong>Temps:</strong> Durée d'exposition en heures
+                </div>
+                <div>
+                  • <strong>Débit respiratoire:</strong> Variable selon l'activité (0.4-3.5 m³/h)
+                </div>
+                <div className="text-xs opacity-75 mt-1">
+                  {t('analysis.doseCalculation.explanation')}
+                </div>
+              </div>
+            </div>
             <PollutionSummaryTable
               breakdownData={breakdownData}
               pmType={pmType}

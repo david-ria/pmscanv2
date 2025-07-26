@@ -341,6 +341,11 @@
       "highestExposureMissions": "HIGHEST EXPOSURE MISSIONS",
       "eventAnalysis": "EVENT ANALYSIS",
       "events": "events",
+      "doseCalculation": {
+        "title": "How is the inhaled dose calculated?",
+        "formula": "Formula",
+        "explanation": "This formula calculates the actual amount of particles inhaled, taking into account your breathing rate according to the activity."
+      },
       "duringEvent": "during event",
       "normalConditions": "in normal conditions",
       "impact": "Impact",

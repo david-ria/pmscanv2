@@ -358,6 +358,11 @@
       "highestExposureMissions": "MISSIONS LES PLUS EXPOSÉES",
       "eventAnalysis": "ANALYSE DES ÉVÉNEMENTS",
       "events": "événements",
+      "doseCalculation": {
+        "title": "Comment est calculée la dose inhalée ?",
+        "formula": "Formule",
+        "explanation": "Cette formule calcule la quantité réelle de particules inhalées en tenant compte de votre rythme respiratoire selon l'activité."
+      },
       "duringEvent": "pendant l'événement",
       "normalConditions": "en conditions normales",
       "impact": "Impact",
