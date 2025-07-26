@@ -110,7 +110,7 @@ export const MapboxMapCore = ({
     }
   };
 
-  // Auto-load map only after frequency selection (when recording is truly confirmed)
+  // Auto-load map based on context
   useEffect(() => {
     const recordingConfirmed = localStorage.getItem('recording-confirmed') === 'true';
     
@@ -123,13 +123,20 @@ export const MapboxMapCore = ({
       return;
     }
 
+    // Auto-load for historical data viewing (when trackPoints exist)
+    if (trackPoints.length > 0 && !isRecording && !mapboxLoaded && !loading) {
+      console.debug('[PERF] 📊 Historical data detected - auto-loading map...');
+      handleLoadMap();
+      return;
+    }
+
     // Auto-load if user has previously interacted with the map OR if recording is active
     const shouldAutoLoad = localStorage.getItem('mapbox-user-preference') === 'enabled';
     if ((shouldAutoLoad || isRecording) && !mapboxLoaded && !loading) {
       console.debug('[PERF] 🔄 Auto-loading map for recording or returning user...');
       handleLoadMap();
     }
-  }, [autoLoadOnRecording, isRecording, mapboxLoaded, userRequested, loading]);
+  }, [autoLoadOnRecording, isRecording, trackPoints.length, mapboxLoaded, userRequested, loading]);
 
   // Cleanup effect
   useEffect(() => {
