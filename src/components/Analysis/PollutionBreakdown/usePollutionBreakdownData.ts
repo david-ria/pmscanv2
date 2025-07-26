@@ -12,6 +12,7 @@ import {
 } from 'date-fns';
 import { MissionData } from '@/lib/dataStorage';
 import { getColorForKey } from './utils';
+import { getRespiratoryRate } from '@/lib/respiratoryRates';
 
 type BreakdownType = 'location' | 'activity' | 'autocontext';
 type PMType = 'pm1' | 'pm25' | 'pm10';
@@ -110,9 +111,17 @@ export const usePollutionBreakdownData = (
             const measurementDuration =
               mission.durationMinutes / mission.measurements.length;
             const measurementDurationHours = measurementDuration / 60;
+            
+            // Get respiratory rate for this measurement
+            const respiratoryRate = getRespiratoryRate(
+              measurement.activityContext,
+              measurement.locationContext,
+              measurement.automaticContext
+            );
+            
             existing.totalExposure += measurementDuration;
             existing.weightedPM += pmValue * measurementDuration;
-            existing.cumulativeDose += pmValue * measurementDurationHours;
+            existing.cumulativeDose += pmValue * measurementDurationHours * respiratoryRate; // Real inhaled dose in µg
             contextMap.set(autoContext, existing);
           });
 
@@ -164,9 +173,17 @@ export const usePollutionBreakdownData = (
             const measurementDuration =
               mission.durationMinutes / mission.measurements.length;
             const measurementDurationHours = measurementDuration / 60;
+            
+            // Get respiratory rate for this measurement
+            const respiratoryRate = getRespiratoryRate(
+              measurement.activityContext,
+              measurement.locationContext,
+              measurement.automaticContext
+            );
+            
             existing.totalExposure += measurementDuration;
             existing.weightedPM += pmValue * measurementDuration;
-            existing.cumulativeDose += pmValue * measurementDurationHours;
+            existing.cumulativeDose += pmValue * measurementDurationHours * respiratoryRate; // Real inhaled dose in µg
             contextMap.set(contextValue, existing);
           });
 

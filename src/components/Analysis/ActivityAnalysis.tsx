@@ -9,7 +9,7 @@ import { formatDurationHHMM } from '@/utils/timeFormat';
 interface ActivityData {
   activity: string;
   timeSpent: number;
-  cumulativeDose: number; // In µg·h/m³
+  cumulativeDose: number; // In µg (inhaled dose)
   averageExposure: number;
   measurements: number;
 }
@@ -77,7 +77,7 @@ export const ActivityAnalysis = ({
                   <div className="text-sm text-muted-foreground flex items-center gap-4">
                     <span>
                       {showActivityExposure
-                        ? `${activity.cumulativeDose.toFixed(1)} µg·h/m³`
+                        ? `${activity.cumulativeDose.toFixed(1)} µg`
                         : formatDurationHHMM(activity.timeSpent)}
                     </span>
                     <span className="text-xs">
