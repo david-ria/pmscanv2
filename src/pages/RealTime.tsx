@@ -234,15 +234,15 @@ export default function RealTime() {
     }
   }, [latestLocation, fetchWeatherData, showCriticalOnly]);
 
-  // Initialize local state from mission context on mount only
+  // Initialize local state from mission context when it changes
   useEffect(() => {
-    if (missionContext.location && !selectedLocation) {
+    if (missionContext.location && missionContext.location !== selectedLocation) {
       setSelectedLocation(missionContext.location);
     }
-    if (missionContext.activity && !selectedActivity) {
+    if (missionContext.activity && missionContext.activity !== selectedActivity) {
       setSelectedActivity(missionContext.activity);
     }
-  }, []); // Empty dependency array - only run on mount
+  }, [missionContext.location, missionContext.activity]); // Depend on mission context changes
 
   // Request GPS permission when app loads
   useEffect(() => {
