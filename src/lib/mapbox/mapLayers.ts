@@ -4,6 +4,8 @@ import { createMapStyleExpression } from './mapStyles';
 type MapboxMap = any;
 
 export const addTrackDataSources = (map: MapboxMap) => {
+  if (!map) return;
+  
   // Add data sources for track visualization only if they don't exist
   if (!map.getSource('track-line')) {
     map.addSource('track-line', {
@@ -31,6 +33,8 @@ export const addTrackDataSources = (map: MapboxMap) => {
 };
 
 export const addTrackLayers = (map: MapboxMap, thresholds: any) => {
+  if (!map) return;
+  
   // Add track line layer only if it doesn't exist
   if (!map.getLayer('track-line')) {
     map.addLayer({
@@ -81,7 +85,7 @@ export const updateTrackData = (
   }>,
   isRecording: boolean
 ) => {
-  if (!map.getSource('track-points')) return;
+  if (!map || !map.getSource('track-points')) return;
 
   // Create features for track points
   const features = trackPoints.map((point, index) => ({
@@ -149,7 +153,7 @@ export const updateTrackData = (
 };
 
 export const updateLayerStyles = (map: MapboxMap, thresholds: any) => {
-  if (!map.getLayer('track-points')) return;
+  if (!map || !map.getLayer('track-points')) return;
 
   // Update the circle color expression with new thresholds
   map.setPaintProperty(
