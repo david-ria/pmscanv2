@@ -1,4 +1,4 @@
-import { Play, Square, Clock, Circle } from 'lucide-react';
+import { Play, Square, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useState, useEffect } from 'react';
@@ -202,7 +202,7 @@ export function FloatingRecordButton({
       <button
         onClick={handleRecordingClick}
         className={cn(
-          'h-16 w-16 rounded-full flex items-center justify-center transition-all duration-200 relative',
+          'h-16 w-16 rounded-full flex items-center justify-center transition-all duration-200',
           'hover:scale-105 active:scale-95 shadow-xl',
           isRecording
             ? 'bg-destructive text-destructive-foreground animate-slow-pulse'
@@ -210,31 +210,11 @@ export function FloatingRecordButton({
         )}
         type="button"
       >
-        {/* Record icon overlay */}
-        <div className="absolute inset-0 rounded-full flex items-center justify-center">
-          <Circle 
-            className={cn(
-              "h-8 w-8",
-              isRecording ? "text-destructive-foreground/30" : "text-primary-foreground/30"
-            )} 
-            fill="currentColor" 
-          />
-          <div 
-            className={cn(
-              "absolute h-3 w-3 rounded-full",
-              isRecording ? "bg-destructive-foreground" : "bg-primary-foreground"
-            )}
-          />
-        </div>
-        
-        {/* Play/Stop icon */}
-        <div className="relative z-10">
-          {isRecording ? (
-            <Square className="h-6 w-6" />
-          ) : (
-            <Play className="h-6 w-6" />
-          )}
-        </div>
+        {isRecording ? (
+          <Square className="h-6 w-6" />
+        ) : (
+          <Play className="h-6 w-6" />
+        )}
       </button>
 
       {/* Event Button - positioned next to record button */}
