@@ -96,13 +96,15 @@ export default function RealTime() {
   }, []);
   const { checkAlerts } = useAlerts();
 
-  // Initialize with current mission context if already recording
-  const [selectedLocation, setSelectedLocation] = useState(
-    missionContext.location
-  );
-  const [selectedActivity, setSelectedActivity] = useState(
-    missionContext.activity
-  );
+  // Restore last selected location/activity from localStorage for recording persistence
+  const [selectedLocation, setSelectedLocation] = useState(() => {
+    const saved = localStorage.getItem('recording-location');
+    return saved || missionContext.location || '';
+  });
+  const [selectedActivity, setSelectedActivity] = useState(() => {
+    const saved = localStorage.getItem('recording-activity');
+    return saved || missionContext.activity || '';
+  });
 
   // Add data to recording when new data comes in - with deduplication
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
@@ -234,15 +236,18 @@ export default function RealTime() {
     }
   }, [latestLocation, fetchWeatherData, showCriticalOnly]);
 
-  // Initialize local state from mission context when it changes
+  // Persist location/activity selections to localStorage for recording persistence
   useEffect(() => {
-    if (missionContext.location && missionContext.location !== selectedLocation) {
-      setSelectedLocation(missionContext.location);
+    if (selectedLocation) {
+      localStorage.setItem('recording-location', selectedLocation);
     }
-    if (missionContext.activity && missionContext.activity !== selectedActivity) {
-      setSelectedActivity(missionContext.activity);
+  }, [selectedLocation]);
+
+  useEffect(() => {
+    if (selectedActivity) {
+      localStorage.setItem('recording-activity', selectedActivity);
     }
-  }, [missionContext.location, missionContext.activity]); // Depend on mission context changes
+  }, [selectedActivity]);
 
   // Request GPS permission when app loads
   useEffect(() => {

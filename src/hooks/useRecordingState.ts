@@ -18,25 +18,6 @@ export function useRecordingState() {
     activity: '',
   });
 
-  // Restore mission context from crash recovery on mount
-  useEffect(() => {
-    const restoreContextFromRecovery = () => {
-      try {
-        const recoveryDataStr = localStorage.getItem(CRASH_RECOVERY_KEY);
-        if (recoveryDataStr) {
-          const recoveryData = JSON.parse(recoveryDataStr);
-          if (recoveryData.missionContext) {
-            logger.debug('🔄 Restoring mission context from crash recovery:', recoveryData.missionContext);
-            setMissionContext(recoveryData.missionContext);
-          }
-        }
-      } catch (error) {
-        logger.error('Failed to restore mission context from crash recovery:', error);
-      }
-    };
-
-    restoreContextFromRecovery();
-  }, []);
 
   const recordingStartTime = useRef<Date | null>(null);
   const lastRecordedTime = useRef<Date | null>(null);
