@@ -8,7 +8,7 @@ interface AutoContextDisplayProps {
 }
 
 export function AutoContextDisplay({ className }: AutoContextDisplayProps) {
-  const { latestContext, isEnabled } = useAutoContext(false); // Don't start active scanning for display only
+  const { latestContext, isEnabled } = useAutoContext(false, null); // Don't start active scanning for display only
   const { t } = useTranslation();
 
   if (!isEnabled || !latestContext) {

@@ -54,7 +54,7 @@ const DEFAULT_SETTINGS: AutoContextSettings = {
   overrideContext: false,
 };
 
-export function useAutoContext(enableActiveScanning: boolean = true) {
+export function useAutoContext(enableActiveScanning: boolean = true, externalLocation?: LocationData | null) {
   const { settings, updateSettings } = useStorageSettings(
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
     DEFAULT_SETTINGS
@@ -66,10 +66,14 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
   const [model, setModel] = useState<any | null>(null);
   const homeCountsKey = 'homeWifiCounts';
   const workCountsKey = 'workWifiCounts';
-  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(
-    settings.enabled,
+  // Use external location if provided, otherwise initialize own GPS
+  const gpsResult = useGPS(
+    !externalLocation && settings.enabled && enableActiveScanning,
     settings.highAccuracy ?? false
   );
+  
+  const { locationEnabled, latestLocation: gpsLocation, requestLocationPermission } = gpsResult;
+  const latestLocation = externalLocation || gpsLocation;
   
   const { weatherData } = useWeatherService();
   
@@ -128,7 +132,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
   }, [settings.mlEnabled, model]);
 
   useEffect(() => {
-    if (settings.enabled) {
+    if (settings.enabled && enableActiveScanning && !externalLocation) {
       requestLocationPermission().catch((err) => {
         console.error('Failed to request location permission', err);
       });
@@ -143,7 +147,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
         console.error('Failed to stop sensor listening', err);
       });
     }
-  }, [settings.enabled, requestLocationPermission, startSensorListening, stopSensorListening]);
+  }, [settings.enabled, enableActiveScanning, externalLocation, requestLocationPermission, startSensorListening, stopSensorListening]);
 
   // Real WiFi detection function
   const getCurrentWifiSSID = useCallback((): string => {
@@ -625,7 +629,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
 
   // Separate effect to handle WiFi state updates - runs periodically instead of constantly
   useEffect(() => {
-    if (!settings.enabled || !enableActiveScanning) return;
+    if (!settings.enabled || (!enableActiveScanning && !externalLocation)) return;
 
     const checkWifiStatus = () => {
       const newWifiSSID = getCurrentWifiSSID();
@@ -646,7 +650,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
     const interval = setInterval(checkWifiStatus, 10000);
 
     return () => clearInterval(interval);
-  }, [settings.enabled, enableActiveScanning, getCurrentWifiSSID, currentWifiSSID, trackWifiByTime, classifyWifiByTimePattern]);
+  }, [settings.enabled, enableActiveScanning, externalLocation, getCurrentWifiSSID, currentWifiSSID, trackWifiByTime, classifyWifiByTimePattern]);
 
   // Separate function to update context (called from RealTime component)
   const updateLatestContext = useCallback((context: string) => {
@@ -667,7 +671,7 @@ export function useAutoContext(enableActiveScanning: boolean = true) {
       mlEnabled: settings.mlEnabled,
       highAccuracy: settings.highAccuracy,
       latestLocation,
-      locationEnabled,
+      locationEnabled: externalLocation ? true : locationEnabled,
       requestLocationPermission,
     }),
     [

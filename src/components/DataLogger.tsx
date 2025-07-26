@@ -56,7 +56,7 @@ export function DataLogger({
 }: DataLoggerProps) {
   const { t } = useTranslation();
   const { recordingData } = useRecordingContext();
-  const { latestContext, isEnabled: autoContextEnabled } = useAutoContext(false); // Don't start active scanning for logging only
+  const { latestContext, isEnabled: autoContextEnabled } = useAutoContext(false, null); // Don't start active scanning for logging only
   const [isMinimized, setIsMinimized] = useState(false);
   
 

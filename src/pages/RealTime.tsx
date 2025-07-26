@@ -94,7 +94,7 @@ export default function RealTime() {
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
     { enabled: false }
   );
-  const autoContextResult = useAutoContext(isRecording && initialized && autoContextSettings.enabled);
+  const autoContextResult = useAutoContext(isRecording && initialized && autoContextSettings.enabled, latestLocation);
   const { weatherData, fetchWeatherData } = useWeatherData();
   const { getEventsByMission } = useEvents();
   
