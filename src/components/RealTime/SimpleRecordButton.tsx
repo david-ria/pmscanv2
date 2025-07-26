@@ -13,7 +13,7 @@ export function SimpleRecordButton({ onStartRecording, className }: SimpleRecord
       size="lg"
       className={`rounded-full h-16 w-16 shadow-lg ${className}`}
     >
-      <div className="w-3 h-3 bg-white rounded-full" />
+      <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
     </Button>
   );
 }
