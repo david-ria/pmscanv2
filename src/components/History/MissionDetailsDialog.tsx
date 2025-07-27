@@ -513,7 +513,7 @@ export function MissionDetailsDialog({
             </CardContent>
           </Card>
 
-          {/* Graph Section */}
+          {/* Graph Section - Improved mobile layout */}
           <Card>
             <CardHeader>
               <div>
@@ -529,11 +529,12 @@ export function MissionDetailsDialog({
                 selectedContextType={selectedContextType}
                 onContextTypeChange={setSelectedContextType}
               />
-              <div className="h-[500px]" ref={graphRef}>
+              {/* Graph container with better mobile responsive height */}
+              <div className="h-[400px] sm:h-[500px] w-full overflow-hidden" ref={graphRef}>
                 <PMLineGraph 
                   data={graphData} 
                   events={events} 
-                  className="h-full"
+                  className="h-full w-full"
                   hideTitle={true}
                   highlightContextType={selectedContextType}
                   missionContext={{
