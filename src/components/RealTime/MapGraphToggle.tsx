@@ -1,3 +1,4 @@
+
 import { WifiOff, Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MapboxMap } from '@/components/MapboxMap';
@@ -64,6 +65,17 @@ export function MapGraphToggle({
       timestamp: entry.pmData.timestamp,
     }))
     .filter((point) => point.longitude !== 0 && point.latitude !== 0);
+
+  // Transform recording data to PMDataPoint format for the graph
+  const graphData = recordingData.map((entry) => ({
+    timestamp: entry.pmData.timestamp,
+    pm1: entry.pmData.pm1,
+    pm25: entry.pmData.pm25,
+    pm10: entry.pmData.pm10,
+    // Include location data for context if available
+    location: entry.location,
+  }));
+
   return (
     <div className="mb-4">
       {/* Toggle Controls */}
@@ -94,7 +106,7 @@ export function MapGraphToggle({
       <div className="h-[45vh] relative">
         {showGraph ? (
           <PMLineGraph 
-            data={recordingData} 
+            data={graphData} 
             events={events} 
             className="h-full"
             highlightContextType="location"
