@@ -1,5 +1,7 @@
+
 import { BaseCard } from '@/components/shared/BaseCard';
 import { cn } from '@/lib/utils';
+import { layoutClasses, cardClasses } from '@/lib/css-utils';
 
 interface Stat {
   label: string;
@@ -30,16 +32,11 @@ export function StatsCard({ title, stats, className }: StatsCardProps) {
   };
 
   return (
-    <BaseCard title={title} className={className}>
-      <div className="grid grid-cols-2 gap-4">
+    <BaseCard title={title} className={cn(cardClasses.elevated, className)}>
+      <div className={cn(layoutClasses.contentGrid, 'grid-cols-2')}>
         {stats.map((stat, index) => (
           <div key={index} className="text-center">
-            <div
-              className={cn(
-                'text-2xl font-bold',
-                getColorClasses(stat.color)
-              )}
-            >
+            <div className={cn('text-2xl font-bold', getColorClasses(stat.color))}>
               {stat.value}
               {stat.unit && <span className="text-sm ml-1">{stat.unit}</span>}
             </div>

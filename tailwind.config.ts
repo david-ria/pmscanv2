@@ -1,3 +1,4 @@
+
 import type { Config } from 'tailwindcss';
 import tailwindcssAnimate from 'tailwindcss-animate';
 
@@ -84,7 +85,6 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       keyframes: {
-        // Accordion animations
         'accordion-down': {
           from: { height: '0', opacity: '0' },
           to: { height: 'var(--radix-accordion-content-height)', opacity: '1' }
@@ -93,8 +93,6 @@ export default {
           from: { height: 'var(--radix-accordion-content-height)', opacity: '1' },
           to: { height: '0', opacity: '0' }
         },
-        
-        // Enhanced animations for better UX
         'fade-in': {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' }
@@ -123,4 +121,17 @@ export default {
     },
   },
   plugins: [tailwindcssAnimate],
+  // Performance optimizations
+  corePlugins: {
+    // Disable unused utilities to reduce bundle size
+    fontVariantNumeric: false,
+    backdropOpacity: false,
+    backdropBrightness: false,
+    backdropContrast: false,
+    backdropGrayscale: false,
+    backdropHueRotate: false,
+    backdropInvert: false,
+    backdropSaturate: false,
+    backdropSepia: false,
+  },
 } satisfies Config;
