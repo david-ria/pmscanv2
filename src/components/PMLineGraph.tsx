@@ -9,14 +9,46 @@ interface PMDataPoint {
   pm1: number;
   pm25: number;
   pm10: number;
+  locationContext?: string;
+  activityContext?: string;
+  automaticContext?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    timestamp: Date;
+  };
+}
+
+interface EventData {
+  id: string;
+  timestamp: Date;
+  event_type: string;
+  comment?: string;
+}
+
+interface MissionContext {
+  locationContext?: string;
+  activityContext?: string;
 }
 
 interface PMLineGraphProps {
   data: PMDataPoint[];
   className?: string;
+  events?: EventData[];
+  hideTitle?: boolean;
+  highlightContextType?: 'location' | 'activity' | 'autocontext';
+  missionContext?: MissionContext;
 }
 
-export const PMLineGraph = ({ data, className = '' }: PMLineGraphProps) => {
+export const PMLineGraph = ({ 
+  data, 
+  className = '', 
+  events = [], 
+  hideTitle = false, 
+  highlightContextType,
+  missionContext 
+}: PMLineGraphProps) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
 
@@ -33,7 +65,11 @@ export const PMLineGraph = ({ data, className = '' }: PMLineGraphProps) => {
     pm1: Math.round(point.pm1),
     pm25: Math.round(point.pm25),
     pm10: Math.round(point.pm10),
-    time: format(point.timestamp, 'HH:mm:ss')
+    time: format(point.timestamp, 'HH:mm:ss'),
+    // Include context data for potential highlighting
+    locationContext: point.locationContext,
+    activityContext: point.activityContext,
+    automaticContext: point.automaticContext,
   }));
 
   const formatXAxisLabel = (timestamp: number) => {
@@ -41,8 +77,24 @@ export const PMLineGraph = ({ data, className = '' }: PMLineGraphProps) => {
     return format(date, isMobile ? 'HH:mm' : 'HH:mm:ss');
   };
 
+  // Function to get line color based on context highlighting
+  const getLineColor = (lineType: 'pm1' | 'pm25' | 'pm10') => {
+    const defaultColors = {
+      pm1: "hsl(var(--air-good))",
+      pm25: "hsl(var(--air-moderate))",
+      pm10: "hsl(var(--air-poor))"
+    };
+    
+    return defaultColors[lineType];
+  };
+
   return (
     <div className={`w-full h-full min-h-[300px] flex flex-col ${className}`}>
+      {!hideTitle && (
+        <div className="mb-2">
+          <h3 className="text-lg font-semibold">{t('realTime.graph')}</h3>
+        </div>
+      )}
       <div className="flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -91,7 +143,7 @@ export const PMLineGraph = ({ data, className = '' }: PMLineGraphProps) => {
             <Line
               type="monotone"
               dataKey="pm1"
-              stroke="hsl(var(--air-good))"
+              stroke={getLineColor('pm1')}
               strokeWidth={2}
               dot={{ r: isMobile ? 2 : 3 }}
               activeDot={{ r: isMobile ? 4 : 6 }}
@@ -100,7 +152,7 @@ export const PMLineGraph = ({ data, className = '' }: PMLineGraphProps) => {
             <Line
               type="monotone"
               dataKey="pm25"
-              stroke="hsl(var(--air-moderate))"
+              stroke={getLineColor('pm25')}
               strokeWidth={2}
               dot={{ r: isMobile ? 2 : 3 }}
               activeDot={{ r: isMobile ? 4 : 6 }}
@@ -109,7 +161,7 @@ export const PMLineGraph = ({ data, className = '' }: PMLineGraphProps) => {
             <Line
               type="monotone"
               dataKey="pm10"
-              stroke="hsl(var(--air-poor))"
+              stroke={getLineColor('pm10')}
               strokeWidth={2}
               dot={{ r: isMobile ? 2 : 3 }}
               activeDot={{ r: isMobile ? 4 : 6 }}
