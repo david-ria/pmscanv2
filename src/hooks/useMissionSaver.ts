@@ -22,11 +22,19 @@ export function useMissionSaver() {
       throw new Error('Aucune donnée enregistrée pour créer la mission');
     }
 
-    // Use the timestamp of the most recent data point as end time
-    // recordingData is ordered with newest first, so [0] is the most recent
-    const endTime = recordingData.length > 0 
-      ? recordingData[0].timestamp 
-      : new Date();
+    // Calculate the actual start and end times from the recording data
+    // recordingData is ordered with newest first, so we need to find the oldest entry for start time
+    // and use the actual recording start time or the oldest data point
+    const oldestDataPoint = recordingData[recordingData.length - 1];
+    const newestDataPoint = recordingData[0];
+    
+    // Use the earliest timestamp between recording start and oldest data point as start time
+    const actualStartTime = recordingStartTime < oldestDataPoint.timestamp 
+      ? recordingStartTime 
+      : oldestDataPoint.timestamp;
+    
+    // Use the newest data point timestamp as end time
+    const endTime = newestDataPoint.timestamp;
     
     // Debug logging for context flow
     console.log('🔍 Mission saving - context analysis:', {
@@ -46,7 +54,7 @@ export function useMissionSaver() {
     const mission = dataStorage.createMissionFromRecording(
       recordingData,
       missionName,
-      recordingStartTime,
+      actualStartTime,
       endTime,
       locationContext,
       activityContext,
