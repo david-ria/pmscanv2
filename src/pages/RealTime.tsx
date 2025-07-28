@@ -1,4 +1,4 @@
-import React, { useState, useRef, startTransition, useCallback, useMemo, Suspense } from 'react';
+import React, { useState, useRef, startTransition, useCallback, useMemo, Suspense, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
@@ -7,9 +7,10 @@ import { frequencyOptionKeys } from '@/lib/recordingConstants';
 const RealTimeContent = React.lazy(() => import('@/components/RealTime/RealTimeContent'));
 
 export default function RealTime() {
-  // Fast LCP - defer heavy initialization
+  // Fast LCP - defer heavy initialization with robust guards
   const [initialized, setInitialized] = useState(false);
   const hasInitRun = useRef(false);
+  const isMounted = useRef(false);
   const renderCount = useRef(0);
   
   // All hooks must be called unconditionally - Rules of Hooks
@@ -60,19 +61,39 @@ export default function RealTime() {
     stableT, stableToast
   ]);
 
-  // Initialize heavy hooks after first paint - guard with ref to run only once
-  React.useEffect(() => {
-    if (hasInitRun.current) return;
+  // Mount tracking for hydration safety
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // Initialize heavy hooks after first paint - guard against hydration and multiple mounts
+  useEffect(() => {
+    // Triple guard: ref check + mount check + hydration check
+    if (hasInitRun.current || !isMounted.current) return;
+    
+    // Additional hydration safety check
+    if (typeof window === 'undefined') return;
+    
     hasInitRun.current = true;
     
     console.log('[PERF] 🚀 RealTime - Starting initialization transition');
     const start = performance.now();
     
-    startTransition(() => {
-      console.log('[PERF] 🔄 RealTime - Setting initialized to true');
-      setInitialized(true);
-      const end = performance.now();
-      console.log(`[PERF] ✅ RealTime - Initialization took ${end - start}ms`);
+    // Use microtask to ensure DOM is ready
+    Promise.resolve().then(() => {
+      if (!isMounted.current) return; // Component may have unmounted
+      
+      startTransition(() => {
+        if (!isMounted.current) return; // Double-check before state update
+        
+        console.log('[PERF] 🔄 RealTime - Setting initialized to true');
+        setInitialized(true);
+        const end = performance.now();
+        console.log(`[PERF] ✅ RealTime - Initialization took ${end - start}ms`);
+      });
     });
   }, []);
 
