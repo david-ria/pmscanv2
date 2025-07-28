@@ -65,9 +65,10 @@ const RealTime = memo(() => {
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
     { enabled: false }
   );
+  // Only initialize autocontext after user starts recording workflow
   const autoContextResult = useAutoContext(
-    isRecording && autoContextSettings.enabled && userInitiated, 
-    latestLocation
+    false, // Completely disabled until recording starts
+    null
   );
   const { weatherData, fetchWeatherData } = useWeatherData();
   const { getEventsByMission } = useEvents();
@@ -274,8 +275,8 @@ const RealTime = memo(() => {
         </Suspense>
       </div>
 
-      {/* Auto Context Display - Lazy loaded */}
-      {autoContextSettings.enabled && (
+      {/* Auto Context Display - Only show when recording and enabled */}
+      {isRecording && autoContextSettings.enabled && (
         <div className="mb-4">
           <Suspense fallback={<div className="h-16 bg-muted/10 rounded animate-pulse" />}>
             <AutoContextDisplay />
