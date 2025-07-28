@@ -378,8 +378,8 @@ export default function RealTime() {
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-      {/* Map/Graph Section - Show MapGraphToggle when recording is active */}
-      {isRecording || localStorage.getItem('recording-confirmed') === 'true' ? (
+      {/* Map/Graph Section - Only show MapGraphToggle when actually recording */}
+      {isRecording ? (
         <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
           <MapGraphToggle
             showGraph={showGraph}
