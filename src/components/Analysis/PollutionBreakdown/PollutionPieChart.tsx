@@ -1,6 +1,13 @@
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+} from 'recharts';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { DynamicChart } from '@/components/charts/DynamicChart';
 
 type PMType = 'pm1' | 'pm25' | 'pm10';
 
@@ -58,61 +65,49 @@ export const PollutionPieChart = ({
   return (
     <div className="w-full h-full min-h-[300px] max-h-[500px] flex flex-col">
       <div className="flex-1">
-        <DynamicChart 
-          data={breakdownData}
-          config={{}}
-          type="pie"
-        >
-          {(recharts) => {
-            const { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } = recharts;
-            
-            return (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                  <Pie
-                    data={breakdownData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={radius.outer}
-                    innerRadius={radius.inner}
-                    fill="#8884d8"
-                    dataKey="percentage"
-                    label={renderCustomLabel}
-                    labelLine={false}
-                    strokeWidth={1}
-                  >
-                    {breakdownData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string, props: any) => [
-                      `${value.toFixed(1)}%`,
-                      `PM${pmType.replace('pm', '')}: ${Math.round(props.payload.avgPM)} μg/m³`,
-                    ]}
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '6px',
-                      fontSize: isMobile ? '12px' : '14px',
-                      padding: '8px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                    }}
-                  />
-                  <Legend 
-                    verticalAlign="bottom"
-                    height={36}
-                    wrapperStyle={{ 
-                      fontSize: isMobile ? '11px' : '12px',
-                      paddingTop: '8px',
-                      lineHeight: '1.2'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            );
-          }}
-        </DynamicChart>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+            <Pie
+              data={breakdownData}
+              cx="50%"
+              cy="50%"
+              outerRadius={radius.outer}
+              innerRadius={radius.inner}
+              fill="#8884d8"
+              dataKey="percentage"
+              label={renderCustomLabel}
+              labelLine={false}
+              strokeWidth={1}
+            >
+              {breakdownData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value: number, name: string, props: any) => [
+                `${value.toFixed(1)}%`,
+                `PM${pmType.replace('pm', '')}: ${Math.round(props.payload.avgPM)} μg/m³`,
+              ]}
+              contentStyle={{
+                backgroundColor: 'hsl(var(--background))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '6px',
+                fontSize: isMobile ? '12px' : '14px',
+                padding: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              }}
+            />
+            <Legend 
+              verticalAlign="bottom"
+              height={36}
+              wrapperStyle={{ 
+                fontSize: isMobile ? '11px' : '12px',
+                paddingTop: '8px',
+                lineHeight: '1.2'
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

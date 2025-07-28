@@ -1,7 +1,7 @@
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { DynamicChart } from '@/components/charts/DynamicChart';
 
 interface PMDataPoint {
   timestamp: Date;
@@ -95,98 +95,79 @@ export const PMLineGraph = ({
         </div>
       )}
       <div className="flex-1">
-        <DynamicChart 
-          data={chartData}
-          config={{
-            pm1: { label: 'PM1.0 µg/m³', color: getLineColor('pm1') },
-            pm25: { label: 'PM2.5 µg/m³', color: getLineColor('pm25') },
-            pm10: { label: 'PM10 µg/m³', color: getLineColor('pm10') }
-          }}
-          type="line"
-        >
-          {(recharts) => {
-            const { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } = recharts;
-            
-            return (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={chartData}
-                  margin={{
-                    top: isMobile ? 10 : 20,
-                    right: isMobile ? 10 : 30,
-                    left: isMobile ? 10 : 20,
-                    bottom: isMobile ? 20 : 5,
-                  }}
-                >
-                  <CartesianGrid 
-                    strokeDasharray="3 3" 
-                    stroke="hsl(var(--muted-foreground))" 
-                    opacity={0.3} 
-                  />
-                  <XAxis
-                    dataKey="timestamp"
-                    type="number"
-                    scale="time"
-                    domain={['dataMin', 'dataMax']}
-                    tickFormatter={formatXAxisLabel}
-                    tick={{ fontSize: isMobile ? 10 : 12 }}
-                    stroke="hsl(var(--muted-foreground))"
-                  />
-                  <YAxis
-                    tick={{ fontSize: isMobile ? 10 : 12 }}
-                    stroke="hsl(var(--muted-foreground))"
-                    label={{
-                      value: 'µg/m³',
-                      angle: -90,
-                      position: 'insideLeft',
-                      style: { textAnchor: 'middle', fontSize: isMobile ? 10 : 12 }
-                    }}
-                  />
-                  <Tooltip
-                    labelFormatter={(value) => formatXAxisLabel(value as number)}
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--popover))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '6px',
-                      fontSize: isMobile ? '12px' : '14px'
-                    }}
-                    labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  />
-                  <Legend 
-                    wrapperStyle={{ fontSize: isMobile ? '12px' : '14px' }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="pm1"
-                    stroke={getLineColor('pm1')}
-                    strokeWidth={2}
-                    dot={{ r: isMobile ? 2 : 3 }}
-                    activeDot={{ r: isMobile ? 4 : 6 }}
-                    name="PM1.0 µg/m³"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="pm25"
-                    stroke={getLineColor('pm25')}
-                    strokeWidth={2}
-                    dot={{ r: isMobile ? 2 : 3 }}
-                    activeDot={{ r: isMobile ? 4 : 6 }}
-                    name="PM2.5 µg/m³"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="pm10"
-                    stroke={getLineColor('pm10')}
-                    strokeWidth={2}
-                    dot={{ r: isMobile ? 2 : 3 }}
-                    activeDot={{ r: isMobile ? 4 : 6 }}
-                    name="PM10 µg/m³"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            );
-          }}
-        </DynamicChart>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={chartData}
+            margin={{
+              top: isMobile ? 10 : 20,
+              right: isMobile ? 10 : 30,
+              left: isMobile ? 10 : 20,
+              bottom: isMobile ? 20 : 5,
+            }}
+          >
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="hsl(var(--muted-foreground))" 
+              opacity={0.3} 
+            />
+            <XAxis
+              dataKey="time"
+              tick={{ fontSize: isMobile ? 10 : 12 }}
+              tickFormatter={formatXAxisLabel}
+              stroke="hsl(var(--muted-foreground))"
+              interval={isMobile ? 'preserveStartEnd' : 0}
+            />
+            <YAxis
+              tick={{ fontSize: isMobile ? 10 : 12 }}
+              stroke="hsl(var(--muted-foreground))"
+              label={{
+                value: 'µg/m³',
+                angle: -90,
+                position: 'insideLeft',
+                style: { textAnchor: 'middle', fontSize: isMobile ? 10 : 12 }
+              }}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'hsl(var(--popover))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '6px',
+                fontSize: isMobile ? '12px' : '14px'
+              }}
+              labelStyle={{ color: 'hsl(var(--foreground))' }}
+            />
+            <Legend 
+              wrapperStyle={{ fontSize: isMobile ? '12px' : '14px' }}
+            />
+            <Line
+              type="monotone"
+              dataKey="pm1"
+              stroke={getLineColor('pm1')}
+              strokeWidth={2}
+              dot={{ r: isMobile ? 2 : 3 }}
+              activeDot={{ r: isMobile ? 4 : 6 }}
+              name="PM1.0 µg/m³"
+            />
+            <Line
+              type="monotone"
+              dataKey="pm25"
+              stroke={getLineColor('pm25')}
+              strokeWidth={2}
+              dot={{ r: isMobile ? 2 : 3 }}
+              activeDot={{ r: isMobile ? 4 : 6 }}
+              name="PM2.5 µg/m³"
+            />
+            <Line
+              type="monotone"
+              dataKey="pm10"
+              stroke={getLineColor('pm10')}
+              strokeWidth={2}
+              dot={{ r: isMobile ? 2 : 3 }}
+              activeDot={{ r: isMobile ? 4 : 6 }}
+              name="PM10 µg/m³"
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
