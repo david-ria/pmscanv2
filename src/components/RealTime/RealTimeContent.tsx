@@ -71,12 +71,8 @@ export const RealTimeContent = React.memo(function RealTimeContent({
   console.log('[PERF] 🚀 RealTimeContent - LAZY LOADED COMPONENT STARTED!');
   console.log('[PERF] 🔧 RealTimeContent - Starting hooks initialization');
   
-  // Initialize all hooks AFTER the critical render
-  const bluetoothStart = performance.now();
+  // Initialize core hooks immediately (for Rules of Hooks)
   const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
-  console.log(`[PERF] 📱 Bluetooth hook took ${performance.now() - bluetoothStart}ms`);
-
-  const recordingStart = performance.now();
   const {
     isRecording,
     addDataPoint,
@@ -86,41 +82,43 @@ export const RealTimeContent = React.memo(function RealTimeContent({
     startRecording,
     currentMissionId,
   } = useRecordingContext();
-  console.log(`[PERF] 🎬 Recording hook took ${performance.now() - recordingStart}ms`);
+
+  // Defer heavy hooks until user actually needs recording functionality
+  const shouldInitializeHeavyHooks = isRecording || isConnected;
 
   const gpsStart = performance.now();
-  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(true, false, recordingFrequency);
-  console.log(`[PERF] 🧭 GPS hook took ${performance.now() - gpsStart}ms`);
+  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(shouldInitializeHeavyHooks, false, recordingFrequency);
+  if (shouldInitializeHeavyHooks) console.log(`[PERF] 🧭 GPS hook took ${performance.now() - gpsStart}ms`);
 
   const storageStart = performance.now();
   const { settings: autoContextSettings } = useStorageSettings(
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
     { enabled: false }
   );
-  console.log(`[PERF] 💾 Storage settings hook took ${performance.now() - storageStart}ms`);
+  if (shouldInitializeHeavyHooks) console.log(`[PERF] 💾 Storage settings hook took ${performance.now() - storageStart}ms`);
   
   const autoContextStart = performance.now();
-  const autoContextResult = useAutoContext(isRecording && autoContextSettings.enabled, latestLocation);
-  console.log(`[PERF] 🤖 Auto context hook took ${performance.now() - autoContextStart}ms`);
+  const autoContextResult = useAutoContext(shouldInitializeHeavyHooks && isRecording && autoContextSettings.enabled, latestLocation);
+  if (shouldInitializeHeavyHooks) console.log(`[PERF] 🤖 Auto context hook took ${performance.now() - autoContextStart}ms`);
   
   const weatherStart = performance.now();
   const { weatherData, fetchWeatherData } = useWeatherData();
-  console.log(`[PERF] 🌤️ Weather hook took ${performance.now() - weatherStart}ms`);
+  if (shouldInitializeHeavyHooks) console.log(`[PERF] 🌤️ Weather hook took ${performance.now() - weatherStart}ms`);
   
   const eventsStart = performance.now();
   const { getEventsByMission } = useEvents();
-  console.log(`[PERF] 📝 Events hook took ${performance.now() - eventsStart}ms`);
+  if (shouldInitializeHeavyHooks) console.log(`[PERF] 📝 Events hook took ${performance.now() - eventsStart}ms`);
   
   const samplingStart = performance.now();
   const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
     recordingFrequency,
-    isRecording,
+    isRecording: shouldInitializeHeavyHooks && isRecording,
   });
-  console.log(`[PERF] 📊 Context sampling hook took ${performance.now() - samplingStart}ms`);
+  if (shouldInitializeHeavyHooks) console.log(`[PERF] 📊 Context sampling hook took ${performance.now() - samplingStart}ms`);
   
   const alertsStart = performance.now();
   const { checkAlerts } = useAlerts();
-  console.log(`[PERF] 🚨 Alerts hook took ${performance.now() - alertsStart}ms`);
+  if (shouldInitializeHeavyHooks) console.log(`[PERF] 🚨 Alerts hook took ${performance.now() - alertsStart}ms`);
 
   // Restore last selected location/activity from localStorage for recording persistence
   const [selectedLocation, setSelectedLocation] = useState(() => {
