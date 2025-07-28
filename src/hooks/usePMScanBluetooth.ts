@@ -231,7 +231,7 @@ export function usePMScanBluetooth() {
     return () => {
       mounted = false;
     };
-  }, [handleRTData, handleIMData, handleBatteryData, handleChargingData]);
+  }, []); // Only run on mount - handlers are stable useCallback hooks
 
   return {
     isConnected,
