@@ -345,7 +345,7 @@ export const PMLineGraph = ({
             className="absolute inset-0 pointer-events-none overflow-hidden"
             style={{ 
               marginTop: 20, 
-              marginLeft: 50, 
+              marginLeft: isMobile ? 15 : 25, 
               marginRight: 30, 
               marginBottom: 40 
             }}
@@ -381,7 +381,7 @@ export const PMLineGraph = ({
             margin={{
               top: 20,
               right: 30,
-              left: 50,
+              left: isMobile ? 15 : 25,
               bottom: 40,
             }}
           >
