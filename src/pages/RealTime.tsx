@@ -51,7 +51,47 @@ export default function RealTime() {
   // Fast LCP - defer heavy initialization
   const [initialized, setInitialized] = useState(false);
   const hasInitRun = useRef(false);
+  const renderCount = useRef(0);
   
+  // Add debugging for production mount issues
+  renderCount.current += 1;
+  console.log(`[PERF] 🔄 RealTime component starting... (render #${renderCount.current})`);
+  
+  // Only create state and callbacks after initialization to reduce render work
+  if (!initialized) {
+    console.log('[PERF] 🔄 RealTime - Not initialized, showing loading state');
+    
+    // Initialize heavy hooks after first paint - guard with ref to run only once
+    React.useEffect(() => {
+      if (hasInitRun.current) return;
+      hasInitRun.current = true;
+      
+      console.log('[PERF] 🚀 RealTime - Starting initialization transition');
+      const start = performance.now();
+      
+      startTransition(() => {
+        console.log('[PERF] 🔄 RealTime - Setting initialized to true');
+        setInitialized(true);
+        const end = performance.now();
+        console.log(`[PERF] ✅ RealTime - Initialization took ${end - start}ms`);
+      });
+    }, []);
+
+    return (
+      <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
+        {/* Critical content only - fastest LCP */}
+        <div className="text-center p-8">
+          <h1 className="text-2xl font-semibold mb-2">AirSentinels</h1>
+          <p className="text-muted-foreground">Chargement des données de qualité de l'air...</p>
+          <div className="mt-4 w-8 h-8 bg-primary/20 rounded-full animate-pulse mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
+  console.log('[PERF] ✅ RealTime - Initialized, starting hooks initialization');
+  
+  // Only create expensive state and callbacks after initialization
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
@@ -68,10 +108,7 @@ export default function RealTime() {
   const stableT = useCallback(t, []);
   const stableToast = useCallback(toast, []);
 
-  // STEP-BY-STEP PERFORMANCE LOGGING
-  console.log('[PERF] 🔄 RealTime component starting...');
-
-  // Stabilize callbacks to prevent RealTimeContent re-renders - MOVED TO TOP
+  // Stabilize callbacks to prevent RealTimeContent re-renders
   const stableSetIsOnline = useCallback(setIsOnline, []);
   const stableSetShowGraph = useCallback(setShowGraph, []);
   const stableSetShowFrequencyDialog = useCallback(setShowFrequencyDialog, []);
@@ -79,7 +116,7 @@ export default function RealTime() {
   const stableSetHasShownFrequencyDialog = useCallback(setHasShownFrequencyDialog, []);
   const stableSetCurrentEvents = useCallback(setCurrentEvents, []);
 
-  // Memoize props object to prevent unnecessary re-renders - MOVED TO TOP
+  // Memoize props object to prevent unnecessary re-renders
   const contentProps = useMemo(() => ({
     isOnline,
     setIsOnline: stableSetIsOnline,
@@ -104,39 +141,6 @@ export default function RealTime() {
     currentEvents, stableSetCurrentEvents,
     stableT, stableToast
   ]);
-  
-  // Initialize heavy hooks after first paint - guard with ref to run only once
-  useEffect(() => {
-    if (hasInitRun.current) return;
-    hasInitRun.current = true;
-    
-    console.log('[PERF] 🚀 RealTime - Starting initialization transition');
-    const start = performance.now();
-    
-    startTransition(() => {
-      console.log('[PERF] 🔄 RealTime - Setting initialized to true');
-      setInitialized(true);
-      const end = performance.now();
-      console.log(`[PERF] ✅ RealTime - Initialization took ${end - start}ms`);
-    });
-  }, []);
-
-  // Critical path: Show only essential content first
-  if (!initialized) {
-    console.log('[PERF] 🔄 RealTime - Not initialized, showing loading state');
-    return (
-      <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-        {/* Critical content only - fastest LCP */}
-        <div className="text-center p-8">
-          <h1 className="text-2xl font-semibold mb-2">AirSentinels</h1>
-          <p className="text-muted-foreground">Chargement des données de qualité de l'air...</p>
-          <div className="mt-4 w-8 h-8 bg-primary/20 rounded-full animate-pulse mx-auto" />
-        </div>
-      </div>
-    );
-  }
-
-  console.log('[PERF] ✅ RealTime - Initialized, starting hooks initialization');
   
   return <RealTimeContent {...contentProps} />;
 }
