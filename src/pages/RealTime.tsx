@@ -62,17 +62,70 @@ export default function RealTime() {
   const { t } = useTranslation();
   const { toast } = useToast();
 
+  // STEP-BY-STEP PERFORMANCE LOGGING
+  console.log('[PERF] 🔄 RealTime component starting...');
+  
   // Initialize heavy hooks after first paint using startTransition
   useEffect(() => {
+    console.log('[PERF] 🚀 RealTime - Starting initialization transition');
+    const start = performance.now();
+    
     startTransition(() => {
+      console.log('[PERF] 🔄 RealTime - Setting initialized to true');
       setInitialized(true);
+      const end = performance.now();
+      console.log(`[PERF] ✅ RealTime - Initialization took ${end - start}ms`);
     });
   }, []);
 
-  // Only initialize heavy hooks after critical render
-  const { currentData, isConnected, device, error, requestDevice, disconnect } =
-    usePMScanBluetooth();
+  // Critical path: Show only essential content first
+  if (!initialized) {
+    console.log('[PERF] 🔄 RealTime - Not initialized, showing loading state');
+    return (
+      <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
+        {/* Critical content only - fastest LCP */}
+        <div className="text-center p-8">
+          <h1 className="text-2xl font-semibold mb-2">AirSentinels</h1>
+          <p className="text-muted-foreground">Chargement des données de qualité de l'air...</p>
+          <div className="mt-4 w-8 h-8 bg-primary/20 rounded-full animate-pulse mx-auto" />
+        </div>
+      </div>
+    );
+  }
 
+  console.log('[PERF] ✅ RealTime - Initialized, starting hooks initialization');
+  
+  return <RealTimeContent 
+    isOnline={isOnline}
+    setIsOnline={setIsOnline}
+    showGraph={showGraph}
+    setShowGraph={setShowGraph}
+    showFrequencyDialog={showFrequencyDialog}
+    setShowFrequencyDialog={setShowFrequencyDialog}
+    recordingFrequency={recordingFrequency}
+    setRecordingFrequency={setRecordingFrequency}
+    hasShownFrequencyDialog={hasShownFrequencyDialog}
+    setHasShownFrequencyDialog={setHasShownFrequencyDialog}
+    currentEvents={currentEvents}
+    setCurrentEvents={setCurrentEvents}
+    t={t}
+    toast={toast}
+  />;
+}
+
+function RealTimeContent({ 
+  isOnline, setIsOnline, showGraph, setShowGraph, showFrequencyDialog, setShowFrequencyDialog,
+  recordingFrequency, setRecordingFrequency, hasShownFrequencyDialog, setHasShownFrequencyDialog,
+  currentEvents, setCurrentEvents, t, toast 
+}: any) {
+  console.log('[PERF] 🔧 RealTimeContent - Starting hooks initialization');
+  
+  // Initialize all hooks AFTER the critical render
+  const bluetoothStart = performance.now();
+  const { currentData, isConnected, device, error, requestDevice, disconnect } = usePMScanBluetooth();
+  console.log(`[PERF] 📱 Bluetooth hook took ${performance.now() - bluetoothStart}ms`);
+
+  const recordingStart = performance.now();
   const {
     isRecording,
     addDataPoint,
@@ -82,28 +135,41 @@ export default function RealTime() {
     startRecording,
     currentMissionId,
   } = useRecordingContext();
+  console.log(`[PERF] 🎬 Recording hook took ${performance.now() - recordingStart}ms`);
 
-  const { 
-    locationEnabled, 
-    latestLocation, 
-    requestLocationPermission 
-  } = useGPS(true, false, recordingFrequency);
+  const gpsStart = performance.now();
+  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(true, false, recordingFrequency);
+  console.log(`[PERF] 🧭 GPS hook took ${performance.now() - gpsStart}ms`);
 
-  // Only initialize autocontext if the user has enabled it
+  const storageStart = performance.now();
   const { settings: autoContextSettings } = useStorageSettings(
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
     { enabled: false }
   );
-  const autoContextResult = useAutoContext(isRecording && initialized && autoContextSettings.enabled, latestLocation);
-  const { weatherData, fetchWeatherData } = useWeatherData();
-  const { getEventsByMission } = useEvents();
+  console.log(`[PERF] 💾 Storage settings hook took ${performance.now() - storageStart}ms`);
   
+  const autoContextStart = performance.now();
+  const autoContextResult = useAutoContext(isRecording && autoContextSettings.enabled, latestLocation);
+  console.log(`[PERF] 🤖 Auto context hook took ${performance.now() - autoContextStart}ms`);
+  
+  const weatherStart = performance.now();
+  const { weatherData, fetchWeatherData } = useWeatherData();
+  console.log(`[PERF] 🌤️ Weather hook took ${performance.now() - weatherStart}ms`);
+  
+  const eventsStart = performance.now();
+  const { getEventsByMission } = useEvents();
+  console.log(`[PERF] 📝 Events hook took ${performance.now() - eventsStart}ms`);
+  
+  const samplingStart = performance.now();
   const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
     recordingFrequency,
-    isRecording: isRecording && initialized,
+    isRecording,
   });
+  console.log(`[PERF] 📊 Context sampling hook took ${performance.now() - samplingStart}ms`);
   
+  const alertsStart = performance.now();
   const { checkAlerts } = useAlerts();
+  console.log(`[PERF] 🚨 Alerts hook took ${performance.now() - alertsStart}ms`);
 
   // Restore last selected location/activity from localStorage for recording persistence
   const [selectedLocation, setSelectedLocation] = useState(() => {
@@ -119,7 +185,7 @@ export default function RealTime() {
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
 
   useEffect(() => {
-    if (isRecording && currentData && initialized) {
+    if (isRecording && currentData) {
       // Prevent duplicate data points by checking if this is actually new data
       const currentTimestamp = currentData.timestamp.getTime();
       const isDuplicate =
@@ -195,12 +261,11 @@ export default function RealTime() {
     selectedLocation,
     selectedActivity,
     updateContextIfNeeded,
-    initialized,
   ]);
 
   // Clear location history when recording starts for fresh speed calculations
   useEffect(() => {
-    if (isRecording && initialized) {
+    if (isRecording) {
       import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
         clearLocationHistory();
         if (process.env.NODE_ENV === 'development') {
@@ -208,11 +273,11 @@ export default function RealTime() {
         }
       });
     }
-  }, [isRecording, initialized]);
+  }, [isRecording]);
 
   // Initial autocontext effect - runs only when autocontext is toggled
   useEffect(() => {
-    if (initialized && process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development') {
       console.log('Autocontext effect triggered:', { 
         autoContextEnabled, 
         hasCurrentData: !!currentData, 
@@ -229,21 +294,22 @@ export default function RealTime() {
         );
       }
     }
-  }, [autoContextEnabled, forceContextUpdate, initialized]); // Only run when autocontext is toggled
+  }, [autoContextEnabled, forceContextUpdate]); // Only run when autocontext is toggled
 
   // Check alerts whenever new data comes in
   useEffect(() => {
-    if (currentData && initialized) {
+    if (currentData) {
       checkAlerts(currentData.pm1, currentData.pm25, currentData.pm10);
     }
-  }, [currentData, checkAlerts, initialized]);
+  }, [currentData, checkAlerts]);
 
   // Fetch weather data when location changes
   useEffect(() => {
-    if (latestLocation && initialized) {
+    if (latestLocation) {
+      console.log(`[PERF] 🌤️ Triggering weather fetch for location: ${latestLocation.latitude}, ${latestLocation.longitude}`);
       fetchWeatherData(latestLocation);
     }
-  }, [latestLocation, fetchWeatherData, initialized]);
+  }, [latestLocation, fetchWeatherData]);
 
   // Persist location/activity selections to localStorage for recording persistence
   useEffect(() => {
@@ -282,12 +348,12 @@ export default function RealTime() {
 
   // Fetch events for the current mission
   useEffect(() => {
-    if (currentMissionId && initialized) {
+    if (currentMissionId) {
       getEventsByMission(currentMissionId).then(setCurrentEvents);
     } else {
       setCurrentEvents([]);
     }
-  }, [currentMissionId, getEventsByMission, initialized]);
+  }, [currentMissionId, getEventsByMission]);
 
   // Reset frequency dialog flag when device disconnects
   useEffect(() => {
@@ -362,19 +428,7 @@ export default function RealTime() {
     }
   };
 
-  // Critical path: Show only essential content first
-  if (!initialized) {
-    return (
-      <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-        {/* Critical content only - fastest LCP */}
-        <div className="text-center p-8">
-          <h1 className="text-2xl font-semibold mb-2">AirSentinels</h1>
-          <p className="text-muted-foreground">Chargement des données de qualité de l'air...</p>
-          <div className="mt-4 w-8 h-8 bg-primary/20 rounded-full animate-pulse mx-auto" />
-        </div>
-      </div>
-    );
-  }
+  console.log('[PERF] 🎨 RealTimeContent - Rendering UI');
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
