@@ -1,6 +1,8 @@
 
-/* Critical CSS only - loaded synchronously for fast paint */
+/* Main CSS entry point - optimized for performance */
 @import './styles/base.css';
+@import './styles/animations.css';
+@import './styles/components.css';
 @import './styles/layout.css';
 @import './styles/utilities.css';
 @import './styles/performance.css';

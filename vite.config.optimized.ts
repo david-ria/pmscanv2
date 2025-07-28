@@ -38,16 +38,11 @@ export default defineConfig(async ({ command, mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            // Stable vendor chunks with long-term caching (1 year)
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            // Vendor chunk for core React libraries
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
             
-            // Heavy backend libraries - immutable, cache forever
-            'vendor-supabase': ['@supabase/supabase-js'],
-            'vendor-mapbox': ['mapbox-gl'],
-            'vendor-tensorflow': ['@tensorflow/tfjs'],
-            
-            // Large UI library vendors - very stable
-            'vendor-radix': [
+            // UI libraries chunk
+            'ui-vendor': [
               '@radix-ui/react-dialog',
               '@radix-ui/react-dropdown-menu',
               '@radix-ui/react-toast',
@@ -56,15 +51,16 @@ export default defineConfig(async ({ command, mode }) => {
               'lucide-react'
             ],
             
-            // Utility vendors - extremely stable
-            'vendor-utils': ['clsx', 'tailwind-merge', 'class-variance-authority'],
-            
-            // Feature-specific vendors
-            'vendor-charts': ['recharts'],
-            'vendor-pdf': ['jspdf', 'html2canvas'],
-            'vendor-forms': ['react-hook-form', 'zod'],
-            'vendor-dates': ['date-fns'],
-            'vendor-i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector']
+            // Large dependencies that are already dynamically imported
+            // These will only be included if actually used
+            'maps': ['mapbox-gl'],
+            'charts': ['recharts'],
+            'tensorflow': ['@tensorflow/tfjs'],
+            'supabase': ['@supabase/supabase-js'],
+            'pdf': ['jspdf', 'html2canvas'],
+            'forms': ['react-hook-form', 'zod'],
+            'dates': ['date-fns'],
+            'i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector']
           }
         }
       },
@@ -106,10 +102,7 @@ export default defineConfig(async ({ command, mode }) => {
         '@tensorflow/tfjs',
         'jspdf',
         'html2canvas',
-        '@capacitor-community/bluetooth-le',
-        // Exclude Capacitor platform packages from web builds
-        '@capacitor/android',
-        '@capacitor/ios'
+        '@capacitor-community/bluetooth-le'
       ]
     },
     

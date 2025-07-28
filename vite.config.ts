@@ -55,25 +55,38 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
           manualChunks: {
-            // Stable vendor chunks with long-term caching
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            // Core vendor chunk - always needed
+            vendor: ['react', 'react-dom'],
             
-            // Heavy backend libraries - rarely change, cache forever
-            'vendor-supabase': ['@supabase/supabase-js'],
-            'vendor-mapbox': ['mapbox-gl'],
-            'vendor-tensorflow': ['@tensorflow/tfjs'],
+            // Router chunk - needed for navigation
+            router: ['react-router-dom'],
             
-            // Large UI library vendors - cache for long periods
-            'vendor-radix': [
+            // React Query for data fetching
+            query: ['@tanstack/react-query'],
+            
+            // UI library chunks - split by usage frequency
+            'ui-core': [
               '@radix-ui/react-dialog', 
               '@radix-ui/react-select', 
               '@radix-ui/react-tabs',
               '@radix-ui/react-toast',
               '@radix-ui/react-tooltip',
-              '@radix-ui/react-popover',
-              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-popover'
+            ],
+            'ui-forms': [
+              '@radix-ui/react-checkbox',
+              '@radix-ui/react-radio-group',
+              '@radix-ui/react-switch',
+              '@radix-ui/react-slider',
+              '@radix-ui/react-label',
+              'react-hook-form',
+              '@hookform/resolvers',
+              'zod'
+            ],
+            'ui-advanced': [
               '@radix-ui/react-accordion',
               '@radix-ui/react-alert-dialog',
+              '@radix-ui/react-dropdown-menu',
               '@radix-ui/react-navigation-menu',
               '@radix-ui/react-menubar',
               '@radix-ui/react-context-menu',
@@ -85,36 +98,30 @@ export default defineConfig(({ mode }) => {
               '@radix-ui/react-toggle-group'
             ],
             
-            // Form and validation libraries
-            'vendor-forms': [
-              '@radix-ui/react-checkbox',
-              '@radix-ui/react-radio-group',
-              '@radix-ui/react-switch',
-              '@radix-ui/react-slider',
-              '@radix-ui/react-label',
-              'react-hook-form',
-              '@hookform/resolvers',
-              'zod'
-            ],
+            // Feature-specific chunks
+            charts: ['recharts'],
+            mapbox: ['mapbox-gl'],
+            supabase: ['@supabase/supabase-js'],
             
-            // Utility vendors - very stable
-            'vendor-utils': [
-              'clsx', 
-              'class-variance-authority', 
-              'tailwind-merge',
-              'date-fns',
-              'lucide-react'
-            ],
+            // Utility chunks
+            utils: ['clsx', 'class-variance-authority', 'tailwind-merge'],
+            date: ['date-fns'],
+            i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
             
-            // Feature-specific vendors
-            'vendor-charts': ['recharts'],
-            'vendor-i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
-            'vendor-query': ['@tanstack/react-query'],
-            'vendor-theme': ['next-themes'],
-            'vendor-carousel': ['embla-carousel-react'],
-            'vendor-notifications': ['sonner'],
-            'vendor-pdf': ['jspdf', 'html2canvas'],
-            'vendor-bluetooth': ['@capacitor-community/bluetooth-le'],
+            // Heavy feature chunks
+            bluetooth: ['@capacitor-community/bluetooth-le'],
+            tensorflow: ['@tensorflow/tfjs'],
+            pdf: ['jspdf', 'html2canvas'],
+            
+            // Theme and styling
+            theme: ['next-themes'],
+            carousel: ['embla-carousel-react'],
+            notifications: ['sonner'],
+            
+            // Split by route to enable route-based code splitting
+            'route-analysis': [],
+            'route-groups': [],
+            'route-settings': [],
           },
         },
       },

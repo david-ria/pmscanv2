@@ -35,9 +35,6 @@ export function useWeatherData() {
       return null;
     }
 
-    const requestId = `${location.latitude}_${location.longitude}_${timestamp?.getTime() || Date.now()}`;
-    console.log(`[PERF] 🌤️ Weather request starting: ${requestId}`);
-    
     setIsLoading(true);
     
     try {
@@ -57,16 +54,13 @@ export function useWeatherData() {
       }
 
       if (data?.weatherData) {
-        console.log(`[PERF] ✅ Weather request completed: ${requestId}`);
         logger.debug('✅ Weather data fetched successfully:', data.weatherData.id);
         setWeatherData(data.weatherData);
         return data.weatherData;
       }
 
-      console.log(`[PERF] ❌ Weather request failed - no data: ${requestId}`);
       return null;
     } catch (error) {
-      console.log(`[PERF] ❌ Weather request error: ${requestId}`, error);
       logger.error('❌ Error in weather data fetch:', error);
       return null;
     } finally {

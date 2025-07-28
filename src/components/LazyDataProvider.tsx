@@ -3,7 +3,7 @@
  * Use this instead of importing supabase client directly
  */
 
-import { createContext, useContext, ReactNode, useMemo } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import { useSupabaseLazy } from '@/lib/supabaseWrapper';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -47,14 +47,8 @@ export function LazyDataProvider({ children, fallback }: LazyDataProviderProps) 
     );
   }
 
-  const contextValue = useMemo(() => ({
-    supabase,
-    loading,
-    error
-  }), [supabase, loading, error]);
-
   return (
-    <LazyDataContext.Provider value={contextValue}>
+    <LazyDataContext.Provider value={{ supabase, loading, error }}>
       {children}
     </LazyDataContext.Provider>
   );
