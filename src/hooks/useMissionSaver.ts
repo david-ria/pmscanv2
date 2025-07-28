@@ -14,11 +14,24 @@ export function useMissionSaver() {
     shared?: boolean,
     missionId?: string
   ) => {
+    console.log('💾 saveMission called with:', {
+      recordingDataLength: recordingData.length,
+      recordingStartTime,
+      missionName,
+      locationContext,
+      activityContext,
+      recordingFrequency,
+      shared,
+      missionId
+    });
+
     if (!recordingStartTime) {
+      console.error('❌ No recording start time:', recordingStartTime);
       throw new Error('Aucun enregistrement en cours à sauvegarder');
     }
 
     if (recordingData.length === 0) {
+      console.error('❌ No recording data:', recordingData);
       throw new Error('Aucune donnée enregistrée pour créer la mission');
     }
 
@@ -51,29 +64,47 @@ export function useMissionSaver() {
       }))
     });
     
-    const mission = dataStorage.createMissionFromRecording(
-      recordingData,
-      missionName,
-      actualStartTime,
-      endTime,
-      locationContext,
-      activityContext,
-      recordingFrequency,
-      shared,
-      missionId
-    );
+    try {
+      console.log('📊 Creating mission from recording data...');
+      const mission = dataStorage.createMissionFromRecording(
+        recordingData,
+        missionName,
+        actualStartTime,
+        endTime,
+        locationContext,
+        activityContext,
+        recordingFrequency,
+        shared,
+        missionId
+      );
 
-    // Save mission locally so it appears in history
-    dataStorage.saveMissionLocally(mission);
+      console.log('✅ Mission created successfully:', mission.id);
 
-    // Export to CSV immediately
-    await dataStorage.exportMissionToCSV(mission);
+      // Save mission locally so it appears in history
+      console.log('💾 Saving mission locally...');
+      dataStorage.saveMissionLocally(mission);
+      console.log('✅ Mission saved locally');
 
-    logger.debug(
-      '📁 Mission saved locally and exported to CSV. Will sync to database later.'
-    );
+      // Export to CSV immediately
+      console.log('📄 Exporting mission to CSV...');
+      await dataStorage.exportMissionToCSV(mission);
+      console.log('✅ Mission exported to CSV successfully');
 
-    return mission;
+      logger.debug(
+        '📁 Mission saved locally and exported to CSV. Will sync to database later.'
+      );
+
+      return mission;
+    } catch (error) {
+      console.error('❌ Error in mission saving process:', error);
+      console.error('❌ Error details:', {
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : undefined,
+        errorType: typeof error,
+        errorValue: error
+      });
+      throw error; // Re-throw to let the calling code handle it
+    }
   }, []);
 
   return {
