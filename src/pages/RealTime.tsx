@@ -63,6 +63,10 @@ export default function RealTime() {
   const { t } = useTranslation();
   const { toast } = useToast();
 
+  // Stabilize t and toast functions to prevent RealTimeContent re-renders
+  const stableT = useCallback(t, []);
+  const stableToast = useCallback(toast, []);
+
   // STEP-BY-STEP PERFORMANCE LOGGING
   console.log('[PERF] 🔄 RealTime component starting...');
 
@@ -88,8 +92,8 @@ export default function RealTime() {
     setHasShownFrequencyDialog: stableSetHasShownFrequencyDialog,
     currentEvents,
     setCurrentEvents: stableSetCurrentEvents,
-    t,
-    toast
+    t: stableT,
+    toast: stableToast
   }), [
     isOnline, stableSetIsOnline,
     showGraph, stableSetShowGraph,
@@ -97,7 +101,7 @@ export default function RealTime() {
     recordingFrequency, stableSetRecordingFrequency,
     hasShownFrequencyDialog, stableSetHasShownFrequencyDialog,
     currentEvents, stableSetCurrentEvents,
-    t, toast
+    stableT, stableToast
   ]);
   
   // Initialize heavy hooks after first paint using startTransition
