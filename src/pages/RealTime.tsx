@@ -133,11 +133,11 @@ export default function RealTime() {
   return <RealTimeContent {...contentProps} />;
 }
 
-const RealTimeContent = React.memo(({ 
+const RealTimeContent = React.memo(function RealTimeContent({ 
   isOnline, setIsOnline, showGraph, setShowGraph, showFrequencyDialog, setShowFrequencyDialog,
   recordingFrequency, setRecordingFrequency, hasShownFrequencyDialog, setHasShownFrequencyDialog,
   currentEvents, setCurrentEvents, t, toast 
-}: any) => {
+}: any) {
   console.log('[PERF] 🔧 RealTimeContent - Starting hooks initialization');
   
   // Initialize all hooks AFTER the critical render
