@@ -3,8 +3,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 
-// Dynamically import the heavy RealTimeContent component
-const RealTimeContent = React.lazy(() => import('@/components/RealTime/RealTimeContent'));
+// Dynamically import the lightweight wrapper that defers heavy loading
+const RealTimeContentWrapper = React.lazy(() => import('@/components/RealTime/RealTimeContentWrapper'));
 
 export default function RealTime() {
   // Fast LCP - defer heavy initialization with robust guards
@@ -100,6 +100,7 @@ export default function RealTime() {
   // Add debugging for production mount issues
   renderCount.current += 1;
   console.log(`[PERF] 🔄 RealTime component starting... (render #${renderCount.current})`);
+  console.log(`[PERF] 🔄 RealTime - initialized: ${initialized}, hasInitRun: ${hasInitRun.current}, isMounted: ${isMounted.current}`);
 
   // Early return for loading state - but after all hooks are called
   if (!initialized) {
@@ -116,7 +117,7 @@ export default function RealTime() {
     );
   }
 
-  console.log('[PERF] ✅ RealTime - Initialized, starting hooks initialization');
+  console.log('[PERF] ✅ RealTime - Initialized, loading RealTimeContent with Suspense');
   
   return (
     <Suspense 
@@ -130,7 +131,7 @@ export default function RealTime() {
         </div>
       }
     >
-      <RealTimeContent {...contentProps} />
+      <RealTimeContentWrapper {...contentProps} />
     </Suspense>
   );
 }

@@ -68,6 +68,7 @@ export const RealTimeContent = React.memo(function RealTimeContent({
   recordingFrequency, setRecordingFrequency, hasShownFrequencyDialog, setHasShownFrequencyDialog,
   currentEvents, setCurrentEvents, t, toast 
 }: RealTimeContentProps) {
+  console.log('[PERF] 🚀 RealTimeContent - LAZY LOADED COMPONENT STARTED!');
   console.log('[PERF] 🔧 RealTimeContent - Starting hooks initialization');
   
   // Initialize all hooks AFTER the critical render
