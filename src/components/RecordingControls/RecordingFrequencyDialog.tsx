@@ -73,3 +73,5 @@ export function RecordingFrequencyDialog({
     </Dialog>
   );
 }
+
+export default RecordingFrequencyDialog;

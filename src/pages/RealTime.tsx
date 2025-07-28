@@ -18,32 +18,12 @@ import { useEvents } from '@/hooks/useEvents';
 
 // Import lightweight placeholder for fast LCP
 import { MapPlaceholder } from '@/components/RealTime/MapPlaceholder';
-// Lazy load heavy map component only after frequency selection
-const MapGraphToggle = lazy(() => 
-  import('@/components/RealTime/MapGraphToggle').then(module => ({ 
-    default: module.MapGraphToggle 
-  }))
-);
-const ContextSelectors = lazy(() => 
-  import('@/components/RecordingControls/ContextSelectors').then(module => ({ 
-    default: module.ContextSelectors 
-  }))
-);
-const AutoContextDisplay = lazy(() => 
-  import('@/components/AutoContextDisplay').then(module => ({ 
-    default: module.AutoContextDisplay 
-  }))
-);
-const DataLogger = lazy(() => 
-  import('@/components/DataLogger').then(module => ({ 
-    default: module.DataLogger 
-  }))
-);
-const RecordingFrequencyDialog = lazy(() => 
-  import('@/components/RecordingControls/RecordingFrequencyDialog').then(module => ({ 
-    default: module.RecordingFrequencyDialog 
-  }))
-);
+// Lazy load heavy components with proper error boundaries
+const MapGraphToggle = lazy(() => import('@/components/RealTime/MapGraphToggle'));
+const ContextSelectors = lazy(() => import('@/components/RecordingControls/ContextSelectors'));
+const AutoContextDisplay = lazy(() => import('@/components/AutoContextDisplay'));
+const DataLogger = lazy(() => import('@/components/DataLogger'));
+const RecordingFrequencyDialog = lazy(() => import('@/components/RecordingControls/RecordingFrequencyDialog'));
 
 const RealTime = memo(() => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
