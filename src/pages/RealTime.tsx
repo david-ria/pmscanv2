@@ -345,7 +345,7 @@ const RealTimeContent = React.memo(function RealTimeContent({
         );
       }
     }
-  }, [latestLocation, fetchWeatherData]);
+  }, [latestLocation]); // fetchWeatherData is stable useCallback, no need to include
 
   // Persist location/activity selections to localStorage for recording persistence
   useEffect(() => {
