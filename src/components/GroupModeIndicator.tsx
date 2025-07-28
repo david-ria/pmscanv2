@@ -53,12 +53,15 @@ export const GroupModeIndicator = () => {
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             <div>
-              <CardTitle 
-                className="text-base cursor-pointer hover:text-primary transition-colors"
-                onClick={leaveGroupDialog.openDialog}
-              >
-                {activeGroup.name}
-              </CardTitle>
+            <CardTitle 
+              className="text-base cursor-pointer hover:text-primary transition-colors"
+              onClick={() => {
+                console.log('Group name clicked, opening dialog');
+                leaveGroupDialog.openDialog();
+              }}
+            >
+              {activeGroup.name}
+            </CardTitle>
               {activeGroup.description && (
                 <CardDescription className="text-sm">
                   {activeGroup.description}
