@@ -46,6 +46,8 @@ const RecordingFrequencyDialog = lazy(() =>
 );
 
 export default function RealTime() {
+  console.log('[PERF] RealTime component rendering...');
+  
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);

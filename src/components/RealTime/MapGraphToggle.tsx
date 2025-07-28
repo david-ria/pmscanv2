@@ -127,15 +127,6 @@ export function MapGraphToggle({
                   <p>{t('realTime.connectionRequired')}</p>
                 </div>
               </div>
-            ) : !isRecording ? (
-              <div className="h-full flex items-center justify-center bg-muted/20 border border-border rounded-lg">
-                <div className="text-center">
-                  <Map className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground">
-                    {t('realTime.mapWillLoadWhenRecording')}
-                  </p>
-                </div>
-              </div>
             ) : (
               <Suspense fallback={
                 <div className="h-full flex items-center justify-center bg-muted/20 border border-border rounded-lg">
