@@ -78,7 +78,7 @@ export const GroupModeIndicator = () => {
                   QR
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-md" hideTitle={false} hideDescription={false}>
                 <DialogHeader>
                   <DialogTitle>Group QR Code</DialogTitle>
                   <DialogDescription>
