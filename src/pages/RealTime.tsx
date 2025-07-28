@@ -60,12 +60,15 @@ const RealTime = memo(() => {
     requestLocationPermission 
   } = useGPS(userInitiated, false, recordingFrequency);
 
-  // Initialize autocontext if enabled
+  // Initialize autocontext only after user initiation
   const { settings: autoContextSettings } = useStorageSettings(
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
     { enabled: false }
   );
-  const autoContextResult = useAutoContext(isRecording && autoContextSettings.enabled, latestLocation);
+  const autoContextResult = useAutoContext(
+    isRecording && autoContextSettings.enabled && userInitiated, 
+    latestLocation
+  );
   const { weatherData, fetchWeatherData } = useWeatherData();
   const { getEventsByMission } = useEvents();
   
