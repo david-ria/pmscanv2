@@ -119,7 +119,20 @@ export default function RealTime() {
   ) : { settings: { enabled: false } };
   
   const autoContextResult = initialized && autoContextSettings.enabled ? 
-    useAutoContext(isRecording && autoContextSettings.enabled, latestLocation) : null;
+    useAutoContext(isRecording && autoContextSettings.enabled, latestLocation) : {
+      settings: { enabled: false },
+      updateSettings: () => {},
+      toggleEnabled: () => {},
+      determineContext: () => '',
+      updateLatestContext: () => {},
+      latestContext: '',
+      isEnabled: false,
+      mlEnabled: false,
+      highAccuracy: false,
+      latestLocation: null,
+      locationEnabled: false,
+      requestLocationPermission: () => Promise.resolve(false),
+    };
     
   const weatherHook = initialized ? useWeatherData() : {
     weatherData: null,
