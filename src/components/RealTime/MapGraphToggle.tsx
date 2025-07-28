@@ -1,9 +1,16 @@
 
 import { WifiOff, Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MapboxMap } from '@/components/MapboxMap';
 import { PMLineGraph } from '@/components/PMLineGraph';
+import { Suspense, lazy } from 'react';
 import { FloatingRecordButton } from '@/components/FloatingRecordButton';
+
+// Lazy load the heavy MapboxMap component
+const MapboxMap = lazy(() => 
+  import('@/components/MapboxMap').then(module => ({ 
+    default: module.MapboxMap 
+  }))
+);
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { PMScanDevice } from '@/lib/pmscan/types';
@@ -130,14 +137,23 @@ export function MapGraphToggle({
                 </div>
               </div>
             ) : (
-              <MapboxMap
-                currentLocation={latestLocation}
-                pmData={currentData}
-                trackPoints={trackPoints}
-                isRecording={isRecording}
-                className="h-full w-full"
-                autoLoadOnRecording={true}
-              />
+              <Suspense fallback={
+                <div className="h-full flex items-center justify-center bg-muted/20 border border-border rounded-lg">
+                  <div className="text-center">
+                    <Map className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50 animate-pulse" />
+                    <p className="text-sm text-muted-foreground">Loading map...</p>
+                  </div>
+                </div>
+              }>
+                <MapboxMap
+                  currentLocation={latestLocation}
+                  pmData={currentData}
+                  trackPoints={trackPoints}
+                  isRecording={isRecording}
+                  className="h-full w-full"
+                  autoLoadOnRecording={true}
+                />
+              </Suspense>
             )}
           </>
         )}
