@@ -1,8 +1,8 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { formatTime, isValidTimestamp } from '@/utils/timeFormat';
 
 interface PMDataPoint {
   timestamp: Date;
@@ -60,26 +60,28 @@ export const PMLineGraph = ({
     );
   }
 
-  const chartData = data.map(point => ({
-    timestamp: point.timestamp ? point.timestamp.getTime() : Date.now(),
-    pm1: Math.round(point.pm1),
-    pm25: Math.round(point.pm25),
-    pm10: Math.round(point.pm10),
-    time: point.timestamp ? format(point.timestamp, 'HH:mm:ss') : '',
-    // Include context data for potential highlighting
-    locationContext: point.locationContext,
-    activityContext: point.activityContext,
-    automaticContext: point.automaticContext,
-  })).filter(point => point.timestamp && !isNaN(point.timestamp));
+  const chartData = data.map(point => {
+    // Validate timestamp and create safe fallback
+    const validTimestamp = point.timestamp && isValidTimestamp(point.timestamp) 
+      ? point.timestamp 
+      : new Date();
+    
+    return {
+      timestamp: validTimestamp.getTime(),
+      pm1: Math.round(point.pm1),
+      pm25: Math.round(point.pm25),
+      pm10: Math.round(point.pm10),
+      time: formatTime(validTimestamp),
+      // Include context data for potential highlighting
+      locationContext: point.locationContext,
+      activityContext: point.activityContext,
+      automaticContext: point.automaticContext,
+    };
+  }).filter(point => point.timestamp && !isNaN(point.timestamp));
 
-  const formatXAxisLabel = (value: any) => {
-    // Handle invalid timestamps gracefully
-    if (!value || isNaN(value)) return '';
-    
-    const date = new Date(value);
-    if (isNaN(date.getTime())) return '';
-    
-    return format(date, isMobile ? 'HH:mm' : 'HH:mm:ss');
+  const formatXAxisLabel = (timeString: string) => {
+    // timeString is already formatted from chartData.time
+    return isMobile ? timeString.slice(0, 5) : timeString; // Show HH:mm on mobile, HH:mm:ss on desktop
   };
 
   // Function to get line color based on context highlighting
