@@ -64,15 +64,33 @@ export default function RealTime() {
 
   // Initialize heavy hooks after first paint using startTransition
   useEffect(() => {
+    console.log('[PERF] RealTime: Scheduling heavy hooks initialization...');
     startTransition(() => {
+      console.log('[PERF] RealTime: Initializing heavy hooks now...');
       setInitialized(true);
     });
   }, []);
 
   // Only initialize heavy hooks after critical render
-  const { currentData, isConnected, device, error, requestDevice, disconnect } =
-    usePMScanBluetooth();
+  const bluetoothHook = initialized ? usePMScanBluetooth() : {
+    currentData: null,
+    isConnected: false,
+    device: null,
+    error: null,
+    requestDevice: () => {},
+    disconnect: () => {}
+  };
+  const { currentData, isConnected, device, error, requestDevice, disconnect } = bluetoothHook;
 
+  const recordingHook = initialized ? useRecordingContext() : {
+    isRecording: false,
+    addDataPoint: () => {},
+    missionContext: null,
+    recordingData: [],
+    updateMissionContext: () => {},
+    startRecording: () => Promise.resolve(''),
+    currentMissionId: null,
+  };
   const {
     isRecording,
     addDataPoint,
@@ -81,22 +99,38 @@ export default function RealTime() {
     updateMissionContext,
     startRecording,
     currentMissionId,
-  } = useRecordingContext();
+  } = recordingHook;
 
+  const gpsHook = initialized ? useGPS(true, false, recordingFrequency) : {
+    locationEnabled: false,
+    latestLocation: null,
+    requestLocationPermission: () => Promise.resolve(false)
+  };
   const { 
     locationEnabled, 
     latestLocation, 
     requestLocationPermission 
-  } = useGPS(true, false, recordingFrequency);
+  } = gpsHook;
 
-  // Only initialize autocontext if the user has enabled it
-  const { settings: autoContextSettings } = useStorageSettings(
+  // Only initialize autocontext if the user has enabled it AND initialized
+  const { settings: autoContextSettings } = initialized ? useStorageSettings(
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
     { enabled: false }
-  );
-  const autoContextResult = useAutoContext(isRecording && initialized && autoContextSettings.enabled, latestLocation);
-  const { weatherData, fetchWeatherData } = useWeatherData();
-  const { getEventsByMission } = useEvents();
+  ) : { settings: { enabled: false } };
+  
+  const autoContextResult = initialized && autoContextSettings.enabled ? 
+    useAutoContext(isRecording && autoContextSettings.enabled, latestLocation) : null;
+    
+  const weatherHook = initialized ? useWeatherData() : {
+    weatherData: null,
+    fetchWeatherData: () => {}
+  };
+  const { weatherData, fetchWeatherData } = weatherHook;
+  
+  const eventsHook = initialized ? useEvents() : {
+    getEventsByMission: () => Promise.resolve([])
+  };
+  const { getEventsByMission } = eventsHook;
   
   const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
     recordingFrequency,
