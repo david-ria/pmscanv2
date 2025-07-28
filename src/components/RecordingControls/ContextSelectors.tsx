@@ -155,5 +155,3 @@ export function ContextSelectors({
     </div>
   );
 }
-
-export default ContextSelectors;

@@ -128,24 +128,31 @@ export function MissionDetailsDialog({
       });
     }
     
-    // Transform to PMDataPoint format
     return {
-      timestamp: measurement.timestamp,
-      pm1: measurement.pm1,
-      pm25: measurement.pm25,
-      pm10: measurement.pm10,
-      // Additional context data for highlighting
-      locationContext: measurement.locationContext || mission.locationContext,
-      activityContext: measurement.activityContext || mission.activityContext,
-      automaticContext: measurement.automaticContext,
-      location: measurement.latitude && measurement.longitude
-        ? {
-            latitude: measurement.latitude,
-            longitude: measurement.longitude,
-            accuracy: measurement.accuracy || 0,
-            timestamp: measurement.timestamp,
-          }
-        : undefined,
+      pmData: {
+        pm1: measurement.pm1,
+        pm25: measurement.pm25,
+        pm10: measurement.pm10,
+        temp: measurement.temperature || 0,
+        humidity: measurement.humidity || 0,
+        battery: 100, // Default values since these aren't stored in missions
+        charging: false,
+        timestamp: measurement.timestamp,
+      },
+      location:
+        measurement.latitude && measurement.longitude
+          ? {
+              latitude: measurement.latitude,
+              longitude: measurement.longitude,
+              accuracy: measurement.accuracy || 0,
+              timestamp: measurement.timestamp,
+            }
+          : undefined,
+      context: {
+        locationContext: measurement.locationContext || mission.locationContext,
+        activityContext: measurement.activityContext || mission.activityContext,
+        automaticContext: measurement.automaticContext,
+      },
     };
   });
 

@@ -1,11 +1,8 @@
 import { WifiOff, Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MapboxMap } from '@/components/MapboxMap';
 import { PMLineGraph } from '@/components/PMLineGraph';
-import { Suspense, lazy } from 'react';
 import { FloatingRecordButton } from '@/components/FloatingRecordButton';
-
-// Lazy load the heavy MapboxMap component
-const MapboxMap = lazy(() => import('@/components/MapboxMap').then(m => ({ default: m.MapboxMap })));
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { PMScanDevice } from '@/lib/pmscan/types';
@@ -67,17 +64,6 @@ export function MapGraphToggle({
       timestamp: entry.pmData.timestamp,
     }))
     .filter((point) => point.longitude !== 0 && point.latitude !== 0);
-
-  // Transform recording data to PMDataPoint format for the graph
-  const graphData = recordingData.map((entry) => ({
-    timestamp: entry.pmData.timestamp,
-    pm1: entry.pmData.pm1,
-    pm25: entry.pmData.pm25,
-    pm10: entry.pmData.pm10,
-    // Include location data for context if available
-    location: entry.location,
-  }));
-
   return (
     <div className="mb-4">
       {/* Toggle Controls */}
@@ -108,7 +94,7 @@ export function MapGraphToggle({
       <div className="h-[45vh] relative">
         {showGraph ? (
           <PMLineGraph 
-            data={graphData} 
+            data={recordingData} 
             events={events} 
             className="h-full"
             highlightContextType="location"
@@ -122,23 +108,24 @@ export function MapGraphToggle({
                   <p>{t('realTime.connectionRequired')}</p>
                 </div>
               </div>
-            ) : (
-              <Suspense fallback={
-                <div className="h-full flex items-center justify-center bg-muted/10 border border-border rounded-lg">
-                  <div className="text-center">
-                    <Map className="h-8 w-8 mx-auto text-muted-foreground/30 animate-pulse" />
-                  </div>
+            ) : !isRecording ? (
+              <div className="h-full flex items-center justify-center bg-muted/20 border border-border rounded-lg">
+                <div className="text-center">
+                  <Map className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                  <p className="text-sm text-muted-foreground">
+                    {t('realTime.mapWillLoadWhenRecording')}
+                  </p>
                 </div>
-              }>
-                <MapboxMap
-                  currentLocation={latestLocation}
-                  pmData={currentData}
-                  trackPoints={trackPoints}
-                  isRecording={isRecording}
-                  className="h-full w-full"
-                  autoLoadOnRecording={true}
-                />
-              </Suspense>
+              </div>
+            ) : (
+              <MapboxMap
+                currentLocation={latestLocation}
+                pmData={currentData}
+                trackPoints={trackPoints}
+                isRecording={isRecording}
+                className="h-full w-full"
+                autoLoadOnRecording={true}
+              />
             )}
           </>
         )}
@@ -163,5 +150,3 @@ export function MapGraphToggle({
     </div>
   );
 }
-
-export default MapGraphToggle;

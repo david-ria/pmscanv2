@@ -58,11 +58,14 @@ export function MapPlaceholder({
         </div>
       </div>
 
-      {/* Simple placeholder content - no text to avoid LCP issues */}
+      {/* Simple placeholder content */}
       <div className="h-[45vh] relative">
-        <div className="h-full flex items-center justify-center bg-muted/10 border border-border rounded-lg">
+        <div className="h-full flex items-center justify-center bg-muted/20 border border-border rounded-lg">
           <div className="text-center">
-            <Map className="h-8 w-8 mx-auto text-muted-foreground/30" />
+            <Map className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              {t('realTime.mapWillLoadWhenRecording')}
+            </p>
           </div>
         </div>
 

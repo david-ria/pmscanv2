@@ -84,20 +84,24 @@ export function useRecordingContext() {
     );
   }
   
-  // Always return context, even if null - let components handle the loading state
-  // This ensures consistent hook usage and prevents React Error #300
-  return context || {
-    isRecording: false,
-    recordingFrequency: '10s',
-    missionContext: { location: '', activity: '' },
-    currentMissionId: null,
-    startRecording: () => {},
-    stopRecording: () => {},
-    addDataPoint: () => {},
-    saveMission: () => null,
-    updateMissionContext: () => {},
-    recordingStartTime: null,
-    recordingData: [],
-    clearRecordingData: () => {},
-  };
+  if (context === null) {
+    logger.debug('🔄 useRecordingContext: Provider not ready yet, returning fallback');
+    // Return a fallback context while provider is initializing
+    return {
+      isRecording: false,
+      recordingFrequency: '10s',
+      missionContext: { location: '', activity: '' },
+      currentMissionId: null,
+      startRecording: () => {},
+      stopRecording: () => {},
+      addDataPoint: () => {},
+      saveMission: () => null,
+      updateMissionContext: () => {},
+      recordingStartTime: null,
+      recordingData: [],
+      clearRecordingData: () => {},
+    };
+  }
+  
+  return context;
 }

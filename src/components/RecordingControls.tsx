@@ -106,17 +106,9 @@ export function RecordingControls({
       setSelectedLocation('');
       setSelectedActivity('');
     } catch (error) {
-      console.error('❌ Error saving mission:', error);
-      console.error('❌ Error details:', {
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        errorStack: error instanceof Error ? error.stack : undefined,
-        errorType: typeof error,
-        errorValue: error
-      });
-      
+      console.error('Error saving mission:', error);
       const errorMessage =
         error instanceof Error ? error.message : "Erreur lors de l'export CSV";
-      
       toast({
         title: 'Erreur',
         description: errorMessage,

@@ -269,5 +269,3 @@ export function DataLogger({
     </div>
   );
 }
-
-export default DataLogger;

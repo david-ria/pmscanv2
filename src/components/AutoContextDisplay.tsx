@@ -27,5 +27,3 @@ export function AutoContextDisplay({ className }: AutoContextDisplayProps) {
     </div>
   );
 }
-
-export default AutoContextDisplay;

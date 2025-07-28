@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Suspense, lazy, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
 import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 
@@ -7,6 +7,7 @@ import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useAlerts } from '@/contexts/AlertContext';
 import { useAutoContext } from '@/hooks/useAutoContext';
+import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useStorageSettings } from '@/hooks/useStorage';
 import { STORAGE_KEYS } from '@/services/storageService';
 import { useWeatherData } from '@/hooks/useWeatherData';
@@ -18,14 +19,37 @@ import { useEvents } from '@/hooks/useEvents';
 
 // Import lightweight placeholder for fast LCP
 import { MapPlaceholder } from '@/components/RealTime/MapPlaceholder';
-// Lazy load heavy components with proper error boundaries
-const MapGraphToggle = lazy(() => import('@/components/RealTime/MapGraphToggle'));
-const ContextSelectors = lazy(() => import('@/components/RecordingControls/ContextSelectors'));
-const AutoContextDisplay = lazy(() => import('@/components/AutoContextDisplay'));
-const DataLogger = lazy(() => import('@/components/DataLogger'));
-const RecordingFrequencyDialog = lazy(() => import('@/components/RecordingControls/RecordingFrequencyDialog'));
+// Lazy load heavy map component only after frequency selection
+const MapGraphToggle = lazy(() => 
+  import('@/components/RealTime/MapGraphToggle').then(module => ({ 
+    default: module.MapGraphToggle 
+  }))
+);
+const ContextSelectors = lazy(() => 
+  import('@/components/RecordingControls/ContextSelectors').then(module => ({ 
+    default: module.ContextSelectors 
+  }))
+);
+const AutoContextDisplay = lazy(() => 
+  import('@/components/AutoContextDisplay').then(module => ({ 
+    default: module.AutoContextDisplay 
+  }))
+);
+const DataLogger = lazy(() => 
+  import('@/components/DataLogger').then(module => ({ 
+    default: module.DataLogger 
+  }))
+);
+const RecordingFrequencyDialog = lazy(() => 
+  import('@/components/RecordingControls/RecordingFrequencyDialog').then(module => ({ 
+    default: module.RecordingFrequencyDialog 
+  }))
+);
 
-const RealTime = memo(() => {
+export default function RealTime() {
+  // Fast LCP - defer heavy initialization
+  const [initialized, setInitialized] = useState(false);
+  
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
@@ -34,12 +58,18 @@ const RealTime = memo(() => {
   );
   const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
   const [currentEvents, setCurrentEvents] = useState<any[]>([]);
-  const [userInitiated, setUserInitiated] = useState(false);
 
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  // Only initialize heavy hooks after user interaction
+  // Initialize heavy hooks after first paint using startTransition
+  useEffect(() => {
+    startTransition(() => {
+      setInitialized(true);
+    });
+  }, []);
+
+  // Only initialize heavy hooks after critical render
   const { currentData, isConnected, device, error, requestDevice, disconnect } =
     usePMScanBluetooth();
 
@@ -53,91 +83,169 @@ const RealTime = memo(() => {
     currentMissionId,
   } = useRecordingContext();
 
-  // Defer GPS until user initiates
   const { 
     locationEnabled, 
     latestLocation, 
     requestLocationPermission 
-  } = useGPS(userInitiated, false, recordingFrequency);
+  } = useGPS(true, false, recordingFrequency);
 
-  // Initialize autocontext only after user initiation
+  // Only initialize autocontext if the user has enabled it
   const { settings: autoContextSettings } = useStorageSettings(
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
     { enabled: false }
   );
-  // Only initialize autocontext after user starts recording workflow
-  const autoContextResult = useAutoContext(
-    false, // Completely disabled until recording starts
-    null
-  );
+  const autoContextResult = useAutoContext(isRecording && initialized && autoContextSettings.enabled, latestLocation);
   const { weatherData, fetchWeatherData } = useWeatherData();
   const { getEventsByMission } = useEvents();
   
-  const { checkAlerts } = useAlerts();
+  const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
+    recordingFrequency,
+    isRecording: isRecording && initialized,
+  });
   
+  const { checkAlerts } = useAlerts();
+
   // Restore last selected location/activity from localStorage for recording persistence
   const [selectedLocation, setSelectedLocation] = useState(() => {
     const saved = localStorage.getItem('recording-location');
-    return saved || (missionContext?.location) || '';
+    return saved || missionContext.location || '';
   });
   const [selectedActivity, setSelectedActivity] = useState(() => {
     const saved = localStorage.getItem('recording-activity');
-    return saved || (missionContext?.activity) || '';
+    return saved || missionContext.activity || '';
   });
 
   // Add data to recording when new data comes in - with deduplication
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
 
   useEffect(() => {
-    if (currentData && isRecording) {
+    if (isRecording && currentData && initialized) {
+      // Prevent duplicate data points by checking if this is actually new data
       const currentTimestamp = currentData.timestamp.getTime();
-      const lastData = lastDataRef.current;
+      const isDuplicate =
+        lastDataRef.current &&
+        lastDataRef.current.pm25 === currentData.pm25 &&
+        Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
 
-      // Prevent duplicate data points (same PM2.5 value within 1 second)
-      if (
-        !lastData ||
-        lastData.pm25 !== currentData.pm25 ||
-        currentTimestamp - lastData.timestamp > 1000
-      ) {
-        addDataPoint(currentData, latestLocation, { location: selectedLocation, activity: selectedActivity });
+      if (!isDuplicate) {
+        logger.rateLimitedDebug(
+          'realTime.addData',
+          5000,
+          'Adding data point with location:',
+          latestLocation
+        );
 
+        // Update context at recording frequency and get the current context
+        const handleContextAndDataPoint = async () => {
+          // Calculate speed and movement from GPS data
+          let speed = 0;
+          let isMoving = false;
+          
+          if (latestLocation) {
+            const { updateLocationHistory } = await import('@/utils/speedCalculator');
+            const speedData = updateLocationHistory(
+              latestLocation.latitude,
+              latestLocation.longitude,
+              latestLocation.timestamp
+            );
+            speed = speedData.speed;
+            isMoving = speedData.isMoving;
+            
+            // Calculate speed and movement from GPS data (development logging only)
+            if (process.env.NODE_ENV === 'development' && latestLocation) {
+              console.log('🏃 Movement detection:', {
+                speed: `${speed} km/h`,
+                isMoving,
+                location: `${latestLocation.latitude}, ${latestLocation.longitude}`
+              });
+            }
+          }
+          
+          const automaticContext = await updateContextIfNeeded(
+            currentData,
+            latestLocation || undefined,
+            speed,
+            isMoving
+          );
+
+          // DO NOT override user's manual activity selection
+          // Auto context should be separate from manual tags
+
+          addDataPoint(
+            currentData,
+            latestLocation || undefined,
+            { location: selectedLocation, activity: selectedActivity },
+            automaticContext
+          );
+        };
+
+        handleContextAndDataPoint();
+        
         lastDataRef.current = {
           pm25: currentData.pm25,
           timestamp: currentTimestamp,
         };
-
-        logger.info('Added data point to recording', {
-          pm25: currentData.pm25,
-          timestamp: currentData.timestamp,
-          hasLocation: !!latestLocation,
-        });
       }
     }
-  }, [currentData, isRecording, addDataPoint, latestLocation, selectedLocation, selectedActivity]);
+  }, [
+    isRecording,
+    currentData,
+    latestLocation,
+    addDataPoint,
+    selectedLocation,
+    selectedActivity,
+    updateContextIfNeeded,
+    initialized,
+  ]);
 
-  // Clear location history when recording starts to ensure fresh data
+  // Clear location history when recording starts for fresh speed calculations
   useEffect(() => {
-    if (isRecording) {
-      // Clear the location history for fresh start
-      console.log('Recording started - clearing location history');
+    if (isRecording && initialized) {
+      import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
+        clearLocationHistory();
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🏃 Cleared location history for new recording session');
+        }
+      });
     }
-  }, [isRecording]);
+  }, [isRecording, initialized]);
 
-  // Check alerts when data changes
+  // Initial autocontext effect - runs only when autocontext is toggled
   useEffect(() => {
-    if (currentData && isConnected) {
+    if (initialized && process.env.NODE_ENV === 'development') {
+      console.log('Autocontext effect triggered:', { 
+        autoContextEnabled, 
+        hasCurrentData: !!currentData, 
+        latestLocation 
+      });
+      
+      if (autoContextEnabled && currentData) {
+        // Force an immediate context update when autocontext is enabled
+        forceContextUpdate(
+          currentData,
+          latestLocation || undefined,
+          0,
+          false
+        );
+      }
+    }
+  }, [autoContextEnabled, forceContextUpdate, initialized]); // Only run when autocontext is toggled
+
+  // Check alerts whenever new data comes in
+  useEffect(() => {
+    if (currentData && initialized) {
       checkAlerts(currentData.pm1, currentData.pm25, currentData.pm10);
     }
-  }, [currentData, isConnected, checkAlerts]);
+  }, [currentData, checkAlerts, initialized]);
 
-  // Fetch weather data based on location
+  // Fetch weather data when location changes
   useEffect(() => {
-    if (latestLocation && isRecording) {
-      fetchWeatherData({ latitude: latestLocation.latitude, longitude: latestLocation.longitude }, new Date());
+    if (latestLocation && initialized) {
+      fetchWeatherData(latestLocation);
     }
-  }, [latestLocation, isRecording, fetchWeatherData]);
+  }, [latestLocation, fetchWeatherData, initialized]);
 
-  // Persist user selections to localStorage
+  // Persist location/activity selections to localStorage for recording persistence
   useEffect(() => {
     if (selectedLocation) {
       localStorage.setItem('recording-location', selectedLocation);
@@ -150,9 +258,15 @@ const RealTime = memo(() => {
     }
   }, [selectedActivity]);
 
-  // GPS permissions will be requested when user starts recording workflow
+  // Request GPS permission when app loads
+  useEffect(() => {
+    if (!locationEnabled) {
+      requestLocationPermission().catch((err) => {
+        console.log('GPS permission request failed:', err);
+      });
+    }
+  }, [locationEnabled, requestLocationPermission]);
 
-  // Handle online/offline events
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -166,14 +280,50 @@ const RealTime = memo(() => {
     };
   }, []);
 
-  // Fetch events for current mission
+  // Fetch events for the current mission
   useEffect(() => {
-    if (currentMissionId) {
+    if (currentMissionId && initialized) {
       getEventsByMission(currentMissionId).then(setCurrentEvents);
+    } else {
+      setCurrentEvents([]);
     }
-  }, [currentMissionId]);
+  }, [currentMissionId, getEventsByMission, initialized]);
 
-  // Recording workflow: Connection -> Frequency selection -> Map display
+  // Reset frequency dialog flag when device disconnects
+  useEffect(() => {
+    if (!isConnected) {
+      setHasShownFrequencyDialog(false);
+    }
+  }, [isConnected]);
+
+  // Clear recording-confirmed flag when recording stops
+  useEffect(() => {
+    if (!isRecording) {
+      localStorage.removeItem('recording-confirmed');
+    }
+  }, [isRecording]);
+
+  // Handle the complete recording workflow: BT → Frequency → Map
+  const handleStartRecordingWorkflow = async () => {
+    // Step 1: First ensure BT device is connected
+    if (!isConnected) {
+      try {
+        await requestDevice(); // This will open BT device selection
+        // After connection, the frequency dialog will show automatically via useEffect
+      } catch (error) {
+        toast({
+          title: t('notifications.error'),
+          description: 'Failed to connect to PMScan device',
+          variant: 'destructive',
+        });
+      }
+    } else {
+      // If already connected, show frequency dialog directly
+      setShowFrequencyDialog(true);
+    }
+  };
+
+  // Show frequency dialog automatically after BT connection
   useEffect(() => {
     if (isConnected && !hasShownFrequencyDialog && !isRecording) {
       setShowFrequencyDialog(true);
@@ -181,33 +331,23 @@ const RealTime = memo(() => {
     }
   }, [isConnected, hasShownFrequencyDialog, isRecording]);
 
-  const handleFrequencySelect = useCallback((frequency: string) => {
-    setRecordingFrequency(frequency);
-    setShowFrequencyDialog(false);
-  }, []);
-
-  const handleStartRecordingWorkflow = useCallback(async () => {
+  // Handle frequency dialog confirmation - this is when recording truly starts
+  const handleFrequencyConfirm = async () => {
     try {
-      // Initialize heavy operations when user actually wants to record
-      if (!userInitiated) {
-        setUserInitiated(true);
-        await requestLocationPermission();
-      }
+      setShowFrequencyDialog(false);
+      
+      // Start recording with selected frequency
+      await startRecording(recordingFrequency);
+      
+      // Set flag that recording has been confirmed (this will trigger map loading)
+      localStorage.setItem('recording-confirmed', 'true');
 
-      if (!isConnected) {
-        await requestDevice();
-        return;
-      }
-
-      // Show frequency dialog first if not shown
-      if (!hasShownFrequencyDialog) {
-        setShowFrequencyDialog(true);
-        setHasShownFrequencyDialog(true);
-        return;
-      }
-
-      // Start recording with current context
-      startRecording(recordingFrequency);
+      toast({
+        title: t('notifications.recordingStarted'),
+        description: t('notifications.recordingStartedDesc', {
+          frequency: recordingFrequency,
+        }),
+      });
 
       if (process.env.NODE_ENV === 'development') {
         console.log(`🎬 Recording started with frequency: ${recordingFrequency}`);
@@ -220,12 +360,26 @@ const RealTime = memo(() => {
         variant: 'destructive',
       });
     }
-  }, [userInitiated, isConnected, hasShownFrequencyDialog, requestLocationPermission, requestDevice, startRecording, recordingFrequency, t, toast]);
+  };
+
+  // Critical path: Show only essential content first
+  if (!initialized) {
+    return (
+      <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
+        {/* Critical content only - fastest LCP */}
+        <div className="text-center p-8">
+          <h1 className="text-2xl font-semibold mb-2">AirSentinels</h1>
+          <p className="text-muted-foreground">Chargement des données de qualité de l'air...</p>
+          <div className="mt-4 w-8 h-8 bg-primary/20 rounded-full animate-pulse mx-auto" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-      {/* Map/Graph Section - Only show MapGraphToggle when actually recording */}
-      {isRecording ? (
+      {/* Map/Graph Section - Show MapGraphToggle when recording is active */}
+      {isRecording || localStorage.getItem('recording-confirmed') === 'true' ? (
         <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
           <MapGraphToggle
             showGraph={showGraph}
@@ -264,35 +418,37 @@ const RealTime = memo(() => {
 
       {/* Context Selectors - Lazy loaded */}
       <div className="mb-4 context-selector">
-        <Suspense fallback={<div className="h-20 bg-muted/10 rounded animate-pulse" />}>
+        <Suspense fallback={<div className="h-20 bg-muted/20 rounded-lg animate-pulse" />}>
           <ContextSelectors
             selectedLocation={selectedLocation}
-            selectedActivity={selectedActivity}
             onLocationChange={setSelectedLocation}
+            selectedActivity={selectedActivity}
             onActivityChange={setSelectedActivity}
             isRecording={isRecording}
           />
         </Suspense>
       </div>
 
-      {/* Auto Context Display - Only show when recording and enabled */}
-      {isRecording && autoContextSettings.enabled && (
-        <div className="mb-4">
-          <Suspense fallback={<div className="h-16 bg-muted/10 rounded animate-pulse" />}>
-            <AutoContextDisplay />
-          </Suspense>
-        </div>
-      )}
-
-      {/* Data Logger - Lazy loaded */}
-      <div className="mb-4">
-        <Suspense fallback={<div className="h-32 bg-muted/10 rounded animate-pulse" />}>
-          <DataLogger 
-            isRecording={isRecording}
-            currentData={currentData}
-          />
+      {/* Auto Context Display - Lazy loaded */}
+      <div className="mb-4 auto-context-display">
+        <Suspense fallback={<div className="h-16 bg-muted/20 rounded-lg animate-pulse" />}>
+          <AutoContextDisplay />
         </Suspense>
       </div>
+
+      {/* Data Logger - Lazy loaded */}
+      <Suspense fallback={<div className="h-32 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
+        <DataLogger
+          isRecording={isRecording}
+          currentData={currentData}
+          currentLocation={latestLocation}
+          missionContext={{
+            location: selectedLocation,
+            activity: selectedActivity,
+          }}
+          className="mb-4"
+        />
+      </Suspense>
 
       {/* Recording Frequency Dialog - Lazy loaded */}
       <Suspense fallback={null}>
@@ -300,14 +456,10 @@ const RealTime = memo(() => {
           open={showFrequencyDialog}
           onOpenChange={setShowFrequencyDialog}
           recordingFrequency={recordingFrequency}
-          onFrequencyChange={handleFrequencySelect}
-          onConfirm={() => setShowFrequencyDialog(false)}
+          onFrequencyChange={setRecordingFrequency}
+          onConfirm={handleFrequencyConfirm}
         />
       </Suspense>
     </div>
   );
-});
-
-RealTime.displayName = 'RealTime';
-
-export default RealTime;
+}

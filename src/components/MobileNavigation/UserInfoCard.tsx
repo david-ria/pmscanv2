@@ -1,20 +1,9 @@
 import { User, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
-import { useDialog } from '@/hooks/useDialog';
 
 /**
  * User information card component for mobile navigation
@@ -25,8 +14,7 @@ import { useDialog } from '@/hooks/useDialog';
 export function UserInfoCard() {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const { isGroupMode, activeGroup, clearGroupSettings } = useGroupSettings();
-  const leaveGroupDialog = useDialog();
+  const { isGroupMode, activeGroup } = useGroupSettings();
 
   return (
     <div className="p-4">
@@ -52,14 +40,7 @@ export function UserInfoCard() {
                   {t('account.connected')}
                 </Badge>
                 {isGroupMode && activeGroup && (
-                  <Badge 
-                    variant="outline" 
-                    className="text-xs cursor-pointer hover:bg-muted transition-colors"
-                    onClick={() => {
-                      console.log('Group badge clicked, opening dialog');
-                      leaveGroupDialog.openDialog();
-                    }}
-                  >
+                  <Badge variant="outline" className="text-xs">
                     {activeGroup.name}
                   </Badge>
                 )}
@@ -68,27 +49,6 @@ export function UserInfoCard() {
           </div>
         </CardContent>
       </Card>
-
-      <AlertDialog open={leaveGroupDialog.open} onOpenChange={leaveGroupDialog.onOpenChange}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Leave Group</AlertDialogTitle>
-            <AlertDialogDescription>
-              You are about to leave the group "{activeGroup?.name}" and return to your default settings. 
-              This will revert all thresholds, alarms, locations, activities, and events to your personal configuration.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              clearGroupSettings();
-              leaveGroupDialog.closeDialog();
-            }}>
-              Leave Group
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
