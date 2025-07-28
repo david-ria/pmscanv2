@@ -34,11 +34,12 @@ const RealTime = memo(() => {
   );
   const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
   const [currentEvents, setCurrentEvents] = useState<any[]>([]);
+  const [userInitiated, setUserInitiated] = useState(false);
 
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  // Initialize hooks normally
+  // Only initialize heavy hooks after user interaction
   const { currentData, isConnected, device, error, requestDevice, disconnect } =
     usePMScanBluetooth();
 
@@ -52,11 +53,12 @@ const RealTime = memo(() => {
     currentMissionId,
   } = useRecordingContext();
 
+  // Defer GPS until user initiates
   const { 
     locationEnabled, 
     latestLocation, 
     requestLocationPermission 
-  } = useGPS(true, false, recordingFrequency);
+  } = useGPS(userInitiated, false, recordingFrequency);
 
   // Initialize autocontext if enabled
   const { settings: autoContextSettings } = useStorageSettings(
@@ -144,12 +146,7 @@ const RealTime = memo(() => {
     }
   }, [selectedActivity]);
 
-  // Request GPS permissions on mount
-  useEffect(() => {
-    if (!locationEnabled) {
-      requestLocationPermission();
-    }
-  }, [locationEnabled, requestLocationPermission]);
+  // GPS permissions will be requested when user starts recording workflow
 
   // Handle online/offline events
   useEffect(() => {
@@ -187,6 +184,12 @@ const RealTime = memo(() => {
 
   const handleStartRecordingWorkflow = useCallback(async () => {
     try {
+      // Initialize heavy operations when user actually wants to record
+      if (!userInitiated) {
+        setUserInitiated(true);
+        await requestLocationPermission();
+      }
+
       if (!isConnected) {
         await requestDevice();
         return;
@@ -213,7 +216,7 @@ const RealTime = memo(() => {
         variant: 'destructive',
       });
     }
-  }, [isConnected, hasShownFrequencyDialog, requestDevice, startRecording, recordingFrequency, t, toast]);
+  }, [userInitiated, isConnected, hasShownFrequencyDialog, requestLocationPermission, requestDevice, startRecording, recordingFrequency, t, toast]);
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
