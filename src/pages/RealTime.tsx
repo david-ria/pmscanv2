@@ -65,6 +65,40 @@ export default function RealTime() {
 
   // STEP-BY-STEP PERFORMANCE LOGGING
   console.log('[PERF] 🔄 RealTime component starting...');
+
+  // Stabilize callbacks to prevent RealTimeContent re-renders - MOVED TO TOP
+  const stableSetIsOnline = useCallback(setIsOnline, []);
+  const stableSetShowGraph = useCallback(setShowGraph, []);
+  const stableSetShowFrequencyDialog = useCallback(setShowFrequencyDialog, []);
+  const stableSetRecordingFrequency = useCallback(setRecordingFrequency, []);
+  const stableSetHasShownFrequencyDialog = useCallback(setHasShownFrequencyDialog, []);
+  const stableSetCurrentEvents = useCallback(setCurrentEvents, []);
+
+  // Memoize props object to prevent unnecessary re-renders - MOVED TO TOP
+  const contentProps = useMemo(() => ({
+    isOnline,
+    setIsOnline: stableSetIsOnline,
+    showGraph,
+    setShowGraph: stableSetShowGraph,
+    showFrequencyDialog,
+    setShowFrequencyDialog: stableSetShowFrequencyDialog,
+    recordingFrequency,
+    setRecordingFrequency: stableSetRecordingFrequency,
+    hasShownFrequencyDialog,
+    setHasShownFrequencyDialog: stableSetHasShownFrequencyDialog,
+    currentEvents,
+    setCurrentEvents: stableSetCurrentEvents,
+    t,
+    toast
+  }), [
+    isOnline, stableSetIsOnline,
+    showGraph, stableSetShowGraph,
+    showFrequencyDialog, stableSetShowFrequencyDialog,
+    recordingFrequency, stableSetRecordingFrequency,
+    hasShownFrequencyDialog, stableSetHasShownFrequencyDialog,
+    currentEvents, stableSetCurrentEvents,
+    t, toast
+  ]);
   
   // Initialize heavy hooks after first paint using startTransition
   useEffect(() => {
@@ -96,40 +130,6 @@ export default function RealTime() {
 
   console.log('[PERF] ✅ RealTime - Initialized, starting hooks initialization');
   
-  // Stabilize callbacks to prevent RealTimeContent re-renders
-  const stableSetIsOnline = useCallback(setIsOnline, []);
-  const stableSetShowGraph = useCallback(setShowGraph, []);
-  const stableSetShowFrequencyDialog = useCallback(setShowFrequencyDialog, []);
-  const stableSetRecordingFrequency = useCallback(setRecordingFrequency, []);
-  const stableSetHasShownFrequencyDialog = useCallback(setHasShownFrequencyDialog, []);
-  const stableSetCurrentEvents = useCallback(setCurrentEvents, []);
-
-  // Memoize props object to prevent unnecessary re-renders
-  const contentProps = useMemo(() => ({
-    isOnline,
-    setIsOnline: stableSetIsOnline,
-    showGraph,
-    setShowGraph: stableSetShowGraph,
-    showFrequencyDialog,
-    setShowFrequencyDialog: stableSetShowFrequencyDialog,
-    recordingFrequency,
-    setRecordingFrequency: stableSetRecordingFrequency,
-    hasShownFrequencyDialog,
-    setHasShownFrequencyDialog: stableSetHasShownFrequencyDialog,
-    currentEvents,
-    setCurrentEvents: stableSetCurrentEvents,
-    t,
-    toast
-  }), [
-    isOnline, stableSetIsOnline,
-    showGraph, stableSetShowGraph,
-    showFrequencyDialog, stableSetShowFrequencyDialog,
-    recordingFrequency, stableSetRecordingFrequency,
-    hasShownFrequencyDialog, stableSetHasShownFrequencyDialog,
-    currentEvents, stableSetCurrentEvents,
-    t, toast
-  ]);
-
   return <RealTimeContent {...contentProps} />;
 }
 
