@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy, startTransition, useCallback, useMemo } from 'react';
 import * as logger from '@/utils/logger';
+import { mainThreadOptimizer } from '@/lib/mainThreadOptimizer';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 
 // Import critical hooks immediately for core functionality
@@ -95,29 +96,48 @@ export default function RealTime() {
 
   console.log('[PERF] ✅ RealTime - Initialized, starting hooks initialization');
   
-  return <RealTimeContent 
-    isOnline={isOnline}
-    setIsOnline={setIsOnline}
-    showGraph={showGraph}
-    setShowGraph={setShowGraph}
-    showFrequencyDialog={showFrequencyDialog}
-    setShowFrequencyDialog={setShowFrequencyDialog}
-    recordingFrequency={recordingFrequency}
-    setRecordingFrequency={setRecordingFrequency}
-    hasShownFrequencyDialog={hasShownFrequencyDialog}
-    setHasShownFrequencyDialog={setHasShownFrequencyDialog}
-    currentEvents={currentEvents}
-    setCurrentEvents={setCurrentEvents}
-    t={t}
-    toast={toast}
-  />;
+  // Stabilize callbacks to prevent RealTimeContent re-renders
+  const stableSetIsOnline = useCallback(setIsOnline, []);
+  const stableSetShowGraph = useCallback(setShowGraph, []);
+  const stableSetShowFrequencyDialog = useCallback(setShowFrequencyDialog, []);
+  const stableSetRecordingFrequency = useCallback(setRecordingFrequency, []);
+  const stableSetHasShownFrequencyDialog = useCallback(setHasShownFrequencyDialog, []);
+  const stableSetCurrentEvents = useCallback(setCurrentEvents, []);
+
+  // Memoize props object to prevent unnecessary re-renders
+  const contentProps = useMemo(() => ({
+    isOnline,
+    setIsOnline: stableSetIsOnline,
+    showGraph,
+    setShowGraph: stableSetShowGraph,
+    showFrequencyDialog,
+    setShowFrequencyDialog: stableSetShowFrequencyDialog,
+    recordingFrequency,
+    setRecordingFrequency: stableSetRecordingFrequency,
+    hasShownFrequencyDialog,
+    setHasShownFrequencyDialog: stableSetHasShownFrequencyDialog,
+    currentEvents,
+    setCurrentEvents: stableSetCurrentEvents,
+    t,
+    toast
+  }), [
+    isOnline, stableSetIsOnline,
+    showGraph, stableSetShowGraph,
+    showFrequencyDialog, stableSetShowFrequencyDialog,
+    recordingFrequency, stableSetRecordingFrequency,
+    hasShownFrequencyDialog, stableSetHasShownFrequencyDialog,
+    currentEvents, stableSetCurrentEvents,
+    t, toast
+  ]);
+
+  return <RealTimeContent {...contentProps} />;
 }
 
-function RealTimeContent({ 
+const RealTimeContent = React.memo(({ 
   isOnline, setIsOnline, showGraph, setShowGraph, showFrequencyDialog, setShowFrequencyDialog,
   recordingFrequency, setRecordingFrequency, hasShownFrequencyDialog, setHasShownFrequencyDialog,
   currentEvents, setCurrentEvents, t, toast 
-}: any) {
+}: any) => {
   console.log('[PERF] 🔧 RealTimeContent - Starting hooks initialization');
   
   // Initialize all hooks AFTER the critical render
@@ -303,11 +323,27 @@ function RealTimeContent({
     }
   }, [currentData, checkAlerts]);
 
-  // Fetch weather data when location changes
+  // Stabilize weather fetching to prevent repeated calls
+  const lastLocationRef = useRef<string>('');
+  
+  // Fetch weather data when location changes - with debouncing
   useEffect(() => {
     if (latestLocation) {
-      console.log(`[PERF] 🌤️ Triggering weather fetch for location: ${latestLocation.latitude}, ${latestLocation.longitude}`);
-      fetchWeatherData(latestLocation);
+      const locationKey = `${latestLocation.latitude}_${latestLocation.longitude}`;
+      
+      // Only fetch if location actually changed
+      if (lastLocationRef.current !== locationKey) {
+        lastLocationRef.current = locationKey;
+        
+        // Defer weather fetching using main thread optimizer
+        mainThreadOptimizer.scheduleTask(
+          () => {
+            console.log(`[PERF] 🌤️ Triggering weather fetch for location: ${latestLocation.latitude}, ${latestLocation.longitude}`);
+            return fetchWeatherData(latestLocation);
+          },
+          { priority: 'background' }
+        );
+      }
     }
   }, [latestLocation, fetchWeatherData]);
 
@@ -516,4 +552,4 @@ function RealTimeContent({
       </Suspense>
     </div>
   );
-}
+});
