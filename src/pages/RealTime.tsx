@@ -53,30 +53,42 @@ export default function RealTime() {
   const hasInitRun = useRef(false);
   const renderCount = useRef(0);
   
+  // All hooks must be called unconditionally - Rules of Hooks
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [showGraph, setShowGraph] = useState(false);
+  const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
+  const [recordingFrequency, setRecordingFrequency] = useState(
+    frequencyOptionKeys[0].value
+  );
+  const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
+  const [currentEvents, setCurrentEvents] = useState<any[]>([]);
+
+  const { t } = useTranslation();
+  const { toast } = useToast();
+
   // Add debugging for production mount issues
   renderCount.current += 1;
   console.log(`[PERF] 🔄 RealTime component starting... (render #${renderCount.current})`);
-  
-  // Only create state and callbacks after initialization to reduce render work
+
+  // Initialize heavy hooks after first paint - guard with ref to run only once
+  React.useEffect(() => {
+    if (hasInitRun.current) return;
+    hasInitRun.current = true;
+    
+    console.log('[PERF] 🚀 RealTime - Starting initialization transition');
+    const start = performance.now();
+    
+    startTransition(() => {
+      console.log('[PERF] 🔄 RealTime - Setting initialized to true');
+      setInitialized(true);
+      const end = performance.now();
+      console.log(`[PERF] ✅ RealTime - Initialization took ${end - start}ms`);
+    });
+  }, []);
+
+  // Early return for loading state - but after all hooks are called
   if (!initialized) {
     console.log('[PERF] 🔄 RealTime - Not initialized, showing loading state');
-    
-    // Initialize heavy hooks after first paint - guard with ref to run only once
-    React.useEffect(() => {
-      if (hasInitRun.current) return;
-      hasInitRun.current = true;
-      
-      console.log('[PERF] 🚀 RealTime - Starting initialization transition');
-      const start = performance.now();
-      
-      startTransition(() => {
-        console.log('[PERF] 🔄 RealTime - Setting initialized to true');
-        setInitialized(true);
-        const end = performance.now();
-        console.log(`[PERF] ✅ RealTime - Initialization took ${end - start}ms`);
-      });
-    }, []);
-
     return (
       <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
         {/* Critical content only - fastest LCP */}
@@ -90,19 +102,6 @@ export default function RealTime() {
   }
 
   console.log('[PERF] ✅ RealTime - Initialized, starting hooks initialization');
-  
-  // Only create expensive state and callbacks after initialization
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [showGraph, setShowGraph] = useState(false);
-  const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
-  const [recordingFrequency, setRecordingFrequency] = useState(
-    frequencyOptionKeys[0].value
-  );
-  const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
-  const [currentEvents, setCurrentEvents] = useState<any[]>([]);
-
-  const { t } = useTranslation();
-  const { toast } = useToast();
 
   // Stabilize t and toast functions to prevent RealTimeContent re-renders
   const stableT = useCallback(t, []);
