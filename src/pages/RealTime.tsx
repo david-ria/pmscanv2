@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, Suspense, lazy, useMemo, useCallback, memo } from 'react';
 import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 
@@ -45,9 +45,7 @@ const RecordingFrequencyDialog = lazy(() =>
   }))
 );
 
-export default function RealTime() {
-  console.log('[PERF] RealTime component rendering...');
-  
+const RealTime = memo(() => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
@@ -192,7 +190,7 @@ export default function RealTime() {
     if (currentMissionId) {
       getEventsByMission(currentMissionId).then(setCurrentEvents);
     }
-  }, [currentMissionId, getEventsByMission]);
+  }, [currentMissionId]);
 
   // Recording workflow: Connection -> Frequency selection -> Map display
   useEffect(() => {
@@ -202,12 +200,12 @@ export default function RealTime() {
     }
   }, [isConnected, hasShownFrequencyDialog, isRecording]);
 
-  const handleFrequencySelect = (frequency: string) => {
+  const handleFrequencySelect = useCallback((frequency: string) => {
     setRecordingFrequency(frequency);
     setShowFrequencyDialog(false);
-  };
+  }, []);
 
-  const handleStartRecordingWorkflow = async () => {
+  const handleStartRecordingWorkflow = useCallback(async () => {
     try {
       if (!isConnected) {
         await requestDevice();
@@ -235,7 +233,7 @@ export default function RealTime() {
         variant: 'destructive',
       });
     }
-  };
+  }, [isConnected, hasShownFrequencyDialog, requestDevice, startRecording, recordingFrequency, t, toast]);
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
@@ -321,4 +319,8 @@ export default function RealTime() {
       </Suspense>
     </div>
   );
-}
+});
+
+RealTime.displayName = 'RealTime';
+
+export default RealTime;
