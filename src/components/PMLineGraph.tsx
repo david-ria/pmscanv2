@@ -109,13 +109,13 @@ export const PMLineGraph = ({
     let segmentStart = 0;
     let segmentValues: number[] = [];
 
-    // Define context colors
+    // Define context colors with good contrast
     const contextColors = [
-      'hsl(var(--chart-1))',
-      'hsl(var(--chart-2))',
-      'hsl(var(--chart-3))',
-      'hsl(var(--chart-4))',
-      'hsl(var(--chart-5))',
+      'hsl(220 70% 50%)',  // Blue
+      'hsl(160 60% 45%)',  // Teal  
+      'hsl(30 80% 55%)',   // Orange
+      'hsl(280 60% 50%)',  // Purple
+      'hsl(10 80% 50%)',   // Red
     ];
 
     let colorIndex = 0;
@@ -329,7 +329,7 @@ export const PMLineGraph = ({
           {contextSegments.map((segment, index) => (
             <div
               key={`label-${segment.context}-${index}`}
-              className="text-xs px-2 py-1 rounded text-white font-medium shadow-sm whitespace-nowrap"
+              className="text-xs px-2 py-1 rounded font-medium shadow-sm whitespace-nowrap text-white"
               style={{ backgroundColor: segment.color }}
             >
               {segment.context}: {Math.round(segment.avgPm25)} µg/m³
