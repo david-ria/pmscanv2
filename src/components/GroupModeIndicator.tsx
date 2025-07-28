@@ -7,8 +7,19 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Users, X, Settings, QrCode } from 'lucide-react';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
+import { useDialog } from '@/hooks/useDialog';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +32,7 @@ import { generateGroupUrl } from '@/lib/groupConfigs';
 
 export const GroupModeIndicator = () => {
   const { activeGroup, isGroupMode, clearGroupSettings } = useGroupSettings();
+  const leaveGroupDialog = useDialog();
 
   if (!isGroupMode || !activeGroup) {
     return null;
@@ -41,7 +53,12 @@ export const GroupModeIndicator = () => {
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             <div>
-              <CardTitle className="text-base">{activeGroup.name}</CardTitle>
+              <CardTitle 
+                className="text-base cursor-pointer hover:text-primary transition-colors"
+                onClick={leaveGroupDialog.openDialog}
+              >
+                {activeGroup.name}
+              </CardTitle>
               {activeGroup.description && (
                 <CardDescription className="text-sm">
                   {activeGroup.description}
@@ -113,6 +130,27 @@ export const GroupModeIndicator = () => {
           )}
         </div>
       </CardContent>
+
+      <AlertDialog open={leaveGroupDialog.open} onOpenChange={leaveGroupDialog.onOpenChange}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave Group</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to leave the group "{activeGroup.name}" and return to your default settings. 
+              This will revert all thresholds, alarms, locations, activities, and events to your personal configuration.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              clearGroupSettings();
+              leaveGroupDialog.closeDialog();
+            }}>
+              Leave Group
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
