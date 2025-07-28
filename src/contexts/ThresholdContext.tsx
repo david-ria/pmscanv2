@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useCallback,
   ReactNode,
+  useMemo,
 } from 'react';
 
 export interface AirQualityThresholds {
@@ -117,15 +118,15 @@ export function ThresholdProvider({ children }: ThresholdProviderProps) {
     [thresholds]
   );
 
+  const contextValue = useMemo(() => ({
+    thresholds,
+    updateThresholds,
+    resetToWHOStandards,
+    getAirQualityLevel,
+  }), [thresholds, updateThresholds, resetToWHOStandards, getAirQualityLevel]);
+
   return (
-    <ThresholdContext.Provider
-      value={{
-        thresholds,
-        updateThresholds,
-        resetToWHOStandards,
-        getAirQualityLevel,
-      }}
-    >
+    <ThresholdContext.Provider value={contextValue}>
       {children}
     </ThresholdContext.Provider>
   );

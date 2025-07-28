@@ -4,6 +4,8 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useMemo,
+  useCallback,
 } from 'react';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import * as logger from '@/utils/logger';
@@ -181,13 +183,13 @@ export function AlertProvider({ children }: AlertProviderProps) {
     localStorage.setItem('globalAlertsEnabled', globalAlertsEnabled.toString());
   }, [globalAlertsEnabled]);
 
-  const updateAlertSettings = (newSettings: AlertSettings) => {
+  const updateAlertSettings = useCallback((newSettings: AlertSettings) => {
     setAlertSettings(newSettings);
-  };
+  }, []);
 
-  const resetToDefaults = () => {
+  const resetToDefaults = useCallback(() => {
     setAlertSettings(DEFAULT_ALERTS);
-  };
+  }, []);
 
   const triggerAlert = (
     pollutant: 'pm1' | 'pm25' | 'pm10',
@@ -211,7 +213,7 @@ export function AlertProvider({ children }: AlertProviderProps) {
     );
   };
 
-  const checkAlerts = (pm1: number, pm25: number, pm10: number) => {
+  const checkAlerts = useCallback((pm1: number, pm25: number, pm10: number) => {
     if (!globalAlertsEnabled) return;
 
     const effectiveSettings = getEffectiveAlertSettings();
@@ -281,22 +283,22 @@ export function AlertProvider({ children }: AlertProviderProps) {
 
       return newState;
     });
-  };
+  }, [globalAlertsEnabled, getEffectiveAlertSettings]);
 
-  const getExposureState = () => exposureState;
+  const getExposureState = useCallback(() => exposureState, [exposureState]);
+
+  const contextValue = useMemo(() => ({
+    alertSettings: getEffectiveAlertSettings(),
+    updateAlertSettings,
+    resetToDefaults,
+    globalAlertsEnabled,
+    setGlobalAlertsEnabled,
+    checkAlerts,
+    getExposureState,
+  }), [getEffectiveAlertSettings, updateAlertSettings, resetToDefaults, globalAlertsEnabled, setGlobalAlertsEnabled, checkAlerts, getExposureState]);
 
   return (
-    <AlertContext.Provider
-      value={{
-        alertSettings: getEffectiveAlertSettings(),
-        updateAlertSettings,
-        resetToDefaults,
-        globalAlertsEnabled,
-        setGlobalAlertsEnabled,
-        checkAlerts,
-        getExposureState,
-      }}
-    >
+    <AlertContext.Provider value={contextValue}>
       {children}
     </AlertContext.Provider>
   );
