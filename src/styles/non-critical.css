@@ -1,6 +1,3 @@
 /* Non-critical CSS - loaded asynchronously after initial paint */
-@tailwind utilities;
-
 @import './animations.css';
 @import './components.css';
-@import './utilities.css';

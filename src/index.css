@@ -2,4 +2,5 @@
 /* Critical CSS only - loaded synchronously for fast paint */
 @import './styles/base.css';
 @import './styles/layout.css';
+@import './styles/utilities.css';
 @import './styles/performance.css';
