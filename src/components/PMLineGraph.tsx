@@ -77,7 +77,8 @@ export const PMLineGraph = ({
       activityContext: point.activityContext,
       automaticContext: point.automaticContext,
     };
-  }).filter(point => point.timestamp && !isNaN(point.timestamp));
+  }).filter(point => point.timestamp && !isNaN(point.timestamp))
+    .sort((a, b) => a.timestamp - b.timestamp); // Sort chronologically
 
   const formatXAxisLabel = (timeString: string) => {
     // timeString is already formatted from chartData.time
