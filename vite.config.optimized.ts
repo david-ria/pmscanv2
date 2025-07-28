@@ -38,11 +38,16 @@ export default defineConfig(async ({ command, mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            // Vendor chunk for core React libraries
-            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            // Stable vendor chunks with long-term caching (1 year)
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
             
-            // UI libraries chunk
-            'ui-vendor': [
+            // Heavy backend libraries - immutable, cache forever
+            'vendor-supabase': ['@supabase/supabase-js'],
+            'vendor-mapbox': ['mapbox-gl'],
+            'vendor-tensorflow': ['@tensorflow/tfjs'],
+            
+            // Large UI library vendors - very stable
+            'vendor-radix': [
               '@radix-ui/react-dialog',
               '@radix-ui/react-dropdown-menu',
               '@radix-ui/react-toast',
@@ -51,16 +56,15 @@ export default defineConfig(async ({ command, mode }) => {
               'lucide-react'
             ],
             
-            // Large dependencies that are already dynamically imported
-            // These will only be included if actually used
-            'maps': ['mapbox-gl'],
-            'charts': ['recharts'],
-            'tensorflow': ['@tensorflow/tfjs'],
-            'supabase': ['@supabase/supabase-js'],
-            'pdf': ['jspdf', 'html2canvas'],
-            'forms': ['react-hook-form', 'zod'],
-            'dates': ['date-fns'],
-            'i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector']
+            // Utility vendors - extremely stable
+            'vendor-utils': ['clsx', 'tailwind-merge', 'class-variance-authority'],
+            
+            // Feature-specific vendors
+            'vendor-charts': ['recharts'],
+            'vendor-pdf': ['jspdf', 'html2canvas'],
+            'vendor-forms': ['react-hook-form', 'zod'],
+            'vendor-dates': ['date-fns'],
+            'vendor-i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector']
           }
         }
       },
