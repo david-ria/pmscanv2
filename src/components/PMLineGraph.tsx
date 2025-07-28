@@ -60,19 +60,24 @@ export const PMLineGraph = ({
   }
 
   const chartData = data.map(point => ({
-    timestamp: point.timestamp.getTime(),
+    timestamp: point.timestamp ? point.timestamp.getTime() : Date.now(),
     pm1: Math.round(point.pm1),
     pm25: Math.round(point.pm25),
     pm10: Math.round(point.pm10),
-    time: format(point.timestamp, 'HH:mm:ss'),
+    time: point.timestamp ? format(point.timestamp, 'HH:mm:ss') : '',
     // Include context data for potential highlighting
     locationContext: point.locationContext,
     activityContext: point.activityContext,
     automaticContext: point.automaticContext,
-  }));
+  })).filter(point => point.timestamp && !isNaN(point.timestamp));
 
-  const formatXAxisLabel = (timestamp: number) => {
-    const date = new Date(timestamp);
+  const formatXAxisLabel = (value: any) => {
+    // Handle invalid timestamps gracefully
+    if (!value || isNaN(value)) return '';
+    
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return '';
+    
     return format(date, isMobile ? 'HH:mm' : 'HH:mm:ss');
   };
 
