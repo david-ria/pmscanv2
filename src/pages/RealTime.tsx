@@ -140,14 +140,14 @@ export default function RealTime() {
   // Check alerts when data changes
   useEffect(() => {
     if (currentData && isConnected) {
-      checkAlerts(currentData);
+      checkAlerts(currentData.pm1, currentData.pm25, currentData.pm10);
     }
   }, [currentData, isConnected, checkAlerts]);
 
   // Fetch weather data based on location
   useEffect(() => {
     if (latestLocation && isRecording) {
-      fetchWeatherData(latestLocation);
+      fetchWeatherData({ latitude: latestLocation.latitude, longitude: latestLocation.longitude }, new Date());
     }
   }, [latestLocation, isRecording, fetchWeatherData]);
 
@@ -283,6 +283,7 @@ export default function RealTime() {
             selectedActivity={selectedActivity}
             onLocationChange={setSelectedLocation}
             onActivityChange={setSelectedActivity}
+            isRecording={isRecording}
           />
         </Suspense>
       </div>
@@ -311,8 +312,9 @@ export default function RealTime() {
         <RecordingFrequencyDialog
           open={showFrequencyDialog}
           onOpenChange={setShowFrequencyDialog}
-          frequency={recordingFrequency}
+          recordingFrequency={recordingFrequency}
           onFrequencyChange={handleFrequencySelect}
+          onConfirm={() => setShowFrequencyDialog(false)}
         />
       </Suspense>
     </div>
