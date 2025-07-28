@@ -1,4 +1,5 @@
 
+import { useState, useEffect, useRef } from 'react';
 import {
   PieChart,
   Pie,
@@ -29,6 +30,50 @@ export const PollutionPieChart = ({
   pmType,
 }: PollutionPieChartProps) => {
   const { t } = useTranslation();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          setDimensions({ width: rect.width, height: rect.height });
+          setIsReady(true);
+        }
+      }
+    };
+
+    // Initial measurement
+    updateDimensions();
+
+    // Debounced resize handler
+    let timeoutId: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateDimensions, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    // Use ResizeObserver if available for more accurate container size tracking
+    if (containerRef.current && window.ResizeObserver) {
+      const resizeObserver = new ResizeObserver(handleResize);
+      resizeObserver.observe(containerRef.current);
+      
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        resizeObserver.disconnect();
+        clearTimeout(timeoutId);
+      };
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   if (breakdownData.length === 0) {
     return (
@@ -38,10 +83,19 @@ export const PollutionPieChart = ({
     );
   }
 
+  // Don't render chart until container dimensions are available
+  if (!isReady || dimensions.width === 0 || dimensions.height === 0) {
+    return (
+      <div ref={containerRef} className="w-full h-full min-h-[200px] flex items-center justify-center">
+        <div className="text-sm text-muted-foreground">{t('common.loading')}...</div>
+      </div>
+    );
+  }
+
   // Custom label function for better mobile display
   const renderCustomLabel = (entry: any) => {
     // Hide labels on very small screens to avoid clutter
-    if (window.innerWidth < 400) {
+    if (dimensions.width < 400) {
       return null;
     }
     
@@ -52,13 +106,17 @@ export const PollutionPieChart = ({
     return `${entry.percentage.toFixed(0)}%`;
   };
 
-  // Responsive configuration based on screen size
-  const isSmallScreen = window.innerWidth < 640;
-  const isMobileScreen = window.innerWidth < 400;
+  // Responsive configuration based on actual container size
+  const isSmallScreen = dimensions.width < 640;
+  const isMobileScreen = dimensions.width < 400;
 
   return (
-    <div className="w-full h-full min-h-[200px]">
-      <ResponsiveContainer width="100%" height="100%">
+    <div ref={containerRef} className="w-full h-full min-h-[200px]">
+      <ResponsiveContainer 
+        width={dimensions.width} 
+        height={dimensions.height}
+        minHeight={200}
+      >
         <PieChart>
           <Pie
             data={breakdownData}
