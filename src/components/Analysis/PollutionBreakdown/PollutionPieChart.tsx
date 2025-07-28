@@ -52,12 +52,12 @@ export const PollutionPieChart = ({
     return `${entry.percentage.toFixed(0)}%`;
   };
 
-  // Optimized sizing for maximum space utilization
+  // Optimized sizing for maximum space utilization with donut style
   const getOptimizedRadius = () => {
     if (isMobile) {
       return { outer: "85%", inner: "25%" };
     }
-    return { outer: "90%", inner: "0%" };
+    return { outer: "90%", inner: "40%" }; // Donut style for desktop
   };
 
   const radius = getOptimizedRadius();
