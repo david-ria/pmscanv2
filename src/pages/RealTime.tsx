@@ -3,8 +3,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 
-// Dynamically import the lightweight wrapper that defers heavy loading
-const RealTimeContentWrapper = React.lazy(() => import('@/components/RealTime/RealTimeContentWrapper'));
+// Dynamically import the truly deferred component that delays ALL hook initialization
+const RealTimeContentDeferred = React.lazy(() => import('@/components/RealTime/RealTimeContentDeferred'));
 
 export default function RealTime() {
   // Fast LCP - defer heavy initialization with robust guards
@@ -131,7 +131,7 @@ export default function RealTime() {
         </div>
       }
     >
-      <RealTimeContentWrapper {...contentProps} />
+      <RealTimeContentDeferred {...contentProps} />
     </Suspense>
   );
 }
