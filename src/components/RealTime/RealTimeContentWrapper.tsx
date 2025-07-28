@@ -19,36 +19,51 @@ interface RealTimeContentProps {
   toast: (options: any) => void;
 }
 
-// Lightweight wrapper that shows critical UI first, then loads heavy content
+// Lightweight wrapper that shows critical UI first, only loads heavy content when needed
 export const RealTimeContentWrapper = React.memo((props: RealTimeContentProps) => {
-  const [heavyContentLoaded, setHeavyContentLoaded] = useState(false);
+  const [shouldLoadHeavyContent, setShouldLoadHeavyContent] = useState(false);
   const [HeavyRealTimeContent, setHeavyRealTimeContent] = useState<React.ComponentType<RealTimeContentProps> | null>(null);
   const hasInitialized = useRef(false);
 
-  useEffect(() => {
-    if (hasInitialized.current) return;
+  // Only load heavy content when user actually interacts with the page
+  const triggerHeavyContentLoad = () => {
+    if (hasInitialized.current || shouldLoadHeavyContent) return;
     hasInitialized.current = true;
+    setShouldLoadHeavyContent(true);
 
-    console.log('[PERF] 🚀 RealTimeContentWrapper - Starting to load heavy content');
+    console.log('[PERF] 🚀 User interaction detected - Loading heavy content now');
     const start = performance.now();
 
-    // Load the actual heavy content after a microtask to ensure UI renders first
-    Promise.resolve().then(() => {
-      import('./RealTimeContent').then((module) => {
-        console.log(`[PERF] ✅ Heavy RealTimeContent loaded in ${performance.now() - start}ms`);
-        setHeavyRealTimeContent(() => module.RealTimeContent);
-        setHeavyContentLoaded(true);
-      }).catch((error) => {
-        console.error('[PERF] ❌ Failed to load RealTimeContent:', error);
-      });
+    import('./RealTimeContent').then((module) => {
+      console.log(`[PERF] ✅ Heavy RealTimeContent loaded in ${performance.now() - start}ms`);
+      setHeavyRealTimeContent(() => module.RealTimeContent);
+    }).catch((error) => {
+      console.error('[PERF] ❌ Failed to load RealTimeContent:', error);
     });
-  }, []);
+  };
+
+  // Auto-load after a delay if user doesn't interact (fallback)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!shouldLoadHeavyContent) {
+        console.log('[PERF] 🕐 Auto-loading heavy content after delay');
+        triggerHeavyContentLoad();
+      }
+    }, 2000); // 2 second delay
+
+    return () => clearTimeout(timer);
+  }, [shouldLoadHeavyContent]);
 
   // Show lightweight UI first with critical components only
-  if (!heavyContentLoaded || !HeavyRealTimeContent) {
+  if (!shouldLoadHeavyContent || !HeavyRealTimeContent) {
     console.log('[PERF] 🔄 RealTimeContentWrapper - Showing lightweight UI');
     return (
-      <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
+      <div 
+        className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6"
+        onClick={triggerHeavyContentLoad}
+        onFocus={triggerHeavyContentLoad}
+        onMouseMove={triggerHeavyContentLoad}
+      >
         {/* Show map placeholder immediately */}
         <MapPlaceholder
           showGraph={props.showGraph}
@@ -56,9 +71,9 @@ export const RealTimeContentWrapper = React.memo((props: RealTimeContentProps) =
           isOnline={props.isOnline}
           device={null}
           isConnected={false}
-          onConnect={() => console.log('Loading...')}
+          onConnect={triggerHeavyContentLoad}
           onDisconnect={() => {}}
-          onStartRecording={() => console.log('Loading...')}
+          onStartRecording={triggerHeavyContentLoad}
           locationEnabled={false}
           latestLocation={null}
         />
@@ -66,15 +81,30 @@ export const RealTimeContentWrapper = React.memo((props: RealTimeContentProps) =
         {/* Show air quality cards with empty data */}
         <AirQualityCards currentData={null} isConnected={false} />
 
-        {/* Loading indicators for other sections */}
+        {/* Interactive loading sections */}
         <div className="mb-4">
-          <div className="h-20 bg-muted/20 rounded-lg animate-pulse" />
+          <button 
+            onClick={triggerHeavyContentLoad}
+            className="w-full h-20 bg-muted/20 rounded-lg animate-pulse hover:bg-muted/30 transition-colors flex items-center justify-center text-muted-foreground"
+          >
+            Click to load recording controls
+          </button>
         </div>
         <div className="mb-4">
-          <div className="h-16 bg-muted/20 rounded-lg animate-pulse" />
+          <button 
+            onClick={triggerHeavyContentLoad}
+            className="w-full h-16 bg-muted/20 rounded-lg animate-pulse hover:bg-muted/30 transition-colors flex items-center justify-center text-muted-foreground"
+          >
+            Click to load context selectors
+          </button>
         </div>
         <div className="mb-4">
-          <div className="h-32 bg-muted/20 rounded-lg animate-pulse" />
+          <button 
+            onClick={triggerHeavyContentLoad}
+            className="w-full h-32 bg-muted/20 rounded-lg animate-pulse hover:bg-muted/30 transition-colors flex items-center justify-center text-muted-foreground"
+          >
+            Click to load data logger
+          </button>
         </div>
       </div>
     );
