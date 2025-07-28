@@ -155,11 +155,11 @@ export default function RealTime() {
   // Restore last selected location/activity from localStorage for recording persistence
   const [selectedLocation, setSelectedLocation] = useState(() => {
     const saved = localStorage.getItem('recording-location');
-    return saved || missionContext.location || '';
+    return saved || (missionContext?.location) || '';
   });
   const [selectedActivity, setSelectedActivity] = useState(() => {
     const saved = localStorage.getItem('recording-activity');
-    return saved || missionContext.activity || '';
+    return saved || (missionContext?.activity) || '';
   });
 
   // Add data to recording when new data comes in - with deduplication
