@@ -115,14 +115,6 @@ export default defineConfig(({ mode }) => {
             'vendor-notifications': ['sonner'],
             'vendor-pdf': ['jspdf', 'html2canvas'],
             'vendor-bluetooth': ['@capacitor-community/bluetooth-le'],
-            
-            // Capacitor mobile vendors
-            'vendor-capacitor': [
-              '@capacitor/core',
-              '@capacitor/android',
-              '@capacitor/ios',
-              '@capacitor/motion'
-            ],
           },
         },
       },

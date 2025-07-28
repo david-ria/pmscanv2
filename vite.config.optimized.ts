@@ -106,7 +106,10 @@ export default defineConfig(async ({ command, mode }) => {
         '@tensorflow/tfjs',
         'jspdf',
         'html2canvas',
-        '@capacitor-community/bluetooth-le'
+        '@capacitor-community/bluetooth-le',
+        // Exclude Capacitor platform packages from web builds
+        '@capacitor/android',
+        '@capacitor/ios'
       ]
     },
     
