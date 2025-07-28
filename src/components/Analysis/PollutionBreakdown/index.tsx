@@ -76,7 +76,7 @@ export const PollutionBreakdownChart = ({
 
       <CardContent className="space-y-6">
         {/* Mobile-first layout */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:hidden">
           {/* Pie Chart - Full width on mobile */}
           <div className="w-full">
             <div className="h-64 sm:h-80 w-full">
