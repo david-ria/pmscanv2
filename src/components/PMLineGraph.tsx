@@ -322,62 +322,67 @@ export const PMLineGraph = ({
           <h3 className="text-lg font-semibold">{t('realTime.graph')}</h3>
         </div>
       )}
+      
+      {/* Context labels - give them proper space above chart */}
+      {contextSegments.length > 0 && (
+        <div className="mb-2 min-h-[32px] flex flex-wrap gap-1 justify-center">
+          {contextSegments.map((segment, index) => (
+            <div
+              key={`label-${segment.context}-${index}`}
+              className="text-xs px-2 py-1 rounded text-white font-medium shadow-sm whitespace-nowrap"
+              style={{ backgroundColor: segment.color }}
+            >
+              {segment.context}: {Math.round(segment.avgPm25)} µg/m³
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex-1 relative">
-        {/* Context overlays */}
+        {/* Context overlays positioned over the chart area */}
         {contextSegments.length > 0 && (
-          <>
-            <div className="absolute inset-0 pointer-events-none" style={{ 
-              marginTop: isMobile ? 10 : 20, 
-              marginLeft: isMobile ? 10 : 20, 
-              marginRight: isMobile ? 10 : 30, 
-              marginBottom: isMobile ? 20 : 5 
-            }}>
-              {contextSegments.map((segment, index) => {
-                const timeExtent = [
-                  Math.min(...chartData.map(d => d.timestamp)),
-                  Math.max(...chartData.map(d => d.timestamp))
-                ];
-                const startPercent = ((segment.startTime - timeExtent[0]) / (timeExtent[1] - timeExtent[0])) * 100;
-                const endPercent = ((segment.endTime - timeExtent[0]) / (timeExtent[1] - timeExtent[0])) * 100;
-                const widthPercent = endPercent - startPercent;
+          <div 
+            className="absolute inset-0 pointer-events-none overflow-hidden"
+            style={{ 
+              marginTop: 20, 
+              marginLeft: 50, 
+              marginRight: 30, 
+              marginBottom: 40 
+            }}
+          >
+            {contextSegments.map((segment, index) => {
+              const timeExtent = [
+                Math.min(...chartData.map(d => d.timestamp)),
+                Math.max(...chartData.map(d => d.timestamp))
+              ];
+              const startPercent = ((segment.startTime - timeExtent[0]) / (timeExtent[1] - timeExtent[0])) * 100;
+              const endPercent = ((segment.endTime - timeExtent[0]) / (timeExtent[1] - timeExtent[0])) * 100;
+              const widthPercent = Math.max(endPercent - startPercent, 1); // Ensure minimum width
 
-                return (
-                  <div
-                    key={`${segment.context}-${index}`}
-                    className="absolute top-0 h-full opacity-20"
-                    style={{
-                      left: `${startPercent}%`,
-                      width: `${widthPercent}%`,
-                      backgroundColor: segment.color,
-                    }}
-                  />
-                );
-              })}
-            </div>
-
-            {/* Context labels */}
-            <div className="absolute top-2 left-0 right-0 flex flex-wrap gap-1 justify-center pointer-events-none z-10">
-              {contextSegments.map((segment, index) => (
+              return (
                 <div
-                  key={`label-${segment.context}-${index}`}
-                  className="text-xs px-2 py-1 rounded text-white font-medium shadow-sm"
-                  style={{ backgroundColor: segment.color }}
-                >
-                  {segment.context}: {Math.round(segment.avgPm25)} µg/m³
-                </div>
-              ))}
-            </div>
-          </>
+                  key={`overlay-${segment.context}-${index}`}
+                  className="absolute top-0 h-full"
+                  style={{
+                    left: `${Math.max(startPercent, 0)}%`,
+                    width: `${Math.min(widthPercent, 100 - Math.max(startPercent, 0))}%`,
+                    backgroundColor: segment.color,
+                    opacity: 0.15,
+                  }}
+                />
+              );
+            })}
+          </div>
         )}
 
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
             margin={{
-              top: isMobile ? 10 : 20,
-              right: isMobile ? 10 : 30,
-              left: isMobile ? 10 : 20,
-              bottom: isMobile ? 20 : 5,
+              top: 20,
+              right: 30,
+              left: 50,
+              bottom: 40,
             }}
           >
             <CartesianGrid 
