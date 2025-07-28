@@ -50,6 +50,7 @@ const RecordingFrequencyDialog = lazy(() =>
 export default function RealTime() {
   // Fast LCP - defer heavy initialization
   const [initialized, setInitialized] = useState(false);
+  const hasInitRun = useRef(false);
   
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
@@ -104,8 +105,11 @@ export default function RealTime() {
     stableT, stableToast
   ]);
   
-  // Initialize heavy hooks after first paint using startTransition
+  // Initialize heavy hooks after first paint - guard with ref to run only once
   useEffect(() => {
+    if (hasInitRun.current) return;
+    hasInitRun.current = true;
+    
     console.log('[PERF] 🚀 RealTime - Starting initialization transition');
     const start = performance.now();
     
