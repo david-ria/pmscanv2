@@ -1,3 +1,4 @@
+import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -92,6 +93,228 @@ export const PMLineGraph = ({
     return defaultColors[lineType];
   };
 
+  // Calculate context segments for highlighting
+  const contextSegments = React.useMemo(() => {
+    if (!highlightContextType || !data.length) return [];
+
+    const segments: Array<{
+      context: string;
+      startTime: number;
+      endTime: number;
+      avgPm25: number;
+      color: string;
+    }> = [];
+
+    let currentContext = '';
+    let segmentStart = 0;
+    let segmentValues: number[] = [];
+
+    // Define context colors
+    const contextColors = [
+      'hsl(var(--chart-1))',
+      'hsl(var(--chart-2))',
+      'hsl(var(--chart-3))',
+      'hsl(var(--chart-4))',
+      'hsl(var(--chart-5))',
+    ];
+
+    let colorIndex = 0;
+    const contextColorMap = new Map<string, string>();
+
+    data.forEach((point, index) => {
+      let contextValue = '';
+      
+      switch (highlightContextType) {
+        case 'location':
+          contextValue = point.locationContext || missionContext?.locationContext || '';
+          break;
+        case 'activity':
+          contextValue = point.activityContext || missionContext?.activityContext || '';
+          break;
+        case 'autocontext':
+          contextValue = point.automaticContext || '';
+          break;
+      }
+
+      if (contextValue && contextValue !== 'unknown') {
+        if (contextValue !== currentContext) {
+          // Finish previous segment
+          if (currentContext && segmentValues.length > 0) {
+            segments.push({
+              context: currentContext,
+              startTime: segmentStart,
+              endTime: point.timestamp.getTime(),
+              avgPm25: segmentValues.reduce((sum, val) => sum + val, 0) / segmentValues.length,
+              color: contextColorMap.get(currentContext) || contextColors[0],
+            });
+          }
+
+          // Start new segment
+          currentContext = contextValue;
+          segmentStart = point.timestamp.getTime();
+          segmentValues = [point.pm25];
+
+          // Assign color if not already assigned
+          if (!contextColorMap.has(contextValue)) {
+            contextColorMap.set(contextValue, contextColors[colorIndex % contextColors.length]);
+            colorIndex++;
+          }
+        } else {
+          segmentValues.push(point.pm25);
+        }
+      }
+    });
+
+    // Finish last segment
+    if (currentContext && segmentValues.length > 0) {
+      segments.push({
+        context: currentContext,
+        startTime: segmentStart,
+        endTime: data[data.length - 1].timestamp.getTime(),
+        avgPm25: segmentValues.reduce((sum, val) => sum + val, 0) / segmentValues.length,
+        color: contextColorMap.get(currentContext) || contextColors[0],
+      });
+    }
+
+    return segments;
+  }, [data, highlightContextType, missionContext]);
+
+  // Custom chart component with context overlays
+  const CustomChart = ({ width, height }: { width: number; height: number }) => {
+    const margin = {
+      top: isMobile ? 10 : 20,
+      right: isMobile ? 10 : 30,
+      left: isMobile ? 10 : 20,
+      bottom: isMobile ? 20 : 5,
+    };
+
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+
+    // Find data range for scaling
+    const timeExtent = [
+      Math.min(...chartData.map(d => d.timestamp)),
+      Math.max(...chartData.map(d => d.timestamp))
+    ];
+
+    return (
+      <div className="relative w-full h-full">
+        {/* Context overlays */}
+        {contextSegments.length > 0 && (
+          <div className="absolute inset-0 pointer-events-none" style={{ 
+            marginTop: margin.top, 
+            marginLeft: margin.left, 
+            marginRight: margin.right, 
+            marginBottom: margin.bottom 
+          }}>
+            {contextSegments.map((segment, index) => {
+              const startPercent = ((segment.startTime - timeExtent[0]) / (timeExtent[1] - timeExtent[0])) * 100;
+              const endPercent = ((segment.endTime - timeExtent[0]) / (timeExtent[1] - timeExtent[0])) * 100;
+              const widthPercent = endPercent - startPercent;
+
+              return (
+                <div
+                  key={`${segment.context}-${index}`}
+                  className="absolute top-0 h-full opacity-20"
+                  style={{
+                    left: `${startPercent}%`,
+                    width: `${widthPercent}%`,
+                    backgroundColor: segment.color,
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Context labels */}
+        {contextSegments.length > 0 && (
+          <div className="absolute top-2 left-0 right-0 flex flex-wrap gap-1 justify-center pointer-events-none z-10">
+            {contextSegments.map((segment, index) => (
+              <div
+                key={`label-${segment.context}-${index}`}
+                className="text-xs px-2 py-1 rounded text-white font-medium shadow-sm"
+                style={{ backgroundColor: segment.color }}
+              >
+                {segment.context}: {Math.round(segment.avgPm25)} µg/m³
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Recharts LineChart */}
+        <LineChart
+          width={width}
+          height={height}
+          data={chartData}
+          margin={margin}
+        >
+          <CartesianGrid 
+            strokeDasharray="3 3" 
+            stroke="hsl(var(--muted-foreground))" 
+            opacity={0.3} 
+          />
+          <XAxis
+            dataKey="time"
+            tick={{ fontSize: isMobile ? 10 : 12 }}
+            tickFormatter={formatXAxisLabel}
+            stroke="hsl(var(--muted-foreground))"
+            interval={isMobile ? 'preserveStartEnd' : 0}
+          />
+          <YAxis
+            tick={{ fontSize: isMobile ? 10 : 12 }}
+            stroke="hsl(var(--muted-foreground))"
+            label={{
+              value: 'µg/m³',
+              angle: -90,
+              position: 'insideLeft',
+              style: { textAnchor: 'middle', fontSize: isMobile ? 10 : 12 }
+            }}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: 'hsl(var(--popover))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: '6px',
+              fontSize: isMobile ? '12px' : '14px'
+            }}
+            labelStyle={{ color: 'hsl(var(--foreground))' }}
+          />
+          <Legend 
+            wrapperStyle={{ fontSize: isMobile ? '12px' : '14px' }}
+          />
+          <Line
+            type="monotone"
+            dataKey="pm1"
+            stroke={getLineColor('pm1')}
+            strokeWidth={2}
+            dot={{ r: isMobile ? 2 : 3 }}
+            activeDot={{ r: isMobile ? 4 : 6 }}
+            name="PM1.0 µg/m³"
+          />
+          <Line
+            type="monotone"
+            dataKey="pm25"
+            stroke={getLineColor('pm25')}
+            strokeWidth={2}
+            dot={{ r: isMobile ? 2 : 3 }}
+            activeDot={{ r: isMobile ? 4 : 6 }}
+            name="PM2.5 µg/m³"
+          />
+          <Line
+            type="monotone"
+            dataKey="pm10"
+            stroke={getLineColor('pm10')}
+            strokeWidth={2}
+            dot={{ r: isMobile ? 2 : 3 }}
+            activeDot={{ r: isMobile ? 4 : 6 }}
+            name="PM10 µg/m³"
+          />
+        </LineChart>
+      </div>
+    );
+  };
+
   return (
     <div className={`w-full h-full min-h-[300px] flex flex-col ${className}`}>
       {!hideTitle && (
@@ -99,7 +322,54 @@ export const PMLineGraph = ({
           <h3 className="text-lg font-semibold">{t('realTime.graph')}</h3>
         </div>
       )}
-      <div className="flex-1">
+      <div className="flex-1 relative">
+        {/* Context overlays */}
+        {contextSegments.length > 0 && (
+          <>
+            <div className="absolute inset-0 pointer-events-none" style={{ 
+              marginTop: isMobile ? 10 : 20, 
+              marginLeft: isMobile ? 10 : 20, 
+              marginRight: isMobile ? 10 : 30, 
+              marginBottom: isMobile ? 20 : 5 
+            }}>
+              {contextSegments.map((segment, index) => {
+                const timeExtent = [
+                  Math.min(...chartData.map(d => d.timestamp)),
+                  Math.max(...chartData.map(d => d.timestamp))
+                ];
+                const startPercent = ((segment.startTime - timeExtent[0]) / (timeExtent[1] - timeExtent[0])) * 100;
+                const endPercent = ((segment.endTime - timeExtent[0]) / (timeExtent[1] - timeExtent[0])) * 100;
+                const widthPercent = endPercent - startPercent;
+
+                return (
+                  <div
+                    key={`${segment.context}-${index}`}
+                    className="absolute top-0 h-full opacity-20"
+                    style={{
+                      left: `${startPercent}%`,
+                      width: `${widthPercent}%`,
+                      backgroundColor: segment.color,
+                    }}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Context labels */}
+            <div className="absolute top-2 left-0 right-0 flex flex-wrap gap-1 justify-center pointer-events-none z-10">
+              {contextSegments.map((segment, index) => (
+                <div
+                  key={`label-${segment.context}-${index}`}
+                  className="text-xs px-2 py-1 rounded text-white font-medium shadow-sm"
+                  style={{ backgroundColor: segment.color }}
+                >
+                  {segment.context}: {Math.round(segment.avgPm25)} µg/m³
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
