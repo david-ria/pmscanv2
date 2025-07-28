@@ -66,48 +66,9 @@ export default function RealTime() {
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  // Add debugging for production mount issues
-  renderCount.current += 1;
-  console.log(`[PERF] 🔄 RealTime component starting... (render #${renderCount.current})`);
-
-  // Initialize heavy hooks after first paint - guard with ref to run only once
-  React.useEffect(() => {
-    if (hasInitRun.current) return;
-    hasInitRun.current = true;
-    
-    console.log('[PERF] 🚀 RealTime - Starting initialization transition');
-    const start = performance.now();
-    
-    startTransition(() => {
-      console.log('[PERF] 🔄 RealTime - Setting initialized to true');
-      setInitialized(true);
-      const end = performance.now();
-      console.log(`[PERF] ✅ RealTime - Initialization took ${end - start}ms`);
-    });
-  }, []);
-
-  // Early return for loading state - but after all hooks are called
-  if (!initialized) {
-    console.log('[PERF] 🔄 RealTime - Not initialized, showing loading state');
-    return (
-      <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-        {/* Critical content only - fastest LCP */}
-        <div className="text-center p-8">
-          <h1 className="text-2xl font-semibold mb-2">AirSentinels</h1>
-          <p className="text-muted-foreground">Chargement des données de qualité de l'air...</p>
-          <div className="mt-4 w-8 h-8 bg-primary/20 rounded-full animate-pulse mx-auto" />
-        </div>
-      </div>
-    );
-  }
-
-  console.log('[PERF] ✅ RealTime - Initialized, starting hooks initialization');
-
-  // Stabilize t and toast functions to prevent RealTimeContent re-renders
+  // ALL hooks must be called before any conditional logic
   const stableT = useCallback(t, []);
   const stableToast = useCallback(toast, []);
-
-  // Stabilize callbacks to prevent RealTimeContent re-renders
   const stableSetIsOnline = useCallback(setIsOnline, []);
   const stableSetShowGraph = useCallback(setShowGraph, []);
   const stableSetShowFrequencyDialog = useCallback(setShowFrequencyDialog, []);
@@ -115,7 +76,6 @@ export default function RealTime() {
   const stableSetHasShownFrequencyDialog = useCallback(setHasShownFrequencyDialog, []);
   const stableSetCurrentEvents = useCallback(setCurrentEvents, []);
 
-  // Memoize props object to prevent unnecessary re-renders
   const contentProps = useMemo(() => ({
     isOnline,
     setIsOnline: stableSetIsOnline,
@@ -140,6 +100,43 @@ export default function RealTime() {
     currentEvents, stableSetCurrentEvents,
     stableT, stableToast
   ]);
+
+  // Initialize heavy hooks after first paint - guard with ref to run only once
+  React.useEffect(() => {
+    if (hasInitRun.current) return;
+    hasInitRun.current = true;
+    
+    console.log('[PERF] 🚀 RealTime - Starting initialization transition');
+    const start = performance.now();
+    
+    startTransition(() => {
+      console.log('[PERF] 🔄 RealTime - Setting initialized to true');
+      setInitialized(true);
+      const end = performance.now();
+      console.log(`[PERF] ✅ RealTime - Initialization took ${end - start}ms`);
+    });
+  }, []);
+
+  // Add debugging for production mount issues
+  renderCount.current += 1;
+  console.log(`[PERF] 🔄 RealTime component starting... (render #${renderCount.current})`);
+
+  // Early return for loading state - but after all hooks are called
+  if (!initialized) {
+    console.log('[PERF] 🔄 RealTime - Not initialized, showing loading state');
+    return (
+      <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
+        {/* Critical content only - fastest LCP */}
+        <div className="text-center p-8">
+          <h1 className="text-2xl font-semibold mb-2">AirSentinels</h1>
+          <p className="text-muted-foreground">Chargement des données de qualité de l'air...</p>
+          <div className="mt-4 w-8 h-8 bg-primary/20 rounded-full animate-pulse mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
+  console.log('[PERF] ✅ RealTime - Initialized, starting hooks initialization');
   
   return <RealTimeContent {...contentProps} />;
 }
