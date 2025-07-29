@@ -2,10 +2,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { exportMissionToCSV } from './csvExport';
-import {
+import { 
   createMissionFromRecording,
   saveMissionLocally,
   deleteMission,
+  updateMissionName,
 } from './missionManager';
 import {
   getLocalMissions,
@@ -96,6 +97,7 @@ class DataStorageService {
   createMissionFromRecording = createMissionFromRecording;
   saveMissionLocally = saveMissionLocally;
   deleteMission = deleteMission;
+  updateMissionName = updateMissionName;
 
   // Sync methods with proper debouncing
   async syncPendingMissions(): Promise<void> {

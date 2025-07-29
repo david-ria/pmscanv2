@@ -211,6 +211,14 @@ ${mission.activityContext ? `Activité: ${mission.activityContext}` : ''}`;
     }
   }, [enrichAllMissionsWithMissingData, loadMissions, toast]);
 
+  const handleMissionUpdate = useCallback((updatedMission: MissionData) => {
+    setMissions((prev) => 
+      prev.map((mission) => 
+        mission.id === updatedMission.id ? updatedMission : mission
+      )
+    );
+  }, []);
+
   return {
     missions,
     loading,
@@ -221,5 +229,6 @@ ${mission.activityContext ? `Activité: ${mission.activityContext}` : ''}`;
     handleExport,
     handleShare,
     handleEnrichMissions,
+    handleMissionUpdate,
   };
 }

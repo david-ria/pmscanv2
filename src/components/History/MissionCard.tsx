@@ -19,6 +19,7 @@ interface MissionCardProps {
     mission: MissionData,
     shareType: 'email' | 'sms' | 'native'
   ) => void;
+  onMissionUpdate?: (updatedMission: MissionData) => void;
 }
 
 export function MissionCard({
@@ -26,6 +27,7 @@ export function MissionCard({
   onExport,
   onDelete,
   onShare,
+  onMissionUpdate,
 }: MissionCardProps) {
   const { t } = useTranslation();
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -146,6 +148,7 @@ export function MissionCard({
         mission={mission}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
+        onMissionUpdated={onMissionUpdate}
       />
     </>
   );

@@ -225,7 +225,12 @@
       "averagePM25": "Durchschn. PM2.5",
       "pm25AboveWHO": "PM2.5 > WHO (15)",
       "pm10AboveWHO": "PM10 > WHO (45)"
-    }
+    },
+    "editMission": "Missionsnamen bearbeiten",
+    "missionNameUpdated": "Missionsname aktualisiert",
+    "missionNameUpdateSuccess": "Der Missionsname wurde erfolgreich aktualisiert",
+    "errorUpdatingMissionName": "Fehler beim Aktualisieren des Namens",
+    "failedToUpdateMissionName": "Missionsname konnte nicht aktualisiert werden"
   },
   "analysis": {
     "title": "Personalisierte KI-Analyse",

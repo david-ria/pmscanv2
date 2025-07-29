@@ -141,6 +141,27 @@ function savePendingEventsForMission(missionId: string): void {
   }
 }
 
+export function updateMissionName(missionId: string, newName: string): void {
+  try {
+    const missions = getLocalMissions();
+    const missionIndex = missions.findIndex((m) => m.id === missionId);
+    
+    if (missionIndex >= 0) {
+      missions[missionIndex].name = newName;
+      saveLocalMissions(missions);
+      
+      // Add to pending sync to update the database
+      if (missions[missionIndex].synced) {
+        missions[missionIndex].synced = false;
+        addToPendingSync(missionId);
+      }
+    }
+  } catch (error) {
+    console.error('Failed to update mission name:', error);
+    throw new Error('Impossible de mettre à jour le nom de la mission.');
+  }
+}
+
 export async function deleteMission(missionId: string): Promise<void> {
   // Remove from local storage
   const missions = getLocalMissions().filter((m) => m.id !== missionId);

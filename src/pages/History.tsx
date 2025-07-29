@@ -36,6 +36,7 @@ export default function History() {
     handleExport,
     handleShare,
     handleEnrichMissions,
+    handleMissionUpdate,
   } = useMissionManagement();
 
   // Load missions on component mount and enrich missing data
@@ -177,6 +178,7 @@ export default function History() {
               onExport={handleExport}
               onDelete={handleDelete}
               onShare={handleShare}
+              onMissionUpdate={handleMissionUpdate}
             />
           ))
         )}

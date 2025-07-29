@@ -226,7 +226,12 @@
       "averagePM25": "Moyenne PM2.5",
       "pm25AboveWHO": "PM2.5 > OMS (15)",
       "pm10AboveWHO": "PM10 > OMS (45)"
-    }
+    },
+    "editMission": "Modifier le nom de la mission",
+    "missionNameUpdated": "Nom de mission mis à jour",
+    "missionNameUpdateSuccess": "Le nom de la mission a été mis à jour avec succès",
+    "errorUpdatingMissionName": "Erreur lors de la mise à jour du nom",
+    "failedToUpdateMissionName": "Impossible de mettre à jour le nom de la mission"
   },
   "analysis": {
     "title": "Analyse IA personnalisée",
