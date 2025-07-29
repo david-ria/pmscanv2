@@ -10,6 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
+    <!-- Preload critical fonts for immediate rendering -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
+    
     <!-- DNS prefetch for other external services -->
     <link rel="dns-prefetch" href="https://api.mapbox.com">
     <link rel="dns-prefetch" href="https://shydpfwuvnlzdzbubmgb.supabase.co">
@@ -39,7 +44,7 @@
         min-height: 100vh;
         background-color: hsl(var(--background));
         color: hsl(var(--foreground));
-        font-family: system-ui, -apple-system, sans-serif;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
       }
       
       .min-h-screen { min-height: 100vh; }
