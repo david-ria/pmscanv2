@@ -1,3 +1,4 @@
+
 import {
   useState,
   useEffect,
@@ -9,6 +10,7 @@ import {
 import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 import { MapPlaceholder } from '@/components/RealTime/MapPlaceholder';
+import { frequencyOptionKeys } from '@/lib/recordingConstants';
 
 // Critical hooks
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
@@ -96,7 +98,7 @@ export default function RealTime() {
   );
 
   // — defer non-critical hooks until initialized
-  const [gps, setGps] = useState<{ locationEnabled: boolean } | null>(null);
+  const [gps, setGps] = useState<{ locationEnabled: boolean; latestLocation: any; requestLocationPermission: () => Promise<boolean> } | null>(null);
   const [autoContext, setAutoContext] = useState<any>(null);
   const [weatherData, setWeatherData] = useState<any>(null);
   const [events, setEvents] = useState<any[]>([]);
@@ -108,7 +110,7 @@ export default function RealTime() {
     // use requestIdleCallback for non-urgent setup
     window.requestIdleCallback(async () => {
       const [
-        { locationEnabled, latestLocation, requestLocationPermission },
+        gpsHook,
         { updateContextIfNeeded, autoContextEnabled, forceContextUpdate },
         { fetchWeatherData },
         { getEventsByMission },
@@ -126,7 +128,7 @@ export default function RealTime() {
         import('@/contexts/AlertContext').then(m => m.useAlerts()),
       ]);
 
-      setGps({ locationEnabled });
+      setGps(gpsHook);
 
       setAutoContext({ updateContextIfNeeded, autoContextEnabled, forceContextUpdate });
       setWeatherData({ fetchWeatherData });
@@ -134,8 +136,8 @@ export default function RealTime() {
       setAlertsChecker(() => checkAlerts);
 
       // immediately request GPS
-      if (!locationEnabled) {
-        requestLocationPermission().catch(console.warn);
+      if (!gpsHook.locationEnabled) {
+        gpsHook.requestLocationPermission().catch(console.warn);
       }
     });
   }, [initialized, recordingFrequency, isRecording]);
@@ -295,7 +297,18 @@ export default function RealTime() {
   return (
     <div className="min-h-screen px-4 py-6 space-y-4">
       {isRecording || recordingConfirmed ? (
-        <Suspense fallback={<MapPlaceholder /*…*/ />}>
+        <Suspense fallback={<MapPlaceholder 
+          showGraph={showGraph}
+          onToggleView={setShowGraph}
+          isOnline={isOnline}
+          device={device}
+          isConnected={isConnected}
+          onConnect={requestDevice}
+          onDisconnect={disconnect}
+          onStartRecording={handleStartWorkflow}
+          locationEnabled={gps?.locationEnabled || false}
+          latestLocation={gps?.latestLocation}
+        />}>
           <MapGraphToggle
             showGraph={showGraph}
             onToggleView={setShowGraph}
@@ -309,10 +322,23 @@ export default function RealTime() {
             isConnected={isConnected}
             onConnect={requestDevice}
             onDisconnect={disconnect}
+            onRequestLocationPermission={gps?.requestLocationPermission || (() => Promise.resolve(false))}
+            locationEnabled={gps?.locationEnabled || false}
           />
         </Suspense>
       ) : (
-        <MapPlaceholder onStartRecording={handleStartWorkflow} /*…*/ />
+        <MapPlaceholder 
+          showGraph={showGraph}
+          onToggleView={setShowGraph}
+          isOnline={isOnline}
+          device={device}
+          isConnected={isConnected}
+          onConnect={requestDevice}
+          onDisconnect={disconnect}
+          onStartRecording={handleStartWorkflow}
+          locationEnabled={gps?.locationEnabled || false}
+          latestLocation={gps?.latestLocation}
+        />
       )}
 
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
@@ -343,6 +369,7 @@ export default function RealTime() {
       <Suspense fallback={null}>
         <RecordingFrequencyDialog
           open={showFrequencyDialog}
+          onOpenChange={setShowFrequencyDialog}
           recordingFrequency={recordingFrequency}
           onFrequencyChange={setRecordingFrequency}
           onConfirm={handleFreqConfirm}
