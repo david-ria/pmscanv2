@@ -39,13 +39,7 @@ const RecordingFrequencyDialog = lazy(() =>
   }))
 );
 
-// Update frequency options to use string values that match what components expect
-const frequencyOptionKeys = [
-  { value: '1s', label: '1s' },
-  { value: '2s', label: '2s' },
-  { value: '5s', label: '5s' },
-  { value: '10s', label: '10s' }
-];
+import { frequencyOptionKeys } from '@/lib/recordingConstants';
 
 export default function RealTime() {
   // --- 1) local UI state & flags
