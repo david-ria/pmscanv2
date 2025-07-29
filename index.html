@@ -160,6 +160,17 @@
         </main>
       </div>
       
+      <!-- Handle SPA routing for static hosts like GitHub Pages -->
+      <script>
+        (function() {
+          var redirect = sessionStorage.redirect;
+          delete sessionStorage.redirect;
+          if (redirect && redirect !== location.href) {
+            history.replaceState(null, null, redirect);
+          }
+        })();
+      </script>
+      
       <!-- JavaScript fallback - non-critical, can be deferred -->
       <script defer>
         // Hide static content when React takes over (non-critical)
