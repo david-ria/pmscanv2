@@ -489,7 +489,7 @@ export function MissionDetailsDialog({
           <div className="space-y-4">
             <div>
               {/* Editable Mission Title */}
-              <div className="flex items-center gap-2 group">
+              <div className="flex items-center gap-2">
                 {isEditingName ? (
                   <div className="flex-1 flex items-center gap-2">
                     <Input
@@ -523,7 +523,8 @@ export function MissionDetailsDialog({
                       size="sm"
                       variant="ghost"
                       onClick={handleStartEditing}
-                      className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-8 w-8 p-0 hover:bg-muted"
+                      title={t("history.editMission")}
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
