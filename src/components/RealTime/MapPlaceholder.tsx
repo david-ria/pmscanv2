@@ -1,6 +1,7 @@
 import { Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SimpleRecordButton } from './SimpleRecordButton';
+import { OptimizedMapPlaceholder } from './OptimizedMapPlaceholder';
 import { useTranslation } from 'react-i18next';
 import { PMScanDevice } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
@@ -58,16 +59,12 @@ export function MapPlaceholder({
         </div>
       </div>
 
-      {/* Simple placeholder content */}
+      {/* Optimized placeholder with CSS-based visuals instead of images */}
       <div className="h-[45vh] relative">
-        <div className="h-full flex items-center justify-center bg-muted/20 border border-border rounded-lg">
-          <div className="text-center">
-            <Map className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">
-              {t('realTime.mapWillLoadWhenRecording')}
-            </p>
-          </div>
-        </div>
+        <OptimizedMapPlaceholder 
+          className="h-full"
+          message={t('realTime.mapWillLoadWhenRecording')}
+        />
 
         {/* Simple Record Button */}
         <SimpleRecordButton
