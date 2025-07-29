@@ -53,11 +53,32 @@ export function MissionCard({
     setIsEditingName(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editedName.trim()) return;
     
     try {
+      // Update local storage
       dataStorage.updateMissionName(mission.id, editedName.trim());
+      
+      // Sync to database if mission is synced
+      if (mission.synced) {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { error } = await supabase
+          .from('missions')
+          .update({ name: editedName.trim() })
+          .eq('id', mission.id);
+          
+        if (error) {
+          console.error('Error syncing mission name to database:', error);
+          toast({
+            title: t("history.errorUpdatingMissionName"),
+            description: t("history.failedToSyncMissionName"),
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
       setIsEditingName(false);
       
       // Update the mission object for immediate UI feedback
