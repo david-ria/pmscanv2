@@ -17,12 +17,14 @@ import { useTranslation } from 'react-i18next';
 
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 import { MapPlaceholder } from '@/components/RealTime/MapPlaceholder';
-import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
-import { ContextSelectors } from '@/components/RecordingControls/ContextSelectors';
-import { AutoContextDisplay } from '@/components/AutoContextDisplay';
-import { DataLogger } from '@/components/DataLogger';
 import { RecordingFrequencyDialog } from '@/components/RecordingControls/RecordingFrequencyDialog';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
+
+// Lazy-loaded heavy components to reduce initial bundle size
+import { LazyMapGraphToggle } from '@/components/RealTime/LazyMapGraphToggle';
+import { LazyContextSelectors } from '@/components/RealTime/LazyContextSelectors';
+import { LazyAutoContextDisplay } from '@/components/RealTime/LazyAutoContextDisplay';
+import { LazyDataLogger } from '@/components/RealTime/LazyDataLogger';
 
 interface RealTimeContentProps {
   onUiReady: () => void;
@@ -282,7 +284,7 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
   return (
     <div>
       {(isRecording || localStorage.getItem('recording-confirmed') === 'true') ? (
-        <MapGraphToggle
+        <LazyMapGraphToggle
           showGraph={showGraph}
           onToggleView={setShowGraph}
           isOnline={isOnline}
@@ -315,28 +317,22 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
 
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
 
-      <div className="mb-4 context-selector">
-        <ContextSelectors
-          selectedLocation={selectedLocation}
-          onLocationChange={setSelectedLocation}
-          selectedActivity={selectedActivity}
-          onActivityChange={setSelectedActivity}
-          isRecording={isRecording}
-        />
-      </div>
+      <LazyContextSelectors
+        selectedLocation={selectedLocation}
+        onLocationChange={setSelectedLocation}
+        selectedActivity={selectedActivity}
+        onActivityChange={setSelectedActivity}
+        isRecording={isRecording}
+      />
 
-      <div className="mb-4 auto-context-display">
-        <AutoContextDisplay />
-      </div>
+      <LazyAutoContextDisplay />
 
-      <div className="mb-4 data-logger">
-        <DataLogger 
-          isRecording={isRecording}
-          currentData={currentData}
-          currentLocation={latestLocation}
-          missionContext={{ location: selectedLocation, activity: selectedActivity }}
-        />
-      </div>
+      <LazyDataLogger 
+        isRecording={isRecording}
+        currentData={currentData}
+        currentLocation={latestLocation}
+        missionContext={{ location: selectedLocation, activity: selectedActivity }}
+      />
 
       <RecordingFrequencyDialog
         open={showFrequencyDialog}
