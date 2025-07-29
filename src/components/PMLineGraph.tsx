@@ -306,7 +306,8 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
         </div>
       )}
 
-      <ResponsiveContainer width="100%" height="100%">
+      <div className="w-full h-full min-h-[300px] min-w-[300px]">
+        <ResponsiveContainer width="100%" height="100%" minHeight={300} minWidth={300}>
         <LineChart
           data={chartData}
           margin={{ top: 100, right: 5, left: 0, bottom: 120 }}
@@ -468,7 +469,8 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
             );
           })}
         </LineChart>
-      </ResponsiveContainer>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

@@ -57,8 +57,8 @@ export const PollutionPieChart = ({
   const isMobileScreen = window.innerWidth < 400;
 
   return (
-    <div className="w-full h-full min-h-[200px]">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full h-full min-h-[200px] min-w-[200px]">
+      <ResponsiveContainer width="100%" height="100%" minHeight={200} minWidth={200}>
         <PieChart>
           <Pie
             data={breakdownData}
