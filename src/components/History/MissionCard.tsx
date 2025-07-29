@@ -124,12 +124,12 @@ export function MissionCard({
             <div className="flex-1 mr-3">
               <div className="flex items-center gap-2 mb-1">
                 {isEditingName ? (
-                  <div className="flex-1 flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <Input
                       value={editedName}
                       onChange={(e) => setEditedName(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      className="font-semibold flex-1"
+                      className="font-semibold w-32 sm:w-40"
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
                     />
