@@ -1,10 +1,24 @@
 import { lazy, Suspense } from 'react';
 import { SkeletonCard } from '@/components/shared/SkeletonScreens';
 
-// Dynamically import the ContextSelectors component
-const ContextSelectors = lazy(() => import('@/components/RecordingControls/ContextSelectors').then(module => ({
-  default: module.ContextSelectors
-})));
+// Defer the import to avoid blocking initial rendering
+const ContextSelectors = lazy(() =>
+  new Promise<{ default: React.ComponentType<any> }>((resolve) => {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => {
+        import('@/components/RecordingControls/ContextSelectors').then(module => {
+          resolve({ default: module.ContextSelectors });
+        });
+      });
+    } else {
+      setTimeout(() => {
+        import('@/components/RecordingControls/ContextSelectors').then(module => {
+          resolve({ default: module.ContextSelectors });
+        });
+      }, 0);
+    }
+  })
+);
 
 interface LazyContextSelectorsProps {
   selectedLocation: string;

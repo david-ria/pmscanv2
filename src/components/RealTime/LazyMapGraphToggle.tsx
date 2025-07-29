@@ -1,10 +1,25 @@
 import { lazy, Suspense } from 'react';
 import { SkeletonCard } from '@/components/shared/SkeletonScreens';
 
-// Dynamically import the heavy MapGraphToggle component
-const MapGraphToggle = lazy(() => import('./MapGraphToggle').then(module => ({
-  default: module.MapGraphToggle
-})));
+// Defer the import to avoid blocking initial rendering
+const MapGraphToggle = lazy(() => 
+  new Promise<{ default: React.ComponentType<any> }>((resolve) => {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => {
+        import('./MapGraphToggle').then(module => {
+          resolve({ default: module.MapGraphToggle });
+        });
+      });
+    } else {
+      // Fallback for browsers without requestIdleCallback
+      setTimeout(() => {
+        import('./MapGraphToggle').then(module => {
+          resolve({ default: module.MapGraphToggle });
+        });
+      }, 0);
+    }
+  })
+);
 
 interface LazyMapGraphToggleProps {
   showGraph: boolean;

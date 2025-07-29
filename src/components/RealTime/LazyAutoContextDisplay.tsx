@@ -1,10 +1,24 @@
 import { lazy, Suspense } from 'react';
 import { SkeletonCard } from '@/components/shared/SkeletonScreens';
 
-// Dynamically import the AutoContextDisplay component
-const AutoContextDisplay = lazy(() => import('@/components/AutoContextDisplay').then(module => ({
-  default: module.AutoContextDisplay
-})));
+// Defer the import to avoid blocking initial rendering  
+const AutoContextDisplay = lazy(() =>
+  new Promise<{ default: React.ComponentType<any> }>((resolve) => {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => {
+        import('@/components/AutoContextDisplay').then(module => {
+          resolve({ default: module.AutoContextDisplay });
+        });
+      });
+    } else {
+      setTimeout(() => {
+        import('@/components/AutoContextDisplay').then(module => {
+          resolve({ default: module.AutoContextDisplay });
+        });
+      }, 0);
+    }
+  })
+);
 
 export function LazyAutoContextDisplay() {
   return (

@@ -18,15 +18,24 @@ export default function RealTime() {
     });
   }, []);
 
-  // Second phase: let browser paint placeholder first, then load heavy UI
+  // Second phase: defer heavy UI loading until browser is idle after LCP
   useEffect(() => {
     if (initialized) {
-      // RequestAnimationFrame ensures the placeholder has painted
-      requestAnimationFrame(() => {
-        startTransition(() => {
-          setUiReady(true);
-        });
-      });
+      // Use requestIdleCallback to defer heavy work until after critical rendering
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => {
+          startTransition(() => {
+            setUiReady(true);
+          });
+        }, { timeout: 2000 }); // Fallback timeout for slower devices
+      } else {
+        // Fallback for browsers without requestIdleCallback (older Safari)
+        setTimeout(() => {
+          startTransition(() => {
+            setUiReady(true);
+          });
+        }, 0);
+      }
     }
   }, [initialized]);
 

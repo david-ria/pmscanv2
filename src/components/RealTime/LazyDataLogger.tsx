@@ -1,10 +1,24 @@
 import { lazy, Suspense } from 'react';
 import { SkeletonCard } from '@/components/shared/SkeletonScreens';
 
-// Dynamically import the heavy DataLogger component
-const DataLogger = lazy(() => import('@/components/DataLogger').then(module => ({
-  default: module.DataLogger
-})));
+// Defer the import to avoid blocking initial rendering
+const DataLogger = lazy(() =>
+  new Promise<{ default: React.ComponentType<any> }>((resolve) => {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => {
+        import('@/components/DataLogger').then(module => {
+          resolve({ default: module.DataLogger });
+        });
+      });
+    } else {
+      setTimeout(() => {
+        import('@/components/DataLogger').then(module => {
+          resolve({ default: module.DataLogger });
+        });
+      }, 0);
+    }
+  })
+);
 
 interface LazyDataLoggerProps {
   isRecording: boolean;
