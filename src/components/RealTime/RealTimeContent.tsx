@@ -12,6 +12,7 @@ import { STORAGE_KEYS } from '@/services/storageService';
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { useGPS } from '@/hooks/useGPS';
 import { useEvents } from '@/hooks/useEvents';
+import { useSensorCoordinator } from '@/hooks/useSensorCoordinator';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -71,10 +72,20 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
     currentMissionId,
   } = useRecordingContext();
 
+  // Coordinate all sensors for energy optimization
+  const sensorCoordinator = useSensorCoordinator({
+    isRecording,
+    recordingFrequency,
+    onSensorStateChange: (sensorName, isActive) => {
+      console.log(`🔧 ${sensorName} sensor ${isActive ? 'activated' : 'paused'}`);
+    },
+  });
+
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(
     true,
     false,
-    recordingFrequency
+    recordingFrequency,
+    isRecording
   );
 
   const { settings: autoContextSettings } = useStorageSettings(
@@ -96,7 +107,11 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
     isRecording,
   });
 
-  const { weatherData, fetchWeatherData } = useWeatherData();
+  const { weatherData, fetchWeatherData } = useWeatherData({
+    isRecording,
+    recordingFrequency,
+    enabled: true,
+  });
   const { getEventsByMission } = useEvents();
   const { checkAlerts } = useAlerts();
 

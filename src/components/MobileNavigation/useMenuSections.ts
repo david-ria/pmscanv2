@@ -71,7 +71,7 @@ export function useMenuSections({
     requestDevice,
     disconnect,
   } = usePMScanBluetooth();
-  const { locationEnabled, requestLocationPermission } = useGPS();
+  const { locationEnabled, requestLocationPermission } = useGPS(true, false, undefined, false);
 
   const handleProfileClick = () => {
     navigate('/profile');

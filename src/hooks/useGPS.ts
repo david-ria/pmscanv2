@@ -3,7 +3,7 @@ import { LocationData } from '@/types/PMScan';
 import { parseFrequencyToMs } from '@/lib/recordingUtils';
 import * as logger from '@/utils/logger';
 
-export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, recordingFrequency?: string) {
+export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, recordingFrequency?: string, isRecording: boolean = false) {
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [latestLocation, setLatestLocation] = useState<LocationData | null>(
     null
@@ -12,6 +12,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
   const watchIdRef = useRef<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const lastErrorTimeRef = useRef(0);
+  const lastSampleTimeRef = useRef<number>(0);
 
   const stopWatching = useCallback(() => {
     if (watchIdRef.current !== null) {
@@ -54,6 +55,18 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
     };
 
     const handleSuccess = (position: GeolocationPosition) => {
+      const now = Date.now();
+      
+      // If recording, enforce frequency-based sampling
+      if (isRecording && recordingFrequency) {
+        const frequencyMs = parseFrequencyToMs(recordingFrequency);
+        if (lastSampleTimeRef.current && (now - lastSampleTimeRef.current) < frequencyMs) {
+          logger.debug('🧭 GPS: Skipping update due to frequency constraint');
+          return;
+        }
+        lastSampleTimeRef.current = now;
+      }
+
       const locationData: LocationData = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
@@ -65,6 +78,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
       setLatestLocation(locationData);
       setError(null);
       setLocationEnabled(true);
+      logger.debug('🧭 GPS: Location updated', { isRecording, frequency: recordingFrequency });
     };
 
     const handleError = (error: GeolocationPositionError) => {
@@ -213,30 +227,35 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
     };
   }, []);
 
-  // Handle enabled state changes
+  // Handle enabled state changes and recording state for energy optimization
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !isRecording) {
+      // Stop GPS completely when not recording to save energy
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
         setWatchId(null);
+        logger.debug('🧭 GPS: Stopped for energy saving', { enabled, isRecording });
       }
-      setLocationEnabled(false);
-      setLatestLocation(null);
-      setError(null);
+      if (!enabled) {
+        setLocationEnabled(false);
+        setLatestLocation(null);
+        setError(null);
+      }
     }
-  }, [enabled]);
+  }, [enabled, isRecording]);
 
-  // Start watching when enabled and location permission granted
+  // Start watching when enabled, location permission granted, AND recording is active
   useEffect(() => {
-    if (enabled && locationEnabled) {
+    if (enabled && locationEnabled && isRecording) {
       // Small delay to prevent rapid state changes
       const timer = setTimeout(() => {
         startWatching();
+        logger.debug('🧭 GPS: Started with recording', { frequency: recordingFrequency });
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [enabled, locationEnabled, highAccuracy, recordingFrequency]);
+  }, [enabled, locationEnabled, highAccuracy, recordingFrequency, isRecording, startWatching]);
 
   // Cleanup on unmount
   useEffect(() => {
