@@ -1,40 +1,32 @@
-
-import {
-  useState,
-  useEffect,
-  useRef,
-  Suspense,
-  lazy,
-  startTransition,
-} from 'react';
+import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
 import * as logger from '@/utils/logger';
-import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
-import { MapPlaceholder } from '@/components/RealTime/MapPlaceholder';
-import { frequencyOptionKeys } from '@/lib/recordingConstants';
 
-// Critical hooks
+// static imports of hooks (no more dynamic import of hooks!)
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingContext } from '@/contexts/RecordingContext';
+import { useAlerts } from '@/contexts/AlertContext';
+import { useAutoContext } from '@/hooks/useAutoContext';
+import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useStorageSettings } from '@/hooks/useStorage';
 import { STORAGE_KEYS } from '@/services/storageService';
+import { useWeatherData } from '@/hooks/useWeatherData';
+import { useGPS } from '@/hooks/useGPS';
+import { useEvents } from '@/hooks/useEvents';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
-// Lazy-loaded
+import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
+import { MapPlaceholder } from '@/components/RealTime/MapPlaceholder';
+
+// lazy UI chunks only
 const MapGraphToggle = lazy(() =>
-  import('@/components/RealTime/MapGraphToggle').then(m => ({
-    default: m.MapGraphToggle,
-  }))
+  import('@/components/RealTime/MapGraphToggle').then(m => ({ default: m.MapGraphToggle }))
 );
 const ContextSelectors = lazy(() =>
-  import('@/components/RecordingControls/ContextSelectors').then(m => ({
-    default: m.ContextSelectors,
-  }))
+  import('@/components/RecordingControls/ContextSelectors').then(m => ({ default: m.ContextSelectors }))
 );
 const AutoContextDisplay = lazy(() =>
-  import('@/components/AutoContextDisplay').then(m => ({
-    default: m.AutoContextDisplay,
-  }))
+  import('@/components/AutoContextDisplay').then(m => ({ default: m.AutoContextDisplay }))
 );
 const DataLogger = lazy(() =>
   import('@/components/DataLogger').then(m => ({ default: m.DataLogger }))
@@ -46,288 +38,283 @@ const RecordingFrequencyDialog = lazy(() =>
 );
 
 export default function RealTime() {
-  // —————————————————————————————————————————————
-  // 1) One-time initialization guard
-  const hasInitialized = useRef(false);
+  // --- 1) local UI state & flags
   const [initialized, setInitialized] = useState(false);
-
-  // Only run once, after first paint
-  useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
-
-    // Defer heavy init off the critical path
-    startTransition(() => setInitialized(true));
-  }, []);
-
-  // —————————————————————————————————————————————
-  // 2) Core state & contexts
-  const { t } = useTranslation();
-  const { toast } = useToast();
-
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
+  const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
+
   const [recordingFrequency, setRecordingFrequency] = useState(
     frequencyOptionKeys[0].value
   );
-  const [hasShownFreqDialog, setHasShownFreqDialog] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(() => {
-    return (
-      localStorage.getItem('recording-location') ||
-      '' /* fallback from context later */
-    );
+    const saved = localStorage.getItem('recording-location');
+    return saved || '';
   });
   const [selectedActivity, setSelectedActivity] = useState(() => {
-    return localStorage.getItem('recording-activity') || '';
+    const saved = localStorage.getItem('recording-activity');
+    return saved || '';
   });
+  const [currentEvents, setCurrentEvents] = useState<any[]>([]);
 
-  const { currentData, isConnected, device, requestDevice, disconnect } =
-    usePMScanBluetooth();
+  // --- 2) static hook calls (always in same order!)
+  const { t } = useTranslation();
+  const { toast } = useToast();
+
+  const {
+    currentData,
+    isConnected,
+    device,
+    error,
+    requestDevice,
+    disconnect,
+  } = usePMScanBluetooth();
+
   const {
     isRecording,
     addDataPoint,
     missionContext,
     recordingData,
     startRecording,
+    updateMissionContext,
     currentMissionId,
   } = useRecordingContext();
-  const { settings: autoCtxSettings } = useStorageSettings(
+
+  // GPS hook will use your recordingFrequency state
+  const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(
+    true,
+    false,
+    recordingFrequency
+  );
+
+  const { settings: autoContextSettings } = useStorageSettings(
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
     { enabled: false }
   );
+  const autoContextResult = useAutoContext(
+    isRecording && initialized && autoContextSettings.enabled,
+    latestLocation
+  );
 
-  // — defer non-critical hooks until initialized
-  const [gps, setGps] = useState<{ locationEnabled: boolean; latestLocation: any; requestLocationPermission: () => Promise<boolean> } | null>(null);
-  const [autoContext, setAutoContext] = useState<any>(null);
-  const [weatherData, setWeatherData] = useState<any>(null);
-  const [events, setEvents] = useState<any[]>([]);
-  const [alertsChecker, setAlertsChecker] = useState<Function>(() => () => {});
+  const {
+    updateContextIfNeeded,
+    forceContextUpdate,
+    autoContextEnabled,
+  } = useAutoContextSampling({
+    recordingFrequency,
+    isRecording: isRecording && initialized,
+  });
 
+  const { weatherData, fetchWeatherData } = useWeatherData();
+  const { getEventsByMission } = useEvents();
+  const { checkAlerts } = useAlerts();
+
+  // dedupe
+  const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
+
+  // --- 3) defer “heavy” init until after first paint
   useEffect(() => {
-    if (!initialized) return;
+    startTransition(() => setInitialized(true));
+  }, []);
 
-    // use requestIdleCallback for non-urgent setup
-    window.requestIdleCallback(async () => {
-      const [
-        gpsHook,
-        { updateContextIfNeeded, autoContextEnabled, forceContextUpdate },
-        { fetchWeatherData },
-        { getEventsByMission },
-        { checkAlerts },
-      ] = await Promise.all([
-        import('@/hooks/useGPS').then(m => m.useGPS(true, false, recordingFrequency)),
-        import('@/hooks/useAutoContextSampling').then(m =>
-          m.useAutoContextSampling({
-            recordingFrequency,
-            isRecording,
-          })
-        ),
-        import('@/hooks/useWeatherData').then(m => m.useWeatherData()),
-        import('@/hooks/useEvents').then(m => m.useEvents()),
-        import('@/contexts/AlertContext').then(m => m.useAlerts()),
-      ]);
-
-      setGps(gpsHook);
-
-      setAutoContext({ updateContextIfNeeded, autoContextEnabled, forceContextUpdate });
-      setWeatherData({ fetchWeatherData });
-      setEvents([]); // placeholder, we'll fetch below
-      setAlertsChecker(() => checkAlerts);
-
-      // immediately request GPS
-      if (!gpsHook.locationEnabled) {
-        gpsHook.requestLocationPermission().catch(console.warn);
-      }
-    });
-  }, [initialized, recordingFrequency, isRecording]);
-
-  // —————————————————————————————————————————————
-  // 3) Data ingestion effect
-  const lastRef = useRef<{ pm25: number; ts: number } | null>(null);
+  // --- 4) add data points when new sensor data arrives
   useEffect(() => {
-    if (
-      initialized &&
-      isRecording &&
-      currentData &&
-      gps?.latestLocation &&
-      autoContext
-    ) {
-      const ts = currentData.timestamp.getTime();
-      if (
-        !lastRef.current ||
-        lastRef.current.pm25 !== currentData.pm25 ||
-        ts - lastRef.current.ts > 500
-      ) {
-        lastRef.current = { pm25: currentData.pm25, ts };
-        logger.rateLimitedDebug('realTime.addData', 5000, 'Adding…');
+    if (!initialized || !isRecording || !currentData) return;
 
-        (async () => {
-          const { speed, isMoving } = await import('@/utils/speedCalculator').then(
-            ({ updateLocationHistory }) =>
-              updateLocationHistory(
-                gps.latestLocation.latitude,
-                gps.latestLocation.longitude,
-                gps.latestLocation.timestamp
-              )
-          );
+    const ts = currentData.timestamp.getTime();
+    const dup =
+      lastDataRef.current?.pm25 === currentData.pm25 &&
+      Math.abs(ts - lastDataRef.current.timestamp) < 500;
 
-          const autoCtx = await autoContext.updateContextIfNeeded(
-            currentData,
-            gps.latestLocation,
-            speed,
-            isMoving
-          );
+    if (dup) return;
 
-          addDataPoint(
-            currentData,
-            gps.latestLocation,
-            { location: selectedLocation, activity: selectedActivity },
-            autoCtx
-          );
-        })();
+    (async () => {
+      // compute speed/movement
+      let speed = 0, isMoving = false;
+      if (latestLocation) {
+        const { updateLocationHistory } = await import('@/utils/speedCalculator');
+        const sp = updateLocationHistory(
+          latestLocation.latitude,
+          latestLocation.longitude,
+          latestLocation.timestamp
+        );
+        speed = sp.speed;
+        isMoving = sp.isMoving;
       }
-    }
+
+      const automaticContext = await updateContextIfNeeded(
+        currentData,
+        latestLocation || undefined,
+        speed,
+        isMoving
+      );
+
+      addDataPoint(
+        currentData,
+        latestLocation || undefined,
+        { location: selectedLocation, activity: selectedActivity },
+        automaticContext
+      );
+    })();
+
+    lastDataRef.current = { pm25: currentData.pm25, timestamp: ts };
   }, [
-    initialized,
-    isRecording,
     currentData,
-    gps?.latestLocation,
-    autoContext,
-    addDataPoint,
+    isRecording,
+    initialized,
+    latestLocation,
     selectedLocation,
     selectedActivity,
+    updateContextIfNeeded,
+    addDataPoint,
   ]);
 
-  // —————————————————————————————————————————————
-  // 4) Side effects: weather, alerts, events & persistence
+  // clear history on new session
   useEffect(() => {
-    if (initialized && gps?.latestLocation && weatherData) {
-      weatherData.fetchWeatherData(gps.latestLocation);
+    if (initialized && isRecording) {
+      import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
+        clearLocationHistory();
+      });
     }
-  }, [initialized, gps?.latestLocation, weatherData]);
+  }, [initialized, isRecording]);
 
+  // force immediate context update when toggling auto‐context
+  useEffect(() => {
+    if (initialized && autoContextEnabled && currentData) {
+      forceContextUpdate(currentData, latestLocation || undefined, 0, false);
+    }
+  }, [initialized, autoContextEnabled, currentData, latestLocation, forceContextUpdate]);
+
+  // check alerts
   useEffect(() => {
     if (initialized && currentData) {
-      alertsChecker(currentData.pm1, currentData.pm25, currentData.pm10);
+      checkAlerts(currentData.pm1, currentData.pm25, currentData.pm10);
     }
-  }, [initialized, currentData, alertsChecker]);
+  }, [initialized, currentData, checkAlerts]);
 
+  // fetch weather
   useEffect(() => {
-    if (initialized && currentMissionId) {
-      import('@/hooks/useEvents')
-        .then(m => m.useEvents().getEventsByMission(currentMissionId))
-        .then(setEvents);
+    if (initialized && latestLocation) {
+      fetchWeatherData(latestLocation);
     }
-  }, [initialized, currentMissionId]);
+  }, [initialized, latestLocation, fetchWeatherData]);
 
+  // persist selectors
   useEffect(() => {
-    if (selectedLocation)
-      localStorage.setItem('recording-location', selectedLocation);
+    localStorage.setItem('recording-location', selectedLocation);
   }, [selectedLocation]);
-
   useEffect(() => {
-    if (selectedActivity)
-      localStorage.setItem('recording-activity', selectedActivity);
+    localStorage.setItem('recording-activity', selectedActivity);
   }, [selectedActivity]);
 
-  // —————————————————————————————————————————————
-  // 5) Connectivity & recording workflow
+  // GPS permission
   useEffect(() => {
-    const onOnline = () => setIsOnline(true),
-      onOffline = () => setIsOnline(false);
+    if (initialized && !locationEnabled) {
+      requestLocationPermission().catch(console.error);
+    }
+  }, [initialized, locationEnabled, requestLocationPermission]);
 
-    window.addEventListener('online', onOnline);
-    window.addEventListener('offline', onOffline);
+  // online/offline
+  useEffect(() => {
+    const on = () => setIsOnline(true);
+    const off = () => setIsOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
     return () => {
-      window.removeEventListener('online', onOnline);
-      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
     };
   }, []);
 
-  // Show frequency dialog once after BT connect
+  // load events
   useEffect(() => {
-    if (initialized && isConnected && !hasShownFreqDialog && !isRecording) {
-      setShowFrequencyDialog(true);
-      setHasShownFreqDialog(true);
+    if (initialized && currentMissionId) {
+      getEventsByMission(currentMissionId).then(setCurrentEvents);
+    } else {
+      setCurrentEvents([]);
     }
-  }, [initialized, isConnected, isRecording, hasShownFreqDialog]);
+  }, [initialized, currentMissionId, getEventsByMission]);
 
-  const toastError = (msg: string) =>
-    toast({ title: t('notifications.error'), description: msg, variant: 'destructive' });
+  // reset frequency dialog on disconnect
+  useEffect(() => {
+    if (!isConnected) setHasShownFrequencyDialog(false);
+  }, [isConnected]);
 
-  const handleStartWorkflow = async () => {
+  // clear flag when stop
+  useEffect(() => {
+    if (!isRecording) localStorage.removeItem('recording-confirmed');
+  }, [isRecording]);
+
+  // recording workflow
+  const handleStartRecordingWorkflow = async () => {
     if (!isConnected) {
       try {
         await requestDevice();
       } catch {
-        toastError('Failed to connect to PMScan device');
+        toast({ title: t('notifications.error'), description: 'Failed to connect', variant: 'destructive' });
       }
     } else {
       setShowFrequencyDialog(true);
     }
   };
 
-  const handleFreqConfirm = async () => {
+  // auto-show freq dialog
+  useEffect(() => {
+    if (isConnected && !hasShownFrequencyDialog && !isRecording) {
+      setShowFrequencyDialog(true);
+      setHasShownFrequencyDialog(true);
+    }
+  }, [isConnected, hasShownFrequencyDialog, isRecording]);
+
+  const handleFrequencyConfirm = async () => {
     try {
       setShowFrequencyDialog(false);
       await startRecording(recordingFrequency);
       localStorage.setItem('recording-confirmed', 'true');
-      toast({ title: t('notifications.recordingStarted') });
+      toast({ title: t('notifications.recordingStarted'), description: t('notifications.recordingStartedDesc', { frequency: recordingFrequency }) });
     } catch (err) {
-      logger.error('startRecording failed', err);
-      toastError(t('notifications.recordingStartError'));
+      logger.error(err);
+      toast({ title: t('notifications.error'), description: t('notifications.recordingStartError'), variant: 'destructive' });
     }
   };
 
-  // —————————————————————————————————————————————
-  // 6) Render
+  // --- 5) render
   if (!initialized) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <h1 className="text-2xl font-semibold">AirSentinels</h1>
-        <p>Loading…</p>
-        <div className="w-8 h-8 mt-4 bg-primary/20 rounded-full animate-pulse" />
+      <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
+        <div className="text-center p-8">
+          <h1 className="text-2xl font-semibold mb-2">AirSentinels</h1>
+          <p className="text-muted-foreground">Chargement des données de qualité de l'air…</p>
+          <div className="mt-4 w-8 h-8 bg-primary/20 rounded-full animate-pulse mx-auto" />
+        </div>
       </div>
     );
   }
 
-  const recordingConfirmed = localStorage.getItem('recording-confirmed') === 'true';
-
   return (
-    <div className="min-h-screen px-4 py-6 space-y-4">
-      {isRecording || recordingConfirmed ? (
-        <Suspense fallback={<MapPlaceholder 
-          showGraph={showGraph}
-          onToggleView={setShowGraph}
-          isOnline={isOnline}
-          device={device}
-          isConnected={isConnected}
-          onConnect={requestDevice}
-          onDisconnect={disconnect}
-          onStartRecording={handleStartWorkflow}
-          locationEnabled={gps?.locationEnabled || false}
-          latestLocation={gps?.latestLocation}
-        />}>
+    <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
+      {(isRecording || localStorage.getItem('recording-confirmed') === 'true') ? (
+        <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
           <MapGraphToggle
             showGraph={showGraph}
             onToggleView={setShowGraph}
             isOnline={isOnline}
-            latestLocation={gps?.latestLocation}
+            latestLocation={latestLocation}
             currentData={currentData}
             recordingData={recordingData}
-            events={events}
+            events={currentEvents}
             isRecording={isRecording}
             device={device}
             isConnected={isConnected}
             onConnect={requestDevice}
             onDisconnect={disconnect}
-            onRequestLocationPermission={gps?.requestLocationPermission || (() => Promise.resolve(false))}
-            locationEnabled={gps?.locationEnabled || false}
+            onRequestLocationPermission={requestLocationPermission}
+            locationEnabled={locationEnabled}
           />
         </Suspense>
       ) : (
-        <MapPlaceholder 
+        <MapPlaceholder
           showGraph={showGraph}
           onToggleView={setShowGraph}
           isOnline={isOnline}
@@ -335,46 +322,25 @@ export default function RealTime() {
           isConnected={isConnected}
           onConnect={requestDevice}
           onDisconnect={disconnect}
-          onStartRecording={handleStartWorkflow}
-          locationEnabled={gps?.locationEnabled || false}
-          latestLocation={gps?.latestLocation}
+          onStartRecording={handleStartRecordingWorkflow}
+          locationEnabled={locationEnabled}
+          latestLocation={latestLocation}
         />
       )}
 
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
 
-      <Suspense fallback={<div className="h-20 animate-pulse bg-muted/20 rounded" />}>
-        <ContextSelectors
-          selectedLocation={selectedLocation}
-          onLocationChange={setSelectedLocation}
-          selectedActivity={selectedActivity}
-          onActivityChange={setSelectedActivity}
-          isRecording={isRecording}
-        />
-      </Suspense>
+      <div className="mb-4 context-selector">
+        <Suspense fallback={<div className="h-20 bg-muted/20 rounded-lg animate-pulse" />}>
+          <ContextSelectors
+            selectedLocation={selectedLocation}
+            onLocationChange={setSelectedLocation}
+            selectedActivity={selectedActivity}
+            onActivityChange={setSelectedActivity}
+            isRecording={isRecording}
+          />
+        </Suspense>
+      </div>
 
-      <Suspense fallback={<div className="h-16 animate-pulse bg-muted/20 rounded" />}>
-        <AutoContextDisplay />
-      </Suspense>
-
-      <Suspense fallback={<div className="h-32 animate-pulse bg-muted/20 rounded" />}>
-        <DataLogger
-          isRecording={isRecording}
-          currentData={currentData}
-          currentLocation={gps?.latestLocation}
-          missionContext={{ location: selectedLocation, activity: selectedActivity }}
-        />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <RecordingFrequencyDialog
-          open={showFrequencyDialog}
-          onOpenChange={setShowFrequencyDialog}
-          recordingFrequency={recordingFrequency}
-          onFrequencyChange={setRecordingFrequency}
-          onConfirm={handleFreqConfirm}
-        />
-      </Suspense>
-    </div>
-  );
-}
+      <div className="mb-4 auto-context-display">
+        <Suspense fallback=
