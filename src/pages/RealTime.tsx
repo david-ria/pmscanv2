@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
 import * as logger from '@/utils/logger';
 
@@ -36,6 +37,14 @@ const RecordingFrequencyDialog = lazy(() =>
     default: m.RecordingFrequencyDialog,
   }))
 );
+
+// Add the missing frequencyOptionKeys
+const frequencyOptionKeys = [
+  { value: 1000, label: '1s' },
+  { value: 2000, label: '2s' },
+  { value: 5000, label: '5s' },
+  { value: 10000, label: '10s' }
+];
 
 export default function RealTime() {
   // --- 1) local UI state & flags
@@ -113,7 +122,7 @@ export default function RealTime() {
   // dedupe
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
 
-  // --- 3) defer “heavy” init until after first paint
+  // --- 3) defer "heavy" init until after first paint
   useEffect(() => {
     startTransition(() => setInitialized(true));
   }, []);
@@ -343,4 +352,27 @@ export default function RealTime() {
       </div>
 
       <div className="mb-4 auto-context-display">
-        <Suspense fallback=
+        <Suspense fallback={<div className="h-16 bg-muted/20 rounded-lg animate-pulse" />}>
+          <AutoContextDisplay />
+        </Suspense>
+      </div>
+
+      <div className="mb-4 data-logger">
+        <Suspense fallback={<div className="h-32 bg-muted/20 rounded-lg animate-pulse" />}>
+          <DataLogger />
+        </Suspense>
+      </div>
+
+      <Suspense fallback={null}>
+        <RecordingFrequencyDialog
+          open={showFrequencyDialog}
+          onOpenChange={setShowFrequencyDialog}
+          selectedFrequency={recordingFrequency}
+          onFrequencyChange={setRecordingFrequency}
+          onConfirm={handleFrequencyConfirm}
+          frequencyOptions={frequencyOptionKeys}
+        />
+      </Suspense>
+    </div>
+  );
+}
