@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
 import * as logger from '@/utils/logger';
 
@@ -38,12 +39,12 @@ const RecordingFrequencyDialog = lazy(() =>
   }))
 );
 
-// Add the missing frequencyOptionKeys
+// Update frequency options to use string values that match what components expect
 const frequencyOptionKeys = [
-  { value: 1000, label: '1s' },
-  { value: 2000, label: '2s' },
-  { value: 5000, label: '5s' },
-  { value: 10000, label: '10s' }
+  { value: '1s', label: '1s' },
+  { value: '2s', label: '2s' },
+  { value: '5s', label: '5s' },
+  { value: '10s', label: '10s' }
 ];
 
 export default function RealTime() {
@@ -54,6 +55,7 @@ export default function RealTime() {
   const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
   const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
 
+  // Change to string to match expected types throughout the app
   const [recordingFrequency, setRecordingFrequency] = useState(
     frequencyOptionKeys[0].value
   );
@@ -90,7 +92,7 @@ export default function RealTime() {
     currentMissionId,
   } = useRecordingContext();
 
-  // GPS hook will use your recordingFrequency state
+  // GPS hook will use your recordingFrequency state (now string)
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(
     true,
     false,
@@ -288,6 +290,11 @@ export default function RealTime() {
     }
   };
 
+  // Create proper frequency change handler
+  const handleFrequencyChange = (frequency: string) => {
+    setRecordingFrequency(frequency);
+  };
+
   // --- 5) render
   if (!initialized) {
     return (
@@ -359,7 +366,12 @@ export default function RealTime() {
 
       <div className="mb-4 data-logger">
         <Suspense fallback={<div className="h-32 bg-muted/20 rounded-lg animate-pulse" />}>
-          <DataLogger />
+          <DataLogger 
+            isRecording={isRecording}
+            currentData={currentData}
+            currentLocation={latestLocation}
+            missionContext={{ location: selectedLocation, activity: selectedActivity }}
+          />
         </Suspense>
       </div>
 
@@ -367,12 +379,12 @@ export default function RealTime() {
         <RecordingFrequencyDialog
           open={showFrequencyDialog}
           onOpenChange={setShowFrequencyDialog}
-          selectedFrequency={recordingFrequency}
-          onFrequencyChange={setRecordingFrequency}
+          recordingFrequency={recordingFrequency}
+          onFrequencyChange={handleFrequencyChange}
           onConfirm={handleFrequencyConfirm}
-          frequencyOptions={frequencyOptionKeys}
         />
       </Suspense>
     </div>
   );
 }
+
