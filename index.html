@@ -14,104 +14,75 @@
     <link rel="dns-prefetch" href="https://api.mapbox.com">
     <link rel="dns-prefetch" href="https://shydpfwuvnlzdzbubmgb.supabase.co">
     
-    <!-- Critical CSS for immediate rendering -->
+    <!-- Critical CSS for OptimizedPlaceholder only -->
     <style>
-      /* Essential CSS variables for immediate rendering */
+      /* Minimal CSS variables */
       :root {
         --background: 0 0% 99%;
         --foreground: 215 25% 27%;
         --primary: 142 76% 36%;
         --muted-foreground: 215.4 16.3% 46.9%;
-        --border: 214.3 31.8% 91.4%;
-        --card: 0 0% 100%;
-        --muted: 210 40% 96.1%;
       }
       
-      /* Critical typography for H1 and large text */
-      h1.text-lg, .text-lg { 
-        font-size: 1.125rem; 
-        line-height: 1.75rem;
+      /* Dark mode support */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: 215 25% 13%;
+          --foreground: 0 0% 98%;
+          --primary: 142 76% 36%;
+          --muted-foreground: 215 20.2% 65.1%;
+        }
       }
       
-      h1.text-xl, .text-xl { 
-        font-size: 1.25rem; 
-        line-height: 1.75rem;
-      }
-      
-      h1.text-2xl, .text-2xl { 
-        font-size: 1.5rem; 
-        line-height: 2rem;
-      }
-      
-      .font-bold { font-weight: 700; }
-      .font-semibold { font-weight: 600; }
-      
-      /* Critical color utilities */
-      .text-foreground { color: hsl(var(--foreground)); }
-      .text-primary { color: hsl(var(--primary)); }
-      .text-muted-foreground { color: hsl(var(--muted-foreground)); }
-      
-      /* Critical layout utilities */
-      .bg-background { background-color: hsl(var(--background)); }
-      .bg-card { background-color: hsl(var(--card)); }
-      .bg-muted { background-color: hsl(var(--muted)); }
-      .border-border { border-color: hsl(var(--border)); }
-      .min-h-screen { min-height: 100vh; }
-      .fixed { position: fixed; }
-      .top-0 { top: 0; }
-      .left-0 { left: 0; }
-      .right-0 { right: 0; }
-      .z-50 { z-index: 50; }
-      .border-b { border-bottom-width: 1px; }
-      .flex { display: flex; }
-      .items-center { align-items: center; }
-      .justify-between { justify-content: space-between; }
-      .gap-3 { gap: 0.75rem; }
-      .h-14 { height: 3.5rem; }
-      .h-9 { height: 2.25rem; }
-      .w-9 { width: 2.25rem; }
-      .px-4 { padding-left: 1rem; padding-right: 1rem; }
-      .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
-      .pt-14 { padding-top: 3.5rem; }
-      .pb-20 { padding-bottom: 5rem; }
-      .p-4 { padding: 1rem; }
-      .mb-1 { margin-bottom: 0.25rem; }
-      .max-w-7xl { max-width: 80rem; }
-      .mx-auto { margin-left: auto; margin-right: auto; }
-      .rounded { border-radius: 0.25rem; }
-      .rounded-lg { border-radius: 0.5rem; }
-      .rounded-full { border-radius: 9999px; }
-      .border { border-width: 1px; }
-      .text-center { text-align: center; }
-      .text-xs { font-size: 0.75rem; line-height: 1rem; }
-      .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-      .space-y-6 > * + * { margin-top: 1.5rem; }
-      
-      /* Prevent layout shift by setting initial container styles */
+      /* Only critical styles for OptimizedPlaceholder */
       #root {
         min-height: 100vh;
         background-color: hsl(var(--background));
+        color: hsl(var(--foreground));
+        font-family: system-ui, -apple-system, sans-serif;
       }
       
-      /* Critical styles for air quality cards to prevent layout shift */
-      .grid-cols-3 {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.75rem;
+      .min-h-screen { min-height: 100vh; }
+      .bg-background { background-color: hsl(var(--background)); }
+      .text-center { text-align: center; }
+      .p-8 { padding: 2rem; }
+      .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+      .font-semibold { font-weight: 600; }
+      .mb-2 { margin-bottom: 0.5rem; }
+      .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+      .mt-4 { margin-top: 1rem; }
+      .w-8 { width: 2rem; }
+      .h-8 { height: 2rem; }
+      .rounded-full { border-radius: 9999px; }
+      .mx-auto { margin-left: auto; margin-right: auto; }
+      .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+      .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+      
+      /* Spinner animation for placeholder */
+      .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
       }
       
-      /* Loading skeleton styles */
-      .skeleton {
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
       }
       
-      @keyframes loading {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
+      /* Responsive utilities */
+      @media (min-width: 640px) {
+        .sm\\:px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .sm\\:py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+      }
+      
+      /* Primary color with opacity for loading indicator */
+      .bg-primary\\/20 {
+        background-color: hsl(var(--primary) / 0.2);
       }
     </style>
+    
+    <!-- Defer the main CSS bundle -->
+    <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
     <meta
       name="description"
       content="Application de mesure et contextualisation de l'exposition aux particules fines"
@@ -198,13 +169,5 @@
       </script>
     </div>
     <script type="module" src="/src/main.tsx" defer></script>
-    
-    <!-- Add performance optimizations -->
-    <style>
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    </style>
   </body>
 </html>
