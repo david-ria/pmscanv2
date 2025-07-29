@@ -1,35 +1,16 @@
-# Optimized caching strategy for TTFB optimization
+# Optimized caching strategy with HTTP/2 push for TTFB optimization
 
-# Static assets - Long-term caching with immutable
-/assets/js/*.js
-  Cache-Control: public, max-age=31536000, immutable
-  X-Content-Type-Options: nosniff
-
-/assets/css/*.css
-  Cache-Control: public, max-age=31536000, immutable
-  X-Content-Type-Options: nosniff
-
-/assets/images/*
-  Cache-Control: public, max-age=31536000, immutable
-  X-Content-Type-Options: nosniff
-
-/assets/fonts/*
-  Cache-Control: public, max-age=31536000, immutable
-  X-Content-Type-Options: nosniff
-  Access-Control-Allow-Origin: *
-
-# Service worker should not be cached
-/sw.js
-  Cache-Control: no-cache, no-store, must-revalidate
-  X-Content-Type-Options: nosniff
-
-# HTML resources - Optimized for bfcache and TTFB
+# HTML resources with HTTP/2 push for critical resources
 /
   Cache-Control: public, max-age=0, must-revalidate
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   X-XSS-Protection: 1; mode=block
   Referrer-Policy: strict-origin-when-cross-origin
+  # HTTP/2 push critical resources
+  Link: </src/index.css>; rel=preload; as=style
+  Link: <https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap>; rel=preload; as=style
+  Link: <https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2>; rel=preload; as=font; type=font/woff2; crossorigin
 
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
@@ -38,12 +19,69 @@
   X-XSS-Protection: 1; mode=block
   Referrer-Policy: strict-origin-when-cross-origin
 
+# Fingerprinted JS assets - Long-term caching with immutable
+/assets/js/*.*.js
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+  # Enable compression
+  Vary: Accept-Encoding
+
+# Fingerprinted CSS assets - Long-term caching with immutable  
+/assets/css/*.*.css
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+  Vary: Accept-Encoding
+
+# Fingerprinted images - Long-term caching with immutable
+/assets/images/*.*.{jpg,jpeg,png,webp,avif,svg}
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+# Fingerprinted fonts - Long-term caching with immutable
+/assets/fonts/*.*.{woff,woff2,eot,ttf}
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+  Access-Control-Allow-Origin: *
+
+# Non-fingerprinted assets - Shorter cache with revalidation
+/assets/js/*.js
+  Cache-Control: public, max-age=86400, must-revalidate
+  X-Content-Type-Options: nosniff
+
+/assets/css/*.css
+  Cache-Control: public, max-age=86400, must-revalidate
+  X-Content-Type-Options: nosniff
+
+/assets/images/*
+  Cache-Control: public, max-age=2592000, must-revalidate
+  X-Content-Type-Options: nosniff
+
+/assets/fonts/*
+  Cache-Control: public, max-age=2592000, must-revalidate
+  X-Content-Type-Options: nosniff
+  Access-Control-Allow-Origin: *
+
+# Service worker should never be cached
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  X-Content-Type-Options: nosniff
+
+# Module chunks from Vite (fingerprinted)
+/*.*.js
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
 # API responses - Short cache with revalidation
 /api/*
   Cache-Control: public, max-age=60, must-revalidate
   X-Content-Type-Options: nosniff
 
-# Manifest and service worker related
+# Supabase edge functions - Short cache
+/functions/*
+  Cache-Control: public, max-age=300, must-revalidate
+  X-Content-Type-Options: nosniff
+
+# Manifest and other JSON files
 /*.json
   Cache-Control: public, max-age=86400
   X-Content-Type-Options: nosniff
