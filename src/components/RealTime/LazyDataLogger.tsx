@@ -1,22 +1,14 @@
 import { lazy, Suspense } from 'react';
 import { SkeletonCard } from '@/components/shared/SkeletonScreens';
 
-// Defer the import to avoid blocking initial rendering
+// Keep DataLogger deferred as it's not critical for initial interaction
 const DataLogger = lazy(() =>
   new Promise<{ default: React.ComponentType<any> }>((resolve) => {
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => {
-        import('@/components/DataLogger').then(module => {
-          resolve({ default: module.DataLogger });
-        });
+    const timer = setTimeout(() => {
+      import('@/components/DataLogger').then(module => {
+        resolve({ default: module.DataLogger });
       });
-    } else {
-      setTimeout(() => {
-        import('@/components/DataLogger').then(module => {
-          resolve({ default: module.DataLogger });
-        });
-      }, 0);
-    }
+    }, 500); // Short delay for DataLogger only
   })
 );
 

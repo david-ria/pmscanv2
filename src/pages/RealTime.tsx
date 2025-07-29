@@ -18,23 +18,34 @@ export default function RealTime() {
     });
   }, []);
 
-  // Second phase: defer heavy UI loading until browser is idle after LCP
+  // Second phase: load UI immediately when user interacts, otherwise defer
   useEffect(() => {
     if (initialized) {
-      // Use requestIdleCallback to defer heavy work until after critical rendering
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => {
-          startTransition(() => {
-            setUiReady(true);
-          });
-        }, { timeout: 2000 }); // Fallback timeout for slower devices
+      // Check for user interaction or sensor connection to load immediately
+      const hasInteraction = localStorage.getItem('recording-confirmed') === 'true' ||
+                           localStorage.getItem('recording-location') ||
+                           localStorage.getItem('recording-activity');
+      
+      if (hasInteraction) {
+        // Load immediately if user has already interacted with the app
+        startTransition(() => {
+          setUiReady(true);
+        });
       } else {
-        // Fallback for browsers without requestIdleCallback (older Safari)
-        setTimeout(() => {
-          startTransition(() => {
-            setUiReady(true);
-          });
-        }, 0);
+        // Otherwise defer until browser is idle
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => {
+            startTransition(() => {
+              setUiReady(true);
+            });
+          }, { timeout: 1000 }); // Reduced timeout for faster response
+        } else {
+          setTimeout(() => {
+            startTransition(() => {
+              setUiReady(true);
+            });
+          }, 100);
+        }
       }
     }
   }, [initialized]);

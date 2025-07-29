@@ -1,23 +1,11 @@
 import { lazy, Suspense } from 'react';
 import { SkeletonCard } from '@/components/shared/SkeletonScreens';
 
-// Defer the import to avoid blocking initial rendering  
+// Load immediately when needed
 const AutoContextDisplay = lazy(() =>
-  new Promise<{ default: React.ComponentType<any> }>((resolve) => {
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => {
-        import('@/components/AutoContextDisplay').then(module => {
-          resolve({ default: module.AutoContextDisplay });
-        });
-      });
-    } else {
-      setTimeout(() => {
-        import('@/components/AutoContextDisplay').then(module => {
-          resolve({ default: module.AutoContextDisplay });
-        });
-      }, 0);
-    }
-  })
+  import('@/components/AutoContextDisplay').then(module => ({
+    default: module.AutoContextDisplay
+  }))
 );
 
 export function LazyAutoContextDisplay() {
