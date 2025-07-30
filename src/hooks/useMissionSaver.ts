@@ -28,13 +28,28 @@ export function useMissionSaver() {
     const oldestDataPoint = recordingData[recordingData.length - 1];
     const newestDataPoint = recordingData[0];
     
-    // Use the earliest timestamp between recording start and oldest data point as start time
-    const actualStartTime = recordingStartTime < oldestDataPoint.timestamp 
-      ? recordingStartTime 
-      : oldestDataPoint.timestamp;
+    // Use the recording start time as the actual start time
+    // This ensures we capture the full duration of the recording session
+    const actualStartTime = recordingStartTime;
     
     // Use the newest data point timestamp as end time
     const endTime = newestDataPoint.timestamp;
+    
+    // Ensure minimum duration based on number of measurements
+    // If we have many measurements but small time difference, extend the duration
+    const calculatedDurationMs = endTime.getTime() - actualStartTime.getTime();
+    const calculatedDurationMinutes = Math.round(calculatedDurationMs / (1000 * 60));
+    
+    // If duration is 0 but we have measurements, estimate based on measurement count
+    let finalEndTime = endTime;
+    if (calculatedDurationMinutes === 0 && recordingData.length > 1) {
+      // Estimate 30 seconds per measurement on average as minimum
+      const estimatedDurationMs = Math.max(
+        calculatedDurationMs,
+        (recordingData.length - 1) * 30 * 1000
+      );
+      finalEndTime = new Date(actualStartTime.getTime() + estimatedDurationMs);
+    }
     
     // Debug logging for context flow
     console.log('🔍 Mission saving - context analysis:', {
@@ -55,7 +70,7 @@ export function useMissionSaver() {
       recordingData,
       missionName,
       actualStartTime,
-      endTime,
+      finalEndTime,
       locationContext,
       activityContext,
       recordingFrequency,
