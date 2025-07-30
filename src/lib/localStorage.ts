@@ -16,7 +16,16 @@ export function getLocalMissions(): MissionData[] {
       
       // Recalculate duration if it's 0 or invalid
       const calculatedDuration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
-      const durationMinutes = (!m.durationMinutes || m.durationMinutes <= 0) ? calculatedDuration : m.durationMinutes;
+      let durationMinutes = (!m.durationMinutes || m.durationMinutes <= 0) ? calculatedDuration : m.durationMinutes;
+      
+      // If duration is still 0 but we have measurements, estimate based on measurement count
+      if (durationMinutes === 0 && m.measurements && m.measurements.length > 1) {
+        // Estimate 30 seconds per measurement on average as minimum
+        durationMinutes = Math.max(1, Math.round((m.measurements.length - 1) * 0.5));
+      } else if (durationMinutes === 0) {
+        // Ensure minimum 1 minute duration
+        durationMinutes = 1;
+      }
       
       return {
         ...m,
@@ -91,7 +100,16 @@ export function formatDatabaseMission(dbMission: {
   
   // Recalculate duration if it's 0 or invalid
   const calculatedDuration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
-  const durationMinutes = (!dbMission.duration_minutes || dbMission.duration_minutes <= 0) ? calculatedDuration : dbMission.duration_minutes;
+  let durationMinutes = (!dbMission.duration_minutes || dbMission.duration_minutes <= 0) ? calculatedDuration : dbMission.duration_minutes;
+  
+  // If duration is still 0 but we have measurements, estimate based on measurement count
+  if (durationMinutes === 0 && dbMission.measurements && dbMission.measurements.length > 1) {
+    // Estimate 30 seconds per measurement on average as minimum
+    durationMinutes = Math.max(1, Math.round((dbMission.measurements.length - 1) * 0.5));
+  } else if (durationMinutes === 0) {
+    // Ensure minimum 1 minute duration
+    durationMinutes = 1;
+  }
   
   return {
     id: dbMission.id,

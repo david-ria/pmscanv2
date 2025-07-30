@@ -65,14 +65,25 @@ export function createMissionFromRecording(
     measurementData.length;
   const maxPm25 = Math.max(...pm25Values);
 
+  // Calculate duration, ensuring it's never 0
+  const calculatedDurationMs = endTime.getTime() - startTime.getTime();
+  let durationMinutes = Math.round(calculatedDurationMs / (1000 * 60));
+  
+  // If duration is 0 but we have measurements, estimate based on measurement count
+  if (durationMinutes === 0 && measurementData.length > 1) {
+    // Estimate 30 seconds per measurement on average as minimum
+    durationMinutes = Math.max(1, Math.round((measurementData.length - 1) * 0.5));
+  } else if (durationMinutes === 0) {
+    // Ensure minimum 1 minute duration
+    durationMinutes = 1;
+  }
+
   const mission: MissionData = {
     id: missionId || crypto.randomUUID(),
     name: missionName,
     startTime,
     endTime,
-    durationMinutes: Math.round(
-      (endTime.getTime() - startTime.getTime()) / (1000 * 60)
-    ),
+    durationMinutes,
     avgPm1,
     avgPm25,
     avgPm10,
