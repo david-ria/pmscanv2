@@ -4,8 +4,9 @@ import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { MissionContext } from '@/types/recording';
 
-export function useRecordingService(): RecordingState & RecordingActions {
+export function useRecordingService(): RecordingState & RecordingActions & { currentMissionId?: string | null } {
   const [state, setState] = useState<RecordingState>(() => recordingService.getState());
+  const [currentMissionId, setCurrentMissionId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = recordingService.subscribe(setState);
@@ -13,11 +14,15 @@ export function useRecordingService(): RecordingState & RecordingActions {
   }, []);
 
   const startRecording = useCallback((frequency?: string) => {
+    // Generate a new mission ID when recording starts
+    const newMissionId = crypto.randomUUID();
+    setCurrentMissionId(newMissionId);
     recordingService.startRecording(frequency);
   }, []);
 
   const stopRecording = useCallback(() => {
     recordingService.stopRecording();
+    setCurrentMissionId(null);
   }, []);
 
   const addDataPoint = useCallback((
@@ -44,5 +49,6 @@ export function useRecordingService(): RecordingState & RecordingActions {
     addDataPoint,
     updateMissionContext,
     clearRecordingData,
+    currentMissionId,
   };
 }

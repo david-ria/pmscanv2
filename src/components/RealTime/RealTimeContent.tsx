@@ -14,6 +14,7 @@ import { useGPS } from '@/hooks/useGPS';
 import { useEvents } from '@/hooks/useEvents';
 import { useSensorCoordinator } from '@/hooks/useSensorCoordinator';
 import { useBackgroundRecordingPersistence } from '@/hooks/useBackgroundRecordingPersistence';
+import { useRecordingPersistence } from '@/hooks/useRecordingPersistence';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -87,6 +88,9 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
 
   // Ensure recording persists in background
   useBackgroundRecordingPersistence();
+  
+  // Enable recording persistence across sessions and navigation
+  useRecordingPersistence();
 
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(
     true,
