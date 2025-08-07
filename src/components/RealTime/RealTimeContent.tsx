@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import * as logger from '@/utils/logger';
 
 // Move all heavy imports here - away from the main RealTime bundle
@@ -13,6 +13,7 @@ import { useWeatherData } from '@/hooks/useWeatherData';
 import { useGPS } from '@/hooks/useGPS';
 import { useEvents } from '@/hooks/useEvents';
 import { useSensorCoordinator } from '@/hooks/useSensorCoordinator';
+import { useBackgroundRecordingPersistence } from '@/hooks/useBackgroundRecordingPersistence';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -72,14 +73,20 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
     currentMissionId,
   } = useRecordingContext();
 
-  // Coordinate all sensors for energy optimization
+  // Coordinate all sensors for energy optimization  
+  const sensorStateChangeCallback = useCallback((sensorName: string, isActive: boolean) => {
+    // Only log actual state changes, not repeated activations
+    console.log(`🔧 ${sensorName} sensor ${isActive ? 'activated' : 'deactivated'}`);
+  }, []);
+
   const sensorCoordinator = useSensorCoordinator({
     isRecording,
     recordingFrequency,
-    onSensorStateChange: (sensorName, isActive) => {
-      console.log(`🔧 ${sensorName} sensor ${isActive ? 'activated' : 'paused'}`);
-    },
+    onSensorStateChange: sensorStateChangeCallback,
   });
+
+  // Ensure recording persists in background
+  useBackgroundRecordingPersistence();
 
   const { locationEnabled, latestLocation, requestLocationPermission } = useGPS(
     true,

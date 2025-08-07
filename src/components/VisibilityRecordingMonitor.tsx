@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRecordingContext } from '@/contexts/RecordingContext';
+import { globalConnectionManager } from '@/lib/pmscan/globalConnectionManager';
 import * as logger from '@/utils/logger';
 
 /**
@@ -8,32 +9,66 @@ import * as logger from '@/utils/logger';
  */
 export function VisibilityRecordingMonitor() {
   const { isRecording } = useRecordingContext();
+  const keepAliveIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!isRecording) return;
+    if (!isRecording) {
+      // Clear any existing keep-alive interval when not recording
+      if (keepAliveIntervalRef.current) {
+        clearInterval(keepAliveIntervalRef.current);
+        keepAliveIntervalRef.current = null;
+      }
+      return;
+    }
 
     const handleVisibilityChange = () => {
       const isHidden = document.hidden;
       
       if (isHidden) {
-        logger.debug('🔍 App became hidden while recording - continuing recording in background');
+        logger.debug('🔍 App became hidden while recording - starting aggressive keep-alive');
+        
+        // Start more frequent keep-alive checks when in background
+        if (keepAliveIntervalRef.current) {
+          clearInterval(keepAliveIntervalRef.current);
+        }
+        
+        keepAliveIntervalRef.current = setInterval(async () => {
+          try {
+            const isConnected = await globalConnectionManager.keepAlive();
+            if (!isConnected) {
+              logger.debug('🔍 Background keep-alive detected connection loss');
+            }
+          } catch (error) {
+            logger.debug('🔍 Background keep-alive failed:', error);
+          }
+        }, 2000); // Every 2 seconds in background
+        
       } else {
-        logger.debug('🔍 App became visible while recording - recording continues');
+        logger.debug('🔍 App became visible while recording - reducing keep-alive frequency');
+        
+        // Reduce frequency when visible
+        if (keepAliveIntervalRef.current) {
+          clearInterval(keepAliveIntervalRef.current);
+          keepAliveIntervalRef.current = null;
+        }
       }
-      
-      // Don't take any action that would interrupt recording
-      // The recording should continue regardless of visibility state
     };
 
     const handleWindowBlur = () => {
       if (isRecording) {
-        logger.debug('🔍 Window lost focus while recording - continuing recording');
+        logger.debug('🔍 Window lost focus while recording - maintaining connection');
       }
     };
 
     const handleWindowFocus = () => {
       if (isRecording) {
-        logger.debug('🔍 Window gained focus while recording - recording continues');
+        logger.debug('🔍 Window gained focus while recording - connection maintained');
+        
+        // Clear background keep-alive when focused
+        if (keepAliveIntervalRef.current) {
+          clearInterval(keepAliveIntervalRef.current);
+          keepAliveIntervalRef.current = null;
+        }
       }
     };
 
@@ -42,14 +77,21 @@ export function VisibilityRecordingMonitor() {
     window.addEventListener('blur', handleWindowBlur);
     window.addEventListener('focus', handleWindowFocus);
 
-    logger.debug('🔍 Visibility monitoring enabled for recording session');
+    logger.debug('🔍 Enhanced visibility monitoring enabled for recording session');
 
     // Cleanup
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleWindowBlur);
       window.removeEventListener('focus', handleWindowFocus);
-      logger.debug('🔍 Visibility monitoring disabled');
+      
+      // Clear keep-alive interval
+      if (keepAliveIntervalRef.current) {
+        clearInterval(keepAliveIntervalRef.current);
+        keepAliveIntervalRef.current = null;
+      }
+      
+      logger.debug('🔍 Enhanced visibility monitoring disabled');
     };
   }, [isRecording]);
 

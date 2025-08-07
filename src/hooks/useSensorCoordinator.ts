@@ -20,23 +20,27 @@ export function useSensorCoordinator({
   onSensorStateChange,
 }: SensorCoordinatorOptions) {
   
-  // Notify about sensor state changes when recording state changes
+  // Notify about sensor state changes when recording state changes (only when actually changed)
   useEffect(() => {
-    const sensors = ['GPS', 'Weather', 'AutoContext', 'Bluetooth'];
-    
-    sensors.forEach(sensor => {
-      onSensorStateChange?.(sensor, isRecording);
-    });
+    if (onSensorStateChange) {
+      const sensors = ['GPS', 'Weather', 'AutoContext', 'Bluetooth'];
+      
+      sensors.forEach(sensor => {
+        onSensorStateChange(sensor, isRecording);
+      });
+    }
 
     if (isRecording) {
       logger.debug('🚀 Sensor Coordinator: All sensors activated', { 
         frequency: recordingFrequency,
-        activeSensors: sensors 
+        timestamp: new Date().toISOString()
       });
     } else {
-      logger.debug('⏸️ Sensor Coordinator: All sensors paused for energy saving');
+      logger.debug('⏸️ Sensor Coordinator: All sensors paused for energy saving', {
+        timestamp: new Date().toISOString()
+      });
     }
-  }, [isRecording, recordingFrequency, onSensorStateChange]);
+  }, [isRecording, recordingFrequency]); // Remove onSensorStateChange from deps to prevent excessive triggers
 
   /**
    * Get the current sensor configuration
