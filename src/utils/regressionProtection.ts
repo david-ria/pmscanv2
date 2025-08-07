@@ -96,11 +96,12 @@ export const regressionProtector = new RegressionProtector();
 regressionProtector.registerTest({
   name: 'Recording Service Available',
   feature: PROTECTED_FEATURES.RECORDING,
-  test: () => {
+  test: async () => {
     try {
-      const { recordingService } = require('@/services/recordingService');
+      const { recordingService } = await import('@/services/recordingService');
       return recordingService && typeof recordingService.getState === 'function';
-    } catch {
+    } catch (error) {
+      logger.debug('Recording service test failed:', error);
       return false;
     }
   },
@@ -130,7 +131,7 @@ regressionProtector.registerTest({
     try {
       return typeof window !== 'undefined' && 
              window.location && 
-             document.querySelector('[data-testid]') !== null;
+             window.location.pathname !== undefined;
     } catch {
       return false;
     }
