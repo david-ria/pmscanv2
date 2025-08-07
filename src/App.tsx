@@ -39,6 +39,9 @@ const RecordingProvider = lazy(() =>
 const CrashRecoveryInitializer = lazy(() => 
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
+const RegressionMonitor = lazy(() => 
+  import('@/components/RegressionMonitor').then(module => ({ default: module.RegressionMonitor }))
+);
 
 // Import skeleton screens
 const AppLayoutSkeleton = lazy(() => 
@@ -131,6 +134,7 @@ const AppRoutes = () => {
                 <CrashRecoveryInitializer />
                 <VisibilityRecordingMonitor />
                 <RecordingStateMonitor />
+                <RegressionMonitor />
                 <div className="min-h-screen bg-background">
                   <Header />
                   <main className="pt-14 pb-16">
