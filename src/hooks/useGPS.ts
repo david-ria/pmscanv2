@@ -227,27 +227,25 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
     };
   }, []);
 
-  // Handle enabled state changes and recording state for energy optimization
+  // Handle enabled state changes (keep GPS running during recording even when window loses focus)
   useEffect(() => {
-    if (!enabled || !isRecording) {
-      // Stop GPS completely when not recording to save energy
+    if (!enabled) {
+      // Only stop GPS when explicitly disabled, not when recording stops
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
         setWatchId(null);
-        logger.debug('🧭 GPS: Stopped for energy saving', { enabled, isRecording });
+        logger.debug('🧭 GPS: Stopped because disabled', { enabled });
       }
-      if (!enabled) {
-        setLocationEnabled(false);
-        setLatestLocation(null);
-        setError(null);
-      }
+      setLocationEnabled(false);
+      setLatestLocation(null);
+      setError(null);
     }
-  }, [enabled, isRecording]);
+  }, [enabled]);
 
-  // Start watching when enabled, location permission granted, AND recording is active
+  // Start watching when enabled and location permission granted (regardless of recording state)
   useEffect(() => {
-    if (enabled && locationEnabled && isRecording) {
+    if (enabled && locationEnabled) {
       // Small delay to prevent rapid state changes
       const timer = setTimeout(() => {
         startWatching();

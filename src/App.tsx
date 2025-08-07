@@ -27,6 +27,9 @@ const Header = lazy(() =>
 const BottomNavigation = lazy(() => 
   import('@/components/BottomNavigation').then(module => ({ default: module.BottomNavigation }))
 );
+const VisibilityRecordingMonitor = lazy(() => 
+  import('@/components/VisibilityRecordingMonitor').then(module => ({ default: module.VisibilityRecordingMonitor }))
+);
 const RecordingProvider = lazy(() => 
   import('@/contexts/RecordingContext').then(module => ({ default: module.RecordingProvider }))
 );
@@ -123,6 +126,7 @@ const AppRoutes = () => {
             <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
               <RecordingProvider>
                 <CrashRecoveryInitializer />
+                <VisibilityRecordingMonitor />
                 <div className="min-h-screen bg-background">
                   <Header />
                   <main className="pt-14 pb-16">
