@@ -42,8 +42,10 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleNativeDataAdded = (event: any) => {
       console.log('🔄 React context received native data event, total:', event.detail?.totalCount);
+      
+      // Force update by getting fresh state from native service
       const newState = nativeRecordingService.getState();
-      console.log('📊 Setting new state with recordingData length:', newState.recordingData.length);
+      console.log('📊 Context updating with fresh state, recordingData length:', newState.recordingData.length);
       
       // Force a re-render by incrementing counter and setting new state
       setUpdateCounter(prev => prev + 1);

@@ -92,17 +92,21 @@ export default function RealTime() {
   // Initialize native recording service
   useEffect(() => {
     import('@/services/nativeRecordingService').then(({ nativeRecordingService, updateGlobalPMScanData }) => {
-      nativeRecordingService.setDataCollectionCallback((pmData, location) => {
-        // This callback runs on native JS timer, immune to tab focus
-        nativeRecordingService.addDataPoint(pmData, latestLocation || undefined);
-      });
-      
       // Make sure PMScan data is globally available for native service
       if (currentData) {
         updateGlobalPMScanData(currentData);
+        console.log('🔄 Updating global PMScan data with PM2.5:', currentData.pm25);
       }
     });
-  }, [latestLocation, currentData]);
+  }, [currentData]);
+
+  // Debug effect to monitor recording data changes
+  useEffect(() => {
+    console.log('📊 RealTime recordingData changed:', recordingData?.length || 0, 'points');
+    if (recordingData && recordingData.length > 0) {
+      console.log('📊 Latest recording entry:', recordingData[recordingData.length - 1]);
+    }
+  }, [recordingData]);
 
   // Only initialize autocontext if the user has enabled it
   const { settings: autoContextSettings } = useStorageSettings(
@@ -133,7 +137,6 @@ export default function RealTime() {
   // Update global PMScan data for native service and sync context
   useEffect(() => {
     if (currentData && initialized) {
-      console.log('🔄 Updating global PMScan data with PM2.5:', currentData.pm25);
       // Make current data globally available for native recording service
       import('@/services/nativeRecordingService').then(({ updateGlobalPMScanData, nativeRecordingService }) => {
         updateGlobalPMScanData(currentData);
