@@ -34,14 +34,20 @@ interface RecordingContextType {
 const RecordingContext = createContext<RecordingContextType | null>(null);
 
 export function RecordingProvider({ children }: { children: React.ReactNode }) {
-  // Use native recording service instead of React hooks
+  // Use native recording service state with forced updates
   const [state, setState] = useState(() => nativeRecordingService.getState());
+  const [updateCounter, setUpdateCounter] = useState(0);
   
   // Listen for native data events for immediate updates
   useEffect(() => {
     const handleNativeDataAdded = (event: any) => {
       console.log('🔄 React context received native data event, total:', event.detail?.totalCount);
-      setState(nativeRecordingService.getState());
+      const newState = nativeRecordingService.getState();
+      console.log('📊 Setting new state with recordingData length:', newState.recordingData.length);
+      
+      // Force a re-render by incrementing counter and setting new state
+      setUpdateCounter(prev => prev + 1);
+      setState({ ...newState }); // Spread to ensure new object reference
     };
     
     window.addEventListener('nativeDataAdded', handleNativeDataAdded);
@@ -52,8 +58,11 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
       setState(prevState => {
         if (prevState.recordingData.length !== newState.recordingData.length) {
           console.log('📊 Recording data length changed:', prevState.recordingData.length, '->', newState.recordingData.length);
+          console.log('📊 Current recording data sample:', newState.recordingData.slice(-1));
+          setUpdateCounter(prev => prev + 1);
+          return { ...newState }; // Spread to ensure new object reference
         }
-        return newState;
+        return prevState;
       });
     }, 500); // Update every 500ms for more responsive UI
     

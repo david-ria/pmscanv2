@@ -120,6 +120,7 @@ class NativeRecordingService {
   }
 
   getState() {
+    console.log('🔍 Native service getState() called, recordingData length:', this.recordingData.length);
     return {
       isRecording: this.isRecording,
       recordingData: this.recordingData,
