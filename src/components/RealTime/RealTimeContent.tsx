@@ -231,7 +231,22 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
     setRecordingFrequency(frequency);
   };
 
-return (
+  // Safeguard: also record points when on Real-Time screen
+  useEffect(() => {
+    if (!isRecording || !currentData) return;
+
+    const selectedLocation = localStorage.getItem('recording-location') || '';
+    const selectedActivity = localStorage.getItem('recording-activity') || '';
+
+    // Add immediately; global collector will be rate-limited by recorder
+    addDataPoint(
+      currentData,
+      latestLocation || undefined,
+      { location: selectedLocation, activity: selectedActivity }
+    );
+  }, [isRecording, currentData, latestLocation, addDataPoint]);
+
+  return (
     <div>
       {(isRecording || localStorage.getItem('recording-confirmed') === 'true') ? (
         <MapGraphToggle
