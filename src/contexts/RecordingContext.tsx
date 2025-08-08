@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useEffect, useState } from 'react';
-import { useRecordingData } from '@/hooks/useRecordingData';
+import { useRecordingService } from '@/hooks/useRecordingService';
 import * as logger from '@/utils/logger';
 
 interface RecordingContextType {
@@ -36,7 +36,7 @@ const RecordingContext = createContext<RecordingContextType | null>(
 );
 
 export function RecordingProvider({ children }: { children: React.ReactNode }) {
-  const recordingData = useRecordingData();
+  const recordingData = useRecordingService();
   const [isProviderReady, setIsProviderReady] = useState(false);
 
   useEffect(() => {

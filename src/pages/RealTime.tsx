@@ -177,6 +177,15 @@ export default function RealTime() {
             { location: selectedLocation, activity: selectedActivity },
             automaticContext
           );
+
+          // Also add to background recording service for continuous recording
+          import('@/services/backgroundRecordingService').then(({ backgroundRecordingService }) => {
+            backgroundRecordingService.addBackgroundDataPoint(
+              currentData,
+              latestLocation || undefined,
+              { location: selectedLocation, activity: selectedActivity }
+            );
+          });
         };
 
         handleContextAndDataPoint();
