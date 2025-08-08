@@ -39,16 +39,23 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   
   // Listen for native data events for immediate updates
   useEffect(() => {
-    const handleNativeDataAdded = () => {
+    const handleNativeDataAdded = (event: any) => {
+      console.log('🔄 React context received native data event, total:', event.detail?.totalCount);
       setState(nativeRecordingService.getState());
     };
     
     window.addEventListener('nativeDataAdded', handleNativeDataAdded);
     
-    // Fallback: Update state periodically
+    // More frequent polling to ensure updates while we debug
     const interval = setInterval(() => {
-      setState(nativeRecordingService.getState());
-    }, 2000); // Less frequent polling since we have event-based updates
+      const newState = nativeRecordingService.getState();
+      setState(prevState => {
+        if (prevState.recordingData.length !== newState.recordingData.length) {
+          console.log('📊 Recording data length changed:', prevState.recordingData.length, '->', newState.recordingData.length);
+        }
+        return newState;
+      });
+    }, 500); // Update every 500ms for more responsive UI
     
     return () => {
       window.removeEventListener('nativeDataAdded', handleNativeDataAdded);

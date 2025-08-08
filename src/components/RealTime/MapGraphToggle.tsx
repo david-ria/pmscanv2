@@ -1,3 +1,4 @@
+import React from 'react';
 import { WifiOff, Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MapboxMap } from '@/components/MapboxMap';
@@ -54,6 +55,11 @@ export function MapGraphToggle({
   locationEnabled,
 }: MapGraphToggleProps) {
   const { t } = useTranslation();
+
+  // Debug effect to track recording data updates
+  React.useEffect(() => {
+    console.log('🔄 MapGraphToggle received recordingData update:', recordingData?.length || 0, 'points');
+  }, [recordingData]);
 
   // Calculate track points for the map
   const trackPoints = recordingData

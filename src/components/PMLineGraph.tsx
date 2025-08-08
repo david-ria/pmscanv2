@@ -48,7 +48,12 @@ interface PMLineGraphProps {
 export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext }: PMLineGraphProps) {
   // Transform data for the chart - ensure proper chronological ordering
   const chartData = React.useMemo(() => {
-    if (!data || !Array.isArray(data) || data.length === 0) return [];
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      console.log('📊 PMLineGraph: No data available, length:', data?.length || 0);
+      return [];
+    }
+    
+    console.log('📊 PMLineGraph: Processing', data.length, 'data points for chart');
     
     return data
       // Sort by timestamp to ensure chronological order (oldest to newest)
