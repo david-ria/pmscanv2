@@ -137,7 +137,6 @@ const AppRoutes = () => {
                 <CrashRecoveryInitializer />
                 <VisibilityRecordingMonitor />
                 <RecordingStateMonitor />
-                <RecordingDataCollector />
                 <RegressionMonitor />
                 <div className="min-h-screen bg-background">
                   <Header />
