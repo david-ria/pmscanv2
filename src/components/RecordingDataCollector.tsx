@@ -14,7 +14,7 @@ import * as logger from '@/utils/logger';
  */
 export function RecordingDataCollector() {
   const { isRecording, addDataPoint, recordingFrequency } = useRecordingContext();
-  const { currentData } = usePMScanBluetooth();
+  const { currentData, isConnected } = usePMScanBluetooth();
 
   // Location is needed for data points and auto-context
   const { latestLocation } = useGPS(true, false, recordingFrequency, isRecording);
@@ -37,7 +37,8 @@ export function RecordingDataCollector() {
 
   // Dedupe consecutive identical samples
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
-
+  // Watchdog for stalled streams
+  const lastSampleTimeRef = useRef<number>(0);
   useEffect(() => {
     logger.debug('🛰️ RecordingDataCollector mounted');
     return () => logger.debug('🛰️ RecordingDataCollector unmounted');
@@ -98,7 +99,33 @@ export function RecordingDataCollector() {
       lastDataRef.current = { pm25: currentData.pm25, timestamp: ts };
     })();
   }, [isRecording, currentData, latestLocation, recordingFrequency, updateContextIfNeeded, addDataPoint]);
+  // Track when we last saw fresh RT data
+  useEffect(() => {
+    if (currentData) {
+      lastSampleTimeRef.current = Date.now();
+    }
+  }, [currentData]);
 
+  // Watchdog: if RT stream stalls while recording, add a point to keep graph/live log flowing
+  useEffect(() => {
+    if (!isRecording) return;
+    const id = setInterval(() => {
+      if (!isConnected || !currentData) return;
+      const now = Date.now();
+      if (now - (lastSampleTimeRef.current || 0) > 5000) {
+        const selectedLocation = localStorage.getItem('recording-location') || '';
+        const selectedActivity = localStorage.getItem('recording-activity') || '';
+        addDataPoint(
+          currentData,
+          latestLocation || undefined,
+          { location: selectedLocation, activity: selectedActivity }
+        );
+        lastSampleTimeRef.current = now;
+        logger.debug('⏱️ Watchdog added data point due to stalled stream');
+      }
+    }, 3000);
+    return () => clearInterval(id);
+  }, [isRecording, isConnected, currentData, latestLocation, addDataPoint]);
 
   return null;
 }
