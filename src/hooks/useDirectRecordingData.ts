@@ -17,16 +17,28 @@ export function useDirectRecordingData(isRecording: boolean, pollInterval: numbe
       intervalRef.current = null;
     }
     
-    // Direct polling function
+    // Direct polling function with forced updates
     const pollData = () => {
       try {
         const currentData = nativeRecordingService.getRecordingData();
         const currentCount = currentData.length;
         
-        // Only update if data actually changed
-        if (currentCount !== dataCount) {
-          console.log('📊 Direct polling: data changed from', dataCount, 'to', currentCount);
-          setRecordingData([...currentData]); // Create new array reference to force re-render
+        // Always update with fresh data to ensure graph reflects latest values
+        if (currentCount > 0) {
+          const latestEntry = currentData[currentCount - 1];
+          console.log('📊 Direct polling: got', currentCount, 'points, latest PM2.5:', latestEntry?.pmData?.pm25);
+          
+          // Create completely new array reference with timestamp to force re-render
+          const freshData = currentData.map((entry, index) => ({
+            ...entry,
+            _updateId: `${Date.now()}-${index}` // Force unique identity for each update
+          }));
+          
+          setRecordingData(freshData);
+          setDataCount(currentCount);
+        } else if (currentCount !== dataCount) {
+          console.log('📊 Direct polling: data count changed from', dataCount, 'to', currentCount);
+          setRecordingData([...currentData]);
           setDataCount(currentCount);
         }
       } catch (error) {

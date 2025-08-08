@@ -35,6 +35,7 @@ interface PMLineGraphProps {
 
 export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext }: PMLineGraphProps) {
   // Transform data for the chart - ensure proper chronological ordering
+  // Force re-computation by including data length and latest timestamp in dependency array
   const chartData = React.useMemo(() => {
     if (!data || !Array.isArray(data) || data.length === 0) {
       console.log('📊 PMLineGraph: No data available, length:', data?.length || 0);
@@ -42,17 +43,16 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
     }
     
     console.log('📊 PMLineGraph: Processing', data.length, 'data points for chart');
-    console.log('📊 PMLineGraph: Latest data point timestamp:', data[data.length - 1]?.pmData?.timestamp);
-    console.log('📊 PMLineGraph: Data sample:', data.slice(0, 2));
+    const latestPoint = data[data.length - 1];
+    console.log('📊 PMLineGraph: Latest data point PM2.5:', latestPoint?.pmData?.pm25, 'at:', latestPoint?.pmData?.timestamp);
     
-    return data
-      // Sort by timestamp to ensure chronological order (oldest to newest)
+    // Create a fresh copy and sort by timestamp to ensure chronological order
+    const processedData = [...data]
       .sort((a, b) => {
         const aTime = typeof a.pmData.timestamp === 'number' ? a.pmData.timestamp : a.pmData.timestamp.getTime();
         const bTime = typeof b.pmData.timestamp === 'number' ? b.pmData.timestamp : b.pmData.timestamp.getTime();
         return aTime - bTime;
       })
-      // Show all data points for full recording view
       .map((entry, index) => {
         const timestamp = typeof entry.pmData.timestamp === 'number' ? entry.pmData.timestamp : entry.pmData.timestamp.getTime();
         return {
@@ -69,7 +69,10 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
           automaticContext: entry.automaticContext, // Include automatic context
         };
       });
-  }, [data]); // Re-compute when data changes for real-time updates
+    
+    console.log('📊 PMLineGraph: Processed chart data points:', processedData.length);
+    return processedData;
+  }, [data, data?.length, data?.[data?.length - 1]?.pmData?.timestamp, data?.[data?.length - 1]?.pmData?.pm25]); // Force re-computation on new data points
 
   // Process events to find their position on the chart
   const eventMarkers = React.useMemo(() => {
