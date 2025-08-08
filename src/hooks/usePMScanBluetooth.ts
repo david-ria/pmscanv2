@@ -15,6 +15,42 @@ export function usePMScanBluetooth() {
   // Use global connection manager to persist across component unmounts
   const connectionManager = globalConnectionManager;
 
+  // Background polling while tab is hidden (fallback when notifications are throttled)
+  const backgroundPollRef = useRef<NodeJS.Timeout | null>(null);
+
+  const startBackgroundPoll = useCallback(() => {
+    if (backgroundPollRef.current || !isConnected) return;
+    backgroundPollRef.current = setInterval(async () => {
+      try {
+        const data = await connectionManager.readCurrentRTData();
+        if (!data) return;
+        // Deduplicate like RT handler
+        setCurrentData((prevData) => {
+          const isDifferent =
+            !prevData ||
+            Math.abs(prevData.pm25 - data.pm25) >= 0.1 ||
+            Math.abs(prevData.pm1 - data.pm1) >= 0.1 ||
+            Math.abs(prevData.pm10 - data.pm10) >= 0.1 ||
+            data.timestamp.getTime() - prevData.timestamp.getTime() >= 1000;
+          if (isDifferent) {
+            logger.rateLimitedDebug('pmbluetooth.bgpoll', 5000, '📥 Background polled RT data');
+            return data;
+          }
+          return prevData;
+        });
+      } catch (e) {
+        logger.debug('⚠️ Background RT poll failed:', e);
+      }
+    }, 2000);
+  }, [connectionManager, isConnected]);
+
+  const stopBackgroundPoll = useCallback(() => {
+    if (backgroundPollRef.current) {
+      clearInterval(backgroundPollRef.current);
+      backgroundPollRef.current = null;
+    }
+  }, []);
+
   // Event handlers
   const handleRTData = useCallback((event: Event) => {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
@@ -118,7 +154,8 @@ export function usePMScanBluetooth() {
     connectionManager.onDisconnected();
     setIsConnected(false);
     setDevice((prev) => (prev ? { ...prev, connected: false } : null));
-  }, []);
+    stopBackgroundPoll();
+  }, [stopBackgroundPoll]);
 
   const connect = useCallback(() => {
     const manager = connectionManager;
@@ -172,6 +209,7 @@ export function usePMScanBluetooth() {
       setIsConnected(false);
       setDevice(null);
       setCurrentData(null);
+      stopBackgroundPoll();
     } else {
       // Show warning that disconnection was prevented due to active recording
       setError(
@@ -180,9 +218,9 @@ export function usePMScanBluetooth() {
       // Clear error after 3 seconds
       setTimeout(() => setError(null), 3000);
     }
-  }, []);
+  }, [stopBackgroundPoll]);
 
-  // Check for existing connection on component mount and re-establish event listeners
+  // Re-establish event listeners if already connected
   useEffect(() => {
     let mounted = true;
     const manager = connectionManager;
@@ -232,6 +270,24 @@ export function usePMScanBluetooth() {
       mounted = false;
     };
   }, [handleRTData, handleIMData, handleBatteryData, handleChargingData]);
+
+  // Toggle background polling based on visibility and connection
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.hidden && isConnected) {
+        startBackgroundPoll();
+      } else {
+        stopBackgroundPoll();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    // Run once on mount and whenever isConnected changes
+    onVisibilityChange();
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      stopBackgroundPoll();
+    };
+  }, [isConnected, startBackgroundPoll, stopBackgroundPoll]);
 
   return {
     isConnected,
