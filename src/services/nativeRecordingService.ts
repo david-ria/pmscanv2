@@ -85,7 +85,7 @@ class NativeRecordingService {
     // Access the global PMScan data that's updated by the Bluetooth connection
     try {
       const globalData = (window as any).currentPMScanData;
-      console.log('🔍 Native service checking for global PMScan data:', !!globalData, globalData ? `PM2.5: ${globalData.pm25}` : 'no data');
+      
       return globalData || null;
     } catch (error) {
       console.log('❌ Error accessing global PMScan data:', error);
@@ -96,18 +96,45 @@ class NativeRecordingService {
   addDataPoint(pmData: PMScanData, location?: LocationData): void {
     if (!this.isRecording) return;
 
-    const entry: RecordingEntry = {
-      pmData: { ...pmData, timestamp: new Date() },
-      location,
-      context: this.missionContext,
+    // Create a clean, serializable entry without Date objects or functions
+    const cleanEntry: RecordingEntry = {
+      pmData: {
+        pm1: pmData.pm1,
+        pm25: pmData.pm25,
+        pm10: pmData.pm10,
+        temp: pmData.temp,
+        humidity: pmData.humidity,
+        battery: pmData.battery,
+        charging: pmData.charging,
+        timestamp: new Date(), // Fresh timestamp for recording
+      },
+      location: location ? {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracy: location.accuracy || 0,
+        timestamp: location.timestamp || new Date(),
+      } : undefined,
+      context: {
+        location: this.missionContext.location,
+        activity: this.missionContext.activity,
+      },
       timestamp: new Date(),
     };
 
-    this.recordingData.push(entry);
+    this.recordingData.push(cleanEntry);
     
-    // Trigger React context update by dispatching custom event
+    // Create a serializable payload for the event
+    const eventPayload = {
+      pm25: pmData.pm25,
+      pm1: pmData.pm1,
+      pm10: pmData.pm10,
+      totalCount: this.recordingData.length,
+      timestamp: Date.now(), // Use timestamp instead of Date object
+    };
+    
+    // Trigger React context update with serializable data
     window.dispatchEvent(new CustomEvent('nativeDataAdded', { 
-      detail: { entry, totalCount: this.recordingData.length } 
+      detail: eventPayload
     }));
     
     console.log('📊 Native data point added. Total:', this.recordingData.length);
@@ -150,7 +177,17 @@ class NativeRecordingService {
 
 export const nativeRecordingService = NativeRecordingService.getInstance();
 
-// Make PMScan data globally available
+// Make PMScan data globally available with clean serializable data
 export function updateGlobalPMScanData(data: PMScanData): void {
-  (window as any).currentPMScanData = data;
+  // Store a clean, serializable version
+  (window as any).currentPMScanData = {
+    pm1: data.pm1,
+    pm25: data.pm25,
+    pm10: data.pm10,
+    temp: data.temp,
+    humidity: data.humidity,
+    battery: data.battery,
+    charging: data.charging,
+    timestamp: new Date(data.timestamp), // Ensure it's a proper Date object
+  };
 }
