@@ -23,8 +23,8 @@ import { MapPlaceholder } from '@/components/RealTime/MapPlaceholder';
 import { RecordingFrequencyDialog } from '@/components/RecordingControls/RecordingFrequencyDialog';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 
-// Lazy-loaded heavy components to reduce initial bundle size
-import { LazyMapGraphToggle } from '@/components/RealTime/LazyMapGraphToggle';
+// Import components directly to avoid lazy loading issues
+import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
 import { LazyContextSelectors } from '@/components/RealTime/LazyContextSelectors';
 import { LazyAutoContextDisplay } from '@/components/RealTime/LazyAutoContextDisplay';
 import { LazyDataLogger } from '@/components/RealTime/LazyDataLogger';
@@ -310,7 +310,7 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
 return (
     <div>
       {(isRecording || localStorage.getItem('recording-confirmed') === 'true') ? (
-        <LazyMapGraphToggle
+        <MapGraphToggle
           showGraph={showGraph}
           onToggleView={setShowGraph}
           isOnline={isOnline}
