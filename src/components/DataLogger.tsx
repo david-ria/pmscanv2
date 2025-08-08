@@ -219,10 +219,10 @@ export function DataLogger({
             </div>
           ) : (
             <div className="space-y-1 font-mono text-xs">
-              {displayData.map((entry) => (
+              {displayData.slice(-5).map((entry) => (
                 <div key={entry.id} className="text-muted-foreground break-all">
                   <div className="text-xs">
-                    [{entry.timestamp.toLocaleTimeString()}] New reading: PM1=
+                    [{entry.timestamp.toLocaleTimeString()}] Reading: PM1=
                     {entry.pmData.pm1.toFixed(1)}ug/m³,
                   </div>
                   <div className="text-xs pl-2">

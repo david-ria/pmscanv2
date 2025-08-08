@@ -73,13 +73,40 @@ class NativeRecordingService {
     if (currentData) {
       this.lastRecordTime = now;
       
-      // Add data point directly instead of using callback
-      this.addDataPoint(currentData);
-      
-      console.log('📊 Native recording collected data point at', new Date().toLocaleTimeString(), 'PM2.5:', currentData.pm25);
+      // Get current location for the recording
+      this.getCurrentLocation().then(location => {
+        this.addDataPoint(currentData, location);
+        console.log('📊 Native recording collected data point at', new Date().toLocaleTimeString(), 'PM2.5:', currentData.pm25, 'Location:', location ? 'Yes' : 'No');
+      });
     } else {
       console.log('⚠️ No PMScan data available for collection at', new Date().toLocaleTimeString());
     }
+  }
+
+  private getCurrentLocation(): Promise<LocationData | undefined> {
+    return new Promise((resolve) => {
+      // Try to get current position with a short timeout
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const location: LocationData = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              timestamp: new Date(),
+            };
+            resolve(location);
+          },
+          (error) => {
+            console.log('📍 Could not get location for recording:', error.message);
+            resolve(undefined);
+          },
+          { timeout: 1000, enableHighAccuracy: false }
+        );
+      } else {
+        resolve(undefined);
+      }
+    });
   }
 
   private getCurrentPMScanData(): PMScanData | null {
