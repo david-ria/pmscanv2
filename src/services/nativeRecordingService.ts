@@ -1,6 +1,7 @@
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { RecordingEntry, MissionContext } from '@/types/recording';
+import { SerializableRecordingEntry, toSerializablePMScanData, toSerializableLocationData } from '@/types/serializable';
 import { parseFrequencyToMs } from '@/lib/recordingUtils';
 import * as logger from '@/utils/logger';
 
@@ -8,7 +9,7 @@ import * as logger from '@/utils/logger';
 class NativeRecordingService {
   private static instance: NativeRecordingService;
   private isRecording = false;
-  private recordingData: RecordingEntry[] = [];
+  private recordingData: SerializableRecordingEntry[] = [];
   private recordingFrequency = '10s';
   private lastRecordTime = 0;
   private missionContext: MissionContext = { location: '', activity: '' };
@@ -99,29 +100,21 @@ class NativeRecordingService {
     // Get clean timestamp as number to avoid Date object serialization issues
     const now = Date.now();
     
-    // Create a completely serializable entry with no Date objects
-    const cleanEntry: RecordingEntry = {
-      pmData: {
-        pm1: Number(pmData.pm1) || 0,
-        pm25: Number(pmData.pm25) || 0,
-        pm10: Number(pmData.pm10) || 0,
-        temp: Number(pmData.temp) || 0,
-        humidity: Number(pmData.humidity) || 0,
-        battery: Number(pmData.battery) || 0,
-        charging: Boolean(pmData.charging),
-        timestamp: new Date(now), // Clean Date object
-      },
-      location: location ? {
-        latitude: Number(location.latitude) || 0,
-        longitude: Number(location.longitude) || 0,
-        accuracy: Number(location.accuracy) || 0,
-        timestamp: new Date(now),
-      } : undefined,
+    // Create a completely serializable entry with numeric timestamps only
+    const cleanEntry: SerializableRecordingEntry = {
+      pmData: toSerializablePMScanData({
+        ...pmData,
+        timestamp: now,
+      }),
+      location: location ? toSerializableLocationData({
+        ...location,
+        timestamp: now,
+      }) : undefined,
       context: {
         location: String(this.missionContext.location || ''),
         activity: String(this.missionContext.activity || ''),
       },
-      timestamp: new Date(now),
+      timestamp: now,
     };
 
     this.recordingData.push(cleanEntry);
@@ -147,7 +140,7 @@ class NativeRecordingService {
     this.missionContext = { location, activity };
   }
 
-  getRecordingData(): RecordingEntry[] {
+  getRecordingData(): SerializableRecordingEntry[] {
     return [...this.recordingData];
   }
 
@@ -182,7 +175,7 @@ export const nativeRecordingService = NativeRecordingService.getInstance();
 
 // Make PMScan data globally available with clean serializable data
 export function updateGlobalPMScanData(data: PMScanData): void {
-  // Store a clean, serializable version
+  // Store a clean, serializable version with numeric timestamp
   (window as any).currentPMScanData = {
     pm1: data.pm1,
     pm25: data.pm25,
@@ -191,6 +184,6 @@ export function updateGlobalPMScanData(data: PMScanData): void {
     humidity: data.humidity,
     battery: data.battery,
     charging: data.charging,
-    timestamp: new Date(data.timestamp), // Ensure it's a proper Date object
+    timestamp: typeof data.timestamp === 'number' ? data.timestamp : new Date(data.timestamp).getTime(),
   };
 }

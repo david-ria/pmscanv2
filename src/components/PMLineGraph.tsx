@@ -12,7 +12,7 @@ import {
   ReferenceLine,
   ReferenceArea,
 } from 'recharts';
-import { PMScanData } from '@/lib/pmscan/types';
+// Component now handles both serializable and legacy data formats
 
 interface EventData {
   id: string;
@@ -22,19 +22,7 @@ interface EventData {
 }
 
 interface PMLineGraphProps {
-  data: Array<{
-    pmData: PMScanData;
-    location?: {
-      latitude: number;
-      longitude: number;
-      accuracy?: number;
-    };
-    context?: {
-      locationContext?: string;
-      activityContext?: string;
-      automaticContext?: string;
-    };
-  }>;
+  data: any[]; // Accept both SerializableRecordingEntry and legacy RecordingEntry
   events?: EventData[];
   className?: string;
   hideTitle?: boolean;
@@ -57,20 +45,28 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
     
     return data
       // Sort by timestamp to ensure chronological order (oldest to newest)
-      .sort((a, b) => a.pmData.timestamp.getTime() - b.pmData.timestamp.getTime())
+      .sort((a, b) => {
+        const aTime = typeof a.pmData.timestamp === 'number' ? a.pmData.timestamp : a.pmData.timestamp.getTime();
+        const bTime = typeof b.pmData.timestamp === 'number' ? b.pmData.timestamp : b.pmData.timestamp.getTime();
+        return aTime - bTime;
+      })
       // Show all data points for full recording view
-      .map((entry, index) => ({
-        time: entry.pmData.timestamp.getTime(), // Use actual timestamp for X-axis
-        sequentialIndex: index + 1, // Keep sequential index for fallback
-        timestamp: formatTime(entry.pmData.timestamp),
-        fullTimestamp: entry.pmData.timestamp, // Keep full timestamp for calculations
-        PM1: entry.pmData.pm1,
-        PM25: entry.pmData.pm25,
-        PM10: entry.pmData.pm10,
-        temp: entry.pmData.temp,
-        humidity: entry.pmData.humidity,
-        context: entry.context,
-      }));
+      .map((entry, index) => {
+        const timestamp = typeof entry.pmData.timestamp === 'number' ? entry.pmData.timestamp : entry.pmData.timestamp.getTime();
+        return {
+          time: timestamp, // Use numeric timestamp for X-axis
+          sequentialIndex: index + 1, // Keep sequential index for fallback
+          timestamp: formatTime(new Date(timestamp)),
+          fullTimestamp: timestamp, // Keep numeric timestamp for calculations
+          PM1: entry.pmData.pm1,
+          PM25: entry.pmData.pm25,
+          PM10: entry.pmData.pm10,
+          temp: entry.pmData.temp,
+          humidity: entry.pmData.humidity,
+          context: entry.context,
+          automaticContext: entry.automaticContext, // Include automatic context
+        };
+      });
   }, [data]); // Re-compute when data changes for real-time updates
 
   // Process events to find their position on the chart
@@ -89,7 +85,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
         
         // Find closest data point in the chartData
         chartData.forEach((entry, index) => {
-          const entryTime = entry.fullTimestamp.getTime();
+          const entryTime = entry.fullTimestamp;
           const timeDiff = Math.abs(entryTime - eventTime);
           if (timeDiff < minTimeDiff) {
             minTimeDiff = timeDiff;
@@ -176,9 +172,9 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
       
       // Get context value - prioritize measurement level, fallback to mission level
       const contextValue = 
-        highlightContextType === 'location' ? (context?.locationContext || missionContext?.locationContext) :
-        highlightContextType === 'activity' ? (context?.activityContext || missionContext?.activityContext) :
-        highlightContextType === 'autocontext' ? context?.automaticContext :
+        highlightContextType === 'location' ? (context?.location || missionContext?.locationContext) :
+        highlightContextType === 'activity' ? (context?.activity || missionContext?.activityContext) :
+        highlightContextType === 'autocontext' ? (entry as any).automaticContext :
         undefined;
       
       // Handle context changes or missing values
