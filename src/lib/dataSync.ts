@@ -90,41 +90,8 @@ async function syncEventsForMission(missionId: string): Promise<void> {
 
 // Function to fetch air quality data for a mission
 async function fetchAirQualityForMission(mission: MissionData): Promise<string | null> {
-  try {
-    // Get the first measurement with location data
-    const measurementWithLocation = mission.measurements.find(
-      m => m.latitude && m.longitude
-    );
-
-    if (!measurementWithLocation?.latitude || !measurementWithLocation?.longitude) {
-      logger.debug('❌ Cannot fetch air quality for mission: no location data');
-      return null;
-    }
-
-    // Fetch air quality data
-    const { data, error } = await supabase.functions.invoke('fetch-atmosud-data', {
-      body: {
-        latitude: measurementWithLocation.latitude,
-        longitude: measurementWithLocation.longitude,
-        timestamp: mission.startTime.toISOString(),
-      },
-    });
-
-    if (error) {
-      logger.error('❌ Error fetching air quality data for mission:', error);
-      return null;
-    }
-
-    if (data?.airQualityData) {
-      logger.debug('✅ Air quality data fetched for mission:', mission.id);
-      return data.airQualityData.id;
-    }
-
-    return null;
-  } catch (error) {
-    logger.error('❌ Error in air quality fetch for mission:', error);
-    return null;
-  }
+  logger.debug('🌬️ Air quality sync disabled: AtmoSud integration removed', { missionId: mission.id });
+  return null;
 }
 
 export async function syncPendingMissions(): Promise<void> {

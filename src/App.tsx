@@ -1,5 +1,5 @@
 import { Toaster } from '@/components/ui/toaster';
-import { Toaster as Sonner } from '@/components/ui/sonner';
+
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Suspense, lazy, useEffect } from 'react';
@@ -85,7 +85,7 @@ const App = () => {
     <ErrorBoundary>
       <TooltipProvider>
         <Toaster />
-        <Sonner />
+        
         <div className="relative min-h-screen">
           <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
             <AppProviders>
