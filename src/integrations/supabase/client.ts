@@ -2,13 +2,18 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "https://shydpfwuvnlzdzbubmgb.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoeWRwZnd1dm5semR6YnVibWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5NzM1MjcsImV4cCI6MjA2NzU0OTUyN30.l_PAPBy1hlb4J-amKx7qPJ1lPIFseA9GznwL6CcyaQQ";
+const DEV_DEFAULT_URL = "https://shydpfwuvnlzdzbubmgb.supabase.co";
+const DEV_DEFAULT_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoeWRwZnd1dm5semR6YnVibWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5NzM1MjcsImV4cCI6MjA2NzU0OTUyN30.l_PAPBy1hlb4J-amKx7qPJ1lPIFseA9GznwL6CcyaQQ";
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? (import.meta.env.DEV ? DEV_DEFAULT_URL : undefined);
+const SUPABASE_PUBLISHABLE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? (import.meta.env.DEV ? DEV_DEFAULT_ANON_KEY : undefined);
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+// Fail fast in production if env config is missing
+if (import.meta.env.PROD && (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY)) {
+  throw new Error("Supabase environment variables are missing in production. Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+}
+
+export const supabase = createClient<Database>(SUPABASE_URL!, SUPABASE_PUBLISHABLE_KEY!, {
   auth: {
     storage: localStorage,
     persistSession: true,

@@ -35,8 +35,11 @@ jobs:
       - name: Skip format check (auto-fixed above)
         run: echo "Formatting auto-fixed - skipping check"
 
+      - name: Type check
+        run: npx tsc -p tsconfig.json --noEmit
+      
       - name: Run Tests
-        run: npm test || true
-        
-      - name: Build check
-        run: npm run build || true
+        run: npm test
+          
+      - name: Build
+        run: npm run build

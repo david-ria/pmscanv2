@@ -12,3 +12,6 @@ verify_jwt = true
 [functions.decline-group-invitation]
 verify_jwt = true
 
+[functions.fetch-atmosud-data]
+verify_jwt = true
+

@@ -11,7 +11,9 @@ export const debug = (message: string, ...args: any[]) => {
 };
 
 export const info = (message: string, ...args: any[]) => {
-  console.info(`[INFO] ${message}`, ...args);
+  if (import.meta.env.DEV) {
+    console.info(`[INFO] ${message}`, ...args);
+  }
 };
 
 export const warn = (message: string, ...args: any[]) => {
