@@ -1,5 +1,18 @@
-import { RecordingState, RecordingActions } from './recordingService';
+// Decoupled from recordingService types
 import * as logger from '@/utils/logger';
+
+type MinimalRecordingState = {
+  isRecording: boolean;
+  recordingFrequency: string;
+  missionContext: { location: string; activity: string };
+  recordingStartTime: Date | null;
+  currentMissionId?: string | null;
+};
+
+type RecordingActionsMinimal = {
+  startRecording: (frequency?: string) => void | Promise<void>;
+  updateMissionContext: (location: string, activity: string) => void | Promise<void>;
+};
 
 const RECORDING_PERSISTENCE_KEY = 'pmscan_recording_persistence';
 const PERSISTENCE_SYNC_INTERVAL = 3000; // 3 seconds
@@ -68,7 +81,7 @@ class RecordingPersistenceService {
    * Start persistence tracking for active recording
    */
   startPersistence(
-    recordingState: RecordingState & { currentMissionId?: string | null }
+    recordingState: MinimalRecordingState
   ): void {
     if (!recordingState.isRecording) return;
 
@@ -104,7 +117,7 @@ class RecordingPersistenceService {
   /**
    * Update persisted state
    */
-  updateState(recordingState: RecordingState & { currentMissionId?: string | null }): void {
+  updateState(recordingState: MinimalRecordingState): void {
     if (recordingState.isRecording) {
       this.saveState(recordingState);
     } else {
@@ -117,7 +130,7 @@ class RecordingPersistenceService {
    */
   async restoreRecording(
     persistedState: PersistedRecordingState,
-    recordingActions: Pick<RecordingActions, 'startRecording' | 'updateMissionContext'>
+    recordingActions: Pick<RecordingActionsMinimal, 'startRecording' | 'updateMissionContext'>
   ): Promise<void> {
     try {
       logger.debug('🔄 Restoring interrupted recording:', persistedState);
@@ -141,13 +154,13 @@ class RecordingPersistenceService {
   /**
    * Save current recording state to localStorage
    */
-  private saveState(recordingState: RecordingState & { currentMissionId?: string | null }): void {
+  private saveState(recordingState: MinimalRecordingState): void {
     try {
       const persistedState: PersistedRecordingState = {
         isRecording: recordingState.isRecording,
         recordingFrequency: recordingState.recordingFrequency,
         missionContext: recordingState.missionContext,
-        recordingStartTime: recordingState.recordingStartTime?.toISOString() || null,
+        recordingStartTime: recordingState.recordingStartTime ? recordingState.recordingStartTime.toISOString() : null,
         lastSyncTime: Date.now(),
         currentMissionId: recordingState.currentMissionId || null,
       };

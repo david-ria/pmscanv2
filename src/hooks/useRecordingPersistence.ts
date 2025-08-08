@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { recordingPersistenceService } from '@/services/recordingPersistenceService';
-import { useRecordingService } from './useRecordingService';
+import { useRecordingContext } from '@/contexts/RecordingContext';
 import * as logger from '@/utils/logger';
 
 /**
  * Hook to handle recording persistence across browser sessions and navigation
  */
 export function useRecordingPersistence() {
-  const recordingService = useRecordingService();
+  const recording = useRecordingContext();
   const hasInitialized = useRef(false);
   const restorationAttempted = useRef(false);
 
@@ -28,8 +28,8 @@ export function useRecordingPersistence() {
           setTimeout(async () => {
             try {
               await recordingPersistenceService.restoreRecording(persistedState, {
-                startRecording: recordingService.startRecording,
-                updateMissionContext: recordingService.updateMissionContext,
+                startRecording: recording.startRecording,
+                updateMissionContext: recording.updateMissionContext,
               });
               
               logger.debug('✅ Recording restoration successful');
@@ -51,11 +51,14 @@ export function useRecordingPersistence() {
     if (!hasInitialized.current) return;
 
     const recordingState = {
-      ...recordingService,
-      currentMissionId: recordingService.currentMissionId,
+      isRecording: recording.isRecording,
+      recordingFrequency: recording.recordingFrequency,
+      missionContext: recording.missionContext,
+      recordingStartTime: recording.recordingStartTime,
+      currentMissionId: recording.currentMissionId,
     };
 
-    if (recordingService.isRecording) {
+    if (recording.isRecording) {
       // Start or update persistence
       recordingPersistenceService.startPersistence(recordingState);
     } else {
@@ -66,11 +69,11 @@ export function useRecordingPersistence() {
     // Update persisted state on any change
     recordingPersistenceService.updateState(recordingState);
   }, [
-    recordingService.isRecording,
-    recordingService.recordingFrequency,
-    recordingService.missionContext,
-    recordingService.recordingStartTime,
-    recordingService.currentMissionId,
+    recording.isRecording,
+    recording.recordingFrequency,
+    recording.missionContext,
+    recording.recordingStartTime,
+    recording.currentMissionId,
   ]);
 
   return {

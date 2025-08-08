@@ -94,14 +94,14 @@ export const regressionProtector = new RegressionProtector();
 
 // Auto-register core feature tests
 regressionProtector.registerTest({
-  name: 'Recording Service Available',
+  name: 'Recording Hook Available',
   feature: PROTECTED_FEATURES.RECORDING,
   test: async () => {
     try {
-      const { recordingService } = await import('@/services/recordingService');
-      return recordingService && typeof recordingService.getState === 'function';
+      const { useRecordingData } = await import('@/hooks/useRecordingData');
+      return typeof useRecordingData === 'function';
     } catch (error) {
-      logger.debug('Recording service test failed:', error);
+      logger.debug('Recording hook test failed:', error);
       return false;
     }
   },

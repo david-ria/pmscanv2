@@ -29,6 +29,7 @@ import { LazyContextSelectors } from '@/components/RealTime/LazyContextSelectors
 import { LazyAutoContextDisplay } from '@/components/RealTime/LazyAutoContextDisplay';
 import { LazyDataLogger } from '@/components/RealTime/LazyDataLogger';
 import { RecordingHeartbeat } from '@/components/RealTime/RecordingHeartbeat';
+import { RecordingDebugPanel } from '@/components/RealTime/RecordingDebugPanel';
 
 interface RealTimeContentProps {
   onUiReady: () => void;
@@ -232,24 +233,11 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
     setRecordingFrequency(frequency);
   };
 
-  // Safeguard: also record points when on Real-Time screen
-  useEffect(() => {
-    if (!isRecording || !currentData) return;
-
-    const selectedLocation = localStorage.getItem('recording-location') || '';
-    const selectedActivity = localStorage.getItem('recording-activity') || '';
-
-    // Add immediately; global collector will be rate-limited by recorder
-    addDataPoint(
-      currentData,
-      latestLocation || undefined,
-      { location: selectedLocation, activity: selectedActivity }
-    );
-  }, [isRecording, currentData, latestLocation, addDataPoint]);
 
   return (
     <div>
       <RecordingHeartbeat />
+      <RecordingDebugPanel />
       {(isRecording || localStorage.getItem('recording-confirmed') === 'true') ? (
         <MapGraphToggle
           showGraph={showGraph}
