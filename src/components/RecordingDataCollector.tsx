@@ -39,7 +39,16 @@ export function RecordingDataCollector() {
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
 
   useEffect(() => {
-    if (!isRecording || !currentData) return;
+    logger.debug('🛰️ RecordingDataCollector mounted');
+    return () => logger.debug('🛰️ RecordingDataCollector unmounted');
+  }, []);
+
+  useEffect(() => {
+    if (!isRecording) {
+      logger.debug('⏸️ Collector idle: not recording');
+      return;
+    }
+    if (!currentData) return;
 
     const ts = currentData.timestamp.getTime();
     const dup =
@@ -81,7 +90,6 @@ export function RecordingDataCollector() {
         isMoving
       );
 
-      // Read user-chosen mission context from localStorage (kept in RealTime UI)
       const selectedLocation = localStorage.getItem('recording-location') || '';
       const selectedActivity = localStorage.getItem('recording-activity') || '';
 
@@ -92,9 +100,11 @@ export function RecordingDataCollector() {
         automaticContext
       );
 
+      logger.debug('✅ Collector added data point at', new Date(ts).toISOString());
       lastDataRef.current = { pm25: currentData.pm25, timestamp: ts };
     })();
-  }, [isRecording, currentData, latestLocation, recordingFrequency, updateContextIfNeeded, addDataPoint, autoContextResult]);
+  }, [isRecording, currentData, latestLocation, recordingFrequency, updateContextIfNeeded, addDataPoint]);
+
 
   return null;
 }

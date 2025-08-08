@@ -33,10 +33,8 @@ const VisibilityRecordingMonitor = lazy(() =>
 const RecordingStateMonitor = lazy(() => 
   import('@/components/RecordingStateMonitor').then(module => ({ default: module.RecordingStateMonitor }))
 );
-const RecordingDataCollector = lazy(() => 
-  import('@/components/RecordingDataCollector').then(module => ({ default: module.RecordingDataCollector }))
-);
 import { RecordingProvider } from '@/contexts/RecordingContext';
+import { RecordingDataCollector } from '@/components/RecordingDataCollector';
 const CrashRecoveryInitializer = lazy(() => 
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
