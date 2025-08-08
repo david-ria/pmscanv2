@@ -171,13 +171,17 @@ export const MapboxMapCore = ({
 
     (async () => {
       const { createLocationMarker } = await import('@/lib/mapbox/mapMarker');
-      marker.current = createLocationMarker(
-        map.current,
-        currentLocation,
-        pmData,
-        getAirQualityLevel,
-        marker.current
-      );
+      try {
+        marker.current = await createLocationMarker(
+          map.current,
+          currentLocation,
+          pmData,
+          getAirQualityLevel,
+          marker.current
+        );
+      } catch (error) {
+        console.error('Failed to create location marker:', error);
+      }
     })();
   }, [currentLocation, pmData, getAirQualityLevel, mapboxLoaded]);
 

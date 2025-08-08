@@ -8,10 +8,10 @@ interface PMData {
   pm1: number;
   pm25: number;
   pm10: number;
-  timestamp: Date;
+  timestamp: Date | number; // Support both Date and numeric timestamps
 }
 
-export const createLocationMarker = (
+export const createLocationMarker = async (
   map: MapboxMap,
   currentLocation: LocationData,
   pmData: PMData | null,
@@ -20,7 +20,7 @@ export const createLocationMarker = (
     type: string
   ) => { level: string; color: string },
   existingMarker?: any | null
-): any => {
+): Promise<any> => {
   const { longitude, latitude } = currentLocation;
 
   // Remove existing marker
@@ -67,29 +67,44 @@ export const createLocationMarker = (
           </div>
         </div>
         <div style="font-size: 10px; color: #666; margin-top: 4px; text-align: center;">
-          ${pmData.timestamp.toLocaleTimeString()}
+          ${typeof pmData.timestamp === 'number' ? new Date(pmData.timestamp).toLocaleTimeString() : pmData.timestamp.toLocaleTimeString()}
         </div>
       </div>`;
   }
 
   popupContent += '</div>';
 
-  // Create marker using dynamic Mapbox instance
+  // Create marker using proper Mapbox GL JS API
   let marker = null;
-  if ((map as any)._createMarker && (map as any)._createPopup) {
-    // Get color based on PM2.5 quality if data is available
-    const markerColor = pmData 
-      ? getQualityColor(pmData.pm25, getAirQualityLevel)
-      : '#6b7280'; // Gray for no data
-      
-    marker = (map as any)._createMarker({
-      color: markerColor,
-      scale: 0.8,
-    })
-      .setLngLat([longitude, latitude])
-      .setPopup((map as any)._createPopup({ offset: 25 }).setHTML(popupContent))
-      .addTo(map);
-  }
+  
+  // Import Mapbox GL dynamically to get the Marker class
+  const { loadMapboxGL } = await import('@/lib/dynamicImports');
+  const mapboxgl = await loadMapboxGL();
+  
+  // Get color based on PM2.5 quality if data is available
+  const markerColor = pmData 
+    ? getQualityColor(pmData.pm25, getAirQualityLevel)
+    : '#6b7280'; // Gray for no data
+    
+  // Create a custom marker element
+  const markerElement = document.createElement('div');
+  markerElement.className = 'mapbox-marker';
+  markerElement.style.backgroundColor = markerColor;
+  markerElement.style.width = '20px';
+  markerElement.style.height = '20px';
+  markerElement.style.borderRadius = '50%';
+  markerElement.style.border = '3px solid white';
+  markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+  markerElement.style.cursor = 'pointer';
+  
+  // Create popup
+  const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent);
+  
+  // Create marker with custom element
+  marker = new mapboxgl.Marker(markerElement)
+    .setLngLat([longitude, latitude])
+    .setPopup(popup)
+    .addTo(map);
 
   // Center map on new location
   map.flyTo({

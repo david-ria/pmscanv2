@@ -42,6 +42,8 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
     }
     
     console.log('📊 PMLineGraph: Processing', data.length, 'data points for chart');
+    console.log('📊 PMLineGraph: Latest data point timestamp:', data[data.length - 1]?.pmData?.timestamp);
+    console.log('📊 PMLineGraph: Data sample:', data.slice(0, 2));
     
     return data
       // Sort by timestamp to ensure chronological order (oldest to newest)
