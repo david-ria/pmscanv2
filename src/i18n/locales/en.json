@@ -207,6 +207,8 @@
     "avg": "avg",
     "share": "Share",
     "export": "Export",
+    "missionSaved": "Mission saved",
+    "savedAndExported": "saved and exported to CSV",
     "sync": "Sync",
     "local": "Local",
     "statistics": "Statistics",

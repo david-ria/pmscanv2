@@ -207,6 +207,8 @@
     "avg": "Durchschn.",
     "share": "Teilen",
     "export": "Exportieren",
+    "missionSaved": "Mission gespeichert",
+    "savedAndExported": "gespeichert und als CSV exportiert",
     "sync": "Synchronisieren",
     "local": "Lokal",
     "statistics": "Statistiken",

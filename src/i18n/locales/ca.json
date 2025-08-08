@@ -207,6 +207,8 @@
     "avg": "mitjana",
     "share": "Compartir",
     "export": "Exportar",
+    "missionSaved": "Missió desada",
+    "savedAndExported": "desada i exportada a CSV",
     "sync": "Sincronitzar",
     "local": "Local",
     "statistics": "Estadístiques",

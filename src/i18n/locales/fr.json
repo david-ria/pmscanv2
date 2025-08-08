@@ -208,6 +208,8 @@
     "avg": "moy",
     "share": "Partager",
     "export": "Export",
+    "missionSaved": "Mission sauvegardée", 
+    "savedAndExported": "sauvegardée et exportée en CSV",
     "sync": "Sync",
     "local": "Local",
     "statistics": "Statistiques",
