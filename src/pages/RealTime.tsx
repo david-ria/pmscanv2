@@ -5,6 +5,7 @@ import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 // Import critical hooks immediately for core functionality
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingContext } from '@/contexts/RecordingContext';
+import { useDirectRecordingData } from '@/hooks/useDirectRecordingData';
 import { useAlerts } from '@/contexts/AlertContext';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
@@ -77,11 +78,13 @@ export default function RealTime() {
     isRecording,
     addDataPoint,
     missionContext,
-    recordingData,
     updateMissionContext,
     startRecording,
     currentMissionId,
   } = useRecordingContext();
+
+  // Use direct polling for real-time data updates
+  const { recordingData, dataCount } = useDirectRecordingData(isRecording, 300); // Poll every 300ms when recording
 
   const { 
     locationEnabled, 
@@ -102,11 +105,12 @@ export default function RealTime() {
 
   // Debug effect to monitor recording data changes
   useEffect(() => {
-    console.log('📊 RealTime recordingData changed:', recordingData?.length || 0, 'points');
+    console.log('📊 RealTime direct recordingData changed:', dataCount, 'points');
     if (recordingData && recordingData.length > 0) {
-      console.log('📊 Latest recording entry:', recordingData[recordingData.length - 1]);
+      console.log('📊 Latest recording entry timestamp:', recordingData[recordingData.length - 1]?.pmData?.timestamp);
+      console.log('📊 Latest PM2.5 value:', recordingData[recordingData.length - 1]?.pmData?.pm25);
     }
-  }, [recordingData]);
+  }, [recordingData, dataCount]);
 
   // Only initialize autocontext if the user has enabled it
   const { settings: autoContextSettings } = useStorageSettings(
