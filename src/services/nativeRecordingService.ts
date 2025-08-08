@@ -67,16 +67,17 @@ class NativeRecordingService {
     // Only record if enough time has passed
     if (now - this.lastRecordTime < frequencyMs - 100) return; // 100ms tolerance
 
-    // Request current data from PMScan
-    if (this.dataCollectionCallback) {
-      // Get the latest PMScan data
-      const currentData = this.getCurrentPMScanData();
-      if (currentData) {
-        this.lastRecordTime = now;
-        this.dataCollectionCallback(currentData);
-        
-        console.log('📊 Native recording collected data point at', new Date().toLocaleTimeString());
-      }
+    // Get the latest PMScan data directly
+    const currentData = this.getCurrentPMScanData();
+    if (currentData) {
+      this.lastRecordTime = now;
+      
+      // Add data point directly instead of using callback
+      this.addDataPoint(currentData);
+      
+      console.log('📊 Native recording collected data point at', new Date().toLocaleTimeString(), 'PM2.5:', currentData.pm25);
+    } else {
+      console.log('⚠️ No PMScan data available for collection at', new Date().toLocaleTimeString());
     }
   }
 
@@ -121,7 +122,10 @@ class NativeRecordingService {
   }
 
   getState() {
-    console.log('🔍 Native service getState() called, recordingData length:', this.recordingData.length);
+    // Only log occasionally to prevent spam
+    if (Math.random() < 0.1) { // 10% chance to log
+      console.log('🔍 Native service state: recording:', this.isRecording, 'data length:', this.recordingData.length);
+    }
     return {
       isRecording: this.isRecording,
       recordingData: this.recordingData,

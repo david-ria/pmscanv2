@@ -52,19 +52,18 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
     
     window.addEventListener('nativeDataAdded', handleNativeDataAdded);
     
-    // More frequent polling to ensure updates while we debug
+    // Reduce polling frequency to prevent spam
     const interval = setInterval(() => {
       const newState = nativeRecordingService.getState();
       setState(prevState => {
         if (prevState.recordingData.length !== newState.recordingData.length) {
           console.log('📊 Recording data length changed:', prevState.recordingData.length, '->', newState.recordingData.length);
-          console.log('📊 Current recording data sample:', newState.recordingData.slice(-1));
           setUpdateCounter(prev => prev + 1);
-          return { ...newState }; // Spread to ensure new object reference
+          return { ...newState };
         }
         return prevState;
       });
-    }, 500); // Update every 500ms for more responsive UI
+    }, 2000); // Reduced to every 2 seconds to prevent spam
     
     return () => {
       window.removeEventListener('nativeDataAdded', handleNativeDataAdded);
