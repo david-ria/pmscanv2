@@ -126,91 +126,15 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
   const { getEventsByMission } = useEvents();
   const { checkAlerts } = useAlerts();
 
-  // dedupe
-  const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
 
   // Signal that UI is ready after first render
   useEffect(() => {
     onUiReady();
   }, [onUiReady]);
 
-  // Heavy computations moved to web worker for better performance
-  useEffect(() => {
-    if (!isRecording || !currentData) return;
+  // Data collection is now handled by global RecordingDataCollector component
+  // This ensures recording continues across page navigation
 
-    const ts = currentData.timestamp.getTime();
-    const dup =
-      lastDataRef.current?.pm25 === currentData.pm25 &&
-      Math.abs(ts - (lastDataRef.current?.timestamp ?? 0)) < 500;
-
-    if (dup) return;
-
-    // Use web worker for speed calculations to avoid blocking main thread
-    (async () => {
-      let speed = 0, isMoving = false;
-      if (latestLocation) {
-        try {
-          // Import worker manager dynamically to keep it out of main bundle
-          const { speedWorkerManager } = await import('@/lib/speedWorkerManager');
-          const result = await speedWorkerManager.calculateSpeed(
-            latestLocation.latitude,
-            latestLocation.longitude,
-            latestLocation.timestamp.getTime()
-          );
-          speed = result.speed;
-          isMoving = result.isMoving;
-        } catch (error) {
-          console.warn('Speed calculation failed, using fallback:', error);
-          // Fallback to original calculation if worker fails
-          const { updateLocationHistory } = await import('@/utils/speedCalculator');
-          const sp = updateLocationHistory(
-            latestLocation.latitude,
-            latestLocation.longitude,
-            latestLocation.timestamp
-          );
-          speed = sp.speed;
-          isMoving = sp.isMoving;
-        }
-      }
-
-      const automaticContext = await updateContextIfNeeded(
-        currentData,
-        latestLocation || undefined,
-        speed,
-        isMoving
-      );
-
-      addDataPoint(
-        currentData,
-        latestLocation || undefined,
-        { location: selectedLocation, activity: selectedActivity },
-        automaticContext
-      );
-    })();
-
-    lastDataRef.current = { pm25: currentData.pm25, timestamp: ts };
-  }, [
-    currentData,
-    isRecording,
-    latestLocation,
-    selectedLocation,
-    selectedActivity,
-    updateContextIfNeeded,
-    addDataPoint,
-  ]);
-
-  // Clear worker history when starting new recording
-  useEffect(() => {
-    if (isRecording) {
-      // Clear both worker and fallback history
-      import('@/lib/speedWorkerManager').then(({ speedWorkerManager }) => {
-        speedWorkerManager.clearHistory();
-      });
-      import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
-        clearLocationHistory();
-      });
-    }
-  }, [isRecording]);
 
   useEffect(() => {
     if (autoContextEnabled && currentData) {

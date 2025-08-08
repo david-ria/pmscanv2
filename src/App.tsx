@@ -131,10 +131,11 @@ const AppRoutes = () => {
         element={
           user ? (
             <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
-              <RecordingProvider>
+                <RecordingProvider>
                 <CrashRecoveryInitializer />
                 <VisibilityRecordingMonitor />
                 <RecordingStateMonitor />
+                <RecordingDataCollector />
                 <RegressionMonitor />
                 <div className="min-h-screen bg-background">
                   <Header />
