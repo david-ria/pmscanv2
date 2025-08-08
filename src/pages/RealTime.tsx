@@ -83,8 +83,8 @@ export default function RealTime() {
     currentMissionId,
   } = useRecordingContext();
 
-  // Use direct polling for real-time data updates
-  const { recordingData, dataCount } = useDirectRecordingData(isRecording, 300); // Poll every 300ms when recording
+  // Use direct polling for real-time data updates, matching the recording frequency
+  const { recordingData, dataCount } = useDirectRecordingData(isRecording, recordingFrequency);
 
   const { 
     locationEnabled, 

@@ -1,15 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { nativeRecordingService } from '@/services/nativeRecordingService';
+import { parseFrequencyToMs } from '@/lib/recordingUtils';
 
 /**
  * Hook that directly polls the native recording service for real-time data updates
  * Bypasses React context to ensure immediate updates
+ * Uses the actual recording frequency for polling rate
  */
-export function useDirectRecordingData(isRecording: boolean, pollInterval: number = 2000) {
+export function useDirectRecordingData(isRecording: boolean, recordingFrequency: string = '10s') {
   const [recordingData, setRecordingData] = useState<any[]>([]);
   const [dataCount, setDataCount] = useState(0);
   const [lastDataHash, setLastDataHash] = useState<string>('');
   const intervalRef = useRef<number | null>(null);
+  
+  // Convert recording frequency to milliseconds for polling
+  const pollInterval = parseFrequencyToMs(recordingFrequency);
   
   useEffect(() => {
     // Clear any existing interval
@@ -64,7 +69,7 @@ export function useDirectRecordingData(isRecording: boolean, pollInterval: numbe
         intervalRef.current = null;
       }
     };
-  }, [isRecording, lastDataHash, pollInterval]);
+  }, [isRecording, lastDataHash, pollInterval, recordingFrequency]);
   
   // Also listen to native events for immediate updates
   useEffect(() => {
