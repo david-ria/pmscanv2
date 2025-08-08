@@ -22,6 +22,7 @@ import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 import { MapPlaceholder } from '@/components/RealTime/MapPlaceholder';
 import { RecordingFrequencyDialog } from '@/components/RecordingControls/RecordingFrequencyDialog';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
+import { BackgroundRecordingControl } from '@/components/BackgroundRecordingControl';
 
 // Lazy-loaded heavy components to reduce initial bundle size
 import { LazyMapGraphToggle } from '@/components/RealTime/LazyMapGraphToggle';
@@ -307,8 +308,9 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
     setRecordingFrequency(frequency);
   };
 
-  return (
+return (
     <div>
+      <BackgroundRecordingControl />
       {(isRecording || localStorage.getItem('recording-confirmed') === 'true') ? (
         <LazyMapGraphToggle
           showGraph={showGraph}
