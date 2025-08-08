@@ -40,6 +40,12 @@ export function usePMScanBluetooth() {
             '🔄 RT Data received:',
             data
           );
+          
+          // Update global data for native recording service
+          import('@/services/nativeRecordingService').then(({ updateGlobalPMScanData }) => {
+            updateGlobalPMScanData(data);
+          });
+          
           return data;
         }
         // Skip logging and updating if data is too similar

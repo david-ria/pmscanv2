@@ -89,6 +89,16 @@ export default function RealTime() {
     requestLocationPermission 
   } = useGPS(true, false, recordingFrequency);
 
+  // Initialize native recording service
+  useEffect(() => {
+    import('@/services/nativeRecordingService').then(({ nativeRecordingService }) => {
+      nativeRecordingService.setDataCollectionCallback((pmData, location) => {
+        // This callback runs on native JS timer, immune to tab focus
+        nativeRecordingService.addDataPoint(pmData, latestLocation || undefined);
+      });
+    });
+  }, [latestLocation]);
+
   // Only initialize autocontext if the user has enabled it
   const { settings: autoContextSettings } = useStorageSettings(
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
