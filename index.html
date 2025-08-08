@@ -10,100 +10,118 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
-    <!-- Preload critical fonts for immediate rendering -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
-    
     <!-- DNS prefetch for other external services -->
     <link rel="dns-prefetch" href="https://api.mapbox.com">
     <link rel="dns-prefetch" href="https://shydpfwuvnlzdzbubmgb.supabase.co">
     
-    <!-- Critical CSS for OptimizedPlaceholder only -->
+    <!-- Critical CSS for immediate rendering -->
     <style>
-      /* Minimal CSS variables */
+      /* Essential CSS variables for immediate rendering */
       :root {
         --background: 0 0% 99%;
         --foreground: 215 25% 27%;
         --primary: 142 76% 36%;
         --muted-foreground: 215.4 16.3% 46.9%;
+        --border: 214.3 31.8% 91.4%;
+        --card: 0 0% 100%;
+        --muted: 210 40% 96.1%;
       }
       
-      /* Dark mode support */
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --background: 215 25% 13%;
-          --foreground: 0 0% 98%;
-          --primary: 142 76% 36%;
-          --muted-foreground: 215 20.2% 65.1%;
-        }
+      /* Critical typography for H1 and large text */
+      h1.text-lg, .text-lg { 
+        font-size: 1.125rem; 
+        line-height: 1.75rem;
       }
       
-      /* Only critical styles for OptimizedPlaceholder */
+      h1.text-xl, .text-xl { 
+        font-size: 1.25rem; 
+        line-height: 1.75rem;
+      }
+      
+      h1.text-2xl, .text-2xl { 
+        font-size: 1.5rem; 
+        line-height: 2rem;
+      }
+      
+      .font-bold { font-weight: 700; }
+      .font-semibold { font-weight: 600; }
+      
+      /* Critical color utilities */
+      .text-foreground { color: hsl(var(--foreground)); }
+      .text-primary { color: hsl(var(--primary)); }
+      .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+      
+      /* Critical layout utilities */
+      .bg-background { background-color: hsl(var(--background)); }
+      .bg-card { background-color: hsl(var(--card)); }
+      .bg-muted { background-color: hsl(var(--muted)); }
+      .border-border { border-color: hsl(var(--border)); }
+      .min-h-screen { min-height: 100vh; }
+      .fixed { position: fixed; }
+      .top-0 { top: 0; }
+      .left-0 { left: 0; }
+      .right-0 { right: 0; }
+      .z-50 { z-index: 50; }
+      .border-b { border-bottom-width: 1px; }
+      .flex { display: flex; }
+      .items-center { align-items: center; }
+      .justify-between { justify-content: space-between; }
+      .gap-3 { gap: 0.75rem; }
+      .h-14 { height: 3.5rem; }
+      .h-9 { height: 2.25rem; }
+      .w-9 { width: 2.25rem; }
+      .px-4 { padding-left: 1rem; padding-right: 1rem; }
+      .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+      .pt-14 { padding-top: 3.5rem; }
+      .pb-20 { padding-bottom: 5rem; }
+      .p-4 { padding: 1rem; }
+      .mb-1 { margin-bottom: 0.25rem; }
+      .max-w-7xl { max-width: 80rem; }
+      .mx-auto { margin-left: auto; margin-right: auto; }
+      .rounded { border-radius: 0.25rem; }
+      .rounded-lg { border-radius: 0.5rem; }
+      .rounded-full { border-radius: 9999px; }
+      .border { border-width: 1px; }
+      .text-center { text-align: center; }
+      .text-xs { font-size: 0.75rem; line-height: 1rem; }
+      .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+      .space-y-6 > * + * { margin-top: 1.5rem; }
+      
+      /* Prevent layout shift by setting initial container styles */
       #root {
         min-height: 100vh;
         background-color: hsl(var(--background));
-        color: hsl(var(--foreground));
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
       }
       
-      .min-h-screen { min-height: 100vh; }
-      .bg-background { background-color: hsl(var(--background)); }
-      .text-center { text-align: center; }
-      .p-8 { padding: 2rem; }
-      .text-2xl { font-size: 1.5rem; line-height: 2rem; }
-      .font-semibold { font-weight: 600; }
-      .mb-2 { margin-bottom: 0.5rem; }
-      .text-muted-foreground { color: hsl(var(--muted-foreground)); }
-      .mt-4 { margin-top: 1rem; }
-      .w-8 { width: 2rem; }
-      .h-8 { height: 2rem; }
-      .rounded-full { border-radius: 9999px; }
-      .mx-auto { margin-left: auto; margin-right: auto; }
-      .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
-      .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-      
-      /* Spinner animation for placeholder */
-      .animate-pulse {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      /* Critical styles for air quality cards to prevent layout shift */
+      .grid-cols-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
       }
       
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+      /* Loading skeleton styles */
+      .skeleton {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
       }
       
-      /* Responsive utilities */
-      @media (min-width: 640px) {
-        .sm\\:px-4 { padding-left: 1rem; padding-right: 1rem; }
-        .sm\\:py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
-      }
-      
-      /* Primary color with opacity for loading indicator */
-      .bg-primary\\/20 {
-        background-color: hsl(var(--primary) / 0.2);
+      @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
       }
     </style>
-    
-    <!-- Defer the main CSS bundle -->
-    <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
     <meta
       name="description"
       content="Application de mesure et contextualisation de l'exposition aux particules fines"
     />
     <meta name="author" content="Lovable" />
 
-    <!-- Permissions Policy to avoid browser warnings -->
-    <meta
-      http-equiv="Permissions-Policy"
-      content="accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(), geolocation=(self), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()"
-    />
-
     <!-- Content Security Policy for Google APIs, Supabase, and Mapbox -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com; font-src 'self' https://fonts.gstatic.com https://api.mapbox.com; img-src 'self' data: blob: https://api.mapbox.com https://*.tile.openstreetmap.org https://shydpfwuvnlzdzbubmgb.supabase.co; connect-src 'self' https://shydpfwuvnlzdzbubmgb.supabase.co https://api.mapbox.com https://events.mapbox.com https://api.openweathermap.org; child-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.gstatic.com https://cdn.gpteng.co; connect-src 'self' https://accounts.google.com https://apis.google.com https://www.googleapis.com https://*.supabase.co https://shydpfwuvnlzdzbubmgb.supabase.co https://*.mapbox.com https://api.mapbox.com; frame-src https://accounts.google.com; style-src 'self' 'unsafe-inline' https://*.gstatic.com https://api.mapbox.com; font-src 'self' data: https://*.gstatic.com https://api.mapbox.com; img-src 'self' data: https://*.mapbox.com; worker-src 'self' blob:; object-src 'none';"
     />
 
     <meta property="og:title" content="d8e7ca00-b377-4793-af43-f6fcf3d043bd" />
@@ -166,17 +184,6 @@
         </main>
       </div>
       
-      <!-- Handle SPA routing for static hosts like GitHub Pages -->
-      <script>
-        (function() {
-          var redirect = sessionStorage.redirect;
-          delete sessionStorage.redirect;
-          if (redirect && redirect !== location.href) {
-            history.replaceState(null, null, redirect);
-          }
-        })();
-      </script>
-      
       <!-- JavaScript fallback - non-critical, can be deferred -->
       <script defer>
         // Hide static content when React takes over (non-critical)
@@ -191,5 +198,13 @@
       </script>
     </div>
     <script type="module" src="/src/main.tsx" defer></script>
+    
+    <!-- Add performance optimizations -->
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
   </body>
 </html>

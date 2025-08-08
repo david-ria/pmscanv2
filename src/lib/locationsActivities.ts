@@ -23,7 +23,7 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
     name: 'Home',
     icon: '🏠',
     description: 'At home location',
-    allowedActivities: ['rest', 'work', 'indoor', 'cooking_frying', 'cooking_boiling_steaming', 'cleaning', 'DIY']
+    allowedActivities: ['rest', 'work', 'indoor', 'cooking', 'cleaning', 'DIY']
   },
   {
     id: 'office',
@@ -156,17 +156,10 @@ export const DEFAULT_ACTIVITIES: ActivityType[] = [
     availableAt: ['mainStreet']
   },
   {
-    id: 'cooking_frying',
-    name: 'Cooking frying',
-    icon: '🍳',
-    description: 'Cooking with frying methods',
-    availableAt: ['home']
-  },
-  {
-    id: 'cooking_boiling_steaming',
-    name: 'Cooking boiling or steaming',
-    icon: '🥘',
-    description: 'Cooking with boiling or steaming methods',
+    id: 'cooking',
+    name: 'Cooking',
+    icon: '👨‍🍳',
+    description: 'Cooking or food preparation',
     availableAt: ['home']
   },
   {

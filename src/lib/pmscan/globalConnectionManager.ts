@@ -37,7 +37,7 @@ export const setBackgroundRecording = (recording: boolean) => {
 
 export const getBackgroundRecording = () => isBackgroundRecording;
 
-// Auto-reconnection for any recording session with aggressive background handling
+// Auto-reconnection for any recording session
 const startAutoReconnection = () => {
   if (reconnectionInterval) return;
 
@@ -61,16 +61,8 @@ const startAutoReconnection = () => {
       } catch (error) {
         console.warn('⚠️ PMScan auto-reconnection failed:', error);
       }
-    } else {
-      // Even if connected, ping the device to keep the connection alive
-      // This helps prevent browser throttling from affecting the connection
-      try {
-        await globalConnectionManager.keepAlive();
-      } catch (error) {
-        logger.debug('🔄 Keep-alive failed, connection may have been lost');
-      }
     }
-  }, 5000); // Check more frequently (every 5 seconds) for better responsiveness
+  }, 10000); // Check every 10 seconds
 };
 
 const stopAutoReconnection = () => {

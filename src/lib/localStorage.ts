@@ -10,34 +10,15 @@ export function getLocalMissions(): MissionData[] {
     if (!stored) return [];
 
     const missions = JSON.parse(stored);
-    return missions.map((m: Partial<MissionData> & { startTime: string; endTime: string; measurements: Array<{ timestamp: string }> }) => {
-      const startTime = new Date(m.startTime);
-      const endTime = new Date(m.endTime);
-      
-      // Recalculate duration if it's 0 or invalid
-      const calculatedDuration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
-      let durationMinutes = (!m.durationMinutes || m.durationMinutes <= 0) ? calculatedDuration : m.durationMinutes;
-      
-      // If duration is still 0 but we have measurements, estimate based on measurement count
-      if (durationMinutes === 0 && m.measurements && m.measurements.length > 1) {
-        // Estimate 30 seconds per measurement on average as minimum
-        durationMinutes = Math.max(1, Math.round((m.measurements.length - 1) * 0.5));
-      } else if (durationMinutes === 0) {
-        // Ensure minimum 1 minute duration
-        durationMinutes = 1;
-      }
-      
-      return {
-        ...m,
-        startTime,
-        endTime,
-        durationMinutes,
-        measurements: m.measurements.map((measurement: { timestamp: string; [key: string]: unknown }) => ({
-          ...measurement,
-          timestamp: new Date(measurement.timestamp),
-        })),
-      };
-    });
+    return missions.map((m: Partial<MissionData> & { startTime: string; endTime: string; measurements: Array<{ timestamp: string }> }) => ({
+      ...m,
+      startTime: new Date(m.startTime),
+      endTime: new Date(m.endTime),
+      measurements: m.measurements.map((measurement: { timestamp: string; [key: string]: unknown }) => ({
+        ...measurement,
+        timestamp: new Date(measurement.timestamp),
+      })),
+    }));
   } catch (error) {
     console.error('Error reading local missions:', error);
     return [];
@@ -95,28 +76,12 @@ export function formatDatabaseMission(dbMission: {
     automatic_context?: string;
   }>;
 }): MissionData {
-  const startTime = new Date(dbMission.start_time);
-  const endTime = new Date(dbMission.end_time);
-  
-  // Recalculate duration if it's 0 or invalid
-  const calculatedDuration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
-  let durationMinutes = (!dbMission.duration_minutes || dbMission.duration_minutes <= 0) ? calculatedDuration : dbMission.duration_minutes;
-  
-  // If duration is still 0 but we have measurements, estimate based on measurement count
-  if (durationMinutes === 0 && dbMission.measurements && dbMission.measurements.length > 1) {
-    // Estimate 30 seconds per measurement on average as minimum
-    durationMinutes = Math.max(1, Math.round((dbMission.measurements.length - 1) * 0.5));
-  } else if (durationMinutes === 0) {
-    // Ensure minimum 1 minute duration
-    durationMinutes = 1;
-  }
-  
   return {
     id: dbMission.id,
     name: dbMission.name,
-    startTime,
-    endTime,
-    durationMinutes,
+    startTime: new Date(dbMission.start_time),
+    endTime: new Date(dbMission.end_time),
+    durationMinutes: dbMission.duration_minutes,
     avgPm1: dbMission.avg_pm1,
     avgPm25: dbMission.avg_pm25,
     avgPm10: dbMission.avg_pm10,

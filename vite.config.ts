@@ -62,7 +62,7 @@ export default defineConfig(({ mode }) => {
             router: ['react-router-dom'],
             
             // React Query for data fetching
-            
+            query: ['@tanstack/react-query'],
             
             // UI library chunks - split by usage frequency
             'ui-core': [
@@ -116,7 +116,7 @@ export default defineConfig(({ mode }) => {
             // Theme and styling
             theme: ['next-themes'],
             carousel: ['embla-carousel-react'],
-            
+            notifications: ['sonner'],
             
             // Split by route to enable route-based code splitting
             'route-analysis': [],

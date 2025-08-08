@@ -34,7 +34,27 @@ export function useAirQualityData() {
     setIsLoading(true);
     
     try {
-      logger.debug('🌬️ Air quality fetch disabled: AtmoSud integration removed');
+      logger.debug('🌬️ Fetching air quality data for location:', location);
+      
+      const { data, error } = await supabase.functions.invoke('fetch-atmosud-data', {
+        body: {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          timestamp: timestamp ? timestamp.toISOString() : new Date().toISOString(),
+        },
+      });
+
+      if (error) {
+        logger.error('❌ Error fetching air quality data:', error);
+        return null;
+      }
+
+      if (data?.airQualityData) {
+        logger.debug('✅ Air quality data fetched successfully:', data.airQualityData.id);
+        setAirQualityData(data.airQualityData);
+        return data.airQualityData;
+      }
+
       return null;
     } catch (error) {
       logger.error('❌ Error in air quality data fetch:', error);

@@ -1,5 +1,5 @@
 import { Toaster } from '@/components/ui/toaster';
-
+import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Suspense, lazy, useEffect } from 'react';
@@ -27,19 +27,11 @@ const Header = lazy(() =>
 const BottomNavigation = lazy(() => 
   import('@/components/BottomNavigation').then(module => ({ default: module.BottomNavigation }))
 );
-const VisibilityRecordingMonitor = lazy(() => 
-  import('@/components/VisibilityRecordingMonitor').then(module => ({ default: module.VisibilityRecordingMonitor }))
+const RecordingProvider = lazy(() => 
+  import('@/contexts/RecordingContext').then(module => ({ default: module.RecordingProvider }))
 );
-const RecordingStateMonitor = lazy(() => 
-  import('@/components/RecordingStateMonitor').then(module => ({ default: module.RecordingStateMonitor }))
-);
-import { RecordingProvider } from '@/contexts/RecordingContext';
-import { RecordingDataCollector } from '@/components/RecordingDataCollector';
 const CrashRecoveryInitializer = lazy(() => 
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
-);
-const RegressionMonitor = lazy(() => 
-  import('@/components/RegressionMonitor').then(module => ({ default: module.RegressionMonitor }))
 );
 
 // Import skeleton screens
@@ -84,7 +76,7 @@ const App = () => {
     <ErrorBoundary>
       <TooltipProvider>
         <Toaster />
-        
+        <Sonner />
         <div className="relative min-h-screen">
           <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
             <AppProviders>
@@ -129,12 +121,8 @@ const AppRoutes = () => {
         element={
           user ? (
             <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
-                <RecordingProvider>
+              <RecordingProvider>
                 <CrashRecoveryInitializer />
-                <VisibilityRecordingMonitor />
-                <RecordingStateMonitor />
-                <RecordingDataCollector />
-                <RegressionMonitor />
                 <div className="min-h-screen bg-background">
                   <Header />
                   <main className="pt-14 pb-16">

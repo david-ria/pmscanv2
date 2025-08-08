@@ -150,7 +150,6 @@
     "graph": "Gràfic",
     "satellite": "Satèl·lit",
     "connectionRequired": "Connexió requerida per a la vista de mapa",
-    "mapWillLoadWhenRecording": "El mapa es carregarà quan comenci l'enregistrament",
     "connectSensor": "Connecteu el vostre sensor PMScan per veure dades en temps real",
     "lastMeasurement": "Última mesura",
     "airQuality": {
@@ -225,12 +224,7 @@
       "averagePM25": "PM2.5 mitjà",
       "pm25AboveWHO": "PM2.5 > OMS (15)",
       "pm10AboveWHO": "PM10 > OMS (45)"
-    },
-    "editMission": "Editar nom de la missió",
-    "missionNameUpdated": "Nom de la missió actualitzat",
-    "missionNameUpdateSuccess": "El nom de la missió s'ha actualitzat correctament",
-    "errorUpdatingMissionName": "Error actualitzant el nom",
-    "failedToUpdateMissionName": "No s'ha pogut actualitzar el nom de la missió"
+    }
   },
   "analysis": {
     "title": "Anàlisi IA personalitzada",

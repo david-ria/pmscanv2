@@ -69,9 +69,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   // Use external location if provided, otherwise initialize own GPS
   const gpsResult = useGPS(
     !externalLocation && settings.enabled && enableActiveScanning,
-    settings.highAccuracy ?? false,
-    undefined, // no frequency constraint for auto context
-    enableActiveScanning // only when actively scanning
+    settings.highAccuracy ?? false
   );
   
   const { locationEnabled, latestLocation: gpsLocation, requestLocationPermission } = gpsResult;

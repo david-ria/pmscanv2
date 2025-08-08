@@ -3,7 +3,6 @@ import { PMScanDeviceState } from './deviceState';
 import { PMScanDeviceInitializer } from './deviceInitializer';
 import { PMScanEventManager } from './eventManager';
 import { PMScanConnectionUtils } from './connectionUtils';
-import { PMScan_MODE_UUID, PMScan_RT_DATA_UUID } from './constants';
 import {
   getGlobalRecording,
   getBackgroundRecording,
@@ -165,44 +164,4 @@ export class PMScanConnectionManager {
   public updateCharging(status: number): void {
     this.deviceState.updateCharging(status);
   }
-
-  /**
-   * Send a keep-alive ping to maintain connection during background operation
-   */
-  public async keepAlive(): Promise<boolean> {
-    if (!this.service || !this.device?.gatt?.connected) {
-      return false;
-    }
-
-    try {
-      // Try to read device info to verify connection is still active
-      const modeChar = await this.service.getCharacteristic(PMScan_MODE_UUID);
-      await modeChar.readValue();
-      return true;
-    } catch (error) {
-      logger.debug('🔄 Keep-alive check failed, connection may be lost:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Read a single RT data sample synchronously.
-   * Useful as a fallback when background notifications are throttled.
-   */
-  public async readCurrentRTData(): Promise<import('./types').PMScanData | null> {
-    if (!this.service || !this.device?.gatt?.connected) {
-      return null;
-    }
-    try {
-      const rtChar = await this.service.getCharacteristic(PMScan_RT_DATA_UUID);
-      const value = await rtChar.readValue();
-      const { parsePMScanDataPayload } = await import('./dataParser');
-      const data = parsePMScanDataPayload(value, this.deviceState.state);
-      return data;
-    } catch (error) {
-      logger.debug('⚠️ Failed to read RT data in background:', error);
-      return null;
-    }
-  }
 }
-

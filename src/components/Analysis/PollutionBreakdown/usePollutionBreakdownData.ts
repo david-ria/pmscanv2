@@ -108,18 +108,8 @@ export const usePollutionBreakdownData = (
               cumulativeDose: 0,
             };
             // Assume each measurement represents equal time exposure
-            let missionDuration = mission.durationMinutes;
-            
-            // Fix for missions with 0 duration
-            if (missionDuration === 0 && mission.measurements.length > 1) {
-              // Estimate 30 seconds per measurement on average as minimum
-              missionDuration = Math.max(1, Math.round((mission.measurements.length - 1) * 0.5));
-            } else if (missionDuration === 0) {
-              // Ensure minimum 1 minute duration
-              missionDuration = 1;
-            }
-            
-            const measurementDuration = missionDuration / mission.measurements.length;
+            const measurementDuration =
+              mission.durationMinutes / mission.measurements.length;
             const measurementDurationHours = measurementDuration / 60;
             
             // Get respiratory rate for this measurement
@@ -180,18 +170,8 @@ export const usePollutionBreakdownData = (
               cumulativeDose: 0,
             };
             // Assume each measurement represents equal time exposure
-            let missionDuration = mission.durationMinutes;
-            
-            // Fix for missions with 0 duration
-            if (missionDuration === 0 && mission.measurements.length > 1) {
-              // Estimate 30 seconds per measurement on average as minimum
-              missionDuration = Math.max(1, Math.round((mission.measurements.length - 1) * 0.5));
-            } else if (missionDuration === 0) {
-              // Ensure minimum 1 minute duration
-              missionDuration = 1;
-            }
-            
-            const measurementDuration = missionDuration / mission.measurements.length;
+            const measurementDuration =
+              mission.durationMinutes / mission.measurements.length;
             const measurementDurationHours = measurementDuration / 60;
             
             // Get respiratory rate for this measurement

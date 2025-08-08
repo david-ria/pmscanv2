@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { MapboxMap } from '@/components/MapboxMap';
 import { PMLineGraph } from '@/components/PMLineGraph';
 import { FloatingRecordButton } from '@/components/FloatingRecordButton';
-import { OptimizedMapPlaceholder } from './OptimizedMapPlaceholder';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { PMScanDevice } from '@/lib/pmscan/types';
@@ -110,10 +109,14 @@ export function MapGraphToggle({
                 </div>
               </div>
             ) : !isRecording ? (
-              <OptimizedMapPlaceholder 
-                className="h-full"
-                message={t('realTime.mapWillLoadWhenRecording')}
-              />
+              <div className="h-full flex items-center justify-center bg-muted/20 border border-border rounded-lg">
+                <div className="text-center">
+                  <Map className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                  <p className="text-sm text-muted-foreground">
+                    {t('realTime.mapWillLoadWhenRecording')}
+                  </p>
+                </div>
+              </div>
             ) : (
               <MapboxMap
                 currentLocation={latestLocation}

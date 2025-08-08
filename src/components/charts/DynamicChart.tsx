@@ -134,8 +134,8 @@ export function DynamicChart({
           {title && <CardTitle>{title}</CardTitle>}
         </CardHeader>
         <CardContent>
-          <div style={{ height, minHeight: height, minWidth: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%" minHeight={height} minWidth={300}>
+          <div style={{ height }}>
+            <ResponsiveContainer width="100%" height="100%">
               <ChartComponent data={data}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />

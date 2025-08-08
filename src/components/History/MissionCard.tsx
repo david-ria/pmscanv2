@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import { Download, Share, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MissionData } from '@/lib/dataStorage';
@@ -9,10 +8,8 @@ import { MissionDetailsDialog } from './MissionDetailsDialog';
 import { WeatherInfo } from '@/components/WeatherInfo';
 import { AirQualityInfo } from '@/components/AirQualityInfo';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 import { formatDuration } from '@/utils/timeFormat';
-import { useToast } from '@/hooks/use-toast';
-import { dataStorage } from '@/lib/dataStorage';
-import { Edit2, Share2, Download, Trash2, Check, X } from 'lucide-react';
 
 interface MissionCardProps {
   mission: MissionData;
@@ -22,7 +19,6 @@ interface MissionCardProps {
     mission: MissionData,
     shareType: 'email' | 'sms' | 'native'
   ) => void;
-  onMissionUpdate?: (updatedMission: MissionData) => void;
 }
 
 export function MissionCard({
@@ -30,15 +26,9 @@ export function MissionCard({
   onExport,
   onDelete,
   onShare,
-  onMissionUpdate,
 }: MissionCardProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const [shareOpen, setShareOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [editedName, setEditedName] = useState(mission.name);
-
   const getQualityColor = (pm25: number) => {
     if (pm25 <= 12) return 'text-air-good';
     if (pm25 <= 35) return 'text-air-moderate';
@@ -46,71 +36,6 @@ export function MissionCard({
     return 'text-air-very-poor';
   };
 
-  // Mission name editing handlers
-  const handleStartEditing = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent opening the details dialog
-    setEditedName(mission.name);
-    setIsEditingName(true);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editedName.trim()) return;
-    
-    try {
-      // Update local storage
-      dataStorage.updateMissionName(mission.id, editedName.trim());
-      
-      // Sync to database if mission is synced
-      if (mission.synced) {
-        const { supabase } = await import('@/integrations/supabase/client');
-        const { error } = await supabase
-          .from('missions')
-          .update({ name: editedName.trim() })
-          .eq('id', mission.id);
-          
-        if (error) {
-          console.error('Error syncing mission name to database:', error);
-          toast({
-            title: t("history.errorUpdatingMissionName"),
-            description: t("history.failedToSyncMissionName"),
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-      
-      setIsEditingName(false);
-      
-      // Update the mission object for immediate UI feedback
-      const updatedMission = { ...mission, name: editedName.trim() };
-      onMissionUpdate?.(updatedMission);
-      
-      toast({
-        title: t("history.missionNameUpdated"),
-        description: t("history.missionNameUpdateSuccess"),
-      });
-    } catch (error) {
-      console.error('Error updating mission name:', error);
-      toast({
-        title: t("history.errorUpdatingMissionName"),
-        description: t("history.failedToUpdateMissionName"),
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditedName(mission.name);
-    setIsEditingName(false);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSaveEdit();
-    } else if (e.key === 'Escape') {
-      handleCancelEdit();
-    }
-  };
 
   const formatDate = (date: Date) => {
     const now = new Date();
@@ -138,53 +63,13 @@ export function MissionCard({
     <>
       <Card
         className="relative cursor-pointer hover:shadow-md transition-shadow"
-        onClick={() => !isEditingName && setDetailsOpen(true)}
+        onClick={() => setDetailsOpen(true)}
       >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
-            <div className="flex-1 mr-3">
+            <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                {isEditingName ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={editedName}
-                      onChange={(e) => setEditedName(e.target.value)}
-                      onKeyDown={handleKeyPress}
-                      className="font-semibold w-32 sm:w-40"
-                      autoFocus
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleSaveEdit}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Check className="h-4 w-4 text-green-600" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleCancelEdit}
-                      className="h-8 w-8 p-0"
-                    >
-                      <X className="h-4 w-4 text-red-600" />
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <CardTitle className="text-base flex-1">{mission.name}</CardTitle>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleStartEditing}
-                      className="h-6 w-6 p-0 hover:bg-muted"
-                      title={t("history.editMission")}
-                    >
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
-                  </>
-                )}
+                <CardTitle className="text-base">{mission.name}</CardTitle>
                 {!mission.synced && (
                   <Badge variant="outline" className="text-xs">
                     {t('history.local')}
@@ -233,7 +118,7 @@ export function MissionCard({
           >
             <ShareDialog mission={mission} onShare={onShare}>
               <Button variant="outline" size="sm" className="flex-1">
-                <Share2 className="h-3 w-3 mr-2" />
+                <Share className="h-3 w-3 mr-2" />
                 {t('history.share')}
               </Button>
             </ShareDialog>
@@ -261,7 +146,6 @@ export function MissionCard({
         mission={mission}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
-        onMissionUpdated={onMissionUpdate}
       />
     </>
   );

@@ -8,7 +8,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { MapboxMap } from '@/components/MapboxMap';
 import { PMLineGraph } from '@/components/PMLineGraph';
 import { GraphContextSelector } from './GraphContextSelector';
@@ -23,7 +22,6 @@ import { downloadPDF } from '@/lib/pdfExport';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
-import { dataStorage } from '@/lib/dataStorage';
 import { 
   Calendar, 
   MapPin, 
@@ -38,33 +36,24 @@ import {
   AlertCircle,
   Download,
   Image as ImageIcon,
-  FileText,
-  Edit2,
-  Check,
-  X
+  FileText
 } from 'lucide-react';
 
 interface MissionDetailsDialogProps {
   mission: MissionData | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onMissionUpdated?: (updatedMission: MissionData) => void;
 }
 
 export function MissionDetailsDialog({
   mission,
   open,
   onOpenChange,
-  onMissionUpdated,
 }: MissionDetailsDialogProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { getEventsByMission } = useEvents();
   const [events, setEvents] = useState<any[]>([]);
-  
-  // Mission name editing state
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [editedName, setEditedName] = useState('');
   
   // Refs for capturing content
   const graphRef = useRef<HTMLDivElement>(null);
@@ -123,58 +112,6 @@ export function MissionDetailsDialog({
       });
     }
   }, [mission, open, getEventsByMission]);
-
-  // Initialize edit name when mission changes
-  useEffect(() => {
-    if (mission) {
-      setEditedName(mission.name);
-      setIsEditingName(false);
-    }
-  }, [mission]);
-
-  // Mission name editing handlers
-  const handleStartEditing = () => {
-    setEditedName(mission?.name || '');
-    setIsEditingName(true);
-  };
-
-  const handleSaveEdit = () => {
-    if (!mission || !editedName.trim()) return;
-    
-    try {
-      dataStorage.updateMissionName(mission.id, editedName.trim());
-      setIsEditingName(false);
-      
-      // Update the mission object for immediate UI feedback
-      const updatedMission = { ...mission, name: editedName.trim() };
-      onMissionUpdated?.(updatedMission);
-      
-      toast({
-        title: t("history.missionNameUpdated"),
-        description: t("history.missionNameUpdateSuccess"),
-      });
-    } catch (error) {
-      console.error('Error updating mission name:', error);
-      toast({
-        title: t("history.errorUpdatingMissionName"),
-        description: t("history.failedToUpdateMissionName"),
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditedName(mission?.name || '');
-    setIsEditingName(false);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSaveEdit();
-    } else if (e.key === 'Escape') {
-      handleCancelEdit();
-    }
-  };
 
   if (!mission) return null;
 
@@ -488,49 +425,7 @@ export function MissionDetailsDialog({
         <DialogHeader>
           <div className="space-y-4">
             <div>
-              {/* Editable Mission Title */}
-              <div className="flex items-center gap-2">
-                {isEditingName ? (
-                  <div className="flex-1 flex items-center gap-2">
-                    <Input
-                      value={editedName}
-                      onChange={(e) => setEditedName(e.target.value)}
-                      onKeyDown={handleKeyPress}
-                      className="text-xl font-semibold flex-1"
-                      autoFocus
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleSaveEdit}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Check className="h-4 w-4 text-green-600" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleCancelEdit}
-                      className="h-8 w-8 p-0"
-                    >
-                      <X className="h-4 w-4 text-red-600" />
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <DialogTitle className="text-xl flex-1">{mission.name}</DialogTitle>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleStartEditing}
-                      className="h-8 w-8 p-0 hover:bg-muted"
-                      title={t("history.editMission")}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
-              </div>
+              <DialogTitle className="text-xl">{mission.name}</DialogTitle>
               <div className="flex items-center gap-2 mt-1">
                 <p className="text-sm text-muted-foreground">
                   {formatDateTime(mission.startTime)} •{' '}

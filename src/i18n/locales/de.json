@@ -150,7 +150,6 @@
     "graph": "Diagramm",
     "satellite": "Satellit",
     "connectionRequired": "Verbindung für Kartenansicht erforderlich",
-    "mapWillLoadWhenRecording": "Karte wird beim Start der Aufzeichnung geladen",
     "connectSensor": "Verbinden Sie Ihren PMScan-Sensor, um Echtzeitdaten zu sehen",
     "lastMeasurement": "Letzte Messung",
     "airQuality": {
@@ -225,12 +224,7 @@
       "averagePM25": "Durchschn. PM2.5",
       "pm25AboveWHO": "PM2.5 > WHO (15)",
       "pm10AboveWHO": "PM10 > WHO (45)"
-    },
-    "editMission": "Missionsnamen bearbeiten",
-    "missionNameUpdated": "Missionsname aktualisiert",
-    "missionNameUpdateSuccess": "Der Missionsname wurde erfolgreich aktualisiert",
-    "errorUpdatingMissionName": "Fehler beim Aktualisieren des Namens",
-    "failedToUpdateMissionName": "Missionsname konnte nicht aktualisiert werden"
+    }
   },
   "analysis": {
     "title": "Personalisierte KI-Analyse",
