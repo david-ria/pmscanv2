@@ -41,31 +41,37 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   // Listen for native data events for immediate updates
   useEffect(() => {
     const handleNativeDataAdded = (event: any) => {
-      console.log('🔄 React context received native data event, total:', event.detail?.totalCount);
+      const detail = event.detail || {};
+      console.log('🔄 React context received native data event, count:', detail.count);
       
-      // Force update by getting fresh state from native service
-      const newState = nativeRecordingService.getState();
-      console.log('📊 Context updating with fresh state, recordingData length:', newState.recordingData.length);
+      // Force update immediately with fresh state
+      const freshState = nativeRecordingService.getState();
+      console.log('📊 Context updating, data length:', freshState.recordingData.length);
       
-      // Force a re-render by incrementing counter and setting new state
+      // Use functional update to ensure React detects the change
+      setState(() => ({ ...freshState }));
       setUpdateCounter(prev => prev + 1);
-      setState({ ...newState }); // Spread to ensure new object reference
     };
     
+    // Add event listener
     window.addEventListener('nativeDataAdded', handleNativeDataAdded);
     
-    // Reduce polling frequency to prevent spam
+    // Aggressive polling for real-time updates during recording
     const interval = setInterval(() => {
-      const newState = nativeRecordingService.getState();
-      setState(prevState => {
-        if (prevState.recordingData.length !== newState.recordingData.length) {
-          console.log('📊 Recording data length changed:', prevState.recordingData.length, '->', newState.recordingData.length);
-          setUpdateCounter(prev => prev + 1);
-          return { ...newState };
-        }
-        return prevState;
-      });
-    }, 2000); // Reduced to every 2 seconds to prevent spam
+      const currentState = nativeRecordingService.getState();
+      if (currentState.isRecording) {
+        setState(prevState => {
+          // Always update if recording to ensure real-time updates
+          if (prevState.recordingData.length !== currentState.recordingData.length || 
+              prevState.isRecording !== currentState.isRecording) {
+            console.log('📊 Polling update - data changed:', currentState.recordingData.length);
+            setUpdateCounter(prev => prev + 1);
+            return { ...currentState };
+          }
+          return prevState;
+        });
+      }
+    }, 1000); // More aggressive polling during recording
     
     return () => {
       window.removeEventListener('nativeDataAdded', handleNativeDataAdded);

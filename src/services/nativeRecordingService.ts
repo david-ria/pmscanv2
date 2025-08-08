@@ -96,46 +96,49 @@ class NativeRecordingService {
   addDataPoint(pmData: PMScanData, location?: LocationData): void {
     if (!this.isRecording) return;
 
-    // Create a clean, serializable entry without Date objects or functions
+    // Get clean timestamp as number to avoid Date object serialization issues
+    const now = Date.now();
+    
+    // Create a completely serializable entry with no Date objects
     const cleanEntry: RecordingEntry = {
       pmData: {
-        pm1: pmData.pm1,
-        pm25: pmData.pm25,
-        pm10: pmData.pm10,
-        temp: pmData.temp,
-        humidity: pmData.humidity,
-        battery: pmData.battery,
-        charging: pmData.charging,
-        timestamp: new Date(), // Fresh timestamp for recording
+        pm1: Number(pmData.pm1) || 0,
+        pm25: Number(pmData.pm25) || 0,
+        pm10: Number(pmData.pm10) || 0,
+        temp: Number(pmData.temp) || 0,
+        humidity: Number(pmData.humidity) || 0,
+        battery: Number(pmData.battery) || 0,
+        charging: Boolean(pmData.charging),
+        timestamp: new Date(now), // Clean Date object
       },
       location: location ? {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        accuracy: location.accuracy || 0,
-        timestamp: location.timestamp || new Date(),
+        latitude: Number(location.latitude) || 0,
+        longitude: Number(location.longitude) || 0,
+        accuracy: Number(location.accuracy) || 0,
+        timestamp: new Date(now),
       } : undefined,
       context: {
-        location: this.missionContext.location,
-        activity: this.missionContext.activity,
+        location: String(this.missionContext.location || ''),
+        activity: String(this.missionContext.activity || ''),
       },
-      timestamp: new Date(),
+      timestamp: new Date(now),
     };
 
     this.recordingData.push(cleanEntry);
     
-    // Create a serializable payload for the event
-    const eventPayload = {
-      pm25: pmData.pm25,
-      pm1: pmData.pm1,
-      pm10: pmData.pm10,
-      totalCount: this.recordingData.length,
-      timestamp: Date.now(), // Use timestamp instead of Date object
-    };
-    
-    // Trigger React context update with serializable data
-    window.dispatchEvent(new CustomEvent('nativeDataAdded', { 
-      detail: eventPayload
-    }));
+    // Use setTimeout to avoid potential postMessage conflicts
+    setTimeout(() => {
+      // Trigger React context update with a simple numeric payload
+      const updateEvent = new CustomEvent('nativeDataAdded', { 
+        detail: {
+          count: this.recordingData.length,
+          timestamp: now,
+          pm25: Number(pmData.pm25) || 0
+        }
+      });
+      
+      window.dispatchEvent(updateEvent);
+    }, 0);
     
     console.log('📊 Native data point added. Total:', this.recordingData.length);
   }
