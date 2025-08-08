@@ -82,11 +82,12 @@ class NativeRecordingService {
 
   private getCurrentPMScanData(): PMScanData | null {
     // Access the global PMScan data that's updated by the Bluetooth connection
-    // This should be available regardless of React component state
     try {
       const globalData = (window as any).currentPMScanData;
+      console.log('🔍 Native service checking for global PMScan data:', !!globalData, globalData ? `PM2.5: ${globalData.pm25}` : 'no data');
       return globalData || null;
     } catch (error) {
+      console.log('❌ Error accessing global PMScan data:', error);
       return null;
     }
   }

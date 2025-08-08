@@ -133,6 +133,7 @@ export default function RealTime() {
   // Update global PMScan data for native service and sync context
   useEffect(() => {
     if (currentData && initialized) {
+      console.log('🔄 Updating global PMScan data with PM2.5:', currentData.pm25);
       // Make current data globally available for native recording service
       import('@/services/nativeRecordingService').then(({ updateGlobalPMScanData, nativeRecordingService }) => {
         updateGlobalPMScanData(currentData);
