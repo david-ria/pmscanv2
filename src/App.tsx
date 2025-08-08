@@ -33,6 +33,9 @@ const VisibilityRecordingMonitor = lazy(() =>
 const RecordingStateMonitor = lazy(() => 
   import('@/components/RecordingStateMonitor').then(module => ({ default: module.RecordingStateMonitor }))
 );
+const RecordingDataCollector = lazy(() => 
+  import('@/components/RecordingDataCollector').then(module => ({ default: module.RecordingDataCollector }))
+);
 const RecordingProvider = lazy(() => 
   import('@/contexts/RecordingContext').then(module => ({ default: module.RecordingProvider }))
 );
@@ -134,6 +137,7 @@ const AppRoutes = () => {
                 <CrashRecoveryInitializer />
                 <VisibilityRecordingMonitor />
                 <RecordingStateMonitor />
+                <RecordingDataCollector />
                 <RegressionMonitor />
                 <div className="min-h-screen bg-background">
                   <Header />

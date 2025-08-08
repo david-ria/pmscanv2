@@ -134,61 +134,10 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
     onUiReady();
   }, [onUiReady]);
 
-  // Heavy computations moved to web worker for better performance
+  // Recording collection moved to global RecordingDataCollector to keep
+  // recording active across navigation.
   useEffect(() => {
-    if (!isRecording || !currentData) return;
-
-    const ts = currentData.timestamp.getTime();
-    const dup =
-      lastDataRef.current?.pm25 === currentData.pm25 &&
-      Math.abs(ts - lastDataRef.current.timestamp) < 500;
-
-    if (dup) return;
-
-    // Use web worker for speed calculations to avoid blocking main thread
-    (async () => {
-      let speed = 0, isMoving = false;
-      if (latestLocation) {
-        try {
-          // Import worker manager dynamically to keep it out of main bundle
-          const { speedWorkerManager } = await import('@/lib/speedWorkerManager');
-          const result = await speedWorkerManager.calculateSpeed(
-            latestLocation.latitude,
-            latestLocation.longitude,
-            latestLocation.timestamp.getTime()
-          );
-          speed = result.speed;
-          isMoving = result.isMoving;
-        } catch (error) {
-          console.warn('Speed calculation failed, using fallback:', error);
-          // Fallback to original calculation if worker fails
-          const { updateLocationHistory } = await import('@/utils/speedCalculator');
-          const sp = updateLocationHistory(
-            latestLocation.latitude,
-            latestLocation.longitude,
-            latestLocation.timestamp
-          );
-          speed = sp.speed;
-          isMoving = sp.isMoving;
-        }
-      }
-
-      const automaticContext = await updateContextIfNeeded(
-        currentData,
-        latestLocation || undefined,
-        speed,
-        isMoving
-      );
-
-      addDataPoint(
-        currentData,
-        latestLocation || undefined,
-        { location: selectedLocation, activity: selectedActivity },
-        automaticContext
-      );
-    })();
-
-    lastDataRef.current = { pm25: currentData.pm25, timestamp: ts };
+    // No-op: kept for potential UI-specific side effects in the future
   }, [
     currentData,
     isRecording,
