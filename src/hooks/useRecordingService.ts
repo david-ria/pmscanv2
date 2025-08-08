@@ -5,6 +5,7 @@ import { LocationData } from '@/types/PMScan';
 import { MissionContext } from '@/types/recording';
 import { useBackgroundRecording } from '@/hooks/useBackgroundRecording';
 import { setBackgroundRecording, getBackgroundRecording } from '@/lib/pmscan/globalConnectionManager';
+import { simpleBackgroundRecording } from '@/services/simpleBackgroundRecording';
 import * as logger from '@/utils/logger';
 
 export function useRecordingService(): RecordingState & RecordingActions {
@@ -30,34 +31,20 @@ export function useRecordingService(): RecordingState & RecordingActions {
   const startRecording = useCallback(async (frequency?: string) => {
     recordingService.startRecording(frequency);
     
-    // Enable background recording if background mode is active
+    // Enable simple background recording if background mode is active
     if (getBackgroundRecording()) {
-      try {
-        await enableBackgroundRecording({
-          enableWakeLock: true,
-          enableNotifications: true,
-          syncInterval: 10000, // 10 seconds default
-        });
-        recordingService.enableBackgroundRecording();
-        logger.debug('🌙 Background recording enabled for recording session');
-      } catch (error) {
-        logger.debug('⚠️ Failed to enable background recording:', error);
-      }
+      await simpleBackgroundRecording.enable();
+      logger.debug('🌙 Simple background recording enabled for session');
     }
-  }, [enableBackgroundRecording]);
+  }, []);
 
   const stopRecording = useCallback(async () => {
     recordingService.stopRecording();
     
-    // Disable background recording when stopping
-    try {
-      await disableBackgroundRecording();
-      recordingService.disableBackgroundRecording();
-      logger.debug('🌙 Background recording disabled after recording stop');
-    } catch (error) {
-      logger.debug('⚠️ Failed to disable background recording:', error);
-    }
-  }, [disableBackgroundRecording]);
+    // Always disable background recording when stopping
+    await simpleBackgroundRecording.disable();
+    logger.debug('🌙 Simple background recording disabled after stop');
+  }, []);
 
   const addDataPoint = useCallback((
     pmData: PMScanData,

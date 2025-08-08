@@ -88,11 +88,6 @@ class RecordingService {
     setGlobalRecording(true);
     this.notify();
     
-    // Enable background recording service if background mode is active
-    if (getBackgroundRecording()) {
-      this.enableBackgroundRecordingIntegration();
-    }
-    
     logger.debug('✅ Recording started! isRecording should now be:', true);
   }
 
@@ -106,7 +101,6 @@ class RecordingService {
     };
 
     setGlobalRecording(false);
-    this.disableBackgroundRecordingIntegration();
     this.notify();
     
     logger.debug('✅ Recording stopped successfully');
@@ -273,20 +267,6 @@ class RecordingService {
 
   isBackgroundRecordingEnabled(): boolean {
     return this.backgroundRecordingEnabled;
-  }
-
-  private enableBackgroundRecordingIntegration(): void {
-    // Dynamic import to avoid circular dependencies
-    import('./backgroundRecordingService').then(({ backgroundRecordingService }) => {
-      backgroundRecordingService.enableBackgroundRecording();
-    });
-  }
-
-  private disableBackgroundRecordingIntegration(): void {
-    // Dynamic import to avoid circular dependencies
-    import('./backgroundRecordingService').then(({ backgroundRecordingService }) => {
-      backgroundRecordingService.disableBackgroundRecording();
-    });
   }
 }
 
