@@ -36,9 +36,7 @@ const RecordingStateMonitor = lazy(() =>
 const RecordingDataCollector = lazy(() => 
   import('@/components/RecordingDataCollector').then(module => ({ default: module.RecordingDataCollector }))
 );
-const RecordingProvider = lazy(() => 
-  import('@/contexts/RecordingContext').then(module => ({ default: module.RecordingProvider }))
-);
+import { RecordingProvider } from '@/contexts/RecordingContext';
 const CrashRecoveryInitializer = lazy(() => 
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
