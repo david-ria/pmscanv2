@@ -96,6 +96,16 @@ export function RecordingDataCollector() {
         automaticContext
       );
 
+      // Emit heartbeat event and log for diagnostics
+      window.dispatchEvent(
+        new CustomEvent('recording:data-point', {
+          detail: { source: 'rt', ts, pm25: currentData.pm25, speed, isMoving },
+        })
+      );
+      logger.debug(
+        `➕ Data point added (rt): pm2.5=${currentData.pm25}, speed=${speed.toFixed(2)} m/s, moving=${isMoving}`
+      );
+
       lastDataRef.current = { pm25: currentData.pm25, timestamp: ts };
     })();
   }, [isRecording, currentData, latestLocation, recordingFrequency, updateContextIfNeeded, addDataPoint]);
@@ -120,8 +130,15 @@ export function RecordingDataCollector() {
           latestLocation || undefined,
           { location: selectedLocation, activity: selectedActivity }
         );
+        const age = now - (lastSampleTimeRef.current || 0);
         lastSampleTimeRef.current = now;
-        logger.debug('⏱️ Watchdog added data point due to stalled stream');
+        // Emit heartbeat for watchdog action
+        window.dispatchEvent(
+          new CustomEvent('recording:data-point', {
+            detail: { source: 'watchdog', ts: now, pm25: currentData.pm25 },
+          })
+        );
+        logger.debug(`⏱️ Watchdog added data point due to stalled stream (age=${(age/1000).toFixed(1)}s)`);
       }
     }, 3000);
     return () => clearInterval(id);

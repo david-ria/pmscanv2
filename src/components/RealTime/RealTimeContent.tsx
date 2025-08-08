@@ -28,6 +28,7 @@ import { MapGraphToggle } from '@/components/RealTime/MapGraphToggle';
 import { LazyContextSelectors } from '@/components/RealTime/LazyContextSelectors';
 import { LazyAutoContextDisplay } from '@/components/RealTime/LazyAutoContextDisplay';
 import { LazyDataLogger } from '@/components/RealTime/LazyDataLogger';
+import { RecordingHeartbeat } from '@/components/RealTime/RecordingHeartbeat';
 
 interface RealTimeContentProps {
   onUiReady: () => void;
@@ -248,6 +249,7 @@ export default function RealTimeContent({ onUiReady }: RealTimeContentProps) {
 
   return (
     <div>
+      <RecordingHeartbeat />
       {(isRecording || localStorage.getItem('recording-confirmed') === 'true') ? (
         <MapGraphToggle
           showGraph={showGraph}
