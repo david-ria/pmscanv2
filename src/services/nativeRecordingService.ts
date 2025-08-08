@@ -102,6 +102,12 @@ class NativeRecordingService {
     };
 
     this.recordingData.push(entry);
+    
+    // Trigger React context update by dispatching custom event
+    window.dispatchEvent(new CustomEvent('nativeDataAdded', { 
+      detail: { entry, totalCount: this.recordingData.length } 
+    }));
+    
     console.log('📊 Native data point added. Total:', this.recordingData.length);
   }
 

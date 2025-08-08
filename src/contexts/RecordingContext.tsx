@@ -37,13 +37,23 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   // Use native recording service instead of React hooks
   const [state, setState] = useState(() => nativeRecordingService.getState());
   
-  // Update state when native service changes
+  // Listen for native data events for immediate updates
   useEffect(() => {
+    const handleNativeDataAdded = () => {
+      setState(nativeRecordingService.getState());
+    };
+    
+    window.addEventListener('nativeDataAdded', handleNativeDataAdded);
+    
+    // Fallback: Update state periodically
     const interval = setInterval(() => {
       setState(nativeRecordingService.getState());
-    }, 1000); // Update every second
+    }, 2000); // Less frequent polling since we have event-based updates
     
-    return () => clearInterval(interval);
+    return () => {
+      window.removeEventListener('nativeDataAdded', handleNativeDataAdded);
+      clearInterval(interval);
+    };
   }, []);
 
   const startRecording = useCallback((frequency?: string) => {

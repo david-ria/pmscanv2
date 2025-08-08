@@ -91,13 +91,18 @@ export default function RealTime() {
 
   // Initialize native recording service
   useEffect(() => {
-    import('@/services/nativeRecordingService').then(({ nativeRecordingService }) => {
+    import('@/services/nativeRecordingService').then(({ nativeRecordingService, updateGlobalPMScanData }) => {
       nativeRecordingService.setDataCollectionCallback((pmData, location) => {
         // This callback runs on native JS timer, immune to tab focus
         nativeRecordingService.addDataPoint(pmData, latestLocation || undefined);
       });
+      
+      // Make sure PMScan data is globally available for native service
+      if (currentData) {
+        updateGlobalPMScanData(currentData);
+      }
     });
-  }, [latestLocation]);
+  }, [latestLocation, currentData]);
 
   // Only initialize autocontext if the user has enabled it
   const { settings: autoContextSettings } = useStorageSettings(
@@ -125,88 +130,18 @@ export default function RealTime() {
     return saved || missionContext.activity || '';
   });
 
-  // Add data to recording when new data comes in - with deduplication
-  const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
-
+  // Update global PMScan data for native service and sync context
   useEffect(() => {
-    if (isRecording && currentData && initialized) {
-      // Prevent duplicate data points by checking if this is actually new data
-      const currentTimestamp = currentData.timestamp.getTime();
-      const isDuplicate =
-        lastDataRef.current &&
-        lastDataRef.current.pm25 === currentData.pm25 &&
-        Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
-
-      if (!isDuplicate) {
-        logger.rateLimitedDebug(
-          'realTime.addData',
-          5000,
-          'Adding data point with location:',
-          latestLocation
-        );
-
-        // Update context at recording frequency and get the current context
-        const handleContextAndDataPoint = async () => {
-          // Calculate speed and movement from GPS data
-          let speed = 0;
-          let isMoving = false;
-          
-          if (latestLocation) {
-            const { updateLocationHistory } = await import('@/utils/speedCalculator');
-            const speedData = updateLocationHistory(
-              latestLocation.latitude,
-              latestLocation.longitude,
-              latestLocation.timestamp
-            );
-            speed = speedData.speed;
-            isMoving = speedData.isMoving;
-            
-            // Calculate speed and movement from GPS data (development logging only)
-            if (process.env.NODE_ENV === 'development' && latestLocation) {
-              console.log('🏃 Movement detection:', {
-                speed: `${speed} km/h`,
-                isMoving,
-                location: `${latestLocation.latitude}, ${latestLocation.longitude}`
-              });
-            }
-          }
-          
-          const automaticContext = await updateContextIfNeeded(
-            currentData,
-            latestLocation || undefined,
-            speed,
-            isMoving
-          );
-
-          // DO NOT override user's manual activity selection
-          // Auto context should be separate from manual tags
-
-          addDataPoint(
-            currentData,
-            latestLocation || undefined,
-            { location: selectedLocation, activity: selectedActivity },
-            automaticContext
-          );
-        };
-
-        handleContextAndDataPoint();
+    if (currentData && initialized) {
+      // Make current data globally available for native recording service
+      import('@/services/nativeRecordingService').then(({ updateGlobalPMScanData, nativeRecordingService }) => {
+        updateGlobalPMScanData(currentData);
         
-        lastDataRef.current = {
-          pm25: currentData.pm25,
-          timestamp: currentTimestamp,
-        };
-      }
+        // Update mission context in native service when user changes selections
+        nativeRecordingService.updateMissionContext(selectedLocation, selectedActivity);
+      });
     }
-  }, [
-    isRecording,
-    currentData,
-    latestLocation,
-    addDataPoint,
-    selectedLocation,
-    selectedActivity,
-    updateContextIfNeeded,
-    initialized,
-  ]);
+  }, [currentData, selectedLocation, selectedActivity, initialized]);
 
   // Clear location history when recording starts for fresh speed calculations
   useEffect(() => {
