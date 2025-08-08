@@ -98,7 +98,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
   const url = URL.createObjectURL(blob);
 
   // Create filename using new naming convention: [DeviceID]_[YYYYMMDD]_[HHMMSS].csv
-  const startTime = mission.startTime;
+  const startTime = mission.startTime instanceof Date ? mission.startTime : new Date(mission.startTime);
   const deviceId = 'PMScan'; // Default device ID - could be enhanced to use actual device name
   const dateStr =
     startTime.getFullYear().toString() +

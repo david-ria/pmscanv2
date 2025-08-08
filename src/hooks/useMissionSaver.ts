@@ -28,13 +28,21 @@ export function useMissionSaver() {
     const oldestDataPoint = recordingData[recordingData.length - 1];
     const newestDataPoint = recordingData[0];
     
+    // Ensure timestamps are proper Date objects
+    const oldestTimestamp = oldestDataPoint.timestamp instanceof Date 
+      ? oldestDataPoint.timestamp 
+      : new Date(oldestDataPoint.timestamp);
+    const newestTimestamp = newestDataPoint.timestamp instanceof Date 
+      ? newestDataPoint.timestamp 
+      : new Date(newestDataPoint.timestamp);
+    
     // Use the earliest timestamp between recording start and oldest data point as start time
-    const actualStartTime = recordingStartTime < oldestDataPoint.timestamp 
+    const actualStartTime = recordingStartTime < oldestTimestamp 
       ? recordingStartTime 
-      : oldestDataPoint.timestamp;
+      : oldestTimestamp;
     
     // Use the newest data point timestamp as end time
-    const endTime = newestDataPoint.timestamp;
+    const endTime = newestTimestamp;
     
     // Debug logging for context flow
     console.log('🔍 Mission saving - context analysis:', {
