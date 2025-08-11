@@ -29,13 +29,21 @@ export function useSensorData() {
   const [sensorData, setSensorData] = useState<SensorData>({});
   const [gpsAccuracy, setGpsAccuracy] = useState<GPSAccuracy>({ isLowAccuracy: false });
   const [isListening, setIsListening] = useState(false);
+  const [cleanupFunctions, setCleanupFunctions] = useState<Array<{ remove: () => void }>>([]);
 
   const startSensorListening = useCallback(async () => {
+    // Prevent starting listeners twice
+    if (isListening) {
+      logger.debug('🔄 Sensors already listening, skipping initialization');
+      return;
+    }
+
     try {
       setIsListening(true);
+      const subs: Array<{ remove: () => void }> = [];
       
-      // 1. Vraies données d'accélération via Capacitor Motion
-      await Motion.addListener('accel', (event) => {
+      // 1. Motion acceleration listener via Capacitor
+      const accelSub = await Motion.addListener('accel', (event) => {
         const accZ = event.acceleration.z;
         setSensorData(prev => ({
           ...prev,
@@ -43,13 +51,14 @@ export function useSensorData() {
           acceleration_y: event.acceleration.y,
           acceleration_z: accZ,
           totalAcceleration_z: accZ,
-          // Calcul amélioré de la gravité (filtre passe-bas simple)
+          // Enhanced gravity calculation (simple low-pass filter)
           gravity_z: prev.gravity_z ? prev.gravity_z * 0.8 + accZ * 0.2 : accZ
         }));
       });
+      subs.push(accelSub);
 
-      // 2. Vraies données de rotation via Capacitor Motion
-      await Motion.addListener('orientation', (event) => {
+      // 2. Motion orientation listener via Capacitor
+      const orientationSub = await Motion.addListener('orientation', (event) => {
         setSensorData(prev => ({
           ...prev,
           rotationRate_x: event.alpha || 0,
@@ -57,19 +66,20 @@ export function useSensorData() {
           rotationRate_z: event.gamma || 0
         }));
       });
+      subs.push(orientationSub);
 
-      // 3. Vraies données magnétomètre via DeviceOrientationEvent (Web API native)
+      // 3. Device orientation via Web API with proper cleanup
       if ('DeviceOrientationEvent' in window) {
         const handleOrientation = (event: DeviceOrientationEvent) => {
           if ((event as any).webkitCompassHeading !== undefined || event.alpha !== null) {
-            // Calcul approximatif du magnétomètre à partir de l'orientation
+            // Approximate magnetometer calculation from orientation
             const heading = (event as any).webkitCompassHeading || event.alpha || 0;
             const beta = event.beta || 0;
             const gamma = event.gamma || 0;
             
             setSensorData(prev => ({
               ...prev,
-              // Conversion orientation -> magnétomètre (approximation)
+              // Convert orientation -> magnetometer (approximation)
               magnetometer_x: Math.sin(heading * Math.PI / 180) * 50,
               magnetometer_y: -Math.cos(heading * Math.PI / 180) * 40 + beta * 0.5,
               magnetometer_z: Math.cos(beta * Math.PI / 180) * 30 + gamma * 0.3
@@ -77,26 +87,59 @@ export function useSensorData() {
           }
         };
 
-        window.addEventListener('deviceorientationabsolute', handleOrientation);
-        // Fallback pour iOS
-        window.addEventListener('deviceorientation', handleOrientation);
+        // Check for iOS permission requirement
+        if (typeof DeviceOrientationEvent !== 'undefined' && 
+            typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+          try {
+            const permission = await (DeviceOrientationEvent as any).requestPermission();
+            if (permission === 'granted') {
+              window.addEventListener('deviceorientationabsolute', handleOrientation);
+              window.addEventListener('deviceorientation', handleOrientation);
+            } else {
+              logger.warn('⚠️ Device orientation permission denied');
+            }
+          } catch (error) {
+            logger.error('❌ Error requesting device orientation permission:', error);
+          }
+        } else {
+          // Non-iOS devices
+          window.addEventListener('deviceorientationabsolute', handleOrientation);
+          window.addEventListener('deviceorientation', handleOrientation);
+        }
+
+        // Add cleanup for window event listeners
+        subs.push({
+          remove: () => {
+            window.removeEventListener('deviceorientationabsolute', handleOrientation);
+            window.removeEventListener('deviceorientation', handleOrientation);
+          }
+        });
       }
 
-      logger.debug('🎯 Capteurs activés avec données réelles');
+      // Store cleanup functions for later removal
+      setCleanupFunctions(subs);
+      logger.debug('🎯 Sensors activated with real data');
     } catch (error) {
-      logger.error('❌ Erreur activation capteurs:', error);
+      logger.error('❌ Error activating sensors:', error);
+      setIsListening(false);
     }
-  }, []);
+  }, [isListening]);
 
   const stopSensorListening = useCallback(async () => {
     try {
+      // Remove all Capacitor Motion listeners
       await Motion.removeAllListeners();
+      
+      // Remove all custom cleanup functions (window event listeners)
+      cleanupFunctions.forEach(cleanup => cleanup.remove());
+      setCleanupFunctions([]);
+      
       setIsListening(false);
-      logger.debug('🔇 Capteurs désactivés');
+      logger.debug('🔇 All sensors deactivated and cleaned up');
     } catch (error) {
-      logger.error('❌ Erreur désactivation capteurs:', error);
+      logger.error('❌ Error deactivating sensors:', error);
     }
-  }, []);
+  }, [cleanupFunctions]);
 
   // Initialiser la référence d'altitude (surface) avant de descendre underground
   const initializeReference = useCallback((gpsAltitude?: number) => {
@@ -193,11 +236,14 @@ export function useSensorData() {
     }
   }, [isListening, sensorData.acceleration_z, updateRelativeAltitude]);
 
+  // Cleanup effect - ensures all listeners are removed on unmount
   useEffect(() => {
     return () => {
-      stopSensorListening();
+      // Cleanup all listeners when component unmounts
+      Motion.removeAllListeners().catch(console.error);
+      cleanupFunctions.forEach(cleanup => cleanup.remove());
     };
-  }, [stopSensorListening]);
+  }, [cleanupFunctions]);
 
   return {
     sensorData,
