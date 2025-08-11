@@ -329,15 +329,6 @@ export default function RealTime() {
     );
   }
 
-  // Debug logging for troubleshooting
-  console.log('🔍 RealTime Debug Info:', {
-    initialized,
-    isConnected,
-    currentData: currentData ? { pm25: currentData.pm25, pm10: currentData.pm10 } : null,
-    hasDevice: !!device,
-    error: error ? String(error) : null
-  });
-
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
       {/* Map/Graph Section - Show MapGraphToggle when recording is active */}
