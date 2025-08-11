@@ -3,10 +3,9 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy } from 'react';
 import { AppProviders } from '@/components/AppProviders';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-// Removed broken import that was causing 404 errors
 import { useAuth } from '@/contexts/AuthContext';
 
 // Lazy load page components for code splitting
@@ -63,16 +62,6 @@ const MinimalSkeleton = () => (
 );
 
 const App = () => {
-  // Simple preloading without dynamic imports to avoid 404 errors
-  useEffect(() => {
-    // Basic preloading during idle time
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => {
-        // Preload basic UI components
-        import('@radix-ui/react-dialog').catch(() => {});
-      }, { timeout: 2000 });
-    }
-  }, []);
 
   return (
     <ErrorBoundary>
@@ -94,19 +83,6 @@ const App = () => {
 const AppRoutes = () => {
   const location = useLocation();
   const { user, loading } = useAuth();
-  
-  // Simple route change handling without dynamic imports
-  useEffect(() => {
-    // Basic route-based preloading
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => {
-        // Preload route-specific components during idle time
-        if (location.pathname === '/analysis') {
-          import('recharts').catch(() => {});
-        }
-      }, { timeout: 1000 });
-    }
-  }, [location.pathname]);
 
   if (loading) {
     // console.log('🔄 Auth loading...');
