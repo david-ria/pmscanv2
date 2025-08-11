@@ -7,9 +7,20 @@ const ALLOWED_ORIGINS = new Set([
   'http://localhost:5173'
 ]);
 
+function isAllowedOrigin(origin: string): boolean {
+  try {
+    if (!origin) return false;
+    if (ALLOWED_ORIGINS.has(origin)) return true;
+    // Allow Lovable preview domains
+    return origin.endsWith('.lovableproject.com') || origin.endsWith('.lovable.app');
+  } catch {
+    return false;
+  }
+}
+
 function corsHeadersFor(req: Request) {
   const origin = req.headers.get('Origin') ?? '';
-  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : '';
+  const allowed = isAllowedOrigin(origin) ? origin : '';
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',

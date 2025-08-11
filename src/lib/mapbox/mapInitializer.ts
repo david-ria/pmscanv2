@@ -26,24 +26,14 @@ export const initializeMap = async (
 
     const { supabase } = supabaseModule;
 
-    logger.debug('🗺️ Step 2: Mapbox token fetch temporarily disabled...');
-    // Temporarily disabled to prevent CORS spam
-    throw new Error('Mapbox token fetching temporarily disabled');
-    
-    /*
-    const { data, error: tokenError } =
-      await supabase.functions.invoke('get-mapbox-token');
+    // Step 2: Fetch Mapbox token from edge function
+    const { data, error: tokenError } = await supabase.functions.invoke('get-mapbox-token');
 
-    logger.debug('🗺️ Step 3: Edge function response received:', {
-      data,
-      error: tokenError,
-    });
+    logger.debug('🗺️ Step 3: Edge function response received:', { data, error: tokenError });
 
     if (tokenError) {
       console.error('🗺️ ❌ Edge function error:', tokenError);
-      throw new Error(
-        `Edge function error: ${tokenError.message || tokenError}`
-      );
+      throw new Error(`Edge function error: ${tokenError.message || tokenError}`);
     }
 
     if (!data?.token) {
@@ -54,7 +44,7 @@ export const initializeMap = async (
     logger.debug('🗺️ ✅ Successfully received Mapbox token');
     logger.debug('🗺️ Token length:', data.token?.length);
 
-    logger.debug('🗺️ Step 4: Setting Mapbox access token...');
+    // Step 4: Set Mapbox access token
     mapboxgl.accessToken = data.token;
 
     logger.debug('🗺️ Step 4: Determining map initial state...');
@@ -84,13 +74,6 @@ export const initializeMap = async (
         logger.debug('🗺️ Using default map center (Paris)');
       }
     }
-    */
-
-    // Fallback map initialization without token
-    const center: [number, number] = currentLocation 
-      ? [currentLocation.longitude, currentLocation.latitude]
-      : [2.3522, 48.8566];
-    const zoom = currentLocation ? 15 : 10;
 
     logger.debug('🗺️ Step 5: Creating Mapbox map instance...');
     logger.debug('🗺️ Map style:', MAP_STYLES.LIGHT);
