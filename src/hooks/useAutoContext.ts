@@ -87,33 +87,35 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   // Save settings to localStorage whenever they change - handled by useStorageSettings
 
   // Load WiFi SSIDs from user profile
-  useEffect(() => {
-    const loadSSIDs = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return;
+  const loadSSIDs = useCallback(async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
 
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('home_wifi_ssid, work_wifi_ssid')
-          .eq('id', user.id)
-          .single();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('home_wifi_ssid, work_wifi_ssid')
+        .eq('id', user.id)
+        .single();
 
-        if (!error && data) {
-          updateSettings({
-            homeWifiSSID: data.home_wifi_ssid || settings.homeWifiSSID,
-            workWifiSSID: data.work_wifi_ssid || settings.workWifiSSID,
-          });
-        }
-      } catch (err) {
-        console.error('Failed to load profile SSIDs', err);
+      if (!error && data) {
+        updateSettings({
+          homeWifiSSID: data.home_wifi_ssid || settings.homeWifiSSID,
+          workWifiSSID: data.work_wifi_ssid || settings.workWifiSSID,
+        });
       }
-    };
+    } catch (error) {
+      console.error('Error loading WiFi SSIDs:', error);
+    }
+  }, [updateSettings]);
 
-    loadSSIDs();
-  }, []);
+  useEffect(() => {
+    if (settings.enabled) {
+      loadSSIDs();
+    }
+  }, [loadSSIDs, settings.enabled]);
 
   useEffect(() => {
     if (settings.mlEnabled && !model) {
@@ -363,7 +365,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   };
 
   // Persist WiFi SSID to user profile in database
-  const persistSSID = useCallback(
+  const saveSSIDToProfile = useCallback(
     async (field: 'home_wifi_ssid' | 'work_wifi_ssid', ssid: string) => {
       try {
         const {
@@ -377,10 +379,10 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
           .eq('id', user.id);
 
         if (error) {
-          console.error('Failed to persist SSID', error);
+          console.error('Error saving SSID to profile:', error);
         }
-      } catch (err) {
-        console.error('Failed to persist SSID', err);
+      } catch (error) {
+        console.error('Error saving SSID to profile:', error);
       }
     },
     []
@@ -417,7 +419,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
             `🏠 Auto-detected HOME WiFi: ${ssid} (morning: ${times.morning}, evening: ${times.evening}, weekend: ${times.weekend})`
           );
           updateSettings({ homeWifiSSID: ssid });
-          persistSSID('home_wifi_ssid', ssid);
+          saveSSIDToProfile('home_wifi_ssid', ssid);
         }
 
         if (
@@ -429,11 +431,11 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
             `🏢 Auto-detected WORK WiFi: ${ssid} (workday: ${times.workday}, morning: ${times.morning}, evening: ${times.evening})`
           );
           updateSettings({ workWifiSSID: ssid });
-          persistSSID('work_wifi_ssid', ssid);
+          saveSSIDToProfile('work_wifi_ssid', ssid);
         }
       }
     },
-    [settings.homeWifiSSID, settings.workWifiSSID, updateSettings, persistSSID]
+    [settings.homeWifiSSID, settings.workWifiSSID, updateSettings, saveSSIDToProfile]
   );
 
   // Pure context determination function without side effects
