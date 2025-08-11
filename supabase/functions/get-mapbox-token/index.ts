@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const ALLOWED_ORIGINS = new Set([
   'https://staging.example.com',
@@ -22,6 +23,31 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeadersFor(req) })
   }
+
+  // Authenticate user
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const serviceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const auth = req.headers.get('Authorization') || '';
+  
+  console.log('Validating user authentication...')
+  const supabase = createClient(supabaseUrl, serviceRole, { 
+    global: { headers: { Authorization: auth } } 
+  });
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (!user || authError) {
+    console.log('Authentication failed:', { hasUser: !!user, authError: authError?.message });
+    return new Response(
+      JSON.stringify({ error: 'Authentication required' }),
+      { 
+        status: 401, 
+        headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+  
+  console.log('User authenticated:', user.id);
 
   try {
     const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN')
