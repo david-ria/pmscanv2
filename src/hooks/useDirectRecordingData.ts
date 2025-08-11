@@ -12,7 +12,7 @@ import { logPollingUpdate, throttledLog } from '@/utils/debugLogger';
 export function useDirectRecordingData(isRecording: boolean, recordingFrequency: string = '10s') {
   const [recordingData, setRecordingData] = useState<any[]>([]);
   const [dataCount, setDataCount] = useState(0);
-  const lastHashRef = useRef<string>('');
+  const [lastDataHash, setLastDataHash] = useState<string>('');
   const intervalRef = useRef<number | null>(null);
   const isVisibleRef = useRef<boolean>(true);
   
@@ -44,7 +44,7 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
               latestEntry?.pmData?.timestamp,
               latestEntry?.pmData?.pm25
             );
-            lastHashRef.current = dataHash;
+            setLastDataHash(dataHash);
             
             throttledLog('visibility-data-sync', `📊 Refreshed with ${currentCount} data points after visibility restore`);
           } catch (error) {
@@ -80,7 +80,7 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
         );
         
         // Only update if data actually changed
-        if (dataHash !== lastHashRef.current) {
+        if (dataHash !== lastDataHash) {
           if (currentCount > 0) {
             logPollingUpdate('Direct polling', currentCount, latestEntry?.pmData?.pm25);
           }
@@ -88,7 +88,7 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
           // Force new reference with fresh deep copy to ensure React re-renders
           setRecordingData(currentData.map(entry => ({ ...entry })));
           setDataCount(currentCount);
-          lastHashRef.current = dataHash;
+          setLastDataHash(dataHash);
         }
       } catch (error) {
         console.error('Error polling recording data:', error);
@@ -111,7 +111,7 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
       if (currentData.length === 0) {
         setRecordingData([]);
         setDataCount(0);
-        lastHashRef.current = '';
+        setLastDataHash('');
       } else {
         // Get final data when not recording
         pollData();
