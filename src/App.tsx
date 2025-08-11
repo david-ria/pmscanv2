@@ -35,7 +35,7 @@ const CrashRecoveryInitializer = lazy(() =>
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
 
-// Import skeleton screens
+// Import skeleton screens (kept but not used in fallbacks to avoid nested suspensions)
 const AppLayoutSkeleton = lazy(() => 
   import('@/components/shared/SkeletonScreens').then(module => ({ default: module.AppLayoutSkeleton }))
 );
@@ -124,7 +124,7 @@ const AppRoutes = () => {
         path="/*"
         element={
           user ? (
-            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
+            <Suspense fallback={<MinimalSkeleton />}>
               <RecordingProvider>
                 <CrashRecoveryInitializer />
                 <div className="min-h-screen bg-background">
@@ -134,7 +134,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/" 
                         element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><RealTimePageSkeleton /></Suspense>}>
+                          <Suspense fallback={<MinimalSkeleton />}>
                             <RealTime />
                           </Suspense>
                         } 
@@ -142,7 +142,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/history" 
                         element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><HistoryPageSkeleton /></Suspense>}>
+                          <Suspense fallback={<MinimalSkeleton />}>
                             <History />
                           </Suspense>
                         } 
@@ -150,7 +150,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/analysis" 
                         element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AnalysisPageSkeleton /></Suspense>}>
+                          <Suspense fallback={<MinimalSkeleton />}>
                             <Analysis />
                           </Suspense>
                         } 
@@ -158,7 +158,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/groups" 
                         element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><GroupsPageSkeleton /></Suspense>}>
+                          <Suspense fallback={<MinimalSkeleton />}>
                             <Groups />
                           </Suspense>
                         } 
@@ -166,7 +166,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/profile" 
                         element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
+                          <Suspense fallback={<MinimalSkeleton />}>
                             <Profile />
                           </Suspense>
                         } 
@@ -174,7 +174,7 @@ const AppRoutes = () => {
                       <Route
                         path="/custom-thresholds"
                         element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
+                          <Suspense fallback={<MinimalSkeleton />}>
                             <CustomThresholds />
                           </Suspense>
                         }
@@ -182,7 +182,7 @@ const AppRoutes = () => {
                       <Route
                         path="/custom-alerts"
                         element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
+                          <Suspense fallback={<MinimalSkeleton />}>
                             <CustomAlerts />
                           </Suspense>
                         }
@@ -190,7 +190,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/my-settings" 
                         element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
+                          <Suspense fallback={<MinimalSkeleton />}>
                             <MySettings />
                           </Suspense>
                         } 
