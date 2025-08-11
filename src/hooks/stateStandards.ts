@@ -7,6 +7,8 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { AppError, handleError } from '@/utils/errorManager';
 import { logger } from '@/utils/professionalLogger';
 import { AsyncOperationState, ValidationSchema, FormState } from '@/types';
+import { getVersionedItem, setVersionedItem, removeVersionedItem } from '@/lib/versionedStorage';
+import { z } from 'zod';
 
 // === ASYNC STATE HOOK ===
 function useAsyncState<T>(
@@ -180,10 +182,34 @@ function useSafeStorage<T>(
     stringify: (value: T) => string;
   } = JSON
 ): [T, (value: T) => void, () => void] {
+  // Use versioned storage for better state management
   const [state, setState] = useState<T>(() => {
     try {
+      // Try to get from versioned storage first
+      const versionedData = getVersionedItem(key as any, {
+        schema: z.unknown(),
+        migrationStrategy: 'reset',
+      });
+      
+      if (versionedData !== null) {
+        return serializer.parse(JSON.stringify(versionedData));
+      }
+      
+      // Fallback to legacy storage
       const item = localStorage.getItem(key);
-      return item ? serializer.parse(item) : defaultValue;
+      const parsed = item ? serializer.parse(item) : defaultValue;
+      
+      // Migrate to versioned storage
+      if (item) {
+        try {
+          setVersionedItem(key as any, parsed);
+          localStorage.removeItem(key); // Clean up legacy key
+        } catch (error) {
+          logger.warn('Failed to migrate to versioned storage', { key, error });
+        }
+      }
+      
+      return parsed;
     } catch (error) {
       logger.warn('Failed to parse stored value', { key, error });
       return defaultValue;
@@ -193,7 +219,7 @@ function useSafeStorage<T>(
   const setValue = useCallback((value: T) => {
     try {
       setState(value);
-      localStorage.setItem(key, serializer.stringify(value));
+      setVersionedItem(key as any, value);
     } catch (error) {
       logger.error('Failed to store value', handleError(error), { key, value });
     }
@@ -202,7 +228,7 @@ function useSafeStorage<T>(
   const removeValue = useCallback(() => {
     try {
       setState(defaultValue);
-      localStorage.removeItem(key);
+      removeVersionedItem(key as any);
     } catch (error) {
       logger.error('Failed to remove stored value', handleError(error), { key });
     }

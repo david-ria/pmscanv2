@@ -1,16 +1,47 @@
 import { MissionData } from './dataStorage';
 import * as logger from '@/utils/logger';
+import { getVersionedItem, setVersionedItem, removeVersionedItem, STORAGE_SCHEMAS, STORAGE_KEYS } from './versionedStorage';
 
-const MISSIONS_KEY = 'pmscan_missions';
-const PENDING_SYNC_KEY = 'pmscan_pending_sync';
+// Legacy keys for migration
+const LEGACY_MISSIONS_KEY = 'pmscan_missions';
+const LEGACY_PENDING_SYNC_KEY = 'pmscan_pending_sync';
 
 export function getLocalMissions(): MissionData[] {
   try {
-    const stored = localStorage.getItem(MISSIONS_KEY);
+    // Try versioned storage first
+    const versionedMissions = getVersionedItem('MISSIONS', {
+      schema: STORAGE_SCHEMAS.MISSIONS,
+      migrationStrategy: 'migrate',
+      migrator: (oldData: unknown, oldVersion: number) => {
+        logger.info(`Migrating missions from version ${oldVersion} to current`);
+        
+        // Handle legacy format
+        if (Array.isArray(oldData)) {
+          return oldData.map((m: any) => ({
+            ...m,
+            startTime: new Date(m.startTime),
+            endTime: new Date(m.endTime),
+            measurements: m.measurements?.map((measurement: any) => ({
+              ...measurement,
+              timestamp: new Date(measurement.timestamp),
+            })) || [],
+          }));
+        }
+        
+        return oldData as MissionData[];
+      },
+    });
+
+    if (versionedMissions) {
+      return versionedMissions;
+    }
+
+    // Fallback to legacy storage and migrate
+    const stored = localStorage.getItem(LEGACY_MISSIONS_KEY);
     if (!stored) return [];
 
     const missions = JSON.parse(stored);
-    return missions.map((m: Partial<MissionData> & { startTime: string; endTime: string; measurements: Array<{ timestamp: string }> }) => ({
+    const formatted = missions.map((m: Partial<MissionData> & { startTime: string; endTime: string; measurements: Array<{ timestamp: string }> }) => ({
       ...m,
       startTime: new Date(m.startTime),
       endTime: new Date(m.endTime),
@@ -19,6 +50,12 @@ export function getLocalMissions(): MissionData[] {
         timestamp: new Date(measurement.timestamp),
       })),
     }));
+
+    // Migrate to versioned storage and clean up legacy
+    setVersionedItem('MISSIONS', formatted);
+    localStorage.removeItem(LEGACY_MISSIONS_KEY);
+    
+    return formatted;
   } catch (error) {
     console.error('Error reading local missions:', error);
     return [];
@@ -27,7 +64,7 @@ export function getLocalMissions(): MissionData[] {
 
 export function saveLocalMissions(missions: MissionData[]): void {
   try {
-    localStorage.setItem(MISSIONS_KEY, JSON.stringify(missions));
+    setVersionedItem('MISSIONS', missions);
   } catch (quotaError) {
     if (
       quotaError instanceof DOMException &&
@@ -36,7 +73,7 @@ export function saveLocalMissions(missions: MissionData[]): void {
       console.warn('LocalStorage quota exceeded, cleaning up old missions...');
       cleanupOldMissions(missions);
       // Try again after cleanup
-      localStorage.setItem(MISSIONS_KEY, JSON.stringify(missions));
+      setVersionedItem('MISSIONS', missions);
     } else {
       throw quotaError;
     }
@@ -115,8 +152,33 @@ export function formatDatabaseMission(dbMission: {
 
 export function getPendingSyncIds(): string[] {
   try {
-    const stored = localStorage.getItem(PENDING_SYNC_KEY);
-    return stored ? JSON.parse(stored) : [];
+    // Try versioned storage first
+    const versionedPending = getVersionedItem('PENDING_SYNC', {
+      schema: STORAGE_SCHEMAS.PENDING_SYNC,
+      migrationStrategy: 'migrate',
+      migrator: (oldData: unknown) => {
+        if (Array.isArray(oldData)) {
+          return oldData.filter((id): id is string => typeof id === 'string');
+        }
+        return [];
+      },
+    });
+
+    if (versionedPending) {
+      return versionedPending;
+    }
+
+    // Fallback to legacy storage
+    const stored = localStorage.getItem(LEGACY_PENDING_SYNC_KEY);
+    if (!stored) return [];
+    
+    const parsed = JSON.parse(stored);
+    
+    // Migrate to versioned storage
+    setVersionedItem('PENDING_SYNC', parsed);
+    localStorage.removeItem(LEGACY_PENDING_SYNC_KEY);
+    
+    return parsed;
   } catch {
     return [];
   }
@@ -126,18 +188,23 @@ export function addToPendingSync(missionId: string): void {
   const pending = getPendingSyncIds();
   if (!pending.includes(missionId)) {
     pending.push(missionId);
-    localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pending));
+    setVersionedItem('PENDING_SYNC', pending);
   }
 }
 
 export function removeFromPendingSync(missionId: string): void {
   const pending = getPendingSyncIds().filter((id) => id !== missionId);
-  localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pending));
+  setVersionedItem('PENDING_SYNC', pending);
 }
 
 export function clearLocalStorage(): void {
-  localStorage.removeItem(MISSIONS_KEY);
-  localStorage.removeItem(PENDING_SYNC_KEY);
+  removeVersionedItem('MISSIONS');
+  removeVersionedItem('PENDING_SYNC');
+  
+  // Also clean up legacy keys
+  localStorage.removeItem(LEGACY_MISSIONS_KEY);
+  localStorage.removeItem(LEGACY_PENDING_SYNC_KEY);
+  
   logger.debug('Local storage cleared after CSV export');
 }
 
@@ -151,12 +218,12 @@ export function cleanupOldMissions(missions: MissionData[]): void {
   logger.debug(
     `Cleaning up old missions, keeping ${recentMissions.length} most recent ones`
   );
-  localStorage.setItem(MISSIONS_KEY, JSON.stringify(recentMissions));
+  setVersionedItem('MISSIONS', recentMissions);
 
   // Update pending sync list to only include kept missions
   const keptMissionIds = recentMissions.map((m) => m.id);
   const updatedPending = getPendingSyncIds().filter((id) =>
     keptMissionIds.includes(id)
   );
-  localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(updatedPending));
+  setVersionedItem('PENDING_SYNC', updatedPending);
 }

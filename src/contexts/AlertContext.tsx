@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import * as logger from '@/utils/logger';
+import { getMigratedItem, setMigratedItem } from '@/lib/storageMigration';
 
 export interface AlertSettings {
   pm1: {
@@ -146,39 +147,44 @@ export function AlertProvider({ children }: AlertProviderProps) {
     return alertSettings;
   };
 
-  // Load alert settings from localStorage on mount and request notification permissions
+  // Load alert settings from versioned storage on mount and request notification permissions
   useEffect(() => {
-    const savedSettings = localStorage.getItem('alertSettings');
-    const savedGlobalEnabled = localStorage.getItem('globalAlertsEnabled');
+    try {
+      const savedSettings = getMigratedItem('alertSettings', {});
+      const savedGlobalEnabled = getMigratedItem('globalAlertsEnabled', true);
 
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        setAlertSettings(parsedSettings);
-      } catch (error) {
-        console.error('Failed to parse saved alert settings:', error);
+      if (savedSettings && Object.keys(savedSettings).length > 0) {
+        setAlertSettings(savedSettings);
       }
-    }
 
-    if (savedGlobalEnabled !== null) {
-      setGlobalAlertsEnabled(savedGlobalEnabled === 'true');
-    }
+      setGlobalAlertsEnabled(savedGlobalEnabled);
 
-    // Request notification permission if not already granted
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then((permission) => {
-        logger.debug('Notification permission:', permission);
-      });
+      // Request notification permission if not already granted
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then((permission) => {
+          logger.debug('Notification permission:', permission);
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to load alert settings from versioned storage:', error);
     }
   }, []);
 
-  // Save alert settings to localStorage whenever they change
+  // Save alert settings to versioned storage whenever they change
   useEffect(() => {
-    localStorage.setItem('alertSettings', JSON.stringify(alertSettings));
+    try {
+      setMigratedItem('alertSettings', alertSettings);
+    } catch (error) {
+      logger.error('Failed to save alert settings to versioned storage:', error);
+    }
   }, [alertSettings]);
 
   useEffect(() => {
-    localStorage.setItem('globalAlertsEnabled', globalAlertsEnabled.toString());
+    try {
+      setMigratedItem('globalAlertsEnabled', globalAlertsEnabled);
+    } catch (error) {
+      logger.error('Failed to save global alerts enabled to versioned storage:', error);
+    }
   }, [globalAlertsEnabled]);
 
   const updateAlertSettings = (newSettings: AlertSettings) => {
