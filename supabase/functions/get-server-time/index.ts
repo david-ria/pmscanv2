@@ -1,9 +1,9 @@
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeadersFor } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeadersFor(req) });
   }
 
   try {
@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
       }),
       {
         headers: {
-          ...corsHeaders,
+          ...corsHeadersFor(req),
           'Content-Type': 'application/json',
         },
       }
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       {
         status: 500,
         headers: {
-          ...corsHeaders,
+          ...corsHeadersFor(req),
           'Content-Type': 'application/json',
         },
       }

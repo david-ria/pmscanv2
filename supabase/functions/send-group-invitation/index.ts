@@ -2,10 +2,21 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "npm:resend@2.0.0";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const ALLOWED_ORIGINS = new Set([
+  'https://lovable.dev',
+  'http://localhost:8080',
+  'http://localhost:5173'
+]);
+
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get('Origin') ?? '';
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : '';
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+}
 
 interface InvitationRequest {
   groupId: string;
@@ -16,20 +27,20 @@ interface InvitationRequest {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Error response helper
-function errorResponse(errorType: string, message: string, status: number) {
+function errorResponse(errorType: string, message: string, status: number, req: Request) {
   console.error(`Error (${status}):`, { errorType, message });
   return new Response(
     JSON.stringify({ error: errorType, message }),
     { 
       status,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' }
     }
   );
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeadersFor(req) });
   }
 
   try {
@@ -38,22 +49,22 @@ serve(async (req) => {
     try {
       requestData = await req.json();
     } catch {
-      return errorResponse('invalid_request', 'Invalid JSON in request body', 400);
+      return errorResponse('invalid_request', 'Invalid JSON in request body', 400, req);
     }
 
     const { groupId, email } = requestData;
 
     // Validate input parameters
     if (!groupId || typeof groupId !== 'string' || groupId.trim() === '') {
-      return errorResponse('missing_group_id', 'Group ID is required', 422);
+      return errorResponse('missing_group_id', 'Group ID is required', 422, req);
     }
 
     if (!email || typeof email !== 'string' || email.trim() === '') {
-      return errorResponse('missing_email', 'Email is required', 422);
+      return errorResponse('missing_email', 'Email is required', 422, req);
     }
 
     if (!EMAIL_REGEX.test(email.trim())) {
-      return errorResponse('invalid_email', 'Invalid email format', 422);
+      return errorResponse('invalid_email', 'Invalid email format', 422, req);
     }
 
     const normalizedEmail = email.trim().toLowerCase();
@@ -67,7 +78,7 @@ serve(async (req) => {
     // Get the current user
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      return errorResponse('unauthorized', 'Authentication required', 401);
+      return errorResponse('unauthorized', 'Authentication required', 401, req);
     }
 
     // Verify group exists and get group details
@@ -78,7 +89,7 @@ serve(async (req) => {
       .single();
 
     if (groupError || !group) {
-      return errorResponse('group_not_found', 'Group not found or access denied', 404);
+      return errorResponse('group_not_found', 'Group not found or access denied', 404, req);
     }
 
     // Check if user has permission to invite (is creator or admin of the group)
@@ -97,12 +108,12 @@ serve(async (req) => {
     }
 
     if (!hasPermission) {
-      return errorResponse('insufficient_permissions', 'You do not have permission to invite users to this group', 403);
+      return errorResponse('insufficient_permissions', 'You do not have permission to invite users to this group', 403, req);
     }
 
     // Prevent self-invitation
     if (normalizedEmail === user.email?.toLowerCase()) {
-      return errorResponse('self_invitation', 'You cannot invite yourself to a group', 422);
+      return errorResponse('self_invitation', 'You cannot invite yourself to a group', 422, req);
     }
 
     // Check if invitation already exists for this email and group
@@ -116,7 +127,7 @@ serve(async (req) => {
       .single();
 
     if (existingInvitation) {
-      return errorResponse('invitation_pending', 'An invitation is already pending for this email', 409);
+      return errorResponse('invitation_pending', 'An invitation is already pending for this email', 409, req);
     }
 
     // Check if user with this email is already a member by checking existing users
@@ -136,7 +147,7 @@ serve(async (req) => {
         .single();
 
       if (existingMembership) {
-        return errorResponse('already_member', 'This user is already a member of the group', 409);
+        return errorResponse('already_member', 'This user is already a member of the group', 409, req);
       }
     }
 
@@ -161,10 +172,10 @@ serve(async (req) => {
       
       // Handle specific database errors
       if (insertError.code === '23505') { // Unique constraint violation
-        return errorResponse('invitation_pending', 'An invitation is already pending for this email', 409);
+        return errorResponse('invitation_pending', 'An invitation is already pending for this email', 409, req);
       }
       
-      return errorResponse('server_error', 'Failed to create invitation due to database error', 500);
+      return errorResponse('server_error', 'Failed to create invitation due to database error', 500, req);
     }
 
     // Get inviter details for email
@@ -235,11 +246,11 @@ serve(async (req) => {
         invitation_token: token,
         expires_at: expiresAt.toISOString()
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
     console.error('Unexpected error sending invitation:', error);
-    return errorResponse('server_error', 'An unexpected error occurred', 500);
+    return errorResponse('server_error', 'An unexpected error occurred', 500, req);
   }
 });

@@ -3,8 +3,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
 const ALLOWED_ORIGINS = new Set([
-  'https://staging.example.com',
-  'https://app.example.com'
+  'https://lovable.dev',
+  'http://localhost:8080',
+  'http://localhost:5173'
 ]);
 
 function corsHeadersFor(req: Request) {
