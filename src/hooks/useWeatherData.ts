@@ -30,7 +30,16 @@ export function useWeatherData() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
   const fetchWeatherData = useCallback(async (location: LocationData, timestamp?: Date): Promise<WeatherData | null> => {
+    // Weather fetching temporarily disabled to prevent CORS spam
+    logger.debug('🌐 Weather fetching temporarily disabled');
+    return null;
+    
+    // Commented out to prevent CORS spam
+    /*
     if (!location?.latitude || !location?.longitude) {
+      logger.debug('❌ Cannot fetch weather data: missing location');
+      return null;
+    }
       logger.debug('❌ Cannot fetch weather data: missing location');
       return null;
     }
@@ -64,6 +73,7 @@ export function useWeatherData() {
     } finally {
       setIsLoading(false);
     }
+    */
   }, []);
 
   const getWeatherForMeasurement = useCallback(async (latitude: number, longitude: number, timestamp: Date): Promise<string | null> => {

@@ -192,20 +192,20 @@ export default function RealTime() {
     }
   }, [currentData, checkAlerts, initialized]);
 
-  // Fetch weather data when location changes - with debouncing to prevent spam
-  useEffect(() => {
-    if (!latestLocation || !initialized) return;
-    
-    // Debounce weather fetching to prevent rapid requests
-    const timeoutId = setTimeout(() => {
-      fetchWeatherData(latestLocation).catch(error => {
-        // Silently handle CORS and other fetch errors to prevent spam
-        console.warn('Weather fetch failed (silently handled):', error.message);
-      });
-    }, 2000); // 2 second debounce
-    
-    return () => clearTimeout(timeoutId);
-  }, [latestLocation?.latitude, latestLocation?.longitude, initialized]); // Only depend on location coordinates
+  // Weather fetching temporarily disabled to prevent CORS spam
+  // useEffect(() => {
+  //   if (!latestLocation || !initialized) return;
+  //   
+  //   // Debounce weather fetching to prevent rapid requests
+  //   const timeoutId = setTimeout(() => {
+  //     fetchWeatherData(latestLocation).catch(error => {
+  //       // Silently handle CORS and other fetch errors to prevent spam
+  //       console.warn('Weather fetch failed (silently handled):', error.message);
+  //     });
+  //   }, 2000); // 2 second debounce
+  //   
+  //   return () => clearTimeout(timeoutId);
+  // }, [latestLocation?.latitude, latestLocation?.longitude, initialized]); // Only depend on location coordinates
 
   // Persist location/activity selections to localStorage for recording persistence
   useEffect(() => {
