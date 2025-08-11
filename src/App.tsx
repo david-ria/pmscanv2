@@ -62,9 +62,11 @@ const MinimalSkeleton = () => (
 );
 
 const App = () => {
+  console.log('🔧 App component rendering...');
+  
   // Add error tracking for white page debugging
   useEffect(() => {
-    console.log('🚀 App component mounted');
+    console.log('🚀 App component mounted successfully!');
     
     // Suppress permission policy warnings that can cause white page
     const originalError = console.error;
@@ -103,13 +105,22 @@ const App = () => {
 
   // Preload critical chunks on app startup
   useEffect(() => {
+    console.log('🔧 Starting preload effect...');
     // Use requestIdleCallback to preload during idle time
     if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => preloadCriticalChunks(), { timeout: 2000 });
+      requestIdleCallback(() => {
+        console.log('🔧 Preloading critical chunks...');
+        preloadCriticalChunks();
+      }, { timeout: 2000 });
     } else {
-      setTimeout(preloadCriticalChunks, 100);
+      setTimeout(() => {
+        console.log('🔧 Preloading critical chunks (fallback)...');
+        preloadCriticalChunks();
+      }, 100);
     }
   }, []);
+
+  console.log('🔧 About to render App JSX...');
 
   return (
     <ErrorBoundary>
