@@ -3,6 +3,7 @@ import { LocationData } from '@/types/PMScan';
 import { RecordingEntry, MissionContext } from '@/types/recording';
 import { SerializableRecordingEntry, toSerializablePMScanData, toSerializableLocationData } from '@/types/serializable';
 import { parseFrequencyToMs } from '@/lib/recordingUtils';
+import { createFrequencySyncedTimer, clearFrequencySyncedTimer, shouldRecordAtFrequency } from '@/utils/frequencyManager';
 import * as logger from '@/utils/logger';
 
 // Pure JavaScript recording service - immune to React lifecycle
@@ -37,13 +38,14 @@ class NativeRecordingService {
     this.recordingData = [];
     this.lastRecordTime = 0;
 
-    // Start native JavaScript interval
-    const intervalMs = parseFrequencyToMs(frequency);
-    this.recordingInterval = window.setInterval(() => {
-      this.collectDataPoint();
-    }, intervalMs);
+    // Start frequency-synced timer to prevent multiple recordings per interval
+    this.recordingInterval = createFrequencySyncedTimer(
+      frequency,
+      () => this.collectDataPoint(),
+      'nativeRecording'
+    );
 
-    console.log('✅ Native recording started - interval set for', intervalMs, 'ms');
+    console.log('✅ Native recording started - synced timer set for frequency:', frequency);
   }
 
   stopRecording(): void {
@@ -52,7 +54,7 @@ class NativeRecordingService {
     this.isRecording = false;
     
     if (this.recordingInterval) {
-      window.clearInterval(this.recordingInterval);
+      clearFrequencySyncedTimer('nativeRecording');
       this.recordingInterval = null;
     }
 
@@ -75,10 +77,11 @@ class NativeRecordingService {
     if (!this.isRecording) return;
 
     const now = Date.now();
-    const frequencyMs = parseFrequencyToMs(this.recordingFrequency);
     
-    // Only record if enough time has passed
-    if (now - this.lastRecordTime < frequencyMs - 100) return; // 100ms tolerance
+    // Use frequency manager to check if we should record
+    if (!shouldRecordAtFrequency(this.lastRecordTime, this.recordingFrequency)) {
+      return; // Still too early according to frequency
+    }
 
     // Get the latest PMScan data directly
     const currentData = this.getCurrentPMScanData();

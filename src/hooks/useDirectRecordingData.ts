@@ -101,9 +101,10 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
       // Poll immediately
       pollData();
       
-      // Use more aggressive polling to handle window focus changes
-      const adjustedInterval = Math.min(pollInterval / 2, 1000); // More frequent updates, max 1 second
-      intervalRef.current = window.setInterval(pollData, adjustedInterval);
+      // Use synchronized polling that respects the recording frequency
+      // Poll at 1/4 of recording frequency to catch updates without being too aggressive
+      const syncedInterval = Math.max(pollInterval / 4, 2000); // Check every 1/4 of recording interval, min 2 seconds
+      intervalRef.current = window.setInterval(pollData, syncedInterval);
     } else {
       // Clear data when not recording to prevent stale state
       const currentData = nativeRecordingService.getRecordingData();
