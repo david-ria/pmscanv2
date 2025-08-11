@@ -53,8 +53,13 @@ export function useWeatherData() {
       }
 
       return null;
-    } catch (error) {
-      logger.error('❌ Error in weather data fetch:', error);
+    } catch (error: any) {
+      // Handle CORS and network errors more gracefully
+      if (error?.message?.includes('CORS') || error?.message?.includes('NetworkError')) {
+        logger.debug('🌐 Weather fetch blocked by CORS policy - skipping');
+      } else {
+        logger.error('❌ Error in weather data fetch:', error);
+      }
       return null;
     } finally {
       setIsLoading(false);
