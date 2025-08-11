@@ -227,11 +227,43 @@ export function getVersionedItem<T>(
     }
 
     // Validate data structure
-    const validated = config.schema.parse(parsed.data);
-    return validated;
+    try {
+      const validated = config.schema.parse(parsed.data);
+      return validated;
+    } catch (validationError) {
+      logger.error(`Schema validation failed for ${key}:`, validationError);
+      
+      // Provide fallback defaults for critical data types
+      if (key === 'ALERT_SETTINGS') {
+        const defaultAlertSettings = {
+          pm1: { pm25: 10, pm10: 20, enabled: false },
+          pm25: { pm25: 15, pm10: 25, enabled: false },
+          pm10: { pm25: 25, pm10: 50, enabled: false }
+        };
+        logger.info(`Using default alert settings for ${key}`);
+        setVersionedItem(key, defaultAlertSettings as T);
+        return defaultAlertSettings as T;
+      }
+      
+      // Clean up corrupted data for other types
+      localStorage.removeItem(STORAGE_KEYS[key]);
+      return null;
+    }
     
   } catch (error) {
     logger.error(`Failed to parse stored data for ${key}:`, error);
+    
+    // Provide fallback defaults for critical data types
+    if (key === 'ALERT_SETTINGS') {
+      const defaultAlertSettings = {
+        pm1: { pm25: 10, pm10: 20, enabled: false },
+        pm25: { pm25: 15, pm10: 25, enabled: false },
+        pm10: { pm25: 25, pm10: 50, enabled: false }
+      };
+      logger.info(`Using default alert settings after parse error for ${key}`);
+      setVersionedItem(key, defaultAlertSettings as T);
+      return defaultAlertSettings as T;
+    }
     
     // Clean up corrupted data
     try {

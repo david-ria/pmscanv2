@@ -150,11 +150,29 @@ export function AlertProvider({ children }: AlertProviderProps) {
   // Load alert settings from versioned storage on mount and request notification permissions
   useEffect(() => {
     try {
-      const savedSettings = getMigratedItem('alertSettings', {});
+      const savedSettings = getMigratedItem('alertSettings', null);
       const savedGlobalEnabled = getMigratedItem('globalAlertsEnabled', true);
 
       if (savedSettings && Object.keys(savedSettings).length > 0) {
-        setAlertSettings(savedSettings);
+        // Validate that saved settings have the correct structure
+        const validatedSettings: AlertSettings = {
+          pm1: {
+            enabled: Boolean(savedSettings.pm1?.enabled),
+            threshold: typeof savedSettings.pm1?.threshold === 'number' ? savedSettings.pm1.threshold : null,
+            duration: typeof savedSettings.pm1?.duration === 'number' ? savedSettings.pm1.duration : 30,
+          },
+          pm25: {
+            enabled: Boolean(savedSettings.pm25?.enabled),
+            threshold: typeof savedSettings.pm25?.threshold === 'number' ? savedSettings.pm25.threshold : null,
+            duration: typeof savedSettings.pm25?.duration === 'number' ? savedSettings.pm25.duration : 30,
+          },
+          pm10: {
+            enabled: Boolean(savedSettings.pm10?.enabled),
+            threshold: typeof savedSettings.pm10?.threshold === 'number' ? savedSettings.pm10.threshold : null,
+            duration: typeof savedSettings.pm10?.duration === 'number' ? savedSettings.pm10.duration : 30,
+          },
+        };
+        setAlertSettings(validatedSettings);
       }
 
       setGlobalAlertsEnabled(savedGlobalEnabled);
@@ -188,7 +206,25 @@ export function AlertProvider({ children }: AlertProviderProps) {
   }, [globalAlertsEnabled]);
 
   const updateAlertSettings = (newSettings: AlertSettings) => {
-    setAlertSettings(newSettings);
+    // Validate settings before saving
+    const validatedSettings: AlertSettings = {
+      pm1: {
+        enabled: Boolean(newSettings.pm1?.enabled),
+        threshold: typeof newSettings.pm1?.threshold === 'number' ? newSettings.pm1.threshold : null,
+        duration: typeof newSettings.pm1?.duration === 'number' ? newSettings.pm1.duration : 30,
+      },
+      pm25: {
+        enabled: Boolean(newSettings.pm25?.enabled),
+        threshold: typeof newSettings.pm25?.threshold === 'number' ? newSettings.pm25.threshold : null,
+        duration: typeof newSettings.pm25?.duration === 'number' ? newSettings.pm25.duration : 30,
+      },
+      pm10: {
+        enabled: Boolean(newSettings.pm10?.enabled),
+        threshold: typeof newSettings.pm10?.threshold === 'number' ? newSettings.pm10.threshold : null,
+        duration: typeof newSettings.pm10?.duration === 'number' ? newSettings.pm10.duration : 30,
+      },
+    };
+    setAlertSettings(validatedSettings);
   };
 
   const resetToDefaults = () => {
