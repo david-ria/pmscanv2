@@ -1,3 +1,5 @@
+import { reportDuplicateBucket } from '@/utils/timestampDebug';
+
 // Fallback processing functions for when Web Workers are not available
 export async function processOnMainThread(type: string, payload: any): Promise<any> {
   // Use time-sliced processing to avoid blocking the main thread
@@ -285,6 +287,9 @@ async function aggregateDataWithTimeSlicing(data: any) {
       
       if (!groups.has(key)) {
         groups.set(key, []);
+      } else {
+        // Report duplicate bucket detection for monitoring
+        reportDuplicateBucket(key);
       }
       groups.get(key).push(measurement);
     });
@@ -325,6 +330,9 @@ function aggregateChartData(data: any) {
     
     if (!groups.has(key)) {
       groups.set(key, []);
+    } else {
+      // Report duplicate bucket detection for monitoring
+      reportDuplicateBucket(key);
     }
     groups.get(key).push(measurement);
   });
@@ -375,6 +383,9 @@ async function processMissionDataWithTimeSlicing(data: any) {
       const key = mission[groupBy] || 'Unknown';
       if (!groups.has(key)) {
         groups.set(key, []);
+      } else {
+        // Report duplicate bucket detection for monitoring
+        reportDuplicateBucket(key);
       }
       groups.get(key).push(mission);
     });
@@ -408,6 +419,9 @@ function processMissionData(data: any) {
     const key = mission[groupBy] || 'Unknown';
     if (!groups.has(key)) {
       groups.set(key, []);
+    } else {
+      // Report duplicate bucket detection for monitoring
+      reportDuplicateBucket(key);
     }
     groups.get(key).push(mission);
   });

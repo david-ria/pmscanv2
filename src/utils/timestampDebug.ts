@@ -17,6 +17,34 @@ const timestampLogs: TimestampDebugInfo[] = [];
 const MAX_LOGS = 1000; // Keep last 1000 timestamp operations
 
 /**
+ * Debug counters for monitoring timestamp issues
+ */
+export const dbg = {
+  iso_misuse: 0,
+  duplicate_bucket: 0,
+};
+
+/**
+ * Report duplicate bucket detection
+ */
+export function reportDuplicateBucket(id: string): void {
+  dbg.duplicate_bucket++;
+  if (dbg.duplicate_bucket <= 3) {
+    console.warn('🔄 Duplicate bucket detected:', id, `(count: ${dbg.duplicate_bucket})`);
+  }
+}
+
+/**
+ * Report ISO string misuse in internal processing
+ */
+export function reportIsoMisuse(context: string): void {
+  dbg.iso_misuse++;
+  if (dbg.iso_misuse <= 3) {
+    console.warn('⚠️ ISO string misuse detected:', context, `(count: ${dbg.iso_misuse})`);
+  }
+}
+
+/**
  * Log a timestamp operation for debugging
  */
 export function logTimestamp(info: TimestampDebugInfo): void {
@@ -124,4 +152,18 @@ export function exportTimestampLogs(): string {
   ]);
   
   return [headers, ...rows].map(row => row.join(',')).join('\n');
+}
+
+/**
+ * Get monitoring counters for debugging
+ */
+export function getMonitoringCounters() {
+  return {
+    ...dbg,
+    resetCounters: () => {
+      dbg.iso_misuse = 0;
+      dbg.duplicate_bucket = 0;
+      console.log('🔄 Monitoring counters reset');
+    }
+  };
 }
