@@ -48,8 +48,12 @@ function parseSensorData(rawData) {
     return data.map(item => {
       if (typeof item === 'string') {
         const parts = item.split(',');
+        // Parse timestamp from data (assumed to be in parts[5]) or use current time as fallback
+        const ts = Number(parts[5]); // or from payload timestamp field
+        const timestamp = Number.isFinite(ts) ? ts : Date.now(); // fallback as number
+        
         return {
-          timestamp: new Date().toISOString(),
+          timestamp, // Keep as epoch ms number
           pm1: parseFloat(parts[0]) || 0,
           pm25: parseFloat(parts[1]) || 0,
           pm10: parseFloat(parts[2]) || 0,
@@ -131,24 +135,28 @@ function aggregateChartData(data) {
   
   if (!measurements || measurements.length === 0) return [];
   
-  // Group data by time intervals
+  // Group data by time intervals using numeric bucketing
   const groups = new Map();
   const intervalMs = getIntervalMs(timeInterval);
   
   measurements.forEach(measurement => {
-    const timestamp = new Date(measurement.timestamp);
-    const intervalStart = new Date(Math.floor(timestamp.getTime() / intervalMs) * intervalMs);
-    const key = intervalStart.toISOString();
+    // Handle both numeric timestamps and ISO strings
+    const timestamp = typeof measurement.timestamp === 'number' 
+      ? measurement.timestamp 
+      : new Date(measurement.timestamp).getTime();
     
-    if (!groups.has(key)) {
-      groups.set(key, []);
+    // Create numeric bucket key (epoch ms aligned to interval)
+    const bucketMs = Math.floor(timestamp / intervalMs) * intervalMs;
+    
+    if (!groups.has(bucketMs)) {
+      groups.set(bucketMs, []);
     }
-    groups.get(key).push(measurement);
+    groups.get(bucketMs).push(measurement);
   });
   
   // Calculate averages for each interval
-  return Array.from(groups.entries()).map(([timestamp, groupMeasurements]) => {
-    const result = { timestamp };
+  return Array.from(groups.entries()).map(([bucketMs, groupMeasurements]) => {
+    const result = { timestamp: bucketMs }; // Keep as numeric timestamp
     
     fields.forEach(field => {
       const values = groupMeasurements
@@ -161,7 +169,7 @@ function aggregateChartData(data) {
     });
     
     return result;
-  }).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  }).sort((a, b) => a.timestamp - b.timestamp); // Sort by numeric timestamp
 }
 
 function getIntervalMs(interval) {
