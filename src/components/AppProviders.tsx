@@ -18,7 +18,7 @@ interface AppProvidersProps {
 }
 
 function AppProvidersCore({ children }: AppProvidersProps) {
-  console.log('🔧 AppProvidersCore starting...');
+  // console.log('🔧 AppProvidersCore starting...'); // Commented out to reduce log spam
   const { syncState, isRecovering } = useGitHubSyncRecovery();
 
   useEffect(() => {
@@ -31,7 +31,7 @@ function AppProvidersCore({ children }: AppProvidersProps) {
 
   // Don't show recovery screen - it causes infinite loops
   // Just let the app load normally
-  console.log('🔧 AppProviders rendering with sync state:', syncState);
+  // console.log('🔧 AppProviders rendering with sync state:', syncState); // Commented out to reduce log spam
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-background animate-pulse" />}>

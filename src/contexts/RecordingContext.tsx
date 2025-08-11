@@ -49,29 +49,36 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
       console.log('📊 Context updating, data length:', freshState.recordingData.length);
       
       // Use functional update to ensure React detects the change
-      setState(() => ({ ...freshState }));
-      setUpdateCounter(prev => prev + 1);
+      setState(currentState => {
+        // Only update if state actually changed
+        if (JSON.stringify(currentState) !== JSON.stringify(freshState)) {
+          return freshState;
+        }
+        return currentState;
+      });
     };
     
     // Add event listener
     window.addEventListener('nativeDataAdded', handleNativeDataAdded);
     
-    // Aggressive polling for real-time updates during recording
+    // Optimized polling - only when recording and at reasonable intervals
     const interval = setInterval(() => {
       const currentState = nativeRecordingService.getState();
       if (currentState.isRecording) {
         setState(prevState => {
-          // Always update if recording to ensure real-time updates
-          if (prevState.recordingData.length !== currentState.recordingData.length || 
-              prevState.isRecording !== currentState.isRecording) {
-            console.log('📊 Polling update - data changed:', currentState.recordingData.length);
-            setUpdateCounter(prev => prev + 1);
-            return { ...currentState };
+          // Only update if there are actual meaningful changes
+          const hasDataChange = prevState.recordingData.length !== currentState.recordingData.length;
+          const hasStatusChange = prevState.isRecording !== currentState.isRecording;
+          const hasMissionChange = prevState.currentMissionId !== currentState.currentMissionId;
+          
+          if (hasDataChange || hasStatusChange || hasMissionChange) {
+            console.log('📊 Polling update - meaningful change detected:', currentState.recordingData.length);
+            return currentState; // Don't spread, use direct assignment to avoid unnecessary re-renders
           }
-          return prevState;
+          return prevState; // Return same reference if no changes
         });
       }
-    }, 1000); // More aggressive polling during recording
+    }, 3000); // Reduced frequency from 1s to 3s
     
     return () => {
       window.removeEventListener('nativeDataAdded', handleNativeDataAdded);
