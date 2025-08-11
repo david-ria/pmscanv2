@@ -278,7 +278,10 @@ async function aggregateDataWithTimeSlicing(data: any) {
     chunk.forEach((measurement: any) => {
       const timestamp = new Date(measurement.timestamp);
       const intervalStart = new Date(Math.floor(timestamp.getTime() / intervalMs) * intervalMs);
-      const key = intervalStart.toISOString();
+      
+      // Use epoch ms for stable numeric key instead of ISO string
+      const bucketStartMs = intervalStart.getTime();
+      const key = String(bucketStartMs);
       
       if (!groups.has(key)) {
         groups.set(key, []);

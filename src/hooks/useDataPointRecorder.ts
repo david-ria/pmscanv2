@@ -100,7 +100,7 @@ export function useDataPointRecorder({
         location: context?.location,
         activity: context?.activity,
         automaticContext,
-        timestamp: new Date(currentTime).toISOString()
+        timestamp: currentTime
       });
 
       // Store data for background processing if background mode is enabled

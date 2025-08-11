@@ -2,6 +2,8 @@ import { useEffect, useCallback } from 'react';
 import { RecordingEntry } from '@/types/recording';
 import { dataStorage } from '@/lib/dataStorage';
 import { useMissionSaver } from './useMissionSaver';
+import { formatDateTime } from '@/utils/timeFormat';
+import { ensureEpochMs } from '@/utils/timestampUtils';
 import * as logger from '@/utils/logger';
 
 const CRASH_RECOVERY_KEY = 'pmscan_recording_recovery';
@@ -9,7 +11,7 @@ const UNSENT_CSV_KEY = 'pmscan_unsent_csv';
 
 interface RecoveryData {
   recordingData: RecordingEntry[];
-  startTime: string;
+  startTime: number; // Changed to number for epoch ms
   frequency: string;
   missionContext: {
     location: string;
@@ -81,8 +83,9 @@ export function useCrashRecovery() {
 
             try {
               // Create unique mission name with timestamp to avoid duplicates
-              const startTime = new Date(recoveryData.startTime);
-              const crashMissionName = `Recovered Mission ${startTime.toISOString().replace(/[:.]/g, '-')}`;
+              const startEpochMs = ensureEpochMs(recoveryData.startTime);
+              const safe = (s: string) => s.replace(/[:/\\?%*|"<>.]/g, '-');
+              const crashMissionName = `Recovered Mission ${safe(formatDateTime(startEpochMs))}`;
 
               // Create a temporary mission from recovery data
               const mission = dataStorage.createMissionFromRecording(
@@ -156,7 +159,7 @@ export function useCrashRecovery() {
 
       const recoveryData: RecoveryData = {
         recordingData,
-        startTime: startTime.toISOString(),
+        startTime: typeof startTime === 'number' ? startTime : startTime.getTime(),
         frequency,
         missionContext,
         timestamp: Date.now(),
