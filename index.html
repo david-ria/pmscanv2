@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
-    <!-- Load Inter font with font-display: swap -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    <!-- Load Inter font with font-display: swap - only bold weight for above-the-fold -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap">
     
     <!-- DNS prefetch for other external services -->
     <link rel="dns-prefetch" href="https://api.mapbox.com">
@@ -201,6 +201,10 @@
       </script>
     </div>
     <script type="module" src="/src/main.tsx" defer></script>
+    
+    <!-- Load additional font weights after critical content -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"></noscript>
     
     <!-- Add performance optimizations -->
     <style>
