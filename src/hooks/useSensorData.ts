@@ -135,7 +135,7 @@ export function useSensorData() {
       setCleanupFunctions([]);
       
       setIsListening(false);
-      logger.debug('🔇 All sensors deactivated and cleaned up');
+      // logger.debug('🔇 All sensors deactivated and cleaned up'); // Disabled to prevent console spam
     } catch (error) {
       logger.error('❌ Error deactivating sensors:', error);
     }
