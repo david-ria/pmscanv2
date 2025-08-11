@@ -66,18 +66,36 @@ const App = () => {
   useEffect(() => {
     console.log('🚀 App component mounted');
     
+    // Suppress permission policy warnings that can cause white page
+    const originalError = console.error;
+    console.error = (...args) => {
+      const message = String(args[0]);
+      if (message.includes('Unrecognized feature') || 
+          message.includes('vr') || 
+          message.includes('ambient-light-sensor') || 
+          message.includes('battery')) {
+        return; // Suppress these warnings
+      }
+      originalError(...args);
+    };
+    
     const handleError = (event: ErrorEvent) => {
-      console.error('💥 Uncaught error:', event.error);
+      console.log('💥 Uncaught error:', event.error);
+      // Don't let permission policy errors break the app
+      if (String(event.error).includes('Unrecognized feature')) {
+        event.preventDefault();
+      }
     };
     
     const handleRejection = (event: PromiseRejectionEvent) => {
-      console.error('💥 Unhandled promise rejection:', event.reason);
+      console.log('💥 Unhandled promise rejection:', event.reason);
     };
     
     window.addEventListener('error', handleError);
     window.addEventListener('unhandledrejection', handleRejection);
     
     return () => {
+      console.error = originalError;
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleRejection);
     };
