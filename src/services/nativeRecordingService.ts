@@ -43,13 +43,19 @@ class NativeRecordingService {
       return;
     }
 
+    // Check if already recording to prevent multiple starts
+    if (this.isRecording) {
+      console.log('⚠️ Recording already in progress - ignoring duplicate start call');
+      return;
+    }
+
     console.log('🎬 Native recording starting with frequency:', frequency);
     
     this.isRecording = true;
     this.recordingFrequency = frequency;
     this.recordingStartTime = timeAuthority.now(); // Use time authority
     this.currentMissionId = crypto.randomUUID();
-    this.recordingData = [];
+    this.recordingData = []; // Only clear data on first start
     this.lastRecordTime = 0;
     this.lastRecordMono = clock.now(); // Initialize monotonic timestamp
 
@@ -179,6 +185,8 @@ class NativeRecordingService {
     };
 
     this.recordingData.push(cleanEntry);
+    console.log('📊 DEBUG: Data array after push:', this.recordingData.length, 'entries');
+    
     
     // Use setTimeout to avoid potential postMessage conflicts
     setTimeout(() => {
@@ -206,10 +214,8 @@ class NativeRecordingService {
   }
 
   getState() {
-    // Only log occasionally to prevent spam
-    if (Math.random() < 0.1) { // 10% chance to log
-      console.log('🔍 Native service state: recording:', this.isRecording, 'data length:', this.recordingData.length);
-    }
+    // Always log to debug the recording issue
+    console.log('🔍 Native service state: recording:', this.isRecording, 'data length:', this.recordingData.length);
     return {
       isRecording: this.isRecording,
       recordingData: this.recordingData,
