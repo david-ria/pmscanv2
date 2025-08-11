@@ -62,6 +62,27 @@ const MinimalSkeleton = () => (
 );
 
 const App = () => {
+  // Add error tracking for white page debugging
+  useEffect(() => {
+    console.log('🚀 App component mounted');
+    
+    const handleError = (event: ErrorEvent) => {
+      console.error('💥 Uncaught error:', event.error);
+    };
+    
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      console.error('💥 Unhandled promise rejection:', event.reason);
+    };
+    
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+    };
+  }, []);
+
   // Preload critical chunks on app startup
   useEffect(() => {
     // Use requestIdleCallback to preload during idle time
@@ -78,7 +99,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <div className="relative min-h-screen">
-          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
+          <Suspense fallback={<MinimalSkeleton />}>
             <AppProviders>
               <AppRoutes />
             </AppProviders>
@@ -103,8 +124,11 @@ const AppRoutes = () => {
   }, [location.pathname]);
 
   if (loading) {
+    console.log('🔄 Auth loading...');
     return <MinimalSkeleton />;
   }
+
+  console.log('✅ Auth loaded, user:', !!user);
 
   return (
     <Routes>
