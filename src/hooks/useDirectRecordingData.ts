@@ -14,9 +14,50 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
   const [dataCount, setDataCount] = useState(0);
   const [lastDataHash, setLastDataHash] = useState<string>('');
   const intervalRef = useRef<number | null>(null);
+  const isVisibleRef = useRef<boolean>(true);
   
   // Convert recording frequency to milliseconds for polling
   const pollInterval = parseFrequencyToMs(recordingFrequency);
+  
+  // Handle window visibility changes to ensure polling continues
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const isVisible = !document.hidden;
+      isVisibleRef.current = isVisible;
+      
+      if (isVisible && isRecording) {
+        // When window becomes visible again, force immediate poll
+        throttledLog('visibility-restored', '👁️ Window visible - resuming data polling');
+        
+        // Small delay to ensure everything is ready
+        setTimeout(() => {
+          try {
+            const currentData = nativeRecordingService.getRecordingData();
+            const currentCount = currentData.length;
+            
+            const latestEntry = currentCount > 0 ? currentData[currentCount - 1] : null;
+            const dataHash = createDataHash(
+              currentCount,
+              latestEntry?.pmData?.timestamp,
+              latestEntry?.pmData?.pm25
+            );
+            
+            if (dataHash !== lastDataHash) {
+              setRecordingData([...currentData]);
+              setDataCount(currentCount);
+              setLastDataHash(dataHash);
+              throttledLog('visibility-data-sync', `📊 Synced ${currentCount} data points after visibility restore`);
+            }
+          } catch (error) {
+            console.error('Error syncing data after visibility restore:', error);
+          }
+        }, 100);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isRecording, lastDataHash]);
   
   useEffect(() => {
     // Clear any existing interval
@@ -60,8 +101,9 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
       // Poll immediately
       pollData();
       
-      // Set up interval for continuous polling
-      intervalRef.current = window.setInterval(pollData, pollInterval);
+      // Use more frequent polling to compensate for potential browser throttling
+      const adjustedInterval = Math.min(pollInterval, 2000); // Cap at 2 seconds max
+      intervalRef.current = window.setInterval(pollData, adjustedInterval);
     } else {
       // Still get final data when not recording
       pollData();
