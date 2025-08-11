@@ -43,7 +43,7 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
             );
             
             if (dataHash !== lastDataHash) {
-              setRecordingData([...currentData]);
+              setRecordingData(currentData.map(entry => ({ ...entry })));
               setDataCount(currentCount);
               setLastDataHash(dataHash);
               throttledLog('visibility-data-sync', `📊 Synced ${currentCount} data points after visibility restore`);
@@ -86,7 +86,8 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
             logPollingUpdate('Direct polling', currentCount, latestEntry?.pmData?.pm25);
           }
           
-          setRecordingData([...currentData]);
+          // Force new reference with fresh deep copy to ensure React re-renders
+          setRecordingData(currentData.map(entry => ({ ...entry })));
           setDataCount(currentCount);
           setLastDataHash(dataHash);
         }
@@ -122,7 +123,7 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
     const handleNativeDataAdded = (event: any) => {
       throttledLog('direct-hook-event', '📊 Direct hook received native data event');
       const currentData = nativeRecordingService.getRecordingData();
-      setRecordingData([...currentData]); // Force new reference
+      setRecordingData(currentData.map(entry => ({ ...entry }))); // Force deep copy
       setDataCount(currentData.length);
     };
     
