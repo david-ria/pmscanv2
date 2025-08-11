@@ -124,7 +124,7 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
         intervalRef.current = null;
       }
     };
-  }, [isRecording, lastDataHash, pollInterval, recordingFrequency]);
+  }, [isRecording, pollInterval]);
   
   // Also listen to native events for immediate updates
   useEffect(() => {
