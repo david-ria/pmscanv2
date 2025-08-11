@@ -11,6 +11,7 @@ export function useGitHubSyncRecovery() {
   useEffect(() => {
     const checkGitHubSyncHealth = async () => {
       try {
+        console.log('🔍 Checking GitHub sync health...');
         logger.debug('🔍 Checking GitHub sync health...');
         
         // Check for signs of corrupted GitHub sync state

@@ -49,6 +49,7 @@ const RecordingFrequencyDialog = lazy(() =>
 );
 
 export default function RealTime() {
+  console.log('🏠 RealTime component starting...');
   // Fast LCP - defer heavy initialization
   const [initialized, setInitialized] = useState(false);
   

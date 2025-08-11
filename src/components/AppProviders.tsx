@@ -18,10 +18,12 @@ interface AppProvidersProps {
 }
 
 function AppProvidersCore({ children }: AppProvidersProps) {
+  console.log('🔧 AppProvidersCore starting...');
   const { syncState, isRecovering } = useGitHubSyncRecovery();
 
   useEffect(() => {
     logger.info('🚀 AppProviders initializing...');
+    console.log('🔧 AppProviders sync state:', syncState);
     if (syncState === 'recovered') {
       logger.info('✅ GitHub sync recovery completed, app should be functional');
     }
