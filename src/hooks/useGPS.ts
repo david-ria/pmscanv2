@@ -111,7 +111,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
 
     watchIdRef.current = id;
     setWatchId(id);
-  }, [enabled, highAccuracy, recordingFrequency]);
+  }, [enabled, highAccuracy]); // Remove recordingFrequency from dependencies
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
     logger.debug('🧭 GPS: Permission request initiated...');
@@ -236,7 +236,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [enabled, locationEnabled, highAccuracy, recordingFrequency]);
+  }, [enabled, locationEnabled, startWatching]); // Remove problematic dependencies
 
   // Cleanup on unmount
   useEffect(() => {
