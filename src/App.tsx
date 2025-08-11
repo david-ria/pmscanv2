@@ -6,7 +6,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Suspense, lazy, useEffect } from 'react';
 import { AppProviders } from '@/components/AppProviders';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { preloadCriticalChunks, preloadRouteChunks } from '@/utils/dynamicImports';
+// Removed broken import that was causing 404 errors
 import { useAuth } from '@/contexts/AuthContext';
 
 // Lazy load page components for code splitting
@@ -63,13 +63,14 @@ const MinimalSkeleton = () => (
 );
 
 const App = () => {
-  // Preload critical chunks on app startup
+  // Simple preloading without dynamic imports to avoid 404 errors
   useEffect(() => {
-    // Use requestIdleCallback to preload during idle time
+    // Basic preloading during idle time
     if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => preloadCriticalChunks(), { timeout: 2000 });
-    } else {
-      setTimeout(preloadCriticalChunks, 100);
+      requestIdleCallback(() => {
+        // Preload basic UI components
+        import('@radix-ui/react-dialog').catch(() => {});
+      }, { timeout: 2000 });
     }
   }, []);
 
@@ -94,12 +95,16 @@ const AppRoutes = () => {
   const location = useLocation();
   const { user, loading } = useAuth();
   
-  // Preload route-specific chunks when route changes
+  // Simple route change handling without dynamic imports
   useEffect(() => {
+    // Basic route-based preloading
     if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => preloadRouteChunks(location.pathname), { timeout: 1000 });
-    } else {
-      setTimeout(() => preloadRouteChunks(location.pathname), 50);
+      requestIdleCallback(() => {
+        // Preload route-specific components during idle time
+        if (location.pathname === '/analysis') {
+          import('recharts').catch(() => {});
+        }
+      }, { timeout: 1000 });
     }
   }, [location.pathname]);
 
