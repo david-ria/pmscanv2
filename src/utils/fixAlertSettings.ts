@@ -27,7 +27,5 @@ export function clearCorruptedAlertSettings(): void {
   }
 }
 
-// Auto-run the fix once
-if (typeof window !== 'undefined') {
-  clearCorruptedAlertSettings();
-}
+// Remove auto-execution that was preventing app from loading
+// This function can be called manually if needed

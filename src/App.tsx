@@ -1,4 +1,4 @@
-import './utils/fixAlertSettings'; // Auto-fix corrupted alert settings
+// Remove problematic auto-import that was blocking app load
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
