@@ -21,8 +21,6 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
-import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
-import { useGPS } from '@/hooks/useGPS';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import { LucideIcon } from 'lucide-react';
 
@@ -62,16 +60,20 @@ export function useMenuSections({
     disableRecordingBackground,
   } = useBackgroundRecordingIntegration();
 
-  // Get weather logging state
-  const { isEnabled: weatherLoggingEnabled, setEnabled: setWeatherLoggingEnabled } = useWeatherLogging();
+  // Lightweight status placeholders to avoid heavy hooks on menu open
+  const isPMScanConnected = false;
+  const locationEnabled = false;
 
-  // Get PMScan and GPS status
-  const {
-    isConnected: isPMScanConnected,
-    requestDevice,
-    disconnect,
-  } = usePMScanBluetooth();
-  const { locationEnabled, requestLocationPermission } = useGPS();
+  const promptLocationPermission = () => {
+    try {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          () => {},
+          () => {}
+        );
+      }
+    } catch {}
+  };
 
   const handleProfileClick = () => {
     navigate('/profile');
@@ -111,6 +113,8 @@ export function useMenuSections({
       await disableRecordingBackground();
     }
   };
+
+  const { isEnabled: weatherLoggingEnabled, setEnabled: setWeatherLoggingEnabled } = useWeatherLogging();
 
   return [
     {
@@ -200,34 +204,27 @@ export function useMenuSections({
         {
           icon: Bluetooth,
           label: t('sensors.pmscan'),
-          badge: isPMScanConnected ? t('sensors.connected') : null,
+          badge: null,
           action: () => {
-            if (isPMScanConnected) {
-              disconnect();
-            } else {
-              requestDevice();
-            }
+            navigate('/');
+            onNavigate();
           },
         },
         {
           icon: MapPin,
           label: 'GPS',
-          badge: locationEnabled ? t('sensors.connected') : null,
-          action: () => {
-            if (!locationEnabled) {
-              requestLocationPermission();
-            }
-           },
-         },
-         {
-           icon: Cloud,
-           label: t('sensors.weather'),
-           badge: null,
-           toggle: {
-             checked: weatherLoggingEnabled,
-             onCheckedChange: setWeatherLoggingEnabled,
-           },
-         },
+          badge: null,
+          action: promptLocationPermission,
+        },
+        {
+          icon: Cloud,
+          label: t('sensors.weather'),
+          badge: null,
+          toggle: {
+            checked: weatherLoggingEnabled,
+            onCheckedChange: setWeatherLoggingEnabled,
+          },
+        },
       ],
     },
   ];
