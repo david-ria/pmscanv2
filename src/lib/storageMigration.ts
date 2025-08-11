@@ -50,36 +50,48 @@ export function getMigratedItem<K extends keyof typeof LEGACY_KEY_MAPPINGS>(
             return typeof oldData === 'string' ? oldData === 'true' : Boolean(oldData);
             
           case 'alertSettings':
-            // Migrate and validate alert settings structure
+            // Migrate and validate alert settings structure to unified shape
             if (oldData && typeof oldData === 'object') {
               const alertData = oldData as any;
-              const migrated: any = {};
-              
-              // Ensure each PM type has proper structure
-              ['pm1', 'pm25', 'pm10'].forEach(pmType => {
-                if (alertData[pmType]) {
-                  migrated[pmType] = {
-                    pm25: typeof alertData[pmType].pm25 === 'number' ? alertData[pmType].pm25 : 15,
-                    pm10: typeof alertData[pmType].pm10 === 'number' ? alertData[pmType].pm10 : 25,
-                    enabled: Boolean(alertData[pmType].enabled)
-                  };
-                } else {
-                  // Provide defaults for missing PM types
-                  const defaults = { pm1: { pm25: 10, pm10: 20 }, pm25: { pm25: 15, pm10: 25 }, pm10: { pm25: 25, pm10: 50 } };
-                  migrated[pmType] = { 
-                    ...defaults[pmType as keyof typeof defaults], 
-                    enabled: false 
+
+              const coerceAlert = (src: any, pollutant: 'pm1'|'pm25'|'pm10') => {
+                // If already in new format
+                if (src && typeof src === 'object' && ('threshold' in src || 'duration' in src)) {
+                  return {
+                    enabled: Boolean(src.enabled),
+                    threshold: typeof src.threshold === 'number' ? src.threshold : null,
+                    duration: typeof src.duration === 'number' ? src.duration : 30,
                   };
                 }
-              });
-              
+                // If in older numeric format with pm25/pm10 fields
+                if (src && typeof src === 'object' && ('pm25' in src || 'pm10' in src)) {
+                  const threshold = pollutant === 'pm25'
+                    ? (typeof src.pm25 === 'number' ? src.pm25 : null)
+                    : pollutant === 'pm10'
+                      ? (typeof src.pm10 === 'number' ? src.pm10 : null)
+                      : null;
+                  return {
+                    enabled: Boolean(src.enabled),
+                    threshold,
+                    duration: 30,
+                  };
+                }
+                // Fallback defaults
+                return { enabled: false, threshold: null, duration: 30 };
+              };
+
+              const migrated = {
+                pm1: coerceAlert(alertData.pm1, 'pm1'),
+                pm25: coerceAlert(alertData.pm25, 'pm25'),
+                pm10: coerceAlert(alertData.pm10, 'pm10'),
+              };
               return migrated;
             }
             // Return defaults if no valid data
             return {
-              pm1: { pm25: 10, pm10: 20, enabled: false },
-              pm25: { pm25: 15, pm10: 25, enabled: false },
-              pm10: { pm25: 25, pm10: 50, enabled: false }
+              pm1: { enabled: false, threshold: null, duration: 30 },
+              pm25: { enabled: false, threshold: null, duration: 30 },
+              pm10: { enabled: false, threshold: null, duration: 30 },
             };
             
           case 'airQualityThresholds':

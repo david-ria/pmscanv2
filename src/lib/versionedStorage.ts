@@ -100,13 +100,23 @@ export const STORAGE_SCHEMAS = {
   
   PENDING_SYNC: z.array(z.string()),
   
-  ALERT_SETTINGS: z.record(z.object({
-    pm1: z.number().optional(),
-    pm25: z.number(),
-    pm10: z.number(),
-    enabled: z.boolean(),
-  })),
-  
+  ALERT_SETTINGS: z.object({
+    pm1: z.object({
+      enabled: z.boolean(),
+      threshold: z.number().nullable(),
+      duration: z.number(),
+    }),
+    pm25: z.object({
+      enabled: z.boolean(),
+      threshold: z.number().nullable(),
+      duration: z.number(),
+    }),
+    pm10: z.object({
+      enabled: z.boolean(),
+      threshold: z.number().nullable(),
+      duration: z.number(),
+    }),
+  }),
   GLOBAL_ALERTS_ENABLED: z.boolean(),
   
   AIR_QUALITY_THRESHOLDS: z.object({
@@ -241,9 +251,9 @@ export function getVersionedItem<T>(
         localStorage.removeItem(STORAGE_KEYS[key]);
         
         const defaultAlertSettings = {
-          pm1: { pm1: 10, pm25: 15, pm10: 20, enabled: false },
-          pm25: { pm1: 15, pm25: 25, pm10: 35, enabled: false },
-          pm10: { pm1: 25, pm25: 35, pm10: 50, enabled: false }
+          pm1: { enabled: false, threshold: null, duration: 30 },
+          pm25: { enabled: false, threshold: null, duration: 30 },
+          pm10: { enabled: false, threshold: null, duration: 30 },
         };
         logger.info(`Using default alert settings for ${key}`);
         setVersionedItem(key, defaultAlertSettings as T);
@@ -265,9 +275,9 @@ export function getVersionedItem<T>(
       localStorage.removeItem(STORAGE_KEYS[key]);
       
       const defaultAlertSettings = {
-        pm1: { pm1: 10, pm25: 15, pm10: 20, enabled: false },
-        pm25: { pm1: 15, pm25: 25, pm10: 35, enabled: false },
-        pm10: { pm1: 25, pm25: 35, pm10: 50, enabled: false }
+        pm1: { enabled: false, threshold: null, duration: 30 },
+        pm25: { enabled: false, threshold: null, duration: 30 },
+        pm10: { enabled: false, threshold: null, duration: 30 },
       };
       logger.info(`Using default alert settings after parse error for ${key}`);
       setVersionedItem(key, defaultAlertSettings as T);
