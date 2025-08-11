@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/api/client';
 import * as logger from '@/utils/logger';
 
 interface WeatherData {
@@ -40,23 +40,16 @@ export function useWeatherData() {
     try {
       logger.debug('🌤️ Fetching weather data for location:', location);
       
-      const { data, error } = await supabase.functions.invoke('fetch-weather', {
-        body: {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          timestamp: timestamp ? timestamp.toISOString() : new Date().toISOString(),
-        },
+      const result = await invokeFunction<{ weatherData: WeatherData }>('fetch-weather', {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        timestamp: timestamp ? timestamp.getTime() : Date.now(),
       });
 
-      if (error) {
-        logger.error('❌ Error fetching weather data:', error);
-        return null;
-      }
-
-      if (data?.weatherData) {
-        logger.debug('✅ Weather data fetched successfully:', data.weatherData.id);
-        setWeatherData(data.weatherData);
-        return data.weatherData;
+      if (result?.weatherData) {
+        logger.debug('✅ Weather data fetched successfully:', result.weatherData.id);
+        setWeatherData(result.weatherData);
+        return result.weatherData;
       }
 
       return null;

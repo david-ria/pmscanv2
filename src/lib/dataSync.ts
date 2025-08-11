@@ -1,3 +1,4 @@
+import { invokeFunction } from '@/lib/api/client';
 import { supabase } from '@/integrations/supabase/client';
 import {
   getLocalMissions,
@@ -22,22 +23,15 @@ async function fetchWeatherForMission(mission: MissionData): Promise<string | nu
     }
 
     // Fetch weather data
-    const { data, error } = await supabase.functions.invoke('fetch-weather', {
-      body: {
-        latitude: measurementWithLocation.latitude,
-        longitude: measurementWithLocation.longitude,
-        timestamp: mission.startTime.toISOString(),
-      },
+    const result = await invokeFunction<{ weatherData: any }>('fetch-weather', {
+      latitude: measurementWithLocation.latitude,
+      longitude: measurementWithLocation.longitude,
+      timestamp: mission.startTime.getTime(),
     });
 
-    if (error) {
-      logger.error('❌ Error fetching weather data for mission:', error);
-      return null;
-    }
-
-    if (data?.weatherData) {
+    if (result?.weatherData) {
       logger.debug('✅ Weather data fetched for mission:', mission.id);
-      return data.weatherData.id;
+      return result.weatherData.id;
     }
 
     return null;
@@ -102,22 +96,15 @@ async function fetchAirQualityForMission(mission: MissionData): Promise<string |
     }
 
     // Fetch air quality data
-    const { data, error } = await supabase.functions.invoke('fetch-atmosud-data', {
-      body: {
-        latitude: measurementWithLocation.latitude,
-        longitude: measurementWithLocation.longitude,
-        timestamp: mission.startTime.toISOString(),
-      },
+    const result = await invokeFunction<{ airQualityData: any }>('fetch-atmosud-data', {
+      latitude: measurementWithLocation.latitude,
+      longitude: measurementWithLocation.longitude,
+      timestamp: mission.startTime.getTime(),
     });
 
-    if (error) {
-      logger.error('❌ Error fetching air quality data for mission:', error);
-      return null;
-    }
-
-    if (data?.airQualityData) {
+    if (result?.airQualityData) {
       logger.debug('✅ Air quality data fetched for mission:', mission.id);
-      return data.airQualityData.id;
+      return result.airQualityData.id;
     }
 
     return null;
