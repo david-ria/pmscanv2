@@ -29,17 +29,9 @@ function AppProvidersCore({ children }: AppProvidersProps) {
     }
   }, [syncState]);
 
-  // Show recovery screen while fixing GitHub sync issues
-  if (isRecovering) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-8 h-8 bg-primary rounded animate-spin mx-auto" />
-          <p className="text-muted-foreground">Initializing application...</p>
-        </div>
-      </div>
-    );
-  }
+  // Don't show recovery screen - it causes infinite loops
+  // Just let the app load normally
+  console.log('🔧 AppProviders rendering with sync state:', syncState);
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-background animate-pulse" />}>

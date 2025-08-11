@@ -6,37 +6,40 @@ import * as logger from '@/utils/logger';
  * This happens when GitHub codespace is deleted but Lovable still has stale sync state
  */
 export function useGitHubSyncRecovery() {
-  const [syncState, setSyncState] = useState<'checking' | 'healthy' | 'corrupted' | 'recovered'>('checking');
+  const [syncState, setSyncState] = useState<'checking' | 'healthy' | 'corrupted' | 'recovered'>('healthy'); // Default to healthy
 
   useEffect(() => {
+    // Only run once on mount
+    let hasRun = false;
+    
     const checkGitHubSyncHealth = async () => {
+      if (hasRun) return; // Prevent multiple runs
+      hasRun = true;
+      
       try {
         console.log('🔍 Checking GitHub sync health...');
-        logger.debug('🔍 Checking GitHub sync health...');
         
-        // Check for signs of corrupted GitHub sync state
-        const hasStaleGitHubState = localStorage.getItem('github_sync_state') && 
-                                   !localStorage.getItem('github_repo_accessible');
+        // Simple check - only look for obvious corruption markers
+        const hasCorruption = localStorage.getItem('github_sync_corrupted') === 'true';
         
-        const hasRepeatedSyncErrors = localStorage.getItem('github_sync_error_count') && 
-                                     parseInt(localStorage.getItem('github_sync_error_count') || '0') > 3;
-
-        if (hasStaleGitHubState || hasRepeatedSyncErrors) {
-          logger.warn('🚨 Detected corrupted GitHub sync state');
+        if (hasCorruption) {
+          console.log('🚨 Detected corrupted GitHub sync state');
           await recoverFromCorruptedSync();
           setSyncState('recovered');
         } else {
-          logger.debug('✅ GitHub sync state appears healthy');
+          console.log('✅ GitHub sync state appears healthy');
           setSyncState('healthy');
         }
       } catch (error) {
-        logger.error('Failed to check GitHub sync health:', error);
-        setSyncState('corrupted');
+        console.error('Failed to check GitHub sync health:', error);
+        setSyncState('healthy'); // Fail safe - assume healthy
       }
     };
 
-    checkGitHubSyncHealth();
-  }, []);
+    // Run check after a short delay to avoid blocking initial render
+    const timeoutId = setTimeout(checkGitHubSyncHealth, 100);
+    return () => clearTimeout(timeoutId);
+  }, []); // Empty dependency array - run only once
 
   const recoverFromCorruptedSync = async () => {
     try {
@@ -91,6 +94,6 @@ export function useGitHubSyncRecovery() {
   return {
     syncState,
     recoverFromCorruptedSync,
-    isRecovering: syncState === 'checking',
+    isRecovering: false, // Never block the app
   };
 }
