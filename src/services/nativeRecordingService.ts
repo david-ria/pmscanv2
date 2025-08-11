@@ -3,7 +3,7 @@ import { LocationData } from '@/types/PMScan';
 import { RecordingEntry, MissionContext } from '@/types/recording';
 import { SerializableRecordingEntry, toSerializablePMScanData, toSerializableLocationData } from '@/types/serializable';
 import { parseFrequencyToMs } from '@/lib/recordingUtils';
-import { createFrequencySyncedTimer, clearFrequencySyncedTimer, shouldRecordAtFrequencyLegacy } from '@/utils/frequencyManager';
+import { createFrequencySyncedTimer, clearFrequencySyncedTimer } from '@/utils/frequencyManager';
 import { RecordingCoordinator } from '@/lib/recordingCoordinator';
 import { timeAuthority, clock } from '@/lib/time';
 import * as logger from '@/utils/logger';
@@ -100,8 +100,9 @@ class NativeRecordingService {
     const now = timeAuthority.now(); // Use time authority
     const mono = clock.now(); // Monotonic timestamp
     
-    // Use frequency manager to check if we should record
-    if (!shouldRecordAtFrequencyLegacy(this.lastRecordTime, this.recordingFrequency)) {
+    // Use time-authority consistent frequency gate
+    const intervalMs = parseFrequencyToMs(this.recordingFrequency);
+    if (now - this.lastRecordTime < intervalMs) {
       return; // Still too early according to frequency
     }
 
