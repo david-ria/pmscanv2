@@ -3,7 +3,7 @@
  * Consumes numeric epoch ms and never persists Date objects
  */
 
-import { toEpochMs } from '@/lib/time';
+import { ensureEpochMs } from '@/utils/timestampUtils';
 
 // Default locale and timezone configuration
 const DEFAULT_LOCALE = 'fr-FR';
@@ -25,11 +25,8 @@ const DATETIME_OPTIONS: Intl.DateTimeFormatOptions = {
 };
 
 /**
- * Strict guard to ensure numeric epoch timestamp
+ * ensureEpochMs centralized in timestampUtils to avoid divergence
  */
-export function ensureEpochMs(input: number | Date | string): number {
-  return toEpochMs(input);
-}
 
 /**
  * Format timestamp consistently for display
@@ -59,9 +56,10 @@ export function formatDateTime(timestamp: number | Date | string, timeZone?: str
 }
 
 /**
- * Get ISO string for consistent API calls and storage
+ * Interop-only ISO string for APIs. Do NOT use for app storage (store epoch ms numbers).
  */
 export function toISOString(timestamp: number | Date | string): string {
+  // Interop only (APIs). Do NOT use for app storage (use epoch ms numbers).
   const epochMs = ensureEpochMs(timestamp);
   return new Date(epochMs).toISOString();
 }
@@ -81,10 +79,10 @@ export function isValidTimestamp(timestamp: number | Date | string): boolean {
 /**
  * Calculate duration between two timestamps in minutes
  */
-export function calculateDurationMinutes(startTime: Date | string, endTime: Date | string): number {
-  const start = startTime instanceof Date ? startTime : new Date(startTime);
-  const end = endTime instanceof Date ? endTime : new Date(endTime);
-  return Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+export function calculateDurationMinutes(startTime: number | Date | string, endTime: number | Date | string): number {
+  const start = ensureEpochMs(startTime);
+  const end = ensureEpochMs(endTime);
+  return Math.round((end - start) / (1000 * 60));
 }
 
 /**
