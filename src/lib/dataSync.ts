@@ -63,7 +63,7 @@ async function syncEventsForMission(missionId: string): Promise<void> {
       accuracy: event.accuracy,
       created_by: currentUser.data.user.id,
       timestamp_epoch_ms: event.timestamp instanceof Date ? event.timestamp.getTime() : Number(event.timestamp),
-      timestamp: event.timestamp instanceof Date ? event.timestamp.toISOString() : new Date(event.timestamp).toISOString(), // Keep for compatibility
+      timestamp: new Date(event.timestamp instanceof Date ? event.timestamp.getTime() : Number(event.timestamp)).toISOString(), // Temporary: DB still expects ISO field
       date_utc: new Date(event.timestamp instanceof Date ? event.timestamp.getTime() : Number(event.timestamp)).toISOString().split('T')[0],
     }));
 
@@ -175,8 +175,8 @@ export async function syncPendingMissions(): Promise<void> {
           name: mission.name,
           start_epoch_ms: mission.startTime instanceof Date ? mission.startTime.getTime() : Number(mission.startTime),
           end_epoch_ms: mission.endTime instanceof Date ? mission.endTime.getTime() : Number(mission.endTime),
-          start_time: mission.startTime instanceof Date ? mission.startTime.toISOString() : new Date(mission.startTime).toISOString(), // Keep for compatibility
-          end_time: mission.endTime instanceof Date ? mission.endTime.toISOString() : new Date(mission.endTime).toISOString(), // Keep for compatibility
+          start_time: new Date(mission.startTime instanceof Date ? mission.startTime.getTime() : Number(mission.startTime)).toISOString(), // Temporary: DB still expects ISO field
+          end_time: new Date(mission.endTime instanceof Date ? mission.endTime.getTime() : Number(mission.endTime)).toISOString(), // Temporary: DB still expects ISO field
           duration_minutes: mission.durationMinutes,
           avg_pm1: mission.avgPm1,
           avg_pm25: mission.avgPm25,
@@ -200,7 +200,7 @@ export async function syncPendingMissions(): Promise<void> {
         id: m.id,
         mission_id: mission.id,
         timestamp_epoch_ms: m.timestamp instanceof Date ? m.timestamp.getTime() : Number(m.timestamp),
-        timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : new Date(m.timestamp).toISOString(), // Keep for compatibility
+        timestamp: new Date(m.timestamp instanceof Date ? m.timestamp.getTime() : Number(m.timestamp)).toISOString(), // Temporary: DB still expects ISO field
         pm1: m.pm1,
         pm25: m.pm25,
         pm10: m.pm10,

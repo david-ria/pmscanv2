@@ -182,9 +182,9 @@ export const useAnalysisLogic = (
                 : endOfYear(selectedDate);
 
         logger.debug('Date range for filtering:', {
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-          todayForReference: now.toISOString(),
+          startDate: startDate.getTime(),
+          endDate: endDate.getTime(),
+          todayForReference: now.getTime(),
         });
       }
 

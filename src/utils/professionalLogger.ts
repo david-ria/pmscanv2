@@ -218,7 +218,7 @@ class Logger {
   // === OUTPUT METHODS ===
   private outputToConsole(entry: LogEntry): void {
     const { level, message, error, data, context } = entry;
-    const timestamp = entry.timestamp.toISOString();
+    const timestamp = entry.timestamp.getTime();
     
     const formatMessage = () => {
       let formatted = `[${timestamp}] ${message}`;

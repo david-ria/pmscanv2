@@ -40,7 +40,7 @@ class WeatherService {
   }
 
   private generateCacheKey(lat: number, lng: number, timestamp?: Date): string {
-    const time = timestamp ? timestamp.toISOString().split('T')[0] : 'current';
+    const time = timestamp ? Math.floor(timestamp.getTime() / (24 * 60 * 60 * 1000)) : 'current';
     return `${lat.toFixed(4)}_${lng.toFixed(4)}_${time}`;
   }
 

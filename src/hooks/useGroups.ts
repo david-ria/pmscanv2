@@ -361,7 +361,7 @@ export const useGroupInvitations = () => {
         .from('group_invitations')
         .select('*')
         .eq('status', 'pending')
-        .gt('expires_at', new Date().toISOString()); // Keep for database compatibility
+        .gt('expires_at', new Date().toISOString()); // TODO: Migrate to epoch-based expiration check
 
       if (error) throw error;
 
