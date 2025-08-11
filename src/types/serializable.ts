@@ -26,12 +26,13 @@ export interface SerializableLocationData {
 export interface SerializableRecordingEntry {
   pmData: SerializablePMScanData;
   location?: SerializableLocationData;
-  context?: {
+  context: {
     location: string;
     activity: string;
   };
   automaticContext?: string;
-  timestamp: number; // numeric timestamp instead of Date
+  timestamp: number; // epoch ms UTC (wall clock)
+  mono: number;      // monotonic timestamp for ordering
   weatherDataId?: string;
 }
 

@@ -26,7 +26,7 @@ interface RecordingContextType {
     shared?: boolean
   ) => any;
   updateMissionContext: (location: string, activity: string) => void;
-  recordingStartTime: Date | null;
+  recordingStartTime: number | null;
   recordingData: any[];
   clearRecordingData: () => void;
 }

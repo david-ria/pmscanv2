@@ -4,18 +4,22 @@ import { RecordingEntry, MissionContext } from '@/types/recording';
 import { SerializableRecordingEntry, toSerializablePMScanData, toSerializableLocationData } from '@/types/serializable';
 import { parseFrequencyToMs } from '@/lib/recordingUtils';
 import { createFrequencySyncedTimer, clearFrequencySyncedTimer, shouldRecordAtFrequencyLegacy } from '@/utils/frequencyManager';
+import { RecordingCoordinator } from '@/lib/recordingCoordinator';
+import { timeAuthority, clock } from '@/lib/time';
 import * as logger from '@/utils/logger';
 
-// Pure JavaScript recording service - immune to React lifecycle
+// Pure JavaScript recording service - single writer pattern with tab coordination
 class NativeRecordingService {
   private static instance: NativeRecordingService;
   private isRecording = false;
   private recordingData: SerializableRecordingEntry[] = [];
   private recordingFrequency = '10s';
   private lastRecordTime = 0;
+  private lastRecordMono = 0; // Monotonic timestamp for ordering
   private missionContext: MissionContext = { location: '', activity: '' };
   private currentMissionId: string | null = null;
-  private recordingStartTime: Date | null = null;
+  private recordingStartTime: number | null = null; // epoch ms
+  private coordinator: RecordingCoordinator;
   
   // Native JavaScript interval - not affected by React lifecycle
   private recordingInterval: number | null = null;
@@ -28,15 +32,26 @@ class NativeRecordingService {
     return NativeRecordingService.instance;
   }
 
+  constructor() {
+    this.coordinator = RecordingCoordinator.getInstance();
+  }
+
   startRecording(frequency: string = '10s'): void {
+    // Only recording leader can actually record
+    if (!this.coordinator.canRecord()) {
+      console.log('🚫 Cannot start recording - not the recording leader tab');
+      return;
+    }
+
     console.log('🎬 Native recording starting with frequency:', frequency);
     
     this.isRecording = true;
     this.recordingFrequency = frequency;
-    this.recordingStartTime = new Date();
+    this.recordingStartTime = timeAuthority.now(); // Use time authority
     this.currentMissionId = crypto.randomUUID();
     this.recordingData = [];
     this.lastRecordTime = 0;
+    this.lastRecordMono = clock.now(); // Initialize monotonic timestamp
 
     // Start frequency-synced timer to prevent multiple recordings per interval
     this.recordingInterval = createFrequencySyncedTimer(
@@ -74,9 +89,10 @@ class NativeRecordingService {
   }
 
   private collectDataPoint(): void {
-    if (!this.isRecording) return;
+    if (!this.isRecording || !this.coordinator.canRecord()) return;
 
-    const now = Date.now();
+    const now = timeAuthority.now(); // Use time authority
+    const mono = clock.now(); // Monotonic timestamp
     
     // Use frequency manager to check if we should record
     if (!shouldRecordAtFrequencyLegacy(this.lastRecordTime, this.recordingFrequency)) {
@@ -87,14 +103,15 @@ class NativeRecordingService {
     const currentData = this.getCurrentPMScanData();
     if (currentData) {
       this.lastRecordTime = now;
+      this.lastRecordMono = mono;
       
       // Get current location for the recording
       this.getCurrentLocation().then(location => {
         this.addDataPoint(currentData, location);
-        console.log('📊 Native recording collected data point at', new Date().toLocaleTimeString(), 'PM2.5:', currentData.pm25, 'Location:', location ? 'Yes' : 'No');
+        console.log('📊 Native recording collected data point at', new Date(now).toLocaleTimeString(), 'PM2.5:', currentData.pm25, 'Location:', location ? 'Yes' : 'No');
       });
     } else {
-      console.log('⚠️ No PMScan data available for collection at', new Date().toLocaleTimeString());
+      console.log('⚠️ No PMScan data available for collection at', new Date(now).toLocaleTimeString());
     }
   }
 
@@ -108,7 +125,7 @@ class NativeRecordingService {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
               accuracy: position.coords.accuracy,
-              timestamp: Date.now(),
+              timestamp: timeAuthority.now(), // Use time authority
             };
             resolve(location);
           },
@@ -137,10 +154,11 @@ class NativeRecordingService {
   }
 
   addDataPoint(pmData: PMScanData, location?: LocationData): void {
-    if (!this.isRecording) return;
+    if (!this.isRecording || !this.coordinator.canRecord()) return;
 
-    // Get clean timestamp as number to avoid Date object serialization issues
-    const now = Date.now();
+    // Get consistent timestamps from time authority
+    const now = timeAuthority.now();
+    const mono = clock.now();
     
     // Create a completely serializable entry with numeric timestamps only
     const cleanEntry: SerializableRecordingEntry = {
@@ -156,7 +174,8 @@ class NativeRecordingService {
         location: String(this.missionContext.location || ''),
         activity: String(this.missionContext.activity || ''),
       },
-      timestamp: now,
+      timestamp: now, // Wall clock time (epoch ms UTC)
+      mono: mono,     // Monotonic time for ordering
     };
 
     this.recordingData.push(cleanEntry);
@@ -204,6 +223,7 @@ class NativeRecordingService {
   clearRecordingData(): void {
     this.recordingData = [];
     this.recordingStartTime = null;
+    this.lastRecordMono = 0;
     this.currentMissionId = null;
     
     // Notify React components about data clearance
@@ -229,7 +249,7 @@ export const nativeRecordingService = NativeRecordingService.getInstance();
 
 // Make PMScan data globally available with clean serializable data
 export function updateGlobalPMScanData(data: PMScanData): void {
-  // Store a clean, serializable version with numeric timestamp
+  // Store a clean, serializable version with time authority timestamp
   (window as any).currentPMScanData = {
     pm1: data.pm1,
     pm25: data.pm25,
@@ -238,6 +258,6 @@ export function updateGlobalPMScanData(data: PMScanData): void {
     humidity: data.humidity,
     battery: data.battery,
     charging: data.charging,
-    timestamp: typeof data.timestamp === 'number' ? data.timestamp : new Date(data.timestamp).getTime(),
+    timestamp: typeof data.timestamp === 'number' ? data.timestamp : timeAuthority.now(),
   };
 }

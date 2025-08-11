@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/contexts/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
+import { initTimeSync } from '@/lib/time';
 import App from './App.tsx';
 import './index.css';
 
@@ -18,13 +19,24 @@ const queryClient = new QueryClient({
 // Initialize i18n immediately for proper app functionality
 import './i18n/config';
 
-createRoot(document.getElementById('root')!).render(
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <ThemeProvider>
-        <App />
-        <Toaster />
-      </ThemeProvider>
-    </BrowserRouter>
-  </QueryClientProvider>
-);
+// Bootstrap time authority before React mounts
+async function bootstrap() {
+  try { 
+    await initTimeSync(); 
+  } catch (error) {
+    console.warn('⏰ Time sync failed during bootstrap:', error);
+  }
+  
+  createRoot(document.getElementById('root')!).render(
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <ThemeProvider>
+          <App />
+          <Toaster />
+        </ThemeProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+}
+
+bootstrap();

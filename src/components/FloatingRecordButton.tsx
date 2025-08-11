@@ -73,8 +73,8 @@ export function FloatingRecordButton({
     
     if (isRecording && recordingStartTime) {
       interval = setInterval(() => {
-        const now = new Date();
-        const diff = Math.floor((now.getTime() - recordingStartTime.getTime()) / 1000);
+        const now = Date.now();
+        const diff = Math.floor((now - recordingStartTime) / 1000);
         setRecordingTime(diff);
       }, 1000);
     } else {
@@ -140,7 +140,7 @@ export function FloatingRecordButton({
       // Use the proper mission saver that handles CSV export and sync status
       await saveMissionWithCSV(
         recordingData,
-        recordingStartTime,
+        recordingStartTime ? new Date(recordingStartTime) : new Date(),
         finalMissionName,
         missionContext?.location,
         missionContext?.activity,
