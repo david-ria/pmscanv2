@@ -28,21 +28,40 @@ export function useMissionSaver() {
     const oldestDataPoint = recordingData[recordingData.length - 1];
     const newestDataPoint = recordingData[0];
     
-    // Ensure timestamps are proper Date objects
-    const oldestTimestamp = oldestDataPoint.timestamp instanceof Date 
-      ? oldestDataPoint.timestamp 
-      : new Date(oldestDataPoint.timestamp);
-    const newestTimestamp = newestDataPoint.timestamp instanceof Date 
-      ? newestDataPoint.timestamp 
-      : new Date(newestDataPoint.timestamp);
+    // Ensure timestamps are proper Date objects using existing utility
+    const { ensureDate } = await import('@/utils/timestampUtils');
+    const oldestTimestamp = ensureDate(oldestDataPoint.timestamp);
+    const newestTimestamp = ensureDate(newestDataPoint.timestamp);
     
     // Use the earliest timestamp between recording start and oldest data point as start time
     const actualStartTime = recordingStartTime < oldestTimestamp 
       ? recordingStartTime 
       : oldestTimestamp;
     
-    // Use the newest data point timestamp as end time
-    const endTime = newestTimestamp;
+    // Use the newest data point timestamp as end time, but ensure minimum duration
+    let endTime = newestTimestamp;
+    
+    // If duration would be 0 or negative, use current time or add minimum buffer
+    const calculatedDuration = (endTime.getTime() - actualStartTime.getTime()) / (1000 * 60);
+    if (calculatedDuration <= 0) {
+      console.warn('⚠️ Mission duration calculated as zero or negative, using current time as end time', {
+        actualStartTime: actualStartTime.toISOString(),
+        originalEndTime: endTime.toISOString(),
+        calculatedDuration,
+        dataPoints: recordingData.length
+      });
+      endTime = new Date(); // Use current time
+    }
+    
+    console.log('🔍 Mission timing calculation:', {
+      recordingStartTime: recordingStartTime?.toISOString(),
+      oldestDataPoint: oldestTimestamp.toISOString(),
+      newestDataPoint: newestTimestamp.toISOString(),
+      actualStartTime: actualStartTime.toISOString(),
+      endTime: endTime.toISOString(),
+      durationMinutes: Math.round((endTime.getTime() - actualStartTime.getTime()) / (1000 * 60)),
+      dataPointsCount: recordingData.length
+    });
     
     // Debug logging for context flow
     console.log('🔍 Mission saving - context analysis:', {
