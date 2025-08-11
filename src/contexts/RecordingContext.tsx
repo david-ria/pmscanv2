@@ -42,11 +42,11 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleNativeDataAdded = (event: any) => {
       const detail = event.detail || {};
-      console.log('🔄 React context received native data event, count:', detail.count);
+      // console.log('🔄 React context received native data event, count:', detail.count);
       
       // Force update immediately with fresh state
       const freshState = nativeRecordingService.getState();
-      console.log('📊 Context updating, data length:', freshState.recordingData.length);
+      // console.log('📊 Context updating, data length:', freshState.recordingData.length);
       
       // Use functional update to ensure React detects the change
       setState(currentState => {
@@ -72,7 +72,7 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
           const hasMissionChange = prevState.currentMissionId !== currentState.currentMissionId;
           
           if (hasDataChange || hasStatusChange || hasMissionChange) {
-            console.log('📊 Polling update - meaningful change detected:', currentState.recordingData.length);
+            // console.log('📊 Polling update - meaningful change detected:', currentState.recordingData.length);
             return currentState; // Don't spread, use direct assignment to avoid unnecessary re-renders
           }
           return prevState; // Return same reference if no changes

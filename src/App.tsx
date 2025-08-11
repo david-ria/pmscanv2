@@ -103,7 +103,7 @@ const AppRoutes = () => {
   }, [location.pathname]);
 
   if (loading) {
-    console.log('🔄 Auth loading...');
+    // console.log('🔄 Auth loading...');
     return <MinimalSkeleton />;
   }
 

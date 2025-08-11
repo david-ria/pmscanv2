@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        console.log('🔄 Initializing Supabase auth...');
+        // console.log('🔄 Initializing Supabase auth...');
         const supabase = await getSupabase();
         setSupabaseClient(supabase);
         console.log('✅ Supabase client initialized');
@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const {
           data: { subscription: authSubscription },
         } = supabase.auth.onAuthStateChange((event, session) => {
-          console.log('🔄 Auth state changed:', event, !!session);
+          // console.log('🔄 Auth state changed:', event, !!session);
           setSession(session);
           setUser(session?.user ?? null);
           setLoading(false);
