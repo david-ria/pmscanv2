@@ -37,7 +37,11 @@ export default defineConfig(({ mode }) => {
         'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       },
     },
+    // Clear cache to prevent phantom chunk issues
+    cacheDir: 'node_modules/.vite',
     build: {
+      // Clear any previous build artifacts to prevent ghost chunks
+      emptyOutDir: true,
       rollupOptions: {
         output: {
           // Enable content-hash filenames for better caching
@@ -54,75 +58,60 @@ export default defineConfig(({ mode }) => {
           },
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
-          manualChunks: {
-            // Core vendor chunk - always needed
-            vendor: ['react', 'react-dom'],
+          // Simplified chunk configuration to prevent phantom chunks
+          manualChunks: (id) => {
+            // Vendor chunk for core libraries
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom')) {
+                return 'react-vendor';
+              }
+              if (id.includes('@radix-ui')) {
+                return 'ui-vendor';
+              }
+              if (id.includes('recharts')) {
+                return 'charts';
+              }
+              if (id.includes('mapbox-gl')) {
+                return 'mapbox';
+              }
+              if (id.includes('@tensorflow')) {
+                return 'tensorflow';
+              }
+              if (id.includes('@supabase')) {
+                return 'supabase';
+              }
+              if (id.includes('react-router')) {
+                return 'router';
+              }
+              return 'vendor';
+            }
             
-            // Router chunk - needed for navigation
-            router: ['react-router-dom'],
+            // Application chunks
+            if (id.includes('src/pages/')) {
+              const pageName = id.split('/pages/')[1].split('.')[0].toLowerCase();
+              return `page-${pageName}`;
+            }
             
-            // React Query for data fetching
-            query: ['@tanstack/react-query'],
+            if (id.includes('src/components/MapboxMap/')) {
+              return 'map-components';
+            }
             
-            // UI library chunks - split by usage frequency
-            'ui-core': [
-              '@radix-ui/react-dialog', 
-              '@radix-ui/react-select', 
-              '@radix-ui/react-tabs',
-              '@radix-ui/react-toast',
-              '@radix-ui/react-tooltip',
-              '@radix-ui/react-popover'
-            ],
-            'ui-forms': [
-              '@radix-ui/react-checkbox',
-              '@radix-ui/react-radio-group',
-              '@radix-ui/react-switch',
-              '@radix-ui/react-slider',
-              '@radix-ui/react-label',
-              'react-hook-form',
-              '@hookform/resolvers',
-              'zod'
-            ],
-            'ui-advanced': [
-              '@radix-ui/react-accordion',
-              '@radix-ui/react-alert-dialog',
-              '@radix-ui/react-dropdown-menu',
-              '@radix-ui/react-navigation-menu',
-              '@radix-ui/react-menubar',
-              '@radix-ui/react-context-menu',
-              '@radix-ui/react-hover-card',
-              '@radix-ui/react-scroll-area',
-              '@radix-ui/react-separator',
-              '@radix-ui/react-collapsible',
-              '@radix-ui/react-toggle',
-              '@radix-ui/react-toggle-group'
-            ],
+            if (id.includes('src/components/Analysis/')) {
+              return 'analysis-components';
+            }
             
-            // Feature-specific chunks
-            charts: ['recharts'],
-            mapbox: ['mapbox-gl'],
-            supabase: ['@supabase/supabase-js'],
+            if (id.includes('src/lib/pmscan/')) {
+              return 'bluetooth';
+            }
             
-            // Utility chunks
-            utils: ['clsx', 'class-variance-authority', 'tailwind-merge'],
-            date: ['date-fns'],
-            i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
-            
-            // Heavy feature chunks
-            bluetooth: ['@capacitor-community/bluetooth-le'],
-            tensorflow: ['@tensorflow/tfjs'],
-            pdf: ['jspdf', 'html2canvas'],
-            
-            // Theme and styling
-            theme: ['next-themes'],
-            carousel: ['embla-carousel-react'],
-            notifications: ['sonner'],
-            
-            // Split by route to enable route-based code splitting
-            'route-analysis': [],
-            'route-groups': [],
-            'route-settings': [],
+            // Default chunk for other modules
+            return 'main';
           },
+        },
+        // Exclude problematic externals that might cause phantom chunks
+        external: (id) => {
+          // Don't externalize anything unless specifically needed
+          return false;
         },
       },
       // Optimize assets for caching and TTFB
@@ -135,6 +124,8 @@ export default defineConfig(({ mode }) => {
       target: 'es2022',
       // Optimize chunk size warnings
       chunkSizeWarningLimit: 1000,
+      // Force rebuilding of all chunks
+      watch: null,
     },
     test: {
       environment: 'jsdom',
