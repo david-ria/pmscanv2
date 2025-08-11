@@ -71,7 +71,9 @@ export function MapGraphToggle({
       longitude: entry.location?.longitude || 0,
       latitude: entry.location?.latitude || 0,
       pm25: entry.pmData.pm25,
-      timestamp: ensureDate(entry.pmData.timestamp),
+      timestamp: typeof entry.pmData.timestamp === 'number' 
+        ? entry.pmData.timestamp 
+        : (entry.pmData.timestamp as any).getTime(),
     }))
     .filter((point) => point.longitude !== 0 && point.latitude !== 0);
   return (

@@ -165,7 +165,7 @@ export function MissionDetailsDialog({
       longitude: m.longitude!,
       latitude: m.latitude!,
       pm25: m.pm25,
-      timestamp: m.timestamp,
+      timestamp: typeof m.timestamp === 'number' ? m.timestamp : m.timestamp.getTime(),
     }));
 
   // Calculate statistics
@@ -488,16 +488,18 @@ export function MissionDetailsDialog({
               <div className="h-64 w-full">
                 {trackPoints.length > 0 ? (
                   <MapboxMap
-                    currentLocation={
-                      firstLocation
-                        ? {
-                            latitude: firstLocation.latitude!,
-                            longitude: firstLocation.longitude!,
-                            accuracy: firstLocation.accuracy || 0,
-                            timestamp: firstLocation.timestamp,
-                          }
-                        : null
-                    }
+                     currentLocation={
+                       firstLocation
+                         ? {
+                             latitude: firstLocation.latitude!,
+                             longitude: firstLocation.longitude!,
+                             accuracy: firstLocation.accuracy || 0,
+                             timestamp: typeof firstLocation.timestamp === 'number' 
+                               ? firstLocation.timestamp 
+                               : firstLocation.timestamp.getTime(),
+                           }
+                         : null
+                     }
                     trackPoints={trackPoints}
                     isRecording={false}
                     className="h-full w-full"

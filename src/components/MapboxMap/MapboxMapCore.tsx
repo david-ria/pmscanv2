@@ -15,13 +15,13 @@ interface MapboxMapCoreProps {
     pm1: number;
     pm25: number;
     pm10: number;
-    timestamp: Date;
+    timestamp: number;
   } | null;
   trackPoints?: Array<{
     longitude: number;
     latitude: number;
     pm25: number;
-    timestamp: Date;
+    timestamp: number;
   }>;
   isRecording?: boolean;
   className?: string;

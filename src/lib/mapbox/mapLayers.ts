@@ -81,7 +81,7 @@ export const updateTrackData = (
     longitude: number;
     latitude: number;
     pm25: number;
-    timestamp: Date;
+    timestamp: number;
   }>,
   isRecording: boolean
 ) => {
@@ -97,7 +97,7 @@ export const updateTrackData = (
     },
     properties: {
       pm25: point.pm25,
-      timestamp: point.timestamp instanceof Date ? point.timestamp.toISOString() : new Date(point.timestamp).toISOString(),
+      timestamp: new Date(point.timestamp).toISOString(),
     },
   }));
 

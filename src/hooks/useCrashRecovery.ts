@@ -62,7 +62,9 @@ export function useCrashRecovery() {
               ...entry,
               pmData: {
                 ...entry.pmData,
-                timestamp: new Date(entry.pmData.timestamp),
+                timestamp: typeof entry.pmData.timestamp === 'number' 
+                  ? entry.pmData.timestamp 
+                  : (entry.pmData.timestamp as any).getTime(),
               },
             })
           );
