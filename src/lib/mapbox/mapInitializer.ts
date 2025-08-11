@@ -26,7 +26,11 @@ export const initializeMap = async (
 
     const { supabase } = supabaseModule;
 
-    logger.debug('🗺️ Step 2: Requesting Mapbox token from edge function...');
+    logger.debug('🗺️ Step 2: Mapbox token fetch temporarily disabled...');
+    // Temporarily disabled to prevent CORS spam
+    throw new Error('Mapbox token fetching temporarily disabled');
+    
+    /*
     const { data, error: tokenError } =
       await supabase.functions.invoke('get-mapbox-token');
 
@@ -80,12 +84,18 @@ export const initializeMap = async (
         logger.debug('🗺️ Using default map center (Paris)');
       }
     }
+    */
+
+    // Fallback map initialization without token
+    const center: [number, number] = currentLocation 
+      ? [currentLocation.longitude, currentLocation.latitude]
+      : [2.3522, 48.8566];
+    const zoom = currentLocation ? 15 : 10;
 
     logger.debug('🗺️ Step 5: Creating Mapbox map instance...');
     logger.debug('🗺️ Map style:', MAP_STYLES.LIGHT);
     logger.debug('🗺️ Map center:', center);
     logger.debug('🗺️ Map zoom:', zoom);
-    logger.debug('🗺️ Map pitch:', pitch);
 
     // Initialize map
     const map = new mapboxgl.Map({
@@ -93,7 +103,7 @@ export const initializeMap = async (
       style: MAP_STYLES.LIGHT,
       center,
       zoom,
-      pitch,
+      pitch: 0,
     });
 
     logger.debug('🗺️ ✅ Map instance created successfully');

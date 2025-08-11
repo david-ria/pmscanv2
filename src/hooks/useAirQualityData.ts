@@ -26,6 +26,11 @@ export function useAirQualityData() {
   const [airQualityData, setAirQualityData] = useState<AirQualityData | null>(null);
 
   const fetchAirQualityData = useCallback(async (location: LocationData, timestamp?: Date): Promise<AirQualityData | null> => {
+    // Air quality fetching temporarily disabled to prevent CORS spam
+    logger.debug('🌬️ Air quality fetching temporarily disabled');
+    return null;
+    
+    /*
     if (!location?.latitude || !location?.longitude) {
       logger.debug('❌ Cannot fetch air quality data: missing location');
       return null;
@@ -55,6 +60,7 @@ export function useAirQualityData() {
     } finally {
       setIsLoading(false);
     }
+    */
   }, []);
 
   const getAirQualityForMeasurement = useCallback(async (latitude: number, longitude: number, timestamp: Date): Promise<string | null> => {
