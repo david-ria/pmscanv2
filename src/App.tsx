@@ -62,65 +62,15 @@ const MinimalSkeleton = () => (
 );
 
 const App = () => {
-  console.log('🔧 App component rendering...');
-  
-  // Add error tracking for white page debugging
-  useEffect(() => {
-    console.log('🚀 App component mounted successfully!');
-    
-    // Suppress permission policy warnings that can cause white page
-    const originalError = console.error;
-    console.error = (...args) => {
-      const message = String(args[0]);
-      if (message.includes('Unrecognized feature') || 
-          message.includes('vr') || 
-          message.includes('ambient-light-sensor') || 
-          message.includes('battery')) {
-        return; // Suppress these warnings
-      }
-      originalError(...args);
-    };
-    
-    const handleError = (event: ErrorEvent) => {
-      console.log('💥 Uncaught error:', event.error);
-      // Don't let permission policy errors break the app
-      if (String(event.error).includes('Unrecognized feature')) {
-        event.preventDefault();
-      }
-    };
-    
-    const handleRejection = (event: PromiseRejectionEvent) => {
-      console.log('💥 Unhandled promise rejection:', event.reason);
-    };
-    
-    window.addEventListener('error', handleError);
-    window.addEventListener('unhandledrejection', handleRejection);
-    
-    return () => {
-      console.error = originalError;
-      window.removeEventListener('error', handleError);
-      window.removeEventListener('unhandledrejection', handleRejection);
-    };
-  }, []);
-
   // Preload critical chunks on app startup
   useEffect(() => {
-    console.log('🔧 Starting preload effect...');
     // Use requestIdleCallback to preload during idle time
     if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => {
-        console.log('🔧 Preloading critical chunks...');
-        preloadCriticalChunks();
-      }, { timeout: 2000 });
+      requestIdleCallback(() => preloadCriticalChunks(), { timeout: 2000 });
     } else {
-      setTimeout(() => {
-        console.log('🔧 Preloading critical chunks (fallback)...');
-        preloadCriticalChunks();
-      }, 100);
+      setTimeout(preloadCriticalChunks, 100);
     }
   }, []);
-
-  console.log('🔧 About to render App JSX...');
 
   return (
     <ErrorBoundary>
