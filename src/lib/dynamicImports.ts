@@ -17,7 +17,7 @@ const trackImport = (moduleName: string) => {
 };
 
 /**
- * Mapbox GL dynamic import with CSS
+ * Mapbox GL dynamic import with CSS - with safe error handling
  */
 export const loadMapboxGL = async () => {
   if (moduleCache.has('mapbox-gl')) {
@@ -27,15 +27,23 @@ export const loadMapboxGL = async () => {
   console.debug('[PERF] Loading Mapbox GL dynamically...');
   trackImport('mapbox-gl');
   
-  // Load CSS first, then JS
-  await import('mapbox-gl/dist/mapbox-gl.css');
-  const mapboxModule = await import('mapbox-gl');
-  
-  const mapbox = mapboxModule.default;
-  moduleCache.set('mapbox-gl', mapbox);
-  console.debug('[PERF] Mapbox GL and CSS loaded');
-  
-  return mapbox;
+  try {
+    // Load CSS and JS with proper error handling
+    await Promise.all([
+      import('mapbox-gl/dist/mapbox-gl.css').catch(() => console.warn('Failed to load Mapbox CSS')),
+      import('mapbox-gl').then(mapboxModule => {
+        const mapbox = mapboxModule.default;
+        moduleCache.set('mapbox-gl', mapbox);
+        console.debug('[PERF] Mapbox GL loaded successfully');
+        return mapbox;
+      })
+    ]);
+    
+    return moduleCache.get('mapbox-gl');
+  } catch (error) {
+    console.error('[PERF] Failed to load Mapbox GL:', error);
+    throw error;
+  }
 };
 
 /**

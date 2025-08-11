@@ -42,9 +42,15 @@ export default defineConfig(({ mode }) => {
     build: {
       // Clear any previous build artifacts to prevent ghost chunks
       emptyOutDir: true,
+      // Force clean build by clearing rollup cache
       rollupOptions: {
+        // Prevent phantom chunks by being more conservative with chunking
+        treeshake: {
+          preset: 'recommended',
+          moduleSideEffects: false,
+        },
         output: {
-          // Enable content-hash filenames for better caching
+          // Stable naming to prevent phantom chunks
           assetFileNames: (assetInfo: PreRenderedAsset) => {
             const info = assetInfo.name!.split('.');
             const ext = info[info.length - 1];
@@ -58,14 +64,14 @@ export default defineConfig(({ mode }) => {
           },
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
-          // Simplified chunk configuration to prevent phantom chunks
+          // Conservative chunk strategy to prevent phantom chunks
           manualChunks: (id) => {
-            // Vendor chunk for core libraries
+            // Only chunk vendor libraries to reduce phantom chunk risk
             if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
                 return 'react-vendor';
               }
-              if (id.includes('@radix-ui')) {
+              if (id.includes('@radix-ui') || id.includes('lucide-react')) {
                 return 'ui-vendor';
               }
               if (id.includes('recharts')) {
@@ -74,44 +80,15 @@ export default defineConfig(({ mode }) => {
               if (id.includes('mapbox-gl')) {
                 return 'mapbox';
               }
-              if (id.includes('@tensorflow')) {
-                return 'tensorflow';
-              }
               if (id.includes('@supabase')) {
                 return 'supabase';
               }
-              if (id.includes('react-router')) {
-                return 'router';
-              }
+              // Group other vendors together to prevent fragmentation
               return 'vendor';
             }
-            
-            // Application chunks
-            if (id.includes('src/pages/')) {
-              const pageName = id.split('/pages/')[1].split('.')[0].toLowerCase();
-              return `page-${pageName}`;
-            }
-            
-            if (id.includes('src/components/MapboxMap/')) {
-              return 'map-components';
-            }
-            
-            if (id.includes('src/components/Analysis/')) {
-              return 'analysis-components';
-            }
-            
-            if (id.includes('src/lib/pmscan/')) {
-              return 'bluetooth';
-            }
-            
-            // Default chunk for other modules
-            return 'main';
+            // Don't manually chunk application code - let Vite handle it
+            return undefined;
           },
-        },
-        // Exclude problematic externals that might cause phantom chunks
-        external: (id) => {
-          // Don't externalize anything unless specifically needed
-          return false;
         },
       },
       // Optimize assets for caching and TTFB

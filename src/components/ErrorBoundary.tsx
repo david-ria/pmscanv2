@@ -48,6 +48,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   handleReload = () => {
+    // Clear build caches to prevent phantom chunk issues
+    if ('caches' in window) {
+      caches.keys().then(cacheNames => {
+        cacheNames.forEach(cacheName => caches.delete(cacheName));
+      });
+    }
     window.location.reload();
   };
 
@@ -57,12 +63,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render() {
     if (this.state.hasError) {
+      const isChunkError = this.state.error?.message?.includes('Loading chunk') || 
+                          this.state.error?.message?.includes('Loading CSS chunk') ||
+                          this.state.error?.name === 'ChunkLoadError';
+
       // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // Default error UI
+      // Default error UI with special handling for chunk errors
       return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
           <div className="max-w-md w-full text-center space-y-6">
@@ -72,14 +82,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             
             <div>
               <h1 className="text-2xl font-bold text-foreground mb-2">
-                Something went wrong
+                {isChunkError ? 'App Update Available' : 'Something went wrong'}
               </h1>
               <p className="text-muted-foreground">
-                We're sorry, but something unexpected happened. Please try refreshing the page.
+                {isChunkError 
+                  ? 'The app has been updated. Please refresh to load the latest version.'
+                  : "We're sorry, but something unexpected happened. Please try refreshing the page."
+                }
               </p>
             </div>
 
-            {import.meta.env.DEV && this.state.error && (
+            {import.meta.env.DEV && this.state.error && !isChunkError && (
               <details className="text-left bg-muted p-4 rounded-lg">
                 <summary className="cursor-pointer font-medium mb-2">
                   Error Details (Development)
@@ -92,16 +105,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             )}
 
             <div className="flex gap-2 justify-center">
-              <Button onClick={this.handleReset} variant="outline">
-                Try Again
-              </Button>
-              
-              {this.props.showReload !== false && (
-                <Button onClick={this.handleReload}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Reload Page
+              {!isChunkError && (
+                <Button onClick={this.handleReset} variant="outline">
+                  Try Again
                 </Button>
               )}
+              
+              <Button onClick={this.handleReload}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                {isChunkError ? 'Refresh App' : 'Reload Page'}
+              </Button>
             </div>
           </div>
         </div>
