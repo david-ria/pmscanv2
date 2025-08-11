@@ -12,40 +12,78 @@ interface InvitationRequest {
   email: string;
 }
 
+// Email validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Error response helper
+function errorResponse(errorType: string, message: string, status: number) {
+  console.error(`Error (${status}):`, { errorType, message });
+  return new Response(
+    JSON.stringify({ error: errorType, message }),
+    { 
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    }
+  );
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Validate request body
+    let requestData: InvitationRequest;
+    try {
+      requestData = await req.json();
+    } catch {
+      return errorResponse('invalid_request', 'Invalid JSON in request body', 400);
+    }
+
+    const { groupId, email } = requestData;
+
+    // Validate input parameters
+    if (!groupId || typeof groupId !== 'string' || groupId.trim() === '') {
+      return errorResponse('missing_group_id', 'Group ID is required', 422);
+    }
+
+    if (!email || typeof email !== 'string' || email.trim() === '') {
+      return errorResponse('missing_email', 'Email is required', 422);
+    }
+
+    if (!EMAIL_REGEX.test(email.trim())) {
+      return errorResponse('invalid_email', 'Invalid email format', 422);
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
-    const { groupId, email }: InvitationRequest = await req.json();
-
     // Get the current user
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      throw new Error('Unauthorized');
+      return errorResponse('unauthorized', 'Authentication required', 401);
     }
 
-    // Verify user has permission to invite (is member or creator of the group)
+    // Verify group exists and get group details
     const { data: group, error: groupError } = await supabaseClient
       .from('groups')
-      .select('created_by')
+      .select('created_by, name, description')
       .eq('id', groupId)
       .single();
 
     if (groupError || !group) {
-      throw new Error('Group not found');
+      return errorResponse('group_not_found', 'Group not found or access denied', 404);
     }
 
-    // Check if user is creator or member
+    // Check if user has permission to invite (is creator or admin of the group)
     const isCreator = group.created_by === user.id;
-    let isMember = false;
+    let hasPermission = isCreator;
 
     if (!isCreator) {
       const { data: membership } = await supabaseClient
@@ -55,30 +93,52 @@ serve(async (req) => {
         .eq('user_id', user.id)
         .single();
       
-      isMember = !!membership;
+      hasPermission = membership && (membership.role === 'admin' || membership.role === 'member');
     }
 
-    if (!isCreator && !isMember) {
-      throw new Error('You do not have permission to invite users to this group');
+    if (!hasPermission) {
+      return errorResponse('insufficient_permissions', 'You do not have permission to invite users to this group', 403);
+    }
+
+    // Prevent self-invitation
+    if (normalizedEmail === user.email?.toLowerCase()) {
+      return errorResponse('self_invitation', 'You cannot invite yourself to a group', 422);
     }
 
     // Check if invitation already exists for this email and group
     const { data: existingInvitation } = await supabaseClient
       .from('group_invitations')
-      .select('id, status')
+      .select('id, status, expires_at')
       .eq('group_id', groupId)
-      .eq('invitee_email', email)
+      .eq('invitee_email', normalizedEmail)
       .eq('status', 'pending')
       .gt('expires_at', new Date().toISOString())
       .single();
 
     if (existingInvitation) {
-      throw new Error('An invitation is already pending for this email');
+      return errorResponse('invitation_pending', 'An invitation is already pending for this email', 409);
     }
 
-    // Check if user with this email is already a member
-    // We'll skip this check for now since we don't have direct access to auth.users
-    // This check can be implemented later with a more complex query
+    // Check if user with this email is already a member by checking existing users
+    const { data: existingUser } = await supabaseClient
+      .from('profiles')
+      .select('id')
+      .ilike('email', normalizedEmail)
+      .single();
+
+    if (existingUser) {
+      // Check if this user is already a member
+      const { data: existingMembership } = await supabaseClient
+        .from('group_memberships')
+        .select('id')
+        .eq('group_id', groupId)
+        .eq('user_id', existingUser.id)
+        .single();
+
+      if (existingMembership) {
+        return errorResponse('already_member', 'This user is already a member of the group', 409);
+      }
+    }
 
     // Generate unique token
     const token = crypto.randomUUID();
@@ -91,97 +151,95 @@ serve(async (req) => {
       .insert({
         group_id: groupId,
         inviter_id: user.id,
-        invitee_email: email,
+        invitee_email: normalizedEmail,
         token,
         expires_at: expiresAt.toISOString(),
       });
 
     if (insertError) {
       console.error('Insert error:', insertError);
-      throw new Error('Failed to create invitation');
+      
+      // Handle specific database errors
+      if (insertError.code === '23505') { // Unique constraint violation
+        return errorResponse('invitation_pending', 'An invitation is already pending for this email', 409);
+      }
+      
+      return errorResponse('server_error', 'Failed to create invitation due to database error', 500);
     }
 
-    // Get group and inviter details for email
-    const { data: groupData } = await supabaseClient
-      .from('groups')
-      .select('name, description')
-      .eq('id', groupId)
-      .single();
-
+    // Get inviter details for email
     const { data: inviterProfile } = await supabaseClient
       .from('profiles')
       .select('first_name, last_name, pseudo')
       .eq('id', user.id)
       .single();
 
-    // Send email notification
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
-    const inviterName = inviterProfile?.pseudo || `${inviterProfile?.first_name} ${inviterProfile?.last_name}`.trim() || 'Unknown';
-    
-    try {
-      const emailResponse = await resend.emails.send({
-        from: 'Air Quality Monitor <onboarding@resend.dev>',
-        to: [email],
-        subject: `Invitation to join "${groupData?.name}" group`,
-        html: `
-          <h1>You're invited to join a group!</h1>
-          <p><strong>${inviterName}</strong> has invited you to join the <strong>"${groupData?.name}"</strong> group in the Air Quality Monitor app.</p>
-          ${groupData?.description ? `<p><em>${groupData.description}</em></p>` : ''}
-          
-          <h2>What's next?</h2>
-          <p>To accept this invitation:</p>
-          <ol>
-            <li>Sign up or log in to the Air Quality Monitor app</li>
-            <li>Go to the Groups section</li>
-            <li>Check your pending invitations</li>
-            <li>Accept the invitation from ${inviterName}</li>
-          </ol>
-          
-          <p><strong>Note:</strong> This invitation will expire on ${new Date(expiresAt).toLocaleDateString()}.</p>
-          
-          <p>If you didn't expect this invitation, you can safely ignore this email.</p>
-          
-          <p>Best regards,<br>
-          The Air Quality Monitor Team</p>
-        `,
-      });
+    const inviterName = inviterProfile?.pseudo || 
+                       `${inviterProfile?.first_name} ${inviterProfile?.last_name}`.trim() || 
+                       'Unknown';
 
-      console.log('Email sent successfully:', emailResponse);
-    } catch (emailError) {
-      console.error('Failed to send email:', emailError);
-      // Don't fail the whole request if email fails - invitation is still created
+    // Send email notification if Resend API key is available
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    if (resendApiKey) {
+      try {
+        const resend = new Resend(resendApiKey);
+        
+        const emailResponse = await resend.emails.send({
+          from: 'Air Quality Monitor <onboarding@resend.dev>',
+          to: [normalizedEmail],
+          subject: `Invitation to join "${group.name}" group`,
+          html: `
+            <h1>You're invited to join a group!</h1>
+            <p><strong>${inviterName}</strong> has invited you to join the <strong>"${group.name}"</strong> group in the Air Quality Monitor app.</p>
+            ${group.description ? `<p><em>${group.description}</em></p>` : ''}
+            
+            <h2>What's next?</h2>
+            <p>To accept this invitation:</p>
+            <ol>
+              <li>Sign up or log in to the Air Quality Monitor app</li>
+              <li>Go to the Groups section</li>
+              <li>Check your pending invitations</li>
+              <li>Accept the invitation from ${inviterName}</li>
+            </ol>
+            
+            <p><strong>Note:</strong> This invitation will expire on ${new Date(expiresAt).toLocaleDateString()}.</p>
+            
+            <p>If you didn't expect this invitation, you can safely ignore this email.</p>
+            
+            <p>Best regards,<br>
+            The Air Quality Monitor Team</p>
+          `,
+        });
+
+        console.log('Email sent successfully:', emailResponse);
+      } catch (emailError) {
+        console.error('Failed to send email:', emailError);
+        // Don't fail the whole request if email fails - invitation is still created
+      }
+    } else {
+      console.warn('RESEND_API_KEY not configured, skipping email notification');
     }
     
-    console.log('Invitation created:', {
-      groupName: groupData?.name,
+    console.log('Invitation created successfully:', {
+      groupName: group.name,
       inviterName,
-      inviteeEmail: email,
+      inviteeEmail: normalizedEmail,
       token,
       expiresAt: expiresAt.toISOString()
     });
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Invitation sent successfully' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Invitation sent successfully',
+        invitation_token: token,
+        expires_at: expiresAt.toISOString()
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
-    console.error('Error sending invitation:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      cause: error.cause
-    });
-    
-    return new Response(
-      JSON.stringify({ 
-        error: error.message || 'An unexpected error occurred',
-        details: 'Check the edge function logs for more information'
-      }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    console.error('Unexpected error sending invitation:', error);
+    return errorResponse('server_error', 'An unexpected error occurred', 500);
   }
 });

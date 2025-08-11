@@ -16,6 +16,18 @@ function corsHeadersFor(req: Request) {
   };
 }
 
+// Error response helper
+function errorResponse(errorType: string, message: string, status: number, req: Request) {
+  console.error(`Error (${status}):`, { errorType, message });
+  return new Response(
+    JSON.stringify({ error: errorType, message }),
+    { 
+      status,
+      headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' }
+    }
+  );
+}
+
 serve(async (req) => {
   console.log('get-mapbox-token function called:', { method: req.method, url: req.url })
   
@@ -24,45 +36,43 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeadersFor(req) })
   }
 
-  // Authenticate user
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const serviceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const auth = req.headers.get('Authorization') || '';
-  
-  console.log('Validating user authentication...')
-  const supabase = createClient(supabaseUrl, serviceRole, { 
-    global: { headers: { Authorization: auth } } 
-  });
-  
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
-  if (!user || authError) {
-    console.log('Authentication failed:', { hasUser: !!user, authError: authError?.message });
-    return new Response(
-      JSON.stringify({ error: 'Authentication required' }),
-      { 
-        status: 401, 
-        headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } 
-      }
-    );
-  }
-  
-  console.log('User authenticated:', user.id);
-
   try {
-    const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN')
-    console.log('Mapbox token exists:', !!mapboxToken)
-    
-    if (!mapboxToken) {
-      console.error('MAPBOX_PUBLIC_TOKEN not found in environment')
-      return new Response(
-        JSON.stringify({ error: 'Mapbox token not configured' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } 
-        }
-      )
+    // Validate environment configuration
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
+
+    if (!supabaseUrl || !serviceRole) {
+      return errorResponse('server_misconfigured', 'Supabase configuration missing', 500, req);
     }
+
+    if (!mapboxToken) {
+      return errorResponse('mapbox_token_missing', 'Mapbox token not configured', 500, req);
+    }
+
+    // Authenticate user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return errorResponse('missing_authorization', 'Authorization header is required', 401, req);
+    }
+    
+    console.log('Validating user authentication...')
+    const supabase = createClient(supabaseUrl, serviceRole, { 
+      global: { headers: { Authorization: authHeader } } 
+    });
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.log('Authentication error:', authError.message);
+      return errorResponse('invalid_token', 'Invalid or expired authentication token', 401, req);
+    }
+    
+    if (!user) {
+      return errorResponse('unauthorized', 'Authentication required', 401, req);
+    }
+    
+    console.log('User authenticated:', user.id);
 
     console.log('Successfully returning mapbox token')
     return new Response(
@@ -72,14 +82,8 @@ serve(async (req) => {
         headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } 
       }
     )
-  } catch (error) {
-    console.error('Error in get-mapbox-token:', error)
-    return new Response(
-      JSON.stringify({ error: 'Failed to get Mapbox token' }),
-      { 
-        status: 500, 
-        headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } 
-      }
-    )
+  } catch (error: any) {
+    console.error('Unexpected error in get-mapbox-token:', error)
+    return errorResponse('server_error', 'An unexpected error occurred', 500, req);
   }
 })
