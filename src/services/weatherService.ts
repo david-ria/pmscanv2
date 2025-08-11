@@ -1,5 +1,6 @@
 import { invokeFunction } from '@/lib/api/client';
 import { supabase } from '@/integrations/supabase/client';
+import { isoForInterop } from '@/utils/iso';
 import { LocationData } from '@/types/PMScan';
 import { MissionData } from '@/lib/dataStorage';
 import * as logger from '@/utils/logger';
@@ -70,7 +71,7 @@ class WeatherService {
         body: {
           latitude,
           longitude,
-          timestamp: timestamp ? timestamp.toISOString() : new Date().toISOString(),
+          timestamp: timestamp ? isoForInterop(timestamp.getTime()) : isoForInterop(Date.now()),
         },
       });
 

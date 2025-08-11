@@ -97,7 +97,7 @@ export const updateTrackData = (
     },
     properties: {
       pm25: point.pm25,
-      timestamp: new Date(point.timestamp).toISOString(),
+      timestamp: point.timestamp, // Use epoch ms for map data
     },
   }));
 

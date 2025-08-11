@@ -51,7 +51,7 @@ export const GroupComparison = ({
     setLoading(true);
     try {
       // Fetch real group statistics from database using date range
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      const dateStr = selectedDate.toISOString().split('T')[0]; // Keep for date queries
       const { data, error } = await supabase
         .from('group_shared_statistics')
         .select('*')
