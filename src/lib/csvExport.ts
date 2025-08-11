@@ -1,6 +1,7 @@
 import { MissionData } from './dataStorage';
 import { storeCSVForSync } from '@/hooks/useCrashRecovery';
 import { EventData } from '@/hooks/useEvents';
+import { isoForInterop } from '@/utils/iso';
 import * as logger from '@/utils/logger';
 
 export async function exportMissionToCSV(mission: MissionData): Promise<void> {
@@ -65,7 +66,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
     const assignedEvent = eventAssignments.get(index.toString());
 
     return [
-      measurementTime.toISOString(),
+      isoForInterop(measurementTime.getTime()),
       m.pm1.toFixed(1),
       m.pm25.toFixed(1),
       m.pm10.toFixed(1),

@@ -56,10 +56,11 @@ export function formatDateTime(timestamp: number | Date | string, timeZone?: str
 }
 
 /**
+ * @deprecated Use isoForInterop() from @/utils/iso instead for API interop
  * Interop-only ISO string for APIs. Do NOT use for app storage (store epoch ms numbers).
  */
 export function toISOString(timestamp: number | Date | string): string {
-  // Interop only (APIs). Do NOT use for app storage (use epoch ms numbers).
+  // DEPRECATED: Use isoForInterop() from @/utils/iso instead
   const epochMs = ensureEpochMs(timestamp);
   return new Date(epochMs).toISOString();
 }
