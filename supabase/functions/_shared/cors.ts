@@ -4,9 +4,14 @@ const ALLOWED_ORIGINS = new Set([
   'http://localhost:5173'
 ]);
 
+// Check if origin matches Lovable project pattern
+function isLovableProjectOrigin(origin: string): boolean {
+  return /^https:\/\/[a-f0-9-]+\.lovableproject\.com$/.test(origin);
+}
+
 function corsHeadersFor(req: Request) {
   const origin = req.headers.get('Origin') ?? '';
-  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : '';
+  const allowed = ALLOWED_ORIGINS.has(origin) || isLovableProjectOrigin(origin) ? origin : '';
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
