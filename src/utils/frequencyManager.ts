@@ -2,6 +2,8 @@
  * Centralized frequency management to prevent multiple data points per interval
  */
 
+import { parseFrequencyToMs } from '@/lib/recordingUtils';
+
 const activeRecordingTimers = new Map<string, number>();
 
 /**
@@ -58,19 +60,6 @@ export function clearAllFrequencyTimers(): void {
     console.log(`⏰ Cleared timer ${id}`);
   });
   activeRecordingTimers.clear();
-}
-
-/**
- * Parse frequency string to milliseconds
- */
-function parseFrequencyToMs(frequency: string): number {
-  const number = parseInt(frequency);
-  if (frequency.includes('s')) {
-    return number * 1000;
-  } else if (frequency.includes('m')) {
-    return number * 60 * 1000;
-  }
-  return 10000; // default 10 seconds
 }
 
 /**
