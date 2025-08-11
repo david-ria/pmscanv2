@@ -27,20 +27,41 @@ class TimeAuthority {
 
 export const timeAuthority = new TimeAuthority();
 
-// Optional: call at app bootstrap for server sync
 export async function initTimeSync(): Promise<void> {
   try {
     const samples: number[] = [];
     
     for (let i = 0; i < 5; i++) {
       const t0 = performance.now();
-      const res = await fetch('/api/now', { cache: 'no-store' });
-      const { epochMs } = await res.json(); // { epochMs: number }
+      
+      // Use a more robust fetch approach
+      const res = await fetch('https://shydpfwuvnlzdzbubmgb.supabase.co/functions/v1/get-server-time', { 
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (!res.ok) {
+        throw new Error(`time-sync ${res.status}: ${res.statusText}`);
+      }
+      
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(`time-sync bad content-type: ${contentType}`);
+      }
+      
+      const data = await res.json();
+      
+      // Support both `epochMs` and `serverEpochMs` properties
+      const serverTime = data.epochMs || data.serverEpochMs;
+      if (typeof serverTime !== 'number') {
+        throw new Error(`time-sync invalid response: missing epochMs/serverEpochMs`);
+      }
+      
       const t1 = performance.now();
       const rtt = t1 - t0;
       
       // Estimate server time at receive moment
-      const estServerAtReceive = epochMs + rtt / 2;
+      const estServerAtReceive = serverTime + rtt / 2;
       const localReceive = Date.now();
       samples.push(estServerAtReceive - localReceive);
       
