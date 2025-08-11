@@ -66,8 +66,8 @@ export const STORAGE_SCHEMAS = {
   MISSIONS: z.array(z.object({
     id: z.string(),
     name: z.string(),
-    startTime: z.date(),
-    endTime: z.date(),
+    startTime: z.coerce.date(),
+    endTime: z.coerce.date(),
     durationMinutes: z.number(),
     avgPm1: z.number(),
     avgPm25: z.number(),
@@ -83,7 +83,7 @@ export const STORAGE_SCHEMAS = {
     synced: z.boolean().optional(),
     measurements: z.array(z.object({
       id: z.string(),
-      timestamp: z.date(),
+      timestamp: z.coerce.date(),
       pm1: z.number(),
       pm25: z.number(),
       pm10: z.number(),
