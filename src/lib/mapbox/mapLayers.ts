@@ -97,7 +97,7 @@ export const updateTrackData = (
     },
     properties: {
       pm25: point.pm25,
-      timestamp: point.timestamp.toISOString(),
+      timestamp: point.timestamp instanceof Date ? point.timestamp.toISOString() : new Date(point.timestamp).toISOString(),
     },
   }));
 
