@@ -3,8 +3,10 @@
  */
 import React, { Component, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, FileText } from 'lucide-react';
 import * as logger from '@/utils/logger';
+import { getVersionedItem, setVersionedItem, removeVersionedItem } from '@/lib/versionedStorage';
+import { z } from 'zod';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -17,15 +19,125 @@ interface ErrorBoundaryState {
   hasError: boolean;
   error?: Error;
   errorInfo?: React.ErrorInfo;
+  previousCrash?: CrashDump | null;
+}
+
+interface CrashDump {
+  timestamp: number;
+  userAgent: string;
+  url: string;
+  error: {
+    name: string;
+    message: string;
+    stack?: string;
+  };
+  componentStack?: string;
+  breadcrumbs?: string[];
+  version: string;
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { 
+      hasError: false,
+      previousCrash: this.loadPreviousCrash()
+    };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  private loadPreviousCrash(): CrashDump | null {
+    try {
+      const crashDump = getVersionedItem('CRASH_RECOVERY', {
+        schema: z.object({
+          timestamp: z.number(),
+          userAgent: z.string(),
+          url: z.string(),
+          error: z.object({
+            name: z.string(),
+            message: z.string(),
+            stack: z.string().optional(),
+          }),
+          componentStack: z.string().optional(),
+          breadcrumbs: z.array(z.string()).optional(),
+          version: z.string(),
+        }),
+        migrationStrategy: 'reset',
+      }) as CrashDump | null;
+      
+      // Only return crash if it's recent (within last 24 hours)
+      if (crashDump && crashDump.timestamp > Date.now() - 24 * 60 * 60 * 1000) {
+        return crashDump;
+      }
+      
+      // Clean up old crash data
+      if (crashDump) {
+        removeVersionedItem('CRASH_RECOVERY');
+      }
+      
+      return null;
+    } catch (error) {
+      console.warn('Failed to load previous crash data:', error);
+      return null;
+    }
+  }
+
+  private persistCrashDump(error: Error, errorInfo?: React.ErrorInfo) {
+    try {
+      const crashDump: CrashDump = {
+        timestamp: Date.now(),
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        error: {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        },
+        componentStack: errorInfo?.componentStack,
+        breadcrumbs: this.getBreadcrumbs(),
+        version: import.meta.env.VITE_APP_VERSION || 'unknown',
+      };
+
+      setVersionedItem('CRASH_RECOVERY', crashDump);
+      
+      // Also try to flush any pending logs if available
+      try {
+        if ('flush' in logger && typeof (logger as any).flush === 'function') {
+          (logger as any).flush();
+        }
+      } catch (flushError) {
+        console.warn('Failed to flush logs:', flushError);
+      }
+      
+      console.log('Crash dump persisted for diagnostics');
+    } catch (storageError) {
+      console.warn('Failed to persist crash dump:', storageError);
+      // Don't block the reload if storage fails
+    }
+  }
+
+  private getBreadcrumbs(): string[] {
+    try {
+      // Try to get navigation breadcrumbs from browser history
+      const breadcrumbs = [];
+      
+      // Add current page info
+      breadcrumbs.push(`Current: ${window.location.pathname}`);
+      
+      // Add referrer if available
+      if (document.referrer) {
+        breadcrumbs.push(`Referrer: ${document.referrer}`);
+      }
+      
+      // Add timestamp
+      breadcrumbs.push(`Time: ${new Date().toISOString()}`);
+      
+      return breadcrumbs;
+    } catch {
+      return [];
+    }
+  }
+
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return {
       hasError: true,
       error,
@@ -35,10 +147,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo });
 
+    // Persist crash dump before any reload might happen
+    this.persistCrashDump(error, errorInfo);
+
     // Log error to monitoring service
     logger.error('React Error Boundary caught error', error, {
       componentStack: errorInfo.componentStack,
       errorBoundary: true,
+      previousCrash: this.state.previousCrash ? {
+        timestamp: this.state.previousCrash.timestamp,
+        recurring: true
+      } : undefined,
     });
 
     // Call custom error handler if provided
@@ -48,17 +167,65 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   handleReload = () => {
+    // Ensure crash dump is persisted before reload
+    if (this.state.error) {
+      this.persistCrashDump(this.state.error, this.state.errorInfo);
+    }
+    
     // Clear build caches to prevent phantom chunk issues
     if ('caches' in window) {
       caches.keys().then(cacheNames => {
         cacheNames.forEach(cacheName => caches.delete(cacheName));
       });
     }
-    window.location.reload();
+    
+    // Small delay to ensure storage operations complete
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   handleReset = () => {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+  };
+
+  handleViewCrashReport = () => {
+    if (this.state.previousCrash) {
+      // Create a detailed crash report for debugging
+      const report = {
+        ...this.state.previousCrash,
+        formatted: {
+          timestamp: new Date(this.state.previousCrash.timestamp).toLocaleString(),
+          timeSince: `${Math.round((Date.now() - this.state.previousCrash.timestamp) / 60000)} minutes ago`,
+        }
+      };
+      
+      console.group('🔍 Previous Crash Report');
+      console.log('Timestamp:', report.formatted.timestamp);
+      console.log('Time Since:', report.formatted.timeSince);
+      console.log('URL:', report.url);
+      console.log('User Agent:', report.userAgent);
+      console.log('Error:', report.error);
+      if (report.componentStack) {
+        console.log('Component Stack:', report.componentStack);
+      }
+      if (report.breadcrumbs) {
+        console.log('Breadcrumbs:', report.breadcrumbs);
+      }
+      console.groupEnd();
+      
+      // Also copy to clipboard for easy sharing
+      navigator.clipboard?.writeText(JSON.stringify(report, null, 2)).then(() => {
+        console.log('📋 Crash report copied to clipboard');
+      }).catch(() => {
+        console.log('📋 Crash report available in console');
+      });
+    }
+  };
+
+  handleDismissCrashReport = () => {
+    removeVersionedItem('CRASH_RECOVERY');
+    this.setState({ previousCrash: null });
   };
 
   render() {
@@ -92,6 +259,37 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </p>
             </div>
 
+            {/* Previous crash report notification */}
+            {this.state.previousCrash && !this.state.hasError && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 text-sm">
+                <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200 mb-2">
+                  <FileText className="h-4 w-4" />
+                  <span className="font-medium">Previous crash detected</span>
+                </div>
+                <p className="text-yellow-700 dark:text-yellow-300 mb-3">
+                  A crash occurred {Math.round((Date.now() - this.state.previousCrash.timestamp) / 60000)} minutes ago.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={this.handleViewCrashReport}
+                    className="text-yellow-800 dark:text-yellow-200 border-yellow-300 dark:border-yellow-700"
+                  >
+                    View Report
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={this.handleDismissCrashReport}
+                    className="text-yellow-700 dark:text-yellow-300"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {import.meta.env.DEV && this.state.error && !isChunkError && (
               <details className="text-left bg-muted p-4 rounded-lg">
                 <summary className="cursor-pointer font-medium mb-2">
@@ -117,6 +315,44 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </Button>
             </div>
           </div>
+        </div>
+      );
+    }
+
+    // Show previous crash notification even when no current error
+    if (this.state.previousCrash && !this.state.hasError) {
+      return (
+        <div>
+          <div className="fixed top-4 right-4 z-50 max-w-sm">
+            <div className="bg-yellow-50 dark:bg-yellow-900/90 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 shadow-lg">
+              <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200 mb-2">
+                <FileText className="h-4 w-4" />
+                <span className="font-medium text-sm">Crash Report Available</span>
+              </div>
+              <p className="text-yellow-700 dark:text-yellow-300 text-xs mb-3">
+                Previous crash: {Math.round((Date.now() - this.state.previousCrash.timestamp) / 60000)}m ago
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={this.handleViewCrashReport}
+                  className="text-xs text-yellow-800 dark:text-yellow-200 border-yellow-300 dark:border-yellow-700"
+                >
+                  View
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={this.handleDismissCrashReport}
+                  className="text-xs text-yellow-700 dark:text-yellow-300"
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          </div>
+          {this.props.children}
         </div>
       );
     }
