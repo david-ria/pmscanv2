@@ -24,6 +24,26 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       '@typescript-eslint/no-unused-vars': 'off',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.property.name='toISOString']",
+          message: 'Use epoch ms for storage/processing. toISOString() is for interop only (use isoForInterop() from @/utils/iso).'
+        }
+      ],
     },
+  },
+  {
+    // Allow toISOString() in interop-only files
+    files: [
+      'src/utils/timeFormat.ts', 
+      'src/utils/iso.ts', 
+      'src/lib/csvExport.ts',
+      'supabase/functions/**/*.ts'
+    ],
+    rules: {
+      'no-restricted-syntax': 'off'
+    }
+  }
   }
 );
