@@ -3,6 +3,7 @@
  * Eliminates window object pollution and provides type-safe global state
  */
 
+import React, { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/utils/professionalLogger';
 import { AppError } from '@/utils/errorManager';
 import { PMScanData, LocationData, DeviceInfo } from '@/types';
@@ -86,7 +87,7 @@ class GlobalStateManager {
     devices.push(device);
     this.setState({ connectedDevices: devices });
     
-    this.componentLogger.deviceEvent(device.name, 'connected', { deviceId: device.id });
+    this.componentLogger.info(`Device connected: ${device.name}`, { deviceId: device.id });
   }
 
   removeDevice(deviceId: string): void {
@@ -95,7 +96,7 @@ class GlobalStateManager {
     this.setState({ connectedDevices: devices });
     
     if (device) {
-      this.componentLogger.deviceEvent(device.name, 'disconnected', { deviceId });
+      this.componentLogger.info(`Device disconnected: ${device.name}`, { deviceId });
     }
   }
 
@@ -107,7 +108,7 @@ class GlobalStateManager {
       currentMissionId: missionId,
     });
 
-    this.componentLogger.userAction('Recording started', {
+    this.componentLogger.info('Recording started', {
       frequency,
       missionId,
     });
@@ -122,7 +123,7 @@ class GlobalStateManager {
       currentMissionId: null,
     });
 
-    this.componentLogger.userAction('Recording stopped', { missionId: currentMissionId });
+    this.componentLogger.info('Recording stopped', { missionId: currentMissionId });
     this.dispatchEvent('recordingStopped', { missionId: currentMissionId });
   }
 
@@ -281,9 +282,9 @@ export const globalState = new GlobalStateManager();
 
 // === REACT HOOKS ===
 export function useGlobalState(): [Readonly<GlobalState>, typeof globalState] {
-  const [state, setState] = React.useState<GlobalState>(globalState.getState());
+  const [state, setState] = useState<GlobalState>(globalState.getState());
 
-  React.useEffect(() => {
+  useEffect(() => {
     const unsubscribe = globalState.subscribe('react-hook', setState);
     return unsubscribe;
   }, []);
@@ -296,7 +297,7 @@ export function useGlobalStateValue<K extends keyof GlobalState>(
 ): [GlobalState[K], (value: GlobalState[K]) => void] {
   const [state] = useGlobalState();
   
-  const setValue = React.useCallback((value: GlobalState[K]) => {
+  const setValue = useCallback((value: GlobalState[K]) => {
     globalState.setStateValue(key, value);
   }, [key]);
 

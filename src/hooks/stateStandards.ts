@@ -1,5 +1,5 @@
 /**
- * CRITICAL: State Management Standards
+ * CRITICAL: Professional State Management Standards
  * Enforces consistent state patterns and eliminates useState chaos
  */
 
@@ -9,7 +9,7 @@ import { logger } from '@/utils/professionalLogger';
 import { AsyncOperationState, ValidationSchema, FormState } from '@/types';
 
 // === ASYNC STATE HOOK ===
-export function useAsyncState<T>(
+function useAsyncState<T>(
   initialData?: T
 ): [AsyncOperationState<T>, (operation: () => Promise<T>) => Promise<T>] {
   const [state, setState] = useState<AsyncOperationState<T>>({
@@ -55,7 +55,7 @@ export function useAsyncState<T>(
 }
 
 // === FORM STATE HOOK ===
-export function useFormState<T extends Record<string, unknown>>(
+function useFormState<T extends Record<string, unknown>>(
   initialData: T,
   validationSchema?: ValidationSchema
 ): {
@@ -172,7 +172,7 @@ export function useFormState<T extends Record<string, unknown>>(
 }
 
 // === SAFE STORAGE HOOK ===
-export function useSafeStorage<T>(
+function useSafeStorage<T>(
   key: string,
   defaultValue: T,
   serializer: {
@@ -212,7 +212,7 @@ export function useSafeStorage<T>(
 }
 
 // === DEBOUNCED STATE HOOK ===
-export function useDebouncedState<T>(
+function useDebouncedState<T>(
   initialValue: T,
   delay: number = 300
 ): [T, T, (value: T) => void] {
@@ -244,7 +244,7 @@ export function useDebouncedState<T>(
 }
 
 // === PREVIOUS VALUE HOOK ===
-export function usePrevious<T>(value: T): T | undefined {
+function usePrevious<T>(value: T): T | undefined {
   const ref = useRef<T>();
   
   useEffect(() => {
@@ -255,13 +255,13 @@ export function usePrevious<T>(value: T): T | undefined {
 }
 
 // === FORCE UPDATE HOOK ===
-export function useForceUpdate(): () => void {
+function useForceUpdate(): () => void {
   const [, setState] = useState({});
   return useCallback(() => setState({}), []);
 }
 
 // === SAFE EFFECT HOOK ===
-export function useSafeEffect(
+function useSafeEffect(
   effect: () => void | (() => void),
   deps?: React.DependencyList,
   componentName?: string
@@ -280,7 +280,7 @@ export function useSafeEffect(
 }
 
 // === INTERVAL HOOK ===
-export function useInterval(callback: () => void, delay: number | null): void {
+function useInterval(callback: () => void, delay: number | null): void {
   const savedCallback = useRef<() => void>();
 
   useEffect(() => {
@@ -302,7 +302,7 @@ export function useInterval(callback: () => void, delay: number | null): void {
 }
 
 // === TIMEOUT HOOK ===
-export function useTimeout(callback: () => void, delay: number | null): void {
+function useTimeout(callback: () => void, delay: number | null): void {
   const savedCallback = useRef<() => void>();
 
   useEffect(() => {
@@ -323,27 +323,27 @@ export function useTimeout(callback: () => void, delay: number | null): void {
 }
 
 // === COMPONENT STATE TRACKER ===
-export function useComponentLifecycle(componentName: string) {
-  const logger = logger.createComponentLogger(componentName);
+function useComponentLifecycle(componentName: string) {
+  const componentLogger = logger.createComponentLogger(componentName);
 
   useEffect(() => {
-    logger.debug('Component mounted');
+    componentLogger.debug('Component mounted');
     return () => {
-      logger.debug('Component unmounted');
+      componentLogger.debug('Component unmounted');
     };
-  }, [logger]);
+  }, [componentLogger]);
 
   const logRender = useCallback((props?: Record<string, unknown>) => {
-    logger.debug('Component rendered', props);
-  }, [logger]);
+    componentLogger.debug('Component rendered', props);
+  }, [componentLogger]);
 
   const logStateChange = useCallback((from: string, to: string) => {
-    logger.stateChange(from, to);
-  }, [logger]);
+    componentLogger.stateChange(from, to);
+  }, [componentLogger]);
 
   const logUserAction = useCallback((action: string, data?: Record<string, unknown>) => {
-    logger.userAction(action, data);
-  }, [logger]);
+    componentLogger.info('User action: ' + action, data);
+  }, [componentLogger]);
 
   return {
     logRender,
@@ -354,7 +354,6 @@ export function useComponentLifecycle(componentName: string) {
 
 // === EXPORT ALL HOOKS ===
 export {
-  // Standard hooks with error handling
   useAsyncState,
   useFormState,
   useSafeStorage,

@@ -165,6 +165,12 @@ class Logger {
       
       stateChange: (from: string, to: string) => 
         this.stateChange(componentName, from, to),
+
+      userAction: (action: string, data?: Record<string, unknown>) => 
+        this.userAction(action, data, { component: componentName }),
+      
+      deviceEvent: (device: string, event: string, data?: Record<string, unknown>) => 
+        this.deviceEvent(device, event, data, { component: componentName }),
     };
   }
 
