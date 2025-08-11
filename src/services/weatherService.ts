@@ -71,7 +71,7 @@ class WeatherService {
         body: {
           latitude,
           longitude,
-          timestamp: timestamp ? isoForInterop(timestamp.getTime()) : isoForInterop(Date.now()),
+          timestamp: timestamp ? timestamp.getTime() : Date.now(), // Send epoch ms directly
         },
       });
 

@@ -80,11 +80,12 @@ serve(async (req) => {
     const weatherData = await weatherResponse.json();
     console.log('Weather API response:', weatherData);
 
-    // Store weather data in our database
+    // Store weather data in our database with epoch ms
     const weatherRecord = {
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
       timestamp: requestTime.toISOString(),
+      timestamp_epoch_ms: requestTime.getTime(), // Store epoch ms as primary
       temperature: weatherData.main.temp,
       humidity: weatherData.main.humidity,
       pressure: weatherData.main.pressure,

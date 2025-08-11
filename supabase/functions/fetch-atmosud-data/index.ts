@@ -37,7 +37,8 @@ serve(async (req) => {
       );
     }
 
-    const requestTime = new Date(timestamp);
+    // Convert timestamp to Date object (expecting epoch ms)
+    const requestTime = new Date(Number(timestamp));
     const oneHourAgo = new Date(requestTime.getTime() - 60 * 60 * 1000);
 
     // Check if we have recent air quality data for this location (within 1 hour and ~5km radius)
@@ -234,6 +235,7 @@ async function processAtmosudData(data: any, latitude: number, longitude: number
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
       timestamp: timestamp.toISOString(),
+      timestamp_epoch_ms: timestamp.getTime(), // Store epoch ms as primary
       no2_value: no2Value ? parseFloat(no2Value) : null,
       o3_value: o3Value ? parseFloat(o3Value) : null,
       station_name: stationName,
@@ -267,6 +269,7 @@ async function processStationData(data: any, station: any, timestamp: Date) {
       latitude: station.latitude || station.lat,
       longitude: station.longitude || station.lng || station.lon,
       timestamp: timestamp.toISOString(),
+      timestamp_epoch_ms: timestamp.getTime(), // Store epoch ms as primary
       no2_value: no2Value ? parseFloat(no2Value) : null,
       o3_value: o3Value ? parseFloat(o3Value) : null,
       station_name: station.name,

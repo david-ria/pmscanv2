@@ -51,7 +51,7 @@ async function syncEventsForMission(missionId: string): Promise<void> {
     const currentUser = await supabase.auth.getUser();
     if (!currentUser.data.user) return;
 
-    // Insert events into database
+    // Insert events into database using epoch ms timestamps
     const eventsToInsert = missionEvents.map((event: any) => ({
       id: event.id,
       mission_id: missionId,
@@ -62,7 +62,9 @@ async function syncEventsForMission(missionId: string): Promise<void> {
       longitude: event.longitude,
       accuracy: event.accuracy,
       created_by: currentUser.data.user.id,
-      timestamp: event.timestamp,
+      timestamp_epoch_ms: event.timestamp instanceof Date ? event.timestamp.getTime() : Number(event.timestamp),
+      timestamp: event.timestamp instanceof Date ? event.timestamp.toISOString() : new Date(event.timestamp).toISOString(), // Keep for compatibility
+      date_utc: new Date(event.timestamp instanceof Date ? event.timestamp.getTime() : Number(event.timestamp)).toISOString().split('T')[0],
     }));
 
     const { error } = await supabase
@@ -171,8 +173,10 @@ export async function syncPendingMissions(): Promise<void> {
           id: mission.id,
           user_id: (await supabase.auth.getUser()).data.user?.id,
           name: mission.name,
-          start_time: mission.startTime instanceof Date ? mission.startTime.toISOString() : new Date(mission.startTime).toISOString(),
-          end_time: mission.endTime instanceof Date ? mission.endTime.toISOString() : new Date(mission.endTime).toISOString(),
+          start_epoch_ms: mission.startTime instanceof Date ? mission.startTime.getTime() : Number(mission.startTime),
+          end_epoch_ms: mission.endTime instanceof Date ? mission.endTime.getTime() : Number(mission.endTime),
+          start_time: mission.startTime instanceof Date ? mission.startTime.toISOString() : new Date(mission.startTime).toISOString(), // Keep for compatibility
+          end_time: mission.endTime instanceof Date ? mission.endTime.toISOString() : new Date(mission.endTime).toISOString(), // Keep for compatibility
           duration_minutes: mission.durationMinutes,
           avg_pm1: mission.avgPm1,
           avg_pm25: mission.avgPm25,
@@ -191,11 +195,11 @@ export async function syncPendingMissions(): Promise<void> {
 
       if (missionError) throw missionError;
 
-      // Save measurements to database using epoch ms timestamps
+      // Save measurements to database using epoch ms timestamps as primary
       const measurementsToInsert = mission.measurements.map((m) => ({
         id: m.id,
         mission_id: mission.id,
-        timestamp_epoch_ms: m.timestamp instanceof Date ? m.timestamp.getTime() : m.timestamp,
+        timestamp_epoch_ms: m.timestamp instanceof Date ? m.timestamp.getTime() : Number(m.timestamp),
         timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : new Date(m.timestamp).toISOString(), // Keep for compatibility
         pm1: m.pm1,
         pm25: m.pm25,
@@ -208,7 +212,8 @@ export async function syncPendingMissions(): Promise<void> {
         location_context: m.locationContext,
         activity_context: m.activityContext,
         automatic_context: m.automaticContext,
-        // weather_data_id removed - now at mission level
+        // Date field for querying (derived from epoch_ms)
+        date_utc: new Date(m.timestamp instanceof Date ? m.timestamp.getTime() : Number(m.timestamp)).toISOString().split('T')[0],
       }));
 
       const { error: measurementsError } = await supabase

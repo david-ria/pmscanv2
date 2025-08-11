@@ -45,8 +45,8 @@ export function useMissionSaver() {
     const calculatedDuration = (endTime.getTime() - actualStartTime.getTime()) / (1000 * 60);
     if (calculatedDuration <= 0) {
       console.warn('⚠️ Mission duration calculated as zero or negative, using current time as end time', {
-        actualStartTime: actualStartTime.toISOString(),
-        originalEndTime: endTime.toISOString(),
+        actualStartTime: actualStartTime.getTime(), // Use epoch ms for logging
+        originalEndTime: endTime.getTime(),
         calculatedDuration,
         dataPoints: recordingData.length
       });
@@ -54,11 +54,11 @@ export function useMissionSaver() {
     }
     
     console.log('🔍 Mission timing calculation:', {
-      recordingStartTime: recordingStartTime?.toISOString(),
-      oldestDataPoint: oldestTimestamp.toISOString(),
-      newestDataPoint: newestTimestamp.toISOString(),
-      actualStartTime: actualStartTime.toISOString(),
-      endTime: endTime.toISOString(),
+      recordingStartTime: recordingStartTime?.getTime(),
+      oldestDataPoint: oldestTimestamp.getTime(),
+      newestDataPoint: newestTimestamp.getTime(),
+      actualStartTime: actualStartTime.getTime(),
+      endTime: endTime.getTime(),
       durationMinutes: Math.round((endTime.getTime() - actualStartTime.getTime()) / (1000 * 60)),
       dataPointsCount: recordingData.length
     });
