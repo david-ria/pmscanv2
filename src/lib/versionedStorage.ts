@@ -101,6 +101,7 @@ export const STORAGE_SCHEMAS = {
   PENDING_SYNC: z.array(z.string()),
   
   ALERT_SETTINGS: z.record(z.object({
+    pm1: z.number().optional(),
     pm25: z.number(),
     pm10: z.number(),
     enabled: z.boolean(),
@@ -236,9 +237,9 @@ export function getVersionedItem<T>(
       // Provide fallback defaults for critical data types
       if (key === 'ALERT_SETTINGS') {
         const defaultAlertSettings = {
-          pm1: { pm25: 10, pm10: 20, enabled: false },
-          pm25: { pm25: 15, pm10: 25, enabled: false },
-          pm10: { pm25: 25, pm10: 50, enabled: false }
+          pm1: { pm1: 10, pm25: 15, pm10: 20, enabled: false },
+          pm25: { pm1: 15, pm25: 25, pm10: 35, enabled: false },
+          pm10: { pm1: 25, pm25: 35, pm10: 50, enabled: false }
         };
         logger.info(`Using default alert settings for ${key}`);
         setVersionedItem(key, defaultAlertSettings as T);
@@ -256,9 +257,9 @@ export function getVersionedItem<T>(
     // Provide fallback defaults for critical data types
     if (key === 'ALERT_SETTINGS') {
       const defaultAlertSettings = {
-        pm1: { pm25: 10, pm10: 20, enabled: false },
-        pm25: { pm25: 15, pm10: 25, enabled: false },
-        pm10: { pm25: 25, pm10: 50, enabled: false }
+        pm1: { pm1: 10, pm25: 15, pm10: 20, enabled: false },
+        pm25: { pm1: 15, pm25: 25, pm10: 35, enabled: false },
+        pm10: { pm1: 25, pm25: 35, pm10: 50, enabled: false }
       };
       logger.info(`Using default alert settings after parse error for ${key}`);
       setVersionedItem(key, defaultAlertSettings as T);

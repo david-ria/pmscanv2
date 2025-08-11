@@ -12,3 +12,6 @@ verify_jwt = true
 [functions.decline-group-invitation]
 verify_jwt = true
 
+[functions.get-server-time]
+verify_jwt = false
+
