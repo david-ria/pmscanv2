@@ -19,6 +19,14 @@ const queryClient = new QueryClient({
 // Initialize i18n immediately for proper app functionality
 import './i18n/config';
 
+// Global error logging to diagnose loading issues in production
+window.addEventListener('error', (e) => {
+  console.error('Global error:', (e as ErrorEvent).error || (e as ErrorEvent).message);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled rejection:', (e as PromiseRejectionEvent).reason);
+});
+
 // Bootstrap time authority before React mounts
 async function bootstrap() {
   try { 
