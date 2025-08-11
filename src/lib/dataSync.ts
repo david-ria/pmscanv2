@@ -153,7 +153,7 @@ export async function syncPendingMissions(): Promise<void> {
         .from('missions')
         .select('id')
         .eq('id', mission.id)
-        .single();
+        .maybeSingle();
 
       // If mission already exists, make sure measurements and fields are consistent
       if (existingMission) {
