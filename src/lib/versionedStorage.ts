@@ -236,6 +236,10 @@ export function getVersionedItem<T>(
       
       // Provide fallback defaults for critical data types
       if (key === 'ALERT_SETTINGS') {
+        logger.info(`Clearing corrupted ALERT_SETTINGS and using defaults`);
+        // Remove the corrupted data first
+        localStorage.removeItem(STORAGE_KEYS[key]);
+        
         const defaultAlertSettings = {
           pm1: { pm1: 10, pm25: 15, pm10: 20, enabled: false },
           pm25: { pm1: 15, pm25: 25, pm10: 35, enabled: false },
@@ -256,6 +260,10 @@ export function getVersionedItem<T>(
     
     // Provide fallback defaults for critical data types
     if (key === 'ALERT_SETTINGS') {
+      logger.info(`Clearing corrupted ALERT_SETTINGS after parse error and using defaults`);
+      // Remove the corrupted data first
+      localStorage.removeItem(STORAGE_KEYS[key]);
+      
       const defaultAlertSettings = {
         pm1: { pm1: 10, pm25: 15, pm10: 20, enabled: false },
         pm25: { pm1: 15, pm25: 25, pm10: 35, enabled: false },
