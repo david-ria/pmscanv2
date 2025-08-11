@@ -19,21 +19,24 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
   // Convert recording frequency to milliseconds for polling
   const pollInterval = parseFrequencyToMs(recordingFrequency);
   
-  // Handle window visibility changes to ensure polling continues
+  // Handle window visibility changes to ensure continuous data flow
   useEffect(() => {
     const handleVisibilityChange = () => {
       const isVisible = !document.hidden;
       isVisibleRef.current = isVisible;
       
-      if (isVisible && isRecording) {
-        // When window becomes visible again, force immediate poll
-        throttledLog('visibility-restored', '👁️ Window visible - resuming data polling');
+      if (isVisible) {
+        throttledLog('visibility-restored', '👁️ Window visible - forcing data refresh');
         
-        // Small delay to ensure everything is ready
+        // Force immediate data refresh regardless of recording state
         setTimeout(() => {
           try {
             const currentData = nativeRecordingService.getRecordingData();
             const currentCount = currentData.length;
+            
+            // Always update when window becomes visible to catch any missed updates
+            setRecordingData(currentData.map(entry => ({ ...entry })));
+            setDataCount(currentCount);
             
             const latestEntry = currentCount > 0 ? currentData[currentCount - 1] : null;
             const dataHash = createDataHash(
@@ -41,23 +44,19 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
               latestEntry?.pmData?.timestamp,
               latestEntry?.pmData?.pm25
             );
+            setLastDataHash(dataHash);
             
-            if (dataHash !== lastDataHash) {
-              setRecordingData(currentData.map(entry => ({ ...entry })));
-              setDataCount(currentCount);
-              setLastDataHash(dataHash);
-              throttledLog('visibility-data-sync', `📊 Synced ${currentCount} data points after visibility restore`);
-            }
+            throttledLog('visibility-data-sync', `📊 Refreshed with ${currentCount} data points after visibility restore`);
           } catch (error) {
             console.error('Error syncing data after visibility restore:', error);
           }
-        }, 100);
+        }, 50); // Faster response
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isRecording, lastDataHash]);
+  }, []); // Remove dependencies to ensure it always works
   
   useEffect(() => {
     // Clear any existing interval
@@ -102,12 +101,20 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
       // Poll immediately
       pollData();
       
-      // Use more frequent polling to compensate for potential browser throttling
-      const adjustedInterval = Math.min(pollInterval, 2000); // Cap at 2 seconds max
+      // Use more aggressive polling to handle window focus changes
+      const adjustedInterval = Math.min(pollInterval / 2, 1000); // More frequent updates, max 1 second
       intervalRef.current = window.setInterval(pollData, adjustedInterval);
     } else {
-      // Still get final data when not recording
-      pollData();
+      // Clear data when not recording to prevent stale state
+      const currentData = nativeRecordingService.getRecordingData();
+      if (currentData.length === 0) {
+        setRecordingData([]);
+        setDataCount(0);
+        setLastDataHash('');
+      } else {
+        // Get final data when not recording
+        pollData();
+      }
     }
     
     return () => {

@@ -56,6 +56,18 @@ class NativeRecordingService {
       this.recordingInterval = null;
     }
 
+    // Trigger update event to notify React components
+    setTimeout(() => {
+      const updateEvent = new CustomEvent('nativeDataAdded', { 
+        detail: {
+          count: this.recordingData.length,
+          timestamp: Date.now(),
+          stopped: true
+        }
+      });
+      window.dispatchEvent(updateEvent);
+    }, 0);
+
     console.log('✅ Native recording stopped');
   }
 
@@ -190,6 +202,18 @@ class NativeRecordingService {
     this.recordingData = [];
     this.recordingStartTime = null;
     this.currentMissionId = null;
+    
+    // Notify React components about data clearance
+    setTimeout(() => {
+      const updateEvent = new CustomEvent('nativeDataAdded', { 
+        detail: {
+          count: 0,
+          timestamp: Date.now(),
+          cleared: true
+        }
+      });
+      window.dispatchEvent(updateEvent);
+    }, 0);
   }
 
   // Set callback for data collection
