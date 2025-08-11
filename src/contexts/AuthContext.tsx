@@ -29,13 +29,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
+        console.log('🔄 Initializing Supabase auth...');
         const supabase = await getSupabase();
         setSupabaseClient(supabase);
+        console.log('✅ Supabase client initialized');
 
         // Set up auth state listener
         const {
           data: { subscription: authSubscription },
         } = supabase.auth.onAuthStateChange((event, session) => {
+          console.log('🔄 Auth state changed:', event, !!session);
           setSession(session);
           setUser(session?.user ?? null);
           setLoading(false);
@@ -45,12 +48,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Check for existing session
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('✅ Initial session check:', !!session);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       } catch (error) {
-        console.error('Failed to initialize Supabase:', error);
+        console.error('❌ Failed to initialize Supabase:', error);
+        // Set loading to false even on error to prevent infinite loading
         setLoading(false);
+        // Set a null user state to redirect to auth page
+        setUser(null);
+        setSession(null);
       }
     };
 
