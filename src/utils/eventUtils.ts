@@ -2,6 +2,8 @@
  * Event management utilities to ensure consistent timestamp and storage handling
  */
 
+import { isoForInterop } from '@/utils/iso';
+
 export interface StandardEvent {
   id: string;
   missionId: string;
@@ -70,7 +72,7 @@ export function eventToStorageFormat(event: StandardEvent): EventStorageFormat {
     longitude: event.longitude,
     accuracy: event.accuracy,
     created_by: event.createdBy,
-    timestamp: event.timestamp.toISOString()
+    timestamp: isoForInterop(event.timestamp instanceof Date ? event.timestamp.getTime() : event.timestamp)
   };
 }
 

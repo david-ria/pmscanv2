@@ -19,6 +19,8 @@ import { useEvents } from '@/hooks/useEvents';
 import { formatDateTime, formatDurationHHMM } from '@/utils/timeFormat';
 import { getEventLabel } from '@/utils/eventTypes';
 import { downloadPDF } from '@/lib/pdfExport';
+import { exportMissionToCSV } from '@/lib/csvExport';
+import { isoForFilename } from '@/utils/iso';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
@@ -276,7 +278,7 @@ export function MissionDetailsDialog({
       });
       
       const link = document.createElement('a');
-      link.download = `${mission.name}_graph_${new Date().toISOString().split('T')[0]}.png`;
+      link.download = `${mission.name}_graph_${isoForFilename(Date.now())}.png`;
       link.href = canvas.toDataURL();
       link.click();
       
@@ -398,7 +400,7 @@ export function MissionDetailsDialog({
 
       // Save PDF
       const blob = pdf.output('blob');
-      downloadPDF(blob, `${mission.name}_report_${new Date().toISOString().split('T')[0]}.pdf`);
+      downloadPDF(blob, `${mission.name}_report_${isoForFilename(Date.now())}.pdf`);
       
       toast({
         title: "Report exported",

@@ -84,7 +84,7 @@ async function parseDataWithTimeSlicing(rawData: any) {
       if (typeof item === 'string') {
         const parts = item.split(',');
         result.push({
-          timestamp: new Date().toISOString(),
+          timestamp: Date.now(),
           pm1: parseFloat(parts[0]) || 0,
           pm25: parseFloat(parts[1]) || 0,
           pm10: parseFloat(parts[2]) || 0,
@@ -111,7 +111,7 @@ function parseSensorData(rawData: any) {
       if (typeof item === 'string') {
         const parts = item.split(',');
         return {
-          timestamp: new Date().toISOString(),
+          timestamp: Date.now(),
           pm1: parseFloat(parts[0]) || 0,
           pm25: parseFloat(parts[1]) || 0,
           pm10: parseFloat(parts[2]) || 0,
@@ -321,7 +321,7 @@ function aggregateChartData(data: any) {
   measurements.forEach((measurement: any) => {
     const timestamp = new Date(measurement.timestamp);
     const intervalStart = new Date(Math.floor(timestamp.getTime() / intervalMs) * intervalMs);
-    const key = intervalStart.toISOString();
+    const key = String(intervalStart.getTime());
     
     if (!groups.has(key)) {
       groups.set(key, []);

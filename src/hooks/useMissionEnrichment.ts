@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { isoForInterop } from '@/utils/iso';
 import { MissionData } from '@/lib/dataStorage';
 import * as logger from '@/utils/logger';
 
@@ -27,7 +28,7 @@ export function useMissionEnrichment() {
           body: {
             latitude: measurementWithLocation.latitude,
             longitude: measurementWithLocation.longitude,
-            timestamp: mission.startTime.toISOString(),
+            timestamp: isoForInterop(mission.startTime instanceof Date ? mission.startTime.getTime() : mission.startTime),
           },
         });
 

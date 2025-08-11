@@ -191,11 +191,12 @@ export async function syncPendingMissions(): Promise<void> {
 
       if (missionError) throw missionError;
 
-      // Save measurements to database using upsert to handle duplicates
+      // Save measurements to database using epoch ms timestamps
       const measurementsToInsert = mission.measurements.map((m) => ({
         id: m.id,
         mission_id: mission.id,
-        timestamp: m.timestamp.toISOString(),
+        timestamp_epoch_ms: m.timestamp instanceof Date ? m.timestamp.getTime() : m.timestamp,
+        timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : new Date(m.timestamp).toISOString(), // Keep for compatibility
         pm1: m.pm1,
         pm25: m.pm25,
         pm10: m.pm10,
