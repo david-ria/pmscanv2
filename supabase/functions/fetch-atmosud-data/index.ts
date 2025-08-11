@@ -2,10 +2,20 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const ALLOWED_ORIGINS = new Set([
+  'https://staging.example.com',
+  'https://app.example.com'
+]);
+
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get('Origin') ?? '';
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : '';
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+}
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -13,7 +23,7 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeadersFor(req) });
   }
 
   try {
@@ -23,7 +33,7 @@ serve(async (req) => {
     if (!latitude || !longitude || !timestamp) {
       return new Response(
         JSON.stringify({ error: 'Missing required parameters: latitude, longitude, timestamp' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -48,7 +58,7 @@ serve(async (req) => {
       console.log('Found cached Atmosud data:', existingData[0].id);
       return new Response(
         JSON.stringify({ airQualityData: existingData[0] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -85,7 +95,7 @@ serve(async (req) => {
         console.error('Atmosud measurements API also failed:', measurementsResponse.status);
         return new Response(
           JSON.stringify({ error: 'Failed to fetch air quality data from Atmosud API' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 500, headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
         );
       }
 
@@ -106,14 +116,14 @@ serve(async (req) => {
           console.error('Error saving air quality data:', saveError);
           return new Response(
             JSON.stringify({ error: 'Failed to save air quality data' }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 500, headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
           );
         }
 
         console.log('Air quality data saved successfully:', savedData.id);
         return new Response(
           JSON.stringify({ airQualityData: savedData }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
         );
       }
     }
@@ -153,14 +163,14 @@ serve(async (req) => {
             console.error('Error saving air quality data:', saveError);
             return new Response(
               JSON.stringify({ error: 'Failed to save air quality data' }),
-              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 500, headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
             );
           }
 
           console.log('Air quality data saved successfully:', savedData.id);
           return new Response(
             JSON.stringify({ airQualityData: savedData }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
           );
         }
       }
@@ -172,14 +182,14 @@ serve(async (req) => {
         error: 'No air quality data available for this location',
         debug: { stationsData }
       }),
-      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 404, headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Error in fetch-atmosud-data function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
     );
   }
 });

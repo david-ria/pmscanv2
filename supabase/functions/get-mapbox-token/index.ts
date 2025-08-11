@@ -1,8 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = new Set([
+  'https://staging.example.com',
+  'https://app.example.com'
+]);
+
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get('Origin') ?? '';
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : '';
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
 }
 
 serve(async (req) => {
@@ -10,7 +20,7 @@ serve(async (req) => {
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeadersFor(req) })
   }
 
   try {
@@ -23,7 +33,7 @@ serve(async (req) => {
         JSON.stringify({ error: 'Mapbox token not configured' }),
         { 
           status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } 
         }
       )
     }
@@ -33,7 +43,7 @@ serve(async (req) => {
       JSON.stringify({ token: mapboxToken }),
       { 
         status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } 
       }
     )
   } catch (error) {
@@ -42,7 +52,7 @@ serve(async (req) => {
       JSON.stringify({ error: 'Failed to get Mapbox token' }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } 
       }
     )
   }
