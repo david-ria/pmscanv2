@@ -21,11 +21,27 @@ export const createLocationMarker = async (
   ) => { level: string; color: string },
   existingMarker?: any | null
 ): Promise<any> => {
+  // Safety checks - ensure map is properly initialized
+  if (!map) {
+    throw new Error('Map instance is null or undefined');
+  }
+  
+  // Check if map has essential methods before proceeding
+  if (typeof map.getContainer !== 'function' || 
+      typeof map.flyTo !== 'function' ||
+      !map.getContainer()) {
+    throw new Error('Map is not properly initialized - missing essential methods or container');
+  }
+
   const { longitude, latitude } = currentLocation;
 
-  // Remove existing marker
-  if (existingMarker) {
-    existingMarker.remove();
+  // Remove existing marker safely
+  try {
+    if (existingMarker && typeof existingMarker.remove === 'function') {
+      existingMarker.remove();
+    }
+  } catch (error) {
+    console.warn('Failed to remove existing marker:', error);
   }
 
   // Create popup content with PM data if available
@@ -100,18 +116,31 @@ export const createLocationMarker = async (
   // Create popup
   const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent);
   
-  // Create marker with custom element
-  marker = new mapboxgl.Marker(markerElement)
-    .setLngLat([longitude, latitude])
-    .setPopup(popup)
-    .addTo(map);
-
-  // Center map on new location
-  map.flyTo({
-    center: [longitude, latitude],
-    zoom: 15,
-    duration: 1500,
-  });
+  // Create marker with custom element and additional safety checks
+  try {
+    marker = new mapboxgl.Marker(markerElement)
+      .setLngLat([longitude, latitude])
+      .setPopup(popup);
+    
+    // Only add to map if it's properly initialized
+    if (map && typeof map.getContainer === 'function' && map.getContainer()) {
+      marker.addTo(map);
+      
+      // Center map on new location only if map supports it
+      if (typeof map.flyTo === 'function') {
+        map.flyTo({
+          center: [longitude, latitude],
+          zoom: 15,
+          duration: 1500,
+        });
+      }
+    } else {
+      throw new Error('Map container not available for marker placement');
+    }
+  } catch (error) {
+    console.error('Failed to create or add marker to map:', error);
+    throw error;
+  }
 
   return marker;
 };
