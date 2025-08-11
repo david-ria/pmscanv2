@@ -68,13 +68,45 @@ export async function invokeFunction<T = unknown>(
       return data as T;
     } catch (e: any) {
       lastErr = e;
+      
+      // Determine if this error is retriable
       const isAbort = e?.name === 'AbortError' || e?.message === 'timeout';
-      const retriable = isAbort || e?.code >= 500 || e?.code === 'ETIMEDOUT' || e?.message?.includes('NetworkError');
+      const isNetworkError = e?.message?.includes('NetworkError') || 
+                             e?.message?.includes('fetch') || 
+                             (typeof e?.code === 'string' && ['ETIMEDOUT', 'ECONNRESET', 'ENOTFOUND'].includes(e.code));
+      
+      // Only retry on server errors (5xx), timeouts, aborts, and network issues
+      // Don't retry client errors (4xx) like 400, 401, 403, 404, 422, etc.
+      const isServerError = typeof e?.code === 'number' && e.code >= 500 && e.code < 600;
+      const retriable = isAbort || isNetworkError || isServerError;
+
+      // Log retry decision for debugging
+      if (attempt < retries) {
+        console.debug(`API retry decision for ${name}:`, {
+          attempt: attempt + 1,
+          maxRetries: retries,
+          errorCode: e?.code,
+          errorMessage: e?.message,
+          isAbort,
+          isNetworkError,
+          isServerError,
+          retriable,
+          willRetry: retriable
+        });
+      }
 
       if (attempt < retries && retriable) {
-        await delay(backoff(attempt));
+        const delayMs = backoff(attempt);
+        console.debug(`Retrying ${name} in ${delayMs}ms (attempt ${attempt + 1}/${retries})`);
+        await delay(delayMs);
         continue;
       }
+      
+      // Don't retry - either max attempts reached or error is not retriable
+      if (!retriable) {
+        console.debug(`Not retrying ${name} - client error (${e?.code}): ${e?.message}`);
+      }
+      
       throw e;
     } finally {
       clearTimeout(to);
