@@ -6,7 +6,8 @@ export interface PMScanData {
   humidity: number;
   battery: number;
   charging: boolean;
-  timestamp: Date;
+  timestamp: number; // epoch ms UTC
+  deviceT?: number; // device time for diagnostics
   location?: string;
 }
 

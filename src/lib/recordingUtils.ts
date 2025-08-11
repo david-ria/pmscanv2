@@ -15,16 +15,19 @@ export const parseFrequencyToMs = (frequency: string): number => {
 
 /**
  * Check if enough time has passed based on recording frequency
- * @param lastRecordedTime - Last time data was recorded
+ * @param lastRecordedTime - Last time data was recorded (epoch ms)
  * @param frequencyMs - Frequency in milliseconds
  * @returns Whether enough time has passed
  */
 export const shouldRecordData = (
-  lastRecordedTime: Date | null,
+  lastRecordedTime: number | Date | null,
   frequencyMs: number
 ): boolean => {
   if (!lastRecordedTime) return true;
 
-  const currentTime = new Date();
-  return currentTime.getTime() - lastRecordedTime.getTime() >= frequencyMs;
+  const lastTime = typeof lastRecordedTime === 'number' 
+    ? lastRecordedTime 
+    : lastRecordedTime.getTime();
+  const currentTime = Date.now();
+  return currentTime - lastTime >= frequencyMs;
 };

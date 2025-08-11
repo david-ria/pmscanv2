@@ -59,7 +59,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
         longitude: position.coords.longitude,
         accuracy: position.coords.accuracy,
         altitude: position.coords.altitude || undefined,
-        timestamp: new Date(),
+        timestamp: Date.now(),
       };
 
       setLatestLocation(locationData);

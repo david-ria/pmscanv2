@@ -1,5 +1,6 @@
 import { PMScanData, PMScanInternalState } from './types';
 import { DT_2000 } from './constants';
+import { timeAuthority } from '@/lib/time';
 
 export function parsePMScanDataPayload(
   charValue: DataView,
@@ -20,7 +21,8 @@ export function parsePMScanDataPayload(
     humidity: (((rawData[17] & 0xff) << 8) | (rawData[16] & 0xff)) / 10,
     battery: pmScanState.battery,
     charging: pmScanState.charging === 1,
-    timestamp: new Date(), // Use smartphone time instead of device time
+    timestamp: timeAuthority.now(), // epoch ms UTC from wall clock authority
+    deviceT: ts2000, // Keep device time for diagnostics
     location: 'PMScan Device',
   };
 

@@ -31,7 +31,7 @@ export function usePMScanBluetooth() {
           Math.abs(prevData.pm25 - data.pm25) >= 0.1 ||
           Math.abs(prevData.pm1 - data.pm1) >= 0.1 ||
           Math.abs(prevData.pm10 - data.pm10) >= 0.1 ||
-          data.timestamp.getTime() - prevData.timestamp.getTime() >= 1000; // 1 second minimum
+          data.timestamp - prevData.timestamp >= 1000; // 1 second minimum
 
         if (isDifferent) {
           logger.rateLimitedDebug(

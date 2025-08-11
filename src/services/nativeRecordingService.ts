@@ -3,7 +3,7 @@ import { LocationData } from '@/types/PMScan';
 import { RecordingEntry, MissionContext } from '@/types/recording';
 import { SerializableRecordingEntry, toSerializablePMScanData, toSerializableLocationData } from '@/types/serializable';
 import { parseFrequencyToMs } from '@/lib/recordingUtils';
-import { createFrequencySyncedTimer, clearFrequencySyncedTimer, shouldRecordAtFrequency } from '@/utils/frequencyManager';
+import { createFrequencySyncedTimer, clearFrequencySyncedTimer, shouldRecordAtFrequencyLegacy } from '@/utils/frequencyManager';
 import * as logger from '@/utils/logger';
 
 // Pure JavaScript recording service - immune to React lifecycle
@@ -79,7 +79,7 @@ class NativeRecordingService {
     const now = Date.now();
     
     // Use frequency manager to check if we should record
-    if (!shouldRecordAtFrequency(this.lastRecordTime, this.recordingFrequency)) {
+    if (!shouldRecordAtFrequencyLegacy(this.lastRecordTime, this.recordingFrequency)) {
       return; // Still too early according to frequency
     }
 
@@ -108,7 +108,7 @@ class NativeRecordingService {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
               accuracy: position.coords.accuracy,
-              timestamp: new Date(),
+              timestamp: Date.now(),
             };
             resolve(location);
           },

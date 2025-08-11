@@ -19,7 +19,7 @@ interface UseDataPointRecorderProps {
     weatherDataId?: string
   ) => void;
   addDataPointToState: (entry: RecordingEntry) => void;
-  updateLastRecordedTime: (time: Date) => void;
+  updateLastRecordedTime: (time: number) => void;
 }
 
 export function useDataPointRecorder({

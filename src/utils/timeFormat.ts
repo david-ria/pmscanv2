@@ -1,6 +1,9 @@
 /**
- * Centralized time formatting utilities to ensure consistency across the app
+ * Display-only time formatting utilities
+ * Consumes numeric epoch ms and never persists Date objects
  */
+
+import { toEpochMs } from '@/lib/time';
 
 // Default locale and timezone configuration
 const DEFAULT_LOCALE = 'fr-FR';
@@ -22,50 +25,57 @@ const DATETIME_OPTIONS: Intl.DateTimeFormatOptions = {
 };
 
 /**
+ * Strict guard to ensure numeric epoch timestamp
+ */
+export function ensureEpochMs(input: number | Date | string): number {
+  return toEpochMs(input);
+}
+
+/**
  * Format timestamp consistently for display
  */
-export function formatTime(timestamp: Date | string): string {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-  return date.toLocaleTimeString(DEFAULT_LOCALE, TIME_OPTIONS);
+export function formatTime(timestamp: number | Date | string, timeZone?: string): string {
+  const epochMs = ensureEpochMs(timestamp);
+  const options = timeZone ? { ...TIME_OPTIONS, timeZone } : TIME_OPTIONS;
+  return new Date(epochMs).toLocaleTimeString(DEFAULT_LOCALE, options);
 }
 
 /**
  * Format date consistently for display
  */
-export function formatDate(timestamp: Date | string): string {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-  return date.toLocaleDateString(DEFAULT_LOCALE, DATE_OPTIONS);
+export function formatDate(timestamp: number | Date | string, timeZone?: string): string {
+  const epochMs = ensureEpochMs(timestamp);
+  const options = timeZone ? { ...DATE_OPTIONS, timeZone } : DATE_OPTIONS;
+  return new Date(epochMs).toLocaleDateString(DEFAULT_LOCALE, options);
 }
 
 /**
  * Format datetime consistently for display
  */
-export function formatDateTime(timestamp: Date | string): string {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-  return date.toLocaleString(DEFAULT_LOCALE, DATETIME_OPTIONS);
+export function formatDateTime(timestamp: number | Date | string, timeZone?: string): string {
+  const epochMs = ensureEpochMs(timestamp);
+  const options = timeZone ? { ...DATETIME_OPTIONS, timeZone } : DATETIME_OPTIONS;
+  return new Date(epochMs).toLocaleString(DEFAULT_LOCALE, options);
 }
 
 /**
  * Get ISO string for consistent API calls and storage
  */
-export function toISOString(timestamp: Date | string): string {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-  return date.toISOString();
-}
-
-/**
- * Create a standardized timestamp for recording
- */
-export function createRecordingTimestamp(): Date {
-  return new Date();
+export function toISOString(timestamp: number | Date | string): string {
+  const epochMs = ensureEpochMs(timestamp);
+  return new Date(epochMs).toISOString();
 }
 
 /**
  * Validate that a timestamp is valid
  */
-export function isValidTimestamp(timestamp: Date | string): boolean {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-  return !isNaN(date.getTime());
+export function isValidTimestamp(timestamp: number | Date | string): boolean {
+  try {
+    const epochMs = ensureEpochMs(timestamp);
+    return !isNaN(epochMs) && isFinite(epochMs);
+  } catch {
+    return false;
+  }
 }
 
 /**

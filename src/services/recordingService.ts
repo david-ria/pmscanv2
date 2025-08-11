@@ -10,7 +10,7 @@ export interface RecordingState {
   isRecording: boolean;
   recordingFrequency: string;
   missionContext: MissionContext;
-  recordingStartTime: Date | null;
+  recordingStartTime: number | null;
   currentMissionId: string | null;
 }
 
@@ -37,7 +37,7 @@ export interface RecordingActions {
 class RecordingService {
   private static instance: RecordingService;
   private listeners: Set<(state: RecordingState) => void> = new Set();
-  private lastRecordedTime: Date | null = null;
+  private lastRecordedTime: number | null = null;
   private backgroundRecordingEnabled: boolean = false;
   private backgroundDataHandler: ((pmData: PMScanData, location?: LocationData, context?: any) => void) | null = null;
   
@@ -80,7 +80,7 @@ class RecordingService {
       ...this.state,
       isRecording: true,
       recordingFrequency: frequency,
-      recordingStartTime: new Date(),
+      recordingStartTime: Date.now(),
       recordingData: [], // Clear previous data
       currentMissionId: newMissionId,
     };
@@ -125,7 +125,7 @@ class RecordingService {
     }
 
     // Update last recorded time
-    const currentTime = new Date();
+    const currentTime = Date.now();
     this.lastRecordedTime = currentTime;
 
     // Use the current recorded time as the definitive timestamp
@@ -212,7 +212,7 @@ class RecordingService {
   // Utility methods
   getRecordingDuration(): number {
     if (!this.state.recordingStartTime) return 0;
-    return Date.now() - this.state.recordingStartTime.getTime();
+    return Date.now() - this.state.recordingStartTime;
   }
 
   getDataPointCount(): number {
