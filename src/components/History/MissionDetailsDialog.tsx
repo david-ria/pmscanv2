@@ -535,12 +535,7 @@ export function MissionDetailsDialog({
                   data={graphData} 
                   events={events} 
                   className="h-full w-full"
-                  hideTitle={true}
-                  highlightContextType={selectedContextType}
-                  missionContext={{
-                    locationContext: mission.locationContext,
-                    activityContext: mission.activityContext,
-                  }}
+                  highlightContextType={selectedContextType === 'autocontext' ? 'location' : selectedContextType}
                 />
               </div>
             </CardContent>

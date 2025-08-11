@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
 import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
+import { throttledLog } from '@/utils/debugLogger';
 
 // Import critical hooks immediately for core functionality
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
@@ -103,14 +104,13 @@ export default function RealTime() {
     });
   }, [currentData]);
 
-  // Debug effect to monitor recording data changes
+  // Optimized effect to monitor recording data changes
   useEffect(() => {
-    console.log('📊 RealTime direct recordingData changed:', dataCount, 'points');
     if (recordingData && recordingData.length > 0) {
-      console.log('📊 Latest recording entry timestamp:', recordingData[recordingData.length - 1]?.pmData?.timestamp);
-      console.log('📊 Latest PM2.5 value:', recordingData[recordingData.length - 1]?.pmData?.pm25);
+      const latest = recordingData[recordingData.length - 1];
+      throttledLog('realtime-data-update', `📊 RealTime: ${dataCount} points, latest PM2.5: ${latest?.pmData?.pm25}`);
     }
-  }, [recordingData, dataCount]);
+  }, [dataCount]); // Only trigger on count change, not full data array
 
   // Only initialize autocontext if the user has enabled it
   const { settings: autoContextSettings } = useStorageSettings(

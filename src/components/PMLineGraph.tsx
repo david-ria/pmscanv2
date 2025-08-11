@@ -1,205 +1,175 @@
 import React from 'react';
-import { formatTime } from '@/utils/timeFormat';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  ReferenceLine,
-  ReferenceArea,
-} from 'recharts';
-// Component now handles both serializable and legacy data formats
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, ReferenceArea, ReferenceLine } from 'recharts';
+import { formatTime, getNumericTimestamp, ensureDate } from '@/utils/timestampUtils';
+import { logDataProcessing, throttledLog } from '@/utils/debugLogger';
+import { Card, CardContent } from '@/components/ui/card';
 
+// Interfaces
 interface EventData {
-  id: string;
-  timestamp: Date;
-  event_type: string;
+  id?: string;
+  type?: string;
   comment?: string;
+  timestamp: Date | string | number;
 }
 
 interface PMLineGraphProps {
-  data: any[]; // Accept both SerializableRecordingEntry and legacy RecordingEntry
+  data: any[];
   events?: EventData[];
+  height?: number;
   className?: string;
-  hideTitle?: boolean;
-  highlightContextType?: 'location' | 'activity' | 'autocontext';
-  missionContext?: {
-    locationContext?: string;
-    activityContext?: string;
-  };
+  highlightContextType?: 'location' | 'activity';
+  hideTemperature?: boolean;
 }
 
-export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext }: PMLineGraphProps) {
-  // Transform data for the chart - ensure proper chronological ordering
-  // Force re-computation by including data length and latest timestamp in dependency array
+// Component
+export const PMLineGraph: React.FC<PMLineGraphProps> = ({
+  data,
+  events,
+  height = 400,
+  className = '',
+  highlightContextType,
+  hideTemperature = false,
+}) => {
+  // Memoize chart data processing to avoid redundant calculations
   const chartData = React.useMemo(() => {
     if (!data || !Array.isArray(data) || data.length === 0) {
-      console.log('📊 PMLineGraph: No data available, length:', data?.length || 0);
       return [];
     }
     
-    console.log('📊 PMLineGraph: Processing', data.length, 'data points for chart');
-    const latestPoint = data[data.length - 1];
-    console.log('📊 PMLineGraph: Latest data point PM2.5:', latestPoint?.pmData?.pm25, 'at:', latestPoint?.pmData?.timestamp);
+    logDataProcessing('PMLineGraph', data.length, data[data.length - 1]?.pmData?.pm25);
     
     // Create a fresh copy and sort by timestamp to ensure chronological order
     const processedData = [...data]
       .sort((a, b) => {
-        const aTime = typeof a.pmData.timestamp === 'number' ? a.pmData.timestamp : a.pmData.timestamp.getTime();
-        const bTime = typeof b.pmData.timestamp === 'number' ? b.pmData.timestamp : b.pmData.timestamp.getTime();
+        const aTime = getNumericTimestamp(a.pmData.timestamp);
+        const bTime = getNumericTimestamp(b.pmData.timestamp);
         return aTime - bTime;
       })
-      .map((entry, index) => {
-        const timestamp = typeof entry.pmData.timestamp === 'number' ? entry.pmData.timestamp : entry.pmData.timestamp.getTime();
+      .map((entry) => {
+        const timestamp = getNumericTimestamp(entry.pmData.timestamp);
         return {
           time: timestamp, // Use numeric timestamp for X-axis
-          sequentialIndex: index + 1, // Keep sequential index for fallback
-          timestamp: formatTime(new Date(timestamp)),
-          fullTimestamp: timestamp, // Keep numeric timestamp for calculations
           PM1: entry.pmData.pm1,
           PM25: entry.pmData.pm25,
           PM10: entry.pmData.pm10,
-          temp: entry.pmData.temp,
-          humidity: entry.pmData.humidity,
+          timestamp: formatTime(timestamp),
+          fullTimestamp: timestamp, // Keep numeric timestamp for calculations
+          temperature: entry.weatherData?.temperature,
+          humidity: entry.weatherData?.humidity,
+          location: entry.location,
           context: entry.context,
           automaticContext: entry.automaticContext, // Include automatic context
         };
       });
     
-    console.log('📊 PMLineGraph: Processed chart data points:', processedData.length);
     return processedData;
-  }, [data, data?.length, data?.[data?.length - 1]?.pmData?.timestamp, data?.[data?.length - 1]?.pmData?.pm25]); // Force re-computation on new data points
+  }, [data, data?.length, data?.[data?.length - 1]?.pmData?.timestamp]); // Optimized dependencies
 
   // Process events to find their position on the chart
   const eventMarkers = React.useMemo(() => {
-    if (!Array.isArray(events) || !events.length || !Array.isArray(chartData) || !chartData.length) return [];
-    
-    console.log('Processing events for chart:', events.length, 'events, ', chartData.length, 'data points');
-    
-    return events
-      .map((event) => {
+    if (!events || events.length === 0 || chartData.length === 0) {
+      return [];
+    }
+
+    return events.map((event, index) => {
+      if (events && events.length > 0) {
         // Ensure timestamp is a Date object
-        const eventTimestamp = event.timestamp instanceof Date ? event.timestamp : new Date(event.timestamp);
+        const eventTimestamp = ensureDate(event.timestamp);
         const eventTime = eventTimestamp.getTime();
-        let closestIndex = -1;
-        let minTimeDiff = Infinity;
-        
-        // Find closest data point in the chartData
-        chartData.forEach((entry, index) => {
-          const entryTime = entry.fullTimestamp;
-          const timeDiff = Math.abs(entryTime - eventTime);
-          if (timeDiff < minTimeDiff) {
-            minTimeDiff = timeDiff;
-            closestIndex = index;
+
+        // Find the closest data point
+        let closestIndex = 0;
+        let minDiff = Math.abs(chartData[0].fullTimestamp - eventTime);
+
+        for (let i = 1; i < chartData.length; i++) {
+          const entryTime = chartData[i].fullTimestamp;
+          const diff = Math.abs(entryTime - eventTime);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestIndex = i;
           }
-        });
-        
-        // Allow events within 60 seconds of data points
-        if (closestIndex >= 0 && minTimeDiff < 60000) {
-          console.log('Event matched to chart:', event.event_type, 'at position', chartData[closestIndex].time);
-          return {
-            ...event,
-            chartPosition: chartData[closestIndex].time, // Use actual timestamp
-            timeString: formatTime(eventTimestamp),
-          };
         }
-        console.log('Event not matched:', event.event_type, 'time diff:', minTimeDiff);
-        return null;
-      })
-      .filter(Boolean);
+
+        return {
+          id: event.id || `event-${index}`,
+          type: event.type || 'event',
+          comment: event.comment || '',
+          chartPosition: chartData[closestIndex].time, // Use actual timestamp
+          timeString: formatTime(eventTimestamp),
+        };
+      }
+      return null;
+    }).filter(Boolean);
   }, [events, chartData]);
 
-  // Color mapping for different activities and locations
-  const getContextColor = React.useCallback((contextType: string, contextValue: string): string => {
-    if (contextType === 'activity') {
-      const activityColors: Record<string, string> = {
-        'indoor': '#8b5cf6', // purple
-        'outdoor': '#22c55e', // green
-        'transport': '#ef4444', // red
-        'walking': '#3b82f6', // blue
-        'cycling': '#f59e0b', // amber
-        'driving': '#dc2626', // red-600
-        'train': '#7c3aed', // violet
-        'bus': '#ea580c', // orange
-        'metro': '#9333ea', // purple-600
-        'undergroundTransport': '#6366f1', // indigo
-        'sport': '#059669', // emerald
-        'rest': '#64748b', // slate
-        'work': '#0891b2', // cyan
-        'meeting': '#e11d48', // rose
-        'shopping': '#db2777', // pink
-        'cooking': '#84cc16', // lime
-        'cleaning': '#06b6d4', // cyan-500
-        'studying': '#8b5cf6', // purple-500
-        'jogging': '#10b981', // emerald-500
-      };
-      return activityColors[contextValue.toLowerCase()] || '#6b7280'; // gray fallback
-    } else if (contextType === 'location') {
-      const locationColors: Record<string, string> = {
-        'home': '#22c55e', // green
-        'office': '#3b82f6', // blue
-        'school': '#f59e0b', // amber
-        'indoor': '#8b5cf6', // purple
-        'outdoor': '#10b981', // emerald
-        'transport': '#ef4444', // red
-        'underground': '#6366f1', // indigo
-        'park': '#84cc16', // lime
-        'mainstreet': '#64748b', // slate
-      };
-      return locationColors[contextValue.toLowerCase()] || '#6b7280'; // gray fallback
-    }
-    return '#3b82f6'; // blue fallback for autocontext
+  // Function to get color based on context type and value
+  const getContextColor = React.useCallback((contextType: string, value: string): string => {
+    if (!contextType || !value) return '#94a3b8';
+    
+    const colorMap: Record<string, Record<string, string>> = {
+      location: {
+        home: '#3b82f6',
+        office: '#8b5cf6',
+        outdoor: '#10b981',
+        transport: '#f59e0b',
+        restaurant: '#ef4444',
+        gym: '#06b6d4',
+        shop: '#84cc16',
+        default: '#6b7280'
+      },
+      activity: {
+        resting: '#3b82f6',
+        walking: '#10b981',
+        running: '#ef4444',
+        cycling: '#f59e0b',
+        working: '#8b5cf6',
+        cooking: '#ec4899',
+        eating: '#84cc16',
+        sleeping: '#1e293b',
+        default: '#6b7280'
+      }
+    };
+    
+    return colorMap[contextType]?.[value] || colorMap[contextType]?.default || '#6b7280';
   }, []);
 
-    // Generate highlighted areas and labels based on context type selection
-    const contextPeriods = React.useMemo(() => {
-      if (!highlightContextType || !chartData.length) return [];
-      
-      const periods: Array<{ 
-        start: number; 
-        end: number; 
-        label: string; 
-        color: string;
-        pm25Average: number;
-      }> = [];
-      
-      let currentStart = chartData[0].time;
+  // Generate context highlighting periods
+  const contextPeriods = React.useMemo(() => {
+    if (!highlightContextType || chartData.length === 0) {
+      return [];
+    }
+
+    const periods: Array<{
+      start: number;
+      end: number;
+      label: string;
+      color: string;
+      pm25Average: number;
+    }> = [];
+    
+    let currentStart = 0;
     let currentLabel = '';
     let currentColor = '';
     
     chartData.forEach((entry, index) => {
-      const { context } = entry;
       const position = entry.time;
+      const context = entry.context;
+      const missionContext = entry.automaticContext; // Use automatic context if available
       
-      // Get context value - prioritize measurement level, fallback to mission level
-      const contextValue = 
-        highlightContextType === 'location' ? (context?.location || missionContext?.locationContext) :
-        highlightContextType === 'activity' ? (context?.activity || missionContext?.activityContext) :
-        highlightContextType === 'autocontext' ? (entry as any).automaticContext :
-        undefined;
-      
-      // Handle context changes or missing values
+      // Determine the context value to use based on the selected type
+      let contextValue = '';
       let label = '';
-      let color = '';
+      let currentEntryColor = '';
       
-      if (contextValue && contextValue !== 'unknown') {
-        label = contextValue;
-        color = getContextColor(highlightContextType, contextValue);
+      if (highlightContextType === 'location') {
+        contextValue = context?.location || missionContext?.location || '';
+      } else if (highlightContextType === 'activity') {
+        contextValue = context?.activity || missionContext?.activity || '';
       }
       
-      // Debug context processing
-      if (index < 3) {
-        console.log(`Processing entry ${index}:`, {
-          measurementContext: context,
-          missionContext,
-          selectedContextType: highlightContextType,
-          resolvedValue: contextValue,
-          finalLabel: label
-        });
+      if (contextValue) {
+        label = contextValue;
+        currentEntryColor = getContextColor(highlightContextType, contextValue);
       }
       
       // Check if we need to close current period and start a new one
@@ -225,7 +195,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
         if (label !== '') {
           currentStart = position;
           currentLabel = label;
-          currentColor = color;
+          currentColor = currentEntryColor;
         } else {
           // Reset tracking for unknown periods
           currentLabel = '';
@@ -252,229 +222,208 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
       });
     }
     
-    console.log('Generated context periods:', periods);
-    console.log('Periods details:', periods.map(p => ({
-      label: p.label,
-      start: p.start,
-      end: p.end,
-      duration: p.end - p.start,
-      dataPoints: p.end - p.start,
-      pm25Average: p.pm25Average.toFixed(1)
-    })));
+    throttledLog('context-periods', 'Generated context periods:', periods);
     return periods;
-  }, [chartData, highlightContextType, missionContext, getContextColor]);
+  }, [chartData, highlightContextType, getContextColor]);
 
-  const formatTooltip = (value: any, name: string) => {
-    if (name === 'PM1' || name === 'PM25' || name === 'PM10') {
-      return [`${value} µg/m³`, name];
-    }
-    if (name === 'temp') {
-      return [`${value}°C`, 'Température'];
-    }
-    if (name === 'humidity') {
-      return [`${value}%`, 'Humidité'];
-    }
-    return [value, name];
-  };
-
-  const formatXAxisLabel = (tickItem: any, index: number) => {
-    const dataPoint = chartData[index];
+  // Custom X-axis tick formatter
+  const formatXAxisTick = (tickItem: any) => {
+    const dataPoint = chartData.find(d => d.time === tickItem);
     return dataPoint ? dataPoint.timestamp : '';
   };
 
-  if (chartData.length === 0) {
-    return (
-      <div
-        className={`flex items-center justify-center h-full bg-card border border-border rounded-lg ${className}`}
-      >
-        <div className="text-center text-muted-foreground">
-          <div className="text-4xl mb-4">📊</div>
-          <p className="text-lg font-medium">Aucune donnée disponible</p>
-          <p className="text-sm mt-2">
-            Démarrez un enregistrement pour voir le graphique en temps réel
-          </p>
+  // Custom tooltip component
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const dataPoint = chartData.find(d => d.time === label);
+      if (!dataPoint) return null;
+
+      return (
+        <div className="bg-popover p-3 border rounded-lg shadow-lg text-sm">
+          <p className="font-medium mb-1">{dataPoint.timestamp}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} style={{ color: entry.color }}>
+              {entry.name}: <span className="font-medium">{entry.value?.toFixed(1)}</span>
+              {entry.name.includes('PM') ? ' μg/m³' : 
+               entry.name === 'Temperature' ? '°C' : 
+               entry.name === 'Humidity' ? '%' : ''}
+            </p>
+          ))}
+          {dataPoint.context && (
+            <div className="mt-2 pt-2 border-t">
+              <p className="text-xs text-muted-foreground">Context:</p>
+              {dataPoint.context.location && (
+                <p className="text-xs">📍 {dataPoint.context.location}</p>
+              )}
+              {dataPoint.context.activity && (
+                <p className="text-xs">🏃 {dataPoint.context.activity}</p>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+      );
+    }
+    return null;
+  };
+
+  if (!chartData || chartData.length === 0) {
+    return (
+      <Card className={`${className}`}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center h-64 text-muted-foreground">
+            <div className="text-center">
+              <p className="text-lg font-medium mb-2">Aucune donnée disponible</p>
+              <p className="text-sm">Les données du graphique apparaîtront ici lors de l'enregistrement</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className={`bg-card border border-border rounded-lg p-4 ${className}`}>
-      {!hideTitle && (
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-foreground">
-            Évolution des particules fines (µg/m³)
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {chartData.length} points de données • Dernière mesure:{' '}
+    <Card className={`${className}`}>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Évolution des particules fines</h3>
+          <div className="text-sm text-muted-foreground">
             {chartData[chartData.length - 1]?.timestamp}
-          </p>
+          </div>
         </div>
-      )}
-
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={chartData}
-          margin={{ top: 100, right: 5, left: 0, bottom: 120 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <XAxis
-            dataKey="time"
-            type="number"
-            scale="time"
-            domain={['dataMin', 'dataMax']}
-            tick={{ fontSize: 10 }}
-            angle={-45}
-            textAnchor="end"
-            height={60}
-            tickFormatter={(value) => {
-              return formatTime(new Date(value));
-            }}
-          />
-          <YAxis
-            tick={{ fontSize: 12 }}
-            width={30}
-          />
-          <Tooltip
-            formatter={formatTooltip}
-            labelFormatter={(label) => {
-              return `Temps: ${formatTime(new Date(label))}`;
-            }}
-            contentStyle={{
-              backgroundColor: 'hsl(var(--card))',
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '6px',
-              color: 'hsl(var(--foreground))',
-            }}
-          />
-          <Legend />
-          <Line
-            type="monotone"
-            dataKey="PM1"
-            stroke="#22c55e"
-            strokeWidth={3}
-            dot={{ fill: '#22c55e', strokeWidth: 1, r: 3 }}
-            activeDot={{ r: 5, stroke: '#22c55e' }}
-          />
-          <Line
-            type="monotone"
-            dataKey="PM25"
-            stroke="#ef4444"
-            strokeWidth={3}
-            dot={{ fill: '#ef4444', strokeWidth: 1, r: 3 }}
-            activeDot={{ r: 5, stroke: '#ef4444' }}
-          />
-          <Line
-            type="monotone"
-            dataKey="PM10"
-            stroke="#3b82f6"
-            strokeWidth={3}
-            dot={{ fill: '#3b82f6', strokeWidth: 1, r: 3 }}
-            activeDot={{ r: 5, stroke: '#3b82f6' }}
-          />
-          {/* Context highlighted areas with labels */}
-          {contextPeriods.map((period, index) => {
-            const periodWidth = period.end - period.start;
-            const centerX = period.start + periodWidth / 2;
-            const isShortPeriod = periodWidth < 20; // Consider periods less than 20 data points as short
-            
-            // Calculate staggered positioning for overlapping labels
-            const verticalOffset = index % 2 === 0 ? 5 : 45;
-            const labelOffset = index % 2 === 0 ? 25 : 65;
-            
-            return (
-              <React.Fragment key={`period-${index}`}>
+        
+        <div style={{ width: '100%', height }}>
+          <ResponsiveContainer>
+            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              {/* Context highlighting areas */}
+              {contextPeriods.map((period, index) => (
                 <ReferenceArea
+                  key={`context-${index}`}
                   x1={period.start}
                   x2={period.end}
                   fill={period.color}
-                  fillOpacity={0.15}
+                  fillOpacity={0.1}
                   stroke={period.color}
-                  strokeOpacity={0.4}
+                  strokeOpacity={0.3}
                   strokeWidth={1}
                 />
-                {/* PM25 average label */}
+              ))}
+              
+              {/* Event markers */}
+              {eventMarkers.map((marker) => (
                 <ReferenceLine
-                  x={centerX}
-                  stroke="transparent"
-                  strokeWidth={0}
+                  key={marker.id}
+                  x={marker.chartPosition}
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
                   label={{
-                    value: `${period.pm25Average.toFixed(1)} µg/m³`,
+                    value: marker.type,
                     position: 'top',
-                    fontSize: 10,
-                    fill: '#ef4444',
-                    textAnchor: 'middle',
-                    fontWeight: 'bold',
-                    offset: verticalOffset,
-                    style: {
-                      textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
-                      fontWeight: 'bold'
-                    }
+                    style: { fontSize: '10px', fill: '#ef4444' }
                   }}
                 />
-                {/* Context label */}
-                <ReferenceLine
-                  x={centerX}
-                  stroke="transparent"
-                  strokeWidth={0}
-                  label={{
-                    value: period.label,
-                    position: 'top',
-                    fontSize: 12,
-                    fill: period.color,
-                    textAnchor: 'middle',
-                    fontWeight: 'bold',
-                    offset: labelOffset,
-                    style: {
-                      textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
-                      fontWeight: 'bold'
-                    }
+              ))}
+              
+              <XAxis 
+                dataKey="time"
+                type="number"
+                scale="time"
+                domain={['dataMin', 'dataMax']}
+                tickFormatter={formatXAxisTick}
+                tick={{ fontSize: 10 }}
+              />
+              <YAxis 
+                yAxisId="pm"
+                orientation="left"
+                tick={{ fontSize: 10 }}
+                label={{ value: 'μg/m³', angle: -90, position: 'insideLeft' }}
+              />
+              {!hideTemperature && (
+                <YAxis
+                  yAxisId="temp"
+                  orientation="right"
+                  tick={{ fontSize: 10 }}
+                  label={{ value: '°C', angle: 90, position: 'insideRight' }}
+                />
+              )}
+              
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              
+              <Line
+                yAxisId="pm"
+                type="monotone"
+                dataKey="PM1"
+                stroke="#8884d8"
+                strokeWidth={2}
+                dot={false}
+                name="PM1"
+                connectNulls={true}
+              />
+              <Line
+                yAxisId="pm"
+                type="monotone"
+                dataKey="PM25"
+                stroke="#82ca9d"
+                strokeWidth={2}
+                dot={false}
+                name="PM2.5"
+                connectNulls={true}
+              />
+              <Line
+                yAxisId="pm"
+                type="monotone"
+                dataKey="PM10"
+                stroke="#ffc658"
+                strokeWidth={2}
+                dot={false}
+                name="PM10"
+                connectNulls={true}
+              />
+              
+              {!hideTemperature && chartData.some(d => d.temperature !== undefined) && (
+                <Line
+                  yAxisId="temp"
+                  type="monotone"
+                  dataKey="temperature"
+                  stroke="#ff7300"
+                  strokeWidth={1}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  name="Temperature"
+                  connectNulls={true}
+                />
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        
+        {/* Context periods legend */}
+        {contextPeriods.length > 0 && (
+          <div className="mt-4 pt-4 border-t">
+            <p className="text-xs font-medium text-muted-foreground mb-2">
+              Périodes {highlightContextType === 'location' ? 'de lieu' : "d'activité"}:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {contextPeriods.map((period, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-1 text-xs px-2 py-1 rounded"
+                  style={{ 
+                    backgroundColor: `${period.color}15`,
+                    borderLeft: `3px solid ${period.color}`
                   }}
-                />
-              </React.Fragment>
-            );
-          })}
-          
-          {/* Event markers */}
-          {eventMarkers.map((event: any, eventIndex: number) => {
-            const eventType = event.event_type || event._type || 'Event';
-            const displayLabel = eventType === 'undefined' ? 'Event' : eventType;
-            
-            return (
-              <React.Fragment key={event.id}>
-                {/* Event line */}
-                <ReferenceLine
-                  x={event.chartPosition}
-                  stroke="#f97316"
-                  strokeWidth={3}
-                  strokeDasharray="3 3"
-                />
-                {/* Event label positioned above the line */}
-                <ReferenceLine
-                  x={event.chartPosition}
-                  stroke="transparent"
-                  strokeWidth={0}
-                  label={{
-                    value: displayLabel,
-                    position: 'top',
-                    fontSize: 12,
-                    fill: '#f97316',
-                    textAnchor: 'start',
-                    fontWeight: 'bold',
-                    offset: 100 + (eventIndex * 20),
-                    style: {
-                      textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
-                      fontWeight: 'bold',
-                      transform: 'rotate(-90deg)',
-                      transformOrigin: 'center'
-                    }
-                  }}
-                />
-              </React.Fragment>
-            );
-          })}
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+                >
+                  <span className="font-medium">{period.label}</span>
+                  <span className="text-muted-foreground">
+                    (PM2.5: {period.pm25Average.toFixed(1)} μg/m³)
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
-}
+};

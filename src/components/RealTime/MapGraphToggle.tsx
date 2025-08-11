@@ -8,6 +8,8 @@ import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { PMScanDevice } from '@/lib/pmscan/types';
 import { useTranslation } from 'react-i18next';
+import { ensureDate } from '@/utils/timestampUtils';
+import { throttledLog } from '@/utils/debugLogger';
 
 interface RecordingEntry {
   pmData: PMScanData;
@@ -56,10 +58,12 @@ export function MapGraphToggle({
 }: MapGraphToggleProps) {
   const { t } = useTranslation();
 
-  // Debug effect to track recording data updates
+  // Optimized effect - only log when data count changes significantly
   React.useEffect(() => {
-    console.log('🔄 MapGraphToggle received recordingData update:', recordingData?.length || 0, 'points');
-  }, [recordingData]);
+    if (recordingData && recordingData.length > 0 && recordingData.length % 10 === 0) {
+      throttledLog('map-graph-toggle', `🔄 MapGraphToggle: ${recordingData.length} points`);
+    }
+  }, [recordingData?.length]); // Only track length changes
 
   // Calculate track points for the map
   const trackPoints = recordingData
@@ -67,7 +71,7 @@ export function MapGraphToggle({
       longitude: entry.location?.longitude || 0,
       latitude: entry.location?.latitude || 0,
       pm25: entry.pmData.pm25,
-      timestamp: new Date(entry.pmData.timestamp),
+      timestamp: ensureDate(entry.pmData.timestamp),
     }))
     .filter((point) => point.longitude !== 0 && point.latitude !== 0);
   return (

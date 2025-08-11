@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { nativeRecordingService } from '@/services/nativeRecordingService';
 import { parseFrequencyToMs } from '@/lib/recordingUtils';
+import { createDataHash } from '@/utils/timestampUtils';
+import { logPollingUpdate, throttledLog } from '@/utils/debugLogger';
 
 /**
  * Hook that directly polls the native recording service for real-time data updates
@@ -30,15 +32,17 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
         const currentCount = currentData.length;
         
         // Create a hash of the latest data to detect real changes
-        const dataHash = currentCount > 0 
-          ? `${currentCount}-${currentData[currentCount - 1]?.pmData?.pm25}-${currentData[currentCount - 1]?.timestamp}`
-          : `${currentCount}`;
+        const latestEntry = currentCount > 0 ? currentData[currentCount - 1] : null;
+        const dataHash = createDataHash(
+          currentCount,
+          latestEntry?.pmData?.timestamp,
+          latestEntry?.pmData?.pm25
+        );
         
         // Only update if data actually changed
         if (dataHash !== lastDataHash) {
           if (currentCount > 0) {
-            const latestEntry = currentData[currentCount - 1];
-            console.log('📊 Direct polling: got', currentCount, 'points, latest PM2.5:', latestEntry?.pmData?.pm25);
+            logPollingUpdate('Direct polling', currentCount, latestEntry?.pmData?.pm25);
           }
           
           setRecordingData([...currentData]);
@@ -50,9 +54,9 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
       }
     };
     
-    // Start aggressive polling when recording
+    // Start polling when recording
     if (isRecording) {
-      console.log('📊 Starting direct polling for recording data');
+      throttledLog('direct-polling-start', '📊 Starting direct polling for recording data');
       // Poll immediately
       pollData();
       
@@ -74,7 +78,7 @@ export function useDirectRecordingData(isRecording: boolean, recordingFrequency:
   // Also listen to native events for immediate updates
   useEffect(() => {
     const handleNativeDataAdded = (event: any) => {
-      console.log('📊 Direct hook received native data event');
+      throttledLog('direct-hook-event', '📊 Direct hook received native data event');
       const currentData = nativeRecordingService.getRecordingData();
       setRecordingData([...currentData]); // Force new reference
       setDataCount(currentData.length);
