@@ -3,7 +3,7 @@ import { Menu, User, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +49,10 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-full sm:w-80 p-0">
+              <SheetHeader className="sr-only">
+                <SheetTitle>{t('settings.title')}</SheetTitle>
+                <SheetDescription>{t('settings.subtitle')}</SheetDescription>
+              </SheetHeader>
               <MobileNavigation onNavigate={() => setIsOpen(false)} />
             </SheetContent>
           </Sheet>
