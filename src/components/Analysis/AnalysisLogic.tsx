@@ -276,11 +276,14 @@ export const useAnalysisLogic = (
   // Generate analysis when missions or date filter changes
   useEffect(() => {
     if (missions.length > 0 && !loading) {
-      generateAnalysis();
-      loadActivityData();
-      loadEventAnalysis();
+      const runAnalysis = async () => {
+        await generateAnalysis();
+        loadActivityData();
+        loadEventAnalysis();
+      };
+      runAnalysis();
     }
-  }, [missions, selectedDate, selectedPeriod, loading, generateAnalysis, loadActivityData, loadEventAnalysis]);
+  }, [missions.length, selectedDate, selectedPeriod]); // Simplified dependencies to prevent infinite loops
 
   const regenerateAnalysis = () => {
     setAnalysisGenerated(false);
