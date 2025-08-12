@@ -109,13 +109,13 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
     } catch (error) {
       console.error('Error loading WiFi SSIDs:', error);
     }
-  }, [updateSettings]);
+  }, [settings.homeWifiSSID, settings.workWifiSSID, updateSettings]);
 
   useEffect(() => {
     if (settings.enabled) {
       loadSSIDs();
     }
-  }, [loadSSIDs, settings.enabled]);
+  }, [settings.enabled]); // Remove loadSSIDs dependency to prevent loop
 
   useEffect(() => {
     if (settings.mlEnabled && !model) {
