@@ -86,7 +86,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
 
   // Save settings to localStorage whenever they change - handled by useStorageSettings
 
-  // Load WiFi SSIDs from user profile
+  // Load WiFi SSIDs from user profile (stabilized with useCallback)
   const loadSSIDs = useCallback(async () => {
     try {
       const {
@@ -101,21 +101,29 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
         .single();
 
       if (!error && data) {
-        updateSettings({
-          homeWifiSSID: data.home_wifi_ssid || settings.homeWifiSSID,
-          workWifiSSID: data.work_wifi_ssid || settings.workWifiSSID,
-        });
+        // Only update if the values are actually different
+        const currentHomeSSID = settings.homeWifiSSID;
+        const currentWorkSSID = settings.workWifiSSID;
+        const newHomeSSID = data.home_wifi_ssid;
+        const newWorkSSID = data.work_wifi_ssid;
+        
+        if (newHomeSSID !== currentHomeSSID || newWorkSSID !== currentWorkSSID) {
+          updateSettings({
+            homeWifiSSID: newHomeSSID || currentHomeSSID,
+            workWifiSSID: newWorkSSID || currentWorkSSID,
+          });
+        }
       }
     } catch (error) {
       console.error('Error loading WiFi SSIDs:', error);
     }
-  }, [settings.homeWifiSSID, settings.workWifiSSID, updateSettings]);
+  }, [updateSettings]); // Remove settings dependencies to prevent loops
 
   useEffect(() => {
     if (settings.enabled) {
       loadSSIDs();
     }
-  }, [settings.enabled]); // Remove loadSSIDs dependency to prevent loop
+  }, [settings.enabled, loadSSIDs]);
 
   useEffect(() => {
     if (settings.mlEnabled && !model) {

@@ -5,6 +5,7 @@ import { DataSummary } from '@/components/Analysis/DataSummary';
 import { GroupComparison } from '@/components/Analysis/GroupComparison';
 import { PollutionBreakdownChart } from '@/components/Analysis/PollutionBreakdown';
 import { useAnalysisLogic } from '@/components/Analysis/AnalysisLogic';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function Analysis() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -36,41 +37,48 @@ export default function Analysis() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-      {/* Header spacing to match History page layout */}
-      <div className="mb-4 sm:mb-6">
-        {/* Empty space to align with History page sync button area */}
+    <ErrorBoundary>
+      <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
+        {/* Header spacing to match History page layout */}
+        <div className="mb-4 sm:mb-6">
+          {/* Empty space to align with History page sync button area */}
+        </div>
+
+        {/* Date Filter */}
+        <ErrorBoundary>
+          <DateFilter
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+            className="mb-4 sm:mb-6"
+          />
+        </ErrorBoundary>
+
+        {/* Pollution Breakdown Chart */}
+        <ErrorBoundary>
+          <PollutionBreakdownChart
+            missions={missions}
+            selectedPeriod={selectedPeriod}
+            selectedDate={selectedDate}
+            onBreakdownDataChange={handleBreakdownDataChange}
+          />
+        </ErrorBoundary>
+
+        {/* Statistical Analysis Report */}
+        <ErrorBoundary>
+          <StatisticalAnalysis
+            statisticalAnalysis={statisticalAnalysis}
+            loading={loading}
+            onRegenerate={regenerateAnalysis}
+            selectedPeriod={selectedPeriod}
+            selectedDate={selectedDate}
+            breakdownData={breakdownData}
+            pmType={pmType}
+            breakdownType={breakdownType}
+          />
+        </ErrorBoundary>
       </div>
-
-      {/* Date Filter */}
-      <DateFilter
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-        selectedPeriod={selectedPeriod}
-        onPeriodChange={setSelectedPeriod}
-        className="mb-4 sm:mb-6"
-      />
-
-
-      {/* Pollution Breakdown Chart */}
-      <PollutionBreakdownChart
-        missions={missions}
-        selectedPeriod={selectedPeriod}
-        selectedDate={selectedDate}
-        onBreakdownDataChange={handleBreakdownDataChange}
-      />
-
-      {/* Statistical Analysis Report */}
-      <StatisticalAnalysis
-        statisticalAnalysis={statisticalAnalysis}
-        loading={loading}
-        onRegenerate={regenerateAnalysis}
-        selectedPeriod={selectedPeriod}
-        selectedDate={selectedDate}
-        breakdownData={breakdownData}
-        pmType={pmType}
-        breakdownType={breakdownType}
-      />
-    </div>
+    </ErrorBoundary>
   );
 }

@@ -99,7 +99,7 @@ export const useAnalysisLogic = (
         variant: 'destructive',
       });
     }
-  }, [toast, t]);
+  }, []); // Remove dependencies that don't affect the logic
 
   const loadActivityData = useCallback(() => {
     try {
@@ -283,12 +283,12 @@ export const useAnalysisLogic = (
       };
       runAnalysis();
     }
-  }, [missions.length, selectedDate, selectedPeriod]); // Simplified dependencies to prevent infinite loops
+  }, [missions.length, selectedDate, selectedPeriod, generateAnalysis, loadActivityData, loadEventAnalysis, loading]);
 
-  const regenerateAnalysis = () => {
+  const regenerateAnalysis = useCallback(() => {
     setAnalysisGenerated(false);
     generateAnalysis();
-  };
+  }, [generateAnalysis]);
 
   return {
     missions,
