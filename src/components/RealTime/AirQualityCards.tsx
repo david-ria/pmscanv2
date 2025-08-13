@@ -4,6 +4,7 @@ import { PMScanData } from '@/lib/pmscan/types';
 import { useTranslation } from 'react-i18next';
 import { useThresholds } from '@/contexts/ThresholdContext';
 import { memo, useMemo } from 'react';
+import { formatTime, createTimestamp } from '@/utils/timeFormat';
 
 interface AirQualityCardsProps {
   currentData: PMScanData | null;
@@ -37,8 +38,8 @@ const AirQualityCards = memo(function AirQualityCards({
         pm10: Math.round(pm10),
       },
       timestamp: currentData.timestamp instanceof Date 
-        ? currentData.timestamp.toLocaleTimeString() 
-        : new Date().toLocaleTimeString(),
+        ? formatTime(currentData.timestamp)
+        : formatTime(createTimestamp()),
     };
   }, [currentData, getAirQualityLevel]);
 

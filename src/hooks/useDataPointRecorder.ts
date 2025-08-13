@@ -8,6 +8,7 @@ import { useWeatherData } from '@/hooks/useWeatherData';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import * as logger from '@/utils/logger';
 import { logTimestamp } from '@/utils/timestampDebug';
+import { createTimestamp, toISOString } from '@/utils/timeFormat';
 
 interface UseDataPointRecorderProps {
   isRecording: boolean;
@@ -51,15 +52,15 @@ export function useDataPointRecorder({
         return;
       }
 
-      // Update last recorded time
-      const currentTime = new Date();
+      // Update last recorded time using standardized timestamp creation
+      const currentTime = createTimestamp();
       lastRecordedTime.current = currentTime;
       updateLastRecordedTime(currentTime);
       
       // Debug timestamp creation
       logTimestamp({
         component: 'DataPointRecorder',
-        operation: 'createRecordingTimestamp',
+        operation: 'createTimestamp',
         timestamp: currentTime,
         source: 'useDataPointRecorder.addDataPoint',
         metadata: { frequency: recordingFrequency }
@@ -100,7 +101,7 @@ export function useDataPointRecorder({
         location: context?.location,
         activity: context?.activity,
         automaticContext,
-        timestamp: currentTime.toISOString()
+        timestamp: toISOString(currentTime)
       });
 
       // Store data for background processing if background mode is enabled

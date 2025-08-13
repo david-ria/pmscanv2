@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { PMData } from '@/types/shared';
+import { formatTime } from '@/utils/timeFormat';
 
 interface AirQualityData {
   pm1: number;
@@ -96,7 +97,7 @@ export function AirQualityCard({ data, className }: AirQualityCardProps) {
         {data.timestamp && (
           <div className="mt-4 pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground text-center">
-              Dernière mesure : {data.timestamp.toLocaleTimeString('fr-FR')}
+              Dernière mesure : {formatTime(data.timestamp)}
             </p>
           </div>
         )}

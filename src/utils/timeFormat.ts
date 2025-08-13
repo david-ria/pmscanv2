@@ -1,5 +1,11 @@
 /**
  * Centralized time formatting utilities to ensure consistency across the app
+ * 
+ * STANDARDS:
+ * - Always use Date objects internally
+ * - Use ISO strings for storage/API calls  
+ * - Use consistent locale formatting for display
+ * - Handle timezone consistently (local time for recording, UTC for storage)
  */
 
 // Default locale and timezone configuration
@@ -22,58 +28,85 @@ const DATETIME_OPTIONS: Intl.DateTimeFormatOptions = {
 };
 
 /**
+ * Create a new timestamp - single source of truth for timestamp creation
+ */
+export function createTimestamp(): Date {
+  return new Date();
+}
+
+/**
+ * Ensure a value is a valid Date object
+ */
+export function ensureDate(timestamp: Date | string | number): Date {
+  if (timestamp instanceof Date) {
+    return timestamp;
+  }
+  if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid timestamp provided:', timestamp);
+      return new Date(); // Fallback to current time
+    }
+    return date;
+  }
+  console.warn('Invalid timestamp type:', typeof timestamp, timestamp);
+  return new Date(); // Fallback to current time
+}
+
+/**
  * Format timestamp consistently for display
  */
-export function formatTime(timestamp: Date | string): string {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+export function formatTime(timestamp: Date | string | number): string {
+  const date = ensureDate(timestamp);
   return date.toLocaleTimeString(DEFAULT_LOCALE, TIME_OPTIONS);
 }
 
 /**
  * Format date consistently for display
  */
-export function formatDate(timestamp: Date | string): string {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+export function formatDate(timestamp: Date | string | number): string {
+  const date = ensureDate(timestamp);
   return date.toLocaleDateString(DEFAULT_LOCALE, DATE_OPTIONS);
 }
 
 /**
  * Format datetime consistently for display
  */
-export function formatDateTime(timestamp: Date | string): string {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+export function formatDateTime(timestamp: Date | string | number): string {
+  const date = ensureDate(timestamp);
   return date.toLocaleString(DEFAULT_LOCALE, DATETIME_OPTIONS);
 }
 
 /**
  * Get ISO string for consistent API calls and storage
  */
-export function toISOString(timestamp: Date | string): string {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+export function toISOString(timestamp: Date | string | number): string {
+  const date = ensureDate(timestamp);
   return date.toISOString();
 }
 
 /**
  * Create a standardized timestamp for recording
+ * @deprecated Use createTimestamp() instead
  */
 export function createRecordingTimestamp(): Date {
-  return new Date();
+  return createTimestamp();
 }
 
 /**
  * Validate that a timestamp is valid
  */
-export function isValidTimestamp(timestamp: Date | string): boolean {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+export function isValidTimestamp(timestamp: Date | string | number): boolean {
+  const date = ensureDate(timestamp);
   return !isNaN(date.getTime());
 }
 
 /**
  * Calculate duration between two timestamps in minutes
  */
-export function calculateDurationMinutes(startTime: Date | string, endTime: Date | string): number {
-  const start = startTime instanceof Date ? startTime : new Date(startTime);
-  const end = endTime instanceof Date ? endTime : new Date(endTime);
+export function calculateDurationMinutes(startTime: Date | string | number, endTime: Date | string | number): number {
+  const start = ensureDate(startTime);
+  const end = ensureDate(endTime);
   return Math.round((end.getTime() - start.getTime()) / (1000 * 60));
 }
 

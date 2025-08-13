@@ -2,6 +2,7 @@ import { MissionData } from './dataStorage';
 import { storeCSVForSync } from '@/hooks/useCrashRecovery';
 import { EventData } from '@/hooks/useEvents';
 import * as logger from '@/utils/logger';
+import { toISOString } from '@/utils/timeFormat';
 
 export async function exportMissionToCSV(mission: MissionData): Promise<void> {
   // Get events for this mission from localStorage
@@ -65,7 +66,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
     const assignedEvent = eventAssignments.get(index.toString());
 
     return [
-      measurementTime.toISOString(),
+      toISOString(measurementTime),
       m.pm1.toFixed(1),
       m.pm25.toFixed(1),
       m.pm10.toFixed(1),

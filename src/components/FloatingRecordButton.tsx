@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
+import { createTimestamp, formatDuration } from '@/utils/timeFormat';
 import { RecordingFrequencyDialog } from './RecordingControls/RecordingFrequencyDialog';
 import { MissionDetailsDialog } from './RecordingControls/MissionDetailsDialog';
 import { ConnectionDialog } from './ConnectionDialog';
@@ -70,7 +71,7 @@ export function FloatingRecordButton({
     
     if (isRecording && recordingStartTime) {
       interval = setInterval(() => {
-        const now = new Date();
+        const now = createTimestamp();
         const diff = Math.floor((now.getTime() - recordingStartTime.getTime()) / 1000);
         setRecordingTime(diff);
       }, 1000);
@@ -129,7 +130,7 @@ export function FloatingRecordButton({
     let finalMissionName = missionName.trim();
 
     if (!finalMissionName) {
-      const now = new Date();
+      const now = createTimestamp();
       finalMissionName = `Mission ${now.toLocaleDateString('fr-FR')} ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
     }
 

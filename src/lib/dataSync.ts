@@ -7,6 +7,7 @@ import {
 import { saveMissionLocally } from './missionManager';
 import { MissionData } from './dataStorage';
 import * as logger from '@/utils/logger';
+import { toISOString } from '@/utils/timeFormat';
 
 // Function to fetch weather data for a mission
 async function fetchWeatherForMission(mission: MissionData): Promise<string | null> {
@@ -26,7 +27,7 @@ async function fetchWeatherForMission(mission: MissionData): Promise<string | nu
       body: {
         latitude: measurementWithLocation.latitude,
         longitude: measurementWithLocation.longitude,
-        timestamp: mission.startTime.toISOString(),
+        timestamp: toISOString(mission.startTime),
       },
     });
 
@@ -106,7 +107,7 @@ async function fetchAirQualityForMission(mission: MissionData): Promise<string |
       body: {
         latitude: measurementWithLocation.latitude,
         longitude: measurementWithLocation.longitude,
-        timestamp: mission.startTime.toISOString(),
+        timestamp: toISOString(mission.startTime),
       },
     });
 
@@ -184,8 +185,8 @@ export async function syncPendingMissions(): Promise<void> {
           id: mission.id,
           user_id: (await supabase.auth.getUser()).data.user?.id,
           name: mission.name,
-          start_time: mission.startTime.toISOString(),
-          end_time: mission.endTime.toISOString(),
+      start_time: toISOString(mission.startTime),
+      end_time: toISOString(mission.endTime),
           duration_minutes: mission.durationMinutes,
           avg_pm1: mission.avgPm1,
           avg_pm25: mission.avgPm25,
@@ -208,7 +209,7 @@ export async function syncPendingMissions(): Promise<void> {
       const measurementsToInsert = mission.measurements.map((m) => ({
         id: m.id,
         mission_id: mission.id,
-        timestamp: m.timestamp.toISOString(),
+        timestamp: toISOString(m.timestamp),
         pm1: m.pm1,
         pm25: m.pm25,
         pm10: m.pm10,

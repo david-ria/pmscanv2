@@ -13,6 +13,7 @@ import { useRecordingContext } from '@/contexts/RecordingContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { EVENT_TYPES } from '@/utils/eventTypes';
+import { createTimestamp, formatTime } from '@/utils/timeFormat';
 
 interface EventButtonProps {}
 
@@ -76,7 +77,7 @@ export function EventButton({}: EventButtonProps) {
         latitude,
         longitude,
         accuracy,
-        timestamp: new Date(), // Use Date object instead of ISO string
+        timestamp: createTimestamp(), // Use standardized timestamp creation
       };
 
       await createEvent(eventData);
@@ -170,7 +171,7 @@ export function EventButton({}: EventButtonProps) {
           {/* Status Badge */}
           <div className="flex justify-center">
             <Badge variant="outline" className="text-xs">
-              {new Date().toLocaleTimeString()} • Recording Session
+              {formatTime(createTimestamp())} • Recording Session
             </Badge>
           </div>
 

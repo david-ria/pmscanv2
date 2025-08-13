@@ -6,6 +6,7 @@ import {
 } from '@/types/recording';
 import { setGlobalRecording } from '@/lib/pmscan/globalConnectionManager';
 import * as logger from '@/utils/logger';
+import { createTimestamp } from '@/utils/timeFormat';
 
 const CRASH_RECOVERY_KEY = 'pmscan_recording_recovery';
 
@@ -27,7 +28,7 @@ export function useRecordingState() {
     setIsRecording(true);
     setRecordingData([]);
     setRecordingFrequency(frequency);
-    recordingStartTime.current = new Date();
+    recordingStartTime.current = createTimestamp();
     lastRecordedTime.current = null;
 
     // Set global recording state to prevent disconnection during navigation
