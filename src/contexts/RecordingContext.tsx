@@ -50,12 +50,28 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Debug recording state changes
+  useEffect(() => {
+    logger.debug('🔄 RecordingProvider: Recording state changed', {
+      isRecording: recordingData.isRecording,
+      frequency: recordingData.recordingFrequency,
+      contextLocation: recordingData.missionContext.location,
+      contextActivity: recordingData.missionContext.activity,
+      startTime: recordingData.recordingStartTime,
+      isProviderReady
+    });
+  }, [recordingData.isRecording, recordingData.recordingFrequency, recordingData.missionContext, recordingData.recordingStartTime, isProviderReady]);
+
   const contextValue = useMemo(() => {
     if (!isProviderReady) {
       logger.debug('🔄 RecordingProvider: Provider not ready yet, returning null');
       return null;
     }
-    logger.debug('🔄 RecordingProvider: Creating context value', recordingData);
+    logger.debug('🔄 RecordingProvider: Creating context value', {
+      isRecording: recordingData.isRecording,
+      frequency: recordingData.recordingFrequency,
+      dataLength: recordingData.recordingData.length
+    });
     return recordingData;
   }, [recordingData, isProviderReady]);
 
@@ -92,7 +108,9 @@ export function useRecordingContext() {
       recordingFrequency: '10s',
       missionContext: { location: '', activity: '' },
       currentMissionId: null,
-      startRecording: () => {},
+      startRecording: () => {
+        logger.debug('🚨 FALLBACK startRecording called - provider not ready!');
+      },
       stopRecording: () => {},
       addDataPoint: () => {},
       saveMission: () => null,

@@ -19,12 +19,26 @@ export function useRecordingState() {
     activity: '',
   });
 
+  // Debug state changes
+  useEffect(() => {
+    logger.debug('🎬 useRecordingState: isRecording changed to:', isRecording);
+  }, [isRecording]);
+
+  useEffect(() => {
+    logger.debug('🎬 useRecordingState: recordingFrequency changed to:', recordingFrequency);
+  }, [recordingFrequency]);
+
+  useEffect(() => {
+    logger.debug('🎬 useRecordingState: missionContext changed to:', missionContext);
+  }, [missionContext]);
+
 
   const recordingStartTime = useRef<Date | null>(null);
   const lastRecordedTime = useRef<Date | null>(null);
 
   const startRecording = useCallback((frequency: string = '10s') => {
     logger.debug('🎬 Starting recording with frequency:', frequency);
+    logger.debug('🎬 Current isRecording before setting:', isRecording);
     setIsRecording(true);
     setRecordingData([]);
     setRecordingFrequency(frequency);
@@ -35,7 +49,8 @@ export function useRecordingState() {
     setGlobalRecording(true);
 
     logger.debug('✅ Recording started! isRecording should now be:', true);
-  }, []);
+    logger.debug('🎬 setIsRecording(true) called, state will update in next render');
+  }, [isRecording]);
 
   const stopRecording = useCallback(() => {
     setIsRecording(false);
