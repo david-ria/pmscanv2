@@ -33,6 +33,9 @@ const RecordingProvider = lazy(() =>
 const CrashRecoveryInitializer = lazy(() => 
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
+const PersistentChart = lazy(() => 
+  import('@/components/PersistentChart').then(module => ({ default: module.PersistentChart }))
+);
 
 // Import skeleton screens
 const AppLayoutSkeleton = lazy(() => 
@@ -202,6 +205,10 @@ const AppRoutes = () => {
                     </Routes>
                   </main>
                   <BottomNavigation />
+                  {/* Persistent chart overlay - stays mounted across pages */}
+                  <Suspense fallback={null}>
+                    <PersistentChart />
+                  </Suspense>
                 </div>
               </RecordingProvider>
             </Suspense>

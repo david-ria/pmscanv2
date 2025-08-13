@@ -139,7 +139,8 @@
     "admin": "Admin",
     "member": "Membre",
     "enabled": "Activé",
-    "disabled": "Désactivé"
+    "disabled": "Désactivé",
+    "points": "points"
   },
   "welcome": {
     "title": "Bienvenue dans votre application vierge",
@@ -168,6 +169,8 @@
     "dataLogger": "Journal des données",
     "entries": "entrées",
     "last": "Dernière",
+    "liveChart": "Graphique en Direct",
+    "waitingForData": "En attente de données...",
     "export": "Exporter les données brutes",
     "clear": "Effacer",
     "expand": "Agrandir",

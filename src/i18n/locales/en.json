@@ -139,7 +139,8 @@
     "admin": "Admin",
     "member": "Member",
     "enabled": "Enabled",
-    "disabled": "Disabled"
+    "disabled": "Disabled",
+    "points": "points"
   },
   "welcome": {
     "title": "Welcome to Your Blank App",
@@ -168,6 +169,8 @@
     "stopped": "Ready to record",
     "entries": "entries",
     "last": "Last",
+    "liveChart": "Live Chart",
+    "waitingForData": "Waiting for data...",
     "export": "Export raw data",
     "clear": "Clear",
     "expand": "Expand",
