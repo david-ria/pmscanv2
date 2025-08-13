@@ -115,8 +115,9 @@ export default function RealTime() {
     return saved || missionContext.activity || '';
   });
 
-  // Data collection is now handled by GlobalDataCollector component
+  // Data collection is now handled ENTIRELY by GlobalDataCollector component
   // This ensures recording continues even when navigating away from this page
+  // NO data collection logic should remain here to avoid conflicts
 
   // Location history clearing is now handled by GlobalDataCollector
 

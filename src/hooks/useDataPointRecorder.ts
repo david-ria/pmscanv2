@@ -41,9 +41,9 @@ export function useDataPointRecorder({
       context?: { location: string; activity: string },
       automaticContext?: string
     ) => {
-      if (!isRecording) {
-        return;
-      }
+      // This function should no longer be used directly since GlobalDataCollector handles everything
+      logger.debug('⚠️ useDataPointRecorder.addDataPoint called - this should be handled by GlobalDataCollector now');
+      return;
 
       // Check if enough time has passed based on recording frequency
       const frequencyMs = parseFrequencyToMs(recordingFrequency);
