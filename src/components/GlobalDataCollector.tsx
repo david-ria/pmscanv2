@@ -83,7 +83,8 @@ export function GlobalDataCollector() {
       hasCurrentData: !!currentData,
       isConnected,
       hasAddDataPoint: !!addDataPoint,
-      hasRecordingContext: !!recordingContext
+      hasRecordingContext: !!recordingContext,
+      willProceed: isRecording && !!currentData && !!addDataPoint
     });
 
     if (!recordingContext || !addDataPoint) {
@@ -91,7 +92,8 @@ export function GlobalDataCollector() {
       return;
     }
 
-    if (isRecording && currentData && isConnected) {
+    if (isRecording && currentData) {
+      // We have data, that's what matters - connection status can be unreliable
       // Prevent duplicate data points by checking if this is actually new data
       const currentTimestamp = currentData.timestamp.getTime();
       const isDuplicate =
