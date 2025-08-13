@@ -19,6 +19,25 @@ export function GlobalDataCollector() {
   const { currentData, isConnected } = usePMScanBluetooth();
   const recordingContext = useRecordingContext();
 
+  // Add debugging
+  useEffect(() => {
+    console.log('🔍 GlobalDataCollector: Recording context state:', {
+      hasContext: !!recordingContext,
+      isRecording: recordingContext?.isRecording,
+      hasAddDataPoint: !!recordingContext?.addDataPoint,
+      contextType: typeof recordingContext
+    });
+  }, [recordingContext]);
+
+  useEffect(() => {
+    console.log('🔍 GlobalDataCollector: PMScan state:', {
+      hasCurrentData: !!currentData,
+      isConnected,
+      pm25: currentData?.pm25,
+      timestamp: currentData?.timestamp
+    });
+  }, [currentData, isConnected]);
+
   const {
     isRecording = false,
     addDataPoint,
@@ -59,8 +78,16 @@ export function GlobalDataCollector() {
 
   // Global data collection effect with proper frequency control
   useEffect(() => {
+    console.log('🔍 GlobalDataCollector: Data collection effect triggered:', {
+      isRecording,
+      hasCurrentData: !!currentData,
+      isConnected,
+      hasAddDataPoint: !!addDataPoint,
+      hasRecordingContext: !!recordingContext
+    });
+
     if (!recordingContext || !addDataPoint) {
-      logger.debug('🔄 GlobalDataCollector: Recording context not ready, skipping data collection');
+      console.log('🔄 GlobalDataCollector: Recording context not ready, skipping data collection');
       return;
     }
 
@@ -77,15 +104,15 @@ export function GlobalDataCollector() {
         const frequencyMs = parseFrequencyToMs(recordingFrequency);
         
         if (!shouldRecordData(lastRecordedTimeRef.current, frequencyMs)) {
+          console.log('🔍 GlobalDataCollector: Frequency check failed, skipping data point');
           return;
         }
 
-        logger.rateLimitedDebug(
-          'globalDataCollector.addData',
-          5000,
-          'Adding data point globally with location:',
-          latestLocation
-        );
+        console.log('🔍 GlobalDataCollector: Adding data point!', {
+          pm25: currentData.pm25,
+          timestamp: currentData.timestamp,
+          frequency: recordingFrequency
+        });
 
         // Handle context and data point recording
         const handleContextAndDataPoint = async () => {
