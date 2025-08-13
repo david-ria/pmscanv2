@@ -33,8 +33,8 @@ const RecordingProvider = lazy(() =>
 const CrashRecoveryInitializer = lazy(() => 
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
-const PersistentChart = lazy(() => 
-  import('@/components/PersistentChart').then(module => ({ default: module.PersistentChart }))
+const PMLineGraph = lazy(() => 
+  import('@/components/PMLineGraph').then(module => ({ default: module.PMLineGraph }))
 );
 
 // Import skeleton screens
@@ -205,10 +205,12 @@ const AppRoutes = () => {
                     </Routes>
                   </main>
                   <BottomNavigation />
-                  {/* Persistent chart overlay - stays mounted across pages */}
-                  <Suspense fallback={null}>
-                    <PersistentChart />
-                  </Suspense>
+                  {/* Keep chart alive across pages - hidden but still mounted */}
+                  <div className={location.pathname === '/' ? 'hidden' : 'hidden absolute -top-[9999px]'}>
+                    <Suspense fallback={null}>
+                      <PMLineGraph data={[]} events={[]} className="h-64" />
+                    </Suspense>
+                  </div>
                 </div>
               </RecordingProvider>
             </Suspense>
