@@ -33,8 +33,22 @@ export function useMissionSaver() {
       ? recordingStartTime 
       : oldestDataPoint.timestamp;
     
-    // Use the newest data point timestamp as end time
-    const endTime = newestDataPoint.timestamp;
+    // Use the newest data point timestamp as end time, but ensure minimum duration
+    let endTime = newestDataPoint.timestamp;
+    
+    // If duration would be 0 or very small, use current time as end time to reflect actual recording session
+    const durationMs = endTime.getTime() - actualStartTime.getTime();
+    const durationMinutes = Math.round(durationMs / (1000 * 60));
+    
+    if (durationMinutes < 1) {
+      // Use current time as end time to reflect the actual recording session duration
+      endTime = new Date();
+      logger.debug('📏 Adjusting mission end time due to minimal data duration:', {
+        originalDuration: durationMinutes,
+        adjustedEndTime: endTime,
+        recordingStartTime: actualStartTime
+      });
+    }
     
     // Debug logging for context flow
     console.log('🔍 Mission saving - context analysis:', {
