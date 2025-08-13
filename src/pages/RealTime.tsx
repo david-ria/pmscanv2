@@ -115,100 +115,10 @@ export default function RealTime() {
     return saved || missionContext.activity || '';
   });
 
-  // Add data to recording when new data comes in - with deduplication
-  const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
+  // Data collection is now handled by GlobalDataCollector component
+  // This ensures recording continues even when navigating away from this page
 
-  useEffect(() => {
-    if (isRecording && currentData && initialized) {
-      // Prevent duplicate data points by checking if this is actually new data
-      const currentTimestamp = currentData.timestamp.getTime();
-      const isDuplicate =
-        lastDataRef.current &&
-        lastDataRef.current.pm25 === currentData.pm25 &&
-        Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
-
-      if (!isDuplicate) {
-        logger.rateLimitedDebug(
-          'realTime.addData',
-          5000,
-          'Adding data point with location:',
-          latestLocation
-        );
-
-        // Update context at recording frequency and get the current context
-        const handleContextAndDataPoint = async () => {
-          // Calculate speed and movement from GPS data
-          let speed = 0;
-          let isMoving = false;
-          
-          if (latestLocation) {
-            const { updateLocationHistory } = await import('@/utils/speedCalculator');
-            const speedData = updateLocationHistory(
-              latestLocation.latitude,
-              latestLocation.longitude,
-              latestLocation.timestamp
-            );
-            speed = speedData.speed;
-            isMoving = speedData.isMoving;
-            
-            // Calculate speed and movement from GPS data (development logging only)
-            if (process.env.NODE_ENV === 'development' && latestLocation) {
-              console.log('🏃 Movement detection:', {
-                speed: `${speed} km/h`,
-                isMoving,
-                location: `${latestLocation.latitude}, ${latestLocation.longitude}`
-              });
-            }
-          }
-          
-          const automaticContext = await updateContextIfNeeded(
-            currentData,
-            latestLocation || undefined,
-            speed,
-            isMoving
-          );
-
-          // DO NOT override user's manual activity selection
-          // Auto context should be separate from manual tags
-
-          addDataPoint(
-            currentData,
-            latestLocation || undefined,
-            { location: selectedLocation, activity: selectedActivity },
-            automaticContext
-          );
-        };
-
-        handleContextAndDataPoint();
-        
-        lastDataRef.current = {
-          pm25: currentData.pm25,
-          timestamp: currentTimestamp,
-        };
-      }
-    }
-  }, [
-    isRecording,
-    currentData,
-    latestLocation,
-    addDataPoint,
-    selectedLocation,
-    selectedActivity,
-    updateContextIfNeeded,
-    initialized,
-  ]);
-
-  // Clear location history when recording starts for fresh speed calculations
-  useEffect(() => {
-    if (isRecording && initialized) {
-      import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
-        clearLocationHistory();
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🏃 Cleared location history for new recording session');
-        }
-      });
-    }
-  }, [isRecording, initialized]);
+  // Location history clearing is now handled by GlobalDataCollector
 
   // Initial autocontext effect - runs only when autocontext is toggled
   useEffect(() => {

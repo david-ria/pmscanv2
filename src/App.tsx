@@ -36,6 +36,9 @@ const CrashRecoveryInitializer = lazy(() =>
 const PMLineGraph = lazy(() => 
   import('@/components/PMLineGraph').then(module => ({ default: module.PMLineGraph }))
 );
+const GlobalDataCollector = lazy(() => 
+  import('@/components/GlobalDataCollector').then(module => ({ default: module.GlobalDataCollector }))
+);
 
 // Import skeleton screens
 const AppLayoutSkeleton = lazy(() => 
@@ -205,6 +208,12 @@ const AppRoutes = () => {
                     </Routes>
                   </main>
                   <BottomNavigation />
+                  
+                  {/* Global data collection that persists across pages */}
+                  <Suspense fallback={null}>
+                    <GlobalDataCollector />
+                  </Suspense>
+                  
                   {/* Keep chart alive across pages - hidden but still mounted */}
                   <div className={location.pathname === '/' ? 'hidden' : 'hidden absolute -top-[9999px]'}>
                     <Suspense fallback={null}>
