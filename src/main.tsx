@@ -3,15 +3,14 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/contexts/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
-import { initTimeSync } from '@/lib/time';
 import App from './App.tsx';
 import './index.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     },
   },
 });
@@ -19,32 +18,33 @@ const queryClient = new QueryClient({
 // Initialize i18n immediately for proper app functionality
 import './i18n/config';
 
-// Global error logging to diagnose loading issues in production
-window.addEventListener('error', (e) => {
-  console.error('Global error:', (e as ErrorEvent).error || (e as ErrorEvent).message);
-});
-window.addEventListener('unhandledrejection', (e) => {
-  console.error('Unhandled rejection:', (e as PromiseRejectionEvent).reason);
-});
-
-// Bootstrap time authority before React mounts
-async function bootstrap() {
-  try { 
-    await initTimeSync(); 
-  } catch (error) {
-    console.warn('⏰ Time sync failed during bootstrap:', error);
+// Defer non-essential initialization until after critical rendering
+const scheduleNonEssentialWork = () => {
+  // Import and initialize non-critical features only when browser is idle
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(async () => {
+      const { initNonEssentialFeatures } = await import('@/lib/deferredInit');
+      initNonEssentialFeatures();
+    }, { timeout: 3000 });
+  } else {
+    // Fallback for browsers without requestIdleCallback
+    setTimeout(async () => {
+      const { initNonEssentialFeatures } = await import('@/lib/deferredInit');
+      initNonEssentialFeatures();
+    }, 100);
   }
-  
-  createRoot(document.getElementById('root')!).render(
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <ThemeProvider>
-          <App />
-          <Toaster />
-        </ThemeProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  );
-}
+};
 
-bootstrap();
+// Start non-essential work scheduling
+scheduleNonEssentialWork();
+
+createRoot(document.getElementById('root')!).render(
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <ThemeProvider>
+        <App />
+        <Toaster />
+      </ThemeProvider>
+    </BrowserRouter>
+  </QueryClientProvider>
+);

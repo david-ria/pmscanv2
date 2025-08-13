@@ -62,8 +62,8 @@ export function useRecordingState() {
     setMissionContext({ location, activity });
   }, []);
 
-  const updateLastRecordedTime = useCallback((time: number) => {
-    lastRecordedTime.current = new Date(time);
+  const updateLastRecordedTime = useCallback((time: Date) => {
+    lastRecordedTime.current = time;
   }, []);
 
   return {

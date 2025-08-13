@@ -24,7 +24,7 @@ export const useGroupSettings = () => {
       }
     }
 
-    // logger.debug('Group ID from URL:', groupId); // Disabled to prevent console spam
+    logger.debug('Group ID from URL:', groupId);
 
     if (groupId) {
       const groupConfig = getGroupConfig(groupId);
@@ -54,7 +54,7 @@ export const useGroupSettings = () => {
     } else {
       // Check if we have a stored group
       const storedGroupId = localStorage.getItem('activeGroupId');
-      // logger.debug('Stored group ID:', storedGroupId); // Disabled to prevent console spam
+      logger.debug('Stored group ID:', storedGroupId);
       if (storedGroupId) {
         const groupConfig = getGroupConfig(storedGroupId);
         if (groupConfig) {

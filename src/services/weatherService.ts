@@ -1,6 +1,4 @@
-import { invokeFunction } from '@/lib/api/client';
 import { supabase } from '@/integrations/supabase/client';
-import { isoForInterop } from '@/utils/iso';
 import { LocationData } from '@/types/PMScan';
 import { MissionData } from '@/lib/dataStorage';
 import * as logger from '@/utils/logger';
@@ -40,7 +38,7 @@ class WeatherService {
   }
 
   private generateCacheKey(lat: number, lng: number, timestamp?: Date): string {
-    const time = timestamp ? Math.floor(timestamp.getTime() / (24 * 60 * 60 * 1000)) : 'current';
+    const time = timestamp ? timestamp.toISOString().split('T')[0] : 'current';
     return `${lat.toFixed(4)}_${lng.toFixed(4)}_${time}`;
   }
 
@@ -71,7 +69,7 @@ class WeatherService {
         body: {
           latitude,
           longitude,
-          timestamp: timestamp ? timestamp.getTime() : Date.now(), // Send epoch ms directly
+          timestamp: timestamp ? timestamp.toISOString() : new Date().toISOString(),
         },
       });
 

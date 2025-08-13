@@ -7,7 +7,6 @@ import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { LazyMapboxWrapper } from './LazyMapboxWrapper';
 import { Skeleton } from '@/components/ui/skeleton';
-import { invokeFunction } from '@/lib/api/client';
 
 interface MapboxLazyLoaderProps {
   onMapReady?: (map: any) => void;
@@ -22,18 +21,12 @@ export function MapboxLazyLoader({ onMapReady, className }: MapboxLazyLoaderProp
     
     // Example: Fetch Mapbox token from Supabase edge function
     const fetchMapToken = async () => {
-      // Mapbox token fetching temporarily disabled to prevent CORS spam
-      console.debug('🗺️ Mapbox token fetching temporarily disabled');
-      return;
-      
-      /*
       try {
-        const result = await invokeFunction<{ token: string }>('get-mapbox-token');
-        setMapToken(result?.token || '');
+        const { data } = await supabase.functions.invoke('get-mapbox-token');
+        setMapToken(data?.token || '');
       } catch (error) {
         console.error('Failed to fetch map token:', error);
       }
-      */
     };
 
     fetchMapToken();

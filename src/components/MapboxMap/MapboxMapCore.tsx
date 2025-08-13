@@ -15,13 +15,13 @@ interface MapboxMapCoreProps {
     pm1: number;
     pm25: number;
     pm10: number;
-    timestamp: number;
+    timestamp: Date;
   } | null;
   trackPoints?: Array<{
     longitude: number;
     latitude: number;
     pm25: number;
-    timestamp: number;
+    timestamp: Date;
   }>;
   isRecording?: boolean;
   className?: string;
@@ -167,29 +167,17 @@ export const MapboxMapCore = ({
 
   // Update marker when location changes (only if map is loaded)
   useEffect(() => {
-    // Enhanced safety checks for map initialization
     if (!map.current || !currentLocation || !mapboxLoaded) return;
-    
-    // Additional check to ensure map container is ready
-    if (!map.current.getContainer || !map.current.getContainer()) {
-      console.warn('Map container not ready for marker creation');
-      return;
-    }
 
     (async () => {
       const { createLocationMarker } = await import('@/lib/mapbox/mapMarker');
-      try {
-        marker.current = await createLocationMarker(
-          map.current,
-          currentLocation,
-          pmData,
-          getAirQualityLevel,
-          marker.current
-        );
-      } catch (error) {
-        console.error('Failed to create location marker:', error);
-        // Don't re-throw - this is not a critical error that should break the app
-      }
+      marker.current = createLocationMarker(
+        map.current,
+        currentLocation,
+        pmData,
+        getAirQualityLevel,
+        marker.current
+      );
     })();
   }, [currentLocation, pmData, getAirQualityLevel, mapboxLoaded]);
 

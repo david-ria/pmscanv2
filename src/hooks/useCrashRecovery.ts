@@ -2,8 +2,6 @@ import { useEffect, useCallback } from 'react';
 import { RecordingEntry } from '@/types/recording';
 import { dataStorage } from '@/lib/dataStorage';
 import { useMissionSaver } from './useMissionSaver';
-import { formatDateTime } from '@/utils/timeFormat';
-import { ensureEpochMs } from '@/utils/timestampUtils';
 import * as logger from '@/utils/logger';
 
 const CRASH_RECOVERY_KEY = 'pmscan_recording_recovery';
@@ -11,7 +9,7 @@ const UNSENT_CSV_KEY = 'pmscan_unsent_csv';
 
 interface RecoveryData {
   recordingData: RecordingEntry[];
-  startTime: number; // Changed to number for epoch ms
+  startTime: string;
   frequency: string;
   missionContext: {
     location: string;
@@ -64,9 +62,7 @@ export function useCrashRecovery() {
               ...entry,
               pmData: {
                 ...entry.pmData,
-                timestamp: typeof entry.pmData.timestamp === 'number' 
-                  ? entry.pmData.timestamp 
-                  : (entry.pmData.timestamp as any).getTime(),
+                timestamp: new Date(entry.pmData.timestamp),
               },
             })
           );
@@ -83,9 +79,8 @@ export function useCrashRecovery() {
 
             try {
               // Create unique mission name with timestamp to avoid duplicates
-              const startEpochMs = ensureEpochMs(recoveryData.startTime);
-              const safe = (s: string) => s.replace(/[:/\\?%*|"<>.]/g, '-');
-              const crashMissionName = `Recovered Mission ${safe(formatDateTime(startEpochMs))}`;
+              const startTime = new Date(recoveryData.startTime);
+              const crashMissionName = `Recovered Mission ${startTime.toISOString().replace(/[:.]/g, '-')}`;
 
               // Create a temporary mission from recovery data
               const mission = dataStorage.createMissionFromRecording(
@@ -159,7 +154,7 @@ export function useCrashRecovery() {
 
       const recoveryData: RecoveryData = {
         recordingData,
-        startTime: typeof startTime === 'number' ? startTime : startTime.getTime(),
+        startTime: startTime.toISOString(),
         frequency,
         missionContext,
         timestamp: Date.now(),

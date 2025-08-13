@@ -19,7 +19,7 @@ interface UseDataPointRecorderProps {
     weatherDataId?: string
   ) => void;
   addDataPointToState: (entry: RecordingEntry) => void;
-  updateLastRecordedTime: (time: number) => void;
+  updateLastRecordedTime: (time: Date) => void;
 }
 
 export function useDataPointRecorder({
@@ -29,7 +29,7 @@ export function useDataPointRecorder({
   addDataPointToState,
   updateLastRecordedTime,
 }: UseDataPointRecorderProps) {
-  const lastRecordedTime = useRef<number | null>(null);
+  const lastRecordedTime = useRef<Date | null>(null);
   const { getWeatherForMeasurement } = useWeatherData();
   const { isEnabled: weatherLoggingEnabled } = useWeatherLogging();
 
@@ -52,7 +52,7 @@ export function useDataPointRecorder({
       }
 
       // Update last recorded time
-      const currentTime = Date.now();
+      const currentTime = new Date();
       lastRecordedTime.current = currentTime;
       updateLastRecordedTime(currentTime);
       
@@ -60,7 +60,7 @@ export function useDataPointRecorder({
       logTimestamp({
         component: 'DataPointRecorder',
         operation: 'createRecordingTimestamp',
-        timestamp: new Date(currentTime),
+        timestamp: currentTime,
         source: 'useDataPointRecorder.addDataPoint',
         metadata: { frequency: recordingFrequency }
       });
@@ -78,7 +78,7 @@ export function useDataPointRecorder({
           weatherDataId = await getWeatherForMeasurement(
             location.latitude,
             location.longitude,
-            new Date(currentTime)
+            currentTime
           );
         } catch (error) {
           logger.debug('⚠️ Failed to fetch weather data for measurement:', error);
@@ -100,7 +100,7 @@ export function useDataPointRecorder({
         location: context?.location,
         activity: context?.activity,
         automaticContext,
-        timestamp: currentTime
+        timestamp: currentTime.toISOString()
       });
 
       // Store data for background processing if background mode is enabled

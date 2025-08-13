@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { invokeFunction } from '@/lib/api/client';
+import { supabase } from '@/integrations/supabase/client';
 import * as logger from '@/utils/logger';
 
 interface AirQualityData {
@@ -26,11 +26,6 @@ export function useAirQualityData() {
   const [airQualityData, setAirQualityData] = useState<AirQualityData | null>(null);
 
   const fetchAirQualityData = useCallback(async (location: LocationData, timestamp?: Date): Promise<AirQualityData | null> => {
-    // Air quality fetching temporarily disabled to prevent CORS spam
-    logger.debug('🌬️ Air quality fetching temporarily disabled');
-    return null;
-    
-    /*
     if (!location?.latitude || !location?.longitude) {
       logger.debug('❌ Cannot fetch air quality data: missing location');
       return null;
@@ -41,16 +36,23 @@ export function useAirQualityData() {
     try {
       logger.debug('🌬️ Fetching air quality data for location:', location);
       
-      const result = await invokeFunction<{ airQualityData: AirQualityData }>('fetch-atmosud-data', {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        timestamp: timestamp ? timestamp.getTime() : Date.now(),
+      const { data, error } = await supabase.functions.invoke('fetch-atmosud-data', {
+        body: {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          timestamp: timestamp ? timestamp.toISOString() : new Date().toISOString(),
+        },
       });
 
-      if (result?.airQualityData) {
-        logger.debug('✅ Air quality data fetched successfully:', result.airQualityData.id);
-        setAirQualityData(result.airQualityData);
-        return result.airQualityData;
+      if (error) {
+        logger.error('❌ Error fetching air quality data:', error);
+        return null;
+      }
+
+      if (data?.airQualityData) {
+        logger.debug('✅ Air quality data fetched successfully:', data.airQualityData.id);
+        setAirQualityData(data.airQualityData);
+        return data.airQualityData;
       }
 
       return null;
@@ -60,7 +62,6 @@ export function useAirQualityData() {
     } finally {
       setIsLoading(false);
     }
-    */
   }, []);
 
   const getAirQualityForMeasurement = useCallback(async (latitude: number, longitude: number, timestamp: Date): Promise<string | null> => {

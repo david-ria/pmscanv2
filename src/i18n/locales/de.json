@@ -150,7 +150,6 @@
     "graph": "Diagramm",
     "satellite": "Satellit",
     "connectionRequired": "Verbindung für Kartenansicht erforderlich",
-    "mapWillLoadWhenRecording": "Karte wird geladen, wenn die Aufzeichnung startet",
     "connectSensor": "Verbinden Sie Ihren PMScan-Sensor, um Echtzeitdaten zu sehen",
     "lastMeasurement": "Letzte Messung",
     "airQuality": {
@@ -207,8 +206,6 @@
     "avg": "Durchschn.",
     "share": "Teilen",
     "export": "Exportieren",
-    "missionSaved": "Mission gespeichert",
-    "savedAndExported": "gespeichert und als CSV exportiert",
     "sync": "Synchronisieren",
     "local": "Lokal",
     "statistics": "Statistiken",

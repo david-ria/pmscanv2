@@ -1,16 +1,29 @@
 import {
   User,
   Settings,
+  Smartphone,
   AlertTriangle,
   LogOut,
+  Activity,
   Languages,
   Moon,
+  Brain,
+  SunMoon,
   MapPin,
   Bluetooth,
   Cloud,
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/hooks/useLanguage';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useAutoContext } from '@/hooks/useAutoContext';
+import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
+import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
+import { useGPS } from '@/hooks/useGPS';
+import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import { LucideIcon } from 'lucide-react';
 
 interface MenuSection {
@@ -37,6 +50,28 @@ export function useMenuSections({
 }: UseMenuSectionsProps): MenuSection[] {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { currentLanguage, languages } = useLanguage();
+  const { userRole } = useUserRole();
+  const { theme = 'light', setTheme } = useTheme();
+  const { isEnabled: autoContextEnabled, toggleEnabled: toggleAutoContext } =
+    useAutoContext();
+  const {
+    isBackgroundEnabled,
+    enableRecordingBackground,
+    disableRecordingBackground,
+  } = useBackgroundRecordingIntegration();
+
+  // Get weather logging state
+  const { isEnabled: weatherLoggingEnabled, setEnabled: setWeatherLoggingEnabled } = useWeatherLogging();
+
+  // Get PMScan and GPS status
+  const {
+    isConnected: isPMScanConnected,
+    requestDevice,
+    disconnect,
+  } = usePMScanBluetooth();
+  const { locationEnabled, requestLocationPermission } = useGPS();
 
   const handleProfileClick = () => {
     navigate('/profile');
@@ -59,90 +94,140 @@ export function useMenuSections({
     onNavigate();
   };
 
-  const handleSettings = () => {
-    navigate('/my-settings');
+  const handleGroups = () => {
+    navigate('/groups');
     onNavigate();
+  };
+
+  const getCurrentLanguageDisplay = () => {
+    const lang = languages.find((l) => l.code === currentLanguage);
+    return lang ? lang.name : currentLanguage.toUpperCase();
+  };
+
+  const handleBackgroundRecordingToggle = async (enabled: boolean) => {
+    if (enabled) {
+      await enableRecordingBackground('30s'); // Default 30 second frequency
+    } else {
+      await disableRecordingBackground();
+    }
   };
 
   return [
     {
-      title: "Compte",
+      title: t('account.title'),
       items: [
         {
           icon: User,
-          label: "Mon profil",
+          label: t('account.profile'),
           badge: null,
           action: handleProfileClick,
         },
         {
           icon: LogOut,
-          label: "Déconnexion",
+          label: t('account.logout'),
           badge: null,
           action: handleSignOut,
         },
       ],
     },
     {
-      title: "Paramètres",
+      title: t('settingsMenu.title'),
       items: [
         {
           icon: Settings,
-          label: "Mes Paramètres",
-          badge: null,
-          action: handleSettings,
-        },
-        {
-          icon: Settings,
-          label: "Seuils personnalisés",
+          label: t('settingsMenu.customThresholds'),
           badge: null,
           action: handleCustomThresholds,
         },
         {
           icon: AlertTriangle,
-          label: "Alertes & alarmes",
+          label: t('settingsMenu.alertsAlarms'),
           badge: null,
           action: handleCustomAlerts,
         },
         {
           icon: Languages,
-          label: "Langue",
-          badge: "FR",
+          label: t('settingsMenu.language'),
+          badge: getCurrentLanguageDisplay(),
+        },
+        {
+          icon: SunMoon,
+          label: t('settingsMenu.darkMode'),
+          badge: null,
+          toggle: {
+            checked: theme === 'dark',
+            onCheckedChange: (checked: boolean) =>
+              setTheme(checked ? 'dark' : 'light'),
+          },
         },
         {
           icon: Moon,
-          label: "Mode sombre",
+          label: 'Background Recording',
           badge: null,
           toggle: {
-            checked: false,
-            onCheckedChange: () => {},
+            checked: isBackgroundEnabled,
+            onCheckedChange: handleBackgroundRecordingToggle,
+          },
+          info: 'Continue recording PMScan data even when the app is minimized or in the background. Note: This will use more battery.',
+        },
+        {
+          icon: Brain,
+          label: 'Auto Context',
+          badge: null,
+          toggle: {
+            checked: autoContextEnabled,
+            onCheckedChange: toggleAutoContext,
           },
         },
       ],
     },
+    // Groups section temporarily hidden
+    // {
+    //   title: t('groups.title'),
+    //   items: [
+    //     { icon: Users, label: t('groups.myGroups'), badge: null, action: handleGroups },
+    //     ...(userRole === 'super_admin' ? [
+    //       { icon: Settings, label: t('groups.adminPanel'), badge: null, action: () => {
+    //         navigate('/groups?tab=admin');
+    //         onNavigate();
+    //       }}
+    //     ] : [])
+    //   ]
+    // },
     {
-      title: "Capteurs",
+      title: t('sensors.title'),
       items: [
         {
           icon: Bluetooth,
-          label: "Capteur PMSCAN",
-          badge: null,
+          label: t('sensors.pmscan'),
+          badge: isPMScanConnected ? t('sensors.connected') : null,
           action: () => {
-            navigate('/');
-            onNavigate();
+            if (isPMScanConnected) {
+              disconnect();
+            } else {
+              requestDevice();
+            }
           },
         },
         {
           icon: MapPin,
-          label: "GPS",
-          badge: null,
-          action: () => {},
-        },
-        {
-          icon: Cloud,
-          label: "Données Météo",
-          badge: null,
-          action: () => {},
-        },
+          label: 'GPS',
+          badge: locationEnabled ? t('sensors.connected') : null,
+          action: () => {
+            if (!locationEnabled) {
+              requestLocationPermission();
+            }
+           },
+         },
+         {
+           icon: Cloud,
+           label: t('sensors.weather'),
+           badge: null,
+           toggle: {
+             checked: weatherLoggingEnabled,
+             onCheckedChange: setWeatherLoggingEnabled,
+           },
+         },
       ],
     },
   ];

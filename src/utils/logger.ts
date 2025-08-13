@@ -33,7 +33,7 @@ export const error = (message: string, error?: Error, ...args: any[]) => {
           message,
           error: error?.message,
           stack: error?.stack,
-          timestamp: Date.now(), // Use epoch ms for logging
+          timestamp: new Date().toISOString(),
           url: window.location.href
         })
       }).catch(() => {

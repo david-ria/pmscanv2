@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { invokeFunction } from '@/lib/api/client';
+import { supabase } from '@/integrations/supabase/client';
 import * as logger from '@/utils/logger';
 
 interface WeatherData {
@@ -30,16 +30,7 @@ export function useWeatherData() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
   const fetchWeatherData = useCallback(async (location: LocationData, timestamp?: Date): Promise<WeatherData | null> => {
-    // Weather fetching temporarily disabled to prevent CORS spam
-    logger.debug('🌐 Weather fetching temporarily disabled');
-    return null;
-    
-    // Commented out to prevent CORS spam
-    /*
     if (!location?.latitude || !location?.longitude) {
-      logger.debug('❌ Cannot fetch weather data: missing location');
-      return null;
-    }
       logger.debug('❌ Cannot fetch weather data: missing location');
       return null;
     }
@@ -49,31 +40,32 @@ export function useWeatherData() {
     try {
       logger.debug('🌤️ Fetching weather data for location:', location);
       
-      const result = await invokeFunction<{ weatherData: WeatherData }>('fetch-weather', {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        timestamp: timestamp ? timestamp.getTime() : Date.now(),
+      const { data, error } = await supabase.functions.invoke('fetch-weather', {
+        body: {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          timestamp: timestamp ? timestamp.toISOString() : new Date().toISOString(),
+        },
       });
 
-      if (result?.weatherData) {
-        logger.debug('✅ Weather data fetched successfully:', result.weatherData.id);
-        setWeatherData(result.weatherData);
-        return result.weatherData;
+      if (error) {
+        logger.error('❌ Error fetching weather data:', error);
+        return null;
+      }
+
+      if (data?.weatherData) {
+        logger.debug('✅ Weather data fetched successfully:', data.weatherData.id);
+        setWeatherData(data.weatherData);
+        return data.weatherData;
       }
 
       return null;
-    } catch (error: any) {
-      // Handle CORS and network errors more gracefully
-      if (error?.message?.includes('CORS') || error?.message?.includes('NetworkError')) {
-        logger.debug('🌐 Weather fetch blocked by CORS policy - skipping');
-      } else {
-        logger.error('❌ Error in weather data fetch:', error);
-      }
+    } catch (error) {
+      logger.error('❌ Error in weather data fetch:', error);
       return null;
     } finally {
       setIsLoading(false);
     }
-    */
   }, []);
 
   const getWeatherForMeasurement = useCallback(async (latitude: number, longitude: number, timestamp: Date): Promise<string | null> => {

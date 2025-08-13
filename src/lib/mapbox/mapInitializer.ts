@@ -26,14 +26,20 @@ export const initializeMap = async (
 
     const { supabase } = supabaseModule;
 
-    // Step 2: Fetch Mapbox token from edge function
-    const { data, error: tokenError } = await supabase.functions.invoke('get-mapbox-token');
+    logger.debug('🗺️ Step 2: Requesting Mapbox token from edge function...');
+    const { data, error: tokenError } =
+      await supabase.functions.invoke('get-mapbox-token');
 
-    logger.debug('🗺️ Step 3: Edge function response received:', { data, error: tokenError });
+    logger.debug('🗺️ Step 3: Edge function response received:', {
+      data,
+      error: tokenError,
+    });
 
     if (tokenError) {
       console.error('🗺️ ❌ Edge function error:', tokenError);
-      throw new Error(`Edge function error: ${tokenError.message || tokenError}`);
+      throw new Error(
+        `Edge function error: ${tokenError.message || tokenError}`
+      );
     }
 
     if (!data?.token) {
@@ -44,7 +50,7 @@ export const initializeMap = async (
     logger.debug('🗺️ ✅ Successfully received Mapbox token');
     logger.debug('🗺️ Token length:', data.token?.length);
 
-    // Step 4: Set Mapbox access token
+    logger.debug('🗺️ Step 4: Setting Mapbox access token...');
     mapboxgl.accessToken = data.token;
 
     logger.debug('🗺️ Step 4: Determining map initial state...');
@@ -79,6 +85,7 @@ export const initializeMap = async (
     logger.debug('🗺️ Map style:', MAP_STYLES.LIGHT);
     logger.debug('🗺️ Map center:', center);
     logger.debug('🗺️ Map zoom:', zoom);
+    logger.debug('🗺️ Map pitch:', pitch);
 
     // Initialize map
     const map = new mapboxgl.Map({
@@ -86,7 +93,7 @@ export const initializeMap = async (
       style: MAP_STYLES.LIGHT,
       center,
       zoom,
-      pitch: 0,
+      pitch,
     });
 
     logger.debug('🗺️ ✅ Map instance created successfully');

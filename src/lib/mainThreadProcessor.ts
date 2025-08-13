@@ -1,5 +1,3 @@
-import { reportDuplicateBucket } from '@/utils/timestampDebug';
-
 // Fallback processing functions for when Web Workers are not available
 export async function processOnMainThread(type: string, payload: any): Promise<any> {
   // Use time-sliced processing to avoid blocking the main thread
@@ -86,7 +84,7 @@ async function parseDataWithTimeSlicing(rawData: any) {
       if (typeof item === 'string') {
         const parts = item.split(',');
         result.push({
-          timestamp: Date.now(),
+          timestamp: new Date().toISOString(),
           pm1: parseFloat(parts[0]) || 0,
           pm25: parseFloat(parts[1]) || 0,
           pm10: parseFloat(parts[2]) || 0,
@@ -113,7 +111,7 @@ function parseSensorData(rawData: any) {
       if (typeof item === 'string') {
         const parts = item.split(',');
         return {
-          timestamp: Date.now(),
+          timestamp: new Date().toISOString(),
           pm1: parseFloat(parts[0]) || 0,
           pm25: parseFloat(parts[1]) || 0,
           pm10: parseFloat(parts[2]) || 0,
@@ -280,16 +278,10 @@ async function aggregateDataWithTimeSlicing(data: any) {
     chunk.forEach((measurement: any) => {
       const timestamp = new Date(measurement.timestamp);
       const intervalStart = new Date(Math.floor(timestamp.getTime() / intervalMs) * intervalMs);
-      
-      // Use epoch ms for stable numeric key instead of ISO string
-      const bucketStartMs = intervalStart.getTime();
-      const key = String(bucketStartMs);
+      const key = intervalStart.toISOString();
       
       if (!groups.has(key)) {
         groups.set(key, []);
-      } else {
-        // Report duplicate bucket detection for monitoring
-        reportDuplicateBucket(key);
       }
       groups.get(key).push(measurement);
     });
@@ -326,13 +318,10 @@ function aggregateChartData(data: any) {
   measurements.forEach((measurement: any) => {
     const timestamp = new Date(measurement.timestamp);
     const intervalStart = new Date(Math.floor(timestamp.getTime() / intervalMs) * intervalMs);
-    const key = String(intervalStart.getTime());
+    const key = intervalStart.toISOString();
     
     if (!groups.has(key)) {
       groups.set(key, []);
-    } else {
-      // Report duplicate bucket detection for monitoring
-      reportDuplicateBucket(key);
     }
     groups.get(key).push(measurement);
   });
@@ -383,9 +372,6 @@ async function processMissionDataWithTimeSlicing(data: any) {
       const key = mission[groupBy] || 'Unknown';
       if (!groups.has(key)) {
         groups.set(key, []);
-      } else {
-        // Report duplicate bucket detection for monitoring
-        reportDuplicateBucket(key);
       }
       groups.get(key).push(mission);
     });
@@ -419,9 +405,6 @@ function processMissionData(data: any) {
     const key = mission[groupBy] || 'Unknown';
     if (!groups.has(key)) {
       groups.set(key, []);
-    } else {
-      // Report duplicate bucket detection for monitoring
-      reportDuplicateBucket(key);
     }
     groups.get(key).push(mission);
   });

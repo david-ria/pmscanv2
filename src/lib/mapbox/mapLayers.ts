@@ -81,7 +81,7 @@ export const updateTrackData = (
     longitude: number;
     latitude: number;
     pm25: number;
-    timestamp: number;
+    timestamp: Date;
   }>,
   isRecording: boolean
 ) => {
@@ -97,7 +97,7 @@ export const updateTrackData = (
     },
     properties: {
       pm25: point.pm25,
-      timestamp: point.timestamp, // Use epoch ms for map data
+      timestamp: point.timestamp.toISOString(),
     },
   }));
 

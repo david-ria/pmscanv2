@@ -10,28 +10,15 @@ import { loadSupabaseClient } from '@/lib/dynamicImports';
 let supabaseClientPromise: Promise<any> | null = null;
 
 /**
- * Get Supabase client with lazy loading and error recovery
+ * Get Supabase client with lazy loading
  */
 export const getSupabase = async () => {
   if (!supabaseClientPromise) {
-    supabaseClientPromise = loadSupabaseClient().catch((error) => {
-      console.error('Failed to load Supabase client:', error);
-      // Reset promise to allow retry
-      supabaseClientPromise = null;
-      throw error;
-    });
+    supabaseClientPromise = loadSupabaseClient();
   }
   
-  try {
-    const { supabase } = await supabaseClientPromise;
-    return supabase;
-  } catch (error) {
-    console.error('Supabase client error, attempting fallback:', error);
-    // Clear failed promise and try direct import as fallback
-    supabaseClientPromise = null;
-    const { supabase } = await import('@/integrations/supabase/client');
-    return supabase;
-  }
+  const { supabase } = await supabaseClientPromise;
+  return supabase;
 };
 
 /**

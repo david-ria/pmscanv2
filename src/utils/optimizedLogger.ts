@@ -43,8 +43,8 @@ class OptimizedLogger {
   }
 
   private formatMessage(level: LogLevel, message: string, ...args: any[]): any[] {
-    const timestamp = Date.now(); // Use epoch ms internally
-    const formattedMessage = `${this.config.prefix} [${level.toUpperCase()}] ${new Date(timestamp).toLocaleString()} ${message}`;
+    const timestamp = new Date().toISOString();
+    const formattedMessage = `${this.config.prefix} [${level.toUpperCase()}] ${timestamp} ${message}`;
     return [formattedMessage, ...args];
   }
 

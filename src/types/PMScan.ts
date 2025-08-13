@@ -19,5 +19,5 @@ export interface LocationData {
   longitude: number;
   accuracy: number;
   altitude?: number;
-  timestamp: number; // epoch ms UTC
+  timestamp: Date;
 }

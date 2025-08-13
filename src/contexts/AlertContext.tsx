@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import * as logger from '@/utils/logger';
-import { getMigratedItem, setMigratedItem } from '@/lib/storageMigration';
 
 export interface AlertSettings {
   pm1: {
@@ -147,84 +146,43 @@ export function AlertProvider({ children }: AlertProviderProps) {
     return alertSettings;
   };
 
-  // Load alert settings from versioned storage on mount and request notification permissions
+  // Load alert settings from localStorage on mount and request notification permissions
   useEffect(() => {
-    try {
-      const savedSettings = getMigratedItem('alertSettings', null);
-      const savedGlobalEnabled = getMigratedItem('globalAlertsEnabled', true);
+    const savedSettings = localStorage.getItem('alertSettings');
+    const savedGlobalEnabled = localStorage.getItem('globalAlertsEnabled');
 
-      if (savedSettings && Object.keys(savedSettings).length > 0) {
-        // Validate that saved settings have the correct structure
-        const validatedSettings: AlertSettings = {
-          pm1: {
-            enabled: Boolean(savedSettings.pm1?.enabled),
-            threshold: typeof savedSettings.pm1?.threshold === 'number' ? savedSettings.pm1.threshold : null,
-            duration: typeof savedSettings.pm1?.duration === 'number' ? savedSettings.pm1.duration : 30,
-          },
-          pm25: {
-            enabled: Boolean(savedSettings.pm25?.enabled),
-            threshold: typeof savedSettings.pm25?.threshold === 'number' ? savedSettings.pm25.threshold : null,
-            duration: typeof savedSettings.pm25?.duration === 'number' ? savedSettings.pm25.duration : 30,
-          },
-          pm10: {
-            enabled: Boolean(savedSettings.pm10?.enabled),
-            threshold: typeof savedSettings.pm10?.threshold === 'number' ? savedSettings.pm10.threshold : null,
-            duration: typeof savedSettings.pm10?.duration === 'number' ? savedSettings.pm10.duration : 30,
-          },
-        };
-        setAlertSettings(validatedSettings);
+    if (savedSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        setAlertSettings(parsedSettings);
+      } catch (error) {
+        console.error('Failed to parse saved alert settings:', error);
       }
+    }
 
-      setGlobalAlertsEnabled(savedGlobalEnabled);
+    if (savedGlobalEnabled !== null) {
+      setGlobalAlertsEnabled(savedGlobalEnabled === 'true');
+    }
 
-      // Request notification permission if not already granted
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission().then((permission) => {
-          logger.debug('Notification permission:', permission);
-        });
-      }
-    } catch (error) {
-      logger.error('Failed to load alert settings from versioned storage:', error);
+    // Request notification permission if not already granted
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then((permission) => {
+        logger.debug('Notification permission:', permission);
+      });
     }
   }, []);
 
-  // Save alert settings to versioned storage whenever they change
+  // Save alert settings to localStorage whenever they change
   useEffect(() => {
-    try {
-      setMigratedItem('alertSettings', alertSettings);
-    } catch (error) {
-      logger.error('Failed to save alert settings to versioned storage:', error);
-    }
+    localStorage.setItem('alertSettings', JSON.stringify(alertSettings));
   }, [alertSettings]);
 
   useEffect(() => {
-    try {
-      setMigratedItem('globalAlertsEnabled', globalAlertsEnabled);
-    } catch (error) {
-      logger.error('Failed to save global alerts enabled to versioned storage:', error);
-    }
+    localStorage.setItem('globalAlertsEnabled', globalAlertsEnabled.toString());
   }, [globalAlertsEnabled]);
 
   const updateAlertSettings = (newSettings: AlertSettings) => {
-    // Validate settings before saving
-    const validatedSettings: AlertSettings = {
-      pm1: {
-        enabled: Boolean(newSettings.pm1?.enabled),
-        threshold: typeof newSettings.pm1?.threshold === 'number' ? newSettings.pm1.threshold : null,
-        duration: typeof newSettings.pm1?.duration === 'number' ? newSettings.pm1.duration : 30,
-      },
-      pm25: {
-        enabled: Boolean(newSettings.pm25?.enabled),
-        threshold: typeof newSettings.pm25?.threshold === 'number' ? newSettings.pm25.threshold : null,
-        duration: typeof newSettings.pm25?.duration === 'number' ? newSettings.pm25.duration : 30,
-      },
-      pm10: {
-        enabled: Boolean(newSettings.pm10?.enabled),
-        threshold: typeof newSettings.pm10?.threshold === 'number' ? newSettings.pm10.threshold : null,
-        duration: typeof newSettings.pm10?.duration === 'number' ? newSettings.pm10.duration : 30,
-      },
-    };
-    setAlertSettings(validatedSettings);
+    setAlertSettings(newSettings);
   };
 
   const resetToDefaults = () => {

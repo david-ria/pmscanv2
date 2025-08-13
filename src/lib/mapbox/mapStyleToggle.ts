@@ -11,7 +11,7 @@ export const toggleMapStyle = (
     longitude: number;
     latitude: number;
     pm25: number;
-    timestamp: number;
+    timestamp: Date;
   }>,
   thresholds: any,
   onStyleChange: (newIsSatellite: boolean) => void
@@ -52,7 +52,7 @@ export const toggleMapStyle = (
           },
           properties: {
             pm25: point.pm25,
-            timestamp: point.timestamp, // Use epoch ms for map data
+            timestamp: point.timestamp.toISOString(),
           },
         })),
       },

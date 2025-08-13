@@ -8,10 +8,10 @@ interface PMData {
   pm1: number;
   pm25: number;
   pm10: number;
-  timestamp: Date | number; // Support both Date and numeric timestamps
+  timestamp: Date;
 }
 
-export const createLocationMarker = async (
+export const createLocationMarker = (
   map: MapboxMap,
   currentLocation: LocationData,
   pmData: PMData | null,
@@ -20,28 +20,12 @@ export const createLocationMarker = async (
     type: string
   ) => { level: string; color: string },
   existingMarker?: any | null
-): Promise<any> => {
-  // Safety checks - ensure map is properly initialized
-  if (!map) {
-    throw new Error('Map instance is null or undefined');
-  }
-  
-  // Check if map has essential methods before proceeding
-  if (typeof map.getContainer !== 'function' || 
-      typeof map.flyTo !== 'function' ||
-      !map.getContainer()) {
-    throw new Error('Map is not properly initialized - missing essential methods or container');
-  }
-
+): any => {
   const { longitude, latitude } = currentLocation;
 
-  // Remove existing marker safely
-  try {
-    if (existingMarker && typeof existingMarker.remove === 'function') {
-      existingMarker.remove();
-    }
-  } catch (error) {
-    console.warn('Failed to remove existing marker:', error);
+  // Remove existing marker
+  if (existingMarker) {
+    existingMarker.remove();
   }
 
   // Create popup content with PM data if available
@@ -83,64 +67,36 @@ export const createLocationMarker = async (
           </div>
         </div>
         <div style="font-size: 10px; color: #666; margin-top: 4px; text-align: center;">
-          ${typeof pmData.timestamp === 'number' ? new Date(pmData.timestamp).toLocaleTimeString() : pmData.timestamp.toLocaleTimeString()}
+          ${pmData.timestamp.toLocaleTimeString()}
         </div>
       </div>`;
   }
 
   popupContent += '</div>';
 
-  // Create marker using proper Mapbox GL JS API
+  // Create marker using dynamic Mapbox instance
   let marker = null;
-  
-  // Import Mapbox GL dynamically to get the Marker class
-  const { loadMapboxGL } = await import('@/lib/dynamicImports');
-  const mapboxgl = await loadMapboxGL();
-  
-  // Get color based on PM2.5 quality if data is available
-  const markerColor = pmData 
-    ? getQualityColor(pmData.pm25, getAirQualityLevel)
-    : '#6b7280'; // Gray for no data
-    
-  // Create a custom marker element
-  const markerElement = document.createElement('div');
-  markerElement.className = 'mapbox-marker';
-  markerElement.style.backgroundColor = markerColor;
-  markerElement.style.width = '20px';
-  markerElement.style.height = '20px';
-  markerElement.style.borderRadius = '50%';
-  markerElement.style.border = '3px solid white';
-  markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-  markerElement.style.cursor = 'pointer';
-  
-  // Create popup
-  const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent);
-  
-  // Create marker with custom element and additional safety checks
-  try {
-    marker = new mapboxgl.Marker(markerElement)
-      .setLngLat([longitude, latitude])
-      .setPopup(popup);
-    
-    // Only add to map if it's properly initialized
-    if (map && typeof map.getContainer === 'function' && map.getContainer()) {
-      marker.addTo(map);
+  if ((map as any)._createMarker && (map as any)._createPopup) {
+    // Get color based on PM2.5 quality if data is available
+    const markerColor = pmData 
+      ? getQualityColor(pmData.pm25, getAirQualityLevel)
+      : '#6b7280'; // Gray for no data
       
-      // Center map on new location only if map supports it
-      if (typeof map.flyTo === 'function') {
-        map.flyTo({
-          center: [longitude, latitude],
-          zoom: 15,
-          duration: 1500,
-        });
-      }
-    } else {
-      throw new Error('Map container not available for marker placement');
-    }
-  } catch (error) {
-    console.error('Failed to create or add marker to map:', error);
-    throw error;
+    marker = (map as any)._createMarker({
+      color: markerColor,
+      scale: 0.8,
+    })
+      .setLngLat([longitude, latitude])
+      .setPopup((map as any)._createPopup({ offset: 25 }).setHTML(popupContent))
+      .addTo(map);
   }
+
+  // Center map on new location
+  map.flyTo({
+    center: [longitude, latitude],
+    zoom: 15,
+    duration: 1500,
+  });
 
   return marker;
 };

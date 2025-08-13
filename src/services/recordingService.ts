@@ -1,8 +1,8 @@
+import { useState, useCallback, useRef } from 'react';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { RecordingEntry, MissionContext } from '@/types/recording';
-import { setGlobalRecording, getBackgroundRecording } from '@/lib/pmscan/globalConnectionManager';
-import { parseFrequencyToMs, shouldRecordData } from '@/lib/recordingUtils';
+import { setGlobalRecording } from '@/lib/pmscan/globalConnectionManager';
 import * as logger from '@/utils/logger';
 
 export interface RecordingState {
@@ -10,8 +10,7 @@ export interface RecordingState {
   isRecording: boolean;
   recordingFrequency: string;
   missionContext: MissionContext;
-  recordingStartTime: number | null;
-  currentMissionId: string | null;
+  recordingStartTime: Date | null;
 }
 
 export interface RecordingActions {
@@ -25,21 +24,11 @@ export interface RecordingActions {
   ) => void;
   updateMissionContext: (location: string, activity: string) => void;
   clearRecordingData: () => void;
-  saveMission: (
-    name: string,
-    locationContext?: string,
-    activityContext?: string,
-    recordingFrequency?: string,
-    shared?: boolean
-  ) => any;
 }
 
 class RecordingService {
   private static instance: RecordingService;
   private listeners: Set<(state: RecordingState) => void> = new Set();
-  private lastRecordedTime: number | null = null;
-  private backgroundRecordingEnabled: boolean = false;
-  private backgroundDataHandler: ((pmData: PMScanData, location?: LocationData, context?: any) => void) | null = null;
   
   private state: RecordingState = {
     recordingData: [],
@@ -47,7 +36,6 @@ class RecordingService {
     recordingFrequency: '10s',
     missionContext: { location: '', activity: '' },
     recordingStartTime: null,
-    currentMissionId: null,
   };
 
   static getInstance(): RecordingService {
@@ -73,16 +61,12 @@ class RecordingService {
   startRecording(frequency: string = '10s'): void {
     logger.debug('🎬 Starting recording with frequency:', frequency);
     
-    // Generate a new mission ID when recording starts
-    const newMissionId = crypto.randomUUID();
-    
     this.state = {
       ...this.state,
       isRecording: true,
       recordingFrequency: frequency,
-      recordingStartTime: Date.now(),
+      recordingStartTime: new Date(),
       recordingData: [], // Clear previous data
-      currentMissionId: newMissionId,
     };
 
     setGlobalRecording(true);
@@ -97,7 +81,7 @@ class RecordingService {
     this.state = {
       ...this.state,
       isRecording: false,
-      // Keep recordingStartTime and currentMissionId for mission saving - will be cleared when data is cleared
+      // Keep recordingStartTime for mission saving - will be cleared when data is cleared
     };
 
     setGlobalRecording(false);
@@ -117,35 +101,13 @@ class RecordingService {
       return;
     }
 
-    // Check if enough time has passed based on recording frequency
-    const frequencyMs = parseFrequencyToMs(this.state.recordingFrequency);
-    
-    if (!shouldRecordData(this.lastRecordedTime, frequencyMs)) {
-      return;
-    }
-
-    // Update last recorded time
-    const currentTime = Date.now();
-    this.lastRecordedTime = currentTime;
-
-    // Use the current recorded time as the definitive timestamp
-    const pmDataWithTimestamp = {
-      ...pmData,
-      timestamp: currentTime,
-    };
-
     const entry: RecordingEntry = {
-      pmData: pmDataWithTimestamp,
+      pmData,
       location,
       context: context || this.state.missionContext,
       automaticContext,
-      timestamp: currentTime,
+      timestamp: pmData.timestamp, // Use PM data timestamp for consistency
     };
-
-    // Store data for background processing if background mode is enabled
-    if (getBackgroundRecording() && this.backgroundDataHandler) {
-      this.backgroundDataHandler(pmDataWithTimestamp, location, context);
-    }
 
     this.state = {
       ...this.state,
@@ -173,7 +135,6 @@ class RecordingService {
       ...this.state,
       recordingData: [],
       recordingStartTime: null, // Clear start time when data is cleared
-      currentMissionId: null, // Clear mission ID when data is cleared
     };
 
     this.notify();
@@ -181,38 +142,10 @@ class RecordingService {
     logger.debug('🧹 Recording data cleared');
   }
 
-  saveMission(
-    name: string,
-    locationContext?: string,
-    activityContext?: string,
-    recordingFrequency?: string,
-    shared?: boolean
-  ): any {
-    // For now, just return a simple mission object
-    // This should integrate with the actual mission saving logic
-    const mission = {
-      id: this.state.currentMissionId || crypto.randomUUID(),
-      name,
-      data: this.state.recordingData,
-      startTime: this.state.recordingStartTime,
-      locationContext,
-      activityContext,
-      frequency: recordingFrequency || this.state.recordingFrequency,
-      shared: shared || false,
-    };
-    
-    logger.debug('💾 Mission saved:', mission.id);
-    
-    // Clear recording data after saving
-    this.clearRecordingData();
-    
-    return mission;
-  }
-
   // Utility methods
   getRecordingDuration(): number {
     if (!this.state.recordingStartTime) return 0;
-    return Date.now() - this.state.recordingStartTime;
+    return Date.now() - this.state.recordingStartTime.getTime();
   }
 
   getDataPointCount(): number {
@@ -246,27 +179,6 @@ class RecordingService {
 
   exportData(): RecordingEntry[] {
     return [...this.state.recordingData];
-  }
-
-  // Background recording integration
-  setBackgroundDataHandler(handler: ((pmData: PMScanData, location?: LocationData, context?: any) => void) | null): void {
-    this.backgroundDataHandler = handler;
-    logger.debug('🌙 Background data handler set:', !!handler);
-  }
-
-  enableBackgroundRecording(): void {
-    this.backgroundRecordingEnabled = true;
-    logger.debug('🌙 Background recording enabled in service');
-  }
-
-  disableBackgroundRecording(): void {
-    this.backgroundRecordingEnabled = false;
-    this.backgroundDataHandler = null;
-    logger.debug('🌙 Background recording disabled in service');
-  }
-
-  isBackgroundRecordingEnabled(): boolean {
-    return this.backgroundRecordingEnabled;
   }
 }
 

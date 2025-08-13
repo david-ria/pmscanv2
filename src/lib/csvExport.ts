@@ -1,7 +1,6 @@
 import { MissionData } from './dataStorage';
 import { storeCSVForSync } from '@/hooks/useCrashRecovery';
 import { EventData } from '@/hooks/useEvents';
-import { isoForInterop } from '@/utils/iso';
 import * as logger from '@/utils/logger';
 
 export async function exportMissionToCSV(mission: MissionData): Promise<void> {
@@ -66,7 +65,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
     const assignedEvent = eventAssignments.get(index.toString());
 
     return [
-      isoForInterop(measurementTime.getTime()),
+      measurementTime.toISOString(),
       m.pm1.toFixed(1),
       m.pm25.toFixed(1),
       m.pm10.toFixed(1),
@@ -99,7 +98,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
   const url = URL.createObjectURL(blob);
 
   // Create filename using new naming convention: [DeviceID]_[YYYYMMDD]_[HHMMSS].csv
-  const startTime = mission.startTime instanceof Date ? mission.startTime : new Date(mission.startTime);
+  const startTime = mission.startTime;
   const deviceId = 'PMScan'; // Default device ID - could be enhanced to use actual device name
   const dateStr =
     startTime.getFullYear().toString() +

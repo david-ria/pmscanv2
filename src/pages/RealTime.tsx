@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
 import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
-import { throttledLog } from '@/utils/debugLogger';
 
 // Import critical hooks immediately for core functionality
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingContext } from '@/contexts/RecordingContext';
-import { useDirectRecordingData } from '@/hooks/useDirectRecordingData';
 import { useAlerts } from '@/contexts/AlertContext';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
@@ -49,7 +47,6 @@ const RecordingFrequencyDialog = lazy(() =>
 );
 
 export default function RealTime() {
-  // console.log('🏠 RealTime component starting...'); // Commented out to reduce log spam
   // Fast LCP - defer heavy initialization
   const [initialized, setInitialized] = useState(false);
   
@@ -80,38 +77,17 @@ export default function RealTime() {
     isRecording,
     addDataPoint,
     missionContext,
+    recordingData,
     updateMissionContext,
     startRecording,
     currentMissionId,
   } = useRecordingContext();
-
-  // Use direct polling for real-time data updates, matching the recording frequency
-  const { recordingData, dataCount } = useDirectRecordingData(isRecording, recordingFrequency);
 
   const { 
     locationEnabled, 
     latestLocation, 
     requestLocationPermission 
   } = useGPS(true, false, recordingFrequency);
-
-  // Initialize native recording service
-  useEffect(() => {
-    import('@/services/nativeRecordingService').then(({ nativeRecordingService, updateGlobalPMScanData }) => {
-      // Make sure PMScan data is globally available for native service
-      if (currentData) {
-        updateGlobalPMScanData(currentData);
-        console.log('🔄 Updating global PMScan data with PM2.5:', currentData.pm25);
-      }
-    });
-  }, [currentData]);
-
-  // Optimized effect to monitor recording data changes
-  useEffect(() => {
-    if (recordingData && recordingData.length > 0) {
-      const latest = recordingData[recordingData.length - 1];
-      throttledLog('realtime-data-update', `📊 RealTime: ${dataCount} points, latest PM2.5: ${latest?.pmData?.pm25}`);
-    }
-  }, [dataCount]); // Only trigger on count change, not full data array
 
   // Only initialize autocontext if the user has enabled it
   const { settings: autoContextSettings } = useStorageSettings(
@@ -139,18 +115,88 @@ export default function RealTime() {
     return saved || missionContext.activity || '';
   });
 
-  // Update global PMScan data for native service and sync context
+  // Add data to recording when new data comes in - with deduplication
+  const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
+
   useEffect(() => {
-    if (currentData && initialized) {
-      // Make current data globally available for native recording service
-      import('@/services/nativeRecordingService').then(({ updateGlobalPMScanData, nativeRecordingService }) => {
-        updateGlobalPMScanData(currentData);
+    if (isRecording && currentData && initialized) {
+      // Prevent duplicate data points by checking if this is actually new data
+      const currentTimestamp = currentData.timestamp.getTime();
+      const isDuplicate =
+        lastDataRef.current &&
+        lastDataRef.current.pm25 === currentData.pm25 &&
+        Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
+
+      if (!isDuplicate) {
+        logger.rateLimitedDebug(
+          'realTime.addData',
+          5000,
+          'Adding data point with location:',
+          latestLocation
+        );
+
+        // Update context at recording frequency and get the current context
+        const handleContextAndDataPoint = async () => {
+          // Calculate speed and movement from GPS data
+          let speed = 0;
+          let isMoving = false;
+          
+          if (latestLocation) {
+            const { updateLocationHistory } = await import('@/utils/speedCalculator');
+            const speedData = updateLocationHistory(
+              latestLocation.latitude,
+              latestLocation.longitude,
+              latestLocation.timestamp
+            );
+            speed = speedData.speed;
+            isMoving = speedData.isMoving;
+            
+            // Calculate speed and movement from GPS data (development logging only)
+            if (process.env.NODE_ENV === 'development' && latestLocation) {
+              console.log('🏃 Movement detection:', {
+                speed: `${speed} km/h`,
+                isMoving,
+                location: `${latestLocation.latitude}, ${latestLocation.longitude}`
+              });
+            }
+          }
+          
+          const automaticContext = await updateContextIfNeeded(
+            currentData,
+            latestLocation || undefined,
+            speed,
+            isMoving
+          );
+
+          // DO NOT override user's manual activity selection
+          // Auto context should be separate from manual tags
+
+          addDataPoint(
+            currentData,
+            latestLocation || undefined,
+            { location: selectedLocation, activity: selectedActivity },
+            automaticContext
+          );
+        };
+
+        handleContextAndDataPoint();
         
-        // Update mission context in native service when user changes selections
-        nativeRecordingService.updateMissionContext(selectedLocation, selectedActivity);
-      });
+        lastDataRef.current = {
+          pm25: currentData.pm25,
+          timestamp: currentTimestamp,
+        };
+      }
     }
-  }, [currentData, selectedLocation, selectedActivity, initialized]);
+  }, [
+    isRecording,
+    currentData,
+    latestLocation,
+    addDataPoint,
+    selectedLocation,
+    selectedActivity,
+    updateContextIfNeeded,
+    initialized,
+  ]);
 
   // Clear location history when recording starts for fresh speed calculations
   useEffect(() => {
@@ -192,20 +238,12 @@ export default function RealTime() {
     }
   }, [currentData, checkAlerts, initialized]);
 
-  // Weather fetching temporarily disabled to prevent CORS spam
-  // useEffect(() => {
-  //   if (!latestLocation || !initialized) return;
-  //   
-  //   // Debounce weather fetching to prevent rapid requests
-  //   const timeoutId = setTimeout(() => {
-  //     fetchWeatherData(latestLocation).catch(error => {
-  //       // Silently handle CORS and other fetch errors to prevent spam
-  //       console.warn('Weather fetch failed (silently handled):', error.message);
-  //     });
-  //   }, 2000); // 2 second debounce
-  //   
-  //   return () => clearTimeout(timeoutId);
-  // }, [latestLocation?.latitude, latestLocation?.longitude, initialized]); // Only depend on location coordinates
+  // Fetch weather data when location changes
+  useEffect(() => {
+    if (latestLocation && initialized) {
+      fetchWeatherData(latestLocation);
+    }
+  }, [latestLocation, fetchWeatherData, initialized]);
 
   // Persist location/activity selections to localStorage for recording persistence
   useEffect(() => {

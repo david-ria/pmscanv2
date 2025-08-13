@@ -50,13 +50,12 @@ export const GroupComparison = ({
 
     setLoading(true);
     try {
-      // Fetch real group statistics from database using date range
-      const dateStr = selectedDate.toISOString().split('T')[0]; // Keep for date queries
+      // Fetch real group statistics from database
       const { data, error } = await supabase
         .from('group_shared_statistics')
         .select('*')
         .eq('group_id', activeGroup.id)
-        .eq('date', dateStr)
+        .eq('date', selectedDate.toISOString().split('T')[0])
         .order('avg_pm25', { ascending: false });
 
       if (error) {

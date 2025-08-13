@@ -15,78 +15,6 @@ import { PMScanDeviceState } from './deviceState';
 import { PMScanDevice } from './types';
 import * as logger from '@/utils/logger';
 
-// Global cleanup tracking for device initializers
-const teardowns: Array<() => void> = [];
-let intervalIds: Set<number> = new Set();
-let timeoutIds: Set<number> = new Set();
-
-/**
- * Helper function to register event listeners with automatic cleanup tracking
- */
-function on(element: any, event: string, handler: any): void {
-  element.addEventListener(event, handler);
-  teardowns.push(() => element.removeEventListener(event, handler));
-}
-
-/**
- * Helper function to track intervals with automatic cleanup
- */
-export function trackInterval(callback: () => void, delay: number): number {
-  const id = window.setInterval(callback, delay);
-  intervalIds.add(id);
-  teardowns.push(() => {
-    window.clearInterval(id);
-    intervalIds.delete(id);
-  });
-  return id;
-}
-
-/**
- * Helper function to track timeouts with automatic cleanup
- */
-export function trackTimeout(callback: () => void, delay: number): number {
-  const id = window.setTimeout(callback, delay);
-  timeoutIds.add(id);
-  teardowns.push(() => {
-    window.clearTimeout(id);
-    timeoutIds.delete(id);
-  });
-  return id;
-}
-
-/**
- * Dispose all tracked listeners, intervals, and timeouts
- */
-export function dispose(): void {
-  logger.debug(`🧹 Disposing ${teardowns.length} tracked resources...`);
-  teardowns.splice(0).forEach(fn => {
-    try {
-      fn();
-    } catch (error) {
-      logger.error('❌ Error during cleanup:', error);
-    }
-  });
-  
-  // Clear any remaining intervals/timeouts (failsafe)
-  intervalIds.forEach(id => window.clearInterval(id));
-  timeoutIds.forEach(id => window.clearTimeout(id));
-  intervalIds.clear();
-  timeoutIds.clear();
-  
-  logger.debug('✅ All device initializer resources disposed');
-}
-
-/**
- * Get current resource count for debugging
- */
-export function getResourceCount(): { listeners: number, intervals: number, timeouts: number } {
-  return {
-    listeners: teardowns.length - intervalIds.size - timeoutIds.size,
-    intervals: intervalIds.size,
-    timeouts: timeoutIds.size
-  };
-}
-
 /**
  * Handles PMScan device initialization and service discovery
  */
@@ -116,24 +44,24 @@ export class PMScanDeviceInitializer {
     logger.debug(`🔋 Battery: ${battery}%`);
     this.deviceState.updateBattery(battery);
 
-    // Start RT data notifications with tracked cleanup
+    // Start RT data notifications
     const rtDataChar = await service.getCharacteristic(PMScan_RT_DATA_UUID);
     await rtDataChar.startNotifications();
-    on(rtDataChar, 'characteristicvaluechanged', onRTData);
+    rtDataChar.addEventListener('characteristicvaluechanged', onRTData);
 
-    // Start IM data notifications with tracked cleanup
+    // Start IM data notifications
     const imDataChar = await service.getCharacteristic(PMScan_IM_DATA_UUID);
     await imDataChar.startNotifications();
-    on(imDataChar, 'characteristicvaluechanged', onIMData);
+    imDataChar.addEventListener('characteristicvaluechanged', onIMData);
 
-    // Start battery notifications with tracked cleanup
+    // Start battery notifications
     await batteryChar.startNotifications();
-    on(batteryChar, 'characteristicvaluechanged', onBatteryData);
+    batteryChar.addEventListener('characteristicvaluechanged', onBatteryData);
 
-    // Start charging notifications with tracked cleanup
+    // Start charging notifications
     const chargingChar = await service.getCharacteristic(PMScan_CHARGING_UUID);
     await chargingChar.startNotifications();
-    on(chargingChar, 'characteristicvaluechanged', onChargingData);
+    chargingChar.addEventListener('characteristicvaluechanged', onChargingData);
 
     // Read and sync time if needed
     await this.syncDeviceTime(service);
@@ -171,8 +99,7 @@ export class PMScanDeviceInitializer {
     logger.debug(`🖥️ Display: ${displayValue.getUint8(0)}`);
     this.deviceState.updateDisplay(new Uint8Array(displayValue.buffer));
 
-    logger.debug('🎉 Device initialization finished');
-    logger.debug(`📊 Resources tracked: ${JSON.stringify(getResourceCount())}`);
+    logger.debug('🎉 Init finished');
 
     const deviceInfo: PMScanDevice = {
       name: device?.name || 'PMScan Device',

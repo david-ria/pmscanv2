@@ -1,21 +1,25 @@
-import React, { ErrorInfo, ReactNode } from 'react';
+/**
+ * Enhanced error boundary component for production-ready error handling
+ */
+import React, { Component, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+import * as logger from '@/utils/logger';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  showReload?: boolean;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error?: Error;
-  errorInfo?: ErrorInfo;
+  errorInfo?: React.ErrorInfo;
 }
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -28,77 +32,78 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    this.setState({
-      error,
-      errorInfo,
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    this.setState({ errorInfo });
+
+    // Log error to monitoring service
+    logger.error('React Error Boundary caught error', error, {
+      componentStack: errorInfo.componentStack,
+      errorBoundary: true,
     });
 
-    // Call the onError prop if provided
+    // Call custom error handler if provided
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
-
-    // Log the error
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
-
-  handleReset = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
-  };
 
   handleReload = () => {
     window.location.reload();
   };
 
+  handleReset = () => {
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+  };
+
   render() {
     if (this.state.hasError) {
+      // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
+      // Default error UI
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 p-3 rounded-full bg-destructive/10">
-                <AlertTriangle className="h-8 w-8 text-destructive" />
-              </div>
-              <CardTitle className="text-xl">Something went wrong</CardTitle>
-              <CardDescription>
-                The application encountered an unexpected error and needs to recover.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col gap-2">
-                <Button onClick={this.handleReset} className="w-full">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Try Again
-                </Button>
-                <Button onClick={this.handleReload} variant="outline" className="w-full">
-                  <Home className="mr-2 h-4 w-4" />
+        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+          <div className="max-w-md w-full text-center space-y-6">
+            <div className="flex justify-center">
+              <AlertTriangle className="h-16 w-16 text-destructive" />
+            </div>
+            
+            <div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">
+                Something went wrong
+              </h1>
+              <p className="text-muted-foreground">
+                We're sorry, but something unexpected happened. Please try refreshing the page.
+              </p>
+            </div>
+
+            {import.meta.env.DEV && this.state.error && (
+              <details className="text-left bg-muted p-4 rounded-lg">
+                <summary className="cursor-pointer font-medium mb-2">
+                  Error Details (Development)
+                </summary>
+                <pre className="text-xs overflow-auto whitespace-pre-wrap">
+                  {this.state.error.toString()}
+                  {this.state.errorInfo?.componentStack}
+                </pre>
+              </details>
+            )}
+
+            <div className="flex gap-2 justify-center">
+              <Button onClick={this.handleReset} variant="outline">
+                Try Again
+              </Button>
+              
+              {this.props.showReload !== false && (
+                <Button onClick={this.handleReload}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
                   Reload Page
                 </Button>
-              </div>
-              
-              {process.env.NODE_ENV === 'development' && this.state.error && (
-                <details className="mt-4">
-                  <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                    Error Details (Development Only)
-                  </summary>
-                  <div className="mt-2 p-3 bg-muted rounded text-xs overflow-auto max-h-40">
-                    <div className="font-mono">
-                      <div className="text-destructive font-semibold">{this.state.error.name}: {this.state.error.message}</div>
-                      <pre className="mt-2 whitespace-pre-wrap">{this.state.error.stack}</pre>
-                      {this.state.errorInfo && (
-                        <pre className="mt-2 whitespace-pre-wrap">{this.state.errorInfo.componentStack}</pre>
-                      )}
-                    </div>
-                  </div>
-                </details>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       );
     }
@@ -107,7 +112,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 }
 
-// Higher-order component for easy wrapping
+// HOC for wrapping components with error boundary
 export const withErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
   errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
@@ -117,7 +122,8 @@ export const withErrorBoundary = <P extends object>(
       <Component {...props} />
     </ErrorBoundary>
   );
-  
+
   WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
+  
   return WrappedComponent;
 };

@@ -1,7 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import * as logger from '@/utils/logger';
-import { formatDateTime } from '@/utils/timeFormat';
-import { isoForInterop, isoForFilename } from '@/utils/iso';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -112,7 +110,7 @@ export function DataLogger({
       headers.join(','),
       ...displayData.map((entry) =>
         [
-          isoForInterop(entry.timestamp instanceof Date ? entry.timestamp.getTime() : entry.timestamp),
+          entry.timestamp.toISOString(),
           entry.pmData.pm1.toFixed(2),
           entry.pmData.pm25.toFixed(2),
           entry.pmData.pm10.toFixed(2),
@@ -132,7 +130,7 @@ export function DataLogger({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `journal-donnees-${isoForFilename(Date.now())}.csv`;
+    link.download = `journal-donnees-${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -221,10 +219,10 @@ export function DataLogger({
             </div>
           ) : (
             <div className="space-y-1 font-mono text-xs">
-              {displayData.slice(-5).map((entry) => (
+              {displayData.map((entry) => (
                 <div key={entry.id} className="text-muted-foreground break-all">
                   <div className="text-xs">
-                    [{entry.timestamp.toLocaleTimeString()}] Reading: PM1=
+                    [{entry.timestamp.toLocaleTimeString()}] New reading: PM1=
                     {entry.pmData.pm1.toFixed(1)}ug/m³,
                   </div>
                   <div className="text-xs pl-2">

@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useMemo, useEffect, useState, useCallback } from 'react';
-import { nativeRecordingService } from '@/services/nativeRecordingService';
+import React, { createContext, useContext, useMemo, useEffect, useState } from 'react';
+import { useRecordingData } from '@/hooks/useRecordingData';
 import * as logger from '@/utils/logger';
 
 interface RecordingContextType {
@@ -26,102 +26,44 @@ interface RecordingContextType {
     shared?: boolean
   ) => any;
   updateMissionContext: (location: string, activity: string) => void;
-  recordingStartTime: number | null;
+  recordingStartTime: Date | null;
   recordingData: any[];
   clearRecordingData: () => void;
 }
 
-const RecordingContext = createContext<RecordingContextType | null>(null);
+const RecordingContext = createContext<RecordingContextType | null>(
+  null
+);
 
 export function RecordingProvider({ children }: { children: React.ReactNode }) {
-  // Use native recording service state with forced updates
-  const [state, setState] = useState(() => nativeRecordingService.getState());
-  const [updateCounter, setUpdateCounter] = useState(0);
-  
-  // Listen for native data events for immediate updates
+  const recordingData = useRecordingData();
+  const [isProviderReady, setIsProviderReady] = useState(false);
+
   useEffect(() => {
-    const handleNativeDataAdded = (event: any) => {
-      const detail = event.detail || {};
-      // console.log('🔄 React context received native data event, count:', detail.count);
-      
-      // Force update immediately with fresh state
-      const freshState = nativeRecordingService.getState();
-      // console.log('📊 Context updating, data length:', freshState.recordingData.length);
-      
-      // Use functional update to ensure React detects the change
-      setState(currentState => {
-        // Only update if state actually changed
-        if (JSON.stringify(currentState) !== JSON.stringify(freshState)) {
-          return freshState;
-        }
-        return currentState;
-      });
-    };
-    
-    // Add event listener
-    window.addEventListener('nativeDataAdded', handleNativeDataAdded);
-    
-    // Optimized polling - only when recording and at reasonable intervals
-    const interval = setInterval(() => {
-      const currentState = nativeRecordingService.getState();
-      if (currentState.isRecording) {
-        setState(prevState => {
-          // Only update if there are actual meaningful changes
-          const hasDataChange = prevState.recordingData.length !== currentState.recordingData.length;
-          const hasStatusChange = prevState.isRecording !== currentState.isRecording;
-          const hasMissionChange = prevState.currentMissionId !== currentState.currentMissionId;
-          
-          if (hasDataChange || hasStatusChange || hasMissionChange) {
-            // console.log('📊 Polling update - meaningful change detected:', currentState.recordingData.length);
-            return currentState; // Don't spread, use direct assignment to avoid unnecessary re-renders
-          }
-          return prevState; // Return same reference if no changes
-        });
-      }
-    }, 3000); // Reduced frequency from 1s to 3s
-    
-    return () => {
-      window.removeEventListener('nativeDataAdded', handleNativeDataAdded);
-      clearInterval(interval);
-    };
+    logger.debug('🔄 RecordingProvider: Initializing provider');
+    logger.debug('🔄 RecordingProvider: Recording data loaded', {
+      isRecording: recordingData.isRecording,
+      dataLength: recordingData.recordingData.length,
+    });
+    setIsProviderReady(true);
+    logger.debug('🔄 RecordingProvider: Provider is now ready');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startRecording = useCallback((frequency?: string) => {
-    nativeRecordingService.startRecording(frequency);
-  }, []);
+  const contextValue = useMemo(() => {
+    if (!isProviderReady) {
+      logger.debug('🔄 RecordingProvider: Provider not ready yet, returning null');
+      return null;
+    }
+    logger.debug('🔄 RecordingProvider: Creating context value', recordingData);
+    return recordingData;
+  }, [recordingData, isProviderReady]);
 
-  const stopRecording = useCallback(() => {
-    nativeRecordingService.stopRecording();
-  }, []);
-
-  const updateMissionContext = useCallback((location: string, activity: string) => {
-    nativeRecordingService.updateMissionContext(location, activity);
-  }, []);
-
-  const clearRecordingData = useCallback(() => {
-    nativeRecordingService.clearRecordingData();
-  }, []);
-
-  const addDataPoint = useCallback((pmData: any, location?: any, context?: any, automaticContext?: string) => {
-    nativeRecordingService.addDataPoint(pmData, location);
-  }, []);
-
-  const saveMission = useCallback((name: string) => {
-    const data = nativeRecordingService.getRecordingData();
-    console.log('💾 Saving mission with', data.length, 'data points');
-    nativeRecordingService.clearRecordingData();
-    return { id: crypto.randomUUID(), name, data };
-  }, []);
-
-  const contextValue = useMemo(() => ({
-    ...state,
-    startRecording,
-    stopRecording,
-    addDataPoint,
-    updateMissionContext,
-    clearRecordingData,
-    saveMission,
-  }), [state, startRecording, stopRecording, addDataPoint, updateMissionContext, clearRecordingData, saveMission]);
+  useEffect(() => {
+    if (contextValue) {
+      logger.debug('🔄 RecordingProvider: Provider rendered with value', contextValue);
+    }
+  }, [contextValue]);
 
   return (
     <RecordingContext.Provider value={contextValue}>
@@ -134,10 +76,16 @@ export function useRecordingContext() {
   const context = useContext(RecordingContext);
   
   if (context === undefined) {
-    throw new Error('useRecordingContext must be used within a RecordingProvider');
+    logger.error('🚨 useRecordingContext called outside of RecordingProvider!');
+    logger.error('🚨 Current context value:', undefined, { context });
+    logger.error('🚨 Stack trace:', new Error('Stack trace'));
+    throw new Error(
+      'useRecordingContext must be used within a RecordingProvider'
+    );
   }
   
   if (context === null) {
+    logger.debug('🔄 useRecordingContext: Provider not ready yet, returning fallback');
     // Return a fallback context while provider is initializing
     return {
       isRecording: false,

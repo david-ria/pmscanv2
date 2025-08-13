@@ -69,24 +69,7 @@ export default function History() {
     }
   }, [missions, handleEnrichMissions, loadMissions, enrichmentInProgress, hasTriggeredEnrichment]);
 
-  // Deduplicate missions by id (prefer synced and most recent), then filter by period
-  const uniqueMissions = useMemo(() => {
-    const map = new Map<string, typeof missions[number]>();
-    for (const m of missions) {
-      const existing = map.get(m.id);
-      if (!existing) {
-        map.set(m.id, m);
-      } else {
-        const preferCurrent =
-          (m.synced && !existing.synced) ||
-          (m.synced === existing.synced &&
-            new Date(m.endTime).getTime() >= new Date(existing.endTime).getTime());
-        if (preferCurrent) map.set(m.id, m);
-      }
-    }
-    return Array.from(map.values());
-  }, [missions]);
-
+  // Filter missions based on selected date and period
   const filteredMissions = useMemo(() => {
     let startDate: Date;
     let endDate: Date;
@@ -109,14 +92,14 @@ export default function History() {
         endDate = endOfYear(selectedDate);
         break;
       default:
-        return uniqueMissions;
+        return missions;
     }
 
-    return uniqueMissions.filter((mission) => {
+    return missions.filter((mission) => {
       const missionDate = new Date(mission.startTime);
       return isWithinInterval(missionDate, { start: startDate, end: endDate });
     });
-  }, [uniqueMissions, selectedDate, selectedPeriod]);
+  }, [missions, selectedDate, selectedPeriod]);
 
   const periodStats = useHistoryStats(filteredMissions);
   const unsyncedCount = missions.filter((m) => !m.synced).length;
@@ -189,7 +172,7 @@ export default function History() {
         ) : (
           filteredMissions.map((mission) => (
             <MissionCard
-              key={`${mission.id}-${new Date(mission.startTime).getTime()}`}
+              key={mission.id}
               mission={mission}
               onExport={handleExport}
               onDelete={handleDelete}

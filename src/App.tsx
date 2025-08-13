@@ -1,11 +1,11 @@
-// Remove problematic auto-import that was blocking app load
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { AppProviders } from '@/components/AppProviders';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { preloadCriticalChunks, preloadRouteChunks } from '@/utils/dynamicImports';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Lazy load page components for code splitting
@@ -34,7 +34,7 @@ const CrashRecoveryInitializer = lazy(() =>
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
 
-// Import skeleton screens (kept but not used in fallbacks to avoid nested suspensions)
+// Import skeleton screens
 const AppLayoutSkeleton = lazy(() => 
   import('@/components/shared/SkeletonScreens').then(module => ({ default: module.AppLayoutSkeleton }))
 );
@@ -62,6 +62,15 @@ const MinimalSkeleton = () => (
 );
 
 const App = () => {
+  // Preload critical chunks on app startup
+  useEffect(() => {
+    // Use requestIdleCallback to preload during idle time
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => preloadCriticalChunks(), { timeout: 2000 });
+    } else {
+      setTimeout(preloadCriticalChunks, 100);
+    }
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -69,7 +78,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <div className="relative min-h-screen">
-          <Suspense fallback={<MinimalSkeleton />}>
+          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
             <AppProviders>
               <AppRoutes />
             </AppProviders>
@@ -83,13 +92,19 @@ const App = () => {
 const AppRoutes = () => {
   const location = useLocation();
   const { user, loading } = useAuth();
+  
+  // Preload route-specific chunks when route changes
+  useEffect(() => {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => preloadRouteChunks(location.pathname), { timeout: 1000 });
+    } else {
+      setTimeout(() => preloadRouteChunks(location.pathname), 50);
+    }
+  }, [location.pathname]);
 
   if (loading) {
-    // console.log('🔄 Auth loading...');
     return <MinimalSkeleton />;
   }
-
-  console.log('✅ Auth loaded, user:', !!user);
 
   return (
     <Routes>
@@ -105,7 +120,7 @@ const AppRoutes = () => {
         path="/*"
         element={
           user ? (
-            <Suspense fallback={<MinimalSkeleton />}>
+            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
               <RecordingProvider>
                 <CrashRecoveryInitializer />
                 <div className="min-h-screen bg-background">
@@ -115,7 +130,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/" 
                         element={
-                          <Suspense fallback={<MinimalSkeleton />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><RealTimePageSkeleton /></Suspense>}>
                             <RealTime />
                           </Suspense>
                         } 
@@ -123,7 +138,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/history" 
                         element={
-                          <Suspense fallback={<MinimalSkeleton />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><HistoryPageSkeleton /></Suspense>}>
                             <History />
                           </Suspense>
                         } 
@@ -131,7 +146,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/analysis" 
                         element={
-                          <Suspense fallback={<MinimalSkeleton />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AnalysisPageSkeleton /></Suspense>}>
                             <Analysis />
                           </Suspense>
                         } 
@@ -139,7 +154,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/groups" 
                         element={
-                          <Suspense fallback={<MinimalSkeleton />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><GroupsPageSkeleton /></Suspense>}>
                             <Groups />
                           </Suspense>
                         } 
@@ -147,7 +162,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/profile" 
                         element={
-                          <Suspense fallback={<MinimalSkeleton />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
                             <Profile />
                           </Suspense>
                         } 
@@ -155,7 +170,7 @@ const AppRoutes = () => {
                       <Route
                         path="/custom-thresholds"
                         element={
-                          <Suspense fallback={<MinimalSkeleton />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
                             <CustomThresholds />
                           </Suspense>
                         }
@@ -163,7 +178,7 @@ const AppRoutes = () => {
                       <Route
                         path="/custom-alerts"
                         element={
-                          <Suspense fallback={<MinimalSkeleton />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
                             <CustomAlerts />
                           </Suspense>
                         }
@@ -171,7 +186,7 @@ const AppRoutes = () => {
                       <Route 
                         path="/my-settings" 
                         element={
-                          <Suspense fallback={<MinimalSkeleton />}>
+                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
                             <MySettings />
                           </Suspense>
                         } 

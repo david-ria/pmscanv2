@@ -37,20 +37,10 @@ export default defineConfig(({ mode }) => {
         'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       },
     },
-    // Clear cache to prevent phantom chunk issues
-    cacheDir: 'node_modules/.vite',
     build: {
-      // Clear any previous build artifacts to prevent ghost chunks
-      emptyOutDir: true,
-      // Force clean build by clearing rollup cache
       rollupOptions: {
-        // Prevent phantom chunks by being more conservative with chunking
-        treeshake: {
-          preset: 'recommended',
-          moduleSideEffects: false,
-        },
         output: {
-          // Stable naming to prevent phantom chunks
+          // Enable content-hash filenames for better caching
           assetFileNames: (assetInfo: PreRenderedAsset) => {
             const info = assetInfo.name!.split('.');
             const ext = info[info.length - 1];
@@ -64,30 +54,74 @@ export default defineConfig(({ mode }) => {
           },
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
-          // Conservative chunk strategy to prevent phantom chunks
-          manualChunks: (id) => {
-            // Only chunk vendor libraries to reduce phantom chunk risk
-            if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-                return 'react-vendor';
-              }
-              if (id.includes('@radix-ui') || id.includes('lucide-react')) {
-                return 'ui-vendor';
-              }
-              if (id.includes('recharts')) {
-                return 'charts';
-              }
-              if (id.includes('mapbox-gl')) {
-                return 'mapbox';
-              }
-              if (id.includes('@supabase')) {
-                return 'supabase';
-              }
-              // Group other vendors together to prevent fragmentation
-              return 'vendor';
-            }
-            // Don't manually chunk application code - let Vite handle it
-            return undefined;
+          manualChunks: {
+            // Core vendor chunk - always needed
+            vendor: ['react', 'react-dom'],
+            
+            // Router chunk - needed for navigation
+            router: ['react-router-dom'],
+            
+            // React Query for data fetching
+            query: ['@tanstack/react-query'],
+            
+            // UI library chunks - split by usage frequency
+            'ui-core': [
+              '@radix-ui/react-dialog', 
+              '@radix-ui/react-select', 
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-toast',
+              '@radix-ui/react-tooltip',
+              '@radix-ui/react-popover'
+            ],
+            'ui-forms': [
+              '@radix-ui/react-checkbox',
+              '@radix-ui/react-radio-group',
+              '@radix-ui/react-switch',
+              '@radix-ui/react-slider',
+              '@radix-ui/react-label',
+              'react-hook-form',
+              '@hookform/resolvers',
+              'zod'
+            ],
+            'ui-advanced': [
+              '@radix-ui/react-accordion',
+              '@radix-ui/react-alert-dialog',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-navigation-menu',
+              '@radix-ui/react-menubar',
+              '@radix-ui/react-context-menu',
+              '@radix-ui/react-hover-card',
+              '@radix-ui/react-scroll-area',
+              '@radix-ui/react-separator',
+              '@radix-ui/react-collapsible',
+              '@radix-ui/react-toggle',
+              '@radix-ui/react-toggle-group'
+            ],
+            
+            // Feature-specific chunks
+            charts: ['recharts'],
+            mapbox: ['mapbox-gl'],
+            supabase: ['@supabase/supabase-js'],
+            
+            // Utility chunks
+            utils: ['clsx', 'class-variance-authority', 'tailwind-merge'],
+            date: ['date-fns'],
+            i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+            
+            // Heavy feature chunks
+            bluetooth: ['@capacitor-community/bluetooth-le'],
+            tensorflow: ['@tensorflow/tfjs'],
+            pdf: ['jspdf', 'html2canvas'],
+            
+            // Theme and styling
+            theme: ['next-themes'],
+            carousel: ['embla-carousel-react'],
+            notifications: ['sonner'],
+            
+            // Split by route to enable route-based code splitting
+            'route-analysis': [],
+            'route-groups': [],
+            'route-settings': [],
           },
         },
       },
@@ -101,8 +135,6 @@ export default defineConfig(({ mode }) => {
       target: 'es2022',
       // Optimize chunk size warnings
       chunkSizeWarningLimit: 1000,
-      // Force rebuilding of all chunks
-      watch: null,
     },
     test: {
       environment: 'jsdom',

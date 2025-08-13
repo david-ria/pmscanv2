@@ -150,7 +150,6 @@
     "graph": "Gràfic",
     "satellite": "Satèl·lit",
     "connectionRequired": "Connexió requerida per a la vista de mapa",
-    "mapWillLoadWhenRecording": "El mapa es carregarà quan comenci l'enregistrament",
     "connectSensor": "Connecteu el vostre sensor PMScan per veure dades en temps real",
     "lastMeasurement": "Última mesura",
     "airQuality": {
@@ -207,8 +206,6 @@
     "avg": "mitjana",
     "share": "Compartir",
     "export": "Exportar",
-    "missionSaved": "Missió desada",
-    "savedAndExported": "desada i exportada a CSV",
     "sync": "Sincronitzar",
     "local": "Local",
     "statistics": "Estadístiques",

@@ -44,18 +44,18 @@ const DialogContent = React.forwardRef<
     },
     ref
   ) => {
-    // Recursively check for DialogTitle in children
-    const findDialogTitle = (children: React.ReactNode): boolean => {
-      return React.Children.toArray(children).some((child: any) => {
-        if (child?.type?.displayName === 'DialogTitle') return true;
-        if (child?.props?.children) {
-          return findDialogTitle(child.props.children);
-        }
-        return false;
-      });
-    };
+    // Check if DialogTitle or DialogDescription exists in children
+    const hasTitle = React.Children.toArray(children).some(
+      (child: any) =>
+        child?.type?.displayName === 'DialogTitle' ||
+        child?.props?.children?.type?.displayName === 'DialogTitle'
+    );
 
-    const hasTitle = findDialogTitle(children);
+    const hasDescription = React.Children.toArray(children).some(
+      (child: any) =>
+        child?.type?.displayName === 'DialogDescription' ||
+        child?.props?.children?.type?.displayName === 'DialogDescription'
+    );
 
     return (
       <DialogPortal>
@@ -73,7 +73,7 @@ const DialogContent = React.forwardRef<
               Dialog
             </DialogPrimitive.Title>
           )}
-          {!hideDescription && (
+          {!hasDescription && !hideDescription && (
             <DialogPrimitive.Description className="sr-only">
               Dialog content
             </DialogPrimitive.Description>

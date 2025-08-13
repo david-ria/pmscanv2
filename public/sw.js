@@ -33,11 +33,6 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (request.method !== 'GET') return;
   
-  // Never cache /api/now for time sync accuracy
-  if (url.pathname === '/api/now') {
-    return;
-  }
-  
   // Check if this is a static asset with hash in filename
   const isStaticAsset = /\/assets\/.*\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|eot|ttf|otf)/.test(url.pathname);
   

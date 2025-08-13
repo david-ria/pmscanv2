@@ -1,4 +1,3 @@
-import React from 'react';
 import { WifiOff, Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MapboxMap } from '@/components/MapboxMap';
@@ -8,8 +7,6 @@ import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { PMScanDevice } from '@/lib/pmscan/types';
 import { useTranslation } from 'react-i18next';
-import { ensureDate } from '@/utils/timestampUtils';
-import { throttledLog } from '@/utils/debugLogger';
 
 interface RecordingEntry {
   pmData: PMScanData;
@@ -58,22 +55,13 @@ export function MapGraphToggle({
 }: MapGraphToggleProps) {
   const { t } = useTranslation();
 
-  // Optimized effect - only log when data count changes significantly
-  React.useEffect(() => {
-    if (recordingData && recordingData.length > 0 && recordingData.length % 10 === 0) {
-      throttledLog('map-graph-toggle', `🔄 MapGraphToggle: ${recordingData.length} points`);
-    }
-  }, [recordingData?.length]); // Only track length changes
-
   // Calculate track points for the map
   const trackPoints = recordingData
     .map((entry) => ({
       longitude: entry.location?.longitude || 0,
       latitude: entry.location?.latitude || 0,
       pm25: entry.pmData.pm25,
-      timestamp: typeof entry.pmData.timestamp === 'number' 
-        ? entry.pmData.timestamp 
-        : (entry.pmData.timestamp as any).getTime(),
+      timestamp: entry.pmData.timestamp,
     }))
     .filter((point) => point.longitude !== 0 && point.latitude !== 0);
   return (

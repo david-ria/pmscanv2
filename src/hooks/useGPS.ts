@@ -59,7 +59,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
         longitude: position.coords.longitude,
         accuracy: position.coords.accuracy,
         altitude: position.coords.altitude || undefined,
-        timestamp: Date.now(),
+        timestamp: new Date(),
       };
 
       setLatestLocation(locationData);
@@ -111,7 +111,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
 
     watchIdRef.current = id;
     setWatchId(id);
-  }, [enabled, highAccuracy]); // Remove recordingFrequency from dependencies
+  }, [enabled, highAccuracy, recordingFrequency]);
 
   const requestLocationPermission = useCallback(async (): Promise<boolean> => {
     logger.debug('🧭 GPS: Permission request initiated...');
@@ -236,7 +236,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [enabled, locationEnabled, startWatching]); // Remove problematic dependencies
+  }, [enabled, locationEnabled, highAccuracy, recordingFrequency]);
 
   // Cleanup on unmount
   useEffect(() => {

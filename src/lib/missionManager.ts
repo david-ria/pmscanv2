@@ -32,9 +32,10 @@ export function createMissionFromRecording(
   const measurementData: MeasurementData[] = measurements.map((m, index) => {
     return {
       id: crypto.randomUUID(),
-      timestamp: typeof m.pmData.timestamp === 'number'
-          ? new Date(m.pmData.timestamp)
-          : m.pmData.timestamp,
+      timestamp:
+        m.pmData.timestamp instanceof Date
+          ? m.pmData.timestamp
+          : new Date(m.pmData.timestamp),
       pm1: m.pmData.pm1,
       pm25: m.pmData.pm25,
       pm10: m.pmData.pm10,

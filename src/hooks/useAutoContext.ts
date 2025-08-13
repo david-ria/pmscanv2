@@ -86,44 +86,34 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
 
   // Save settings to localStorage whenever they change - handled by useStorageSettings
 
-  // Load WiFi SSIDs from user profile (stabilized with useCallback)
-  const loadSSIDs = useCallback(async () => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+  // Load WiFi SSIDs from user profile
+  useEffect(() => {
+    const loadSSIDs = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('home_wifi_ssid, work_wifi_ssid')
-        .eq('id', user.id)
-        .single();
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('home_wifi_ssid, work_wifi_ssid')
+          .eq('id', user.id)
+          .single();
 
-      if (!error && data) {
-        // Only update if the values are actually different
-        const currentHomeSSID = settings.homeWifiSSID;
-        const currentWorkSSID = settings.workWifiSSID;
-        const newHomeSSID = data.home_wifi_ssid;
-        const newWorkSSID = data.work_wifi_ssid;
-        
-        if (newHomeSSID !== currentHomeSSID || newWorkSSID !== currentWorkSSID) {
+        if (!error && data) {
           updateSettings({
-            homeWifiSSID: newHomeSSID || currentHomeSSID,
-            workWifiSSID: newWorkSSID || currentWorkSSID,
+            homeWifiSSID: data.home_wifi_ssid || settings.homeWifiSSID,
+            workWifiSSID: data.work_wifi_ssid || settings.workWifiSSID,
           });
         }
+      } catch (err) {
+        console.error('Failed to load profile SSIDs', err);
       }
-    } catch (error) {
-      console.error('Error loading WiFi SSIDs:', error);
-    }
-  }, [updateSettings]); // Remove settings dependencies to prevent loops
+    };
 
-  useEffect(() => {
-    if (settings.enabled) {
-      loadSSIDs();
-    }
-  }, [settings.enabled, loadSSIDs]);
+    loadSSIDs();
+  }, []);
 
   useEffect(() => {
     if (settings.mlEnabled && !model) {
@@ -373,7 +363,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   };
 
   // Persist WiFi SSID to user profile in database
-  const saveSSIDToProfile = useCallback(
+  const persistSSID = useCallback(
     async (field: 'home_wifi_ssid' | 'work_wifi_ssid', ssid: string) => {
       try {
         const {
@@ -387,10 +377,10 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
           .eq('id', user.id);
 
         if (error) {
-          console.error('Error saving SSID to profile:', error);
+          console.error('Failed to persist SSID', error);
         }
-      } catch (error) {
-        console.error('Error saving SSID to profile:', error);
+      } catch (err) {
+        console.error('Failed to persist SSID', err);
       }
     },
     []
@@ -427,7 +417,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
             `🏠 Auto-detected HOME WiFi: ${ssid} (morning: ${times.morning}, evening: ${times.evening}, weekend: ${times.weekend})`
           );
           updateSettings({ homeWifiSSID: ssid });
-          saveSSIDToProfile('home_wifi_ssid', ssid);
+          persistSSID('home_wifi_ssid', ssid);
         }
 
         if (
@@ -439,11 +429,11 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
             `🏢 Auto-detected WORK WiFi: ${ssid} (workday: ${times.workday}, morning: ${times.morning}, evening: ${times.evening})`
           );
           updateSettings({ workWifiSSID: ssid });
-          saveSSIDToProfile('work_wifi_ssid', ssid);
+          persistSSID('work_wifi_ssid', ssid);
         }
       }
     },
-    [settings.homeWifiSSID, settings.workWifiSSID, updateSettings, saveSSIDToProfile]
+    [settings.homeWifiSSID, settings.workWifiSSID, updateSettings, persistSSID]
   );
 
   // Pure context determination function without side effects

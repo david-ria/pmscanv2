@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { invokeFunction } from '@/lib/api/client';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -361,7 +360,7 @@ export const useGroupInvitations = () => {
         .from('group_invitations')
         .select('*')
         .eq('status', 'pending')
-        .gt('expires_at', new Date().toISOString()); // TODO: Migrate to epoch-based expiration check
+        .gt('expires_at', new Date().toISOString());
 
       if (error) throw error;
 
@@ -421,7 +420,14 @@ export const useGroupInvitations = () => {
 
   const sendInvitation = async (groupId: string, email: string) => {
     try {
-      await invokeFunction('send-group-invitation', { groupId, email });
+      const { error } = await supabase.functions.invoke(
+        'send-group-invitation',
+        {
+          body: { groupId, email },
+        }
+      );
+
+      if (error) throw error;
 
       toast({
         title: 'Success',
@@ -439,7 +445,14 @@ export const useGroupInvitations = () => {
 
   const acceptInvitation = async (token: string) => {
     try {
-      await invokeFunction('accept-group-invitation', { token });
+      const { error } = await supabase.functions.invoke(
+        'accept-group-invitation',
+        {
+          body: { token },
+        }
+      );
+
+      if (error) throw error;
 
       toast({
         title: 'Success',
@@ -459,7 +472,14 @@ export const useGroupInvitations = () => {
 
   const declineInvitation = async (token: string) => {
     try {
-      await invokeFunction('decline-group-invitation', { token });
+      const { error } = await supabase.functions.invoke(
+        'decline-group-invitation',
+        {
+          body: { token },
+        }
+      );
+
+      if (error) throw error;
 
       toast({
         title: 'Success',

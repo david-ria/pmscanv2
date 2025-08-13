@@ -36,8 +36,8 @@ const AirQualityCards = memo(function AirQualityCards({
         pm25: Math.round(pm25),
         pm10: Math.round(pm10),
       },
-      timestamp: typeof currentData.timestamp === 'number' 
-        ? new Date(currentData.timestamp).toLocaleTimeString() 
+      timestamp: currentData.timestamp instanceof Date 
+        ? currentData.timestamp.toLocaleTimeString() 
         : new Date().toLocaleTimeString(),
     };
   }, [currentData, getAirQualityLevel]);

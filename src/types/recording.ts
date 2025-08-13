@@ -9,7 +9,7 @@ export interface RecordingEntry {
     activity: string;
   };
   automaticContext?: string;
-  timestamp: number; // epoch ms UTC
+  timestamp: Date;
   weatherDataId?: string; // Still needed for recording, will be moved to mission level
 }
 
@@ -20,6 +20,6 @@ export interface MissionContext {
 
 export interface RecordingConfig {
   frequency: string;
-  startTime: number | null; // epoch ms UTC
-  lastRecordedTime: number | null; // epoch ms UTC
+  startTime: Date | null;
+  lastRecordedTime: Date | null;
 }

@@ -1,7 +1,6 @@
 import { Play, Square, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRecordingContext } from '@/contexts/RecordingContext';
-import { useMissionSaver } from '@/hooks/useMissionSaver';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
@@ -50,14 +49,12 @@ export function FloatingRecordButton({
   const {
     startRecording,
     stopRecording,
+    saveMission,
     isRecording,
     clearRecordingData,
     missionContext,
     recordingStartTime,
-    recordingData,
   } = useRecordingContext();
-  
-  const { saveMission: saveMissionWithCSV } = useMissionSaver();
 
   // Auto-proceed to frequency selection when device becomes connected
   useEffect(() => {
@@ -73,8 +70,8 @@ export function FloatingRecordButton({
     
     if (isRecording && recordingStartTime) {
       interval = setInterval(() => {
-        const now = Date.now();
-        const diff = Math.floor((now - recordingStartTime) / 1000);
+        const now = new Date();
+        const diff = Math.floor((now.getTime() - recordingStartTime.getTime()) / 1000);
         setRecordingTime(diff);
       }, 1000);
     } else {
@@ -137,10 +134,7 @@ export function FloatingRecordButton({
     }
 
     try {
-      // Use the proper mission saver that handles CSV export and sync status
-      await saveMissionWithCSV(
-        recordingData,
-        recordingStartTime ? new Date(recordingStartTime) : new Date(),
+      await saveMission(
         finalMissionName,
         missionContext?.location,
         missionContext?.activity,
@@ -152,8 +146,8 @@ export function FloatingRecordButton({
       closeDialog('mission');
 
       toast({
-        title: t('history.missionSaved'),
-        description: `"${finalMissionName}" ${t('history.savedAndExported')}`,
+        title: t('history.export'),
+        description: `"${finalMissionName}" ${t('history.export')}`,
       });
 
       setMissionName('');

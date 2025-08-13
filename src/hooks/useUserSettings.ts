@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -55,7 +55,7 @@ export const useUserLocations = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchLocations = useCallback(async () => {
+  const fetchLocations = async () => {
     try {
       const { data, error } = await supabase
         .from('user_locations')
@@ -73,7 +73,7 @@ export const useUserLocations = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  };
 
   const createLocation = async (
     location: Omit<UserLocation, 'id' | 'user_id' | 'created_at' | 'updated_at'>
@@ -157,7 +157,7 @@ export const useUserLocations = () => {
 
   useEffect(() => {
     fetchLocations();
-  }, [fetchLocations]);
+  }, []);
 
   return {
     locations,
@@ -174,7 +174,7 @@ export const useUserActivities = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchActivities = useCallback(async () => {
+  const fetchActivities = async () => {
     try {
       const { data, error } = await supabase
         .from('user_activities')
@@ -192,7 +192,7 @@ export const useUserActivities = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  };
 
   const createActivity = async (
     activity: Omit<UserActivity, 'id' | 'user_id' | 'created_at' | 'updated_at'>
@@ -276,7 +276,7 @@ export const useUserActivities = () => {
 
   useEffect(() => {
     fetchActivities();
-  }, [fetchActivities]);
+  }, []);
 
   return {
     activities,
@@ -293,7 +293,7 @@ export const useUserAlarms = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchAlarms = useCallback(async () => {
+  const fetchAlarms = async () => {
     try {
       const { data, error } = await supabase
         .from('user_alarms')
@@ -311,7 +311,7 @@ export const useUserAlarms = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  };
 
   const createAlarm = async (
     alarm: Omit<UserAlarm, 'id' | 'user_id' | 'created_at' | 'updated_at'>
@@ -395,7 +395,7 @@ export const useUserAlarms = () => {
 
   useEffect(() => {
     fetchAlarms();
-  }, [fetchAlarms]);
+  }, []);
 
   return {
     alarms,
@@ -412,7 +412,7 @@ export const useUserEvents = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchEvents = useCallback(async () => {
+  const fetchEvents = async () => {
     try {
       const { data, error } = await supabase
         .from('user_events')
@@ -430,7 +430,7 @@ export const useUserEvents = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  };
 
   const createEvent = async (
     event: Omit<UserEvent, 'id' | 'user_id' | 'created_at' | 'updated_at'>
@@ -514,7 +514,7 @@ export const useUserEvents = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+  }, []);
 
   return {
     events,

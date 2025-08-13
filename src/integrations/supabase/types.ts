@@ -26,7 +26,6 @@ export type Database = {
           station_id: string | null
           station_name: string | null
           timestamp: string
-          timestamp_epoch_ms: number | null
           updated_at: string
         }
         Insert: {
@@ -40,7 +39,6 @@ export type Database = {
           station_id?: string | null
           station_name?: string | null
           timestamp: string
-          timestamp_epoch_ms?: number | null
           updated_at?: string
         }
         Update: {
@@ -54,7 +52,6 @@ export type Database = {
           station_id?: string | null
           station_name?: string | null
           timestamp?: string
-          timestamp_epoch_ms?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -65,7 +62,6 @@ export type Database = {
           comment: string | null
           created_at: string
           created_by: string | null
-          date_utc: string | null
           event_type: string
           id: string
           latitude: number | null
@@ -73,7 +69,6 @@ export type Database = {
           mission_id: string
           photo_url: string | null
           timestamp: string
-          timestamp_epoch_ms: number | null
           updated_at: string
         }
         Insert: {
@@ -81,7 +76,6 @@ export type Database = {
           comment?: string | null
           created_at?: string
           created_by?: string | null
-          date_utc?: string | null
           event_type: string
           id?: string
           latitude?: number | null
@@ -89,7 +83,6 @@ export type Database = {
           mission_id: string
           photo_url?: string | null
           timestamp?: string
-          timestamp_epoch_ms?: number | null
           updated_at?: string
         }
         Update: {
@@ -97,7 +90,6 @@ export type Database = {
           comment?: string | null
           created_at?: string
           created_by?: string | null
-          date_utc?: string | null
           event_type?: string
           id?: string
           latitude?: number | null
@@ -105,7 +97,6 @@ export type Database = {
           mission_id?: string
           photo_url?: string | null
           timestamp?: string
-          timestamp_epoch_ms?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -125,12 +116,10 @@ export type Database = {
           created_at: string
           distance_meters: number | null
           duration_minutes: number
-          end_epoch_ms: number | null
           end_time: string
           id: string
           raw_data: Json | null
           source: string | null
-          start_epoch_ms: number | null
           start_time: string
           steps: number | null
           updated_at: string
@@ -142,12 +131,10 @@ export type Database = {
           created_at?: string
           distance_meters?: number | null
           duration_minutes: number
-          end_epoch_ms?: number | null
           end_time: string
           id?: string
           raw_data?: Json | null
           source?: string | null
-          start_epoch_ms?: number | null
           start_time: string
           steps?: number | null
           updated_at?: string
@@ -159,12 +146,10 @@ export type Database = {
           created_at?: string
           distance_meters?: number | null
           duration_minutes?: number
-          end_epoch_ms?: number | null
           end_time?: string
           id?: string
           raw_data?: Json | null
           source?: string | null
-          start_epoch_ms?: number | null
           start_time?: string
           steps?: number | null
           updated_at?: string
@@ -484,7 +469,6 @@ export type Database = {
           activity_context: string | null
           automatic_context: string | null
           created_at: string
-          date_utc: string | null
           humidity: number | null
           id: string
           latitude: number | null
@@ -496,14 +480,12 @@ export type Database = {
           pm25: number
           temperature: number | null
           timestamp: string
-          timestamp_epoch_ms: number | null
         }
         Insert: {
           accuracy?: number | null
           activity_context?: string | null
           automatic_context?: string | null
           created_at?: string
-          date_utc?: string | null
           humidity?: number | null
           id?: string
           latitude?: number | null
@@ -515,14 +497,12 @@ export type Database = {
           pm25: number
           temperature?: number | null
           timestamp: string
-          timestamp_epoch_ms?: number | null
         }
         Update: {
           accuracy?: number | null
           activity_context?: string | null
           automatic_context?: string | null
           created_at?: string
-          date_utc?: string | null
           humidity?: number | null
           id?: string
           latitude?: number | null
@@ -534,7 +514,6 @@ export type Database = {
           pm25?: number
           temperature?: number | null
           timestamp?: string
-          timestamp_epoch_ms?: number | null
         }
         Relationships: [
           {
@@ -555,7 +534,6 @@ export type Database = {
           avg_pm25: number
           created_at: string
           duration_minutes: number
-          end_epoch_ms: number | null
           end_time: string
           id: string
           location_context: string | null
@@ -564,7 +542,6 @@ export type Database = {
           name: string
           recording_frequency: string | null
           shared: boolean | null
-          start_epoch_ms: number | null
           start_time: string
           updated_at: string
           user_id: string | null
@@ -578,7 +555,6 @@ export type Database = {
           avg_pm25: number
           created_at?: string
           duration_minutes: number
-          end_epoch_ms?: number | null
           end_time: string
           id?: string
           location_context?: string | null
@@ -587,7 +563,6 @@ export type Database = {
           name: string
           recording_frequency?: string | null
           shared?: boolean | null
-          start_epoch_ms?: number | null
           start_time: string
           updated_at?: string
           user_id?: string | null
@@ -601,7 +576,6 @@ export type Database = {
           avg_pm25?: number
           created_at?: string
           duration_minutes?: number
-          end_epoch_ms?: number | null
           end_time?: string
           id?: string
           location_context?: string | null
@@ -610,7 +584,6 @@ export type Database = {
           name?: string
           recording_frequency?: string | null
           shared?: boolean | null
-          start_epoch_ms?: number | null
           start_time?: string
           updated_at?: string
           user_id?: string | null
@@ -874,7 +847,6 @@ export type Database = {
           pressure: number
           temperature: number
           timestamp: string
-          timestamp_epoch_ms: number | null
           updated_at: string
           uv_index: number | null
           visibility: number | null
@@ -892,7 +864,6 @@ export type Database = {
           pressure: number
           temperature: number
           timestamp: string
-          timestamp_epoch_ms?: number | null
           updated_at?: string
           uv_index?: number | null
           visibility?: number | null
@@ -910,7 +881,6 @@ export type Database = {
           pressure?: number
           temperature?: number
           timestamp?: string
-          timestamp_epoch_ms?: number | null
           updated_at?: string
           uv_index?: number | null
           visibility?: number | null

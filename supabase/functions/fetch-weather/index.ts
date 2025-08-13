@@ -2,39 +2,10 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
-const ALLOWED_ORIGINS = new Set([
-  'https://lovable.dev',
-  'http://localhost:8080',
-  'http://localhost:5173'
-]);
-
-function corsHeadersFor(req: Request) {
-  const origin = req.headers.get('Origin') ?? '';
-  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : '';
-  return {
-    'Access-Control-Allow-Origin': allowed,
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Vary': 'Origin',
-  };
-}
-
-interface WeatherRequest {
-  latitude: number;
-  longitude: number;
-  timestamp: string;
-}
-
-// Error response helper
-function errorResponse(errorType: string, message: string, status: number, req: Request) {
-  console.error(`Error (${status}):`, { errorType, message });
-  return new Response(
-    JSON.stringify({ error: errorType, message }),
-    { 
-      status,
-      headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' }
-    }
-  );
-}
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 const openWeatherApiKey = Deno.env.get('OPENWEATHERMAP_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -43,63 +14,25 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeadersFor(req) });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Validate API key configuration
-    if (!openWeatherApiKey) {
-      return errorResponse('api_key_missing', 'OpenWeatherMap API key not configured', 500, req);
-    }
-
-    // Validate request body
-    let requestData: WeatherRequest;
-    try {
-      requestData = await req.json();
-    } catch {
-      return errorResponse('invalid_request', 'Invalid JSON in request body', 400, req);
-    }
-
-    const { latitude, longitude, timestamp } = requestData;
-
-    // Validate required parameters
-    if (latitude === undefined || latitude === null || isNaN(latitude)) {
-      return errorResponse('invalid_latitude', 'Valid latitude is required', 422, req);
-    }
-
-    if (longitude === undefined || longitude === null || isNaN(longitude)) {
-      return errorResponse('invalid_longitude', 'Valid longitude is required', 422, req);
-    }
-
-    if (!timestamp) {
-      return errorResponse('missing_timestamp', 'Timestamp is required', 422, req);
-    }
-
-    // Validate coordinate ranges
-    if (latitude < -90 || latitude > 90) {
-      return errorResponse('latitude_out_of_range', 'Latitude must be between -90 and 90', 422, req);
-    }
-
-    if (longitude < -180 || longitude > 180) {
-      return errorResponse('longitude_out_of_range', 'Longitude must be between -180 and 180', 422, req);
-    }
-
-    // Validate timestamp
-    let requestTime: Date;
-    try {
-      requestTime = new Date(timestamp);
-      if (isNaN(requestTime.getTime())) {
-        throw new Error('Invalid date');
-      }
-    } catch {
-      return errorResponse('invalid_timestamp', 'Invalid timestamp format', 422, req);
-    }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const { latitude, longitude, timestamp } = await req.json();
+
+    if (!latitude || !longitude || !timestamp) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required parameters: latitude, longitude, timestamp' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const requestTime = new Date(timestamp);
     const oneHourAgo = new Date(requestTime.getTime() - 60 * 60 * 1000);
 
     // Check if we have recent weather data for this location (within 1 hour and ~1km radius)
-    const { data: existingWeather, error: queryError } = await supabase
+    const { data: existingWeather } = await supabase
       .from('weather_data')
       .select('*')
       .gte('timestamp', oneHourAgo.toISOString())
@@ -111,67 +44,37 @@ serve(async (req) => {
       .order('timestamp', { ascending: false })
       .limit(1);
 
-    if (queryError) {
-      console.error('Database query error:', queryError);
-      return errorResponse('database_error', 'Failed to query existing weather data', 500, req);
-    }
-
     if (existingWeather && existingWeather.length > 0) {
       console.log('Found cached weather data:', existingWeather[0].id);
       return new Response(
         JSON.stringify({ weatherData: existingWeather[0] }),
-        { headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Fetch new weather data from OpenWeatherMap
     console.log('Fetching new weather data for:', latitude, longitude);
     
-    let weatherResponse: Response;
-    try {
-      weatherResponse = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric`
-      );
-    } catch (fetchError) {
-      console.error('Network error fetching weather data:', fetchError);
-      return errorResponse('network_error', 'Failed to connect to weather service', 500, req);
-    }
+    const weatherResponse = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric`
+    );
 
     if (!weatherResponse.ok) {
       console.error('OpenWeatherMap API error:', weatherResponse.status, weatherResponse.statusText);
-      
-      switch (weatherResponse.status) {
-        case 401:
-          return errorResponse('api_key_invalid', 'Invalid OpenWeatherMap API key', 500, req);
-        case 404:
-          return errorResponse('location_not_found', 'Weather data not available for this location', 422, req);
-        case 429:
-          return errorResponse('rate_limit_exceeded', 'Weather service rate limit exceeded', 429, req);
-        default:
-          return errorResponse('weather_api_error', `Weather service error: ${weatherResponse.status}`, 500, req);
-      }
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch weather data from OpenWeatherMap' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    let weatherData: any;
-    try {
-      weatherData = await weatherResponse.json();
-    } catch {
-      return errorResponse('invalid_weather_response', 'Invalid response from weather service', 500, req);
-    }
-
-    // Validate weather data structure
-    if (!weatherData.main || !weatherData.weather || !Array.isArray(weatherData.weather) || weatherData.weather.length === 0) {
-      return errorResponse('incomplete_weather_data', 'Incomplete weather data received', 500, req);
-    }
-
+    const weatherData = await weatherResponse.json();
     console.log('Weather API response:', weatherData);
 
-    // Store weather data in our database with epoch ms
+    // Store weather data in our database
     const weatherRecord = {
-      latitude: parseFloat(latitude.toString()),
-      longitude: parseFloat(longitude.toString()),
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
       timestamp: requestTime.toISOString(),
-      timestamp_epoch_ms: requestTime.getTime(), // Store epoch ms as primary
       temperature: weatherData.main.temp,
       humidity: weatherData.main.humidity,
       pressure: weatherData.main.pressure,
@@ -191,24 +94,24 @@ serve(async (req) => {
 
     if (saveError) {
       console.error('Error saving weather data:', saveError);
-      
-      // Check for specific database errors
-      if (saveError.code === '23505') { // Unique constraint violation
-        return errorResponse('duplicate_weather_data', 'Weather data for this location and time already exists', 409, req);
-      }
-      
-      return errorResponse('database_save_error', 'Failed to save weather data to database', 500, req);
+      return new Response(
+        JSON.stringify({ error: 'Failed to save weather data' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Weather data saved successfully:', savedWeather.id);
 
     return new Response(
       JSON.stringify({ weatherData: savedWeather }),
-      { headers: { ...corsHeadersFor(req), 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
-    console.error('Unexpected error in fetch-weather function:', error);
-    return errorResponse('server_error', 'An unexpected error occurred', 500, req);
+  } catch (error) {
+    console.error('Error in fetch-weather function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });
