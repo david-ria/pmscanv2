@@ -8,6 +8,7 @@ import {
   removeFromPendingSync,
 } from './localStorage';
 import { supabase } from '@/integrations/supabase/client';
+import * as logger from '@/utils/logger';
 
 export function createMissionFromRecording(
   measurements: Array<{
@@ -92,8 +93,18 @@ export function createMissionFromRecording(
 }
 
 export function saveMissionLocally(mission: MissionData): void {
+  logger.debug('💾 === SAVING MISSION LOCALLY ===');
+  logger.debug('💾 Mission to save:', {
+    id: mission.id,
+    name: mission.name,
+    measurementsCount: mission.measurementsCount,
+    startTime: mission.startTime,
+    endTime: mission.endTime
+  });
+  const existingMissions = getLocalMissions();
+  logger.debug('💾 Existing missions count:', existingMissions.length);
   try {
-    const missions = getLocalMissions();
+    const missions = existingMissions;
     const existingIndex = missions.findIndex((m) => m.id === mission.id);
 
     if (existingIndex >= 0) {
@@ -103,6 +114,7 @@ export function saveMissionLocally(mission: MissionData): void {
     }
 
     saveLocalMissions(missions);
+    logger.debug('✅ Mission saved locally successfully. Total missions now:', missions.length);
 
     // Save any pending events for this mission
     savePendingEventsForMission(mission.id);

@@ -5,6 +5,14 @@ import * as logger from '@/utils/logger';
 import { toISOString } from '@/utils/timeFormat';
 
 export async function exportMissionToCSV(mission: MissionData): Promise<void> {
+  logger.debug('📊 === CSV EXPORT STARTED ===');
+  logger.debug('📊 Mission data:', {
+    id: mission.id,
+    name: mission.name,
+    measurementsCount: mission.measurements?.length || 0,
+    startTime: mission.startTime,
+    endTime: mission.endTime
+  });
   // Get events for this mission from localStorage
   const getEventsForMission = (missionId: string): EventData[] => {
     try {
@@ -123,5 +131,9 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
   link.click();
   document.body.removeChild(link);
 
-  logger.debug(`📄 Mission exported to CSV: ${filename}`);
+  logger.debug('✅ CSV export completed successfully:', {
+    filename,
+    rowCount: rows.length,
+    csvSize: csvWithBOM.length
+  });
 }

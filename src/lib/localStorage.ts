@@ -26,8 +26,12 @@ export function getLocalMissions(): MissionData[] {
 }
 
 export function saveLocalMissions(missions: MissionData[]): void {
+  logger.debug('💾 === SAVING LOCAL MISSIONS ===');
+  logger.debug('💾 Number of missions to save:', missions.length);
+  logger.debug('💾 Mission names:', missions.map(m => m.name));
   try {
     localStorage.setItem(MISSIONS_KEY, JSON.stringify(missions));
+    logger.debug('✅ Missions saved to localStorage successfully');
   } catch (quotaError) {
     if (
       quotaError instanceof DOMException &&
