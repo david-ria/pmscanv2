@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
-import { useRecordingContext } from '@/contexts/RecordingContext';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { EVENT_TYPES } from '@/utils/eventTypes';
@@ -21,7 +21,7 @@ export function EventButton({}: EventButtonProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { createEvent, isLoading } = useEvents();
-  const { isRecording, currentMissionId } = useRecordingContext();
+  const { isRecording } = useUnifiedData();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [eventType, setEventType] = useState<string>('');
@@ -38,7 +38,7 @@ export function EventButton({}: EventButtonProps) {
       return;
     }
 
-    if (!currentMissionId) {
+    if (!isRecording) {
       toast({
         title: 'No Active Recording',
         description: 'Please start a recording session first.',
@@ -71,7 +71,7 @@ export function EventButton({}: EventButtonProps) {
       }
 
       const eventData = {
-        missionId: currentMissionId,
+        missionId: 'current-recording', // Temporary ID for events during recording
         eventType: eventType,
         comment: comment.trim() || undefined,
         latitude,
