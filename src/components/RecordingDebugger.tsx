@@ -49,6 +49,16 @@ export function RecordingDebugger() {
     }
   };
 
+  const handleConnect = async () => {
+    console.log('🐛 DEBUGGER: Attempting to connect to PMScan device');
+    try {
+      await unifiedData.requestDevice();
+      console.log('🐛 DEBUGGER: Device connection initiated');
+    } catch (error) {
+      console.error('🚨🐛 DEBUGGER: Connection failed:', error);
+    }
+  };
+
   const handleStopRecording = async () => {
     console.log('🚨🐛 === DEBUGGER STOP RECORDING CALLED ===');
     console.log('🐛 DEBUGGER: Stopping recording and saving mission');
@@ -60,6 +70,7 @@ export function RecordingDebugger() {
     });
     
     // Save mission first (like the normal UI flow)
+
     if (unifiedData.recordingData.length > 0 && unifiedData.recordingStartTime) {
       try {
         console.log('🐛 DEBUGGER: Calling saveMission...');
@@ -141,7 +152,15 @@ export function RecordingDebugger() {
         <div>Can Proceed: {debugInfo.canProceed ? '✅' : '❌'}</div>
       </div>
 
-      <div className="flex gap-2 mt-3">
+      <div className="flex gap-1 mt-3 flex-wrap">
+        <Button 
+          size="sm" 
+          variant="default"
+          onClick={handleConnect}
+          disabled={debugInfo.isConnected}
+        >
+          Connect
+        </Button>
         <Button 
           size="sm" 
           onClick={handleStartRecording}
