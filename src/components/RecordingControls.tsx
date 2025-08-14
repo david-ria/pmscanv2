@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
+import { useMissionSaver } from '@/hooks/useMissionSaver';
 import { cn } from '@/lib/utils';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
@@ -40,9 +41,12 @@ export function RecordingControls({
     startRecording,
     stopRecording,
     updateMissionContext,
+    clearRecordingData,
     isRecording: contextIsRecording,
     recordingData,
+    recordingStartTime,
   } = useUnifiedData();
+  const { saveMission } = useMissionSaver();
 
   const getFrequencyLabel = (frequency: string) => {
     const option = frequencyOptionKeys.find((f) => f.value === frequency);
@@ -82,14 +86,37 @@ export function RecordingControls({
     }
 
     try {
-      // TODO: Implement mission saving logic
-      // For now, just stop recording
+      logger.debug('💾 Saving mission with data:', {
+        recordingDataLength: recordingData.length,
+        recordingStartTime,
+        finalMissionName,
+        selectedLocation,
+        selectedActivity,
+        recordingFrequency,
+        shareData
+      });
+
+      // Save the mission using the mission saver hook
+      const savedMission = await saveMission(
+        recordingData,
+        recordingStartTime,
+        finalMissionName,
+        selectedLocation || undefined,
+        selectedActivity || undefined,
+        recordingFrequency,
+        shareData
+      );
+
+      // Stop recording and clear data
       stopRecording();
+      clearRecordingData();
       setShowMissionDialog(false);
+
+      logger.debug('✅ Mission saved successfully:', savedMission.id);
 
       toast({
         title: 'Mission sauvegardée',
-        description: `"${finalMissionName}" exportée en CSV`,
+        description: `"${finalMissionName}" exportée en CSV et ajoutée à l'historique`,
       });
 
       // Reset form
@@ -98,7 +125,7 @@ export function RecordingControls({
       setSelectedLocation('');
       setSelectedActivity('');
     } catch (error) {
-      console.error('Error saving mission:', error);
+      logger.error('❌ Error saving mission:', error);
       const errorMessage =
         error instanceof Error ? error.message : "Erreur lors de l'export CSV";
       toast({
@@ -112,7 +139,7 @@ export function RecordingControls({
   const handleDiscardMission = () => {
     // Discard the mission without saving
     stopRecording();
-    // Note: clearRecordingData will be implemented in unified provider if needed
+    clearRecordingData();
     setShowMissionDialog(false);
 
     // Reset form

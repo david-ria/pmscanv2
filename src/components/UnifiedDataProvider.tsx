@@ -19,6 +19,7 @@ interface UnifiedDataState {
   recordingData: any[];
   recordingFrequency: string;
   missionContext: any;
+  recordingStartTime: Date | null;
   
   // GPS data
   latestLocation: LocationData | null;
@@ -32,6 +33,7 @@ interface UnifiedDataState {
   stopRecording: () => void;
   updateMissionContext: (location: string, activity: string) => void;
   addDataPoint: (pmData: PMScanData, location?: LocationData, context?: any, automaticContext?: string) => void;
+  clearRecordingData: () => void;
 }
 
 const UnifiedDataContext = createContext<UnifiedDataState | undefined>(undefined);
@@ -81,6 +83,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     recordingData: recording.recordingData,
     recordingFrequency: recording.recordingFrequency,
     missionContext: recording.missionContext,
+    recordingStartTime: recording.recordingStartTime,
     
     // GPS data
     latestLocation,
@@ -94,6 +97,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     stopRecording: recording.stopRecording,
     updateMissionContext: recording.updateMissionContext,
     addDataPoint: recording.addDataPoint,
+    clearRecordingData: recording.clearRecordingData,
   };
 
   return (
