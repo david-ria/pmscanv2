@@ -23,8 +23,22 @@ export const shouldRecordData = (
   lastRecordedTime: Date | null,
   frequencyMs: number
 ): boolean => {
-  if (!lastRecordedTime) return true;
+  if (!lastRecordedTime) {
+    console.log('🔍 shouldRecordData: No previous record time, allowing data');
+    return true;
+  }
 
   const currentTime = new Date();
-  return currentTime.getTime() - lastRecordedTime.getTime() >= frequencyMs;
+  const timeDiff = currentTime.getTime() - lastRecordedTime.getTime();
+  const shouldRecord = timeDiff >= frequencyMs;
+  
+  console.log('🔍 shouldRecordData check:', {
+    lastRecordedTime: lastRecordedTime.toISOString(),
+    currentTime: currentTime.toISOString(),
+    timeDiffMs: timeDiff,
+    frequencyMs,
+    shouldRecord
+  });
+  
+  return shouldRecord;
 };
