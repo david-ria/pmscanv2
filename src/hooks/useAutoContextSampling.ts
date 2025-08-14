@@ -1,5 +1,4 @@
 import { useRef, useCallback, useState } from 'react';
-import { parseFrequencyToMs, shouldRecordData } from '@/lib/recordingUtils';
 import { useAutoContext } from './useAutoContext';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
@@ -27,13 +26,8 @@ export function useAutoContextSampling({
       return '';
     }
 
-    // Use recording frequency to determine context sampling rate
-    const frequencyMs = parseFrequencyToMs(recordingFrequency);
-
-    // Only update context at the same frequency as data recording
-    if (!shouldRecordData(lastContextUpdateTime.current, frequencyMs)) {
-      return currentAutoContext; // Return current context if not time to update
-    }
+    // Update context for every data point - no frequency throttling needed
+    // The context determination is lightweight and should happen for each measurement
 
     // Update last context update time
     lastContextUpdateTime.current = new Date();
