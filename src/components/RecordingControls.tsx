@@ -42,6 +42,7 @@ export function RecordingControls({
     stopRecording,
     updateMissionContext,
     clearRecordingData,
+    addDataPoint,
     isRecording: contextIsRecording,
     recordingData,
     recordingStartTime,
@@ -61,10 +62,17 @@ export function RecordingControls({
   const confirmStartRecording = () => {
     logger.debug('⚡ === CONFIRM START RECORDING ===');
     logger.debug('⚡ Frequency selected:', recordingFrequency);
+    logger.debug('⚡ Current recording state before starting:', contextIsRecording);
+    logger.debug('⚡ Recording function available:', !!startRecording);
     setShowFrequencyDialog(false);
     logger.debug('⚡ About to call startRecording with frequency:', recordingFrequency);
     startRecording(recordingFrequency); // Pass the frequency here
-    logger.debug('⚡ startRecording call completed');
+    logger.debug('⚡ startRecording call completed, checking state...');
+    
+    // Add a small delay to check if state updated
+    setTimeout(() => {
+      logger.debug('⚡ Post-start recording state check:', contextIsRecording);
+    }, 100);
     
     toast({
       title: t('realTime.recording'),
@@ -166,6 +174,13 @@ export function RecordingControls({
   const handleRecordingClick = () => {
     logger.debug('🔴 === RECORDING BUTTON CLICKED ===');
     logger.debug('🔴 Current contextIsRecording state:', contextIsRecording);
+    logger.debug('🔴 Recording data length:', recordingData.length);
+    logger.debug('🔴 Recording start time:', recordingStartTime);
+    logger.debug('🔴 Unified data functions available:', {
+      startRecording: !!startRecording,
+      stopRecording: !!stopRecording,
+      addDataPoint: !!addDataPoint
+    });
     
     if (contextIsRecording) {
       logger.debug('⏹️ Stopping recording...');
