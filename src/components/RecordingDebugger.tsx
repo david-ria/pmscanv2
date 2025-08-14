@@ -41,10 +41,17 @@ export function RecordingDebugger() {
 
   const handleStopRecording = async () => {
     console.log('🐛 DEBUGGER: Stopping recording and saving mission');
+    console.log('🐛 DEBUGGER: Pre-save state:', {
+      recordingDataLength: unifiedData.recordingData.length,
+      hasRecordingStartTime: !!unifiedData.recordingStartTime,
+      recordingStartTime: unifiedData.recordingStartTime,
+      isRecording: unifiedData.isRecording
+    });
     
     // Save mission first (like the normal UI flow)
     if (unifiedData.recordingData.length > 0 && unifiedData.recordingStartTime) {
       try {
+        console.log('🐛 DEBUGGER: Calling saveMission...');
         const missionName = `Debug Mission ${new Date().toLocaleString()}`;
         const savedMission = await saveMission(
           unifiedData.recordingData,
@@ -56,14 +63,25 @@ export function RecordingDebugger() {
           false
         );
         console.log('🐛 DEBUGGER: Mission saved successfully:', savedMission.id);
+        console.log('🐛 DEBUGGER: Saved mission details:', {
+          id: savedMission.id,
+          name: savedMission.name,
+          measurementsCount: savedMission.measurementsCount,
+          startTime: savedMission.startTime,
+          endTime: savedMission.endTime
+        });
       } catch (error) {
         console.error('🐛 DEBUGGER: Mission save failed:', error);
       }
+    } else {
+      console.error('🐛 DEBUGGER: Cannot save mission - missing data or start time');
     }
     
     // Then stop recording
+    console.log('🐛 DEBUGGER: Stopping recording and clearing data...');
     unifiedData.stopRecording();
     unifiedData.clearRecordingData();
+    console.log('🐛 DEBUGGER: Recording stopped and data cleared');
   };
 
   return (
