@@ -118,7 +118,7 @@ export function RecordingDebugger() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 p-4 bg-background border rounded-lg shadow-lg max-w-sm">
+    <div className="fixed top-20 right-4 p-4 bg-background border rounded-lg shadow-lg max-w-sm z-50">
       <h3 className="font-bold mb-2">Recording Debug</h3>
       
       <div className="space-y-2 text-xs">
