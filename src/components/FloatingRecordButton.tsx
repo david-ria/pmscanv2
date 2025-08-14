@@ -1,6 +1,5 @@
 import { Play, Square, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
@@ -12,6 +11,7 @@ import { ConnectionDialog } from './ConnectionDialog';
 import { EventButton } from './RecordingControls/EventButton';
 import { useDialogs } from '@/hooks/useDialog';
 import { ConnectionStatus, PMScanDevice, LocationData } from '@/types/PMScan';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 
 interface FloatingRecordButtonProps {
   device?: PMScanDevice;
@@ -37,23 +37,21 @@ export function FloatingRecordButton({
   className,
 }: FloatingRecordButtonProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const unifiedData = useUnifiedData();
   const { dialogs, openDialog, closeDialog, getOnOpenChange } = useDialogs({
     frequency: false,
     mission: false,
     connection: false
   });
+  
   const [recordingFrequency, setRecordingFrequency] = useState<string>('10s');
   const [missionName, setMissionName] = useState<string>('');
   const [shareData, setShareData] = useState<boolean>(false);
   const [recordingTime, setRecordingTime] = useState<number>(0);
-  const { toast } = useToast();
-  const {
-    startRecording,
-    stopRecording,
-    isRecording,
-    missionContext,
-    recordingData,
-  } = useUnifiedData();
+
+  // Extract values from unified data
+  const { startRecording, stopRecording, isRecording, recordingData } = unifiedData;
 
   // Extract recording start time from recording data
   const recordingStartTime = recordingData.length > 0 ? recordingData[0]?.timestamp : null;
@@ -105,7 +103,7 @@ export function FloatingRecordButton({
 
   const handleStartRecording = () => {
     // Check if PMScan device is connected
-    if (!isConnected) {
+    if (!unifiedData.isConnected) {
       openDialog('connection');
       return;
     }
@@ -136,8 +134,7 @@ export function FloatingRecordButton({
     }
 
     try {
-      // TODO: Implement mission saving logic
-      // For now, just stop recording
+      // Stop recording (mission saving will be handled by the recording service)
       stopRecording();
       closeDialog('mission');
 
