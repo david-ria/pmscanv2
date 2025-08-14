@@ -112,22 +112,46 @@ export function GlobalDataCollector() {
     }
 
     if (isRecording && currentData) {
-      // We have data, that's what matters - connection status can be unreliable
-      // Prevent duplicate data points by checking if this is actually new data
-      const currentTimestamp = currentData.timestamp.getTime();
-      const isDuplicate =
-        lastDataRef.current &&
-        lastDataRef.current.pm25 === currentData.pm25 &&
-        Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
+      // Parse frequency to get interval in milliseconds
+      const getFrequencyMs = (freq: string): number => {
+        const num = parseInt(freq);
+        if (freq.includes('s')) return num * 1000;
+        if (freq.includes('m')) return num * 60 * 1000;
+        return 10000; // default 10s
+      };
 
-      if (!isDuplicate) {
-        // Record all data points - frequency control happens at device level
+      const frequencyMs = getFrequencyMs(recordingFrequency);
+      const now = currentData.timestamp.getTime();
+      
+      // Check if enough time has passed since last recording
+      const shouldRecord = !lastRecordedTimeRef.current || 
+        (now - lastRecordedTimeRef.current.getTime()) >= frequencyMs;
 
-        console.log('🔍 GlobalDataCollector: Adding data point!', {
-          pm25: currentData.pm25,
-          timestamp: currentData.timestamp,
-          frequency: recordingFrequency
-        });
+      console.log('🔍 Frequency check:', {
+        recordingFrequency,
+        frequencyMs,
+        lastRecordedTime: lastRecordedTimeRef.current?.toISOString(),
+        currentTime: currentData.timestamp.toISOString(),
+        timeSinceLastMs: lastRecordedTimeRef.current ? (now - lastRecordedTimeRef.current.getTime()) : 'never',
+        shouldRecord,
+        pm25: currentData.pm25
+      });
+
+      if (shouldRecord) {
+        // We have data, that's what matters - connection status can be unreliable
+        // Prevent duplicate data points by checking if this is actually new data
+        const currentTimestamp = currentData.timestamp.getTime();
+        const isDuplicate =
+          lastDataRef.current &&
+          lastDataRef.current.pm25 === currentData.pm25 &&
+          Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
+
+        if (!isDuplicate) {
+          console.log('🔍 GlobalDataCollector: Adding data point!', {
+            pm25: currentData.pm25,
+            timestamp: currentData.timestamp,
+            frequency: recordingFrequency
+          });
 
         // Handle context and data point recording
         const handleContextAndDataPoint = async () => {
@@ -185,6 +209,10 @@ export function GlobalDataCollector() {
           pm25: currentData.pm25,
           timestamp: currentTimestamp,
         };
+        
+        // Update last recorded time for frequency control
+        lastRecordedTimeRef.current = currentData.timestamp;
+        }
       }
     }
   }, [
