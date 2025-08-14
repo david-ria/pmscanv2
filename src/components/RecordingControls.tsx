@@ -93,8 +93,17 @@ export function RecordingControls({
         selectedLocation,
         selectedActivity,
         recordingFrequency,
-        shareData
+        shareData,
+        sampleRecordingData: recordingData.slice(0, 2) // Show first 2 entries for debugging
       });
+
+      if (recordingData.length === 0) {
+        throw new Error('Aucune donnée enregistrée. Assurez-vous que le capteur est connecté et fonctionne.');
+      }
+
+      if (!recordingStartTime) {
+        throw new Error('Heure de début d\'enregistrement manquante.');
+      }
 
       // Save the mission using the mission saver hook
       const savedMission = await saveMission(

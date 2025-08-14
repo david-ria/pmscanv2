@@ -15,11 +15,23 @@ export function useMissionSaver() {
     shared?: boolean,
     missionId?: string
   ) => {
+    logger.debug('💾 useMissionSaver.saveMission called with:', {
+      recordingDataLength: recordingData?.length || 0,
+      recordingStartTime,
+      missionName,
+      locationContext,
+      activityContext,
+      recordingFrequency,
+      shared
+    });
+
     if (!recordingStartTime) {
+      logger.error('❌ No recording start time provided');
       throw new Error('Aucun enregistrement en cours à sauvegarder');
     }
 
     if (recordingData.length === 0) {
+      logger.error('❌ No recording data provided');
       throw new Error('Aucune donnée enregistrée pour créer la mission');
     }
 
@@ -66,6 +78,7 @@ export function useMissionSaver() {
       }))
     });
     
+    logger.debug('💾 About to create mission from recording data');
     const mission = dataStorage.createMissionFromRecording(
       recordingData,
       missionName,
@@ -78,10 +91,18 @@ export function useMissionSaver() {
       missionId
     );
 
+    logger.debug('💾 Mission created:', {
+      id: mission.id,
+      name: mission.name,
+      measurementsCount: mission.measurementsCount
+    });
+
     // Save mission locally so it appears in history
+    logger.debug('💾 Saving mission locally...');
     dataStorage.saveMissionLocally(mission);
 
     // Export to CSV immediately
+    logger.debug('💾 Exporting mission to CSV...');
     await dataStorage.exportMissionToCSV(mission);
 
     logger.debug(
