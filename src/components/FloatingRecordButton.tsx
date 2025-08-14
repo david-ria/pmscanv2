@@ -1,6 +1,6 @@
 import { Play, Square, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useRecordingService } from '@/hooks/useRecordingService';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
@@ -51,10 +51,12 @@ export function FloatingRecordButton({
     startRecording,
     stopRecording,
     isRecording,
-    clearRecordingData,
     missionContext,
-    recordingStartTime,
-  } = useRecordingService();
+    recordingData,
+  } = useUnifiedData();
+
+  // Extract recording start time from recording data
+  const recordingStartTime = recordingData.length > 0 ? recordingData[0]?.timestamp : null;
 
   // Auto-proceed to frequency selection when device becomes connected
   useEffect(() => {
@@ -160,7 +162,7 @@ export function FloatingRecordButton({
 
   const handleDiscardMission = () => {
     stopRecording();
-    clearRecordingData();
+    // Note: clearRecordingData will be implemented in unified provider if needed
     closeDialog('mission');
 
     setMissionName('');

@@ -27,8 +27,8 @@ const Header = lazy(() =>
 const BottomNavigation = lazy(() => 
   import('@/components/BottomNavigation').then(module => ({ default: module.BottomNavigation }))
 );
-const RecordingProvider = lazy(() => 
-  import('@/contexts/RecordingContext').then(module => ({ default: module.RecordingProvider }))
+const UnifiedDataProvider = lazy(() => 
+  import('@/components/UnifiedDataProvider').then(module => ({ default: module.UnifiedDataProvider }))
 );
 const CrashRecoveryInitializer = lazy(() => 
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
@@ -127,7 +127,7 @@ const AppRoutes = () => {
         element={
           user ? (
             <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
-              <RecordingProvider>
+              <UnifiedDataProvider>
                 <CrashRecoveryInitializer />
                 <div className="min-h-screen bg-background">
                   <Header />
@@ -221,7 +221,7 @@ const AppRoutes = () => {
                     </Suspense>
                   </div>
                 </div>
-              </RecordingProvider>
+              </UnifiedDataProvider>
             </Suspense>
           ) : (
             <Navigate to="/auth" replace />

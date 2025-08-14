@@ -20,7 +20,7 @@ import { LocationData } from '@/types/PMScan';
 import { useTranslation } from 'react-i18next';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { WeatherInfo } from '@/components/WeatherInfo';
-import { useRecordingService } from '@/hooks/useRecordingService';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 
 // Data logger component for real-time PM measurement tracking
 interface DataLogEntry {
@@ -55,7 +55,7 @@ export function DataLogger({
   className,
 }: DataLoggerProps) {
   const { t } = useTranslation();
-  const { recordingData } = useRecordingService();
+  const { recordingData } = useUnifiedData();
   const { latestContext, isEnabled: autoContextEnabled } = useAutoContext(false, null); // Don't start active scanning for logging only
   const [isMinimized, setIsMinimized] = useState(false);
   

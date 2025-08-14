@@ -1,7 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
-import { useRecordingService } from '@/hooks/useRecordingService';
-import { useGPS } from '@/hooks/useGPS';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useStorageSettings } from '@/hooks/useStorage';
 import { STORAGE_KEYS } from '@/services/storageService';
@@ -16,23 +14,25 @@ import { createTimestamp } from '@/utils/timeFormat';
  * This ensures recording continues even when navigating away from real-time page
  */
 export function GlobalDataCollector() {
-  const { currentData, isConnected } = usePMScanBluetooth();
+  // Get all data from unified source
+  const unifiedData = useUnifiedData();
   const {
+    currentData,
     isRecording,
     addDataPoint,
     recordingFrequency,
     missionContext,
-  } = useRecordingService();
+    latestLocation,
+    isConnected,
+  } = unifiedData;
 
-  logger.debug('🔍 GlobalDataCollector component state:', {
+  logger.debug('🔍 GlobalDataCollector unified state:', {
     isRecording,
+    hasCurrentData: !!currentData,
+    isConnected,
     hasAddDataPoint: !!addDataPoint,
-    recordingFrequency,
-    missionContext
+    willProceed: isRecording && !!currentData && !!addDataPoint
   });
-
-  
-  const { latestLocation } = useGPS(true, false, recordingFrequency);
   const { getWeatherForMeasurement } = useWeatherData();
   const { isEnabled: weatherLoggingEnabled } = useWeatherLogging();
   

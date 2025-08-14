@@ -3,8 +3,7 @@ import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 
 // Import critical hooks immediately for core functionality
-import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
-import { useRecordingService } from '@/hooks/useRecordingService';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useAlerts } from '@/contexts/AlertContext';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
@@ -69,23 +68,23 @@ export default function RealTime() {
     });
   }, []);
 
-  // Only initialize heavy hooks after critical render
-  const { currentData, isConnected, device, error, requestDevice, disconnect } =
-    usePMScanBluetooth();
-
+  // Get unified data from single source
+  const unifiedData = useUnifiedData();
   const {
+    currentData,
+    isConnected,
+    device,
+    error,
+    requestDevice,
+    disconnect,
     isRecording,
     recordingData,
     missionContext,
     startRecording,
     updateMissionContext,
-  } = useRecordingService();
-
-  const { 
-    locationEnabled, 
-    latestLocation, 
-    requestLocationPermission 
-  } = useGPS(true, false, recordingFrequency);
+    latestLocation,
+    locationEnabled,
+  } = unifiedData;
 
   // Only initialize autocontext if the user has enabled it
   const { settings: autoContextSettings } = useStorageSettings(
@@ -170,11 +169,11 @@ export default function RealTime() {
   // Request GPS permission when app loads
   useEffect(() => {
     if (!locationEnabled) {
-      requestLocationPermission().catch((err) => {
+      unifiedData.requestLocationPermission?.().catch((err) => {
         console.log('GPS permission request failed:', err);
       });
     }
-  }, [locationEnabled, requestLocationPermission]);
+  }, [locationEnabled, unifiedData.requestLocationPermission]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -296,7 +295,7 @@ export default function RealTime() {
             isConnected={isConnected}
             onConnect={requestDevice}
             onDisconnect={disconnect}
-            onRequestLocationPermission={requestLocationPermission}
+            onRequestLocationPermission={unifiedData.requestLocationPermission}
             locationEnabled={locationEnabled}
           />
         </Suspense>

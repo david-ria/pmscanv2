@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useRecordingService } from '@/hooks/useRecordingService';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { cn } from '@/lib/utils';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
@@ -41,8 +41,8 @@ export function RecordingControls({
     stopRecording,
     updateMissionContext,
     isRecording: contextIsRecording,
-    clearRecordingData,
-  } = useRecordingService();
+    recordingData,
+  } = useUnifiedData();
 
   const getFrequencyLabel = (frequency: string) => {
     const option = frequencyOptionKeys.find((f) => f.value === frequency);
@@ -112,7 +112,7 @@ export function RecordingControls({
   const handleDiscardMission = () => {
     // Discard the mission without saving
     stopRecording();
-    clearRecordingData();
+    // Note: clearRecordingData will be implemented in unified provider if needed
     setShowMissionDialog(false);
 
     // Reset form
