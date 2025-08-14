@@ -59,7 +59,9 @@ class RecordingService {
   }
 
   startRecording(frequency: string = '10s'): void {
-    logger.debug('🎬 Starting recording with frequency:', frequency);
+    logger.debug('🎬 === RECORDING SERVICE startRecording() CALLED ===');
+    logger.debug('🎬 Input frequency:', frequency);
+    logger.debug('🎬 Current state before update:', JSON.stringify(this.state, null, 2));
     
     this.state = {
       ...this.state,
@@ -68,6 +70,8 @@ class RecordingService {
       recordingStartTime: new Date(),
       recordingData: [], // Clear previous data
     };
+
+    logger.debug('🎬 New state after update:', JSON.stringify(this.state, null, 2));
 
     // Enable both global and background recording for continuity
     setGlobalRecording(true);
@@ -79,11 +83,13 @@ class RecordingService {
         type: 'START_BACKGROUND_RECORDING',
         frequency,
       });
+      logger.debug('🎬 Service worker message sent');
     }
     
+    logger.debug('🎬 About to notify listeners:', this.listeners.size, 'listeners');
     this.notify();
     
-    logger.debug('✅ Recording started! isRecording should now be:', true);
+    logger.debug('✅ Recording started! Final isRecording state:', this.state.isRecording);
   }
 
   stopRecording(): void {

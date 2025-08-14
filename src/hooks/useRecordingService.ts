@@ -3,16 +3,26 @@ import { recordingService, RecordingState, RecordingActions } from '@/services/r
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { MissionContext } from '@/types/recording';
+import * as logger from '@/utils/logger';
 
 export function useRecordingService(): RecordingState & RecordingActions {
-  const [state, setState] = useState<RecordingState>(() => recordingService.getState());
+  const [state, setState] = useState<RecordingState>(() => {
+    const initialState = recordingService.getState();
+    logger.debug('🎯 useRecordingService initial state:', initialState);
+    return initialState;
+  });
 
   useEffect(() => {
-    const unsubscribe = recordingService.subscribe(setState);
+    logger.debug('🎯 useRecordingService subscribing to recording service');
+    const unsubscribe = recordingService.subscribe((newState) => {
+      logger.debug('🎯 useRecordingService received state update:', newState);
+      setState(newState);
+    });
     return unsubscribe;
   }, []);
 
   const startRecording = useCallback((frequency?: string) => {
+    logger.debug('🚨 useRecordingService.startRecording called with frequency:', frequency);
     recordingService.startRecording(frequency);
   }, []);
 

@@ -55,13 +55,13 @@ export function RecordingControls({
   };
 
   const confirmStartRecording = () => {
-    logger.debug('⚡ Confirming start recording...');
+    logger.debug('⚡ === CONFIRM START RECORDING ===');
+    logger.debug('⚡ Frequency selected:', recordingFrequency);
     setShowFrequencyDialog(false);
+    logger.debug('⚡ About to call startRecording with frequency:', recordingFrequency);
     startRecording(recordingFrequency); // Pass the frequency here
-    logger.debug(
-      '📞 Called startRecording function with frequency:',
-      recordingFrequency
-    );
+    logger.debug('⚡ startRecording call completed');
+    
     toast({
       title: t('realTime.recording'),
       description: `${t('modals.recordingFrequency.chooseMeasureFrequency')} ${getFrequencyLabel(recordingFrequency)}`,
@@ -128,15 +128,14 @@ export function RecordingControls({
   };
 
   const handleRecordingClick = () => {
-    logger.debug(
-      '🔴 Recording button clicked! contextIsRecording:',
-      contextIsRecording
-    );
+    logger.debug('🔴 === RECORDING BUTTON CLICKED ===');
+    logger.debug('🔴 Current contextIsRecording state:', contextIsRecording);
+    
     if (contextIsRecording) {
       logger.debug('⏹️ Stopping recording...');
       handleStopRecording();
     } else {
-      logger.debug('▶️ Starting recording...');
+      logger.debug('▶️ Starting recording workflow...');
       handleStartRecording();
     }
   };

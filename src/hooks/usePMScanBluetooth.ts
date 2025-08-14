@@ -34,12 +34,8 @@ export function usePMScanBluetooth() {
           data.timestamp.getTime() - prevData.timestamp.getTime() >= 1000; // 1 second minimum
 
         if (isDifferent) {
-          logger.rateLimitedDebug(
-            'pmbluetooth.rtdata',
-            5000,
-            '🔄 RT Data received:',
-            data
-          );
+          logger.debug('📡 NEW PMScan data received:', data);
+          logger.debug('📡 PM values: PM1=', data.pm1, 'PM2.5=', data.pm25, 'PM10=', data.pm10);
           return data;
         }
         // Skip logging and updating if data is too similar

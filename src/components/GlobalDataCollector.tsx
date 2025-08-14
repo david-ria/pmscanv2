@@ -24,6 +24,13 @@ export function GlobalDataCollector() {
     missionContext,
   } = useRecordingService();
 
+  logger.debug('🔍 GlobalDataCollector component state:', {
+    isRecording,
+    hasAddDataPoint: !!addDataPoint,
+    recordingFrequency,
+    missionContext
+  });
+
   
   const { latestLocation } = useGPS(true, false, recordingFrequency);
   const { getWeatherForMeasurement } = useWeatherData();
