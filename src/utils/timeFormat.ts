@@ -1,11 +1,19 @@
 /**
- * Centralized time formatting utilities to ensure consistency across the app
+ * =======================================
+ * UNIFIED TIME REFERENCE STRATEGY
+ * =======================================
+ * 
+ * SINGLE SOURCE OF TRUTH: createTimestamp()
+ * - PMScan data parser uses this for device data
+ * - Recording service preserves original timestamps
+ * - All components use same time reference
+ * - No timestamp overwriting in data flow
  * 
  * STANDARDS:
  * - Always use Date objects internally
  * - Use ISO strings for storage/API calls  
  * - Use consistent locale formatting for display
- * - Handle timezone consistently (local time for recording, UTC for storage)
+ * - Smartphone time for recording (more accurate than device)
  */
 
 // Default locale and timezone configuration
@@ -28,7 +36,8 @@ const DATETIME_OPTIONS: Intl.DateTimeFormatOptions = {
 };
 
 /**
- * Create a new timestamp - single source of truth for timestamp creation
+ * SINGLE SOURCE OF TRUTH: Create timestamp for ALL components
+ * This is the ONLY function that should create new timestamps
  */
 export function createTimestamp(): Date {
   return new Date();

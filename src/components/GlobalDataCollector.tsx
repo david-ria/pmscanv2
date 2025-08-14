@@ -125,9 +125,8 @@ export function GlobalDataCollector() {
             isMoving
           );
 
-          // Update last recorded time using standardized timestamp creation
-          const recordingTime = createTimestamp();
-          lastRecordedTimeRef.current = recordingTime;
+          // Use PMScan data timestamp (already standardized) - no need to overwrite
+          lastRecordedTimeRef.current = currentData.timestamp;
 
           // Fetch weather data only if enabled and location is available
           let weatherDataId: string | null = null;
@@ -136,22 +135,16 @@ export function GlobalDataCollector() {
               weatherDataId = await getWeatherForMeasurement(
                 latestLocation.latitude,
                 latestLocation.longitude,
-                recordingTime
+                currentData.timestamp // Use PMScan timestamp consistently
               );
             } catch (error) {
               logger.debug('⚠️ Failed to fetch weather data for measurement:', error);
             }
           }
 
-          // Use the current recorded time as the definitive timestamp for consistency
-          const pmDataWithTimestamp = {
-            ...currentData,
-            timestamp: recordingTime,
-          };
-
-          // Add data point with user's manual context selections
+          // Use original PMScan data with its timestamp (no overwriting)
           addDataPoint(
-            pmDataWithTimestamp,
+            currentData, // Use original PMScan data with consistent timestamp
             latestLocation || undefined,
             { location: selectedLocation, activity: selectedActivity },
             automaticContext

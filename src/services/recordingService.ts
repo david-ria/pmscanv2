@@ -133,7 +133,7 @@ class RecordingService {
       location,
       context: context || this.state.missionContext,
       automaticContext,
-      timestamp: pmData.timestamp, // Use PM data timestamp for consistency
+      timestamp: pmData.timestamp, // Use PMScan timestamp (already standardized via createTimestamp)
     };
 
     this.state = {
