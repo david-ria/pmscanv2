@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
+import { useMissionSaver } from '@/hooks/useMissionSaver';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
  */
 export function RecordingDebugger() {
   const unifiedData = useUnifiedData();
+  const { saveMission } = useMissionSaver();
   const [debugInfo, setDebugInfo] = useState<any>({});
 
   useEffect(() => {
@@ -37,9 +39,31 @@ export function RecordingDebugger() {
     unifiedData.startRecording('5s');
   };
 
-  const handleStopRecording = () => {
-    console.log('🐛 DEBUGGER: Stopping recording');
+  const handleStopRecording = async () => {
+    console.log('🐛 DEBUGGER: Stopping recording and saving mission');
+    
+    // Save mission first (like the normal UI flow)
+    if (unifiedData.recordingData.length > 0 && unifiedData.recordingStartTime) {
+      try {
+        const missionName = `Debug Mission ${new Date().toLocaleString()}`;
+        const savedMission = await saveMission(
+          unifiedData.recordingData,
+          unifiedData.recordingStartTime,
+          missionName,
+          'Debug Location',
+          'Debug Activity',
+          unifiedData.recordingFrequency,
+          false
+        );
+        console.log('🐛 DEBUGGER: Mission saved successfully:', savedMission.id);
+      } catch (error) {
+        console.error('🐛 DEBUGGER: Mission save failed:', error);
+      }
+    }
+    
+    // Then stop recording
     unifiedData.stopRecording();
+    unifiedData.clearRecordingData();
   };
 
   return (
