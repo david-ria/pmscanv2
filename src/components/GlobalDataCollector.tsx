@@ -87,13 +87,7 @@ export function GlobalDataCollector() {
         Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
 
       if (!isDuplicate) {
-        // Check if enough time has passed based on recording frequency
-        const frequencyMs = parseFrequencyToMs(recordingFrequency);
-        
-        if (!shouldRecordData(lastRecordedTimeRef.current, frequencyMs)) {
-          console.log('🔍 GlobalDataCollector: Frequency check failed, skipping data point');
-          return;
-        }
+        // Record all data points - frequency control happens at device level
 
         console.log('🔍 GlobalDataCollector: Adding data point!', {
           pm25: currentData.pm25,
