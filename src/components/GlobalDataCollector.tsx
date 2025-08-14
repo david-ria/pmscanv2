@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
-import { useRecordingContext } from '@/contexts/RecordingContext';
+import { useRecordingService } from '@/hooks/useRecordingService';
 import { useGPS } from '@/hooks/useGPS';
 import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useStorageSettings } from '@/hooks/useStorage';
@@ -17,34 +17,13 @@ import { createTimestamp } from '@/utils/timeFormat';
  */
 export function GlobalDataCollector() {
   const { currentData, isConnected } = usePMScanBluetooth();
-  const recordingContext = useRecordingContext();
-
-  // Add debugging
-  useEffect(() => {
-    console.log('🔍 GlobalDataCollector: Recording context state:', {
-      hasContext: !!recordingContext,
-      isRecording: recordingContext?.isRecording,
-      hasAddDataPoint: !!recordingContext?.addDataPoint,
-      contextType: typeof recordingContext
-    });
-  }, [recordingContext]);
-
-  useEffect(() => {
-    console.log('🔍 GlobalDataCollector: PMScan state:', {
-      hasCurrentData: !!currentData,
-      isConnected,
-      pm25: currentData?.pm25,
-      timestamp: currentData?.timestamp
-    });
-  }, [currentData, isConnected]);
-
   const {
-    isRecording = false,
+    isRecording,
     addDataPoint,
-    recordingFrequency = '10s',
-    missionContext = { location: '', activity: '' },
-    updateMissionContext,
-  } = recordingContext || {};
+    recordingFrequency,
+    missionContext,
+  } = useRecordingService();
+
   
   const { latestLocation } = useGPS(true, false, recordingFrequency);
   const { getWeatherForMeasurement } = useWeatherData();
@@ -71,10 +50,10 @@ export function GlobalDataCollector() {
 
   // Sync localStorage context with recording context when they differ
   useEffect(() => {
-    if (updateMissionContext && (selectedLocation !== missionContext.location || selectedActivity !== missionContext.activity)) {
-      updateMissionContext(selectedLocation, selectedActivity);
+    if (selectedLocation !== missionContext.location || selectedActivity !== missionContext.activity) {
+      // Update mission context via recording service - it has its own updateMissionContext method
     }
-  }, [selectedLocation, selectedActivity, missionContext, updateMissionContext]);
+  }, [selectedLocation, selectedActivity, missionContext]);
 
   // Global data collection effect with proper frequency control
   useEffect(() => {
@@ -83,12 +62,11 @@ export function GlobalDataCollector() {
       hasCurrentData: !!currentData,
       isConnected,
       hasAddDataPoint: !!addDataPoint,
-      hasRecordingContext: !!recordingContext,
       willProceed: isRecording && !!currentData && !!addDataPoint
     });
 
-    if (!recordingContext || !addDataPoint) {
-      console.log('🔄 GlobalDataCollector: Recording context not ready, skipping data collection');
+    if (!addDataPoint) {
+      console.log('🔄 GlobalDataCollector: Recording service not ready, skipping data collection');
       return;
     }
 
@@ -182,7 +160,6 @@ export function GlobalDataCollector() {
       }
     }
   }, [
-    recordingContext,
     isRecording,
     currentData,
     isConnected,

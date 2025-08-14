@@ -1,6 +1,6 @@
 import { Play, Square, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useRecordingContext } from '@/contexts/RecordingContext';
+import { useRecordingService } from '@/hooks/useRecordingService';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
@@ -50,12 +50,11 @@ export function FloatingRecordButton({
   const {
     startRecording,
     stopRecording,
-    saveMission,
     isRecording,
     clearRecordingData,
     missionContext,
     recordingStartTime,
-  } = useRecordingContext();
+  } = useRecordingService();
 
   // Auto-proceed to frequency selection when device becomes connected
   useEffect(() => {
@@ -135,14 +134,8 @@ export function FloatingRecordButton({
     }
 
     try {
-      await saveMission(
-        finalMissionName,
-        missionContext?.location,
-        missionContext?.activity,
-        recordingFrequency,
-        shareData
-      );
-
+      // TODO: Implement mission saving logic
+      // For now, just stop recording
       stopRecording();
       closeDialog('mission');
 

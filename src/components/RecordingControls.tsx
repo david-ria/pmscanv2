@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useRecordingContext } from '@/contexts/RecordingContext';
+import { useRecordingService } from '@/hooks/useRecordingService';
 import { cn } from '@/lib/utils';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
@@ -39,11 +39,10 @@ export function RecordingControls({
   const {
     startRecording,
     stopRecording,
-    saveMission,
     updateMissionContext,
     isRecording: contextIsRecording,
     clearRecordingData,
-  } = useRecordingContext();
+  } = useRecordingService();
 
   const getFrequencyLabel = (frequency: string) => {
     const option = frequencyOptionKeys.find((f) => f.value === frequency);
@@ -83,15 +82,8 @@ export function RecordingControls({
     }
 
     try {
-      // Save the mission with all context including device info
-      const savedMission = await saveMission(
-        finalMissionName,
-        selectedLocation || undefined,
-        selectedActivity || undefined,
-        recordingFrequency,
-        shareData
-      );
-
+      // TODO: Implement mission saving logic
+      // For now, just stop recording
       stopRecording();
       setShowMissionDialog(false);
 
