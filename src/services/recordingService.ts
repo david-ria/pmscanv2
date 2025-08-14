@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { RecordingEntry, MissionContext } from '@/types/recording';
-import { setGlobalRecording } from '@/lib/pmscan/globalConnectionManager';
+import { setGlobalRecording, setBackgroundRecording } from '@/lib/pmscan/globalConnectionManager';
 import * as logger from '@/utils/logger';
 
 export interface RecordingState {
@@ -69,7 +69,18 @@ class RecordingService {
       recordingData: [], // Clear previous data
     };
 
+    // Enable both global and background recording for continuity
     setGlobalRecording(true);
+    setBackgroundRecording(true);
+    
+    // Enable background collection via service worker
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'START_BACKGROUND_RECORDING',
+        frequency,
+      });
+    }
+    
     this.notify();
     
     logger.debug('✅ Recording started! isRecording should now be:', true);
@@ -84,7 +95,17 @@ class RecordingService {
       // Keep recordingStartTime for mission saving - will be cleared when data is cleared
     };
 
+    // Disable both global and background recording
     setGlobalRecording(false);
+    setBackgroundRecording(false);
+    
+    // Stop background collection via service worker
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'STOP_BACKGROUND_RECORDING',
+      });
+    }
+    
     this.notify();
     
     logger.debug('✅ Recording stopped successfully');

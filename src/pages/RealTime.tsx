@@ -4,7 +4,7 @@ import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 
 // Import critical hooks immediately for core functionality
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
-import { useRecordingContext } from '@/contexts/RecordingContext';
+import { useRecordingService } from '@/hooks/useRecordingService';
 import { useAlerts } from '@/contexts/AlertContext';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
@@ -75,13 +75,11 @@ export default function RealTime() {
 
   const {
     isRecording,
-    addDataPoint,
-    missionContext,
     recordingData,
-    updateMissionContext,
+    missionContext,
     startRecording,
-    currentMissionId,
-  } = useRecordingContext();
+    updateMissionContext,
+  } = useRecordingService();
 
   const { 
     locationEnabled, 
@@ -191,14 +189,7 @@ export default function RealTime() {
     };
   }, []);
 
-  // Fetch events for the current mission
-  useEffect(() => {
-    if (currentMissionId && initialized) {
-      getEventsByMission(currentMissionId).then(setCurrentEvents);
-    } else {
-      setCurrentEvents([]);
-    }
-  }, [currentMissionId, getEventsByMission, initialized]);
+  // Note: Events functionality temporarily simplified for recording service migration
 
   // Reset frequency dialog flag when device disconnects
   useEffect(() => {
