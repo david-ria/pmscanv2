@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { dataStorage } from '@/lib/dataStorage';
 import { RecordingEntry } from '@/types/recording';
+import { createTimestamp } from '@/utils/timeFormat';
 import * as logger from '@/utils/logger';
 
 export function useMissionSaver() {
@@ -41,8 +42,8 @@ export function useMissionSaver() {
     const durationMinutes = Math.round(durationMs / (1000 * 60));
     
     if (durationMinutes < 1) {
-      // Use current time as end time to reflect the actual recording session duration
-      endTime = new Date();
+      // Use unified timestamp creation for consistency
+      endTime = createTimestamp();
       logger.debug('📏 Adjusting mission end time due to minimal data duration:', {
         originalDuration: durationMinutes,
         adjustedEndTime: endTime,
