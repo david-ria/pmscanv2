@@ -36,7 +36,17 @@ export function RecordingDebugger() {
 
   const handleStartRecording = () => {
     console.log('🐛 DEBUGGER: Starting recording with 5s frequency');
-    unifiedData.startRecording('5s');
+    console.log('🐛 DEBUGGER: Current state before start:', {
+      isRecording: unifiedData.isRecording,
+      startRecording: typeof unifiedData.startRecording,
+      startRecordingExists: !!unifiedData.startRecording
+    });
+    try {
+      unifiedData.startRecording('5s');
+      console.log('🐛 DEBUGGER: startRecording called successfully');
+    } catch (error) {
+      console.error('🚨🐛 DEBUGGER: Error calling startRecording:', error);
+    }
   };
 
   const handleStopRecording = async () => {
