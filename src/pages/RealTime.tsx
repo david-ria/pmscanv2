@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
 import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
+import { RecordingDebugger } from '@/components/RecordingDebugger';
 
 // Import critical hooks immediately for core functionality
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
@@ -361,6 +362,9 @@ export default function RealTime() {
           onConfirm={handleFrequencyConfirm}
         />
       </Suspense>
+
+      {/* Recording Debugger for development */}
+      {process.env.NODE_ENV === 'development' && <RecordingDebugger />}
     </div>
   );
 }
