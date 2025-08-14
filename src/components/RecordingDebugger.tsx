@@ -40,6 +40,7 @@ export function RecordingDebugger() {
   };
 
   const handleStopRecording = async () => {
+    console.log('🚨🐛 === DEBUGGER STOP RECORDING CALLED ===');
     console.log('🐛 DEBUGGER: Stopping recording and saving mission');
     console.log('🐛 DEBUGGER: Pre-save state:', {
       recordingDataLength: unifiedData.recordingData.length,
@@ -71,16 +72,20 @@ export function RecordingDebugger() {
           endTime: savedMission.endTime
         });
       } catch (error) {
+        console.error('🚨🐛 === DEBUGGER MISSION SAVE ERROR ===', error);
         console.error('🐛 DEBUGGER: Mission save failed:', error);
       }
     } else {
+      console.error('🚨🐛 === DEBUGGER MISSING DATA ===');
       console.error('🐛 DEBUGGER: Cannot save mission - missing data or start time');
     }
     
     // Then stop recording
+    console.log('🚨🐛 === DEBUGGER STOPPING RECORDING ===');
     console.log('🐛 DEBUGGER: Stopping recording and clearing data...');
     unifiedData.stopRecording();
     unifiedData.clearRecordingData();
+    console.log('🚨🐛 === DEBUGGER RECORDING STOPPED ===');
     console.log('🐛 DEBUGGER: Recording stopped and data cleared');
   };
 
