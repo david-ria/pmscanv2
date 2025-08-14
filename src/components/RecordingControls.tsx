@@ -55,6 +55,16 @@ export function RecordingControls({
   };
 
   const handleStartRecording = () => {
+    // Check if device is connected first
+    if (!device?.connected) {
+      toast({
+        title: 'Capteur non connecté',
+        description: 'Veuillez connecter un capteur PMScan avant de commencer l\'enregistrement',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     logger.debug('🎯 handleStartRecording called');
     setShowFrequencyDialog(true);
   };
