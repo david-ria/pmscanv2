@@ -2,7 +2,7 @@ import { Shield, Wifi, Bell, BatteryLow } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useBackgroundRecording } from '@/hooks/useBackgroundRecording';
-import { useRecordingContext } from '@/contexts/RecordingContext';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 
 export function BackgroundRecordingStatus() {
   const {
@@ -11,7 +11,7 @@ export function BackgroundRecordingStatus() {
     notificationPermission,
     wakeLock,
   } = useBackgroundRecording();
-  const { isRecording } = useRecordingContext();
+  const { isRecording } = useUnifiedData();
 
   if (!isRecording) return null;
 

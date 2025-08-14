@@ -2,7 +2,7 @@ import { Bluetooth, BluetoothOff, Battery, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { cn } from '@/lib/utils';
 
 interface BluetoothConnectionProps {
@@ -17,7 +17,7 @@ export function BluetoothConnection({ className }: BluetoothConnectionProps) {
     error,
     requestDevice,
     disconnect,
-  } = usePMScanBluetooth();
+  } = useUnifiedData();
 
   return (
     <Card className={cn('', className)}>

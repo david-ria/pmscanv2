@@ -21,7 +21,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
-import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useGPS } from '@/hooks/useGPS';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import { LucideIcon } from 'lucide-react';
@@ -70,8 +70,9 @@ export function useMenuSections({
     isConnected: isPMScanConnected,
     requestDevice,
     disconnect,
-  } = usePMScanBluetooth();
-  const { locationEnabled, requestLocationPermission } = useGPS();
+    locationEnabled,
+    requestLocationPermission,
+  } = useUnifiedData();
 
   const handleProfileClick = () => {
     navigate('/profile');

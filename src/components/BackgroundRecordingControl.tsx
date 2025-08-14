@@ -13,7 +13,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { useBackgroundRecording } from '@/hooks/useBackgroundRecording';
-import { useRecordingContext } from '@/contexts/RecordingContext';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import {
   setBackgroundRecording,
   getBackgroundRecording,
@@ -36,7 +36,7 @@ export function BackgroundRecordingControl() {
     requestNotificationPermission,
   } = useBackgroundRecording();
 
-  const { isRecording } = useRecordingContext();
+  const { isRecording } = useUnifiedData();
 
   const handleBackgroundToggle = async (enabled: boolean) => {
     setIsBackgroundMode(enabled);
