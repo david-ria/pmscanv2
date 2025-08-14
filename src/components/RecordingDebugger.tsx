@@ -89,6 +89,34 @@ export function RecordingDebugger() {
     console.log('🐛 DEBUGGER: Recording stopped and data cleared');
   };
 
+  const handleSaveMission = async () => {
+    console.log('🚨🐛 === DEBUGGER MANUAL SAVE MISSION ===');
+    if (unifiedData.recordingData.length > 0 && unifiedData.recordingStartTime) {
+      try {
+        console.log('🐛 DEBUGGER: Manually saving mission with existing data...');
+        const missionName = `Manual Save ${new Date().toLocaleString()}`;
+        const savedMission = await saveMission(
+          unifiedData.recordingData,
+          unifiedData.recordingStartTime,
+          missionName,
+          'Debug Location',
+          'Debug Activity',
+          unifiedData.recordingFrequency,
+          false
+        );
+        console.log('🚨🐛 === MANUAL MISSION SAVE SUCCESS ===');
+        console.log('🐛 DEBUGGER: Manual mission saved successfully:', savedMission.id);
+        
+        // Clear data after successful save
+        unifiedData.clearRecordingData();
+      } catch (error) {
+        console.error('🚨🐛 === MANUAL MISSION SAVE ERROR ===', error);
+      }
+    } else {
+      console.error('🚨🐛 === NO DATA TO SAVE ===');
+    }
+  };
+
   return (
     <div className="fixed bottom-4 right-4 p-4 bg-background border rounded-lg shadow-lg max-w-sm">
       <h3 className="font-bold mb-2">Recording Debug</h3>
@@ -118,6 +146,14 @@ export function RecordingDebugger() {
           disabled={!debugInfo.isRecording}
         >
           Stop
+        </Button>
+        <Button 
+          size="sm" 
+          variant="secondary" 
+          onClick={handleSaveMission}
+          disabled={debugInfo.recordingDataLength === 0}
+        >
+          Save
         </Button>
       </div>
     </div>
