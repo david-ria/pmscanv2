@@ -58,16 +58,39 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   const recording = useRecordingService();
   const { latestLocation, locationEnabled, requestLocationPermission } = useGPS(true, false, recording.recordingFrequency);
 
-  // Log unified state for debugging
+  // Enhanced state change tracking
   useEffect(() => {
-    logger.debug('🔄 UNIFIED DATA STATE:', {
+    console.log('🔄 UNIFIED DATA - RECORDING STATE CHANGED:', {
+      isRecording: recording.isRecording,
+      hasAddDataPoint: !!recording.addDataPoint,
+      timestamp: new Date().toISOString()
+    });
+  }, [recording.isRecording, recording.addDataPoint]);
+
+  useEffect(() => {
+    console.log('🔄 UNIFIED DATA - BLUETOOTH STATE CHANGED:', {
       hasCurrentData: !!bluetooth.currentData,
+      isConnected: bluetooth.isConnected,
+      pm25: bluetooth.currentData?.pm25,
+      timestamp: new Date().toISOString()
+    });
+  }, [bluetooth.currentData, bluetooth.isConnected]);
+
+  // Enhanced unified state logging
+  useEffect(() => {
+    console.log('🔄 UNIFIED DATA COMPLETE STATE:', {
+      hasCurrentData: !!bluetooth.currentData,
+      currentDataPM25: bluetooth.currentData?.pm25,
       isConnected: bluetooth.isConnected,
       isRecording: recording.isRecording,
       recordingDataLength: recording.recordingData.length,
       hasLocation: !!latestLocation,
+      hasAddDataPoint: !!recording.addDataPoint,
+      timestamp: new Date().toISOString(),
+      // Test the exact conditions GlobalDataCollector checks
+      willProceedCheck: recording.isRecording && !!bluetooth.currentData && !!recording.addDataPoint
     });
-  }, [bluetooth.currentData, bluetooth.isConnected, recording.isRecording, recording.recordingData.length, latestLocation]);
+  }, [bluetooth.currentData, bluetooth.isConnected, recording.isRecording, recording.recordingData.length, latestLocation, recording.addDataPoint]);
 
   // Unified state object
   const unifiedState: UnifiedDataState = {

@@ -26,12 +26,23 @@ export function GlobalDataCollector() {
     isConnected,
   } = unifiedData;
 
-  logger.debug('🔍 GlobalDataCollector unified state:', {
+  // Enhanced debugging for recording state
+  console.log('🔍 GlobalDataCollector FULL STATE DEBUG:', {
     isRecording,
     hasCurrentData: !!currentData,
+    currentDataTimestamp: currentData?.timestamp?.toISOString(),
+    currentDataPM25: currentData?.pm25,
     isConnected,
     hasAddDataPoint: !!addDataPoint,
-    willProceed: isRecording && !!currentData && !!addDataPoint
+    recordingFrequency,
+    missionContext,
+    hasLatestLocation: !!latestLocation,
+    willProceed: isRecording && !!currentData && !!addDataPoint,
+    // Break down the conditions:
+    condition1_isRecording: isRecording,
+    condition2_hasCurrentData: !!currentData,
+    condition3_hasAddDataPoint: !!addDataPoint,
+    finalResult: isRecording && !!currentData && !!addDataPoint
   });
   const { getWeatherForMeasurement } = useWeatherData();
   const { isEnabled: weatherLoggingEnabled } = useWeatherLogging();
@@ -62,6 +73,28 @@ export function GlobalDataCollector() {
     }
   }, [selectedLocation, selectedActivity, missionContext]);
 
+  // Track recording state changes
+  useEffect(() => {
+    console.log('🚨 RECORDING STATE CHANGED:', { isRecording, timestamp: new Date().toISOString() });
+  }, [isRecording]);
+
+  // Track currentData changes
+  useEffect(() => {
+    console.log('📊 CURRENT DATA CHANGED:', { 
+      hasData: !!currentData, 
+      pm25: currentData?.pm25,
+      timestamp: currentData?.timestamp?.toISOString()
+    });
+  }, [currentData]);
+
+  // Track addDataPoint availability
+  useEffect(() => {
+    console.log('🔧 ADD DATA POINT AVAILABILITY:', { 
+      hasAddDataPoint: !!addDataPoint,
+      timestamp: new Date().toISOString()
+    });
+  }, [addDataPoint]);
+
   // Global data collection effect with proper frequency control
   useEffect(() => {
     console.log('🔍 GlobalDataCollector: Data collection effect triggered:', {
@@ -69,7 +102,8 @@ export function GlobalDataCollector() {
       hasCurrentData: !!currentData,
       isConnected,
       hasAddDataPoint: !!addDataPoint,
-      willProceed: isRecording && !!currentData && !!addDataPoint
+      willProceed: isRecording && !!currentData && !!addDataPoint,
+      timestamp: new Date().toISOString()
     });
 
     if (!addDataPoint) {

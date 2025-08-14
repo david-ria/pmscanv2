@@ -34,8 +34,16 @@ export function usePMScanBluetooth() {
           data.timestamp.getTime() - prevData.timestamp.getTime() >= 1000; // 1 second minimum
 
         if (isDifferent) {
-          logger.debug('📡 NEW PMScan data received:', data);
-          logger.debug('📡 PM values: PM1=', data.pm1, 'PM2.5=', data.pm25, 'PM10=', data.pm10);
+          console.log('📡 NEW PMScan data received and set as currentData:', {
+            pm1: data.pm1,
+            pm25: data.pm25, 
+            pm10: data.pm10,
+            timestamp: data.timestamp.toISOString(),
+            previousData: prevData ? {
+              pm25: prevData.pm25,
+              timestamp: prevData.timestamp.toISOString()
+            } : null
+          });
           return data;
         }
         // Skip logging and updating if data is too similar

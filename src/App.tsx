@@ -39,6 +39,9 @@ const PMLineGraph = lazy(() =>
 const GlobalDataCollector = lazy(() => 
   import('@/components/GlobalDataCollector').then(module => ({ default: module.GlobalDataCollector }))
 );
+const RecordingDebugger = lazy(() => 
+  import('@/components/RecordingDebugger').then(module => ({ default: module.RecordingDebugger }))
+);
 
 // Import skeleton screens
 const AppLayoutSkeleton = lazy(() => 
@@ -213,6 +216,13 @@ const AppRoutes = () => {
                   <Suspense fallback={null}>
                     <GlobalDataCollector />
                   </Suspense>
+                  
+                  {/* Recording debugger for development */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <Suspense fallback={null}>
+                      <RecordingDebugger />
+                    </Suspense>
+                  )}
                   
                   {/* Keep chart alive across pages - hidden but still mounted */}
                   <div className={location.pathname === '/' ? 'hidden' : 'hidden absolute -top-[9999px]'}>
