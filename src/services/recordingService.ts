@@ -93,6 +93,13 @@ class RecordingService {
   }
 
   stopRecording(): void {
+    console.log('🚨🛑 === RECORDING SERVICE STOP CALLED ===');
+    console.log('🛑 Recording service stop - current state:', {
+      isRecording: this.state.isRecording,
+      recordingDataLength: this.state.recordingData.length,
+      hasRecordingStartTime: !!this.state.recordingStartTime,
+      recordingStartTime: this.state.recordingStartTime
+    });
     logger.debug('🛑 Stopping recording...');
     
     this.state = {
@@ -114,6 +121,7 @@ class RecordingService {
     
     this.notify();
     
+    console.log('🚨🛑 === RECORDING SERVICE STOP COMPLETE ===');
     logger.debug('✅ Recording stopped successfully');
   }
 

@@ -15,6 +15,22 @@ export function useMissionSaver() {
     shared?: boolean,
     missionId?: string
   ) => {
+    console.log('🚨💾 === MISSION SAVER CALLED ===');
+    console.log('💾 useMissionSaver.saveMission called with:', {
+      recordingDataLength: recordingData?.length || 0,
+      recordingStartTime,
+      missionName,
+      locationContext,
+      activityContext,
+      recordingFrequency,
+      shared,
+      hasRecordingData: !!recordingData,
+      sampleDataPoints: recordingData?.slice(0, 2).map(entry => ({
+        pm25: entry.pmData.pm25,
+        timestamp: entry.timestamp,
+        context: entry.context
+      }))
+    });
     logger.debug('💾 useMissionSaver.saveMission called with:', {
       recordingDataLength: recordingData?.length || 0,
       recordingStartTime,
@@ -103,11 +119,25 @@ export function useMissionSaver() {
 
     // Export to CSV immediately
     logger.debug('💾 Exporting mission to CSV...');
-    await dataStorage.exportMissionToCSV(mission);
+    console.log('🚨💾 === ABOUT TO EXPORT CSV ===');
+    console.log('💾 Mission data for CSV export:', {
+      missionId: mission.id,
+      measurementsCount: mission.measurementsCount,
+      missionName: mission.name
+    });
+    
+    try {
+      await dataStorage.exportMissionToCSV(mission);
+      console.log('🚨💾 === CSV EXPORT SUCCESS ===');
+    } catch (csvError) {
+      console.error('🚨💾 === CSV EXPORT FAILED ===', csvError);
+      throw csvError;
+    }
 
     logger.debug(
       '📁 Mission saved locally and exported to CSV. Will sync to database later.'
     );
+    console.log('🚨💾 === MISSION SAVE COMPLETE ===');
 
     return mission;
   }, []);

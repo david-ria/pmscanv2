@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
 import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
-import { RecordingDebugger } from '@/components/RecordingDebugger';
+// RecordingDebugger now loaded in App.tsx to avoid duplication
 
 // Import critical hooks immediately for core functionality
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
@@ -363,8 +363,7 @@ export default function RealTime() {
         />
       </Suspense>
 
-      {/* Recording Debugger for development */}
-      {process.env.NODE_ENV === 'development' && <RecordingDebugger />}
+      {/* Recording Debugger now in App.tsx */}
     </div>
   );
 }
