@@ -51,7 +51,7 @@ export function FloatingRecordButton({
   const [recordingTime, setRecordingTime] = useState<number>(0);
 
   // Extract values from unified data
-  const { startRecording, stopRecording, isRecording, recordingData } = unifiedData;
+  const { startRecording, stopRecording, isRecording, recordingData, saveMission } = unifiedData;
 
   // Extract recording start time from recording data
   const recordingStartTime = recordingData.length > 0 ? recordingData[0]?.timestamp : null;
@@ -134,8 +134,15 @@ export function FloatingRecordButton({
     }
 
     try {
-      // Stop recording (mission saving will be handled by the recording service)
-      stopRecording();
+      // Save the mission with all recorded data
+      await saveMission(
+        finalMissionName,
+        undefined, // locationContext 
+        undefined, // activityContext
+        recordingFrequency,
+        shareData
+      );
+      
       closeDialog('mission');
 
       toast({

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
-import { useRecordingService } from '@/hooks/useRecordingService';
+import { useRecordingData } from '@/hooks/useRecordingData';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
@@ -34,6 +34,7 @@ interface UnifiedDataState {
   updateMissionContext: (location: string, activity: string) => void;
   addDataPoint: (pmData: PMScanData, location?: LocationData, context?: any, automaticContext?: string) => void;
   clearRecordingData: () => void;
+  saveMission: (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean) => Promise<any>;
 }
 
 const UnifiedDataContext = createContext<UnifiedDataState | undefined>(undefined);
@@ -55,7 +56,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   
   // Core data sources
   const bluetooth = usePMScanBluetooth();
-  const recording = useRecordingService();
+  const recording = useRecordingData();
   const { latestLocation, locationEnabled, requestLocationPermission } = useGPS(true, false, recording.recordingFrequency);
 
   // Enhanced state change tracking
@@ -121,6 +122,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     updateMissionContext: recording.updateMissionContext,
     addDataPoint: recording.addDataPoint,
     clearRecordingData: recording.clearRecordingData,
+    saveMission: recording.saveMission,
   };
 
   return (
