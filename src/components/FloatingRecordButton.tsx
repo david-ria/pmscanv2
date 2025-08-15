@@ -143,8 +143,8 @@ export function FloatingRecordButton({
         throw new Error('No recording data available to save');
       }
 
-      // Save the mission with captured data
-      await saveMission(
+      // Save the mission with captured data - await to ensure CSV export completes
+      const savedMission = await saveMission(
         finalMissionName,
         undefined, // locationContext 
         undefined, // activityContext

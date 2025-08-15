@@ -146,7 +146,7 @@ export function useRecordingData() {
   }, [stopRecordingState, disableRecordingBackground]);
 
   const saveMission = useCallback(
-    (
+    async (
       missionName: string,
       locationContext?: string,
       activityContext?: string,
@@ -154,7 +154,7 @@ export function useRecordingData() {
       shared?: boolean
     ) => {
       // Pass mission-level context correctly while preserving individual measurement contexts
-      const mission = saveMissionHelper(
+      const mission = await saveMissionHelper(
         recordingData,
         recordingStartTime,
         missionName,
