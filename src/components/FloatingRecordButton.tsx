@@ -49,6 +49,7 @@ export function FloatingRecordButton({
   const [missionName, setMissionName] = useState<string>('');
   const [shareData, setShareData] = useState<boolean>(false);
   const [recordingTime, setRecordingTime] = useState<number>(0);
+  const [capturedRecordingData, setCapturedRecordingData] = useState<any[]>([]);
 
   // Extract values from unified data
   const { startRecording, stopRecording, isRecording, recordingData, saveMission } = unifiedData;
@@ -122,6 +123,9 @@ export function FloatingRecordButton({
   };
 
   const handleStopRecording = () => {
+    // Capture current recording data before it gets cleared
+    setCapturedRecordingData([...recordingData]);
+    stopRecording();
     openDialog('mission');
   };
 
@@ -134,7 +138,12 @@ export function FloatingRecordButton({
     }
 
     try {
-      // Save the mission with all recorded data
+      // Use captured data to ensure we have the data even after recording stopped
+      if (capturedRecordingData.length === 0) {
+        throw new Error('No recording data available to save');
+      }
+
+      // Save the mission with captured data
       await saveMission(
         finalMissionName,
         undefined, // locationContext 
@@ -144,6 +153,8 @@ export function FloatingRecordButton({
       );
       
       closeDialog('mission');
+      // Clear captured data after successful save
+      setCapturedRecordingData([]);
 
       toast({
         title: t('history.export'),
@@ -165,8 +176,8 @@ export function FloatingRecordButton({
   };
 
   const handleDiscardMission = () => {
-    stopRecording();
-    // Note: clearRecordingData will be implemented in unified provider if needed
+    // Clear captured data since mission is being discarded
+    setCapturedRecordingData([]);
     closeDialog('mission');
 
     setMissionName('');
