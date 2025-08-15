@@ -143,6 +143,8 @@ export function FloatingRecordButton({
         throw new Error('No recording data available to save');
       }
 
+      console.log('🔄 Saving mission with data:', capturedRecordingData.length, 'points');
+      
       // Save the mission with captured data - await to ensure CSV export completes
       const savedMission = await saveMission(
         finalMissionName,
@@ -151,6 +153,8 @@ export function FloatingRecordButton({
         recordingFrequency,
         shareData
       );
+      
+      console.log('✅ Mission saved successfully');
       
       closeDialog('mission');
       // Clear captured data after successful save
@@ -164,7 +168,7 @@ export function FloatingRecordButton({
       setMissionName('');
       setShareData(false);
     } catch (error) {
-      console.error('Error saving mission:', error);
+      console.error('❌ Error saving mission:', error);
       const errorMessage =
         error instanceof Error ? error.message : t('analysis.error');
       toast({
@@ -190,6 +194,11 @@ export function FloatingRecordButton({
   };
 
   const handleRecordingClick = () => {
+    // Prevent double clicks during state transitions
+    if (dialogs.mission || dialogs.frequency) {
+      return;
+    }
+    
     if (isRecording) {
       handleStopRecording();
     } else {
