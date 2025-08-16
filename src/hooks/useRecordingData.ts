@@ -155,11 +155,14 @@ export function useRecordingData() {
       shared?: boolean,
       explicitRecordingData?: any[]
     ) => {
+      console.log('🚨🔄 === USE RECORDING DATA SAVE MISSION CALLED ===');
       console.log('🔄 useRecordingData.saveMission called with:', {
         missionName,
         explicitDataLength: explicitRecordingData?.length,
         stateDataLength: recordingData.length,
-        hasRecordingStartTime: !!recordingStartTime
+        hasRecordingStartTime: !!recordingStartTime,
+        recordingStartTime: recordingStartTime?.toISOString(),
+        isCurrentlyRecording: isRecording
       });
 
       // Use explicit data first, then current React state as primary source
@@ -206,14 +209,22 @@ export function useRecordingData() {
       const capturedData = [...dataToSave];
       const capturedStartTime = startTimeToUse;
       
+      console.log('🚨📊 === DATA CAPTURED FOR SAVING ===');
       console.log('🔄 Data captured for saving:', {
         capturedDataLength: capturedData.length,
-        capturedStartTime,
-        sampleEntry: capturedData[0]
+        capturedStartTime: capturedStartTime?.toISOString(),
+        sampleEntry: capturedData[0] ? {
+          pm25: capturedData[0].pmData.pm25,
+          timestamp: capturedData[0].timestamp.toISOString()
+        } : null
       });
 
       if (!capturedStartTime || capturedData.length === 0) {
-        console.error('❌ Cannot save mission: missing data or start time');
+        console.error('🚨❌ === MISSION SAVE FAILED - NO DATA ===');
+        console.error('❌ Cannot save mission: missing data or start time:', {
+          hasStartTime: !!capturedStartTime,
+          dataLength: capturedData.length
+        });
         throw new Error('No recording data available to save');
       }
 
@@ -229,13 +240,16 @@ export function useRecordingData() {
         currentMissionId || undefined
       );
 
+      console.log('🚨✅ === MISSION SAVED, NOW CLEARING ===');
       console.log('✅ Mission and CSV saved successfully, now clearing state and crash recovery');
 
       // Clear crash recovery data since mission was properly saved
       clearRecoveryData();
+      console.log('🗑️ Crash recovery data cleared');
 
       // Clear recording data only after successful save AND CSV export
       clearRecordingData();
+      console.log('🗑️ Recording data cleared');
 
       return mission;
     },

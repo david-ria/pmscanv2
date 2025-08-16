@@ -123,8 +123,11 @@ export function FloatingRecordButton({
   };
 
   const handleStopRecording = () => {
+    console.log('🚨🛑 === STOP RECORDING BUTTON CLICKED ===');
     console.log('🛑 Stop recording requested, current data:', recordingData.length, 'points');
     console.log('🛑 Recording data sample:', recordingData.slice(0, 2).map(d => ({ pm25: d.pmData.pm25, timestamp: d.timestamp })));
+    console.log('🛑 Recording start time:', recordingStartTime);
+    console.log('🛑 Is currently recording:', isRecording);
     // Stop recording but keep data for saving
     stopRecording();
     openDialog('mission');
@@ -139,7 +142,10 @@ export function FloatingRecordButton({
     }
 
     try {
+      console.log('🚨💾 === CONFIRM STOP RECORDING CALLED ===');
       console.log('🔄 Saving mission:', finalMissionName, 'with current recording data:', recordingData.length, 'points');
+      console.log('🔄 Recording start time available:', !!recordingStartTime);
+      console.log('🔄 Data sample before save:', recordingData.slice(0, 1).map(d => ({ pm25: d.pmData.pm25, timestamp: d.timestamp })));
       
       // Save the mission - data will be captured from current state before clearing
       const savedMission = await saveMission(
