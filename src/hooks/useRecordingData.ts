@@ -161,12 +161,48 @@ export function useRecordingData() {
         hasRecordingStartTime: !!recordingStartTime
       });
 
-      // Use explicit data if provided, otherwise use state data
-      const dataToSave = explicitRecordingData || recordingData;
+      // First try to get data from crash recovery if state data is empty
+      let dataToSave = explicitRecordingData || recordingData;
+      let startTimeToUse = recordingStartTime;
+
+      if (dataToSave.length === 0) {
+        console.log('🔄 State data empty, checking crash recovery...');
+        
+        try {
+          const crashRecoveryStr = localStorage.getItem('pmscan_recording_recovery');
+          if (crashRecoveryStr) {
+            const crashData = JSON.parse(crashRecoveryStr);
+            console.log('🔄 Found crash recovery data:', {
+              recordingDataLength: crashData.recordingData?.length || 0,
+              startTime: crashData.startTime,
+              frequency: crashData.frequency
+            });
+            
+            if (crashData.recordingData && crashData.recordingData.length > 0) {
+              // Convert timestamps back to Date objects
+              dataToSave = crashData.recordingData.map((entry: any) => ({
+                ...entry,
+                pmData: {
+                  ...entry.pmData,
+                  timestamp: new Date(entry.pmData.timestamp),
+                },
+                timestamp: new Date(entry.timestamp)
+              }));
+              startTimeToUse = new Date(crashData.startTime);
+              console.log('🔄 Using crash recovery data:', {
+                dataLength: dataToSave.length,
+                startTime: startTimeToUse
+              });
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error reading crash recovery data:', error);
+        }
+      }
       
       // Capture data locally before any clearing operations
       const capturedData = [...dataToSave];
-      const capturedStartTime = recordingStartTime;
+      const capturedStartTime = startTimeToUse;
       
       console.log('🔄 Data captured for saving:', {
         capturedDataLength: capturedData.length,
@@ -191,7 +227,7 @@ export function useRecordingData() {
         currentMissionId || undefined
       );
 
-      console.log('✅ Mission saved successfully, now clearing state');
+      console.log('✅ Mission saved successfully, now clearing state and crash recovery');
 
       // Clear crash recovery data since mission was properly saved
       clearRecoveryData();
