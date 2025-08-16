@@ -23,7 +23,8 @@ interface RecordingContextType {
     locationContext?: string,
     activityContext?: string,
     recordingFrequency?: string,
-    shared?: boolean
+    shared?: boolean,
+    explicitRecordingData?: any[]
   ) => any;
   updateMissionContext: (location: string, activity: string) => void;
   recordingStartTime: Date | null;

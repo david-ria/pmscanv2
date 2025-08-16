@@ -151,24 +151,52 @@ export function useRecordingData() {
       locationContext?: string,
       activityContext?: string,
       recordingFrequency?: string,
-      shared?: boolean
+      shared?: boolean,
+      explicitRecordingData?: any[]
     ) => {
-      // Pass mission-level context correctly while preserving individual measurement contexts
-      const mission = await saveMissionHelper(
-        recordingData,
-        recordingStartTime,
+      console.log('🔄 useRecordingData.saveMission called with:', {
         missionName,
-        locationContext, // Mission-level location context
-        activityContext, // Mission-level activity context
+        explicitDataLength: explicitRecordingData?.length,
+        stateDataLength: recordingData.length,
+        hasRecordingStartTime: !!recordingStartTime
+      });
+
+      // Use explicit data if provided, otherwise use state data
+      const dataToSave = explicitRecordingData || recordingData;
+      
+      // Capture data locally before any clearing operations
+      const capturedData = [...dataToSave];
+      const capturedStartTime = recordingStartTime;
+      
+      console.log('🔄 Data captured for saving:', {
+        capturedDataLength: capturedData.length,
+        capturedStartTime,
+        sampleEntry: capturedData[0]
+      });
+
+      if (!capturedStartTime || capturedData.length === 0) {
+        console.error('❌ Cannot save mission: missing data or start time');
+        throw new Error('No recording data available to save');
+      }
+
+      // Save mission with captured data
+      const mission = await saveMissionHelper(
+        capturedData,
+        capturedStartTime,
+        missionName,
+        locationContext,
+        activityContext,
         recordingFrequency,
         shared,
         currentMissionId || undefined
       );
 
+      console.log('✅ Mission saved successfully, now clearing state');
+
       // Clear crash recovery data since mission was properly saved
       clearRecoveryData();
 
-      // Clear recording data
+      // Clear recording data only after successful save
       clearRecordingData();
 
       return mission;

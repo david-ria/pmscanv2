@@ -34,7 +34,7 @@ interface UnifiedDataState {
   updateMissionContext: (location: string, activity: string) => void;
   addDataPoint: (pmData: PMScanData, location?: LocationData, context?: any, automaticContext?: string) => void;
   clearRecordingData: () => void;
-  saveMission: (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean) => Promise<any>;
+  saveMission: (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: any[]) => Promise<any>;
 }
 
 const UnifiedDataContext = createContext<UnifiedDataState | undefined>(undefined);
