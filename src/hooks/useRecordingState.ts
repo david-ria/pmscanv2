@@ -61,18 +61,27 @@ export function useRecordingState() {
   }, []);
 
   const addDataPoint = useCallback((entry: RecordingEntry) => {
+    console.log('🔄 useRecordingState.addDataPoint called with:', {
+      pm25: entry.pmData.pm25,
+      timestamp: entry.timestamp,
+      currentRecordingDataLength: recordingData.length,
+      isCurrentlyRecording: isRecording
+    });
+    
     setRecordingData((prev) => {
       const updated = [entry, ...prev];
+      console.log('📊 Recording data updated, total points:', updated.length, 'previous:', prev.length);
       logger.debug('📊 Recording data updated, total points:', updated.length);
       return updated;
     });
-  }, []);
+  }, [recordingData.length, isRecording]);
 
   const clearRecordingData = useCallback(() => {
+    console.log('🗑️ useRecordingState.clearRecordingData called, current length:', recordingData.length);
     setRecordingData([]);
     recordingStartTime.current = null; // Clear start time when data is cleared
     lastRecordedTime.current = null;
-  }, []);
+  }, [recordingData.length]);
 
   const updateMissionContext = useCallback((location: string, activity: string) => {
     setMissionContext({ location, activity });

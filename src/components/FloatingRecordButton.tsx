@@ -124,6 +124,7 @@ export function FloatingRecordButton({
 
   const handleStopRecording = () => {
     console.log('🛑 Stop recording requested, current data:', recordingData.length, 'points');
+    console.log('🛑 Recording data sample:', recordingData.slice(0, 2).map(d => ({ pm25: d.pmData.pm25, timestamp: d.timestamp })));
     stopRecording();
     openDialog('mission');
   };
