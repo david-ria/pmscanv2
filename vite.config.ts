@@ -8,26 +8,10 @@ import type { PreRenderedAsset } from 'rollup';
 export default defineConfig(({ mode }) => {
   const plugins: PluginOption[] = [react()];
 
-  // Note: componentTagger temporarily disabled to prevent console errors
-  // Will be re-enabled when the issue is resolved
-  // if (mode === 'development') {
-  //   try {
-  //     const { componentTagger } = await import('lovable-tagger');
-  //     const tagger = componentTagger();
-  //     if (tagger) {
-  //       plugins.push(tagger);
-  //     }
-  //   } catch (error) {
-  //     console.warn('lovable-tagger not available:', error);
-  //   }
-  // }
-
   return {
     server: {
       host: '::',
       port: 8080,
-      // Enable HTTP/2 for development (requires HTTPS setup)
-      // https: true, // Can be enabled with SSL certificates
     },
     plugins,
     resolve: {
@@ -40,7 +24,7 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          // Enable content-hash filenames for better caching
+          // Simplified asset naming to prevent build issues
           assetFileNames: (assetInfo: PreRenderedAsset) => {
             const info = assetInfo.name!.split('.');
             const ext = info[info.length - 1];
@@ -54,86 +38,35 @@ export default defineConfig(({ mode }) => {
           },
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
+          // Simplified manual chunks to prevent 404s
           manualChunks: {
-            // Core vendor chunk - always needed
-            vendor: ['react', 'react-dom'],
+            // Core vendor chunk
+            vendor: ['react', 'react-dom', 'react-router-dom'],
             
-            // Router chunk - needed for navigation
-            router: ['react-router-dom'],
-            
-            // React Query for data fetching
-            query: ['@tanstack/react-query'],
-            
-            // UI library chunks - split by usage frequency
-            'ui-core': [
+            // UI library chunk
+            ui: [
               '@radix-ui/react-dialog', 
               '@radix-ui/react-select', 
               '@radix-ui/react-tabs',
               '@radix-ui/react-toast',
               '@radix-ui/react-tooltip',
-              '@radix-ui/react-popover'
-            ],
-            'ui-forms': [
               '@radix-ui/react-checkbox',
               '@radix-ui/react-radio-group',
               '@radix-ui/react-switch',
-              '@radix-ui/react-slider',
-              '@radix-ui/react-label',
-              'react-hook-form',
-              '@hookform/resolvers',
-              'zod'
-            ],
-            'ui-advanced': [
-              '@radix-ui/react-accordion',
-              '@radix-ui/react-alert-dialog',
-              '@radix-ui/react-dropdown-menu',
-              '@radix-ui/react-navigation-menu',
-              '@radix-ui/react-menubar',
-              '@radix-ui/react-context-menu',
-              '@radix-ui/react-hover-card',
-              '@radix-ui/react-scroll-area',
-              '@radix-ui/react-separator',
-              '@radix-ui/react-collapsible',
-              '@radix-ui/react-toggle',
-              '@radix-ui/react-toggle-group'
+              'lucide-react'
             ],
             
-            // Feature-specific chunks
-            charts: ['recharts'],
-            mapbox: ['mapbox-gl'],
-            supabase: ['@supabase/supabase-js'],
-            
-            // Utility chunks
+            // Only include chunks for dependencies that are actually used
             utils: ['clsx', 'class-variance-authority', 'tailwind-merge'],
-            date: ['date-fns'],
-            i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
-            
-            // Heavy feature chunks
-            bluetooth: ['@capacitor-community/bluetooth-le'],
-            tensorflow: ['@tensorflow/tfjs'],
-            pdf: ['jspdf', 'html2canvas'],
-            
-            // Theme and styling
-            theme: ['next-themes'],
-            carousel: ['embla-carousel-react'],
-            notifications: ['sonner'],
-            
-            // Split by route to enable route-based code splitting
-            'route-analysis': [],
-            'route-groups': [],
-            'route-settings': [],
           },
         },
       },
       // Optimize assets for caching and TTFB
-      assetsInlineLimit: 4096, // Inline small assets as base64
-      cssCodeSplit: true, // Split CSS into separate files with hashes
-      sourcemap: false, // Disable source maps in production for better performance
-      // Enable compression and minification
+      assetsInlineLimit: 4096,
+      cssCodeSplit: true,
+      sourcemap: false,
       minify: 'esbuild',
-      // Target modern browsers for better optimization
       target: 'es2022',
-      // Optimize chunk size warnings
       chunkSizeWarningLimit: 1000,
     },
     test: {
@@ -141,5 +74,23 @@ export default defineConfig(({ mode }) => {
       globals: true,
       setupFiles: './vitest.setup.ts',
     },
+    // Optimize dependencies
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        'clsx',
+        'tailwind-merge'
+      ],
+      exclude: [
+        // Large dependencies that are dynamically imported
+        'mapbox-gl',
+        'recharts',
+        '@tensorflow/tfjs',
+        'jspdf',
+        'html2canvas'
+      ]
+    }
   };
 });
