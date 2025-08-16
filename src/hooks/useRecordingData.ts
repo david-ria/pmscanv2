@@ -137,6 +137,7 @@ export function useRecordingData() {
   );
 
   const stopRecording = useCallback(async () => {
+    // Only stop recording state, don't clear data yet
     stopRecordingState();
     setGlobalRecording(false);
     setCurrentMissionId(null);
@@ -161,12 +162,13 @@ export function useRecordingData() {
         hasRecordingStartTime: !!recordingStartTime
       });
 
-      // First try to get data from crash recovery if state data is empty
+      // Use explicit data first, then current React state as primary source
       let dataToSave = explicitRecordingData || recordingData;
       let startTimeToUse = recordingStartTime;
 
+      // Only fallback to crash recovery if both explicit and state data are empty
       if (dataToSave.length === 0) {
-        console.log('🔄 State data empty, checking crash recovery...');
+        console.log('🔄 Both explicit and state data empty, checking crash recovery...');
         
         try {
           const crashRecoveryStr = localStorage.getItem('pmscan_recording_recovery');
@@ -189,7 +191,7 @@ export function useRecordingData() {
                 timestamp: new Date(entry.timestamp)
               }));
               startTimeToUse = new Date(crashData.startTime);
-              console.log('🔄 Using crash recovery data:', {
+              console.log('🔄 Using crash recovery data as fallback:', {
                 dataLength: dataToSave.length,
                 startTime: startTimeToUse
               });
@@ -215,7 +217,7 @@ export function useRecordingData() {
         throw new Error('No recording data available to save');
       }
 
-      // Save mission with captured data
+      // Save mission with captured data (includes CSV export)
       const mission = await saveMissionHelper(
         capturedData,
         capturedStartTime,
@@ -227,12 +229,12 @@ export function useRecordingData() {
         currentMissionId || undefined
       );
 
-      console.log('✅ Mission saved successfully, now clearing state and crash recovery');
+      console.log('✅ Mission and CSV saved successfully, now clearing state and crash recovery');
 
       // Clear crash recovery data since mission was properly saved
       clearRecoveryData();
 
-      // Clear recording data only after successful save
+      // Clear recording data only after successful save AND CSV export
       clearRecordingData();
 
       return mission;

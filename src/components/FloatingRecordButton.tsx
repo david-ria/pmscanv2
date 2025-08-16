@@ -123,10 +123,9 @@ export function FloatingRecordButton({
   };
 
   const handleStopRecording = () => {
-    // Get fresh recording data directly from unifiedData to avoid stale closure
-    const currentRecordingData = unifiedData.recordingData;
-    console.log('🛑 Stop recording requested, current data:', currentRecordingData.length, 'points');
-    console.log('🛑 Recording data sample:', currentRecordingData.slice(0, 2).map(d => ({ pm25: d.pmData.pm25, timestamp: d.timestamp })));
+    console.log('🛑 Stop recording requested, current data:', recordingData.length, 'points');
+    console.log('🛑 Recording data sample:', recordingData.slice(0, 2).map(d => ({ pm25: d.pmData.pm25, timestamp: d.timestamp })));
+    // Stop recording but keep data for saving
     stopRecording();
     openDialog('mission');
   };
@@ -140,18 +139,16 @@ export function FloatingRecordButton({
     }
 
     try {
-      // Get fresh recording data directly from unifiedData to avoid stale closure
-      const currentRecordingData = unifiedData.recordingData;
-      console.log('🔄 Saving mission:', finalMissionName, 'with current recording data:', currentRecordingData.length, 'points');
+      console.log('🔄 Saving mission:', finalMissionName, 'with current recording data:', recordingData.length, 'points');
       
-      // Save the mission - saveMission will handle data capture internally
+      // Save the mission - data will be captured from current state before clearing
       const savedMission = await saveMission(
         finalMissionName,
-        undefined, // locationContext 
+        undefined, // locationContext
         undefined, // activityContext
         recordingFrequency,
-        shareData,
-        currentRecordingData // Pass fresh recording data explicitly
+        shareData
+        // Let saveMission use current recordingData from state
       );
       
       console.log('✅ Mission saved successfully');
