@@ -1,6 +1,6 @@
 import { Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SimpleRecordButton } from './SimpleRecordButton';
+
 import { useTranslation } from 'react-i18next';
 import { PMScanDevice } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
@@ -13,7 +13,7 @@ interface MapPlaceholderProps {
   isConnected: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
-  onStartRecording: () => void;
+  
   locationEnabled: boolean;
   latestLocation: LocationData | null;
 }
@@ -26,7 +26,7 @@ export function MapPlaceholder({
   isConnected,
   onConnect,
   onDisconnect,
-  onStartRecording,
+  
   locationEnabled,
   latestLocation
 }: MapPlaceholderProps) {
@@ -69,11 +69,6 @@ export function MapPlaceholder({
           </div>
         </div>
 
-        {/* Simple Record Button */}
-        <SimpleRecordButton
-          onStartRecording={onStartRecording}
-          className="absolute bottom-4 right-4 z-10"
-        />
       </div>
     </div>
   );

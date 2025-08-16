@@ -12,7 +12,7 @@ import { useStorageSettings } from '@/hooks/useStorage';
 import { STORAGE_KEYS } from '@/services/storageService';
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { useGPS } from '@/hooks/useGPS';
-import { frequencyOptionKeys } from '@/lib/recordingConstants';
+
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
@@ -40,11 +40,6 @@ const DataLogger = lazy(() =>
     default: module.DataLogger 
   }))
 );
-const RecordingFrequencyDialog = lazy(() => 
-  import('@/components/RecordingControls/RecordingFrequencyDialog').then(module => ({ 
-    default: module.RecordingFrequencyDialog 
-  }))
-);
 
 export default function RealTime() {
   // Fast LCP - defer heavy initialization
@@ -52,11 +47,6 @@ export default function RealTime() {
   
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showGraph, setShowGraph] = useState(false);
-  const [showFrequencyDialog, setShowFrequencyDialog] = useState(false);
-  const [recordingFrequency, setRecordingFrequency] = useState(
-    frequencyOptionKeys[0].value
-  );
-  const [hasShownFrequencyDialog, setHasShownFrequencyDialog] = useState(false);
   const [currentEvents, setCurrentEvents] = useState<any[]>([]);
 
   const { t } = useTranslation();
@@ -97,7 +87,7 @@ export default function RealTime() {
   const { getEventsByMission } = useEvents();
   
   const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
-    recordingFrequency,
+    recordingFrequency: '10s', // Default frequency since FloatingRecordButton handles frequency selection
     isRecording: isRecording && initialized,
   });
   
@@ -191,12 +181,6 @@ export default function RealTime() {
 
   // Note: Events functionality temporarily simplified for recording service migration
 
-  // Reset frequency dialog flag when device disconnects
-  useEffect(() => {
-    if (!isConnected) {
-      setHasShownFrequencyDialog(false);
-    }
-  }, [isConnected]);
 
   // Clear recording-confirmed flag when recording stops
   useEffect(() => {
@@ -205,64 +189,6 @@ export default function RealTime() {
     }
   }, [isRecording]);
 
-  // Handle the complete recording workflow: BT → Frequency → Map
-  const handleStartRecordingWorkflow = async () => {
-    // Step 1: First ensure BT device is connected
-    if (!isConnected) {
-      try {
-        await requestDevice(); // This will open BT device selection
-        // After connection, the frequency dialog will show automatically via useEffect
-      } catch (error) {
-        toast({
-          title: t('notifications.error'),
-          description: 'Failed to connect to PMScan device',
-          variant: 'destructive',
-        });
-      }
-    } else {
-      // If already connected, show frequency dialog directly
-      setShowFrequencyDialog(true);
-    }
-  };
-
-  // Show frequency dialog automatically after BT connection
-  useEffect(() => {
-    if (isConnected && !hasShownFrequencyDialog && !isRecording) {
-      setShowFrequencyDialog(true);
-      setHasShownFrequencyDialog(true);
-    }
-  }, [isConnected, hasShownFrequencyDialog, isRecording]);
-
-  // Handle frequency dialog confirmation - this is when recording truly starts
-  const handleFrequencyConfirm = async () => {
-    try {
-      setShowFrequencyDialog(false);
-      
-      // Start recording with selected frequency
-      await startRecording(recordingFrequency);
-      
-      // Set flag that recording has been confirmed (this will trigger map loading)
-      localStorage.setItem('recording-confirmed', 'true');
-
-      toast({
-        title: t('notifications.recordingStarted'),
-        description: t('notifications.recordingStartedDesc', {
-          frequency: recordingFrequency,
-        }),
-      });
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`🎬 Recording started with frequency: ${recordingFrequency}`);
-      }
-    } catch (error) {
-      logger.error('Failed to start recording:', error);
-      toast({
-        title: t('notifications.error'),
-        description: t('notifications.recordingStartError'),
-        variant: 'destructive',
-      });
-    }
-  };
 
   // Critical path: Show only essential content first
   if (!initialized) {
@@ -309,7 +235,7 @@ export default function RealTime() {
           isConnected={isConnected}
           onConnect={requestDevice}
           onDisconnect={disconnect}
-          onStartRecording={handleStartRecordingWorkflow}
+          
           locationEnabled={locationEnabled}
           latestLocation={latestLocation}
         />
@@ -352,16 +278,6 @@ export default function RealTime() {
         />
       </Suspense>
 
-      {/* Recording Frequency Dialog - Lazy loaded */}
-      <Suspense fallback={null}>
-        <RecordingFrequencyDialog
-          open={showFrequencyDialog}
-          onOpenChange={setShowFrequencyDialog}
-          recordingFrequency={recordingFrequency}
-          onFrequencyChange={setRecordingFrequency}
-          onConfirm={handleFrequencyConfirm}
-        />
-      </Suspense>
 
       {/* Recording Debugger now in App.tsx */}
     </div>
