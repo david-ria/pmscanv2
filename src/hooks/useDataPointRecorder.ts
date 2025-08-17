@@ -96,6 +96,13 @@ export function useDataPointRecorder({
       }
 
       // Add to recording data
+      console.log('🚨📊 === ADDING DATA POINT TO STATE ===', {
+        pm25: entry.pmData.pm25,
+        timestamp: entry.timestamp.toISOString(),
+        hasLocation: !!entry.location,
+        context: entry.context,
+        automaticContext: entry.automaticContext
+      });
       addDataPointToState(entry);
       logger.rateLimitedDebug('dataRecorder.added', 10000, 'Data point added with weather data');
     },

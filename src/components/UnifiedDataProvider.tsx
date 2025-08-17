@@ -122,7 +122,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     updateMissionContext: recording.updateMissionContext,
     addDataPoint: recording.addDataPoint,
     clearRecordingData: recording.clearRecordingData,
-    saveMission: recording.saveMission,
+  saveMission: recording.saveMission,
   };
 
   return (

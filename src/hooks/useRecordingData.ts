@@ -261,6 +261,20 @@ export function useRecordingData() {
     ]
   );
 
+  // Debug logging for final state
+  console.log('🚨🔍 === useRecordingData final state ===', {
+    recordingDataLength: recordingData.length,
+    isRecording,
+    recordingFrequency,
+    missionContext,
+    currentMissionId,
+    recordingStartTime: recordingStartTime?.toISOString(),
+    sampleEntry: recordingData[0] ? {
+      pm25: recordingData[0].pmData.pm25,
+      timestamp: recordingData[0].timestamp.toISOString()
+    } : null
+  });
+
   return useMemo(
     () => ({
       recordingData,
