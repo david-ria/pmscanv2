@@ -6,7 +6,7 @@ This directory contains custom React hooks that encapsulate business logic and s
 
 ### Data Management
 - `useAirQualityData` - Fetches and manages air quality data
-- `useRecordingData` - Manages recording session data
+- `useRecordingService` - Unified recording system using singleton RecordingService
 - `useSensorData` - Handles PM sensor data collection
 
 ### User Interface

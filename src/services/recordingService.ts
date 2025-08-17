@@ -154,7 +154,8 @@ class RecordingService {
 
     this.notify();
     
-    logger.debug('📊 Data point added. Total entries:', this.state.recordingData.length);
+    console.log('🚨✅ === UNIFIED RECORDING SYSTEM ===');
+    logger.debug('📊 Data point added to UNIFIED RecordingService. Total entries:', this.state.recordingData.length);
   }
 
   updateMissionContext(location: string, activity: string): void {

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
-import { useRecordingData } from '@/hooks/useRecordingData';
+import { useRecordingService } from '@/hooks/useRecordingService';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
@@ -56,7 +56,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   
   // Core data sources
   const bluetooth = usePMScanBluetooth();
-  const recording = useRecordingData();
+  const recording = useRecordingService(); // Single source of truth
   const { latestLocation, locationEnabled, requestLocationPermission } = useGPS(true, true, recording.recordingFrequency);
 
   // Enhanced state change tracking
@@ -122,7 +122,10 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     updateMissionContext: recording.updateMissionContext,
     addDataPoint: recording.addDataPoint,
     clearRecordingData: recording.clearRecordingData,
-  saveMission: recording.saveMission,
+    saveMission: async (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: any[]) => {
+      // TODO: Implement saveMission in RecordingService or use legacy system  
+      throw new Error('saveMission not yet implemented in unified RecordingService');
+    },
   };
 
   return (

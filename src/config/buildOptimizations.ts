@@ -62,7 +62,7 @@ export const BundleOptimizations = {
     'react',
     'react-dom',
     '@/contexts/AuthContext',
-    '@/contexts/RecordingContext',
+    // Removed RecordingContext - now using unified RecordingService
   ],
 
   // Lazy load candidates (low priority)
