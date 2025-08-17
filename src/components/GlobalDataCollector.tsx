@@ -3,6 +3,7 @@ import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useStorageSettings } from '@/hooks/useStorage';
 import { STORAGE_KEYS } from '@/services/storageService';
+import { useLocationEnrichmentIntegration } from '@/hooks/useLocationEnrichmentIntegration';
 
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
@@ -57,6 +58,9 @@ export function GlobalDataCollector() {
     recordingFrequency,
     isRecording: isRecording && autoContextSettings.enabled,
   });
+
+  // Location enrichment integration
+  const { enrichLocation } = useLocationEnrichmentIntegration();
 
   // Prevent duplicate data points and track frequency
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
@@ -170,11 +174,52 @@ export function GlobalDataCollector() {
             isMoving = speedData.isMoving;
           }
           
+          // Get enriched location if available
+          let enrichedLocationName = '';
+          console.log('🔍 Location enrichment check:', {
+            hasEnrichFunction: !!enrichLocation,
+            hasLocation: !!(latestLocation?.latitude && latestLocation?.longitude),
+            location: latestLocation ? {
+              lat: latestLocation.latitude,
+              lng: latestLocation.longitude
+            } : null
+          });
+          
+          if (enrichLocation && latestLocation?.latitude && latestLocation?.longitude) {
+            try {
+              console.log('🌍 Enriching location during recording:', {
+                lat: latestLocation.latitude,
+                lng: latestLocation.longitude,
+                timestamp: currentData.timestamp.toISOString()
+              });
+              
+              const enrichmentResult = await enrichLocation(
+                latestLocation.latitude,
+                latestLocation.longitude,
+                currentData.timestamp.toISOString()
+              );
+              
+              console.log('📍 Enrichment result:', enrichmentResult);
+              
+              if (enrichmentResult?.enhanced_context) {
+                enrichedLocationName = enrichmentResult.enhanced_context;
+                console.log('✅ Location enriched successfully:', enrichedLocationName);
+              } else {
+                console.log('⚠️ No enhanced context in enrichment result');
+              }
+            } catch (error) {
+              console.warn('⚠️ Failed to enrich location during recording:', error);
+            }
+          } else {
+            console.log('⏭️ Skipping location enrichment - missing requirements');
+          }
+
           const automaticContext = await updateContextIfNeeded(
             currentData,
             latestLocation || undefined,
             speed,
-            isMoving
+            isMoving,
+            enrichedLocationName
           );
 
           // Use PMScan data timestamp (already standardized) - no need to overwrite
@@ -227,6 +272,7 @@ export function GlobalDataCollector() {
     recordingFrequency,
     getWeatherForMeasurement,
     weatherLoggingEnabled,
+    enrichLocation,
   ]);
 
   // Clear location history when recording starts for fresh speed calculations

@@ -2,6 +2,7 @@ import { useRef, useCallback, useState } from 'react';
 import { useAutoContext } from './useAutoContext';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
+import { formatAutomaticContext } from '@/utils/contextFormatter';
 
 interface AutoContextSamplingProps {
   recordingFrequency: string;
@@ -20,7 +21,8 @@ export function useAutoContextSampling({
     pmData?: PMScanData,
     location?: LocationData,
     speed: number = 0,
-    isMoving: boolean = false
+    isMoving: boolean = false,
+    enrichedLocationName?: string
   ): Promise<string> => {
     if (!autoContextEnabled) {
       return '';
@@ -32,18 +34,27 @@ export function useAutoContextSampling({
     // Update last context update time
     lastContextUpdateTime.current = new Date();
 
-    // Determine context
-    const automaticContext = await determineContext({
+    // Get rule-based context first
+    const ruleBasedContext = await determineContext({
       pmData,
       location,
       speed,
       isMoving,
     });
 
-    if (automaticContext) {
-      updateLatestContext(automaticContext);
-      setCurrentAutoContext(automaticContext);
-      return automaticContext;
+    // Format the context using enriched location name and rule-based context
+    const formattedContext = formatAutomaticContext(enrichedLocationName, ruleBasedContext);
+    
+    if (formattedContext) {
+      if (enrichedLocationName) {
+        console.log('🏷️ Using enriched location context:', formattedContext);
+      } else {
+        console.log('🔄 Using rule-based context:', formattedContext);
+      }
+      
+      updateLatestContext(formattedContext);
+      setCurrentAutoContext(formattedContext);
+      return formattedContext;
     }
     
     return currentAutoContext;
