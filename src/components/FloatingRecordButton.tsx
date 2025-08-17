@@ -239,7 +239,7 @@ export function FloatingRecordButton({
         {isRecording ? (
           <Square className="h-6 w-6" />
         ) : (
-          <div className="w-3 h-3 bg-white rounded-full" />
+          <div className="w-3 h-3 bg-background rounded-full" />
         )}
       </button>
 
