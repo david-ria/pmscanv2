@@ -33,7 +33,8 @@ export function useDataPointRecorder({
       pmData: PMScanData,
       location?: LocationData,
       context?: { location: string; activity: string },
-      automaticContext?: string
+      automaticContext?: string,
+      enrichedLocation?: string // NEW parameter
     ) => {
       // Allow direct usage for adding data points
       if (!isRecording) {
@@ -77,6 +78,7 @@ export function useDataPointRecorder({
         location,
         context,
         automaticContext,
+        enrichedLocation, // NEW: Store location enrichment separately
         timestamp: currentTime, // Use single, consistent timestamp
         weatherDataId,
       };
@@ -87,6 +89,7 @@ export function useDataPointRecorder({
         location: context?.location,
         activity: context?.activity,
         automaticContext,
+        enrichedLocation, // NEW: Debug enriched location
         timestamp: toISOString(currentTime)
       });
 

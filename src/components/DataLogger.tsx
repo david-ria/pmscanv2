@@ -72,7 +72,8 @@ export function DataLogger({
           pmData: entry.pmData,
           location: entry.location,
           missionContext: entry.context,
-          automaticContext: entry.automaticContext,
+          automaticContext: entry.automaticContext, // Autocontext (sensors + heuristics)
+          enrichedLocation: entry.enrichedLocation, // NEW: Location enrichment from GPS
         };
       }).filter(Boolean)  // Remove null entries
     : [];
@@ -250,11 +251,16 @@ export function DataLogger({
                           .join(', ')}
                       </div>
                     )}
-                   {entry.automaticContext && (
-                    <div className="text-xs pl-2 text-blue-400">
-                      Auto: {entry.automaticContext}
-                    </div>
-                  )}
+                    {entry.automaticContext && (
+                     <div className="text-xs pl-2 text-blue-400">
+                       Auto: {entry.automaticContext}
+                     </div>
+                   )}
+                   {entry.enrichedLocation && (
+                     <div className="text-xs pl-2 text-green-400">
+                       Location: {entry.enrichedLocation}
+                     </div>
+                   )}
                 </div>
               ))}
             </div>

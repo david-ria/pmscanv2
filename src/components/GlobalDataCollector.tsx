@@ -259,7 +259,8 @@ export function GlobalDataCollector() {
             currentData, // Use original PMScan data with consistent timestamp
             latestLocation || undefined,
             { location: selectedLocation, activity: selectedActivity },
-            automaticContext
+            automaticContext,
+            enrichedLocationName // NEW: Pass enriched location separately
           );
         };
 
