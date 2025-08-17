@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingService } from '@/hooks/useRecordingService';
+import { useMissionSaver } from '@/hooks/useMissionSaver';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
@@ -58,6 +59,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   const bluetooth = usePMScanBluetooth();
   const recording = useRecordingService(); // Single source of truth
   const { latestLocation, locationEnabled, requestLocationPermission } = useGPS(true, true, recording.recordingFrequency);
+  const { saveMission: missionSaverFunction } = useMissionSaver();
 
   // Enhanced state change tracking
   useEffect(() => {
@@ -133,11 +135,8 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     addDataPoint: recording.addDataPoint,
     clearRecordingData: recording.clearRecordingData,
     saveMission: async (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: any[]) => {
-      // Use existing working useMissionSaver instead of duplicating functionality
-      const { useMissionSaver } = await import('@/hooks/useMissionSaver');
-      const missionSaver = useMissionSaver();
       const dataToSave = explicitRecordingData || recording.recordingData;
-      return missionSaver.saveMission(
+      return missionSaverFunction(
         dataToSave,
         recording.recordingStartTime,
         missionName,
