@@ -62,6 +62,11 @@ export function GlobalDataCollector() {
   // Location enrichment integration
   const { enrichLocation } = useLocationEnrichmentIntegration();
 
+  console.log('🔧 GlobalDataCollector - Location enrichment state:', {
+    hasEnrichLocation: !!enrichLocation,
+    enrichLocationType: typeof enrichLocation
+  });
+
   // Prevent duplicate data points and track frequency
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
   const lastRecordedTimeRef = useRef<Date | null>(null);
