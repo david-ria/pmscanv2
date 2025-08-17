@@ -48,24 +48,6 @@ export function useRecordingService(): RecordingState & RecordingActions {
     recordingService.clearRecordingData();
   }, []);
 
-  const saveMission = useCallback(async (
-    missionName: string,
-    locationContext?: string,
-    activityContext?: string,
-    recordingFrequency?: string,
-    shared?: boolean,
-    explicitRecordingData?: any[]
-  ) => {
-    return recordingService.saveMission(
-      missionName,
-      locationContext,
-      activityContext,
-      recordingFrequency,
-      shared,
-      explicitRecordingData
-    );
-  }, []);
-
   return {
     ...state,
     startRecording,
@@ -73,6 +55,6 @@ export function useRecordingService(): RecordingState & RecordingActions {
     addDataPoint,
     updateMissionContext,
     clearRecordingData,
-    saveMission, // Add saveMission to the returned interface
+    // No saveMission - will be handled at UnifiedDataProvider level using existing useMissionSaver
   };
 }

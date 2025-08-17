@@ -25,14 +25,7 @@ export interface RecordingActions {
   ) => void;
   updateMissionContext: (location: string, activity: string) => void;
   clearRecordingData: () => void;
-  saveMission: (
-    missionName: string,
-    locationContext?: string,
-    activityContext?: string,
-    recordingFrequency?: string,
-    shared?: boolean,
-    explicitRecordingData?: any[]
-  ) => Promise<any>; // Add saveMission method
+  // Removed saveMission - will use existing useMissionSaver instead
 }
 
 class RecordingService {
@@ -222,105 +215,6 @@ class RecordingService {
       pm25: totals.pm25 / count,
       pm10: totals.pm10 / count,
     };
-  }
-
-  async saveMission(
-    missionName: string,
-    locationContext?: string,
-    activityContext?: string,
-    recordingFrequency?: string,
-    shared?: boolean,
-    explicitRecordingData?: any[]
-  ): Promise<any> {
-    console.log('🚨💾 === RECORDING SERVICE SAVE MISSION ===');
-    console.log('💾 RecordingService.saveMission called with:', {
-      missionName,
-      explicitDataLength: explicitRecordingData?.length,
-      stateDataLength: this.state.recordingData.length,
-      hasRecordingStartTime: !!this.state.recordingStartTime,
-      recordingStartTime: this.state.recordingStartTime?.toISOString(),
-      shared
-    });
-
-    // Use explicit data first, then current state
-    const dataToSave = explicitRecordingData || this.state.recordingData;
-    const startTimeToUse = this.state.recordingStartTime;
-
-    if (!startTimeToUse || dataToSave.length === 0) {
-      console.error('🚨❌ === MISSION SAVE FAILED - NO DATA ===');
-      console.error('❌ Cannot save mission: missing data or start time:', {
-        hasStartTime: !!startTimeToUse,
-        dataLength: dataToSave.length
-      });
-      throw new Error('No recording data available to save');
-    }
-
-    try {
-      // Calculate mission statistics
-      const endTime = new Date();
-      const durationMinutes = Math.max(1, Math.round((endTime.getTime() - startTimeToUse.getTime()) / (1000 * 60)));
-      
-      // Calculate averages and max values
-      const pmValues = dataToSave.map(entry => entry.pmData);
-      const avgPm1 = pmValues.reduce((sum, pm) => sum + pm.pm1, 0) / pmValues.length;
-      const avgPm25 = pmValues.reduce((sum, pm) => sum + pm.pm25, 0) / pmValues.length;
-      const avgPm10 = pmValues.reduce((sum, pm) => sum + pm.pm10, 0) / pmValues.length;
-      const maxPm25 = Math.max(...pmValues.map(pm => pm.pm25));
-
-      // Create measurements data
-      const measurements = dataToSave.map((entry, index) => ({
-        id: `${entry.pmData.timestamp.getTime()}-${index}`,
-        timestamp: entry.timestamp,
-        pm1: entry.pmData.pm1,
-        pm25: entry.pmData.pm25,
-        pm10: entry.pmData.pm10,
-        temperature: entry.pmData.temp,
-        humidity: entry.pmData.humidity,
-        latitude: entry.location?.latitude,
-        longitude: entry.location?.longitude,
-        accuracy: entry.location?.accuracy,
-        locationContext: entry.context?.location || locationContext || '',
-        activityContext: entry.context?.activity || activityContext || '',
-        automaticContext: entry.automaticContext,
-        enrichedLocation: entry.enrichedLocation
-      }));
-
-      // Create mission object compatible with existing system
-      const missionData = {
-        id: crypto.randomUUID(),
-        name: missionName,
-        startTime: startTimeToUse,
-        endTime,
-        durationMinutes,
-        avgPm1,
-        avgPm25,
-        avgPm10,
-        maxPm25,
-        measurementsCount: dataToSave.length,
-        locationContext,
-        activityContext,
-        recordingFrequency: recordingFrequency || '10s',
-        shared: shared || false,
-        measurements,
-        synced: false
-      };
-
-      // Export mission to CSV using existing functionality
-      const { exportMissionToCSV } = await import('@/lib/csvExport');
-      await exportMissionToCSV(missionData);
-
-      console.log('🚨✅ === MISSION SAVED SUCCESSFULLY ===');
-      console.log('✅ Mission exported to CSV, now clearing recording data');
-
-      // Clear recording data after successful save
-      this.clearRecordingData();
-      console.log('🗑️ Recording data cleared');
-
-      return missionData;
-    } catch (error) {
-      console.error('❌ Error saving mission:', error);
-      throw error;
-    }
   }
 
   exportData(): RecordingEntry[] {

@@ -132,7 +132,21 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     updateMissionContext: recording.updateMissionContext,
     addDataPoint: recording.addDataPoint,
     clearRecordingData: recording.clearRecordingData,
-    saveMission: recording.saveMission, // Now properly implemented in RecordingService
+    saveMission: async (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: any[]) => {
+      // Use existing working useMissionSaver instead of duplicating functionality
+      const { useMissionSaver } = await import('@/hooks/useMissionSaver');
+      const missionSaver = useMissionSaver();
+      const dataToSave = explicitRecordingData || recording.recordingData;
+      return missionSaver.saveMission(
+        dataToSave,
+        recording.recordingStartTime,
+        missionName,
+        locationContext,
+        activityContext,
+        recordingFrequency,
+        shared
+      );
+    },
   };
 
   return (
