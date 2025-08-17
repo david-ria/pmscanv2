@@ -212,6 +212,13 @@ export function GlobalDataCollector() {
               if (enrichmentResult?.enhanced_context) {
                 enrichedLocationName = enrichmentResult.enhanced_context;
                 console.log('✅ Location enriched successfully:', enrichedLocationName);
+                console.log('🌍 === UNIFIED ENRICHMENT RESULT ===', {
+                  enhanced_context: enrichedLocationName,
+                  display_name: enrichmentResult.display_name,
+                  source: enrichmentResult.source,
+                  confidence: enrichmentResult.confidence || 'N/A',
+                  timestamp: currentData.timestamp.toISOString()
+                });
               } else {
                 console.log('⚠️ No enhanced context in enrichment result');
               }
