@@ -193,7 +193,7 @@ export function GlobalDataCollector() {
             willProceedToEnrichment: shouldRecord && !!enrichLocation && !!(latestLocation?.latitude && latestLocation?.longitude)
           });
           
-          if (enrichLocation && latestLocation?.latitude && latestLocation?.longitude) {
+          if (shouldRecord && enrichLocation && latestLocation?.latitude && latestLocation?.longitude) {
             try {
               console.log('🌍 Enriching location during recording:', {
                 lat: latestLocation.latitude,
