@@ -12,6 +12,7 @@ import {
   MapPin,
   Bluetooth,
   Cloud,
+  MapPin as MapPinIcon,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +25,7 @@ import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordin
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useGPS } from '@/hooks/useGPS';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
+import { useLocationEnrichmentSettings } from '@/hooks/useLocationEnrichmentSettings';
 import { LucideIcon } from 'lucide-react';
 
 interface MenuSection {
@@ -64,6 +66,9 @@ export function useMenuSections({
 
   // Get weather logging state
   const { isEnabled: weatherLoggingEnabled, setEnabled: setWeatherLoggingEnabled } = useWeatherLogging();
+  
+  // Get location enrichment settings
+  const { isEnabled: locationEnrichmentEnabled, toggleEnabled: toggleLocationEnrichment } = useLocationEnrichmentSettings();
 
   // Get PMScan and GPS status
   const {
@@ -220,16 +225,26 @@ export function useMenuSections({
             }
            },
          },
-         {
-           icon: Cloud,
-           label: t('sensors.weather'),
-           badge: null,
-           toggle: {
-             checked: weatherLoggingEnabled,
-             onCheckedChange: setWeatherLoggingEnabled,
-           },
-         },
-      ],
-    },
-  ];
+          {
+            icon: Cloud,
+            label: t('sensors.weather'),
+            badge: null,
+            toggle: {
+              checked: weatherLoggingEnabled,
+              onCheckedChange: setWeatherLoggingEnabled,
+            },
+          },
+          {
+            icon: MapPinIcon,
+            label: 'Location Enrichment',
+            badge: null,
+            toggle: {
+              checked: locationEnrichmentEnabled,
+              onCheckedChange: toggleLocationEnrichment,
+            },
+            info: 'Enhance location context using OpenStreetMap reverse geocoding to automatically detect places like restaurants, schools, etc.',
+          },
+       ],
+     },
+   ];
 }
