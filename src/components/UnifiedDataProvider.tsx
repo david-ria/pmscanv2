@@ -132,10 +132,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     updateMissionContext: recording.updateMissionContext,
     addDataPoint: recording.addDataPoint,
     clearRecordingData: recording.clearRecordingData,
-    saveMission: async (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: any[]) => {
-      // TODO: Implement saveMission in RecordingService or use legacy system  
-      throw new Error('saveMission not yet implemented in unified RecordingService');
-    },
+    saveMission: recording.saveMission, // Now properly implemented in RecordingService
   };
 
   return (
