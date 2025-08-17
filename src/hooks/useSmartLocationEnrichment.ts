@@ -319,6 +319,14 @@ export function useSmartLocationEnrichment() {
     }
   }, [recentLocations, updateMovementPatterns]);
 
+  console.log('🔧 useSmartLocationEnrichment state:', {
+    hasEnrichLocation: !!enrichLocation,
+    loading,
+    error,
+    cacheSize: cache.length,
+    queueSize: enrichmentQueue.current.length
+  });
+
   return {
     enrichLocation,
     preEnrichFrequentLocations,

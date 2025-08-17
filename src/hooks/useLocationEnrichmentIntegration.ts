@@ -11,6 +11,16 @@ export function useLocationEnrichmentIntegration() {
   const { enrichLocation, preEnrichFrequentLocations } = useSmartLocationEnrichment();
   const { latestLocation } = useGPS(true, true);
 
+  console.log('🔧 useLocationEnrichmentIntegration state:', {
+    isEnabled,
+    hasEnrichFunction: !!enrichLocation,
+    hasLocation: !!latestLocation,
+    location: latestLocation ? {
+      lat: latestLocation.latitude,
+      lng: latestLocation.longitude
+    } : null
+  });
+
   // Auto-enrich current location when enabled
   useEffect(() => {
     if (isEnabled && latestLocation) {
@@ -36,6 +46,12 @@ export function useLocationEnrichmentIntegration() {
 
     return () => clearInterval(interval);
   }, [isEnabled, preEnrichFrequentLocations]);
+
+  console.log('🔧 useLocationEnrichmentIntegration returning:', {
+    hasEnrichFunction: !!enrichLocation,
+    enrichLocation: isEnabled ? enrichLocation : null,
+    isEnabled
+  });
 
   return {
     enrichLocation: isEnabled ? enrichLocation : null
