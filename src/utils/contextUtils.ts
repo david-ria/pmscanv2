@@ -113,6 +113,37 @@ export function contextFromDbFormat(dbContext: {
 }
 
 /**
+ * Enhance context with location enrichment data
+ */
+export function enhanceContextWithLocation(
+  context: StandardContext,
+  enhancedLocation?: string
+): StandardContext {
+  if (!enhancedLocation) {
+    return context;
+  }
+
+  // If we don't have a location context, use the enhanced one
+  if (!context.location) {
+    return {
+      ...context,
+      location: enhancedLocation
+    };
+  }
+
+  // If we have a generic context, enhance it with more specific data
+  if (context.location === 'Indoor' || context.location === 'Outdoor') {
+    return {
+      ...context,
+      location: enhancedLocation
+    };
+  }
+
+  // Keep existing specific context
+  return context;
+}
+
+/**
  * Debug context flow for troubleshooting
  */
 export function debugContext(
