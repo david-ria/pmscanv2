@@ -2,7 +2,6 @@ import { WifiOff, Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MapboxMap } from '@/components/MapboxMap';
 import { PMLineGraph } from '@/components/PMLineGraph';
-import { FloatingRecordButton } from '@/components/FloatingRecordButton';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { PMScanDevice } from '@/lib/pmscan/types';
@@ -129,23 +128,6 @@ export function MapGraphToggle({
             )}
           </>
         )}
-
-        {/* Floating Record Button - Always visible */}
-        <FloatingRecordButton
-          device={device}
-          isConnected={isConnected}
-          connectionStatus={{
-            connected: isConnected,
-            connecting: false,
-            error: null,
-          }}
-          locationEnabled={locationEnabled}
-          latestLocation={latestLocation}
-          onConnect={onConnect}
-          onDisconnect={onDisconnect}
-          onRequestLocationPermission={onRequestLocationPermission}
-          className="absolute bottom-4 right-4 z-10"
-        />
       </div>
     </div>
   );

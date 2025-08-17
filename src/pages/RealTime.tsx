@@ -19,6 +19,7 @@ import { useEvents } from '@/hooks/useEvents';
 
 // Import lightweight placeholder for fast LCP
 import { MapPlaceholder } from '@/components/RealTime/MapPlaceholder';
+import { FloatingRecordButton } from '@/components/FloatingRecordButton';
 // Lazy load heavy map component only after frequency selection
 const MapGraphToggle = lazy(() => 
   import('@/components/RealTime/MapGraphToggle').then(module => ({ 
@@ -206,40 +207,59 @@ export default function RealTime() {
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-      {/* Map/Graph Section - Show MapGraphToggle when recording is active */}
-      {isRecording || localStorage.getItem('recording-confirmed') === 'true' ? (
-        <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
-          <MapGraphToggle
+      {/* Map/Graph Section */}
+      <div className="relative">
+        {isRecording || localStorage.getItem('recording-confirmed') === 'true' ? (
+          <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
+            <MapGraphToggle
+              showGraph={showGraph}
+              onToggleView={setShowGraph}
+              isOnline={isOnline}
+              latestLocation={latestLocation}
+              currentData={currentData}
+              recordingData={recordingData}
+              events={currentEvents}
+              isRecording={isRecording}
+              device={device}
+              isConnected={isConnected}
+              onConnect={requestDevice}
+              onDisconnect={disconnect}
+              onRequestLocationPermission={unifiedData.requestLocationPermission}
+              locationEnabled={locationEnabled}
+            />
+          </Suspense>
+        ) : (
+          <MapPlaceholder
             showGraph={showGraph}
             onToggleView={setShowGraph}
             isOnline={isOnline}
-            latestLocation={latestLocation}
-            currentData={currentData}
-            recordingData={recordingData}
-            events={currentEvents}
-            isRecording={isRecording}
             device={device}
             isConnected={isConnected}
             onConnect={requestDevice}
             onDisconnect={disconnect}
-            onRequestLocationPermission={unifiedData.requestLocationPermission}
+            
             locationEnabled={locationEnabled}
+            latestLocation={latestLocation}
           />
-        </Suspense>
-      ) : (
-        <MapPlaceholder
-          showGraph={showGraph}
-          onToggleView={setShowGraph}
-          isOnline={isOnline}
+        )}
+
+        {/* FloatingRecordButton - Always visible */}
+        <FloatingRecordButton
           device={device}
           isConnected={isConnected}
-          onConnect={requestDevice}
-          onDisconnect={disconnect}
-          
+          connectionStatus={{
+            connected: isConnected,
+            connecting: false,
+            error: null,
+          }}
           locationEnabled={locationEnabled}
           latestLocation={latestLocation}
+          onConnect={requestDevice}
+          onDisconnect={disconnect}
+          onRequestLocationPermission={unifiedData.requestLocationPermission}
+          className="absolute bottom-4 right-4 z-10"
         />
-      )}
+      </div>
 
       {/* Air Quality Cards - Critical for LCP */}
       <AirQualityCards currentData={currentData} isConnected={isConnected} />
