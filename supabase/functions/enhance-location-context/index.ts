@@ -97,37 +97,44 @@ serve(async (req) => {
   }
 
   try {
-    const { latitude, longitude, timestamp } = await req.json();
+    const { latitude, longitude, timestamp, useSmartCaching } = await req.json();
 
     if (!latitude || !longitude) {
       throw new Error('Latitude and longitude are required');
     }
 
-    console.log(`Enhancing location context for: ${latitude}, ${longitude}`);
+    console.log(`Enhancing location context for: ${latitude}, ${longitude} (smart: ${useSmartCaching})`);
 
-    // Check for existing data within 1 hour and ~100m radius
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const latRange = 0.001; // ~100m
-    const lonRange = 0.001; // ~100m
+    // Smart caching with variable radius and timeframe
+    const timeRange = useSmartCaching ? 2 * 60 * 60 * 1000 : 60 * 60 * 1000; // 2h vs 1h
+    const cacheThreshold = new Date(Date.now() - timeRange).toISOString();
+    const spatialRange = useSmartCaching ? 0.002 : 0.001; // ~200m vs ~100m
 
     const { data: existingData, error: fetchError } = await supabase
       .from('location_enrichment_data')
       .select('*')
-      .gte('timestamp', oneHourAgo)
-      .gte('latitude', latitude - latRange)
-      .lte('latitude', latitude + latRange)
-      .gte('longitude', longitude - lonRange)
-      .lte('longitude', longitude + lonRange)
+      .gte('timestamp', cacheThreshold)
+      .gte('latitude', latitude - spatialRange)
+      .lte('latitude', latitude + spatialRange)
+      .gte('longitude', longitude - spatialRange)
+      .lte('longitude', longitude + spatialRange)
       .order('timestamp', { ascending: false })
-      .limit(1);
+      .limit(useSmartCaching ? 3 : 1);
 
     if (fetchError) {
       console.error('Error fetching existing location data:', fetchError);
     }
 
     if (existingData && existingData.length > 0) {
-      console.log('Using cached location enrichment data');
-      const cached = existingData[0];
+      console.log(`Using cached location enrichment data (${existingData.length} entries found)`);
+      
+      // For smart caching, choose best quality entry
+      let cached = existingData[0];
+      if (useSmartCaching && existingData.length > 1) {
+        // Prefer entries with more specific amenity/class data
+        cached = existingData.find(entry => entry.amenity || entry.place_class) || existingData[0];
+      }
+      
       const enhancedContext = mapNominatimToContext({
         display_name: cached.display_name || '',
         class: cached.place_class || undefined,
@@ -140,6 +147,7 @@ serve(async (req) => {
         enhanced_context: enhancedContext,
         display_name: cached.display_name,
         source: 'cached',
+        cache_quality: cached.amenity || cached.place_class ? 'high' : 'medium',
         raw_data: cached.raw_nominatim_data
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -189,6 +197,7 @@ serve(async (req) => {
       enhanced_context: enhancedContext,
       display_name: nominatimData.display_name,
       source: 'nominatim',
+      cache_quality: nominatimData.amenity || nominatimData.class ? 'high' : 'medium',
       raw_data: nominatimData
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
