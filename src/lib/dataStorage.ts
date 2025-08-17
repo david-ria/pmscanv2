@@ -54,6 +54,7 @@ export interface MeasurementData {
   locationContext?: string;
   activityContext?: string;
   automaticContext?: string;
+  enrichedLocation?: string;
   // weatherDataId removed - now at mission level
 }
 

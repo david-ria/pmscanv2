@@ -185,6 +185,7 @@ export async function syncPendingMissions(): Promise<void> {
         location_context: m.locationContext,
         activity_context: m.activityContext,
         automatic_context: m.automaticContext,
+        enriched_location: m.enrichedLocation,
         // weather_data_id removed - now at mission level
       }));
 

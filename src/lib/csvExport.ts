@@ -40,6 +40,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
     'Location Context',
     'Activity Context',
     'Auto Context',
+    'Enriched Location (Nominatim)',
     'Event Type',
     'Event Comment',
   ];
@@ -86,6 +87,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
       m.locationContext || mission.locationContext || '',
       m.activityContext || mission.activityContext || '',
       m.automaticContext || '',
+      m.enrichedLocation || '',
       assignedEvent?.event_type || '',
       assignedEvent?.comment || '',
     ];
