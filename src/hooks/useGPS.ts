@@ -62,6 +62,13 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
         timestamp: new Date(),
       };
 
+      console.log('🧭 === GPS LOCATION UPDATED ===', {
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        accuracy: locationData.accuracy,
+        timestamp: locationData.timestamp.toISOString()
+      });
+
       setLatestLocation(locationData);
       setError(null);
       setLocationEnabled(true);

@@ -94,6 +94,16 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   }, [bluetooth.currentData, bluetooth.isConnected, recording.isRecording, recording.recordingData.length, latestLocation, recording.addDataPoint]);
 
   // Unified state object
+  console.log('🔄 UNIFIED DATA - GPS STATE:', {
+    hasLatestLocation: !!latestLocation,
+    locationEnabled,
+    location: latestLocation ? {
+      lat: latestLocation.latitude,
+      lng: latestLocation.longitude,
+      accuracy: latestLocation.accuracy
+    } : null
+  });
+
   const unifiedState: UnifiedDataState = {
     // PMScan data
     currentData: bluetooth.currentData,
