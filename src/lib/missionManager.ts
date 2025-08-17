@@ -19,6 +19,7 @@ export function createMissionFromRecording(
       activity: string;
     };
     automaticContext?: string;
+    enrichedLocation?: string;
     weatherDataId?: string;
   }>,
   missionName: string,
@@ -49,6 +50,7 @@ export function createMissionFromRecording(
       locationContext: m.context?.location,
       activityContext: m.context?.activity,
       automaticContext: m.automaticContext,
+      enrichedLocation: m.enrichedLocation,
     };
   });
 
@@ -134,16 +136,27 @@ export function saveMissionLocally(mission: MissionData): void {
 function savePendingEventsForMission(missionId: string): void {
   try {
     const pendingEvents = JSON.parse(localStorage.getItem('pending_events') || '[]');
-    const eventsForMission = pendingEvents.filter((event: any) => event.mission_id === missionId);
+    // Get events for current recording session (both temporary ID and actual mission ID)
+    const eventsForMission = pendingEvents.filter((event: any) => 
+      event.mission_id === missionId || event.mission_id === 'current-recording'
+    );
     
     if (eventsForMission.length > 0) {
+      // Update mission_id for events that were using temporary ID
+      const updatedEvents = eventsForMission.map((event: any) => ({
+        ...event,
+        mission_id: missionId // Replace temporary ID with actual mission ID
+      }));
+      
       // Store events for this mission separately
       const existingMissionEvents = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
-      const updatedEvents = [...existingMissionEvents, ...eventsForMission];
-      localStorage.setItem(`mission_events_${missionId}`, JSON.stringify(updatedEvents));
+      const allEvents = [...existingMissionEvents, ...updatedEvents];
+      localStorage.setItem(`mission_events_${missionId}`, JSON.stringify(allEvents));
       
-      // Remove these events from pending
-      const remainingPending = pendingEvents.filter((event: any) => event.mission_id !== missionId);
+      // Remove these events from pending (both temporary and actual mission IDs)
+      const remainingPending = pendingEvents.filter((event: any) => 
+        event.mission_id !== missionId && event.mission_id !== 'current-recording'
+      );
       localStorage.setItem('pending_events', JSON.stringify(remainingPending));
       
       console.log(`Saved ${eventsForMission.length} events for mission ${missionId}`);
