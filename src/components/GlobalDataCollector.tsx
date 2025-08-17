@@ -187,7 +187,9 @@ export function GlobalDataCollector() {
             location: latestLocation ? {
               lat: latestLocation.latitude,
               lng: latestLocation.longitude
-            } : null
+            } : null,
+            shouldRecord,
+            willProceedToEnrichment: shouldRecord && !!enrichLocation && !!(latestLocation?.latitude && latestLocation?.longitude)
           });
           
           if (enrichLocation && latestLocation?.latitude && latestLocation?.longitude) {
