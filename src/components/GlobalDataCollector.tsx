@@ -146,7 +146,8 @@ export function GlobalDataCollector() {
         pm25: currentData.pm25
       });
 
-      if (shouldRecord) {
+        if (shouldRecord) {
+          console.log('✅ shouldRecord is TRUE - proceeding with enrichment check');
         // We have data, that's what matters - connection status can be unreliable
         // Prevent duplicate data points by checking if this is actually new data
         const currentTimestamp = currentData.timestamp.getTime();
