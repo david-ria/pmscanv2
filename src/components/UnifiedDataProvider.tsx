@@ -57,7 +57,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   // Core data sources
   const bluetooth = usePMScanBluetooth();
   const recording = useRecordingData();
-  const { latestLocation, locationEnabled, requestLocationPermission } = useGPS(true, false, recording.recordingFrequency);
+  const { latestLocation, locationEnabled, requestLocationPermission } = useGPS(true, true, recording.recordingFrequency);
 
   // Enhanced state change tracking
   useEffect(() => {
