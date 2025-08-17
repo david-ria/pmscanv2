@@ -209,18 +209,19 @@ export function GlobalDataCollector() {
               
               console.log('📍 Enrichment result:', enrichmentResult);
               
-              if (enrichmentResult?.enhanced_context) {
-                enrichedLocationName = enrichmentResult.enhanced_context;
+              if (enrichmentResult?.display_name) {
+                // Use display_name for actual location (street address)
+                enrichedLocationName = enrichmentResult.display_name;
                 console.log('✅ Location enriched successfully:', enrichedLocationName);
                 console.log('🌍 === UNIFIED ENRICHMENT RESULT ===', {
-                  enhanced_context: enrichedLocationName,
-                  display_name: enrichmentResult.display_name,
+                  display_name: enrichmentResult.display_name, // Street address from Nominatim
+                  enhanced_context: enrichmentResult.enhanced_context, // Activity context (separate)
                   source: enrichmentResult.source,
                   confidence: enrichmentResult.confidence || 'N/A',
                   timestamp: currentData.timestamp.toISOString()
                 });
               } else {
-                console.log('⚠️ No enhanced context in enrichment result');
+                console.log('⚠️ No display_name in enrichment result');
               }
             } catch (error) {
               console.warn('⚠️ Failed to enrich location during recording:', error);
