@@ -66,10 +66,8 @@ export function useRecordingData() {
 
   const dataPointRecorder = useDataPointRecorder({
     isRecording,
-    recordingFrequency,
     storeBackgroundData,
     addDataPointToState,
-    updateLastRecordedTime,
   });
 
   const { addDataPoint } = dataPointRecorder;

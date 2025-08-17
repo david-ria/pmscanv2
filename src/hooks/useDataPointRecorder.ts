@@ -1,8 +1,7 @@
-import { useRef, useCallback } from 'react';
+import { useCallback } from 'react';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { RecordingEntry } from '@/types/recording';
-import { parseFrequencyToMs, shouldRecordData } from '@/lib/recordingUtils';
 import { getBackgroundRecording } from '@/lib/pmscan/globalConnectionManager';
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
@@ -12,7 +11,6 @@ import { createTimestamp, toISOString } from '@/utils/timeFormat';
 
 interface UseDataPointRecorderProps {
   isRecording: boolean;
-  recordingFrequency: string;
   storeBackgroundData: (
     pmData: PMScanData,
     location?: LocationData,
@@ -20,17 +18,13 @@ interface UseDataPointRecorderProps {
     weatherDataId?: string
   ) => void;
   addDataPointToState: (entry: RecordingEntry) => void;
-  updateLastRecordedTime: (time: Date) => void;
 }
 
 export function useDataPointRecorder({
   isRecording,
-  recordingFrequency,
   storeBackgroundData,
   addDataPointToState,
-  updateLastRecordedTime,
 }: UseDataPointRecorderProps) {
-  const lastRecordedTime = useRef<Date | null>(null);
   const { getWeatherForMeasurement } = useWeatherData();
   const { isEnabled: weatherLoggingEnabled } = useWeatherLogging();
 
@@ -47,25 +41,15 @@ export function useDataPointRecorder({
         return;
       }
 
-      // Check if enough time has passed based on recording frequency
-      const frequencyMs = parseFrequencyToMs(recordingFrequency);
-
-      if (!shouldRecordData(lastRecordedTime.current, frequencyMs)) {
-        return;
-      }
-
-      // Update last recorded time using standardized timestamp creation
+      // Create timestamp for this data point
       const currentTime = createTimestamp();
-      lastRecordedTime.current = currentTime;
-      updateLastRecordedTime(currentTime);
       
       // Debug timestamp creation
       logTimestamp({
         component: 'DataPointRecorder',
         operation: 'createTimestamp',
         timestamp: currentTime,
-        source: 'useDataPointRecorder.addDataPoint',
-        metadata: { frequency: recordingFrequency }
+        source: 'useDataPointRecorder.addDataPoint'
       });
 
       // Use the current recorded time as the definitive timestamp
@@ -117,8 +101,6 @@ export function useDataPointRecorder({
     },
     [
       isRecording,
-      recordingFrequency,
-      updateLastRecordedTime,
       storeBackgroundData,
       addDataPointToState,
       getWeatherForMeasurement,
