@@ -234,8 +234,8 @@ export function GlobalDataCollector() {
             currentData,
             latestLocation || undefined,
             speed,
-            isMoving,
-            enrichedLocationName
+            isMoving
+            // DO NOT pass enrichedLocationName - keep autocontext separate from location enrichment
           );
 
           // Use PMScan data timestamp (already standardized) - no need to overwrite

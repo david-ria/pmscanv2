@@ -21,8 +21,8 @@ export function useAutoContextSampling({
     pmData?: PMScanData,
     location?: LocationData,
     speed: number = 0,
-    isMoving: boolean = false,
-    enrichedLocationName?: string
+    isMoving: boolean = false
+    // Removed enrichedLocationName - autocontext should be pure activity detection
   ): Promise<string> => {
     if (!autoContextEnabled) {
       return '';
@@ -42,22 +42,24 @@ export function useAutoContextSampling({
       isMoving,
     });
 
-    // Format the context using enriched location name and rule-based context
-    const formattedContext = formatAutomaticContext(enrichedLocationName, ruleBasedContext);
+    // Use ONLY rule-based context from sensors/heuristics - no location mixing
+    const formattedContext = ruleBasedContext || '';
+    
+    console.log('🤖 === PURE AUTOCONTEXT (sensors + heuristics) ===', {
+      ruleBasedContext,
+      finalContext: formattedContext,
+      source: 'sensors and movement heuristics only'
+    });
     
     if (formattedContext) {
-      if (enrichedLocationName) {
-        console.log('🏷️ Using enriched location context:', formattedContext);
-      } else {
-        console.log('🔄 Using rule-based context:', formattedContext);
-      }
-      
+      console.log('🏷️ Autocontext determined:', formattedContext);
       updateLatestContext(formattedContext);
       setCurrentAutoContext(formattedContext);
       return formattedContext;
+    } else {
+      console.log('🔄 No autocontext determined');
+      return currentAutoContext;
     }
-    
-    return currentAutoContext;
   }, [autoContextEnabled, recordingFrequency, determineContext, updateLatestContext, currentAutoContext]);
 
   const forceContextUpdate = useCallback(async (
