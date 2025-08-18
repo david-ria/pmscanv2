@@ -328,6 +328,8 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
           <YAxis
             tick={{ fontSize: 12 }}
             width={30}
+            domain={[0, 'dataMax + 5']}
+            allowDataOverflow={false}
           />
           <Tooltip
             formatter={formatTooltip}
@@ -347,24 +349,24 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
             dataKey="PM1"
             stroke="#22c55e"
             strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 4, stroke: '#22c55e', strokeWidth: 2 }}
+            dot={{ fill: '#22c55e', strokeWidth: 1, r: 3 }}
+            activeDot={{ r: 5, stroke: '#22c55e' }}
           />
           <Line
             type="monotone"
             dataKey="PM25"
             stroke="#ef4444"
             strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 4, stroke: '#ef4444', strokeWidth: 2 }}
+            dot={{ fill: '#ef4444', strokeWidth: 1, r: 3 }}
+            activeDot={{ r: 5, stroke: '#ef4444' }}
           />
           <Line
             type="monotone"
             dataKey="PM10"
             stroke="#3b82f6"
             strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 4, stroke: '#3b82f6', strokeWidth: 2 }}
+            dot={{ fill: '#3b82f6', strokeWidth: 1, r: 3 }}
+            activeDot={{ r: 5, stroke: '#3b82f6' }}
           />
           {/* Context highlighted areas with labels */}
           {contextPeriods.map((period, index) => {
