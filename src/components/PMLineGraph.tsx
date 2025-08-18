@@ -346,25 +346,25 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
             type="monotone"
             dataKey="PM1"
             stroke="#22c55e"
-            strokeWidth={3}
-            dot={{ fill: '#22c55e', strokeWidth: 1, r: 3 }}
-            activeDot={{ r: 5, stroke: '#22c55e' }}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4, stroke: '#22c55e', strokeWidth: 2 }}
           />
           <Line
             type="monotone"
             dataKey="PM25"
             stroke="#ef4444"
-            strokeWidth={3}
-            dot={{ fill: '#ef4444', strokeWidth: 1, r: 3 }}
-            activeDot={{ r: 5, stroke: '#ef4444' }}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4, stroke: '#ef4444', strokeWidth: 2 }}
           />
           <Line
             type="monotone"
             dataKey="PM10"
             stroke="#3b82f6"
-            strokeWidth={3}
-            dot={{ fill: '#3b82f6', strokeWidth: 1, r: 3 }}
-            activeDot={{ r: 5, stroke: '#3b82f6' }}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4, stroke: '#3b82f6', strokeWidth: 2 }}
           />
           {/* Context highlighted areas with labels */}
           {contextPeriods.map((period, index) => {
