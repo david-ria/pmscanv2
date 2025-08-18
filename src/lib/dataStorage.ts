@@ -83,7 +83,8 @@ class DataStorageService {
             accuracy,
             location_context,
             activity_context,
-            automatic_context
+            automatic_context,
+            enriched_location
           )
         `
         )

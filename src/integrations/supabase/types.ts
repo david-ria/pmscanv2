@@ -530,6 +530,7 @@ export type Database = {
           automatic_context: string | null
           created_at: string
           date_utc: string | null
+          enriched_location: string | null
           humidity: number | null
           id: string
           latitude: number | null
@@ -549,6 +550,7 @@ export type Database = {
           automatic_context?: string | null
           created_at?: string
           date_utc?: string | null
+          enriched_location?: string | null
           humidity?: number | null
           id?: string
           latitude?: number | null
@@ -568,6 +570,7 @@ export type Database = {
           automatic_context?: string | null
           created_at?: string
           date_utc?: string | null
+          enriched_location?: string | null
           humidity?: number | null
           id?: string
           latitude?: number | null
