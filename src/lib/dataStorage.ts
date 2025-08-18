@@ -70,7 +70,22 @@ class DataStorageService {
         .select(
           `
           *,
-          measurements (*)
+          measurements (
+            id,
+            timestamp,
+            pm1,
+            pm25,
+            pm10,
+            temperature,
+            humidity,
+            latitude,
+            longitude,
+            accuracy,
+            location_context,
+            activity_context,
+            automatic_context,
+            enriched_location
+          )
         `
         )
         .order('created_at', { ascending: false });
@@ -78,9 +93,18 @@ class DataStorageService {
       if (!error && dbMissions) {
         const formattedDbMissions = dbMissions.map(formatDatabaseMission);
 
+        // Filter out database missions that have no measurements (orphaned missions)
+        const validDbMissions = formattedDbMissions.filter(mission => {
+          const hasValidMeasurements = mission.measurements && mission.measurements.length > 0;
+          if (!hasValidMeasurements && mission.measurementsCount > 0) {
+            logger.warn(`⚠️ Mission ${mission.name} has ${mission.measurementsCount} measurements in metadata but 0 actual measurements - likely orphaned`);
+          }
+          return hasValidMeasurements;
+        });
+
         // Merge with local unsynced missions
         const unsyncedLocal = localMissions.filter((m) => !m.synced);
-        return [...unsyncedLocal, ...formattedDbMissions];
+        return [...unsyncedLocal, ...validDbMissions];
       }
     } catch (error) {
       logger.debug('Database not available, using local data only:', error);
