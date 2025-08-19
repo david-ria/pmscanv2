@@ -26,6 +26,7 @@ import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useGPS } from '@/hooks/useGPS';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import { useLocationEnrichmentSettings } from '@/hooks/useLocationEnrichmentSettings';
+import { useSubscription } from '@/hooks/useSubscription';
 import { LucideIcon } from 'lucide-react';
 
 interface MenuSection {
@@ -69,6 +70,9 @@ export function useMenuSections({
   
   // Get location enrichment settings
   const { isEnabled: locationEnrichmentEnabled, toggleEnabled: toggleLocationEnrichment } = useLocationEnrichmentSettings();
+  
+  // Get subscription features
+  const { features } = useSubscription();
 
   // Get PMScan and GPS status
   const {
@@ -228,20 +232,26 @@ export function useMenuSections({
           {
             icon: Cloud,
             label: t('sensors.weather'),
-            badge: null,
-            toggle: {
+            badge: !features.canUseWeatherData ? 'Premium' : null,
+            toggle: features.canUseWeatherData ? {
               checked: weatherLoggingEnabled,
               onCheckedChange: setWeatherLoggingEnabled,
-            },
+            } : undefined,
+            action: !features.canUseWeatherData ? () => {
+              // Show upgrade prompt - for now just disable the feature
+            } : undefined,
           },
           {
             icon: MapPinIcon,
             label: 'Location Enrichment',
-            badge: null,
-            toggle: {
+            badge: !features.canUseLocationEnrichment ? 'Premium' : null,
+            toggle: features.canUseLocationEnrichment ? {
               checked: locationEnrichmentEnabled,
               onCheckedChange: toggleLocationEnrichment,
-            },
+            } : undefined,
+            action: !features.canUseLocationEnrichment ? () => {
+              // Show upgrade prompt - for now just disable the feature
+            } : undefined,
             info: 'Enhance location context using OpenStreetMap reverse geocoding to automatically detect places like restaurants, schools, etc.',
           },
        ],

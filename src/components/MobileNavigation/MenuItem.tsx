@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Crown } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -62,13 +63,14 @@ export function MenuItem({
         <div className="flex items-center gap-2">
           {badge && (
             <Badge
-              variant="secondary"
+              variant={badge === 'Premium' ? 'outline' : 'secondary'}
               className={cn(
                 'text-xs flex-shrink-0',
-                badge === t('sensors.connected') &&
-                  'bg-air-good/10 text-air-good'
+                badge === t('sensors.connected') && 'bg-air-good/10 text-air-good',
+                badge === 'Premium' && 'text-yellow-700 border-yellow-300 dark:text-yellow-400 dark:border-yellow-600'
               )}
             >
+              {badge === 'Premium' && <Crown className="h-3 w-3 mr-1" />}
               {badge}
             </Badge>
           )}

@@ -425,25 +425,40 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          custom_activities: Json | null
+          custom_locations: Json | null
           description: string | null
           id: string
           name: string
+          subscription_tier:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           created_by: string
+          custom_activities?: Json | null
+          custom_locations?: Json | null
           description?: string | null
           id?: string
           name: string
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           created_by?: string
+          custom_activities?: Json | null
+          custom_locations?: Json | null
           description?: string | null
           id?: string
           name?: string
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at?: string
         }
         Relationships: []
@@ -654,31 +669,46 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          custom_activities: Json | null
+          custom_locations: Json | null
           first_name: string | null
           home_wifi_ssid: string | null
           id: string
           last_name: string | null
           pseudo: string | null
+          subscription_tier:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at: string
           work_wifi_ssid: string | null
         }
         Insert: {
           created_at?: string
+          custom_activities?: Json | null
+          custom_locations?: Json | null
           first_name?: string | null
           home_wifi_ssid?: string | null
           id: string
           last_name?: string | null
           pseudo?: string | null
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at?: string
           work_wifi_ssid?: string | null
         }
         Update: {
           created_at?: string
+          custom_activities?: Json | null
+          custom_locations?: Json | null
           first_name?: string | null
           home_wifi_ssid?: string | null
           id?: string
           last_name?: string | null
           pseudo?: string | null
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at?: string
           work_wifi_ssid?: string | null
         }
@@ -843,6 +873,7 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "admin" | "moderator" | "user"
+      subscription_tier: "free" | "premium" | "enterprise"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -971,6 +1002,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "admin", "moderator", "user"],
+      subscription_tier: ["free", "premium", "enterprise"],
     },
   },
 } as const

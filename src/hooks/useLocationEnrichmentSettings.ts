@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface LocationEnrichmentSettings {
   enabled: boolean;
@@ -7,6 +8,7 @@ interface LocationEnrichmentSettings {
 const STORAGE_KEY = 'locationEnrichmentSettings';
 
 export function useLocationEnrichmentSettings() {
+  const { features } = useSubscription();
   const [settings, setSettings] = useState<LocationEnrichmentSettings>({
     enabled: true // Enable by default
   });
@@ -30,11 +32,15 @@ export function useLocationEnrichmentSettings() {
   }, [settings]);
 
   const toggleEnabled = (enabled: boolean) => {
+    // Only allow enabling if user has premium access
+    if (enabled && !features.canUseLocationEnrichment) {
+      return;
+    }
     setSettings(prev => ({ ...prev, enabled }));
   };
 
   return {
-    isEnabled: settings.enabled,
+    isEnabled: settings.enabled && features.canUseLocationEnrichment,
     toggleEnabled
   };
 }

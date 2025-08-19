@@ -5,12 +5,17 @@ import { useToast } from '@/hooks/use-toast';
 import * as logger from '@/utils/logger';
 import { DEFAULT_THRESHOLDS } from '@/config/constants';
 import { DEFAULT_LOCATIONS, DEFAULT_ACTIVITIES } from '@/lib/locationsActivities';
+import { useSubscription } from '@/hooks/useSubscription';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useGroupSettings = () => {
   const [searchParams] = useSearchParams();
   const [activeGroup, setActiveGroup] = useState<GroupConfig | null>(null);
   const [isGroupMode, setIsGroupMode] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { features } = useSubscription();
 
   useEffect(() => {
     // Check for both 'group' parameter and direct group ID as parameter
@@ -210,6 +215,7 @@ export const useGroupSettings = () => {
   };
 
   const getCurrentLocations = () => {
+    // Fallback to group config or default
     if (activeGroup) {
       return activeGroup.locations;
     }
@@ -221,6 +227,7 @@ export const useGroupSettings = () => {
   };
 
   const getCurrentActivities = () => {
+    // Fallback to group config or default
     if (activeGroup) {
       return activeGroup.activities;
     }
