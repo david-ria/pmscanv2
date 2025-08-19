@@ -230,13 +230,13 @@ export function GlobalDataCollector() {
             console.log('⏭️ Skipping location enrichment - missing requirements');
           }
 
-          const automaticContext = await updateContextIfNeeded(
+          const automaticContext = autoContextSettings.enabled ? await updateContextIfNeeded(
             currentData,
             latestLocation || undefined,
             speed,
             isMoving
             // DO NOT pass enrichedLocationName - keep autocontext separate from location enrichment
-          );
+          ) : '';
 
           // Use PMScan data timestamp (already standardized) - no need to overwrite
           lastRecordedTimeRef.current = currentData.timestamp;
