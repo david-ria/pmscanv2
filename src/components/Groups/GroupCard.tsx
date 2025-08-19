@@ -130,14 +130,8 @@ export function GroupCard({ group, onInviteUser }: GroupCardProps) {
             </div>
 
             {/* Primary Actions */}
-            <div className="flex gap-2 pt-2">
-              {isAdmin && (
-                <Button onClick={onInviteUser} size="sm" className="flex-1">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Invite
-                </Button>
-              )}
-              <Button asChild variant={isAdmin ? "outline" : "default"} size="sm" className="flex-1">
+            <div className="flex pt-2">
+              <Button asChild variant="default" size="sm" className="w-full">
                 <Link to={`/groups/${group.id}`} className="flex items-center justify-center gap-2">
                   <ExternalLink className="h-4 w-4" />
                   {isAdmin ? 'Manage' : 'View Details'}
