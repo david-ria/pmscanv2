@@ -217,7 +217,11 @@ export default function GroupDetails() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge className={getPlanColor(group.subscription_tier || 'free')}>
+              <Badge 
+                className={`cursor-pointer transition-colors hover:opacity-80 ${getPlanColor(group.subscription_tier || 'free')}`}
+                onClick={() => alert('Group subscription management coming soon!')}
+              >
+                <Crown className="h-3 w-3 mr-1" />
                 {(group.subscription_tier || 'free').toUpperCase()} Plan
               </Badge>
               <Button onClick={inviteDialog.openDialog}>
