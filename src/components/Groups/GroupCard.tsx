@@ -2,16 +2,15 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users,
-  Settings,
   UserPlus,
   MoreVertical,
   Trash2,
   LogOut,
+  ExternalLink,
 } from 'lucide-react';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -40,21 +39,14 @@ import { formatDistanceToNow } from 'date-fns';
 interface GroupCardProps {
   group: Group;
   onInviteUser: () => void;
-  isAdminView?: boolean;
 }
 
-export function GroupCard({
-  group,
-  onInviteUser,
-  isAdminView = false,
-}: GroupCardProps) {
+export function GroupCard({ group, onInviteUser }: GroupCardProps) {
   const { deleteGroup, leaveGroup } = useGroups();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
 
   const isAdmin = group.role === 'admin';
-  // In admin view, super admins can manage any group
-  const canManageGroup = isAdminView || isAdmin;
 
   const handleDelete = async () => {
     try {
@@ -76,36 +68,29 @@ export function GroupCard({
 
   return (
     <>
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-          <div className="space-y-1 flex-1">
-            <CardTitle className="text-lg">{group.name}</CardTitle>
-            <CardDescription className="line-clamp-2">
-              {group.description || 'No description provided'}
-            </CardDescription>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {/* View Details - Always available */}
-              <DropdownMenuItem asChild>
-                <Link
-                  to={`/groups/${group.id}`}
-                  className="flex items-center w-full"
+      <Card className="group hover:shadow-lg transition-all duration-200 border-border/50">
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-xl mb-2 truncate">{group.name}</CardTitle>
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {group.description || 'No description provided'}
+              </p>
+            </div>
+            
+            {/* Only show menu for destructive actions */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <Settings className="h-4 w-4 mr-2" />
-                  View Details
-                </Link>
-              </DropdownMenuItem>
-
-              {/* Admin functions - Show in admin view OR if user is group admin */}
-              {canManageGroup && (
-                <>
-                  <DropdownMenuSeparator />
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                {isAdmin ? (
                   <DropdownMenuItem
                     onClick={() => setDeleteOpen(true)}
                     className="text-destructive focus:text-destructive"
@@ -113,13 +98,7 @@ export function GroupCard({
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Group
                   </DropdownMenuItem>
-                </>
-              )}
-
-              {/* Leave option - Only for non-admins in regular view */}
-              {!isAdminView && !isAdmin && (
-                <>
-                  <DropdownMenuSeparator />
+                ) : (
                   <DropdownMenuItem
                     onClick={() => setLeaveOpen(true)}
                     className="text-destructive focus:text-destructive"
@@ -127,55 +106,44 @@ export function GroupCard({
                     <LogOut className="h-4 w-4 mr-2" />
                     Leave Group
                   </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                {group.member_count} member{group.member_count !== 1 ? 's' : ''}
-              </span>
+
+        <CardContent className="pt-0">
+          <div className="space-y-4">
+            {/* Group Stats */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Users className="h-4 w-4" />
+                <span>{group.member_count} member{group.member_count !== 1 ? 's' : ''}</span>
+              </div>
+              <Badge variant={isAdmin ? 'default' : 'secondary'} className="font-medium">
+                {isAdmin ? 'Admin' : 'Member'}
+              </Badge>
             </div>
-            <Badge variant={isAdmin ? 'default' : 'secondary'}>
-              {isAdmin ? 'Admin' : 'Member'}
-            </Badge>
-          </div>
 
-          <div className="text-xs text-muted-foreground">
-            Created{' '}
-            {formatDistanceToNow(new Date(group.created_at), {
-              addSuffix: true,
-            })}
-          </div>
+            <div className="text-xs text-muted-foreground">
+              Created {formatDistanceToNow(new Date(group.created_at), { addSuffix: true })}
+            </div>
 
-          {/* Action buttons - Streamlined design */}
-          <div className="flex gap-2">
-            {canManageGroup ? (
-              <>
+            {/* Primary Actions */}
+            <div className="flex gap-2 pt-2">
+              {isAdmin && (
                 <Button onClick={onInviteUser} size="sm" className="flex-1">
                   <UserPlus className="h-4 w-4 mr-2" />
                   Invite
                 </Button>
-                <Button asChild variant="outline" size="sm" className="flex-1">
-                  <Link to={`/groups/${group.id}`}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Manage
-                  </Link>
-                </Button>
-              </>
-            ) : (
-              // For non-admins, just show view details button
-              <Button asChild variant="outline" size="sm" className="flex-1">
-                <Link to={`/groups/${group.id}`}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  View Details
+              )}
+              <Button asChild variant={isAdmin ? "outline" : "default"} size="sm" className="flex-1">
+                <Link to={`/groups/${group.id}`} className="flex items-center justify-center gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  {isAdmin ? 'Manage' : 'View Details'}
                 </Link>
               </Button>
-            )}
+            </div>
           </div>
         </CardContent>
       </Card>

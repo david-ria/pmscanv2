@@ -1,62 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
-import { Plus, Users, Settings, UserPlus, Mail, Shield } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGroups, useGroupInvitations } from '@/hooks/useGroups';
-import { useUserRole } from '@/hooks/useUserRole';
 import { CreateGroupDialog } from '@/components/Groups/CreateGroupDialog';
 import { InviteUserDialog } from '@/components/Groups/InviteUserDialog';
 import { GroupCard } from '@/components/Groups/GroupCard';
-import { GroupAdminDashboard } from '@/components/Groups/GroupAdminDashboard';
 import { InvitationCard } from '@/components/Groups/InvitationCard';
-import * as logger from '@/utils/logger';
 
 export default function Groups() {
-  const [searchParams] = useSearchParams();
   const { groups, loading: groupsLoading } = useGroups();
   const { invitations, loading: invitationsLoading } = useGroupInvitations();
-  const { isSuperAdmin, userRole } = useUserRole();
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [inviteUserOpen, setInviteUserOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [showInvitations, setShowInvitations] = useState(false);
   const { t } = useTranslation();
-
-  // Get initial tab from URL params
-  const initialTab =
-    searchParams.get('tab') === 'admin' && isSuperAdmin ? 'admin' : 'my-groups';
-  const [activeTab, setActiveTab] = useState(initialTab);
-
-  // Update active tab when URL or role changes
-  useEffect(() => {
-    const urlTab = searchParams.get('tab');
-    if (urlTab === 'admin' && isSuperAdmin) {
-      setActiveTab('admin');
-    } else {
-      setActiveTab('my-groups');
-    }
-  }, [searchParams, isSuperAdmin]);
-
-  // Log user role for debugging
-  logger.debug(
-    'Groups page - User role:',
-    userRole,
-    'Is super admin:',
-    isSuperAdmin,
-    'Active tab:',
-    activeTab,
-    'URL tab:',
-    searchParams.get('tab')
-  );
 
   const handleInviteUser = (groupId: string) => {
     setSelectedGroupId(groupId);
@@ -65,13 +28,15 @@ export default function Groups() {
 
   if (groupsLoading || invitationsLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/4"></div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-48 bg-muted rounded"></div>
-            ))}
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-muted rounded w-1/4"></div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-48 bg-muted rounded-lg"></div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -79,131 +44,79 @@ export default function Groups() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {t('groups.title')}
-          </h1>
-          <p className="text-muted-foreground">{t('groups.subtitle')}</p>
-        </div>
-      </div>
-
-      {/* Show different interfaces based on whether we're in admin mode */}
-      {activeTab === 'admin' && isSuperAdmin ? (
-        // ADMIN ONLY INTERFACE - No tabs, just admin content
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Admin Panel</h2>
-              <p className="text-muted-foreground">
-                Manage all groups, create new groups, and handle administrative
-                tasks
-              </p>
-            </div>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Groups</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your air quality monitoring groups
+            </p>
+          </div>
+          <div className="flex gap-3">
+            {invitations.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setShowInvitations(!showInvitations)}
+                className="gap-2"
+              >
+                <Users className="h-4 w-4" />
+                Invitations ({invitations.length})
+              </Button>
+            )}
             <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
-              {t('groups.createGroup')}
+              Create Group
             </Button>
           </div>
+        </div>
 
+        {/* Invitations Section (when toggled) */}
+        {showInvitations && invitations.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Pending Invitations</h2>
+            <div className="space-y-3">
+              {invitations.map((invitation) => (
+                <InvitationCard key={invitation.id} invitation={invitation} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Groups Grid */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">
+            My Groups ({groups.length})
+          </h2>
+          
           {groups.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Shield className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  No groups created yet
-                </h3>
-                <p className="text-muted-foreground text-center mb-4">
-                  Create your first group to start managing air quality
-                  monitoring groups
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Users className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No groups yet</h3>
+                <p className="text-muted-foreground text-center mb-6 max-w-md">
+                  Create your first group to start collaborating with others on air quality monitoring
                 </p>
-                <Button
-                  onClick={() => setCreateGroupOpen(true)}
-                  className="gap-2"
-                >
+                <Button onClick={() => setCreateGroupOpen(true)} className="gap-2">
                   <Plus className="h-4 w-4" />
-                  {t('groups.createGroup')}
+                  Create Your First Group
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {groups.map((group) => (
                 <GroupCard
                   key={group.id}
                   group={group}
                   onInviteUser={() => handleInviteUser(group.id)}
-                  isAdminView={true}
                 />
               ))}
             </div>
           )}
         </div>
-      ) : (
-        // REGULAR USER INTERFACE - With tabs for My Groups and Invitations
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="my-groups" className="gap-2">
-              <Users className="h-4 w-4" />
-              {t('groups.myGroups')} ({groups.length})
-            </TabsTrigger>
-            <TabsTrigger value="invitations" className="gap-2">
-              <Mail className="h-4 w-4" />
-              {t('groups.invitations')} ({invitations.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="my-groups" className="space-y-4">
-            {groups.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Users className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    {t('groups.noGroupsYet')}
-                  </h3>
-                  <p className="text-muted-foreground text-center mb-4">
-                    {t('groups.invitationsDescription')}
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {groups.map((group) => (
-                  <GroupCard
-                    key={group.id}
-                    group={group}
-                    onInviteUser={() => handleInviteUser(group.id)}
-                    isAdminView={false}
-                  />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="invitations" className="space-y-4">
-            {invitations.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Mail className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    {t('groups.noPendingInvitations')}
-                  </h3>
-                  <p className="text-muted-foreground text-center">
-                    {t('groups.invitationsDescription')}
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {invitations.map((invitation) => (
-                  <InvitationCard key={invitation.id} invitation={invitation} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      )}
+      </div>
 
       <CreateGroupDialog
         open={createGroupOpen}
