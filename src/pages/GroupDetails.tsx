@@ -186,9 +186,25 @@ export default function GroupDetails() {
         {/* Group Overview */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1">
               <h1 className="text-3xl font-bold">{group.name}</h1>
               <p className="text-muted-foreground mt-1">{group.description || 'No description'}</p>
+              <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  <span>{membersLoading ? '...' : members.length} member{members.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  <span>Created {new Date(group.created_at).toLocaleDateString()}</span>
+                </div>
+                {group.custom_locations && Object.keys(group.custom_locations).length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    <span>{Object.keys(group.custom_locations).length} location{Object.keys(group.custom_locations).length !== 1 ? 's' : ''}</span>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Badge className={getPlanColor(group.subscription_tier || 'free')}>
@@ -199,55 +215,6 @@ export default function GroupDetails() {
                 Invite Member
               </Button>
             </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Users className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Members</span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold">
-                      {membersLoading ? '...' : members.length}
-                    </span>
-                    {group.member_quota && (
-                      <span className="text-muted-foreground">/ {group.member_quota}</span>
-                    )}
-                  </div>
-                  {group.member_quota && (
-                    <Progress value={memberUsage} className="h-2" />
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Locations</span>
-                </div>
-                <span className="text-2xl font-bold">
-                  {group.custom_locations ? Object.keys(group.custom_locations).length : 0}
-                </span>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Created</span>
-                </div>
-                <span className="text-lg font-medium">
-                  {new Date(group.created_at).toLocaleDateString()}
-                </span>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
