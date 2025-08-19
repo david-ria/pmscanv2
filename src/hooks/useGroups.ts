@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -54,12 +54,23 @@ export const useGroups = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const hasInitialized = useRef(false);
+  const retryCount = useRef(0);
+  const maxRetries = 3;
 
-  const fetchGroups = useCallback(async () => {
+  const fetchGroups = useCallback(async (isRetry = false) => {
     if (!user?.id) {
       setGroups([]);
       setLoading(false);
       setError(null);
+      hasInitialized.current = true;
+      return;
+    }
+
+    // Prevent excessive API calls during retries
+    if (isRetry && retryCount.current >= maxRetries) {
+      setError('Max retries exceeded');
+      setLoading(false);
       return;
     }
 
@@ -97,17 +108,25 @@ export const useGroups = () => {
         }) || [];
 
       setGroups(groupsWithRole);
+      hasInitialized.current = true;
+      retryCount.current = 0; // Reset retry count on success
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch groups',
-        variant: 'destructive',
-      });
+      if (isRetry) {
+        retryCount.current++;
+        // Exponential backoff for retries
+        setTimeout(() => fetchGroups(true), Math.pow(2, retryCount.current) * 1000);
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch groups',
+          variant: 'destructive',
+        });
+      }
       setError(error.message);
     } finally {
       setLoading(false);
     }
-  }, [toast, user?.id]);
+  }, [toast, user?.id, maxRetries]);
 
   const createGroup = useCallback(async (name: string, description?: string) => {
     try {
@@ -226,11 +245,16 @@ export const useGroups = () => {
   }, [fetchGroups, toast]);
 
   useEffect(() => {
-    // Only fetch if user is authenticated and we haven't already loaded
-    if (user?.id && (loading || groups.length === 0)) {
+    // Only fetch once when user becomes available and we haven't initialized
+    if (user?.id && !hasInitialized.current) {
       fetchGroups();
     }
-  }, [user?.id, fetchGroups, loading, groups.length]);
+    // Reset initialization when user changes
+    if (!user?.id) {
+      hasInitialized.current = false;
+      retryCount.current = 0;
+    }
+  }, [user?.id, fetchGroups]);
 
   return {
     groups,

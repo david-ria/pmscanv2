@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useGroups } from '@/hooks/useGroups';
@@ -56,6 +56,11 @@ export function useSubscription(): SubscriptionData {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Memoize group IDs to prevent unnecessary re-computations
+  const groupIds = useMemo(() => {
+    return userGroups?.map(group => group.id) || [];
+  }, [userGroups]);
+
   const fetchUserSubscription = useCallback(async () => {
     if (!user?.id) {
       setUserTier('free');
@@ -96,15 +101,13 @@ export function useSubscription(): SubscriptionData {
       let highestTier = (profile?.subscription_tier as SubscriptionTier) || 'free';
 
       // Check group subscriptions only if groups loaded successfully and exist
-      if (userGroups && userGroups.length > 0 && !groupsError) {
-        const groupIds = userGroups.map(group => group.id);
-        
-        const { data: groups, error: groupsError } = await supabase
+      if (groupIds.length > 0 && !groupsError) {
+        const { data: groups, error: groupSubscriptionError } = await supabase
           .from('groups')
           .select('subscription_tier')
           .in('id', groupIds);
 
-        if (!groupsError && groups) {
+        if (!groupSubscriptionError && groups) {
           const tierPriority = { enterprise: 3, premium: 2, free: 1 };
           const groupTiers = groups.map(g => g.subscription_tier as SubscriptionTier);
           
@@ -124,7 +127,7 @@ export function useSubscription(): SubscriptionData {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, userGroups, groupsLoading, groupsError]);
+  }, [user?.id, groupIds, groupsLoading, groupsError]);
 
   useEffect(() => {
     fetchUserSubscription();
