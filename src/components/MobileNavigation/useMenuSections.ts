@@ -173,22 +173,14 @@ export function useMenuSections({
           icon: Settings,
           label: t('settingsMenu.customThresholds'),
           isPremiumFeature: !features.hasCustomLists,
-          toggle: features.hasCustomLists ? {
-            checked: true, // Always enabled when available
-            onCheckedChange: () => {},
-          } : undefined,
-          action: features.hasCustomLists ? handleCustomThresholds : undefined,
+          action: handleCustomThresholds,
           info: !features.hasCustomLists ? 'Premium feature' : undefined,
         },
         {
           icon: AlertTriangle,
           label: t('settingsMenu.alertsAlarms'),
           isPremiumFeature: !features.hasCustomLists,
-          toggle: features.hasCustomLists ? {
-            checked: true, // Always enabled when available
-            onCheckedChange: () => {},
-          } : undefined,
-          action: features.hasCustomLists ? handleCustomAlerts : undefined,
+          action: handleCustomAlerts,
           info: !features.hasCustomLists ? 'Premium feature' : undefined,
         },
         {

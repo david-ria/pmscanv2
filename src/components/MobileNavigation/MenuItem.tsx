@@ -36,7 +36,7 @@ export function MenuItem({
   const { t } = useTranslation();
 
   const handleClick = () => {
-    if (!toggle && !isPremiumFeature) {
+    if (!toggle) {
       action?.();
     }
   };
