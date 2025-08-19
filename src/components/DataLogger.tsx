@@ -55,14 +55,15 @@ export function DataLogger({
   className,
 }: DataLoggerProps) {
   const { t } = useTranslation();
-  const { recordingData } = useUnifiedData();
+  const { recordingData, clearRecordingData } = useUnifiedData();
   const { latestContext, isEnabled: autoContextEnabled } = useAutoContext(false, null); // Don't start active scanning for logging only
   const [isMinimized, setIsMinimized] = useState(false);
   
 
   // Use actual recording data instead of managing separate log with defensive checks
+  // Reverse the order so newest entries are at the top
   const displayData = Array.isArray(recordingData) 
-    ? recordingData.slice(0, 100).map((entry, index) => {
+    ? recordingData.slice().reverse().slice(0, 100).map((entry, index) => {
         // Ensure entry exists and has required properties
         if (!entry || !entry.pmData) return null;
         
@@ -84,8 +85,8 @@ export function DataLogger({
     : latestContext;
 
   const clearLog = () => {
-    // This would need to be implemented in the context if needed
-    logger.debug('Clear log requested - this would clear actual recording data');
+    clearRecordingData();
+    logger.debug('Clear log requested - recording data cleared');
   };
 
 
