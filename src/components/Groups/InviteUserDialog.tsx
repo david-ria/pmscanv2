@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useGroupInvitations } from '@/hooks/useGroups';
+import { useGroupInvitations, useGroups } from '@/hooks/useGroups';
 import { BaseDialogProps } from '@/types/shared';
 import { generateGroupQRCode, copyGroupUrlToClipboard, downloadGroupQRCode } from '@/utils/qrCode';
 import { generateGroupUrl } from '@/lib/groupConfigs';
@@ -45,11 +45,15 @@ export function InviteUserDialog({
   onOpenChange,
 }: InviteUserDialogProps) {
   const { sendInvitation } = useGroupInvitations();
+  const { groups } = useGroups();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const groupUrl = generateGroupUrl(groupId);
-  const qrCodeUrl = generateGroupQRCode(groupId, { size: 256 });
+  // Find the current group to get its name for URL generation
+  const currentGroup = groups.find(g => g.id === groupId);
+  
+  const groupUrl = generateGroupUrl(groupId, currentGroup?.name);
+  const qrCodeUrl = generateGroupQRCode(groupId, { size: 256 }, currentGroup?.name);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -72,7 +76,7 @@ export function InviteUserDialog({
   };
 
   const handleCopyUrl = async () => {
-    const success = await copyGroupUrlToClipboard(groupId);
+    const success = await copyGroupUrlToClipboard(groupId, currentGroup?.name);
     if (success) {
       toast({
         title: 'Success',
@@ -89,7 +93,10 @@ export function InviteUserDialog({
 
   const handleDownloadQR = async () => {
     try {
-      await downloadGroupQRCode(groupId, `group-${groupId}-invite.png`, { size: 512 });
+      const filename = currentGroup?.name 
+        ? `${currentGroup.name.toLowerCase().replace(/\s+/g, '-')}-invite.png`
+        : `group-${groupId}-invite.png`;
+      await downloadGroupQRCode(groupId, filename, { size: 512 }, currentGroup?.name);
       toast({
         title: 'Success',
         description: 'QR code downloaded successfully',

@@ -11,11 +11,12 @@ export interface QRCodeOptions {
  */
 export function generateGroupQRCode(
   groupId: string,
-  options: QRCodeOptions = {}
+  options: QRCodeOptions = {},
+  groupName?: string
 ): string {
   const { size = 300, format = 'png', errorCorrectionLevel = 'M' } = options;
 
-  const groupUrl = generateGroupUrl(groupId);
+  const groupUrl = generateGroupUrl(groupId, groupName);
 
   // Using qr-server.com free API for QR code generation
   const params = new URLSearchParams({
@@ -34,9 +35,10 @@ export function generateGroupQRCode(
 export async function downloadGroupQRCode(
   groupId: string,
   filename?: string,
-  options: QRCodeOptions = {}
+  options: QRCodeOptions = {},
+  groupName?: string
 ): Promise<void> {
-  const qrUrl = generateGroupQRCode(groupId, options);
+  const qrUrl = generateGroupQRCode(groupId, options, groupName);
 
   try {
     const response = await fetch(qrUrl);
@@ -63,9 +65,10 @@ export async function downloadGroupQRCode(
  * Copies the group URL to clipboard
  */
 export async function copyGroupUrlToClipboard(
-  groupId: string
+  groupId: string,
+  groupName?: string
 ): Promise<boolean> {
-  const groupUrl = generateGroupUrl(groupId);
+  const groupUrl = generateGroupUrl(groupId, groupName);
 
   try {
     await navigator.clipboard.writeText(groupUrl);

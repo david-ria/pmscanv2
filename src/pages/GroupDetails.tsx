@@ -48,7 +48,31 @@ export default function GroupDetails() {
 
   useEffect(() => {
     if (!loading && groups.length > 0 && groupId) {
-      const foundGroup = groups.find(g => g.id === groupId);
+      // Try to find group by exact ID match first
+      let foundGroup = groups.find(g => g.id === groupId);
+      
+      // If not found and it's a slug format, try to match by name or partial UUID
+      if (!foundGroup && groupId) {
+        // Check if it's a name-based slug
+        if (!groupId.includes('-') || groupId.split('-').length < 5) {
+          // Try to find by name (convert back from slug)
+          const nameFromSlug = groupId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          foundGroup = groups.find(g => 
+            g.name.toLowerCase() === nameFromSlug.toLowerCase() ||
+            g.name.toLowerCase().replace(/\s+/g, '-') === groupId.toLowerCase()
+          );
+          
+          // If still not found, try partial UUID match
+          if (!foundGroup) {
+            const parts = groupId.split('-');
+            const lastPart = parts[parts.length - 1];
+            if (/^[0-9a-f]{8}$/i.test(lastPart)) {
+              foundGroup = groups.find(g => g.id.startsWith(lastPart));
+            }
+          }
+        }
+      }
+      
       setGroup(foundGroup || null);
     }
   }, [groups, loading, groupId]);

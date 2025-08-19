@@ -316,12 +316,50 @@ function isUUID(str: string): boolean {
   return uuidRegex.test(str);
 }
 
+// Helper function to create URL-safe slug from group name
+export function createGroupSlug(name: string, groupId?: string): string {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-')          // Replace spaces with hyphens
+    .replace(/-+/g, '-')           // Replace multiple hyphens with single
+    .trim();
+  
+  // Add UUID suffix for uniqueness if provided
+  if (groupId && isUUID(groupId)) {
+    const shortId = groupId.split('-')[0]; // Use first part of UUID
+    return `${slug}-${shortId}`;
+  }
+  
+  return slug;
+}
+
+// Helper function to extract group ID from slug
+export function extractGroupIdFromSlug(slug: string): string | null {
+  // Check if slug contains UUID suffix
+  const parts = slug.split('-');
+  const lastPart = parts[parts.length - 1];
+  
+  // If last part looks like start of UUID (8 hex chars), try to match with groups
+  if (lastPart && /^[0-9a-f]{8}$/i.test(lastPart)) {
+    return lastPart;
+  }
+  
+  return null;
+}
+
 export function generateGroupUrl(
   groupId: string,
+  groupName?: string,
   baseUrl: string = window.location.origin
 ): string {
-  // If it's a UUID (database group), use proper routing
+  // If it's a UUID (database group), create name-based URL
   if (isUUID(groupId)) {
+    if (groupName) {
+      const slug = createGroupSlug(groupName, groupId);
+      return `${baseUrl}/groups/${slug}`;
+    }
+    // Fallback to UUID if no name provided
     return `${baseUrl}/groups/${groupId}`;
   }
   // If it's a static config ID, use query parameter for backward compatibility
