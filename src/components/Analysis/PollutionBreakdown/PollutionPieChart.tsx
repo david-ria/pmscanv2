@@ -86,6 +86,10 @@ export const PollutionPieChart = ({
               borderRadius: '6px',
               fontSize: isSmallScreen ? '12px' : '14px',
               padding: '8px',
+              color: 'hsl(var(--foreground))',
+            }}
+            labelStyle={{
+              color: 'hsl(var(--foreground))',
             }}
           />
           {!isMobileScreen && (
