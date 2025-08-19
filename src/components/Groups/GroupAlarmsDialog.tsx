@@ -21,9 +21,17 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
   const { alarms, loading, createAlarm, updateAlarm, deleteAlarm } = useGroupAlarms(groupId);
   const { features } = useSubscription();
   const [isCreating, setIsCreating] = useState(false);
-  const [newAlarm, setNewAlarm] = useState({
+  const [newAlarm, setNewAlarm] = useState<{
+    name: string;
+    pollutant: 'pm1' | 'pm25' | 'pm10';
+    threshold: number;
+    enabled: boolean;
+    sound_enabled: boolean;
+    vibration_enabled: boolean;
+    color: string;
+  }>({
     name: '',
-    pollutant: 'pm25' as const,
+    pollutant: 'pm25',
     threshold: 25,
     enabled: true,
     sound_enabled: true,

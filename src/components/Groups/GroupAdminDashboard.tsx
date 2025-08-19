@@ -263,13 +263,13 @@ export function GroupAdminDashboard({ group }: GroupAdminDashboardProps) {
 
       {/* Dialogs */}
       <GroupSettingsDialog
-        groupId={group.id}
+        group={group}
         open={settingsDialog.open}
         onOpenChange={settingsDialog.setOpen}
       />
       
       <GroupCustomThresholdsDialog
-        groupId={group.id}
+        group={group}
         open={thresholdsDialog.open}
         onOpenChange={thresholdsDialog.setOpen}
       />

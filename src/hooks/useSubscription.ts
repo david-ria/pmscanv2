@@ -11,6 +11,8 @@ interface SubscriptionFeatures {
   canUseWeatherData: boolean;
   canUseAutoContext: boolean;
   hasCustomLists: boolean;
+  customAlarms: boolean;
+  customEvents: boolean;
   maxMeasurementsPerDay?: number;
   maxGroupsAllowed?: number;
 }
@@ -28,6 +30,8 @@ const TIER_FEATURES: Record<SubscriptionTier, SubscriptionFeatures> = {
     canUseWeatherData: false,
     canUseAutoContext: false,
     hasCustomLists: false,
+    customAlarms: false,
+    customEvents: false,
     maxMeasurementsPerDay: 100,
     maxGroupsAllowed: 1,
   },
@@ -36,6 +40,8 @@ const TIER_FEATURES: Record<SubscriptionTier, SubscriptionFeatures> = {
     canUseWeatherData: true,
     canUseAutoContext: true,
     hasCustomLists: true,
+    customAlarms: true,
+    customEvents: true,
     maxMeasurementsPerDay: 1000,
     maxGroupsAllowed: 5,
   },
@@ -44,6 +50,8 @@ const TIER_FEATURES: Record<SubscriptionTier, SubscriptionFeatures> = {
     canUseWeatherData: true,
     canUseAutoContext: true,
     hasCustomLists: true,
+    customAlarms: true,
+    customEvents: true,
     // No limits for enterprise
   },
 };

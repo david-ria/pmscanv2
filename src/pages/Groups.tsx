@@ -17,6 +17,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { CreateGroupDialog } from '@/components/Groups/CreateGroupDialog';
 import { InviteUserDialog } from '@/components/Groups/InviteUserDialog';
 import { GroupCard } from '@/components/Groups/GroupCard';
+import { GroupAdminDashboard } from '@/components/Groups/GroupAdminDashboard';
 import { InvitationCard } from '@/components/Groups/InvitationCard';
 import * as logger from '@/utils/logger';
 

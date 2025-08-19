@@ -10,6 +10,10 @@ export interface Group {
   created_by: string;
   created_at: string;
   updated_at: string;
+  subscription_tier?: string | null;
+  member_quota?: number | null;
+  custom_locations?: Record<string, any> | null;
+  custom_activities?: Record<string, any> | null;
   role?: string;
   member_count?: number;
 }
@@ -20,7 +24,7 @@ export interface GroupMembership {
   user_id: string;
   role: 'admin' | 'member';
   joined_at: string;
-  user_profile?: {
+  profiles?: {
     first_name: string | null;
     last_name: string | null;
     pseudo: string | null;
@@ -107,7 +111,7 @@ export const useGroups = () => {
           };
         }) || [];
 
-      setGroups(groupsWithRole);
+      setGroups(groupsWithRole as Group[]);
       hasInitialized.current = true;
       retryCount.current = 0; // Reset retry count on success
     } catch (error: any) {
@@ -164,7 +168,7 @@ export const useGroups = () => {
 
   const updateGroup = useCallback(async (
     groupId: string,
-    updates: { name?: string; description?: string }
+    updates: { name?: string; description?: string; subscription_tier?: 'free' | 'premium' | 'enterprise'; member_quota?: number; custom_locations?: any; custom_activities?: any }
   ) => {
     try {
       const { error } = await supabase

@@ -32,7 +32,7 @@ export function useGroupAlarms(groupId?: string) {
         .single();
 
       if (error) throw error;
-      setAlarms((data?.custom_alarms as GroupAlarm[]) || []);
+      setAlarms((data?.custom_alarms as unknown as GroupAlarm[]) || []);
     } catch (error) {
       console.error('Error fetching group alarms:', error);
       toast({
