@@ -30,6 +30,25 @@ export const PollutionPieChart = ({
 }: PollutionPieChartProps) => {
   const { t } = useTranslation();
 
+  // Custom Tooltip Component
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-background border border-border rounded-md p-2 text-sm shadow-md">
+          <p className="text-foreground font-medium">{data.name}</p>
+          <p className="text-foreground">
+            {payload[0].value.toFixed(1)}%
+          </p>
+          <p className="text-foreground">
+            PM{pmType.replace('pm', '')}: {Math.round(data.avgPM)} μg/m³
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   if (breakdownData.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -76,21 +95,7 @@ export const PollutionPieChart = ({
             ))}
           </Pie>
           <Tooltip
-            formatter={(value: number, name: string, props: any) => [
-              `${value.toFixed(1)}%`,
-              `PM${pmType.replace('pm', '')}: ${Math.round(props.payload.avgPM)} μg/m³`,
-            ]}
-            contentStyle={{
-              backgroundColor: 'hsl(var(--background))',
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '6px',
-              fontSize: isSmallScreen ? '12px' : '14px',
-              padding: '8px',
-              color: 'hsl(var(--foreground))',
-            }}
-            labelStyle={{
-              color: 'hsl(var(--foreground))',
-            }}
+            content={<CustomTooltip />}
           />
           {!isMobileScreen && (
             <Legend 
