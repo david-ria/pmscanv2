@@ -7,6 +7,10 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useGroups } from '@/hooks/useGroups';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 interface GroupSubscriptionDialogProps {
   group: any;
@@ -16,7 +20,7 @@ interface GroupSubscriptionDialogProps {
 
 const accessLevels = [
   {
-    id: 'free',
+    id: 'free' as const,
     level: 'Level 1',
     name: 'Basic Access',
     description: 'Standard group monitoring capabilities',
@@ -31,7 +35,7 @@ const accessLevels = [
     bgColor: 'bg-muted/20',
   },
   {
-    id: 'premium',
+    id: 'premium' as const,
     level: 'Level 2',
     name: 'Enhanced Access',
     description: 'Advanced group monitoring features',
@@ -47,7 +51,7 @@ const accessLevels = [
     bgColor: 'bg-accent/20',
   },
   {
-    id: 'enterprise',
+    id: 'enterprise' as const,
     level: 'Level 3',
     name: 'Full Access',
     description: 'Complete enterprise functionality',
@@ -72,58 +76,98 @@ export function GroupSubscriptionDialog({
   onOpenChange 
 }: GroupSubscriptionDialogProps) {
   const currentTier = group?.subscription_tier || 'free';
-  const currentLevel = accessLevels.find(level => level.id === currentTier);
+  const { updateGroup } = useGroups();
+  const { toast } = useToast();
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleLevelChange = async (newTier: 'free' | 'premium' | 'enterprise') => {
+    if (newTier === currentTier || isUpdating) return;
+    
+    setIsUpdating(true);
+    try {
+      await updateGroup(group.id, { subscription_tier: newTier });
+      toast({
+        title: "Access level updated",
+        description: `Group access level changed to ${accessLevels.find(l => l.id === newTier)?.level}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to update access level",
+        description: "Please try again later",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            Group Access Level
+            Group Access Levels
           </DialogTitle>
           <p className="text-center text-muted-foreground">
-            Current access level and available functionalities
+            Select an access level to change group functionalities
           </p>
         </DialogHeader>
 
-        <div className="mt-6">
-          {currentLevel && (
-            <Card className="relative border-2 border-primary">
-              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
-                Current Level
-              </Badge>
-              
-              <CardHeader className="text-center pb-4">
-                <div className={`w-16 h-16 mx-auto rounded-lg ${currentLevel.bgColor} flex items-center justify-center mb-3`}>
-                  <currentLevel.icon className={`h-8 w-8 ${currentLevel.color}`} />
-                </div>
-                <CardTitle className="text-2xl">{currentLevel.level}</CardTitle>
-                <h3 className="text-lg font-semibold">{currentLevel.name}</h3>
-                <p className="text-sm text-muted-foreground">{currentLevel.description}</p>
-              </CardHeader>
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {accessLevels.map((level) => {
+            const isCurrent = level.id === currentTier;
+            return (
+              <Card 
+                key={level.id} 
+                className={`relative transition-all duration-200 ${
+                  isCurrent 
+                    ? 'border-2 border-primary shadow-lg' 
+                    : 'border hover:border-accent hover:shadow-md cursor-pointer'
+                }`}
+                onClick={() => !isCurrent && handleLevelChange(level.id)}
+              >
+                {isCurrent && (
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
+                    Current
+                  </Badge>
+                )}
+                
+                <CardHeader className="text-center pb-3">
+                  <div className={`w-12 h-12 mx-auto rounded-lg ${level.bgColor} flex items-center justify-center mb-2`}>
+                    <level.icon className={`h-6 w-6 ${level.color}`} />
+                  </div>
+                  <CardTitle className="text-lg">{level.level}</CardTitle>
+                  <h3 className="text-sm font-semibold">{level.name}</h3>
+                  <p className="text-xs text-muted-foreground">{level.description}</p>
+                </CardHeader>
 
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                    Available Features
-                  </h4>
-                  {currentLevel.features.map((feature, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <div className="h-2 w-2 rounded-full bg-green-500 mt-2 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-            <p className="text-sm text-muted-foreground text-center">
-              <strong>Note:</strong> Access levels are managed by administrators. 
-              Contact support if you need access to additional features.
-            </p>
-          </div>
+                <CardContent className="pt-0">
+                  <div className="space-y-2 mb-4">
+                    {level.features.map((feature, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+                        <span className="text-xs">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {!isCurrent && (
+                    <Button 
+                      className="w-full" 
+                      variant="outline"
+                      disabled={isUpdating}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLevelChange(level.id);
+                      }}
+                    >
+                      {isUpdating ? 'Updating...' : 'Select Level'}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </DialogContent>
     </Dialog>
