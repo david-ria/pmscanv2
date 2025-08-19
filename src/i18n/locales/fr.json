@@ -151,6 +151,7 @@
     "graph": "Graphique",
     "satellite": "Satellite",
     "connectionRequired": "Connexion requise pour la vue carte",
+    "mapWillLoadWhenRecording": "La carte se chargera au démarrage de l'enregistrement",
     "connectSensor": "Connectez votre capteur PMScan pour voir les données en temps réel",
     "lastMeasurement": "Dernière mesure",
     "airQuality": {
