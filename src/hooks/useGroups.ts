@@ -279,36 +279,43 @@ export const useGroupMembers = (groupId: string) => {
 
   const fetchMembers = async () => {
     try {
-      const { data, error } = await supabase
+      // First fetch memberships
+      const { data: memberships, error: membershipError } = await supabase
         .from('group_memberships')
-        .select(
-          `
-          id,
-          group_id,
-          user_id,
-          role,
-          joined_at,
-          profiles!group_memberships_user_id_fkey(first_name, last_name, pseudo)
-        `
-        )
+        .select('id, group_id, user_id, role, joined_at')
         .eq('group_id', groupId);
 
-      if (error) throw error;
+      if (membershipError) throw membershipError;
 
-      const membersWithProfiles =
-        data?.map((member) => ({
-          id: member.id,
-          group_id: member.group_id,
-          user_id: member.user_id,
-          role: member.role as 'admin' | 'member',
-          joined_at: member.joined_at,
-          user_profile: Array.isArray(member.profiles)
-            ? member.profiles[0]
-            : member.profiles,
-        })) || [];
+      // Then fetch profiles for each user
+      if (memberships && memberships.length > 0) {
+        const userIds = memberships.map(m => m.user_id);
+        const { data: profiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, pseudo')
+          .in('id', userIds);
 
-      setMembers(membersWithProfiles);
+        if (profileError) throw profileError;
+
+        // Combine memberships with profiles
+        const membersWithProfiles = memberships.map((member) => {
+          const profile = profiles?.find(p => p.id === member.user_id);
+          return {
+            id: member.id,
+            group_id: member.group_id,
+            user_id: member.user_id,
+            role: member.role as 'admin' | 'member',
+            joined_at: member.joined_at,
+            user_profile: profile || null,
+          };
+        });
+
+        setMembers(membersWithProfiles);
+      } else {
+        setMembers([]);
+      }
     } catch (error: any) {
+      console.error('Error fetching group members:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch group members',
