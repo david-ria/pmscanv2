@@ -40,14 +40,14 @@ export function useUserRole() {
   }, [user?.id]);
 
   useEffect(() => {
-    if (!user) {
+    if (!user?.id) {
       setUserRole(null);
       setLoading(false);
       return;
     }
 
     fetchUserRole();
-  }, [user, fetchUserRole]);
+  }, [user?.id, fetchUserRole]);
 
   const isSuperAdmin = userRole === 'super_admin';
   const isAdmin = userRole === 'admin' || userRole === 'super_admin';
