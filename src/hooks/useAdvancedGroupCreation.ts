@@ -40,16 +40,15 @@ export interface AdvancedGroupData {
     enabled: boolean;
   }>;
   
-  // Custom locations and activities (stored in groups table as jsonb)
+  // Custom locations with linked activities (stored in groups table as jsonb)
   custom_locations: Array<{
     name: string;
     description?: string;
-  }>;
-  
-  custom_activities: Array<{
-    name: string;
-    description?: string;
-    icon?: string;
+    activities: Array<{
+      name: string;
+      description?: string;
+      icon?: string;
+    }>;
   }>;
 }
 
@@ -75,7 +74,7 @@ export const useAdvancedGroupCreation = () => {
         .update({
           subscription_tier: data.subscription_tier,
           custom_locations: data.custom_locations,
-          custom_activities: data.custom_activities,
+          custom_activities: null, // Not used anymore - activities are now linked to locations
         })
         .eq('id', group.id);
 

@@ -37,6 +37,7 @@ import { useAdvancedGroupCreation } from '@/hooks/useAdvancedGroupCreation';
 import { BaseDialogProps } from '@/types/shared';
 import { Plus, Trash2, MapPin, Activity, Target, Bell, Settings } from 'lucide-react';
 import { useUserRole } from '@/hooks/useUserRole';
+import { LocationWithActivities } from './LocationWithActivities';
 
 const thresholdSchema = z.object({
   name: z.string().min(1, 'Threshold name is required'),
@@ -50,15 +51,16 @@ const thresholdSchema = z.object({
   enabled: z.boolean(),
 });
 
-const locationSchema = z.object({
-  name: z.string().min(1, 'Location name is required'),
-  description: z.string().optional(),
-});
-
 const activitySchema = z.object({
   name: z.string().min(1, 'Activity name is required'),
   description: z.string().optional(),
   icon: z.string().optional(),
+});
+
+const locationSchema = z.object({
+  name: z.string().min(1, 'Location name is required'),
+  description: z.string().optional(),
+  activities: z.array(activitySchema).default([]),
 });
 
 const formSchema = z.object({
@@ -92,7 +94,6 @@ const formSchema = z.object({
   // Arrays
   thresholds: z.array(thresholdSchema).default([]),
   custom_locations: z.array(locationSchema).default([]),
-  custom_activities: z.array(activitySchema).default([]),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -124,7 +125,6 @@ export function CreateGroupDialog({
       weekly_reports: false,
       thresholds: [],
       custom_locations: [],
-      custom_activities: [],
     },
   });
 
@@ -146,15 +146,6 @@ export function CreateGroupDialog({
     name: 'custom_locations',
   });
 
-  const {
-    fields: activityFields,
-    append: appendActivity,
-    remove: removeActivity,
-  } = useFieldArray({
-    control: form.control,
-    name: 'custom_activities',
-  });
-
   const addDefaultThreshold = () => {
     appendThreshold({
       name: 'Good',
@@ -170,14 +161,13 @@ export function CreateGroupDialog({
     appendLocation({
       name: 'Office',
       description: 'Workplace environment',
-    });
-  };
-
-  const addDefaultActivity = () => {
-    appendActivity({
-      name: 'Work',
-      description: 'Work-related activities',
-      icon: 'briefcase',
+      activities: [
+        {
+          name: 'Work',
+          description: 'Work-related activities',
+          icon: 'briefcase',
+        }
+      ],
     });
   };
 
@@ -215,11 +205,11 @@ export function CreateGroupDialog({
         custom_locations: values.custom_locations.map(l => ({
           name: l.name,
           description: l.description,
-        })),
-        custom_activities: values.custom_activities.map(a => ({
-          name: a.name,
-          description: a.description,
-          icon: a.icon,
+          activities: l.activities.map(a => ({
+            name: a.name,
+            description: a.description,
+            icon: a.icon,
+          })),
         })),
       };
 
@@ -252,12 +242,11 @@ export function CreateGroupDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="basic">Basic Info</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
                 <TabsTrigger value="thresholds">Thresholds</TabsTrigger>
-                <TabsTrigger value="locations">Locations</TabsTrigger>
-                <TabsTrigger value="activities">Activities</TabsTrigger>
+                <TabsTrigger value="locations">Locations & Activities</TabsTrigger>
               </TabsList>
 
               {/* Basic Info Tab */}
@@ -753,13 +742,13 @@ export function CreateGroupDialog({
                 </div>
               </TabsContent>
 
-              {/* Locations Tab */}
+              {/* Locations & Activities Tab */}
               <TabsContent value="locations" className="space-y-4">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      <h3 className="text-lg font-semibold">Custom Locations</h3>
+                      <h3 className="text-lg font-semibold">Locations & Activities</h3>
                     </div>
                     <Button type="button" variant="outline" onClick={addDefaultLocation}>
                       <Plus className="h-4 w-4 mr-2" />
@@ -769,154 +758,17 @@ export function CreateGroupDialog({
 
                   {locationFields.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
-                      No custom locations defined. Add locations specific to your group's context.
+                      No locations defined. Each location can have multiple activities associated with it.
                     </div>
                   ) : (
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {locationFields.map((field, index) => (
-                        <div key={field.id} className="border rounded-lg p-4 space-y-4">
-                          <div className="flex justify-between items-center">
-                            <h4 className="font-medium">Location {index + 1}</h4>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeLocation(index)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-
-                          <FormField
-                            control={form.control}
-                            name={`custom_locations.${index}.name`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Location Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Office, Home, Park..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`custom_locations.${index}.description`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Description</FormLabel>
-                                <FormControl>
-                                  <Textarea
-                                    placeholder="Describe this location..."
-                                    className="resize-none"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              {/* Activities Tab */}
-              <TabsContent value="activities" className="space-y-4">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-primary" />
-                      <h3 className="text-lg font-semibold">Custom Activities</h3>
-                    </div>
-                    <Button type="button" variant="outline" onClick={addDefaultActivity}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Activity
-                    </Button>
-                  </div>
-
-                  {activityFields.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No custom activities defined. Add activities specific to your group's context.
-                    </div>
-                  ) : (
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {activityFields.map((field, index) => (
-                        <div key={field.id} className="border rounded-lg p-4 space-y-4">
-                          <div className="flex justify-between items-center">
-                            <h4 className="font-medium">Activity {index + 1}</h4>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeActivity(index)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-
-                          <FormField
-                            control={form.control}
-                            name={`custom_activities.${index}.name`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Activity Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Walking, Work, Sport..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`custom_activities.${index}.description`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Description</FormLabel>
-                                <FormControl>
-                                  <Textarea
-                                    placeholder="Describe this activity..."
-                                    className="resize-none"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`custom_activities.${index}.icon`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Icon</FormLabel>
-                                <FormControl>
-                                  <Select value={field.value} onValueChange={field.onChange}>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Choose an icon" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="briefcase">Briefcase</SelectItem>
-                                      <SelectItem value="home">Home</SelectItem>
-                                      <SelectItem value="car">Car</SelectItem>
-                                      <SelectItem value="activity">Activity</SelectItem>
-                                      <SelectItem value="coffee">Coffee</SelectItem>
-                                      <SelectItem value="users">Users</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
+                    <div className="space-y-6">
+                      {locationFields.map((locationField, locationIndex) => (
+                        <LocationWithActivities
+                          key={locationField.id}
+                          locationIndex={locationIndex}
+                          onRemoveLocation={() => removeLocation(locationIndex)}
+                          form={form}
+                        />
                       ))}
                     </div>
                   )}
