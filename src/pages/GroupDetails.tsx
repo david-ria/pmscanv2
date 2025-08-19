@@ -22,9 +22,8 @@ import { useGroups, useGroupMembers } from '@/hooks/useGroups';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useDialog } from '@/hooks/useDialog';
-import { GroupSettingsDialog } from '@/components/Groups/GroupSettingsDialog';
-import { GroupCustomThresholdsDialog } from '@/components/Groups/GroupCustomThresholdsDialog';
-import { GroupAlarmsDialog } from '@/components/Groups/GroupAlarmsDialog';
+
+import { GroupMonitoringDialog } from '@/components/Groups/GroupMonitoringDialog';
 import { GroupEventsDialog } from '@/components/Groups/GroupEventsDialog';
 import { GroupLocationsDialog } from '@/components/Groups/GroupLocationsDialog';
 import { EditGroupDialog } from '@/components/Groups/EditGroupDialog';
@@ -39,9 +38,7 @@ export default function GroupDetails() {
   const [group, setGroup] = useState(null);
 
   // Dialog states
-  const settingsDialog = useDialog();
-  const thresholdsDialog = useDialog();
-  const alarmsDialog = useDialog();
+  const monitoringDialog = useDialog();
   const eventsDialog = useDialog();
   const locationsDialog = useDialog();
   const editDialog = useDialog();
@@ -237,41 +234,25 @@ export default function GroupDetails() {
         <div className="space-y-6">
           <h2 className="text-2xl font-bold">Group Management</h2>
           
-          <div className="grid gap-4">
-            <ManagementOption
-              icon={Settings}
-              title="General Settings"
-              description="Configure group preferences and basic settings"
-              onClick={settingsDialog.openDialog}
-            />
-            
+          <div className="grid gap-4">            
             <ManagementOption
               icon={Bell}
-              title="Custom Thresholds"
-              description="Set pollution level ranges specific to your group"
-              onClick={thresholdsDialog.openDialog}
-            />
-            
-            <ManagementOption
-              icon={Bell}
-              title="Automated Alarms"
-              description="Set up alerts when pollution levels exceed limits"
-              onClick={alarmsDialog.openDialog}
-              isPremium={true}
-              disabled={!features.customAlarms}
+              title="Monitoring Settings"
+              description="Manage pollution thresholds and automated alerts"
+              onClick={monitoringDialog.openDialog}
             />
             
             <ManagementOption
               icon={MapPin}
               title="Locations & Activities"
-              description="Manage group-specific locations and activity types"
+              description="Configure custom locations and activity types for your group"
               onClick={locationsDialog.openDialog}
             />
             
             <ManagementOption
               icon={Calendar}
-              title="Event Configuration"
-              description="Configure custom event types for data collection"
+              title="Event Types"
+              description="Create custom event types for enhanced data collection"
               onClick={eventsDialog.openDialog}
               isPremium={true}
               disabled={!features.customAlarms}
@@ -319,22 +300,10 @@ export default function GroupDetails() {
           onOpenChange={editDialog.setOpen}
         />
 
-        <GroupSettingsDialog
+        <GroupMonitoringDialog
           group={group}
-          open={settingsDialog.open}
-          onOpenChange={settingsDialog.setOpen}
-        />
-        
-        <GroupCustomThresholdsDialog
-          group={group}
-          open={thresholdsDialog.open}
-          onOpenChange={thresholdsDialog.setOpen}
-        />
-
-        <GroupAlarmsDialog
-          groupId={group.id}
-          open={alarmsDialog.open}
-          onOpenChange={alarmsDialog.setOpen}
+          open={monitoringDialog.open}
+          onOpenChange={monitoringDialog.setOpen}
         />
 
         <GroupEventsDialog

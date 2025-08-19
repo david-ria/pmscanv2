@@ -36,7 +36,7 @@ export const loadGroupComponents = () => ({
   CreateGroupDialog: () => import('@/components/Groups/CreateGroupDialog'),
   EditGroupDialog: () => import('@/components/Groups/EditGroupDialog'),
   InviteUserDialog: () => import('@/components/Groups/InviteUserDialog'),
-  GroupSettingsDialog: () => import('@/components/Groups/GroupSettingsDialog'),
+  
   GroupThresholdDialog: () => import('@/components/Groups/GroupThresholdDialog'),
   GroupCustomThresholdsDialog: () => import('@/components/Groups/GroupCustomThresholdsDialog'),
 });

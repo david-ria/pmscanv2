@@ -18,7 +18,7 @@ import {
 import { useGroups, type Group } from '@/hooks/useGroups';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useGroupMembers } from '@/hooks/useGroups';
-import { GroupSettingsDialog } from './GroupSettingsDialog';
+
 import { GroupCustomThresholdsDialog } from './GroupCustomThresholdsDialog';
 import { GroupAlarmsDialog } from './GroupAlarmsDialog';
 import { GroupEventsDialog } from './GroupEventsDialog';
@@ -35,7 +35,6 @@ export function GroupAdminDashboard({ group }: GroupAdminDashboardProps) {
   const { members, loading: membersLoading } = useGroupMembers(group.id);
   
   // Dialog states
-  const settingsDialog = useDialog();
   const thresholdsDialog = useDialog();
   const alarmsDialog = useDialog();
   const eventsDialog = useDialog();
@@ -171,21 +170,7 @@ export function GroupAdminDashboard({ group }: GroupAdminDashboardProps) {
         </TabsList>
 
         <TabsContent value="settings" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FeatureCard
-              title="General Settings"
-              description="Configure group preferences and notifications"
-              icon={Settings}
-              onManage={settingsDialog.openDialog}
-            />
-            <FeatureCard
-              title="Member Quota"
-              description="Set limits on group membership"
-              icon={Users}
-              onManage={settingsDialog.openDialog}
-              isPremium={true}
-            />
-          </div>
+          <p className="text-muted-foreground">Basic group settings are managed through the group overview page.</p>
         </TabsContent>
 
         <TabsContent value="members" className="space-y-4">
@@ -262,12 +247,6 @@ export function GroupAdminDashboard({ group }: GroupAdminDashboardProps) {
       </Tabs>
 
       {/* Dialogs */}
-      <GroupSettingsDialog
-        group={group}
-        open={settingsDialog.open}
-        onOpenChange={settingsDialog.setOpen}
-      />
-      
       <GroupCustomThresholdsDialog
         group={group}
         open={thresholdsDialog.open}
