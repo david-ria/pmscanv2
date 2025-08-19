@@ -1,0 +1,2 @@
+group_id,name,description,subscription_tier,pm1_min,pm1_max,pm25_min,pm25_max,pm10_min,pm10_max,alarm_enabled,alarm_sound,alarm_visual,locations,activities,events,event_notifications,location_auto_detect,activity_auto_suggest,weekly_reports,notification_frequency,default_location,default_activity,auto_share_stats
+my-new-group,My New Group,Custom group for testing,premium,0,12,0,20,0,40,true,true,false,"Home Office|Garden|Kitchen","Working|Cooking|Exercising","High Pollution|Cooking Start|Window Opened",true,false,true,false,daily,Home Office,Working,true
