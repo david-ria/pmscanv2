@@ -153,8 +153,8 @@ export function FloatingRecordButton({
         undefined, // locationContext
         undefined, // activityContext
         recordingFrequency,
-        shareData
-        // Let saveMission use current recordingData from state
+        shareData,
+        recordingData // explicitRecordingData
       );
       
       console.log('✅ Mission saved successfully');
