@@ -21,6 +21,7 @@ interface MenuItemProps {
     onCheckedChange: (checked: boolean) => void;
   };
   info?: string;
+  isPremiumFeature?: boolean;
 }
 
 export function MenuItem({
@@ -30,11 +31,12 @@ export function MenuItem({
   action,
   toggle,
   info,
+  isPremiumFeature = false,
 }: MenuItemProps) {
   const { t } = useTranslation();
 
   const handleClick = () => {
-    if (!toggle) {
+    if (!toggle && !isPremiumFeature) {
       action?.();
     }
   };
@@ -42,13 +44,22 @@ export function MenuItem({
   return (
     <TooltipProvider>
       <div
-        className="flex items-center justify-between px-4 py-4 hover:bg-accent/50 transition-colors rounded-lg min-h-[48px] touch-manipulation active:bg-accent/70"
+        className={cn(
+          "flex items-center justify-between px-4 py-4 transition-colors rounded-lg min-h-[48px] touch-manipulation",
+          isPremiumFeature ? "opacity-50" : "hover:bg-accent/50 active:bg-accent/70"
+        )}
         onClick={handleClick}
-        style={{ cursor: toggle ? 'default' : 'pointer' }}
+        style={{ cursor: isPremiumFeature ? 'not-allowed' : (toggle ? 'default' : 'pointer') }}
       >
         <div className="flex items-center gap-4">
-          <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <span className="text-sm text-foreground leading-tight">{label}</span>
+          <Icon className={cn(
+            "h-4 w-4 flex-shrink-0",
+            isPremiumFeature ? "text-muted-foreground/50" : "text-muted-foreground"
+          )} />
+          <span className={cn(
+            "text-sm leading-tight",
+            isPremiumFeature ? "text-muted-foreground/50" : "text-foreground"
+          )}>{label}</span>
           {info && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -61,7 +72,7 @@ export function MenuItem({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {badge && (
+          {badge && !isPremiumFeature && (
             <Badge
               variant={badge === 'Premium' ? 'outline' : 'secondary'}
               className={cn(
@@ -78,6 +89,7 @@ export function MenuItem({
             <Switch
               checked={toggle.checked}
               onCheckedChange={toggle.onCheckedChange}
+              disabled={isPremiumFeature}
             />
           )}
         </div>

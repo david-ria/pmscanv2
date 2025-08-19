@@ -41,6 +41,7 @@ interface MenuSection {
       onCheckedChange: (checked: boolean) => void;
     };
     info?: string;
+    isPremiumFeature?: boolean;
   }[];
 }
 
@@ -144,18 +145,6 @@ export function useMenuSections({
       title: t('settingsMenu.title'),
       items: [
         {
-          icon: Settings,
-          label: t('settingsMenu.customThresholds'),
-          badge: null,
-          action: handleCustomThresholds,
-        },
-        {
-          icon: AlertTriangle,
-          label: t('settingsMenu.alertsAlarms'),
-          badge: null,
-          action: handleCustomAlerts,
-        },
-        {
           icon: Languages,
           label: t('settingsMenu.language'),
           badge: getCurrentLanguageDisplay(),
@@ -181,13 +170,36 @@ export function useMenuSections({
           info: 'Continue recording PMScan data even when the app is minimized or in the background. Note: This will use more battery.',
         },
         {
+          icon: Settings,
+          label: t('settingsMenu.customThresholds'),
+          isPremiumFeature: !features.hasCustomLists,
+          toggle: features.hasCustomLists ? {
+            checked: true, // Always enabled when available
+            onCheckedChange: () => {},
+          } : undefined,
+          action: features.hasCustomLists ? handleCustomThresholds : undefined,
+          info: !features.hasCustomLists ? 'Premium feature' : undefined,
+        },
+        {
+          icon: AlertTriangle,
+          label: t('settingsMenu.alertsAlarms'),
+          isPremiumFeature: !features.hasCustomLists,
+          toggle: features.hasCustomLists ? {
+            checked: true, // Always enabled when available
+            onCheckedChange: () => {},
+          } : undefined,
+          action: features.hasCustomLists ? handleCustomAlerts : undefined,
+          info: !features.hasCustomLists ? 'Premium feature' : undefined,
+        },
+        {
           icon: Brain,
           label: 'Auto Context',
-          badge: null,
-          toggle: {
+          isPremiumFeature: !features.hasCustomLists,
+          toggle: features.hasCustomLists ? {
             checked: autoContextEnabled,
             onCheckedChange: toggleAutoContext,
-          },
+          } : undefined,
+          info: !features.hasCustomLists ? 'Premium feature' : undefined,
         },
       ],
     },
@@ -232,27 +244,22 @@ export function useMenuSections({
           {
             icon: Cloud,
             label: t('sensors.weather'),
-            badge: !features.canUseWeatherData ? 'Premium' : null,
+            isPremiumFeature: !features.canUseWeatherData,
             toggle: features.canUseWeatherData ? {
               checked: weatherLoggingEnabled,
               onCheckedChange: setWeatherLoggingEnabled,
             } : undefined,
-            action: !features.canUseWeatherData ? () => {
-              // Show upgrade prompt - for now just disable the feature
-            } : undefined,
+            info: !features.canUseWeatherData ? 'Premium feature' : undefined,
           },
           {
             icon: MapPinIcon,
             label: 'Location Enrichment',
-            badge: !features.canUseLocationEnrichment ? 'Premium' : null,
+            isPremiumFeature: !features.canUseLocationEnrichment,
             toggle: features.canUseLocationEnrichment ? {
               checked: locationEnrichmentEnabled,
               onCheckedChange: toggleLocationEnrichment,
             } : undefined,
-            action: !features.canUseLocationEnrichment ? () => {
-              // Show upgrade prompt - for now just disable the feature
-            } : undefined,
-            info: 'Enhance location context using OpenStreetMap reverse geocoding to automatically detect places like restaurants, schools, etc.',
+            info: !features.canUseLocationEnrichment ? 'Premium feature' : 'Enhance location context using OpenStreetMap reverse geocoding to automatically detect places like restaurants, schools, etc.',
           },
        ],
      },

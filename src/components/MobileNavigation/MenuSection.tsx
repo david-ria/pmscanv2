@@ -15,6 +15,7 @@ interface MenuSectionProps {
       onCheckedChange: (checked: boolean) => void;
     };
     info?: string;
+    isPremiumFeature?: boolean;
   }[];
 }
 
@@ -47,6 +48,7 @@ export function MenuSection({ title, items }: MenuSectionProps) {
               action={item.action}
               toggle={item.toggle}
               info={item.info}
+              isPremiumFeature={item.isPremiumFeature}
             />
           );
         })}
