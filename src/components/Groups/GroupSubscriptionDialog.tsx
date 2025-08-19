@@ -75,7 +75,9 @@ export function GroupSubscriptionDialog({
   open, 
   onOpenChange 
 }: GroupSubscriptionDialogProps) {
-  const currentTier = group?.subscription_tier || 'free';
+  const [currentTier, setCurrentTier] = useState<'free' | 'premium' | 'enterprise'>(
+    group?.subscription_tier || 'free'
+  );
   const { updateGroup } = useGroups();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -86,6 +88,7 @@ export function GroupSubscriptionDialog({
     setIsUpdating(true);
     try {
       await updateGroup(group.id, { subscription_tier: newTier });
+      setCurrentTier(newTier); // Update local state immediately
       toast({
         title: "Access level updated",
         description: `Group access level changed to ${accessLevels.find(l => l.id === newTier)?.level}`,
@@ -103,17 +106,17 @@ export function GroupSubscriptionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">
+          <DialogTitle className="text-xl font-bold text-center">
             Group Access Levels
           </DialogTitle>
-          <p className="text-center text-muted-foreground">
+          <p className="text-center text-muted-foreground text-sm">
             Select an access level to change group functionalities
           </p>
         </DialogHeader>
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-4 grid grid-cols-1 gap-3">
           {accessLevels.map((level) => {
             const isCurrent = level.id === currentTier;
             return (
