@@ -16,7 +16,7 @@ const Groups = lazy(() => import('./pages/Groups'));
 const Profile = lazy(() => import('./pages/Profile'));
 const CustomThresholds = lazy(() => import('./pages/CustomThresholds'));
 const CustomAlerts = lazy(() => import('./pages/CustomAlerts'));
-const MySettings = lazy(() => import('./pages/MySettings'));
+
 const Auth = lazy(() => import('./pages/Auth'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -188,14 +188,6 @@ const AppRoutes = () => {
                             <CustomAlerts />
                           </Suspense>
                         }
-                      />
-                      <Route 
-                        path="/my-settings" 
-                        element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
-                            <MySettings />
-                          </Suspense>
-                        } 
                       />
                       <Route 
                         path="*" 

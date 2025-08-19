@@ -8,7 +8,7 @@ const STORAGE_KEY = 'locationEnrichmentSettings';
 
 export function useLocationEnrichmentSettings() {
   const [settings, setSettings] = useState<LocationEnrichmentSettings>({
-    enabled: true // Enable by default for testing
+    enabled: true // Enable by default
   });
 
   // Load settings from localStorage on mount
