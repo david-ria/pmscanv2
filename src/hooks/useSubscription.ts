@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useGroups } from '@/hooks/useGroups';
+import { useUserRole } from '@/hooks/useUserRole';
 
 export type SubscriptionTier = 'free' | 'premium' | 'enterprise';
 
 interface SubscriptionFeatures {
   canUseLocationEnrichment: boolean;
   canUseWeatherData: boolean;
+  canUseAutoContext: boolean;
   hasCustomLists: boolean;
   maxMeasurementsPerDay?: number;
   maxGroupsAllowed?: number;
@@ -24,6 +26,7 @@ const TIER_FEATURES: Record<SubscriptionTier, SubscriptionFeatures> = {
   free: {
     canUseLocationEnrichment: false,
     canUseWeatherData: false,
+    canUseAutoContext: false,
     hasCustomLists: false,
     maxMeasurementsPerDay: 100,
     maxGroupsAllowed: 1,
@@ -31,6 +34,7 @@ const TIER_FEATURES: Record<SubscriptionTier, SubscriptionFeatures> = {
   premium: {
     canUseLocationEnrichment: true,
     canUseWeatherData: true,
+    canUseAutoContext: true,
     hasCustomLists: true,
     maxMeasurementsPerDay: 1000,
     maxGroupsAllowed: 5,
@@ -38,6 +42,7 @@ const TIER_FEATURES: Record<SubscriptionTier, SubscriptionFeatures> = {
   enterprise: {
     canUseLocationEnrichment: true,
     canUseWeatherData: true,
+    canUseAutoContext: true,
     hasCustomLists: true,
     // No limits for enterprise
   },
@@ -46,6 +51,7 @@ const TIER_FEATURES: Record<SubscriptionTier, SubscriptionFeatures> = {
 export function useSubscription(): SubscriptionData {
   const { user } = useAuth();
   const { groups: userGroups } = useGroups();
+  const { isSuperAdmin } = useUserRole();
   const [userTier, setUserTier] = useState<SubscriptionTier>('free');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,9 +118,14 @@ export function useSubscription(): SubscriptionData {
     fetchUserSubscription();
   }, [fetchUserSubscription]);
 
+  // Super admin override - grant enterprise features
+  const finalFeatures = isSuperAdmin 
+    ? TIER_FEATURES.enterprise 
+    : TIER_FEATURES[userTier];
+
   return {
     tier: userTier,
-    features: TIER_FEATURES[userTier],
+    features: finalFeatures,
     loading,
     error,
   };

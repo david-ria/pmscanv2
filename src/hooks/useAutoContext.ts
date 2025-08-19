@@ -9,6 +9,7 @@ import { MODEL_LABELS } from '@/lib/recordingConstants';
 import { supabase } from '@/integrations/supabase/client';
 import { useStorageSettings } from '@/hooks/useStorage';
 import { STORAGE_KEYS } from '@/services/storageService';
+import { useSubscription } from '@/hooks/useSubscription';
 import { Capacitor } from '@capacitor/core';
 import { BleClient } from '@capacitor-community/bluetooth-le';
 import {
@@ -59,6 +60,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
     STORAGE_KEYS.AUTO_CONTEXT_SETTINGS,
     DEFAULT_SETTINGS
   );
+  const { features } = useSubscription();
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
@@ -80,9 +82,14 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   // Hook pour les capteurs de détection des transports souterrains
   const { sensorData, updateGPSAccuracy, updateAltitudeFromGPS, detectUndergroundActivity, startSensorListening, stopSensorListening, initializeReference } = useSensorData();
 
-  const toggleEnabled = useCallback(() => {
-    updateSettings({ enabled: !settings.enabled });
-  }, [settings.enabled, updateSettings]);
+  const toggleEnabled = useCallback((enabled?: boolean) => {
+    // Only allow enabling if user has subscription access
+    const newEnabled = enabled !== undefined ? enabled : !settings.enabled;
+    if (newEnabled && !features.canUseAutoContext) {
+      return;
+    }
+    updateSettings({ enabled: newEnabled });
+  }, [settings.enabled, updateSettings, features.canUseAutoContext]);
 
   // Save settings to localStorage whenever they change - handled by useStorageSettings
 
@@ -667,7 +674,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       determineContext,
       updateLatestContext,
       latestContext,
-      isEnabled: settings.enabled,
+      isEnabled: settings.enabled && features.canUseAutoContext,
       mlEnabled: settings.mlEnabled,
       highAccuracy: settings.highAccuracy,
       latestLocation,

@@ -194,12 +194,12 @@ export function useMenuSections({
         {
           icon: Brain,
           label: 'Auto Context',
-          isPremiumFeature: !features.hasCustomLists,
-          toggle: features.hasCustomLists ? {
+          isPremiumFeature: !features.canUseAutoContext,
+          toggle: features.canUseAutoContext ? {
             checked: autoContextEnabled,
             onCheckedChange: toggleAutoContext,
           } : undefined,
-          info: !features.hasCustomLists ? 'Premium feature' : undefined,
+          info: !features.canUseAutoContext ? 'Premium feature' : undefined,
         },
       ],
     },
