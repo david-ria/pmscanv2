@@ -310,9 +310,20 @@ export function getAllGroupIds(): string[] {
   return Object.keys(groupConfigs);
 }
 
+// Helper function to check if string is a UUID
+function isUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
 export function generateGroupUrl(
   groupId: string,
   baseUrl: string = window.location.origin
 ): string {
+  // If it's a UUID (database group), use proper routing
+  if (isUUID(groupId)) {
+    return `${baseUrl}/groups/${groupId}`;
+  }
+  // If it's a static config ID, use query parameter for backward compatibility
   return `${baseUrl}?group=${groupId}`;
 }
