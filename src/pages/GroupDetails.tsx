@@ -28,6 +28,7 @@ import { GroupEventsDialog } from '@/components/Groups/GroupEventsDialog';
 import { GroupLocationsDialog } from '@/components/Groups/GroupLocationsDialog';
 import { EditGroupDialog } from '@/components/Groups/EditGroupDialog';
 import { InviteUserDialog } from '@/components/Groups/InviteUserDialog';
+import { GroupSubscriptionDialog } from '@/components/Groups/GroupSubscriptionDialog';
 
 export default function GroupDetails() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -43,6 +44,7 @@ export default function GroupDetails() {
   const locationsDialog = useDialog();
   const editDialog = useDialog();
   const inviteDialog = useDialog();
+  const subscriptionDialog = useDialog();
 
   useEffect(() => {
     if (!loading && groups.length > 0 && groupId) {
@@ -219,7 +221,7 @@ export default function GroupDetails() {
             <div className="flex items-center gap-3">
               <Badge 
                 className={`cursor-pointer transition-colors hover:opacity-80 ${getPlanColor(group.subscription_tier || 'free')}`}
-                onClick={() => alert('Group subscription management coming soon!')}
+                onClick={subscriptionDialog.openDialog}
               >
                 <Crown className="h-3 w-3 mr-1" />
                 {(group.subscription_tier || 'free').toUpperCase()} Plan
@@ -326,6 +328,12 @@ export default function GroupDetails() {
           groupId={group.id}
           open={inviteDialog.open}
           onOpenChange={inviteDialog.setOpen}
+        />
+
+        <GroupSubscriptionDialog
+          group={group}
+          open={subscriptionDialog.open}
+          onOpenChange={subscriptionDialog.setOpen}
         />
       </div>
     </div>
