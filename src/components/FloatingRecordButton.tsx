@@ -232,7 +232,7 @@ export function FloatingRecordButton({
           'hover:scale-105 active:scale-95 shadow-xl',
           isRecording
             ? 'bg-destructive text-destructive-foreground animate-slow-pulse'
-            : 'bg-primary text-primary-foreground hover:shadow-2xl'
+            : 'bg-green-500 text-white hover:shadow-2xl hover:bg-green-600'
         )}
         type="button"
       >
