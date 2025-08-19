@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,7 +12,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -21,25 +21,22 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useGroups, Group } from '@/hooks/useGroups';
-import { BaseDialogProps } from '@/types/shared';
+import { z } from 'zod';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Group } from '@/hooks/useGroups';
 
-const formSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Group name is required')
-    .max(100, 'Group name must be less than 100 characters'),
-  description: z
-    .string()
-    .max(500, 'Description must be less than 500 characters')
-    .optional(),
+const editGroupSchema = z.object({
+  name: z.string().min(1, 'Group name is required').max(100, 'Name too long'),
+  description: z.string().max(500, 'Description too long').optional(),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type EditGroupFormData = z.infer<typeof editGroupSchema>;
 
-interface EditGroupDialogProps extends BaseDialogProps {
+interface EditGroupDialogProps {
   group: Group;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function EditGroupDialog({
@@ -47,47 +44,73 @@ export function EditGroupDialog({
   open,
   onOpenChange,
 }: EditGroupDialogProps) {
-  const { updateGroup } = useGroups();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<EditGroupFormData>({
+    resolver: zodResolver(editGroupSchema),
     defaultValues: {
-      name: group.name,
+      name: group.name || '',
       description: group.description || '',
     },
   });
 
+  // Reset form when group changes
   useEffect(() => {
-    if (open) {
+    if (open && group) {
       form.reset({
-        name: group.name,
+        name: group.name || '',
         description: group.description || '',
       });
     }
   }, [open, group, form]);
 
-  const onSubmit = async (values: FormData) => {
-    setIsSubmitting(true);
+  const onSubmit = async (data: EditGroupFormData) => {
+    setLoading(true);
     try {
-      await updateGroup(group.id, values);
+      const { error } = await supabase
+        .from('groups')
+        .update({
+          name: data.name,
+          description: data.description || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', group.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Group information updated successfully',
+      });
+
       onOpenChange(false);
-    } catch (error) {
-      // Error handling is done in the hook
+      // Reload the page to reflect changes
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update group information',
+        variant: 'destructive',
+      });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Group</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Edit3 className="h-5 w-5" />
+            Edit Group Information
+          </DialogTitle>
           <DialogDescription>
-            Update your group's name and description.
+            Update the basic information for your group.
           </DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -95,48 +118,48 @@ export function EditGroupDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Group Name</FormLabel>
+                  <FormLabel>Group Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter group name" {...field} />
+                    <Input
+                      placeholder="Enter group name"
+                      {...field}
+                    />
                   </FormControl>
-                  <FormDescription>
-                    Choose a descriptive name for your group
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describe the purpose of this group"
+                      placeholder="Optional group description"
                       className="resize-none"
+                      rows={3}
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Help members understand the group's purpose
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
+                disabled={loading}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Saving...' : 'Save Changes'}
               </Button>
             </DialogFooter>
           </form>

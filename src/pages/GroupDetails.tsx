@@ -10,7 +10,8 @@ import {
   UserPlus,
   Crown,
   ChevronRight,
-  Loader2
+  Edit3,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +27,7 @@ import { GroupCustomThresholdsDialog } from '@/components/Groups/GroupCustomThre
 import { GroupAlarmsDialog } from '@/components/Groups/GroupAlarmsDialog';
 import { GroupEventsDialog } from '@/components/Groups/GroupEventsDialog';
 import { GroupLocationsDialog } from '@/components/Groups/GroupLocationsDialog';
+import { EditGroupDialog } from '@/components/Groups/EditGroupDialog';
 import { InviteUserDialog } from '@/components/Groups/InviteUserDialog';
 
 export default function GroupDetails() {
@@ -42,6 +44,7 @@ export default function GroupDetails() {
   const alarmsDialog = useDialog();
   const eventsDialog = useDialog();
   const locationsDialog = useDialog();
+  const editDialog = useDialog();
   const inviteDialog = useDialog();
 
   useEffect(() => {
@@ -187,8 +190,18 @@ export default function GroupDetails() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold">{group.name}</h1>
-              <p className="text-muted-foreground mt-1">{group.description || 'No description'}</p>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold">{group.name}</h1>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={editDialog.openDialog}
+                  className="h-8 w-8 p-0 opacity-60 hover:opacity-100"
+                >
+                  <Edit3 className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground">{group.description || 'No description'}</p>
               <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
@@ -300,7 +313,12 @@ export default function GroupDetails() {
           </div>
         </div>
 
-        {/* Dialogs */}
+        <EditGroupDialog
+          group={group}
+          open={editDialog.open}
+          onOpenChange={editDialog.setOpen}
+        />
+
         <GroupSettingsDialog
           group={group}
           open={settingsDialog.open}
