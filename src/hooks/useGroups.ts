@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Group {
   id: string;
@@ -50,16 +51,21 @@ export interface GroupInvitation {
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchGroups = useCallback(async () => {
-    try {
-      // Get current user first
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+    if (!user?.id) {
+      setGroups([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
+    try {
+      setError(null);
+      
       // First fetch groups
       const { data: groupsData, error: groupsError } = await supabase
         .from('groups')
@@ -97,10 +103,11 @@ export const useGroups = () => {
         description: 'Failed to fetch groups',
         variant: 'destructive',
       });
+      setError(error.message);
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, user?.id]);
 
   const createGroup = useCallback(async (name: string, description?: string) => {
     try {
@@ -219,12 +226,16 @@ export const useGroups = () => {
   }, [fetchGroups, toast]);
 
   useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
+    // Only fetch if user is authenticated and we haven't already loaded
+    if (user?.id && (loading || groups.length === 0)) {
+      fetchGroups();
+    }
+  }, [user?.id, fetchGroups, loading, groups.length]);
 
   return {
     groups,
     loading,
+    error,
     createGroup,
     updateGroup,
     deleteGroup,

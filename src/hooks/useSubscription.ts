@@ -50,7 +50,7 @@ const TIER_FEATURES: Record<SubscriptionTier, SubscriptionFeatures> = {
 
 export function useSubscription(): SubscriptionData {
   const { user } = useAuth();
-  const { groups: userGroups } = useGroups();
+  const { groups: userGroups, loading: groupsLoading, error: groupsError } = useGroups();
   const { isSuperAdmin } = useUserRole();
   const [userTier, setUserTier] = useState<SubscriptionTier>('free');
   const [loading, setLoading] = useState(true);
@@ -60,6 +60,11 @@ export function useSubscription(): SubscriptionData {
     if (!user?.id) {
       setUserTier('free');
       setLoading(false);
+      return;
+    }
+
+    // Wait for groups to finish loading
+    if (groupsLoading) {
       return;
     }
 
@@ -74,6 +79,13 @@ export function useSubscription(): SubscriptionData {
         .single();
 
       if (profileError) {
+        // If profile doesn't exist, continue with free tier
+        if (profileError.code === 'PGRST116') {
+          setUserTier('free');
+          setLoading(false);
+          return;
+        }
+        
         console.error('Error fetching user subscription:', profileError);
         setError('Failed to fetch subscription data');
         setUserTier('free');
@@ -83,8 +95,8 @@ export function useSubscription(): SubscriptionData {
 
       let highestTier = (profile?.subscription_tier as SubscriptionTier) || 'free';
 
-      // Check group subscriptions - highest tier wins
-      if (userGroups && userGroups.length > 0) {
+      // Check group subscriptions only if groups loaded successfully and exist
+      if (userGroups && userGroups.length > 0 && !groupsError) {
         const groupIds = userGroups.map(group => group.id);
         
         const { data: groups, error: groupsError } = await supabase
@@ -112,7 +124,7 @@ export function useSubscription(): SubscriptionData {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, userGroups]);
+  }, [user?.id, userGroups, groupsLoading, groupsError]);
 
   useEffect(() => {
     fetchUserSubscription();
