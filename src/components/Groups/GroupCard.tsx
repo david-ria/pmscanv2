@@ -1,15 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Users,
   Settings,
   UserPlus,
   MoreVertical,
   Trash2,
-  Edit,
   LogOut,
-  Cog,
-  Target,
 } from 'lucide-react';
 import {
   Card,
@@ -38,10 +35,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useGroups, Group } from '@/hooks/useGroups';
-import { EditGroupDialog } from './EditGroupDialog';
-import { GroupSettingsDialog } from './GroupSettingsDialog';
-import { GroupCustomThresholdsDialog } from './GroupCustomThresholdsDialog';
-import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 
 interface GroupCardProps {
@@ -56,11 +49,8 @@ export function GroupCard({
   isAdminView = false,
 }: GroupCardProps) {
   const { deleteGroup, leaveGroup } = useGroups();
-  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [thresholdsOpen, setThresholdsOpen] = useState(false);
 
   const isAdmin = group.role === 'admin';
   // In admin view, super admins can manage any group
@@ -116,22 +106,6 @@ export function GroupCard({
               {canManageGroup && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Group
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
-                    <Cog className="h-4 w-4 mr-2" />
-                    Group Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setThresholdsOpen(true)}>
-                    <Target className="h-4 w-4 mr-2" />
-                    Seuils Personnalisés
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onInviteUser}>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Invite Members
-                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setDeleteOpen(true)}
                     className="text-destructive focus:text-destructive"
@@ -178,7 +152,7 @@ export function GroupCard({
             })}
           </div>
 
-          {/* Action buttons - Show admin buttons when user can manage the group */}
+          {/* Action buttons - Streamlined design */}
           <div className="flex gap-2">
             {canManageGroup ? (
               <>
@@ -186,23 +160,15 @@ export function GroupCard({
                   <UserPlus className="h-4 w-4 mr-2" />
                   Invite
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setSettingsOpen(true)}
-                  size="sm"
-                >
-                  <Cog className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setEditOpen(true)}
-                  size="sm"
-                >
-                  <Settings className="h-4 w-4" />
+                <Button asChild variant="outline" size="sm" className="flex-1">
+                  <Link to={`/groups/${group.id}`}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Manage
+                  </Link>
                 </Button>
               </>
             ) : (
-              // In regular view, just show view details button
+              // For non-admins, just show view details button
               <Button asChild variant="outline" size="sm" className="flex-1">
                 <Link to={`/groups/${group.id}`}>
                   <Settings className="h-4 w-4 mr-2" />
@@ -213,24 +179,6 @@ export function GroupCard({
           </div>
         </CardContent>
       </Card>
-
-      <EditGroupDialog
-        group={group}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-      />
-
-      <GroupSettingsDialog
-        group={group}
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-      />
-
-      <GroupCustomThresholdsDialog
-        group={group}
-        open={thresholdsOpen}
-        onOpenChange={setThresholdsOpen}
-      />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
