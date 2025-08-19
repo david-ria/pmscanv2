@@ -220,6 +220,42 @@ export type Database = {
         }
         Relationships: []
       }
+      group_events: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          enabled: boolean | null
+          group_id: string
+          icon: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          enabled?: boolean | null
+          group_id: string
+          icon?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          enabled?: boolean | null
+          group_id?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       group_invitations: {
         Row: {
           created_at: string
@@ -312,6 +348,7 @@ export type Database = {
           alarm_enabled: boolean | null
           auto_share_stats: boolean | null
           created_at: string
+          custom_alarms: Json | null
           default_activity: string | null
           default_location: string | null
           event_notifications: boolean | null
@@ -330,6 +367,7 @@ export type Database = {
           alarm_enabled?: boolean | null
           auto_share_stats?: boolean | null
           created_at?: string
+          custom_alarms?: Json | null
           default_activity?: string | null
           default_location?: string | null
           event_notifications?: boolean | null
@@ -348,6 +386,7 @@ export type Database = {
           alarm_enabled?: boolean | null
           auto_share_stats?: boolean | null
           created_at?: string
+          custom_alarms?: Json | null
           default_activity?: string | null
           default_location?: string | null
           event_notifications?: boolean | null
@@ -429,6 +468,7 @@ export type Database = {
           custom_locations: Json | null
           description: string | null
           id: string
+          member_quota: number | null
           name: string
           subscription_tier:
             | Database["public"]["Enums"]["subscription_tier"]
@@ -442,6 +482,7 @@ export type Database = {
           custom_locations?: Json | null
           description?: string | null
           id?: string
+          member_quota?: number | null
           name: string
           subscription_tier?:
             | Database["public"]["Enums"]["subscription_tier"]
@@ -455,6 +496,7 @@ export type Database = {
           custom_locations?: Json | null
           description?: string | null
           id?: string
+          member_quota?: number | null
           name?: string
           subscription_tier?:
             | Database["public"]["Enums"]["subscription_tier"]
