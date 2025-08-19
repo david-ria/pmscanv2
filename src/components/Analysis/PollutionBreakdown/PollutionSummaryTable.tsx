@@ -46,28 +46,31 @@ export const PollutionSummaryTable = ({
         return (
           <div
             key={item.name}
-            className="flex items-start sm:items-center gap-3 p-3 bg-muted/30 rounded-lg"
+            className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg"
           >
             <div
-              className="w-4 h-4 rounded-full mt-0.5 sm:mt-0 flex-shrink-0"
+              className="w-4 h-4 rounded-full mt-0.5 flex-shrink-0"
               style={{ backgroundColor: item.color }}
             />
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm">{item.name}</div>
-              <div className="text-xs text-muted-foreground break-words">
-                {Math.round(item.exposure)} {t('analysis.minutes')} • PM
-                {pmType.replace('pm', '')}: {Math.round(item.avgPM)} μg/m³ • {t('analysis.cumulativeDose')}: {item.cumulativeDose.toFixed(1)} μg
+              {/* Line 1: Activity name */}
+              <div className="font-medium text-sm mb-1">{item.name}</div>
+              
+              {/* Line 2: Duration and average + WHO compliance */}
+              <div className="text-xs text-muted-foreground mb-1">
+                {Math.round(item.exposure)} {t('analysis.minutes')} • PM{pmType.replace('pm', '')}: {Math.round(item.avgPM)} μg/m³
                 {whoThreshold.value && (
                   <span
-                    className={`block sm:inline sm:ml-2 ${exceedsWHO ? 'text-red-600' : 'text-green-600'}`}
+                    className={`ml-2 ${exceedsWHO ? 'text-red-600' : 'text-green-600'}`}
                   >
-                    (
-                    {exceedsWHO
-                      ? t('analysis.exceeds')
-                      : t('analysis.complies')}{' '}
-                    {t('analysis.whoThreshold')}: {whoThreshold.value} μg/m³)
+                    ({exceedsWHO ? t('analysis.exceeds') : t('analysis.complies')} {t('analysis.whoThreshold')}: {whoThreshold.value} μg/m³)
                   </span>
                 )}
+              </div>
+              
+              {/* Line 3: Cumulative dose */}
+              <div className="text-xs text-muted-foreground">
+                {t('analysis.cumulativeDose')}: {item.cumulativeDose.toFixed(1)} μg
               </div>
             </div>
             <div className="text-right flex-shrink-0">
