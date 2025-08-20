@@ -75,6 +75,7 @@ export function DataLogger({
           missionContext: entry.context,
           automaticContext: entry.automaticContext, // Autocontext (sensors + heuristics)
           enrichedLocation: entry.enrichedLocation, // NEW: Location enrichment from GPS
+          geohash: entry.geohash, // NEW: Geohash for spatial indexing
         };
       }).filter(Boolean)  // Remove null entries
     : [];
@@ -106,6 +107,8 @@ export function DataLogger({
       'Location Context',
       'Activity Context',
       'Auto Context',
+      'Enriched Location',
+      'Geohash',
     ];
 
     const csvContent = [
@@ -124,6 +127,8 @@ export function DataLogger({
           entry.missionContext?.location || '',
           entry.missionContext?.activity || '',
           entry.automaticContext || '',
+          entry.enrichedLocation || '',
+          entry.geohash || '',
         ].join(',')
       ),
     ].join('\n');
@@ -260,6 +265,11 @@ export function DataLogger({
                    {entry.enrichedLocation && (
                      <div className="text-xs pl-2 text-green-400">
                        Location: {entry.enrichedLocation}
+                     </div>
+                   )}
+                   {entry.geohash && (
+                     <div className="text-xs pl-2 text-purple-400">
+                       Geohash: {entry.geohash}
                      </div>
                    )}
                 </div>
