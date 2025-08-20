@@ -131,3 +131,10 @@ export const useThresholdSettings = () => {
 export const useWeatherLogging = () => {
   return useStorageBoolean(STORAGE_KEYS.WEATHER_LOGGING, true);
 };
+
+export const useGeohashSettings = () => {
+  return useStorageSettings(STORAGE_KEYS.GEOHASH_SETTINGS, {
+    enabled: false,
+    precision: 8, // Building level by default
+  });
+};

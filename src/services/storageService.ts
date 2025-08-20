@@ -8,6 +8,7 @@ export const STORAGE_KEYS = {
   GLOBAL_ALERTS_ENABLED: 'globalAlertsEnabled',
   AIR_QUALITY_THRESHOLDS: 'airQualityThresholds',
   WEATHER_LOGGING: 'weatherLoggingEnabled',
+  GEOHASH_SETTINGS: 'geohashSettings',
   
   // Mission and data storage
   MISSIONS: 'missions',
