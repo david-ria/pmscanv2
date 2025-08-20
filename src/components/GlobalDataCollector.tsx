@@ -72,6 +72,20 @@ export function GlobalDataCollector() {
     enrichLocationType: typeof enrichLocation
   });
 
+  console.log('🗺️ GEOHASH DEBUG STATE:', {
+    geohashEnabled: geohashSettings.enabled,
+    geohashPrecision: geohashSettings.precision,
+    hasLatestLocation: !!latestLocation,
+    latestLocationCoords: latestLocation ? {
+      lat: latestLocation.latitude,
+      lng: latestLocation.longitude,
+      timestamp: latestLocation.timestamp
+    } : null,
+    isRecording,
+    hasCurrentData: !!currentData,
+    willGenerateGeohash: geohashSettings.enabled && !!latestLocation && isRecording && !!currentData
+  });
+
   // Prevent duplicate data points and track frequency
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
   const lastRecordedTimeRef = useRef<Date | null>(null);
