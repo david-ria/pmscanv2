@@ -81,7 +81,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
       }
       lastErrorTimeRef.current = now;
 
-      logger.error('🧭 GPS: Error occurred:', undefined, {
+      logger.error('🧭 GPS: Error occurred:', new Error(error.message), {
         code: (error as any).code,
         message: error.message,
         PERMISSION_DENIED: (error as any).PERMISSION_DENIED,
