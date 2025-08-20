@@ -55,6 +55,7 @@ export interface MeasurementData {
   activityContext?: string;
   automaticContext?: string;
   enrichedLocation?: string;
+  geohash?: string; // NEW: Geohash for spatial indexing and privacy
   // weatherDataId removed - now at mission level
 }
 
@@ -84,7 +85,8 @@ class DataStorageService {
             location_context,
             activity_context,
             automatic_context,
-            enriched_location
+            enriched_location,
+            geohash
           )
         `
         )

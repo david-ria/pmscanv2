@@ -13,6 +13,7 @@ import {
   Bluetooth,
   Cloud,
   MapPin as MapPinIcon,
+  Hash,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +27,8 @@ import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useGPS } from '@/hooks/useGPS';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import { useLocationEnrichmentSettings } from '@/hooks/useLocationEnrichmentSettings';
+import { useGeohashSettings } from '@/hooks/useStorage';
+import { getGeohashPrecisionDescription } from '@/utils/geohash';
 import { useSubscription } from '@/hooks/useSubscription';
 import { LucideIcon } from 'lucide-react';
 
@@ -71,6 +74,9 @@ export function useMenuSections({
   
   // Get location enrichment settings
   const { isEnabled: locationEnrichmentEnabled, toggleEnabled: toggleLocationEnrichment } = useLocationEnrichmentSettings();
+  
+  // Get geohash settings
+  const { settings: geohashSettings, updateSettings: updateGeohashSettings } = useGeohashSettings();
   
   // Get subscription features
   const { features } = useSubscription();
@@ -252,6 +258,16 @@ export function useMenuSections({
               onCheckedChange: toggleLocationEnrichment,
             } : undefined,
             info: !features.canUseLocationEnrichment ? 'Premium feature' : 'Enhance location context using OpenStreetMap reverse geocoding to automatically detect places like restaurants, schools, etc.',
+          },
+          {
+            icon: Hash,
+            label: 'Geohash Encoding',
+            badge: geohashSettings.enabled ? getGeohashPrecisionDescription(geohashSettings.precision) : null,
+            toggle: {
+              checked: geohashSettings.enabled,
+              onCheckedChange: (enabled: boolean) => updateGeohashSettings({ enabled }),
+            },
+            info: 'Generate geohash codes for spatial indexing and privacy-preserving location data. Geohashes allow for efficient location-based queries while protecting exact coordinates.',
           },
        ],
      },

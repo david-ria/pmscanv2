@@ -227,6 +227,7 @@ export async function syncPendingMissions(): Promise<void> {
           activity_context: m.activityContext,
           automatic_context: m.automaticContext,
           enriched_location: m.enrichedLocation,
+          geohash: m.geohash, // NEW: Include geohash in sync
         }));
 
         const { error: measurementsError } = await supabase

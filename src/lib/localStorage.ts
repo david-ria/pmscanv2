@@ -79,6 +79,7 @@ export function formatDatabaseMission(dbMission: {
     activity_context?: string;
     automatic_context?: string;
     enriched_location?: string;
+    geohash?: string; // NEW: Include geohash in database measurement type
   }>;
 }): MissionData {
   return {
@@ -114,6 +115,7 @@ export function formatDatabaseMission(dbMission: {
         activityContext: m.activity_context,
         automaticContext: m.automatic_context,
         enrichedLocation: m.enriched_location,
+        geohash: m.geohash, // NEW: Include geohash from database
       })) || [],
     synced: true,
   };

@@ -20,6 +20,7 @@ export function createMissionFromRecording(
     };
     automaticContext?: string;
     enrichedLocation?: string;
+    geohash?: string; // NEW: Geohash field
     weatherDataId?: string;
   }>,
   missionName: string,
@@ -51,6 +52,7 @@ export function createMissionFromRecording(
       activityContext: m.context?.activity,
       automaticContext: m.automaticContext,
       enrichedLocation: m.enrichedLocation,
+      geohash: m.geohash, // NEW: Include geohash in measurement conversion
     };
   });
 

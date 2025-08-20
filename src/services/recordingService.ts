@@ -21,7 +21,8 @@ export interface RecordingActions {
     location?: LocationData,
     context?: MissionContext,
     automaticContext?: string,
-    enrichedLocation?: string // NEW parameter
+    enrichedLocation?: string, // NEW parameter
+    geohash?: string // NEW: Geohash parameter
   ) => void;
   updateMissionContext: (location: string, activity: string) => void;
   clearRecordingData: () => void;
@@ -132,7 +133,8 @@ class RecordingService {
     location?: LocationData,
     context?: MissionContext,
     automaticContext?: string,
-    enrichedLocation?: string // NEW parameter
+    enrichedLocation?: string, // NEW parameter
+    geohash?: string // NEW: Geohash parameter
   ): void {
     if (!this.state.isRecording) {
       logger.debug('⚠️ Attempted to add data point while not recording');
@@ -145,6 +147,7 @@ class RecordingService {
       context: context || this.state.missionContext,
       automaticContext,
       enrichedLocation, // NEW: Store location enrichment separately
+      geohash, // NEW: Store geohash when provided
       timestamp: pmData.timestamp, // Use PMScan timestamp (already standardized via createTimestamp)
     };
 

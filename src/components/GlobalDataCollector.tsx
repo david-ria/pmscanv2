@@ -4,6 +4,8 @@ import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useStorageSettings } from '@/hooks/useStorage';
 import { STORAGE_KEYS } from '@/services/storageService';
 import { useLocationEnrichmentIntegration } from '@/hooks/useLocationEnrichmentIntegration';
+import { useGeohashSettings } from '@/hooks/useStorage';
+import { encodeGeohash } from '@/utils/geohash';
 
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
@@ -61,6 +63,9 @@ export function GlobalDataCollector() {
 
   // Location enrichment integration
   const { enrichLocation } = useLocationEnrichmentIntegration();
+
+  // Get geohash settings
+  const { settings: geohashSettings } = useGeohashSettings();
 
   console.log('🔧 GlobalDataCollector - Location enrichment state:', {
     hasEnrichLocation: !!enrichLocation,
@@ -261,7 +266,10 @@ export function GlobalDataCollector() {
             latestLocation || undefined,
             { location: selectedLocation, activity: selectedActivity },
             automaticContext,
-            enrichedLocationName // NEW: Pass enriched location separately
+            enrichedLocationName, // NEW: Pass enriched location separately
+            geohashSettings.enabled && latestLocation?.latitude && latestLocation?.longitude 
+              ? encodeGeohash(latestLocation.latitude, latestLocation.longitude, geohashSettings.precision)
+              : undefined // NEW: Pass geohash when enabled and location available
           );
         };
 

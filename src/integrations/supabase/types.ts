@@ -540,6 +540,7 @@ export type Database = {
           created_at: string
           date_utc: string | null
           enriched_location: string | null
+          geohash: string | null
           humidity: number | null
           id: string
           latitude: number | null
@@ -560,6 +561,7 @@ export type Database = {
           created_at?: string
           date_utc?: string | null
           enriched_location?: string | null
+          geohash?: string | null
           humidity?: number | null
           id?: string
           latitude?: number | null
@@ -580,6 +582,7 @@ export type Database = {
           created_at?: string
           date_utc?: string | null
           enriched_location?: string | null
+          geohash?: string | null
           humidity?: number | null
           id?: string
           latitude?: number | null
