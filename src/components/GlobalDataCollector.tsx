@@ -312,6 +312,8 @@ export function GlobalDataCollector() {
     getWeatherForMeasurement,
     weatherLoggingEnabled,
     enrichLocation,
+    geohashSettings,
+    encodeGeohash,
   ]);
 
   // Clear location history when recording starts for fresh speed calculations
