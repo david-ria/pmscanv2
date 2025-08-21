@@ -18,7 +18,7 @@ export async function initializeDatabase(): Promise<void> {
     db.exec(`
       CREATE TABLE IF NOT EXISTS processed_files (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        path TEXT UNIQUE NOT NULL,
+        path TEXT NOT NULL,
         fingerprint TEXT NOT NULL,
         device_id TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'processing',
@@ -108,24 +108,33 @@ export function isFileProcessed(path: string, fingerprint: string): boolean {
   }
 }
 
-// Start processing a file (status='processing')
+// Start processing a file (status='processing') with upsert behavior
 export function startFileProcessing(path: string, fingerprint: string, deviceId: string, fileSize: number): number {
   try {
     const stmt = db.prepare(`
-      INSERT INTO processed_files (path, fingerprint, device_id, file_size, status, total_rows)
-      VALUES (?, ?, ?, ?, 'processing', 0)
+      INSERT INTO processed_files (path, fingerprint, device_id, file_size, status, total_rows, started_at)
+      VALUES (?, ?, ?, ?, 'processing', 0, CURRENT_TIMESTAMP)
+      ON CONFLICT(path, fingerprint) DO UPDATE SET 
+        status = 'processing',
+        started_at = CURRENT_TIMESTAMP,
+        finished_at = NULL,
+        error_message = NULL
     `);
     const result = stmt.run(path, fingerprint, deviceId, fileSize);
     
-    if (typeof result.lastInsertRowid === 'number') {
-      logger.info('File processing started:', { 
+    // Get the file ID (either inserted or updated)
+    const selectStmt = db.prepare('SELECT id FROM processed_files WHERE path = ? AND fingerprint = ?');
+    const fileRecord = selectStmt.get(path, fingerprint) as { id: number } | undefined;
+    
+    if (fileRecord) {
+      logger.info('File processing started/restarted:', { 
         path, 
         fingerprint: fingerprint.substring(0, 16) + '...', 
         deviceId, 
         fileSize, 
-        fileId: result.lastInsertRowid 
+        fileId: fileRecord.id 
       });
-      return result.lastInsertRowid;
+      return fileRecord.id;
     } else {
       throw new Error('Failed to get file ID');
     }

@@ -47,17 +47,14 @@ export async function listCSVFiles(): Promise<StorageFile[]> {
       return [];
     }
     
-    // Filter for CSV files and add full paths (no size filtering)
+    // Filter for CSV files and preserve full paths
     const csvFiles = (data || [])
-      .filter(file => {
-        const isCSV = file.name.toLowerCase().endsWith('.csv');
-        return isCSV; // Don't filter on size - let empty files through for processing
-      })
+      .filter(file => file.name.toLowerCase().endsWith('.csv'))
       .map(file => ({
         ...file,
-        // Ensure we have the full path for downloads
-        name: config.storage.pathPrefix + file.name,
-        // Extract just the basename for logging
+        // Preserve full path for downloads
+        fullPath: config.storage.pathPrefix + file.name,
+        // Keep basename for logging
         basename: file.name,
       })) as StorageFile[];
     
@@ -77,105 +74,63 @@ export async function listCSVFiles(): Promise<StorageFile[]> {
   }
 }
 
-// Compute file fingerprint for idempotency (path + size + lastModified)
-export function computeFileFingerprint(file: StorageFile): FileFingerprint {
-  const path = file.name;
-  const size = file.metadata?.size || 0;
-  const lastModified = file.updated_at || file.created_at;
-  
+// Download a CSV file as Blob (for fingerprinting and non-destructive peek)
+export async function downloadCSVBlob(filename: string): Promise<{ blob: Blob; fullPath: string; updatedAt: string } | null> {
+  try {
+    logger.debug('Downloading file as blob:', filename);
+    
+    const { data, error } = await supabase.storage
+      .from(config.storage.bucket)
+      .download(filename);
+    
+    if (error) {
+      logger.error('Error downloading file:', { filename, error });
+      return null;
+    }
+    
+    if (!data) {
+      logger.warn('No data returned for file:', filename);
+      return null;
+    }
+    
+    logger.debug('File downloaded as blob:', { filename, size: data.size });
+    return {
+      blob: data,
+      fullPath: filename,
+      updatedAt: new Date().toISOString() // Blob doesn't have metadata, use current time
+    };
+    
+  } catch (error) {
+    logger.error('Error downloading CSV blob:', { filename, error });
+    return null;
+  }
+}
+
+// Convert Blob to Node.js Readable using Readable.fromWeb
+export async function blobToNodeStream(blob: Blob): Promise<NodeJS.ReadableStream> {
+  const { Readable } = await import('stream');
+  const webStream = blob.stream();
+  return Readable.fromWeb(webStream as any);
+}
+
+// Compute file fingerprint after download using fullPath, blob.size, and updatedAt
+export function computeFileFingerprint(fullPath: string, blobSize: number, updatedAt: string): FileFingerprint {
   // Create a stable fingerprint from path, size, and timestamp
-  const fingerprint = `${path}:${size}:${lastModified}`;
+  const fingerprint = `${fullPath}:${blobSize}:${updatedAt}`;
   
   return {
-    path,
-    size,
-    lastModified,
+    path: fullPath,
+    size: blobSize,
+    lastModified: updatedAt,
     fingerprint,
   };
 }
 
-// Download a CSV file as Node.js Readable (memory-efficient streaming)
+// Legacy function - kept for backward compatibility
 export async function downloadCSVFileAsStream(filename: string): Promise<NodeJS.ReadableStream | null> {
-  try {
-    logger.debug('Downloading file as stream:', filename);
-    
-    const { data, error } = await supabase.storage
-      .from(config.storage.bucket)
-      .download(filename);
-    
-    if (error) {
-      logger.error('Error downloading file:', { filename, error });
-      return null;
-    }
-    
-    if (!data) {
-      logger.warn('No data returned for file:', filename);
-      return null;
-    }
-    
-    // Get file size for logging
-    const fileSize = data.size;
-    logger.debug('File downloaded successfully:', { filename, size: fileSize });
-    
-    // Convert Web ReadableStream to Node.js Readable
-    const webStream = data.stream();
-    const reader = webStream.getReader();
-    
-    const { Readable } = await import('stream');
-    
-    const nodeReadable = new Readable({
-      async read() {
-        try {
-          const { done, value } = await reader.read();
-          if (done) {
-            this.push(null); // End of stream
-          } else {
-            this.push(Buffer.from(value));
-          }
-        } catch (error) {
-          this.destroy(error as Error);
-        }
-      }
-    });
-    
-    return nodeReadable;
-    
-  } catch (error) {
-    logger.error('Error downloading CSV file:', { filename, error });
-    return null;
-  }
-}
-
-// Alternative: Download as Buffer (less memory-efficient, but sometimes needed)
-export async function downloadCSVFileAsBuffer(filename: string): Promise<Buffer | null> {
-  try {
-    logger.debug('Downloading file as buffer:', filename);
-    
-    const { data, error } = await supabase.storage
-      .from(config.storage.bucket)
-      .download(filename);
-    
-    if (error) {
-      logger.error('Error downloading file:', { filename, error });
-      return null;
-    }
-    
-    if (!data) {
-      logger.warn('No data returned for file:', filename);
-      return null;
-    }
-    
-    // Convert Blob to Buffer
-    const arrayBuffer = await data.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    
-    logger.debug('File downloaded as buffer:', { filename, size: buffer.length });
-    return buffer;
-    
-  } catch (error) {
-    logger.error('Error downloading CSV file as buffer:', { filename, error });
-    return null;
-  }
+  const result = await downloadCSVBlob(filename);
+  if (!result) return null;
+  return blobToNodeStream(result.blob);
 }
 
 // Extract device ID from filename with CSV content fallback

@@ -3,9 +3,10 @@ import { config } from './config.js';
 import { createLogger } from './logger.js';
 import { 
   listCSVFiles, 
-  downloadCSVFileAsStream, 
-  extractDeviceIdFromFilename,
-  computeFileFingerprint 
+  downloadCSVBlob,
+  blobToNodeStream,
+  computeFileFingerprint,
+  extractDeviceIdFromFilename
 } from './supabase.js';
 import { 
   isFileProcessed, 
@@ -84,8 +85,16 @@ export async function pollAndProcess(): Promise<void> {
     
     for (const file of files) {
       try {
-        // Compute file fingerprint for idempotency
-        const fingerprint = computeFileFingerprint(file);
+        // Download file as blob for fingerprinting and non-destructive peek
+        const blobResult = await downloadCSVBlob(file.fullPath);
+        if (!blobResult) {
+          logger.warn('❌ Failed to download file blob:', file.fullPath);
+          skipped++;
+          continue;
+        }
+        
+        // Compute fingerprint after download using fullPath, blob.size, and updatedAt
+        const fingerprint = computeFileFingerprint(blobResult.fullPath, blobResult.blob.size, file.updated_at || file.created_at);
         
         // Check if this specific file version has been processed
         if (isFileProcessed(fingerprint.path, fingerprint.fingerprint)) {
@@ -97,33 +106,42 @@ export async function pollAndProcess(): Promise<void> {
           continue;
         }
         
-        // Extract device ID with CSV fallback support
-        const deviceId = await extractDeviceIdFromFilename(file.name);
+        // Non-destructive peek for device ID using blob.slice()
+        const peekChunk = blobResult.blob.slice(0, 2048);
+        const peekText = await peekChunk.text();
+        
+        // Extract device ID with CSV content fallback
+        let deviceId = await extractDeviceIdFromFilename(file.fullPath);
         if (!deviceId) {
-          logger.warn('❌ Cannot extract device ID (will try CSV fallback), skipping for now:', file.name);
+          deviceId = await extractDeviceIdFromFilename(file.fullPath, peekText);
+        }
+        
+        if (!deviceId) {
+          logger.warn('❌ Cannot extract device ID from filename or CSV content:', file.fullPath);
           skipped++;
           continue;
         }
         
-        // Check sensor mapping (may be re-checked after CSV fallback)
+        // Check sensor mapping
         if (!hasDeviceMapping(deviceId)) {
-          logger.debug('⏳ No sensor mapping for device (will try CSV fallback):', { file: file.name, deviceId });
-          // Don't skip yet - the CSV fallback in processFileWithStream might find a better device ID
+          logger.warn('❌ No sensor mapping for device:', { file: file.fullPath, deviceId });
+          skipped++;
+          continue;
         }
         
-        // Process the file with streaming
+        // Process the file with streaming from fresh blob
         logger.info('📄 Processing file:', { 
-          file: file.basename || file.name, 
+          file: file.basename || file.fullPath, 
           deviceId, 
           size: fingerprint.size,
           fingerprint: fingerprint.fingerprint.substring(0, 16) + '...'
         });
         
-        await processFileWithStream(file, fingerprint, deviceId);
+        await processFileWithBlob(blobResult.blob, fingerprint, deviceId);
         processed++;
         
       } catch (error) {
-        logger.error('❌ Error processing file:', { file: file.name, error });
+        logger.error('❌ Error processing file:', { file: file.fullPath, error });
         skipped++;
       }
     }
@@ -148,56 +166,14 @@ export async function pollAndProcess(): Promise<void> {
   }
 }
 
-// Process a single file with streaming (no full file in memory)
-async function processFileWithStream(file: any, fingerprint: any, deviceId: string): Promise<void> {
-  const filePath = file.name;
-  
+// Process a single file with blob streaming (no full file in memory)
+async function processFileWithBlob(blob: Blob, fingerprint: any, deviceId: string): Promise<void> {
   // Start file processing (creates database record with status='processing')
   const fileId = startFileProcessing(fingerprint.path, fingerprint.fingerprint, deviceId, fingerprint.size);
   
   try {
-    // Download file as Node.js Readable (memory-efficient)
-    const stream = await downloadCSVFileAsStream(filePath);
-    if (!stream) {
-      logger.error('❌ Failed to download file stream:', filePath);
-      finishFileProcessing(fileId, 'failed', 0, 0, 1, 'Failed to download file stream');
-      return;
-    }
-    
-    // For device ID fallback, we may need to peek at CSV content
-    let csvBuffer = '';
-    let fallbackAttempted = false;
-    
-    // If device ID extraction failed from filename, attempt CSV content fallback
-    if (!deviceId || deviceId === 'unknown') {
-      logger.info('🔍 Attempting device ID fallback from CSV content:', filePath);
-      
-      // Read first chunk of CSV for device ID extraction
-      const firstChunk = await new Promise<string>((resolve) => {
-        let buffer = '';
-        stream.on('data', (chunk) => {
-          buffer += chunk.toString();
-          if (buffer.length > 1024 || buffer.includes('\n\n')) { // Stop after 1KB or two newlines
-            resolve(buffer);
-          }
-        });
-        stream.on('end', () => resolve(buffer));
-      });
-      
-      const fallbackDeviceId = await extractDeviceIdFromFilename(filePath, firstChunk);
-      if (fallbackDeviceId) {
-        deviceId = fallbackDeviceId;
-        logger.info('✅ Device ID found via CSV fallback:', { file: filePath, deviceId });
-        fallbackAttempted = true;
-      }
-    }
-    
-    // Final check for device mapping
-    if (!deviceId || !hasDeviceMapping(deviceId)) {
-      logger.error('❌ No valid device mapping after fallback:', { file: filePath, deviceId });
-      finishFileProcessing(fileId, 'failed', 0, 0, 1, `No device mapping for: ${deviceId}`);
-      return;
-    }
+    // Convert blob to Node.js readable stream
+    const stream = await blobToNodeStream(blob);
     
     // Process CSV stream row-by-row without loading full file in memory
     const stats = await processCSVStream(
@@ -214,16 +190,15 @@ async function processFileWithStream(file: any, fingerprint: any, deviceId: stri
     finishFileProcessing(fileId, status, stats.totalRows, stats.successfulRows, stats.failedRows);
     
     logger.info('✅ File processing completed:', { 
-      file: file.basename || filePath,
+      path: fingerprint.path,
       deviceId, 
       fingerprint: fingerprint.fingerprint.substring(0, 16) + '...',
-      fallbackUsed: fallbackAttempted,
       status,
       ...stats 
     });
     
   } catch (error) {
-    logger.error('❌ Error processing file stream:', { file: filePath, deviceId, error });
+    logger.error('❌ Error processing file blob:', { path: fingerprint.path, deviceId, error });
     const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
     finishFileProcessing(fileId, 'failed', 0, 0, 1, errorMessage);
   }

@@ -102,6 +102,7 @@ export interface StorageFile {
     cacheControl: string;
   };
   basename?: string; // Just the filename without prefix
+  fullPath?: string; // Full path including prefix
 }
 
 // Database entities with fingerprinting and status support
