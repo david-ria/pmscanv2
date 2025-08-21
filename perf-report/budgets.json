@@ -1,0 +1,6 @@
+{
+  "webVitals": { "LCP": 2500, "CLS": 0.1, "TTI": 3500, "speedIndex": 3000 },
+  "network": { "maxRequests": 35, "maxTransferBytes": 1258291, "allowThirdParty": false },
+  "mainThread": { "tbtHomeMs": 1500 },
+  "bundles": { "maxTotalJsGzip": 460800, "maxChunkGzip": 200000, "chunkGrowth": 0.10 }
+}
