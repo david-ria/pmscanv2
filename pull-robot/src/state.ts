@@ -39,9 +39,10 @@ export async function initializeDatabase(): Promise<void> {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         file_id INTEGER NOT NULL,
         row_index INTEGER NOT NULL,
-        timestamp TEXT NOT NULL,
+        payload_hash TEXT NOT NULL,
         sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        response_status INTEGER,
+        status TEXT NOT NULL DEFAULT 'sent',
+        error_message TEXT,
         FOREIGN KEY (file_id) REFERENCES processed_files (id),
         UNIQUE(file_id, row_index)
       );
@@ -63,7 +64,8 @@ export async function initializeDatabase(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_processed_files_status ON processed_files(status);
       CREATE INDEX IF NOT EXISTS idx_processed_files_device_id ON processed_files(device_id);
       CREATE INDEX IF NOT EXISTS idx_processed_rows_file_id ON processed_rows(file_id);
-      CREATE INDEX IF NOT EXISTS idx_processed_rows_timestamp ON processed_rows(timestamp);
+      CREATE INDEX IF NOT EXISTS idx_processed_rows_payload_hash ON processed_rows(payload_hash);
+      CREATE INDEX IF NOT EXISTS idx_processed_rows_status ON processed_rows(status);
       CREATE INDEX IF NOT EXISTS idx_dlq_file_id ON dead_letter_queue(file_id);
       CREATE INDEX IF NOT EXISTS idx_dlq_attempt_count ON dead_letter_queue(attempt_count);
     `);
@@ -196,14 +198,38 @@ export function updateFileStats(fileId: number, totalRows: number, successfulRow
   }
 }
 
-// Record a successfully processed row
-export function recordProcessedRow(fileId: number, rowIndex: number, timestamp: string, responseStatus: number): void {
+// Check if a row has been processed
+export function isRowProcessed(fileId: number, rowIndex: number): boolean {
+  try {
+    const stmt = db.prepare('SELECT id FROM processed_rows WHERE file_id = ? AND row_index = ?');
+    const result = stmt.get(fileId, rowIndex);
+    return result !== undefined;
+  } catch (error) {
+    logger.error('Error checking if row is processed:', error);
+    return false;
+  }
+}
+
+// Mark a row as processed with status and payload hash
+export function markRowProcessed(fileId: number, rowIndex: number, payloadHash: string, status: string = 'sent', errorMessage?: string): void {
   try {
     const stmt = db.prepare(`
-      INSERT OR REPLACE INTO processed_rows (file_id, row_index, timestamp, response_status)
-      VALUES (?, ?, ?, ?)
+      INSERT OR REPLACE INTO processed_rows (file_id, row_index, payload_hash, status, error_message)
+      VALUES (?, ?, ?, ?, ?)
     `);
-    stmt.run(fileId, rowIndex, timestamp, responseStatus);
+    stmt.run(fileId, rowIndex, payloadHash, status, errorMessage || null);
+  } catch (error) {
+    logger.error('Error marking row as processed:', error);
+    throw error;
+  }
+}
+
+// Record a successfully processed row (legacy function - use markRowProcessed instead)
+export function recordProcessedRow(fileId: number, rowIndex: number, timestamp: string, responseStatus: number): void {
+  try {
+    // Convert old format to new format with a simple hash
+    const payloadHash = `legacy_${rowIndex}_${timestamp}_${responseStatus}`;
+    markRowProcessed(fileId, rowIndex, payloadHash, responseStatus >= 200 && responseStatus < 300 ? 'sent' : 'failed');
   } catch (error) {
     logger.error('Error recording processed row:', error);
     throw error;
