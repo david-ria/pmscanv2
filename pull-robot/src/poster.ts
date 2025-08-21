@@ -66,11 +66,29 @@ export async function postPayload(
       // Handle failure based on retry policy
       const isRetryable = isRetryableError(result.status);
       
-      if (isRetryable) {
+      if (isRetryable && retryCount < config.retry.maxRetries) {
+        // Retryable error - attempt retry with exponential backoff
+        totalRetries++;
+        const delay = Math.min(
+          config.retry.delayMs * Math.pow(config.retry.backoffMultiplier, retryCount),
+          30000 // Cap at 30 seconds
+        );
+        logger.info(`Retryable error ${result.status}, retrying in ${delay}ms (attempt ${retryCount + 2}/${config.retry.maxRetries + 1})`);
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return postPayload(payload, fileId, rowIndex, retryCount + 1, idempotencyKey);
+        
+      } else if (isRetryable) {
+        // Retryable error but retries exhausted
         retryableFailures++;
+        updateRowProcessingStatus(fileId, rowIndex, 'failed', `Max retries exhausted: ${result.error}`);
+        pushDLQ(idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
+                JSON.stringify(payload), result.status, `Max retries exhausted: ${result.error}`);
+        logger.warn('Retries exhausted, added to DLQ:', { fileId, rowIndex, status: result.status });
+        
       } else {
-        nonRetryableFailures++;
         // Non-retryable error - mark failed and add to DLQ immediately
+        nonRetryableFailures++;
         updateRowProcessingStatus(fileId, rowIndex, 'failed', result.error);
         pushDLQ(idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
                 JSON.stringify(payload), result.status, result.error);
