@@ -232,10 +232,20 @@ jobs:
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
-      - name: Upload Lighthouse Results
+      - name: Run Bundle Size Analysis
+        run: node scripts/bundle-size-check.js
+
+      - name: Run Performance Budget Tests
+        run: npx playwright test tests/performance-budgets.spec.ts --reporter=list
+        env:
+          VITE_E2E: '1'
+
+      - name: Upload Performance Reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lighthouse-results
-          path: .lighthouseci/
+          name: performance-reports
+          path: |
+            .lighthouseci/
+            perf-report/
           retention-days: 30

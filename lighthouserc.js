@@ -1,7 +1,11 @@
 module.exports = {
   ci: {
     collect: {
-      url: ['http://127.0.0.1:4173/'],
+      url: [
+        'http://127.0.0.1:4173/',
+        'http://127.0.0.1:4173/auth',
+        'http://127.0.0.1:4173/history'
+      ],
       startServerCommand: 'npm run preview',
       startServerReadyPattern: 'Local:   http://127.0.0.1:4173/',
       startServerReadyTimeout: 30000,
@@ -23,14 +27,16 @@ module.exports = {
         'cumulative-layout-shift': ['error', { maxNumericValue: 0.1 }], // CLS < 0.1
         'max-potential-fid': ['error', { maxNumericValue: 100 }], // Interaction delay < 100ms
         
-        // Bundle size constraints
-        'total-byte-weight': ['error', { maxNumericValue: 512000 }], // ~500KB total (uncompressed)
+        // Network and JS execution constraints
+        'total-byte-weight': ['error', { maxNumericValue: 1200000 }], // ≤ 1.2 MB total transfer
+        'bootup-time': ['error', { maxNumericValue: 1500 }], // ≤ 1.5s JS execution time
+        'network-requests': ['error', { maxNumericValue: 35 }], // ≤ 35 requests
         'uses-text-compression': 'error', // Ensure gzip is enabled
         
-        // Performance basics
+        // Performance basics  
         'first-contentful-paint': ['warn', { maxNumericValue: 1800 }],
-        'speed-index': ['warn', { maxNumericValue: 3400 }],
-        'interactive': ['warn', { maxNumericValue: 3800 }],
+        'speed-index': ['error', { maxNumericValue: 3000 }], // ≤ 3.0s Speed Index
+        'interactive': ['error', { maxNumericValue: 3500 }], // ≤ 3.5s TTI
         
         // Best practices
         'unused-javascript': ['warn', { maxNumericValue: 20000 }],
