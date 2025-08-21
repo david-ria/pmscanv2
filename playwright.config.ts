@@ -24,6 +24,9 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
 
+  /* Global setup to block external requests */
+  globalSetup: require.resolve('./tests/global-setup.ts'),
+
   /* Configure projects for major browsers */
   projects: [
     {

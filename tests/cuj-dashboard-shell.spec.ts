@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { setupNetworkIsolation } from './network-isolation';
 
 test.describe('Dashboard Shell CUJ', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupNetworkIsolation(page);
+  });
   test('should login and load dashboard with core UI elements', async ({ page }) => {
     // Mock Supabase auth endpoints to stay fully offline
     await page.route('**/auth/v1/token?grant_type=password**', async (route) => {

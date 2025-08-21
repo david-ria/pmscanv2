@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { setupNetworkIsolation } from './network-isolation';
 
 test.describe('History Page - Empty State', () => {
   test.beforeEach(async ({ page }) => {
+    await setupNetworkIsolation(page);
     // Mock Supabase auth to simulate logged-in state
     await page.route('**/auth/v1/user**', async (route) => {
       await route.fulfill({

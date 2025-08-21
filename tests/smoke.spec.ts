@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { setupNetworkIsolation } from './network-isolation';
 
 test.describe('Smoke Tests', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupNetworkIsolation(page);
+  });
   test('auth page loads and shows required elements', async ({ page }) => {
     // Navigate to the auth page
     await page.goto('/auth');
