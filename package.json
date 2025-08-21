@@ -13,6 +13,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"scripts/**/*.{js,ts}\""
   },
   "dependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@capacitor-community/bluetooth-le": "^7.1.1",
     "@capacitor/android": "^7.4.2",
     "@capacitor/cli": "^7.4.2",
