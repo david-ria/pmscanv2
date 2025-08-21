@@ -3,8 +3,15 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/contexts/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
+
+// Import and initialize Sentry observability
+import { initSentry } from '@/observability/sentry';
+
 import App from './App.tsx';
 import './index.css';
+
+// Initialize Sentry (only in production with explicit opt-in)
+initSentry();
 
 const queryClient = new QueryClient({
   defaultOptions: {
