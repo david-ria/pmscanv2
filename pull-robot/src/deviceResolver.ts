@@ -125,50 +125,26 @@ function extractFromFilename(filename: string): string | null {
  * - Lines: Device: <id>, DeviceID=<id>
  */
 function extractFromCSVContent(csvContent: string): string | null {
-  try {
-    const lines = csvContent.split('\n').slice(0, 10); // Check first 10 lines
-    
-    for (const line of lines) {
-      // Look for device ID in headers (first line typically)
-      if (line.toLowerCase().includes('device')) {
-        const headerMatch = line.match(/device[_\s]*(?:id)?[,\t]/i);
-        if (headerMatch) {
-          // If we find device header, look for the value in the same or next line
-          const parts = line.split(/[,\t]/);
-          const deviceIndex = parts.findIndex(part => /device[_\s]*(?:id)?/i.test(part.trim()));
-          if (deviceIndex >= 0 && deviceIndex + 1 < parts.length) {
-            const deviceValue = parts[deviceIndex + 1]?.trim();
-            if (deviceValue && deviceValue.length > 0) {
-              return deviceValue;
-            }
-          }
-        }
-      }
+  if (!csvContent) return null;
 
-      // Look for device ID in metadata lines: "Device: PMScan123" or "DeviceID=PMScan456"
-      const deviceMatches = line.match(/device[_\s]*(?:id)?[\s:=]+([a-zA-Z0-9_-]+)/i);
-      if (deviceMatches && deviceMatches[1]) {
-        const deviceId = deviceMatches[1].trim();
-        if (deviceId.length > 0) {
-          return deviceId;
-        }
-      }
-      
-      // Look for sensor/pmscan patterns
-      const sensorMatches = line.match(/([a-zA-Z0-9_-]+).*(?:sensor|pmscan)/i);
-      if (sensorMatches && sensorMatches[1]) {
-        const deviceId = sensorMatches[1].trim();
-        if (deviceId.length > 2) {
-          return deviceId;
-        }
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    logger.debug('Error extracting device ID from CSV content:', { error });
-    return null;
+  // A) Free-form lines: "Device: PMScan123", "DeviceID=PMScan456"
+  const inlineRe = /device[_\s-]*(?:id)?[\s:=,]+([A-Za-z0-9_-]+)/i;
+  const inlineMatch = csvContent.match(inlineRe);
+  if (inlineMatch?.[1]) return inlineMatch[1].trim();
+
+  // B) Header-based detection (first non-empty line)
+  const lines = csvContent.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (!lines.length) return null;
+
+  const header = lines[0].split(/[,\t;]/).map(s => s.trim());
+  const data   = (lines[1] || '').split(/[,\t;]/).map(s => s.trim());
+
+  const headerIdx = header.findIndex(h => /^(device(_|-)?id?|device)$/i.test(h));
+  if (headerIdx >= 0 && data[headerIdx] && data[headerIdx].length <= 64) {
+    return data[headerIdx];
   }
+
+  return null;
 }
 
 /**
