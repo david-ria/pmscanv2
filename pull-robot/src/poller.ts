@@ -9,7 +9,8 @@ import {
 } from './supabase.js';
 import { 
   isFileProcessed, 
-  markFileProcessed, 
+  startFileProcessing, 
+  finishFileProcessing,
   updateFileStats,
   recordProcessedRow,
   addToDeadLetterQueue 
@@ -96,19 +97,18 @@ export async function pollAndProcess(): Promise<void> {
           continue;
         }
         
-        // Extract device ID
-        const deviceId = extractDeviceIdFromFilename(file.name);
+        // Extract device ID with CSV fallback support
+        const deviceId = await extractDeviceIdFromFilename(file.name);
         if (!deviceId) {
-          logger.warn('❌ Cannot extract device ID, skipping:', file.name);
+          logger.warn('❌ Cannot extract device ID (will try CSV fallback), skipping for now:', file.name);
           skipped++;
           continue;
         }
         
-        // Check sensor mapping
+        // Check sensor mapping (may be re-checked after CSV fallback)
         if (!hasDeviceMapping(deviceId)) {
-          logger.warn('❌ No sensor mapping for device, skipping:', { file: file.name, deviceId });
-          skipped++;
-          continue;
+          logger.debug('⏳ No sensor mapping for device (will try CSV fallback):', { file: file.name, deviceId });
+          // Don't skip yet - the CSV fallback in processFileWithStream might find a better device ID
         }
         
         // Process the file with streaming
@@ -152,15 +152,50 @@ export async function pollAndProcess(): Promise<void> {
 async function processFileWithStream(file: any, fingerprint: any, deviceId: string): Promise<void> {
   const filePath = file.name;
   
-  // Mark file as being processed (creates database record)
-  const fileId = markFileProcessed(fingerprint.path, fingerprint.fingerprint, deviceId, fingerprint.size);
+  // Start file processing (creates database record with status='processing')
+  const fileId = startFileProcessing(fingerprint.path, fingerprint.fingerprint, deviceId, fingerprint.size);
   
   try {
-    // Download file as ReadableStream (memory-efficient)
+    // Download file as Node.js Readable (memory-efficient)
     const stream = await downloadCSVFileAsStream(filePath);
     if (!stream) {
       logger.error('❌ Failed to download file stream:', filePath);
-      updateFileStats(fileId, 0, 0, 1);
+      finishFileProcessing(fileId, 'failed', 0, 0, 1, 'Failed to download file stream');
+      return;
+    }
+    
+    // For device ID fallback, we may need to peek at CSV content
+    let csvBuffer = '';
+    let fallbackAttempted = false;
+    
+    // If device ID extraction failed from filename, attempt CSV content fallback
+    if (!deviceId || deviceId === 'unknown') {
+      logger.info('🔍 Attempting device ID fallback from CSV content:', filePath);
+      
+      // Read first chunk of CSV for device ID extraction
+      const firstChunk = await new Promise<string>((resolve) => {
+        let buffer = '';
+        stream.on('data', (chunk) => {
+          buffer += chunk.toString();
+          if (buffer.length > 1024 || buffer.includes('\n\n')) { // Stop after 1KB or two newlines
+            resolve(buffer);
+          }
+        });
+        stream.on('end', () => resolve(buffer));
+      });
+      
+      const fallbackDeviceId = await extractDeviceIdFromFilename(filePath, firstChunk);
+      if (fallbackDeviceId) {
+        deviceId = fallbackDeviceId;
+        logger.info('✅ Device ID found via CSV fallback:', { file: filePath, deviceId });
+        fallbackAttempted = true;
+      }
+    }
+    
+    // Final check for device mapping
+    if (!deviceId || !hasDeviceMapping(deviceId)) {
+      logger.error('❌ No valid device mapping after fallback:', { file: filePath, deviceId });
+      finishFileProcessing(fileId, 'failed', 0, 0, 1, `No device mapping for: ${deviceId}`);
       return;
     }
     
@@ -174,24 +209,23 @@ async function processFileWithStream(file: any, fingerprint: any, deviceId: stri
       }
     );
     
-    // Update file processing stats
-    updateFileStats(
-      fileId, 
-      stats.totalRows, 
-      stats.successfulRows, 
-      stats.failedRows
-    );
+    // Finish file processing with final stats (status='done' if successful)
+    const status = stats.failedRows > stats.successfulRows ? 'failed' : 'done';
+    finishFileProcessing(fileId, status, stats.totalRows, stats.successfulRows, stats.failedRows);
     
     logger.info('✅ File processing completed:', { 
       file: file.basename || filePath,
       deviceId, 
       fingerprint: fingerprint.fingerprint.substring(0, 16) + '...',
+      fallbackUsed: fallbackAttempted,
+      status,
       ...stats 
     });
     
   } catch (error) {
     logger.error('❌ Error processing file stream:', { file: filePath, deviceId, error });
-    updateFileStats(fileId, 0, 0, 1);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
+    finishFileProcessing(fileId, 'failed', 0, 0, 1, errorMessage);
   }
 }
 

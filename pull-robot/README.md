@@ -157,6 +157,42 @@ docker-compose up -d
 
 Set `LOG_LEVEL=debug` in `.env` for detailed logging.
 
+# =============================================================================
+# SUPABASE BUCKET ACCESS & CREDENTIALS
+# =============================================================================
+
+## Storage Bucket Permissions
+
+**Public Bucket (Recommended for read-only CSV exports):**
+- Uses `SUPABASE_KEY` (anon key) with public read access
+- No additional authentication required
+- Suitable for non-sensitive CSV data exports
+
+**Private Bucket (Requires elevated permissions):**
+- **Service Role Key Preferred**: Set `SUPABASE_KEY` to your Service Role key for full access
+- Anon key with RLS policies: Configure Row Level Security policies on `storage.objects`
+- Custom edge function: Use Supabase edge function with service role access
+
+## Credential Configuration
+
+The pull robot uses the credential specified in `SUPABASE_KEY` environment variable:
+
+```bash
+# For public buckets (anon key sufficient)
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...anon-key...
+
+# For private buckets (Service Role key preferred)
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...service-role-key...
+```
+
+**Service Role Key Advantages:**
+- ✅ Bypasses RLS policies for administrative access
+- ✅ Full read/write access to all storage buckets
+- ✅ No additional policy configuration required
+- ✅ Recommended for isolated pull robot services
+
+**Security Note:** Store Service Role keys securely and only use in trusted server environments. Never expose Service Role keys in client-side code.
+
 ## License
 
 MIT

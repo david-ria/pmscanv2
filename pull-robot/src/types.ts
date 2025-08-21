@@ -104,18 +104,22 @@ export interface StorageFile {
   basename?: string; // Just the filename without prefix
 }
 
-// Database entities with fingerprinting support
+// Database entities with fingerprinting and status support
 export interface ProcessedFile {
   id: number;
   path: string; // Full file path
   fingerprint: string; // Unique fingerprint for re-upload detection
   device_id: string;
+  status: 'processing' | 'done' | 'failed'; // Processing status
   processed_at: string;
+  started_at: string;
+  finished_at: string | null;
   total_rows: number;
   successful_rows: number;
   failed_rows: number;
   last_row_timestamp: string | null;
   file_size: number;
+  error_message: string | null;
 }
 
 export interface ProcessedRow {

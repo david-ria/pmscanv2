@@ -21,12 +21,16 @@ export async function initializeDatabase(): Promise<void> {
         path TEXT UNIQUE NOT NULL,
         fingerprint TEXT NOT NULL,
         device_id TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'processing',
         processed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        finished_at DATETIME,
         total_rows INTEGER NOT NULL DEFAULT 0,
         successful_rows INTEGER NOT NULL DEFAULT 0,
         failed_rows INTEGER NOT NULL DEFAULT 0,
         last_row_timestamp TEXT,
         file_size INTEGER NOT NULL DEFAULT 0,
+        error_message TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(path, fingerprint)
       );
@@ -56,6 +60,7 @@ export async function initializeDatabase(): Promise<void> {
       
       CREATE INDEX IF NOT EXISTS idx_processed_files_path ON processed_files(path);
       CREATE INDEX IF NOT EXISTS idx_processed_files_fingerprint ON processed_files(fingerprint);
+      CREATE INDEX IF NOT EXISTS idx_processed_files_status ON processed_files(status);
       CREATE INDEX IF NOT EXISTS idx_processed_files_device_id ON processed_files(device_id);
       CREATE INDEX IF NOT EXISTS idx_processed_rows_file_id ON processed_rows(file_id);
       CREATE INDEX IF NOT EXISTS idx_processed_rows_timestamp ON processed_rows(timestamp);
@@ -82,14 +87,20 @@ export async function testDatabaseConnection(): Promise<boolean> {
   }
 }
 
-// Check if a file with specific fingerprint has been processed (prevents re-processing)
+// Check if a file with specific fingerprint has been fully processed (status='done')
 export function isFileProcessed(path: string, fingerprint: string): boolean {
   try {
-    const stmt = db.prepare('SELECT id FROM processed_files WHERE path = ? AND fingerprint = ?');
-    const result = stmt.get(path, fingerprint);
-    const isProcessed = !!result;
+    const stmt = db.prepare('SELECT id, status FROM processed_files WHERE path = ? AND fingerprint = ?');
+    const result = stmt.get(path, fingerprint) as { id: number; status: string } | undefined;
     
-    logger.debug('File processed check:', { path, fingerprint, isProcessed });
+    const isProcessed = result?.status === 'done';
+    
+    logger.debug('File processed check:', { 
+      path, 
+      fingerprint: fingerprint.substring(0, 16) + '...', 
+      status: result?.status || 'not_found',
+      isProcessed 
+    });
     return isProcessed;
   } catch (error) {
     logger.error('Error checking if file is processed:', error);
@@ -97,19 +108,19 @@ export function isFileProcessed(path: string, fingerprint: string): boolean {
   }
 }
 
-// Mark file as processed with fingerprint (idempotency tracking)
-export function markFileProcessed(path: string, fingerprint: string, deviceId: string, fileSize: number): number {
+// Start processing a file (status='processing')
+export function startFileProcessing(path: string, fingerprint: string, deviceId: string, fileSize: number): number {
   try {
     const stmt = db.prepare(`
-      INSERT INTO processed_files (path, fingerprint, device_id, file_size, total_rows)
-      VALUES (?, ?, ?, ?, 0)
+      INSERT INTO processed_files (path, fingerprint, device_id, file_size, status, total_rows)
+      VALUES (?, ?, ?, ?, 'processing', 0)
     `);
     const result = stmt.run(path, fingerprint, deviceId, fileSize);
     
     if (typeof result.lastInsertRowid === 'number') {
-      logger.info('File marked as processing:', { 
+      logger.info('File processing started:', { 
         path, 
-        fingerprint, 
+        fingerprint: fingerprint.substring(0, 16) + '...', 
         deviceId, 
         fileSize, 
         fileId: result.lastInsertRowid 
@@ -119,16 +130,44 @@ export function markFileProcessed(path: string, fingerprint: string, deviceId: s
       throw new Error('Failed to get file ID');
     }
   } catch (error) {
-    logger.error('Error marking file as processed:', error);
+    logger.error('Error starting file processing:', error);
     throw error;
   }
 }
 
-// Legacy function - kept for backward compatibility but use markFileProcessed instead
-export function startFileProcessing(filename: string, deviceId: string): number {
-  // Create a simple fingerprint from filename for legacy compatibility
-  const fingerprint = `legacy:${filename}:${Date.now()}`;
-  return markFileProcessed(filename, fingerprint, deviceId, 0);
+// Finish processing a file (status='done' or 'failed')
+export function finishFileProcessing(fileId: number, status: 'done' | 'failed', totalRows: number, successfulRows: number, failedRows: number, errorMessage?: string): void {
+  try {
+    const stmt = db.prepare(`
+      UPDATE processed_files 
+      SET status = ?, 
+          total_rows = ?, 
+          successful_rows = ?, 
+          failed_rows = ?, 
+          finished_at = CURRENT_TIMESTAMP,
+          error_message = ?
+      WHERE id = ?
+    `);
+    
+    stmt.run(status, totalRows, successfulRows, failedRows, errorMessage || null, fileId);
+    
+    logger.info('File processing finished:', { 
+      fileId, 
+      status, 
+      totalRows, 
+      successfulRows, 
+      failedRows,
+      errorMessage 
+    });
+  } catch (error) {
+    logger.error('Error finishing file processing:', error);
+    throw error;
+  }
+}
+
+// Legacy function - kept for backward compatibility but use startFileProcessing instead
+export function markFileProcessed(path: string, fingerprint: string, deviceId: string, fileSize: number): number {
+  return startFileProcessing(path, fingerprint, deviceId, fileSize);
 }
 
 // Update file processing stats

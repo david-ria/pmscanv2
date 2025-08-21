@@ -111,7 +111,7 @@ export function createPayloadTransformer(deviceId: string, sensorMapping: Map<st
 
 // Utility to process a CSV stream and return processed rows count
 export async function processCSVStream(
-  stream: ReadableStream<Uint8Array>,
+  stream: NodeJS.ReadableStream,
   deviceId: string,
   sensorMapping: Map<string, number>,
   onPayload: (payload: any) => Promise<void>
@@ -122,31 +122,12 @@ export async function processCSVStream(
     let successfulRows = 0;
     let failedRows = 0;
     
-    // Convert ReadableStream to Node.js Readable
-    const reader = stream.getReader();
-    const { Readable } = require('stream');
-    
-    const nodeReadable = new Readable({
-      async read() {
-        try {
-          const { done, value } = await reader.read();
-          if (done) {
-            this.push(null); // End of stream
-          } else {
-            this.push(Buffer.from(value));
-          }
-        } catch (error) {
-          this.destroy(error);
-        }
-      }
-    });
-    
     const csvParser = createCSVParser();
     const rowValidator = createRowValidator();
     const payloadTransformer = createPayloadTransformer(deviceId, sensorMapping);
     
-    // Pipeline: ReadableStream -> CSV Parser -> Row Validator -> Payload Transformer
-    nodeReadable
+    // Pipeline: Node.js Readable -> CSV Parser -> Row Validator -> Payload Transformer
+    stream
       .pipe(csvParser)
       .pipe(rowValidator)
       .pipe(payloadTransformer)

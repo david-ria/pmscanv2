@@ -27,7 +27,7 @@ export async function testSupabaseConnection(): Promise<boolean> {
   }
 }
 
-// List CSV files in the storage bucket, sorted oldest to newest
+// List CSV files in the storage bucket, client-side sorted by updated_at (oldest→newest)
 export async function listCSVFiles(): Promise<StorageFile[]> {
   try {
     logger.debug('Listing CSV files from bucket:', { 
@@ -39,7 +39,7 @@ export async function listCSVFiles(): Promise<StorageFile[]> {
       .from(config.storage.bucket)
       .list(config.storage.pathPrefix, {
         limit: 1000, // Adjust based on your needs
-        sortBy: { column: 'created_at', order: 'asc' }, // OLDEST to NEWEST for processing order
+        // No server-side sorting - we'll sort client-side for reliability
       });
     
     if (error) {
@@ -47,12 +47,11 @@ export async function listCSVFiles(): Promise<StorageFile[]> {
       return [];
     }
     
-    // Filter for CSV files only and add full paths
+    // Filter for CSV files and add full paths (no size filtering)
     const csvFiles = (data || [])
       .filter(file => {
         const isCSV = file.name.toLowerCase().endsWith('.csv');
-        const hasSize = file.metadata?.size > 0;
-        return isCSV && hasSize; // Only include non-empty CSV files
+        return isCSV; // Don't filter on size - let empty files through for processing
       })
       .map(file => ({
         ...file,
@@ -62,7 +61,14 @@ export async function listCSVFiles(): Promise<StorageFile[]> {
         basename: file.name,
       })) as StorageFile[];
     
-    logger.info(`Found ${csvFiles.length} CSV files (sorted oldest→newest)`);
+    // Client-side sort by updated_at (oldest→newest) for reliable processing order
+    csvFiles.sort((a, b) => {
+      const timeA = new Date(a.updated_at || a.created_at).getTime();
+      const timeB = new Date(b.updated_at || b.created_at).getTime();
+      return timeA - timeB; // oldest first
+    });
+    
+    logger.info(`Found ${csvFiles.length} CSV files (client-sorted oldest→newest by updated_at)`);
     return csvFiles;
     
   } catch (error) {
@@ -88,8 +94,8 @@ export function computeFileFingerprint(file: StorageFile): FileFingerprint {
   };
 }
 
-// Download a CSV file as a ReadableStream (memory-efficient streaming)
-export async function downloadCSVFileAsStream(filename: string): Promise<ReadableStream<Uint8Array> | null> {
+// Download a CSV file as Node.js Readable (memory-efficient streaming)
+export async function downloadCSVFileAsStream(filename: string): Promise<NodeJS.ReadableStream | null> {
   try {
     logger.debug('Downloading file as stream:', filename);
     
@@ -111,8 +117,28 @@ export async function downloadCSVFileAsStream(filename: string): Promise<Readabl
     const fileSize = data.size;
     logger.debug('File downloaded successfully:', { filename, size: fileSize });
     
-    // Convert Blob to ReadableStream for memory-efficient processing
-    return data.stream();
+    // Convert Web ReadableStream to Node.js Readable
+    const webStream = data.stream();
+    const reader = webStream.getReader();
+    
+    const { Readable } = await import('stream');
+    
+    const nodeReadable = new Readable({
+      async read() {
+        try {
+          const { done, value } = await reader.read();
+          if (done) {
+            this.push(null); // End of stream
+          } else {
+            this.push(Buffer.from(value));
+          }
+        } catch (error) {
+          this.destroy(error as Error);
+        }
+      }
+    });
+    
+    return nodeReadable;
     
   } catch (error) {
     logger.error('Error downloading CSV file:', { filename, error });
@@ -152,23 +178,53 @@ export async function downloadCSVFileAsBuffer(filename: string): Promise<Buffer 
   }
 }
 
-// Extract device ID from filename
-// Assumes filename format like: "device123_mission_2025-07-30_12-34-45.csv"
-export function extractDeviceIdFromFilename(filename: string): string | null {
+// Extract device ID from filename with CSV content fallback
+export async function extractDeviceIdFromFilename(filename: string, csvContent?: string): Promise<string | null> {
   try {
-    // Remove path prefix and extension
+    // Primary: Extract from filename pattern "device123_mission_2025-07-30_12-34-45.csv"
     const basename = filename.replace(config.storage.pathPrefix, '').replace('.csv', '');
-    
-    // Extract device ID (assumes it's the first part before underscore)
     const parts = basename.split('_');
+    
     if (parts.length > 0) {
       const deviceId = parts[0];
-      logger.debug('Extracted device ID:', { filename, deviceId });
-      return deviceId;
+      // Validate device ID format (basic check)
+      if (deviceId && deviceId.length > 0 && !deviceId.includes('.')) {
+        logger.debug('Extracted device ID from filename:', { filename, deviceId });
+        return deviceId;
+      }
     }
     
-    logger.warn('Could not extract device ID from filename:', filename);
+    // Fallback: Look for device ID in CSV content header/first few rows
+    if (csvContent) {
+      logger.debug('Attempting CSV content fallback for device ID:', filename);
+      
+      // Look for device ID patterns in CSV headers or first few lines
+      const lines = csvContent.split('\n').slice(0, 5); // Check first 5 lines
+      
+      for (const line of lines) {
+        // Look for patterns like "Device: device123" or "DeviceID,device456"
+        const deviceMatches = line.match(/device[_\s]*(?:id)?[:\s,=]+([a-zA-Z0-9_-]+)/i);
+        if (deviceMatches && deviceMatches[1]) {
+          const deviceId = deviceMatches[1];
+          logger.info('Found device ID in CSV content:', { filename, deviceId, line: line.substring(0, 50) });
+          return deviceId;
+        }
+        
+        // Look for common CSV metadata patterns
+        const metadataMatches = line.match(/([a-zA-Z0-9_-]+).*sensor|([a-zA-Z0-9_-]+).*pmscan/i);
+        if (metadataMatches) {
+          const deviceId = metadataMatches[1] || metadataMatches[2];
+          if (deviceId && deviceId.length > 2) {
+            logger.info('Found device ID from sensor metadata:', { filename, deviceId });
+            return deviceId;
+          }
+        }
+      }
+    }
+    
+    logger.warn('Could not extract device ID from filename or CSV content:', filename);
     return null;
+    
   } catch (error) {
     logger.error('Error extracting device ID:', { filename, error });
     return null;
