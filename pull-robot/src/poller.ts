@@ -15,7 +15,7 @@ import {
   recordProcessedRow,
   addToDeadLetterQueue 
 } from './state.js';
-import { loadSensorMapping, hasDeviceMapping } from './mapper.js';
+import { loadSensorMapping, hasDeviceMapping, getSensorId } from './mapper.js';
 import { processCSVStreamWithIdempotency } from './streamingProcessor.js';
 import { postPayload } from './poster.js';
 import { resolveDeviceId, logAllowListSkip } from './deviceResolver.js';
@@ -128,15 +128,26 @@ export async function pollAndProcess(): Promise<void> {
         
         const deviceId = resolution.deviceId!; // Safe since shouldSkip is false
         
-        // Check sensor mapping (required for processing)
-        if (!hasDeviceMapping(deviceId)) {
-          logger.warn('❌ No sensor mapping for resolved device:', { 
-            file: file.fullPath, 
-            deviceId, 
-            source: resolution.source 
-          });
-          skipped++;
-          continue;
+        // Check sensor mapping for resolved device ID
+        const idSensor = getSensorId(deviceId);
+        if (idSensor == null) {
+          if (config.deviceResolution.unknownMappingBehavior === 'skip') {
+            logger.warn('⏭️  Skipping due to missing mapping (per config=skip)', {
+              file: file.fullPath, deviceId
+            });
+            skipped++;
+            continue; // no DLQ in skip mode
+          } else {
+            // default: dlq
+            const key = `${deviceId}|${'unknown_mission'}|${new Date().toISOString()}`;
+            addToDeadLetterQueue(key, JSON.stringify({ file: file.fullPath, deviceId }),
+                    undefined, 'missing_mapping');
+            logger.error('🧾 DLQ: missing mapping for resolved device', {
+              file: file.fullPath, deviceId
+            });
+            skipped++;   // counted as not processed here
+            continue;
+          }
         }
         
         // Process the file with streaming from fresh blob

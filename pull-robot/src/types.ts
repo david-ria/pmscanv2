@@ -46,6 +46,7 @@ export const ConfigSchema = z.object({
   }),
   deviceResolution: z.object({
     unknownBehavior: z.enum(['skip', 'dlq']),
+    unknownMappingBehavior: z.enum(['skip', 'dlq']),
     allowList: z.array(z.string()).nullable(),
   }),
 });

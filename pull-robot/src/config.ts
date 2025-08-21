@@ -57,6 +57,7 @@ const EnvSchema = z.object({
   
   // Device ID Resolution & Allow-list
   UNKNOWN_DEVICE_BEHAVIOR: z.enum(['skip', 'dlq']).default('skip'),
+  UNKNOWN_MAPPING_BEHAVIOR: z.enum(['skip', 'dlq']).default('dlq'),
   ALLOW_DEVICE_IDS: z.string().optional().refine(
     ids => !ids || ids.split(',').every(id => id.trim().length > 0),
     'ALLOW_DEVICE_IDS must be comma-separated device IDs'
@@ -163,6 +164,7 @@ function loadConfig(): Config {
       },
       deviceResolution: {
         unknownBehavior: env.UNKNOWN_DEVICE_BEHAVIOR,
+        unknownMappingBehavior: env.UNKNOWN_MAPPING_BEHAVIOR,
         allowList: allowDeviceIds,
       },
     };
