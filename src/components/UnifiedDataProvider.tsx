@@ -143,7 +143,9 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
         locationContext,
         activityContext,
         recordingFrequency,
-        shared
+        shared,
+        undefined, // missionId
+        bluetooth.device?.name // deviceName
       );
     },
   };
