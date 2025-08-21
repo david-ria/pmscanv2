@@ -2,9 +2,12 @@ import { useCallback } from 'react';
 import { dataStorage } from '@/lib/dataStorage';
 import { RecordingEntry } from '@/types/recording';
 import { createTimestamp } from '@/utils/timeFormat';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import * as logger from '@/utils/logger';
 
 export function useMissionSaver() {
+  const { device } = useUnifiedData();
+  
   const saveMission = useCallback(async (
     recordingData: RecordingEntry[],
     recordingStartTime: Date | null,
@@ -24,6 +27,7 @@ export function useMissionSaver() {
       activityContext,
       recordingFrequency,
       shared,
+      deviceName: device?.name,
       hasRecordingData: !!recordingData,
       sampleDataPoints: recordingData?.slice(0, 2).map(entry => ({
         pm25: entry.pmData.pm25,
@@ -104,7 +108,8 @@ export function useMissionSaver() {
       activityContext,
       recordingFrequency,
       shared,
-      missionId
+      missionId,
+      device?.name
     );
 
     logger.debug('💾 Mission created:', {

@@ -34,6 +34,7 @@ export interface MissionData {
   activityContext?: string;
   recordingFrequency: string;
   shared: boolean;
+  deviceName?: string;
   measurements: MeasurementData[];
   synced: boolean; // For local storage tracking
   weatherDataId?: string; // Weather data for the entire mission

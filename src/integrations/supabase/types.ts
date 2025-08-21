@@ -614,6 +614,7 @@ export type Database = {
           avg_pm10: number
           avg_pm25: number
           created_at: string
+          device_name: string | null
           duration_minutes: number
           end_epoch_ms: number | null
           end_time: string
@@ -637,6 +638,7 @@ export type Database = {
           avg_pm10: number
           avg_pm25: number
           created_at?: string
+          device_name?: string | null
           duration_minutes: number
           end_epoch_ms?: number | null
           end_time: string
@@ -660,6 +662,7 @@ export type Database = {
           avg_pm10?: number
           avg_pm25?: number
           created_at?: string
+          device_name?: string | null
           duration_minutes?: number
           end_epoch_ms?: number | null
           end_time?: string

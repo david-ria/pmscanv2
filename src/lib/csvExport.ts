@@ -112,7 +112,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
 
   // Create filename using new naming convention: [DeviceID]_[YYYYMMDD]_[HHMMSS].csv
   const startTime = mission.startTime;
-  const deviceId = 'PMScan'; // Default device ID - could be enhanced to use actual device name
+  const deviceId = mission.deviceName || 'PMScan'; // Use stored device name or fallback to 'PMScan'
   const dateStr =
     startTime.getFullYear().toString() +
     (startTime.getMonth() + 1).toString().padStart(2, '0') +

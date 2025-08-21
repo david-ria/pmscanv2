@@ -202,6 +202,7 @@ export async function syncPendingMissions(): Promise<void> {
             activity_context: mission.activityContext,
             recording_frequency: mission.recordingFrequency,
             shared: mission.shared,
+            device_name: mission.deviceName,
             weather_data_id: weatherDataId,
             air_quality_data_id: airQualityDataId,
           })
