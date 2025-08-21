@@ -17,9 +17,11 @@ RUN npm run build
 FROM node:20-alpine AS runtime
 WORKDIR /app
 
-# Only what we need at runtime
+# Copy package.json for reference
 COPY package*.json ./
-RUN npm ci --omit=dev
+
+# Copy pre-compiled node_modules from build stage (includes compiled better-sqlite3)
+COPY --from=build /app/node_modules ./node_modules
 
 # Copy compiled JS and necessary runtime assets
 COPY --from=build /app/dist ./dist
