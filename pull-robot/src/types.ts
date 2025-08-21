@@ -81,7 +81,15 @@ export const SensorMappingSchema = z.object({
 
 export type SensorMapping = z.infer<typeof SensorMappingSchema>;
 
-// Storage file metadata
+// File fingerprint for idempotency tracking
+export interface FileFingerprint {
+  path: string;
+  size: number;
+  lastModified: string;
+  fingerprint: string; // Combined fingerprint string
+}
+
+// Storage file metadata from Supabase
 export interface StorageFile {
   name: string;
   id: string;
@@ -93,18 +101,21 @@ export interface StorageFile {
     mimetype: string;
     cacheControl: string;
   };
+  basename?: string; // Just the filename without prefix
 }
 
-// Database entities
+// Database entities with fingerprinting support
 export interface ProcessedFile {
   id: number;
-  filename: string;
+  path: string; // Full file path
+  fingerprint: string; // Unique fingerprint for re-upload detection
   device_id: string;
   processed_at: string;
   total_rows: number;
   successful_rows: number;
   failed_rows: number;
   last_row_timestamp: string | null;
+  file_size: number;
 }
 
 export interface ProcessedRow {

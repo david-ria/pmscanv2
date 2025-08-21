@@ -15,18 +15,20 @@ export async function initializeDatabase(): Promise<void> {
     // Enable WAL mode for better concurrent access
     db.pragma('journal_mode = WAL');
     
-    // Create tables
     db.exec(`
       CREATE TABLE IF NOT EXISTS processed_files (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        filename TEXT UNIQUE NOT NULL,
+        path TEXT UNIQUE NOT NULL,
+        fingerprint TEXT NOT NULL,
         device_id TEXT NOT NULL,
         processed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         total_rows INTEGER NOT NULL DEFAULT 0,
         successful_rows INTEGER NOT NULL DEFAULT 0,
         failed_rows INTEGER NOT NULL DEFAULT 0,
         last_row_timestamp TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        file_size INTEGER NOT NULL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(path, fingerprint)
       );
       
       CREATE TABLE IF NOT EXISTS processed_rows (
@@ -52,7 +54,8 @@ export async function initializeDatabase(): Promise<void> {
         FOREIGN KEY (file_id) REFERENCES processed_files (id)
       );
       
-      CREATE INDEX IF NOT EXISTS idx_processed_files_filename ON processed_files(filename);
+      CREATE INDEX IF NOT EXISTS idx_processed_files_path ON processed_files(path);
+      CREATE INDEX IF NOT EXISTS idx_processed_files_fingerprint ON processed_files(fingerprint);
       CREATE INDEX IF NOT EXISTS idx_processed_files_device_id ON processed_files(device_id);
       CREATE INDEX IF NOT EXISTS idx_processed_rows_file_id ON processed_rows(file_id);
       CREATE INDEX IF NOT EXISTS idx_processed_rows_timestamp ON processed_rows(timestamp);
@@ -60,7 +63,7 @@ export async function initializeDatabase(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_dlq_attempt_count ON dead_letter_queue(attempt_count);
     `);
     
-    logger.info('Database schema initialized');
+    logger.info('Database schema initialized with fingerprinting support');
   } catch (error) {
     logger.error('Failed to initialize database:', error);
     throw error;
@@ -79,37 +82,53 @@ export async function testDatabaseConnection(): Promise<boolean> {
   }
 }
 
-// Check if a file has been processed
-export function isFileProcessed(filename: string): boolean {
+// Check if a file with specific fingerprint has been processed (prevents re-processing)
+export function isFileProcessed(path: string, fingerprint: string): boolean {
   try {
-    const stmt = db.prepare('SELECT id FROM processed_files WHERE filename = ?');
-    const result = stmt.get(filename);
-    return !!result;
+    const stmt = db.prepare('SELECT id FROM processed_files WHERE path = ? AND fingerprint = ?');
+    const result = stmt.get(path, fingerprint);
+    const isProcessed = !!result;
+    
+    logger.debug('File processed check:', { path, fingerprint, isProcessed });
+    return isProcessed;
   } catch (error) {
     logger.error('Error checking if file is processed:', error);
     return false;
   }
 }
 
-// Start processing a new file
-export function startFileProcessing(filename: string, deviceId: string): number {
+// Mark file as processed with fingerprint (idempotency tracking)
+export function markFileProcessed(path: string, fingerprint: string, deviceId: string, fileSize: number): number {
   try {
     const stmt = db.prepare(`
-      INSERT INTO processed_files (filename, device_id, total_rows)
-      VALUES (?, ?, 0)
+      INSERT INTO processed_files (path, fingerprint, device_id, file_size, total_rows)
+      VALUES (?, ?, ?, ?, 0)
     `);
-    const result = stmt.run(filename, deviceId);
+    const result = stmt.run(path, fingerprint, deviceId, fileSize);
     
     if (typeof result.lastInsertRowid === 'number') {
-      logger.debug('Started processing file:', { filename, deviceId, fileId: result.lastInsertRowid });
+      logger.info('File marked as processing:', { 
+        path, 
+        fingerprint, 
+        deviceId, 
+        fileSize, 
+        fileId: result.lastInsertRowid 
+      });
       return result.lastInsertRowid;
     } else {
       throw new Error('Failed to get file ID');
     }
   } catch (error) {
-    logger.error('Error starting file processing:', error);
+    logger.error('Error marking file as processed:', error);
     throw error;
   }
+}
+
+// Legacy function - kept for backward compatibility but use markFileProcessed instead
+export function startFileProcessing(filename: string, deviceId: string): number {
+  // Create a simple fingerprint from filename for legacy compatibility
+  const fingerprint = `legacy:${filename}:${Date.now()}`;
+  return markFileProcessed(filename, fingerprint, deviceId, 0);
 }
 
 // Update file processing stats
@@ -174,7 +193,7 @@ export async function getProcessingState(): Promise<ProcessingState> {
     const dlqCount = db.prepare('SELECT COUNT(*) as count FROM dead_letter_queue').get() as any;
     
     const lastFile = db.prepare(`
-      SELECT filename, processed_at 
+      SELECT path, processed_at 
       FROM processed_files 
       ORDER BY processed_at DESC 
       LIMIT 1
@@ -187,7 +206,7 @@ export async function getProcessingState(): Promise<ProcessingState> {
       rowsFailed: stats?.rows_failed || 0,
       deadLetterCount: dlqCount?.count || 0,
       lastPollAt: new Date().toISOString(), // Will be updated by poller
-      lastProcessedFile: lastFile?.filename || null,
+      lastProcessedFile: lastFile?.path || null,
     };
   } catch (error) {
     logger.error('Error getting processing state:', error);

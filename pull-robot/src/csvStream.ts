@@ -122,28 +122,24 @@ export async function processCSVStream(
     let successfulRows = 0;
     let failedRows = 0;
     
-    const nodeStream = new ReadableStream({
-      start(controller) {
-        const reader = stream.getReader();
-        
-        function pump(): Promise<void> {
-          return reader.read().then(({ done, value }) => {
-            if (done) {
-              controller.close();
-              return;
-            }
-            controller.enqueue(value);
-            return pump();
-          });
+    // Convert ReadableStream to Node.js Readable
+    const reader = stream.getReader();
+    const { Readable } = require('stream');
+    
+    const nodeReadable = new Readable({
+      async read() {
+        try {
+          const { done, value } = await reader.read();
+          if (done) {
+            this.push(null); // End of stream
+          } else {
+            this.push(Buffer.from(value));
+          }
+        } catch (error) {
+          this.destroy(error);
         }
-        
-        return pump();
       }
     });
-    
-    // Convert ReadableStream to Node.js Readable
-    const { Readable } = await import('stream');
-    const nodeReadable = Readable.fromWeb(nodeStream as any);
     
     const csvParser = createCSVParser();
     const rowValidator = createRowValidator();

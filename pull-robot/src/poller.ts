@@ -3,12 +3,13 @@ import { config } from './config.js';
 import { createLogger } from './logger.js';
 import { 
   listCSVFiles, 
-  downloadCSVFile, 
-  extractDeviceIdFromFilename 
+  downloadCSVFileAsStream, 
+  extractDeviceIdFromFilename,
+  computeFileFingerprint 
 } from './supabase.js';
 import { 
   isFileProcessed, 
-  startFileProcessing, 
+  markFileProcessed, 
   updateFileStats,
   recordProcessedRow,
   addToDeadLetterQueue 
@@ -21,6 +22,12 @@ const logger = createLogger('poller');
 
 let isPolling = false;
 let sensorMapping: Map<string, number>;
+let pollStats = {
+  totalScanned: 0,
+  totalSkipped: 0,
+  totalProcessed: 0,
+  lastPollAt: null as string | null,
+};
 
 // Start the polling service
 export async function startPoller(): Promise<void> {
@@ -46,92 +53,118 @@ export async function startPoller(): Promise<void> {
   }
 }
 
-// Main polling and processing logic
-async function pollAndProcess(): Promise<void> {
+// Main polling and processing logic with fingerprinting
+export async function pollAndProcess(): Promise<void> {
   if (isPolling) {
     logger.debug('Polling already in progress, skipping');
     return;
   }
   
   isPolling = true;
+  pollStats.lastPollAt = new Date().toISOString();
   
   try {
-    logger.debug('Starting polling cycle...');
+    logger.info('🔄 Starting polling cycle...');
     
-    // Get list of CSV files from Supabase Storage
+    // Get list of CSV files from Supabase Storage (sorted oldest→newest)
     const files = await listCSVFiles();
-    logger.info(`Found ${files.length} CSV files in storage`);
+    pollStats.totalScanned += files.length;
+    
+    logger.info(`📁 Found ${files.length} CSV files in storage (oldest→newest)`);
     
     if (files.length === 0) {
       logger.debug('No CSV files found');
       return;
     }
     
-    // Process files in batches to avoid overwhelming the system
-    const batchSize = config.polling.batchSize;
-    for (let i = 0; i < files.length; i += batchSize) {
-      const batch = files.slice(i, i + batchSize);
-      await processBatch(batch);
+    // Process files with fingerprint-based idempotency
+    let processed = 0;
+    let skipped = 0;
+    
+    for (const file of files) {
+      try {
+        // Compute file fingerprint for idempotency
+        const fingerprint = computeFileFingerprint(file);
+        
+        // Check if this specific file version has been processed
+        if (isFileProcessed(fingerprint.path, fingerprint.fingerprint)) {
+          logger.debug('⏭️  Skipping already processed file:', { 
+            path: fingerprint.path, 
+            fingerprint: fingerprint.fingerprint.substring(0, 16) + '...' 
+          });
+          skipped++;
+          continue;
+        }
+        
+        // Extract device ID
+        const deviceId = extractDeviceIdFromFilename(file.name);
+        if (!deviceId) {
+          logger.warn('❌ Cannot extract device ID, skipping:', file.name);
+          skipped++;
+          continue;
+        }
+        
+        // Check sensor mapping
+        if (!hasDeviceMapping(deviceId)) {
+          logger.warn('❌ No sensor mapping for device, skipping:', { file: file.name, deviceId });
+          skipped++;
+          continue;
+        }
+        
+        // Process the file with streaming
+        logger.info('📄 Processing file:', { 
+          file: file.basename || file.name, 
+          deviceId, 
+          size: fingerprint.size,
+          fingerprint: fingerprint.fingerprint.substring(0, 16) + '...'
+        });
+        
+        await processFileWithStream(file, fingerprint, deviceId);
+        processed++;
+        
+      } catch (error) {
+        logger.error('❌ Error processing file:', { file: file.name, error });
+        skipped++;
+      }
     }
     
-    logger.info('Polling cycle completed');
+    // Update stats and log summary
+    pollStats.totalProcessed += processed;
+    pollStats.totalSkipped += skipped;
+    
+    logger.info('✅ Polling cycle completed:', { 
+      scanned: files.length,
+      processed,
+      skipped,
+      totalScanned: pollStats.totalScanned,
+      totalProcessed: pollStats.totalProcessed,
+      totalSkipped: pollStats.totalSkipped
+    });
     
   } catch (error) {
-    logger.error('Error during polling cycle:', error);
+    logger.error('💥 Error during polling cycle:', error);
   } finally {
     isPolling = false;
   }
 }
 
-// Process a batch of files
-async function processBatch(files: any[]): Promise<void> {
-  for (const file of files) {
-    try {
-      await processFile(file);
-    } catch (error) {
-      logger.error('Error processing file:', { filename: file.name, error });
-    }
-  }
-}
-
-// Process a single CSV file
-async function processFile(file: any): Promise<void> {
-  const filename = file.name;
+// Process a single file with streaming (no full file in memory)
+async function processFileWithStream(file: any, fingerprint: any, deviceId: string): Promise<void> {
+  const filePath = file.name;
   
-  // Check if file has already been processed
-  if (isFileProcessed(filename)) {
-    logger.debug('File already processed, skipping:', filename);
-    return;
-  }
-  
-  // Extract device ID from filename
-  const deviceId = extractDeviceIdFromFilename(filename);
-  if (!deviceId) {
-    logger.warn('Cannot extract device ID from filename, skipping:', filename);
-    return;
-  }
-  
-  // Check if we have sensor mapping for this device
-  if (!hasDeviceMapping(deviceId)) {
-    logger.warn('No sensor mapping found for device, skipping:', { filename, deviceId });
-    return;
-  }
-  
-  logger.info('Processing file:', { filename, deviceId });
-  
-  // Start processing in database
-  const fileId = startFileProcessing(filename, deviceId);
+  // Mark file as being processed (creates database record)
+  const fileId = markFileProcessed(fingerprint.path, fingerprint.fingerprint, deviceId, fingerprint.size);
   
   try {
-    // Download file as stream
-    const stream = await downloadCSVFile(filename);
+    // Download file as ReadableStream (memory-efficient)
+    const stream = await downloadCSVFileAsStream(filePath);
     if (!stream) {
-      logger.error('Failed to download file:', filename);
+      logger.error('❌ Failed to download file stream:', filePath);
       updateFileStats(fileId, 0, 0, 1);
       return;
     }
     
-    // Process CSV stream
+    // Process CSV stream row-by-row without loading full file in memory
     const stats = await processCSVStream(
       stream,
       deviceId,
@@ -149,19 +182,20 @@ async function processFile(file: any): Promise<void> {
       stats.failedRows
     );
     
-    logger.info('File processing completed:', { 
-      filename, 
+    logger.info('✅ File processing completed:', { 
+      file: file.basename || filePath,
       deviceId, 
+      fingerprint: fingerprint.fingerprint.substring(0, 16) + '...',
       ...stats 
     });
     
   } catch (error) {
-    logger.error('Error processing file:', { filename, deviceId, error });
+    logger.error('❌ Error processing file stream:', { file: filePath, deviceId, error });
     updateFileStats(fileId, 0, 0, 1);
   }
 }
 
-// Process a single payload (measurement row)
+// Process a single payload (measurement row) - includes sent_rows idempotency
 async function processPayload(fileId: number, payload: any): Promise<void> {
   const rowIndex = payload._rowIndex;
   const originalTimestamp = payload._originalTimestamp;
@@ -174,17 +208,17 @@ async function processPayload(fileId: number, payload: any): Promise<void> {
     const result = await postPayload(apiPayload);
     
     if (result.success) {
-      // Record successful processing
+      // Record successful processing (sent_rows idempotency - won't duplicate on re-upload)
       recordProcessedRow(fileId, rowIndex, originalTimestamp, result.status || 200);
       
-      logger.debug('Payload posted successfully:', { 
+      logger.debug('✅ Payload posted successfully:', { 
         fileId, 
         rowIndex, 
         idSensor: apiPayload.idSensor,
         status: result.status 
       });
     } else {
-      // Add to dead letter queue
+      // Add to dead letter queue for retry
       addToDeadLetterQueue(
         fileId,
         rowIndex,
@@ -192,7 +226,7 @@ async function processPayload(fileId: number, payload: any): Promise<void> {
         result.error || 'Unknown error'
       );
       
-      logger.warn('Payload failed, added to DLQ:', { 
+      logger.warn('⚠️  Payload failed, added to DLQ:', { 
         fileId, 
         rowIndex, 
         error: result.error,
@@ -210,7 +244,7 @@ async function processPayload(fileId: number, payload: any): Promise<void> {
       errorMessage
     );
     
-    logger.error('Payload processing failed:', { 
+    logger.error('❌ Payload processing failed:', { 
       fileId, 
       rowIndex, 
       error: errorMessage 
@@ -218,15 +252,21 @@ async function processPayload(fileId: number, payload: any): Promise<void> {
   }
 }
 
-// Get poller status
+// Get poller status with statistics
 export function getPollerStatus(): {
   isActive: boolean;
   intervalMs: number;
   lastPollTime: string | null;
+  totalScanned: number;
+  totalProcessed: number;
+  totalSkipped: number;
 } {
   return {
     isActive: isPolling,
     intervalMs: config.polling.intervalMs,
-    lastPollTime: new Date().toISOString(), // This could be tracked more precisely
+    lastPollTime: pollStats.lastPollAt,
+    totalScanned: pollStats.totalScanned,
+    totalProcessed: pollStats.totalProcessed,
+    totalSkipped: pollStats.totalSkipped,
   };
 }
