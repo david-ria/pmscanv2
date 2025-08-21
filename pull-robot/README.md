@@ -536,6 +536,249 @@ docker-compose restart pull-robot
 - Set up alerts for high error rates or DLQ growth
 - Track API rate limit violations
 
+## Smoke Test
+
+This section provides step-by-step instructions to verify the pull-robot is working correctly using a test webhook endpoint.
+
+### Prerequisites
+
+1. Pull-robot service running locally or in Docker
+2. Supabase credentials configured in `.env`
+3. Access to webhook.site for creating test endpoints
+
+### Step 1: Setup Test Webhook
+
+**Create Test Endpoint:**
+1. Go to [webhook.site](https://webhook.site)
+2. Copy the unique URL (e.g., `https://webhook.site/12345678-1234-1234-1234-123456789abc`)
+
+**Configure Environment:**
+```bash
+# Edit .env file
+DASHBOARD_ENDPOINT=https://webhook.site/12345678-1234-1234-1234-123456789abc
+DASHBOARD_BEARER=test-token-123
+
+# Restart service to pick up changes
+docker-compose restart pull-robot
+```
+
+### Step 2: Setup Sensor Mapping
+
+**Create `data/sensor_map.csv`:**
+```csv
+device_id,idSensor
+test_device_001,90100001
+```
+
+**Directory Structure:**
+```
+pull-robot/
+├── data/
+│   ├── sensor_map.csv          # Your mapping file
+│   └── robot-state.db          # Will be created automatically
+├── .env                        # Your configuration
+└── docker-compose.yml
+```
+
+### Step 3: Create Test CSV File
+
+**Sample CSV content (`test_mission_001.csv`):**
+```csv
+Timestamp,PM1,PM2.5,PM10,Location,Activity
+2025-08-21T14:30:00.000Z,12.5,18.3,23.1,"Office","Working"
+2025-08-21T14:30:00.000Z,13.2,19.1,24.8,"Office","Working"
+2025-08-21T14:30:00.000Z,11.8,17.9,22.4,"Office","Working"
+```
+
+**File Details:**
+- 3 rows with **same timestamp** (will be merged)
+- Device ID: `test_device_001` (must match sensor_map.csv)
+- Consistent location and activity
+
+### Step 4: Upload Test File
+
+**Upload to Supabase Storage:**
+```bash
+# Using Supabase CLI (if installed)
+supabase storage upload missions test_mission_001.csv
+
+# Or upload via Supabase Dashboard:
+# 1. Go to Storage > missions bucket
+# 2. Upload test_mission_001.csv
+# 3. Ensure public read access if using anon key
+```
+
+**Expected File Path:** `missions/test_mission_001.csv`
+
+### Step 5: Verify Processing
+
+**Monitor Logs:**
+```bash
+# Watch for processing activity
+docker-compose logs -f pull-robot
+
+# Expected log entries:
+# "New file detected: test_mission_001.csv"
+# "Processing 3 rows from file..."
+# "Merged 3 measurements for timestamp 2025-08-21T14:30:00.000Z"
+# "API request successful: status 200"
+```
+
+**Check Webhook Requests:**
+1. Refresh your webhook.site page
+2. Verify **exactly 1 POST request** received
+
+**Expected Webhook Payload:**
+```json
+{
+  "device_id": "test_device_001",
+  "mission_id": "test_mission_001", 
+  "ts": "2025-08-21T14:30:00.000Z",
+  "metrics": {
+    "PM1": 12.5,      // Average of 3 measurements
+    "PM2_5": 18.43,   // Average of 3 measurements  
+    "PM10": 23.43     // Average of 3 measurements
+  }
+}
+```
+
+**Expected Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer test-token-123  
+Idempotency-Key: test_device_001|test_mission_001|2025-08-21T14:30:00.000Z
+User-Agent: pull-robot/1.0.0
+```
+
+### Step 6: Verify Metrics
+
+**Check Metrics Endpoint:**
+```bash
+curl http://localhost:3000/metrics.txt
+```
+
+**Expected Counter Changes:**
+```text
+poster_requests_total 1          # One request made
+poster_success_total 1           # One successful request  
+files_processed_total 1          # One file processed
+rows_processed_total 3           # Three CSV rows processed
+rows_sent_total 1                # One merged payload sent
+dead_letter_count 0              # No failures
+```
+
+### Step 7: Test Duplicate Handling
+
+**Re-upload Same File:**
+```bash
+# Upload identical file again
+supabase storage upload missions test_mission_001_duplicate.csv
+```
+
+**Expected Behavior:**
+```bash
+# Monitor logs
+docker-compose logs -f pull-robot | tail -20
+
+# Expected log:
+# "File already processed (same fingerprint): test_mission_001_duplicate.csv"
+# "Skipping file: test_mission_001_duplicate.csv"
+```
+
+**Verification:**
+- No new webhook requests
+- Metrics counters unchanged
+- No duplicate processing
+
+### Step 8: Test File Modification
+
+**Create Modified Version:**
+```csv
+Timestamp,PM1,PM2.5,PM10,Location,Activity
+2025-08-21T14:30:00.000Z,15.0,20.5,25.0,"Office","Working"
+2025-08-21T14:30:00.000Z,14.8,19.8,24.2,"Office","Working"
+2025-08-21T14:30:00.000Z,15.2,20.1,25.3,"Office","Working"
+```
+
+**Upload Modified File:**
+```bash
+# Same filename, different content
+supabase storage upload missions test_mission_001.csv --upsert
+```
+
+**Expected Behavior:**
+- New fingerprint detected (different content)
+- File reprocessed completely
+- **No duplicate rows sent** (thanks to `sent_rows` tracking)
+- New webhook request with updated averages
+
+**Updated Webhook Payload:**
+```json
+{
+  "device_id": "test_device_001", 
+  "mission_id": "test_mission_001",
+  "ts": "2025-08-21T14:30:00.000Z",
+  "metrics": {
+    "PM1": 15.0,      // New averages
+    "PM2_5": 20.13,
+    "PM10": 24.83
+  }
+}
+```
+
+### Success Criteria
+
+✅ **Pass Conditions:**
+- [x] Exactly 1 POST per unique timestamp
+- [x] Merged metrics (3 CSV rows → 1 API payload)
+- [x] Correct idempotency key format
+- [x] Metrics counters increment properly
+- [x] Duplicate file uploads skipped
+- [x] Modified files reprocessed without duplicates
+
+❌ **Failure Conditions:**
+- Multiple POSTs for same timestamp
+- Missing or incorrect idempotency keys  
+- Duplicate processing of same data
+- Metrics not updating
+- DLQ entries for successful test data
+
+### Troubleshooting Test Issues
+
+**No Processing Activity:**
+```bash
+# Check Supabase connection
+curl http://localhost:3000/health
+
+# Verify file upload location
+# File must be in missions/ bucket with correct name pattern
+```
+
+**Webhook Not Receiving Requests:**
+```bash
+# Check logs for HTTP errors
+docker-compose logs pull-robot | grep "ERROR\|WARN"
+
+# Verify DASHBOARD_ENDPOINT URL is correct
+echo $DASHBOARD_ENDPOINT
+```
+
+**Wrong Sensor ID:**
+```bash
+# Check sensor mapping
+cat data/sensor_map.csv
+
+# Ensure device_id matches CSV filename pattern
+```
+
+**File Processing Errors:**
+```bash
+# Check CSV format
+head -5 test_mission_001.csv
+
+# Verify timestamp format (must be ISO 8601 with Z suffix)
+```
+
 ## License
 
 MIT
