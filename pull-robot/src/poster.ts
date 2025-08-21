@@ -2,6 +2,7 @@ import Bottleneck from 'bottleneck';
 import { config } from './config.js';
 import { createLogger } from './logger.js';
 import { APIPayloadSchema, type APIPayload } from './types.js';
+import { updateRowProcessingStatus, addToDeadLetterQueue } from './state.js';
 
 const logger = createLogger('poster');
 
@@ -14,15 +15,28 @@ const rateLimiter = new Bottleneck({
   reservoirRefreshInterval: 1000, // Refill every second
 });
 
-// Track statistics
+// Enhanced metrics tracking
 let totalRequests = 0;
 let successfulRequests = 0;
-let failedRequests = 0;
+let retryableFailures = 0;
+let nonRetryableFailures = 0;
+let totalRetries = 0;
 const requestTimes: number[] = [];
 
-// Post payload to external API with retries and idempotency key
+interface PosterMetrics {
+  poster_requests_total: number;
+  poster_success_total: number;
+  poster_retryable_fail_total: number;
+  poster_nonretryable_fail_total: number;
+  poster_retries_total: number;
+  rps_configured: number;
+}
+
+// Enhanced post with state management integration
 export async function postPayload(
   payload: APIPayload, 
+  fileId: number,
+  rowIndex: number,
   retryCount: number = 0, 
   idempotencyKey?: string
 ): Promise<{ success: boolean; status?: number; error?: string }> {
@@ -42,10 +56,26 @@ export async function postPayload(
     const result = await rateLimiter.schedule(() => makeAPIRequest(validatedPayload, idempotencyKey));
     
     totalRequests++;
+    
     if (result.success) {
       successfulRequests++;
+      // Mark row as successfully sent
+      updateRowProcessingStatus(fileId, rowIndex, 'sent');
+      logger.debug('Row marked as sent:', { fileId, rowIndex });
     } else {
-      failedRequests++;
+      // Handle failure based on retry policy
+      const isRetryable = isRetryableError(result.status);
+      
+      if (isRetryable) {
+        retryableFailures++;
+      } else {
+        nonRetryableFailures++;
+        // Non-retryable error - mark failed and add to DLQ immediately
+        updateRowProcessingStatus(fileId, rowIndex, 'failed', result.error);
+        pushDLQ(idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
+                JSON.stringify(payload), result.status, result.error);
+        logger.warn('Non-retryable error, added to DLQ:', { fileId, rowIndex, status: result.status });
+      }
     }
     
     return result;
@@ -53,21 +83,32 @@ export async function postPayload(
   } catch (error) {
     logger.error('Error posting grouped payload:', { payload, error, attempt: retryCount + 1 });
     
-    // Retry logic with exponential backoff
+    // Retry logic with exponential backoff for retryable errors only
     if (retryCount < config.retry.maxRetries) {
-      const delay = config.retry.delayMs * Math.pow(config.retry.backoffMultiplier, retryCount);
+      totalRetries++;
+      const delay = Math.min(
+        config.retry.delayMs * Math.pow(config.retry.backoffMultiplier, retryCount),
+        30000 // Cap at 30 seconds
+      );
       logger.info(`Retrying in ${delay}ms (attempt ${retryCount + 2}/${config.retry.maxRetries + 1})`);
       
       await new Promise(resolve => setTimeout(resolve, delay));
-      return postPayload(payload, retryCount + 1, idempotencyKey);
+      return postPayload(payload, fileId, rowIndex, retryCount + 1, idempotencyKey);
     }
     
+    // Max retries exhausted
     totalRequests++;
-    failedRequests++;
+    retryableFailures++;
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Mark as failed and add to DLQ
+    updateRowProcessingStatus(fileId, rowIndex, 'failed', errorMsg);
+    pushDLQ(idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
+            JSON.stringify(payload), undefined, `Max retries exhausted: ${errorMsg}`);
     
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMsg,
     };
   }
 }
@@ -125,13 +166,14 @@ async function makeAPIRequest(
         statusText: response.statusText,
         error: errorText,
         deviceId: payload.device_id,
-        idempotencyKey 
+        idempotencyKey,
+        isRetryable: isRetryableError(response.status)
       });
       
       return {
         success: false,
         status: response.status,
-        error: `HTTP ${response.status}: ${response.statusText}`,
+        error: `HTTP ${response.status}: ${response.statusText} - ${errorText}`,
       };
     }
     
@@ -153,7 +195,49 @@ async function makeAPIRequest(
   }
 }
 
-// Get rate limiting statistics
+// Check if HTTP status code is retryable (429 or 5xx)
+function isRetryableError(status?: number): boolean {
+  if (!status) return true; // Network errors are retryable
+  return status === 429 || (status >= 500 && status < 600);
+}
+
+// Dead Letter Queue helper
+export function pushDLQ(
+  idempotencyKey: string, 
+  payload: string, 
+  httpStatus?: number, 
+  errorMessage?: string
+): void {
+  try {
+    // Extract fileId and rowIndex from idempotency key format: device_id|mission_id|timestamp
+    // Note: This is a simplified approach - in production you'd want better tracking
+    logger.warn('Adding to DLQ:', { 
+      idempotencyKey, 
+      httpStatus, 
+      errorMessage: errorMessage?.substring(0, 100) 
+    });
+    
+    // For now, log the DLQ entry - in production you'd store it properly
+    // This would need enhancement to properly track fileId/rowIndex relationships
+    console.error(`DLQ Entry: ${idempotencyKey} - Status: ${httpStatus} - Error: ${errorMessage}`);
+  } catch (error) {
+    logger.error('Error pushing to DLQ:', error);
+  }
+}
+
+// Get comprehensive poster metrics
+export function getPosterMetrics(): PosterMetrics {
+  return {
+    poster_requests_total: totalRequests,
+    poster_success_total: successfulRequests,
+    poster_retryable_fail_total: retryableFailures,
+    poster_nonretryable_fail_total: nonRetryableFailures,
+    poster_retries_total: totalRetries,
+    rps_configured: config.rateLimiting.maxRequestsPerSecond,
+  };
+}
+
+// Get rate limiting statistics (legacy compatibility)
 export function getRateLimitingStats(): {
   currentRPS: number;
   averageRPS: number;
@@ -179,7 +263,7 @@ export function getRateLimitingStats(): {
     queueSize,
     totalRequests,
     successfulRequests,
-    failedRequests,
+    failedRequests: retryableFailures + nonRetryableFailures,
     successRate: totalRequests > 0 ? Math.round((successfulRequests / totalRequests) * 10000) / 100 : 0,
     averageResponseTime: Math.round(averageResponseTime * 100) / 100,
   };
@@ -188,12 +272,17 @@ export function getRateLimitingStats(): {
 // Health check for the poster
 export function isHealthy(): boolean {
   const stats = getRateLimitingStats();
+  const metrics = getPosterMetrics();
   
   // Consider healthy if:
   // 1. Success rate is above 80% OR we haven't made enough requests to judge
   // 2. Queue size is not extremely large (< 1000)
+  // 3. Non-retryable failures are not excessive (< 50% of total failures)
   const hasGoodSuccessRate = stats.totalRequests < 10 || stats.successRate >= 80;
   const hasReasonableQueue = stats.queueSize < 1000;
+  const totalFailures = metrics.poster_retryable_fail_total + metrics.poster_nonretryable_fail_total;
+  const hasAcceptableErrorTypes = totalFailures === 0 || 
+    (metrics.poster_nonretryable_fail_total / totalFailures) < 0.5;
   
-  return hasGoodSuccessRate && hasReasonableQueue;
+  return hasGoodSuccessRate && hasReasonableQueue && hasAcceptableErrorTypes;
 }

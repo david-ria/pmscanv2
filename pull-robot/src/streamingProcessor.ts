@@ -270,11 +270,16 @@ export function createPayloadSender(fileId: number, stats: ProcessingStats): Wri
           }
           
           // Send payload to API with idempotency key
-          const result = await postPayload(processedRow.payload, 0, processedRow.idempotencyKey);
+          const result = await postPayload(
+            processedRow.payload, 
+            fileId,
+            processedRow.rowIndex, 
+            0, 
+            processedRow.idempotencyKey
+          );
+          
           
           if (result.success) {
-            // Update status to sent
-            updateRowProcessingStatus(fileId, processedRow.rowIndex, 'sent');
             stats.successfulRows++;
             
             logger.debug('Grouped payload sent successfully:', {
@@ -285,8 +290,6 @@ export function createPayloadSender(fileId: number, stats: ProcessingStats): Wri
             });
             
           } else {
-            // Update status to failed
-            updateRowProcessingStatus(fileId, processedRow.rowIndex, 'failed', result.error);
             stats.failedRows++;
             
             logger.warn('Grouped payload send failed:', {

@@ -3,6 +3,7 @@ import { config } from './config.js';
 import { createLogger } from './logger.js';
 import { getProcessingState, testDatabaseConnection } from './state.js';
 import { testSupabaseConnection } from './supabase.js';
+import { getPosterMetrics, getRateLimitingStats, isHealthy as isPosterHealthy } from './poster.js';
 import type { HealthResponse, MetricsResponse } from './types.js';
 
 const logger = createLogger('health');
@@ -18,7 +19,7 @@ fastify.get('/health', async (request, reply) => {
     const dbConnected = await testDatabaseConnection();
     const supabaseConnected = await testSupabaseConnection();
     
-    const isHealthy = dbConnected && supabaseConnected;
+    const isHealthy = dbConnected && supabaseConnected && isPosterHealthy();
     
     const healthResponse: HealthResponse = {
       status: isHealthy ? 'healthy' : 'unhealthy',
@@ -52,19 +53,21 @@ fastify.get('/health', async (request, reply) => {
   }
 });
 
-// Metrics endpoint with more detailed information
+// Metrics endpoint with comprehensive poster metrics
 fastify.get('/metrics', async (request, reply) => {
   try {
     const processingState = await getProcessingState();
+    const posterMetrics = getPosterMetrics();
+    const rateLimitingStats = getRateLimitingStats();
     
-    // TODO: Add rate limiting metrics when poster.ts is implemented
     const metricsResponse: MetricsResponse = {
       ...processingState,
       rateLimiting: {
-        currentRPS: 0, // Will be implemented with bottleneck integration
-        averageRPS: 0,
-        queueSize: 0,
+        currentRPS: rateLimitingStats.currentRPS,
+        averageRPS: rateLimitingStats.averageRPS,
+        queueSize: rateLimitingStats.queueSize,
       },
+      poster: posterMetrics,
     };
     
     reply
