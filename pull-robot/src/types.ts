@@ -59,14 +59,12 @@ export const CSVRowSchema = z.object({
 
 export type CSVRow = z.infer<typeof CSVRowSchema>;
 
-// API payload structure - enhanced for multiple metrics
+// API payload structure - grouped metrics format
 export const APIPayloadSchema = z.object({
-  idSensor: z.number(),
-  time: z.string(),
-  data: z.record(z.object({
-    value: z.number(),
-    unit: z.string(),
-  })),
+  device_id: z.string(),
+  mission_id: z.string(),
+  ts: z.string(), // ISO timestamp
+  metrics: z.record(z.number()), // Simple metric name -> value mapping
 });
 
 export type APIPayload = z.infer<typeof APIPayloadSchema>;

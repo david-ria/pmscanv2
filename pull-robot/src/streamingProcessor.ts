@@ -21,20 +21,27 @@ interface ProcessedRow {
   rowIndex: number;
   payload: APIPayload;
   payloadHash: string;
+  idempotencyKey: string;
   originalData: CSVRow;
 }
 
-// Create SHA256 hash of normalized payload
+// Create SHA256 hash of normalized payload for idempotency
 function createPayloadHash(payload: APIPayload): string {
   // Normalize payload for consistent hashing
   const normalized = {
-    idSensor: payload.idSensor,
-    time: payload.time,
-    data: payload.data
+    device_id: payload.device_id,
+    mission_id: payload.mission_id,
+    ts: payload.ts,
+    metrics: payload.metrics
   };
   
   const payloadString = JSON.stringify(normalized, Object.keys(normalized).sort());
   return createHash('sha256').update(payloadString, 'utf8').digest('hex');
+}
+
+// Create idempotency key for request deduplication
+function createIdempotencyKey(payload: APIPayload): string {
+  return `${payload.device_id}|${payload.mission_id}|${payload.ts}`;
 }
 
 // Enhanced CSV row validator that tracks row indices
@@ -83,7 +90,7 @@ export function createEnhancedRowValidator(fileId: number): Transform {
   });
 }
 
-// Enhanced payload transformer with hash generation
+// Enhanced payload transformer with grouped metrics format
 export function createEnhancedPayloadTransformer(deviceId: string, sensorMapping: Map<string, number>): Transform {
   const sensorId = sensorMapping.get(deviceId);
   
@@ -97,8 +104,8 @@ export function createEnhancedPayloadTransformer(deviceId: string, sensorMapping
       try {
         const csvRow = chunk as CSVRow & { _rowIndex: number; _fileId: number };
         
-        // Create base payload structure based on configured metrics
-        const data: any = {};
+        // Create grouped metrics object
+        const metrics: Record<string, number> = {};
         
         // Add PM2.5 (required)
         const pm25Value = parseFloat(csvRow['PM2.5']);
@@ -111,87 +118,76 @@ export function createEnhancedPayloadTransformer(deviceId: string, sensorMapping
           callback();
           return;
         }
-        
-        data.pm25 = {
-          value: pm25Value,
-          unit: config.metrics.units.pm25 || 'ugm3',
-        };
+        metrics.pm25 = pm25Value;
         
         // Add other metrics if configured and available
         if (config.metrics.include.includes('pm1') && csvRow['PM1']) {
           const pm1Value = parseFloat(csvRow['PM1']);
           if (!isNaN(pm1Value)) {
-            data.pm1 = {
-              value: pm1Value,
-              unit: config.metrics.units.pm1 || 'ugm3',
-            };
+            metrics.pm1 = pm1Value;
           }
         }
         
         if (config.metrics.include.includes('pm10') && csvRow['PM10']) {
           const pm10Value = parseFloat(csvRow['PM10']);
           if (!isNaN(pm10Value)) {
-            data.pm10 = {
-              value: pm10Value,
-              unit: config.metrics.units.pm10 || 'ugm3',
-            };
+            metrics.pm10 = pm10Value;
           }
         }
         
         if (config.metrics.include.includes('temperature') && csvRow['Temperature']) {
           const tempValue = parseFloat(csvRow['Temperature']);
           if (!isNaN(tempValue)) {
-            data.temperature = {
-              value: tempValue,
-              unit: config.metrics.units.temperature || 'celsius',
-            };
+            metrics.temperature = tempValue;
           }
         }
         
         if (config.metrics.include.includes('humidity') && csvRow['Humidity']) {
           const humidityValue = parseFloat(csvRow['Humidity']);
           if (!isNaN(humidityValue)) {
-            data.humidity = {
-              value: humidityValue,
-              unit: config.metrics.units.humidity || 'percent',
-            };
+            metrics.humidity = humidityValue;
           }
         }
         
         // Convert timestamp to ISO format
         const timestamp = new Date(csvRow.Timestamp).toISOString();
         
-        // Create API payload
+        // Create grouped API payload
         const payload: APIPayload = {
-          idSensor: sensorId,
-          time: timestamp,
-          data,
+          device_id: deviceId,
+          mission_id: `mission-${sensorId}`, // Generate mission ID from sensor mapping
+          ts: timestamp,
+          metrics,
         };
         
-        // Generate payload hash
+        // Generate payload hash and idempotency key
         const payloadHash = createPayloadHash(payload);
+        const idempotencyKey = createIdempotencyKey(payload);
         
         // Create processed row object
         const processedRow: ProcessedRow = {
           rowIndex: csvRow._rowIndex,
           payload,
           payloadHash,
+          idempotencyKey,
           originalData: csvRow,
         };
         
-        logger.debug('Created payload with hash:', { 
+        logger.debug('Created grouped payload:', { 
           fileId: csvRow._fileId,
           rowIndex: csvRow._rowIndex, 
-          sensorId, 
+          deviceId, 
+          missionId: payload.mission_id,
           timestamp, 
           payloadHash: payloadHash.substring(0, 16) + '...',
-          dataKeys: Object.keys(data)
+          idempotencyKey,
+          metricKeys: Object.keys(metrics)
         });
         
         callback(null, processedRow);
         
       } catch (error) {
-        logger.error('Error transforming CSV row to payload:', error);
+        logger.error('Error transforming CSV row to grouped payload:', error);
         callback();
       }
     }
@@ -262,8 +258,8 @@ export function createPayloadSender(fileId: number, stats: ProcessingStats): Wri
       // Process batch items concurrently but with rate limiting
       const batchPromises = currentBatch.map(async (processedRow) => {
         try {
-          // Send payload to API
-          const result = await postPayload(processedRow.payload);
+          // Send payload to API with idempotency key
+          const result = await postPayload(processedRow.payload, 0, processedRow.idempotencyKey);
           
           if (result.success) {
             // Mark as successfully sent
@@ -275,9 +271,10 @@ export function createPayloadSender(fileId: number, stats: ProcessingStats): Wri
             );
             stats.successfulRows++;
             
-            logger.debug('Payload sent successfully:', {
+            logger.debug('Grouped payload sent successfully:', {
               fileId,
               rowIndex: processedRow.rowIndex,
+              idempotencyKey: processedRow.idempotencyKey,
               status: result.status
             });
             
@@ -292,9 +289,10 @@ export function createPayloadSender(fileId: number, stats: ProcessingStats): Wri
             );
             stats.failedRows++;
             
-            logger.warn('Payload send failed:', {
+            logger.warn('Grouped payload send failed:', {
               fileId,
               rowIndex: processedRow.rowIndex,
+              idempotencyKey: processedRow.idempotencyKey,
               error: result.error
             });
           }

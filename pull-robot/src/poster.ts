@@ -20,20 +20,26 @@ let successfulRequests = 0;
 let failedRequests = 0;
 const requestTimes: number[] = [];
 
-// Post payload to external API with retries
-export async function postPayload(payload: APIPayload, retryCount: number = 0): Promise<{ success: boolean; status?: number; error?: string }> {
+// Post payload to external API with retries and idempotency key
+export async function postPayload(
+  payload: APIPayload, 
+  retryCount: number = 0, 
+  idempotencyKey?: string
+): Promise<{ success: boolean; status?: number; error?: string }> {
   try {
     // Validate payload structure
     const validatedPayload = APIPayloadSchema.parse(payload);
     
-    logger.debug('Posting payload:', { 
-      idSensor: validatedPayload.idSensor, 
-      time: validatedPayload.time, 
+    logger.debug('Posting grouped payload:', { 
+      deviceId: validatedPayload.device_id,
+      missionId: validatedPayload.mission_id, 
+      timestamp: validatedPayload.ts, 
+      idempotencyKey,
       attempt: retryCount + 1 
     });
     
     // Use rate limiter to control request rate
-    const result = await rateLimiter.schedule(() => makeAPIRequest(validatedPayload));
+    const result = await rateLimiter.schedule(() => makeAPIRequest(validatedPayload, idempotencyKey));
     
     totalRequests++;
     if (result.success) {
@@ -45,7 +51,7 @@ export async function postPayload(payload: APIPayload, retryCount: number = 0): 
     return result;
     
   } catch (error) {
-    logger.error('Error posting payload:', { payload, error, attempt: retryCount + 1 });
+    logger.error('Error posting grouped payload:', { payload, error, attempt: retryCount + 1 });
     
     // Retry logic with exponential backoff
     if (retryCount < config.retry.maxRetries) {
@@ -53,7 +59,7 @@ export async function postPayload(payload: APIPayload, retryCount: number = 0): 
       logger.info(`Retrying in ${delay}ms (attempt ${retryCount + 2}/${config.retry.maxRetries + 1})`);
       
       await new Promise(resolve => setTimeout(resolve, delay));
-      return postPayload(payload, retryCount + 1);
+      return postPayload(payload, retryCount + 1, idempotencyKey);
     }
     
     totalRequests++;
@@ -66,18 +72,28 @@ export async function postPayload(payload: APIPayload, retryCount: number = 0): 
   }
 }
 
-// Make the actual HTTP request
-async function makeAPIRequest(payload: APIPayload): Promise<{ success: boolean; status?: number; error?: string }> {
+// Make the actual HTTP request with idempotency key
+async function makeAPIRequest(
+  payload: APIPayload, 
+  idempotencyKey?: string
+): Promise<{ success: boolean; status?: number; error?: string }> {
   const startTime = Date.now();
   
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.api.key}`,
+      'User-Agent': 'pull-robot/1.0.0',
+    };
+    
+    // Add idempotency key header if provided
+    if (idempotencyKey) {
+      headers['Idempotency-Key'] = idempotencyKey;
+    }
+    
     const response = await fetch(config.api.url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.api.key}`,
-        'User-Agent': 'pull-robot/1.0.0',
-      },
+      headers,
       body: JSON.stringify(payload),
     });
     
@@ -93,7 +109,8 @@ async function makeAPIRequest(payload: APIPayload): Promise<{ success: boolean; 
       logger.debug('API request successful:', { 
         status: response.status, 
         time: requestTime,
-        idSensor: payload.idSensor 
+        deviceId: payload.device_id,
+        idempotencyKey 
       });
       
       return {
@@ -107,7 +124,8 @@ async function makeAPIRequest(payload: APIPayload): Promise<{ success: boolean; 
         status: response.status,
         statusText: response.statusText,
         error: errorText,
-        idSensor: payload.idSensor 
+        deviceId: payload.device_id,
+        idempotencyKey 
       });
       
       return {
@@ -124,7 +142,8 @@ async function makeAPIRequest(payload: APIPayload): Promise<{ success: boolean; 
     logger.error('API request failed with exception:', { 
       error: error instanceof Error ? error.message : 'Unknown error',
       time: requestTime,
-      idSensor: payload.idSensor 
+      deviceId: payload.device_id,
+      idempotencyKey 
     });
     
     return {
