@@ -59,16 +59,14 @@ export const CSVRowSchema = z.object({
 
 export type CSVRow = z.infer<typeof CSVRowSchema>;
 
-// API payload structure
+// API payload structure - enhanced for multiple metrics
 export const APIPayloadSchema = z.object({
   idSensor: z.number(),
   time: z.string(),
-  data: z.object({
-    pm25: z.object({
-      value: z.number(),
-      unit: z.literal('ugm3'),
-    }),
-  }),
+  data: z.record(z.object({
+    value: z.number(),
+    unit: z.string(),
+  })),
 });
 
 export type APIPayload = z.infer<typeof APIPayloadSchema>;
@@ -141,6 +139,13 @@ export interface DeadLetterEntry {
   attempt_count: number;
   created_at: string;
   last_attempt_at: string;
+}
+
+export interface ProcessingStats {
+  totalRows: number;
+  successfulRows: number;
+  failedRows: number;
+  skippedRows: number;
 }
 
 // Processing state

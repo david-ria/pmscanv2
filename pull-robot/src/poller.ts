@@ -17,7 +17,7 @@ import {
   addToDeadLetterQueue 
 } from './state.js';
 import { loadSensorMapping, hasDeviceMapping } from './mapper.js';
-import { processCSVStream } from './csvStream.js';
+import { processCSVStreamWithIdempotency } from './streamingProcessor.js';
 import { postPayload } from './poster.js';
 
 const logger = createLogger('poller');
@@ -166,99 +166,55 @@ export async function pollAndProcess(): Promise<void> {
   }
 }
 
-// Process a single file with blob streaming (no full file in memory)
+// Process a single file with blob streaming using enhanced idempotency processor
 async function processFileWithBlob(blob: Blob, fingerprint: any, deviceId: string): Promise<void> {
   // Start file processing (creates database record with status='processing')
   const fileId = startFileProcessing(fingerprint.path, fingerprint.fingerprint, deviceId, fingerprint.size);
   
   try {
     // Convert blob to Node.js readable stream
-    const stream = await blobToNodeStream(blob);
+    const nodeStream = blobToNodeStream(blob);
     
-    // Process CSV stream row-by-row without loading full file in memory
-    const stats = await processCSVStream(
-      stream,
+    // Process CSV file with enhanced streaming parser (includes idempotency)
+    const stats = await processCSVStreamWithIdempotency(
+      nodeStream,
+      fileId,
       deviceId,
-      sensorMapping,
-      async (payload) => {
-        await processPayload(fileId, payload);
-      }
+      sensorMapping
     );
     
-    // Finish file processing with final stats (status='done' if successful)
-    const status = stats.failedRows > stats.successfulRows ? 'failed' : 'done';
-    finishFileProcessing(fileId, status, stats.totalRows, stats.successfulRows, stats.failedRows);
+    // Update final statistics (skippedRows are rows that were already processed)
+    finishFileProcessing(
+      fileId, 
+      'done', 
+      stats.totalRows, 
+      stats.successfulRows, 
+      stats.failedRows
+    );
     
-    logger.info('✅ File processing completed:', { 
-      path: fingerprint.path,
-      deviceId, 
+    logger.info('File processing completed:', { 
       fingerprint: fingerprint.fingerprint.substring(0, 16) + '...',
-      status,
-      ...stats 
+      deviceId, 
+      stats,
+      skippedDueToIdempotency: stats.skippedRows
     });
     
   } catch (error) {
-    logger.error('❌ Error processing file blob:', { path: fingerprint.path, deviceId, error });
+    logger.error('File processing failed:', { fingerprint: fingerprint.fingerprint.substring(0, 16) + '...', deviceId, error });
+    
     const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
     finishFileProcessing(fileId, 'failed', 0, 0, 1, errorMessage);
+    
+    throw error;
   }
 }
 
-// Process a single payload (measurement row) - includes sent_rows idempotency
+// Legacy function - now replaced by enhanced streaming processor
+// Kept for reference but no longer used
 async function processPayload(fileId: number, payload: any): Promise<void> {
-  const rowIndex = payload._rowIndex;
-  const originalTimestamp = payload._originalTimestamp;
-  
-  // Remove metadata before posting
-  const { _rowIndex, _originalTimestamp, ...apiPayload } = payload;
-  
-  try {
-    // Post to external API
-    const result = await postPayload(apiPayload);
-    
-    if (result.success) {
-      // Record successful processing (sent_rows idempotency - won't duplicate on re-upload)
-      recordProcessedRow(fileId, rowIndex, originalTimestamp, result.status || 200);
-      
-      logger.debug('✅ Payload posted successfully:', { 
-        fileId, 
-        rowIndex, 
-        idSensor: apiPayload.idSensor,
-        status: result.status 
-      });
-    } else {
-      // Add to dead letter queue for retry
-      addToDeadLetterQueue(
-        fileId,
-        rowIndex,
-        JSON.stringify(apiPayload),
-        result.error || 'Unknown error'
-      );
-      
-      logger.warn('⚠️  Payload failed, added to DLQ:', { 
-        fileId, 
-        rowIndex, 
-        error: result.error,
-        status: result.status 
-      });
-    }
-    
-  } catch (error) {
-    // Add to dead letter queue
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    addToDeadLetterQueue(
-      fileId,
-      rowIndex,
-      JSON.stringify(apiPayload),
-      errorMessage
-    );
-    
-    logger.error('❌ Payload processing failed:', { 
-      fileId, 
-      rowIndex, 
-      error: errorMessage 
-    });
-  }
+  // This function is now handled by the enhanced streaming processor
+  // which includes proper idempotency checks and payload hashing
+  logger.debug('Legacy processPayload called - this should not happen with new streaming processor');
 }
 
 // Get poller status with statistics
