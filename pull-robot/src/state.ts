@@ -198,7 +198,60 @@ export function updateFileStats(fileId: number, totalRows: number, successfulRow
   }
 }
 
-// Check if a row has been processed
+// Atomic row reservation for race-condition-free processing
+export function reserveRowForProcessing(fileId: number, rowIndex: number, payloadHash: string): boolean {
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO processed_rows (file_id, row_index, payload_hash, status, sent_at)
+      VALUES (?, ?, ?, 'processing', CURRENT_TIMESTAMP)
+    `);
+    const result = stmt.run(fileId, rowIndex, payloadHash);
+    
+    // If affected rows = 1, we successfully reserved the row
+    const reserved = result.changes === 1;
+    
+    logger.debug('Row reservation attempt:', { 
+      fileId, 
+      rowIndex, 
+      reserved,
+      payloadHash: payloadHash.substring(0, 16) + '...'
+    });
+    
+    return reserved;
+  } catch (error) {
+    // UNIQUE constraint violation means another process already reserved this row
+    if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+      logger.debug('Row already reserved by another process:', { fileId, rowIndex });
+      return false;
+    }
+    
+    logger.error('Error reserving row for processing:', error);
+    return false;
+  }
+}
+
+// Update row status after processing attempt
+export function updateRowProcessingStatus(fileId: number, rowIndex: number, status: 'sent' | 'failed', errorMessage?: string): void {
+  try {
+    const stmt = db.prepare(`
+      UPDATE processed_rows 
+      SET status = ?, error_message = ?, sent_at = CURRENT_TIMESTAMP
+      WHERE file_id = ? AND row_index = ?
+    `);
+    const result = stmt.run(status, errorMessage || null, fileId, rowIndex);
+    
+    if (result.changes === 0) {
+      logger.warn('No row found to update processing status:', { fileId, rowIndex, status });
+    } else {
+      logger.debug('Updated row processing status:', { fileId, rowIndex, status, errorMessage });
+    }
+  } catch (error) {
+    logger.error('Error updating row processing status:', error);
+    throw error;
+  }
+}
+
+// Check if a row has been processed (legacy function - prefer atomic reservation)
 export function isRowProcessed(fileId: number, rowIndex: number): boolean {
   try {
     const stmt = db.prepare('SELECT id FROM processed_rows WHERE file_id = ? AND row_index = ?');
@@ -210,7 +263,7 @@ export function isRowProcessed(fileId: number, rowIndex: number): boolean {
   }
 }
 
-// Mark a row as processed with status and payload hash
+// Mark a row as processed with status and payload hash (legacy - use reserveRowForProcessing + updateRowProcessingStatus instead)
 export function markRowProcessed(fileId: number, rowIndex: number, payloadHash: string, status: string = 'sent', errorMessage?: string): void {
   try {
     const stmt = db.prepare(`

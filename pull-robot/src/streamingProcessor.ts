@@ -5,7 +5,7 @@ import { pipeline } from 'stream/promises';
 import { createLogger } from './logger.js';
 import { config } from './config.js';
 import { postPayload } from './poster.js';
-import { isRowProcessed, markRowProcessed, updateFileStats } from './state.js';
+import { reserveRowForProcessing, updateRowProcessingStatus, updateFileStats } from './state.js';
 import { CSVRowSchema, type CSVRow, type APIPayload } from './types.js';
 
 const logger = createLogger('streaming-processor');
@@ -57,14 +57,7 @@ export function createEnhancedRowValidator(fileId: number): Transform {
         // Validate row structure
         const validatedRow = CSVRowSchema.parse(chunk);
         
-        // Skip if already processed (idempotency check)
-        if (isRowProcessed(fileId, rowIndex)) {
-          logger.debug('Skipping already processed row:', { fileId, rowIndex });
-          callback(); // Skip this row
-          return;
-        }
-        
-        // Add row metadata
+        // Add row metadata (reservation will be handled later in pipeline)
         const enrichedRow = {
           ...validatedRow,
           _rowIndex: rowIndex,
@@ -255,20 +248,33 @@ export function createPayloadSender(fileId: number, stats: ProcessingStats): Wri
     const currentBatch = batchBuffer.splice(0, config.polling.batchSize);
     
     try {
-      // Process batch items concurrently but with rate limiting
+      // Process batch items with atomic reservation
       const batchPromises = currentBatch.map(async (processedRow) => {
         try {
+          // Atomic row reservation - reserve before processing
+          const reserved = reserveRowForProcessing(
+            fileId,
+            processedRow.rowIndex,
+            processedRow.payloadHash
+          );
+          
+          if (!reserved) {
+            // Another process already reserved this row, skip it
+            stats.skippedRows++;
+            logger.debug('Row already reserved, skipping:', {
+              fileId,
+              rowIndex: processedRow.rowIndex,
+              idempotencyKey: processedRow.idempotencyKey
+            });
+            return;
+          }
+          
           // Send payload to API with idempotency key
           const result = await postPayload(processedRow.payload, 0, processedRow.idempotencyKey);
           
           if (result.success) {
-            // Mark as successfully sent
-            markRowProcessed(
-              fileId,
-              processedRow.rowIndex,
-              processedRow.payloadHash,
-              'sent'
-            );
+            // Update status to sent
+            updateRowProcessingStatus(fileId, processedRow.rowIndex, 'sent');
             stats.successfulRows++;
             
             logger.debug('Grouped payload sent successfully:', {
@@ -279,14 +285,8 @@ export function createPayloadSender(fileId: number, stats: ProcessingStats): Wri
             });
             
           } else {
-            // Mark as failed
-            markRowProcessed(
-              fileId,
-              processedRow.rowIndex,
-              processedRow.payloadHash,
-              'failed',
-              result.error
-            );
+            // Update status to failed
+            updateRowProcessingStatus(fileId, processedRow.rowIndex, 'failed', result.error);
             stats.failedRows++;
             
             logger.warn('Grouped payload send failed:', {
@@ -298,18 +298,12 @@ export function createPayloadSender(fileId: number, stats: ProcessingStats): Wri
           }
           
         } catch (error) {
-          // Mark as failed with exception
+          // Update status to failed with exception
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          markRowProcessed(
-            fileId,
-            processedRow.rowIndex,
-            processedRow.payloadHash,
-            'failed',
-            errorMessage
-          );
+          updateRowProcessingStatus(fileId, processedRow.rowIndex, 'failed', errorMessage);
           stats.failedRows++;
           
-          logger.error('Exception while sending payload:', {
+          logger.error('Exception while processing row:', {
             fileId,
             rowIndex: processedRow.rowIndex,
             error: errorMessage
