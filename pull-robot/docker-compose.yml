@@ -6,16 +6,16 @@ services:
     container_name: pull-robot
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3000:3000"                 # maps PORT from container to host
     volumes:
-      # Persist SQLite database and logs
-      - ./data:/app/data
+      - ./data:/app/data            # persists robot.db + sensor_map.csv
     env_file:
       - .env
     environment:
       - NODE_ENV=production
+      - PORT=3000                   # app must bind to this
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:'+(process.env.PORT||3000)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3

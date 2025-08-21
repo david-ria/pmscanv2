@@ -15,9 +15,10 @@ export async function loadSensorMapping(): Promise<Map<string, number>> {
   }
   
   try {
-    logger.info('Loading sensor mapping from:', config.sensorMap.path);
+    const sensorMapPath = process.env.SENSOR_MAP_PATH || '/app/data/sensor_map.csv';
+    logger.info('Loading sensor mapping from:', sensorMapPath);
     
-    const csvContent = await readFile(config.sensorMap.path, 'utf-8');
+    const csvContent = await readFile(sensorMapPath, 'utf-8');
     const records = parse(csvContent, {
       columns: true,
       skip_empty_lines: true,

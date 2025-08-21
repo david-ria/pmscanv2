@@ -9,7 +9,8 @@ let db: Database.Database;
 // Initialize SQLite database with schema
 export async function initializeDatabase(): Promise<void> {
   try {
-    db = new Database(config.database.path);
+    const dbPath = process.env.SQLITE_PATH || '/app/data/robot-state.db';
+    db = new Database(dbPath);
     
     // Enable WAL mode for better concurrent access
     db.pragma('journal_mode = WAL');

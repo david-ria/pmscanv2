@@ -86,11 +86,12 @@ fastify.get('/metrics', async (request, reply) => {
 // Start the health server
 export async function startHealthServer(): Promise<void> {
   try {
+    const port = Number(process.env.PORT || config.health.port);
     await fastify.listen({ 
-      port: config.health.port, 
+      port, 
       host: '0.0.0.0' // Allow external connections for Docker
     });
-    logger.info(`Health server listening on port ${config.health.port}`);
+    logger.info(`Health server listening on port ${port}`);
   } catch (error) {
     logger.error('Failed to start health server:', error);
     throw error;
