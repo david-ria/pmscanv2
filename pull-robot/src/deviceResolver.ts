@@ -67,8 +67,8 @@ export async function resolveDeviceId(
     };
   }
 
-  // Enforce allow-list if configured
-  if (config.deviceResolution.allowList && !config.deviceResolution.allowList.includes(deviceId)) {
+  // Enforce allow-list if configured (case-insensitive)
+  if (config.deviceResolution.allowList && !config.deviceResolution.allowList.map(id => id.toLowerCase()).includes(deviceId.toLowerCase())) {
     logger.warn('Device ID not in allow-list, skipping:', { 
       filename, 
       deviceId, 
@@ -87,9 +87,10 @@ export async function resolveDeviceId(
   // Success - device ID resolved and allowed
   logger.info('Device ID successfully resolved:', { filename, deviceId, source });
   return {
-    deviceId,
-    source,
-    shouldSkip: false
+    deviceId,                                   // non-null
+    source,                                     // 'filename' | 'csv_header' | 'sensor_map'
+    shouldSkip: false,
+    skipReason: null as const                   // <-- ensure explicit null
   };
 }
 
@@ -179,7 +180,7 @@ export function isDeviceAllowed(deviceId: string): boolean {
     return true; // No allow-list configured, all devices allowed
   }
   
-  return allowList.includes(deviceId);
+  return allowList.map(id => id.toLowerCase()).includes(deviceId.toLowerCase());
 }
 
 /**
