@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import * as logger from '@/utils/logger';
+import { isTestMode, logTestModeDisabled } from '@/utils/testMode';
 
 interface BackgroundRecordingOptions {
   enableWakeLock: boolean;
@@ -60,6 +61,11 @@ export function useBackgroundRecording() {
   }, [showNotification]);
 
   const initializeServiceWorker = useCallback(async () => {
+    if (isTestMode()) {
+      logTestModeDisabled('Service Worker registration');
+      return;
+    }
+    
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js');
@@ -75,6 +81,12 @@ export function useBackgroundRecording() {
   }, []);
 
   const checkBackgroundSyncSupport = useCallback(() => {
+    if (isTestMode()) {
+      logTestModeDisabled('Background Sync check');
+      setBackgroundSyncSupported(false);
+      return;
+    }
+    
     const isSupported =
       'serviceWorker' in navigator &&
       'sync' in window.ServiceWorkerRegistration.prototype;

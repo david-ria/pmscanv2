@@ -3,6 +3,8 @@
  * Handles non-essential initialization after critical rendering
  */
 
+import { isTestMode, logTestModeDisabled } from '@/utils/testMode';
+
 interface DeferredTask {
   name: string;
   priority: 'low' | 'medium' | 'high';
@@ -170,6 +172,11 @@ export const initServiceWorker = () => {
     name: 'service-worker',
     priority: 'low',
     task: async () => {
+      if (isTestMode()) {
+        logTestModeDisabled('Service Worker registration (deferred)');
+        return;
+      }
+      
       if ('serviceWorker' in navigator) {
         try {
           await navigator.serviceWorker.register('/sw.js');
