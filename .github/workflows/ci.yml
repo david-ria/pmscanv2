@@ -2,13 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, test/harness-setup]
   pull_request:
+    branches: [main]
 
 jobs:
-  build:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,35 +18,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-
-      - name: Clean node_modules and npm cache
-        run: |
-          rm -rf node_modules
-          npm cache clean --force
+          node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Check Prettier version
-        run: npx prettier --version
+      - name: Run lint
+        run: npm run lint
 
-      - name: Auto-fix formatting
-        run: npx prettier --write "src/**/*.{ts,tsx}" "scripts/**/*.{js,ts,cjs}" || true
-        
-      - name: Skip format check (auto-fixed above)
-        run: echo "Formatting auto-fixed - skipping check"
-
-      - name: Run Tests
-        run: npm test || true
-        
-      - name: Build check
-        run: npm run build || true
-
-  smoke-test:
+  typecheck:
+    name: Type Check
     runs-on: ubuntu-latest
-    needs: build
-
+    needs: lint
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -52,16 +39,62 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Browsers
+      - name: Run type check
+        run: npx tsc --noEmit
+
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: typecheck
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: unit
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Run Playwright smoke tests
-        run: npm run test:smoke
+      - name: Build application
+        run: npm run build
+
+      - name: Run E2E tests
+        run: npm run test:e2e
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
