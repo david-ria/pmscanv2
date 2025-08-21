@@ -3,15 +3,23 @@
  * while providing structured logging for production environments
  */
 
+// Check if we're in production mode
+const isProduction = import.meta.env.PROD;
+const isDevelopment = import.meta.env.DEV;
+
 // Simple logger interface that mirrors console methods
 export const debug = (message: string, ...args: any[]) => {
-  if (import.meta.env.DEV) {
+  // Suppress debug logs in production
+  if (!isProduction && isDevelopment) {
     console.debug(`[DEBUG] ${message}`, ...args);
   }
 };
 
 export const info = (message: string, ...args: any[]) => {
-  console.info(`[INFO] ${message}`, ...args);
+  // Suppress info logs in production
+  if (!isProduction && isDevelopment) {
+    console.info(`[INFO] ${message}`, ...args);
+  }
 };
 
 export const warn = (message: string, ...args: any[]) => {
@@ -22,7 +30,7 @@ export const error = (message: string, error?: Error, ...args: any[]) => {
   console.error(`[ERROR] ${message}`, error, ...args);
   
   // In production, you could send to monitoring service here
-  if (!import.meta.env.DEV && typeof window !== 'undefined') {
+  if (isProduction && typeof window !== 'undefined') {
     // Send to monitoring service
     try {
       fetch('/api/logs', {
@@ -53,7 +61,7 @@ export function rateLimitedDebug(
   intervalMs: number,
   ...args: unknown[]
 ) {
-  if (!import.meta.env.DEV) return;
+  if (isProduction) return; // Suppress in production
   const now = Date.now();
   const last = lastLogTimes[key] ?? 0;
   if (now - last >= intervalMs) {
@@ -62,4 +70,18 @@ export function rateLimitedDebug(
   }
 }
 
-export default { debug, info, warn, error, rateLimitedDebug };
+// Utility to check current log level
+export const getLogLevel = () => {
+  if (isProduction) return 'warn'; // Only warn/error in production
+  return 'debug'; // All levels in development
+};
+
+// Utility to check if a log level is enabled
+export const isLogLevelEnabled = (level: 'debug' | 'info' | 'warn' | 'error') => {
+  if (isProduction) {
+    return level === 'warn' || level === 'error';
+  }
+  return true; // All levels enabled in development
+};
+
+export default { debug, info, warn, error, rateLimitedDebug, getLogLevel, isLogLevelEnabled };
