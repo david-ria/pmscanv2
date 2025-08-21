@@ -93,6 +93,9 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Generate health manifest
+        run: node scripts/gen-health.mjs
+
       - name: Run E2E tests
         run: npm run test:e2e
 
@@ -125,8 +128,8 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Install Lighthouse CI
-        run: npm install -g @lhci/cli@0.12.x
+      - name: Generate health manifest  
+        run: node scripts/gen-health.mjs
 
       - name: Run Lighthouse CI
         run: lhci autorun
