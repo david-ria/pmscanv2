@@ -150,11 +150,22 @@ async function makeAPIRequest(
       headers['Idempotency-Key'] = idempotencyKey;
     }
     
-    const response = await fetch(config.api.url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    });
+    // Create AbortController for per-attempt timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    let response: Response;
+    try {
+      response = await fetch(config.api.url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+    } finally {
+      clearTimeout(timeoutId);
+    }
     
     const requestTime = Date.now() - startTime;
     requestTimes.push(requestTime);
