@@ -44,6 +44,10 @@ export const ConfigSchema = z.object({
     include: z.array(z.string()),
     units: z.record(z.string()),
   }),
+  deviceResolution: z.object({
+    unknownBehavior: z.enum(['skip', 'dlq']),
+    allowList: z.array(z.string()).nullable(),
+  }),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

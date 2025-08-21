@@ -55,6 +55,13 @@ const EnvSchema = z.object({
     'UNITS_JSON must be valid JSON object'
   ),
   
+  // Device ID Resolution & Allow-list
+  UNKNOWN_DEVICE_BEHAVIOR: z.enum(['skip', 'dlq']).default('skip'),
+  ALLOW_DEVICE_IDS: z.string().optional().refine(
+    ids => !ids || ids.split(',').every(id => id.trim().length > 0),
+    'ALLOW_DEVICE_IDS must be comma-separated device IDs'
+  ),
+
   // Optional Configuration
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   RETRY_DELAY_MS: z.coerce.number().default(1000).refine(ms => ms >= 100, 'RETRY_DELAY_MS must be at least 100ms'),
@@ -104,9 +111,10 @@ function loadConfig(): Config {
     
     console.log('✅ Environment validation passed');
     
-    // Parse units JSON
+    // Parse units JSON and allow list
     const units = JSON.parse(env.UNITS_JSON);
     const includeMetrics = env.INCLUDE_METRICS.split(',').map(m => m.trim());
+    const allowDeviceIds = env.ALLOW_DEVICE_IDS ? env.ALLOW_DEVICE_IDS.split(',').map(id => id.trim()) : null;
     
     // Transform to config structure
     const config: Config = {
@@ -152,6 +160,10 @@ function loadConfig(): Config {
       metrics: {
         include: includeMetrics,
         units: units,
+      },
+      deviceResolution: {
+        unknownBehavior: env.UNKNOWN_DEVICE_BEHAVIOR,
+        allowList: allowDeviceIds,
       },
     };
     

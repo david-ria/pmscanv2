@@ -5,8 +5,7 @@ import {
   listCSVFiles, 
   downloadCSVBlob,
   blobToNodeStream,
-  computeFileFingerprint,
-  extractDeviceIdFromFilename
+  computeFileFingerprint
 } from './supabase.js';
 import { 
   isFileProcessed, 
@@ -19,6 +18,7 @@ import {
 import { loadSensorMapping, hasDeviceMapping } from './mapper.js';
 import { processCSVStreamWithIdempotency } from './streamingProcessor.js';
 import { postPayload } from './poster.js';
+import { resolveDeviceId, logAllowListSkip } from './deviceResolver.js';
 
 const logger = createLogger('poller');
 
@@ -110,21 +110,31 @@ export async function pollAndProcess(): Promise<void> {
         const peekChunk = blobResult.blob.slice(0, 2048);
         const peekText = await peekChunk.text();
         
-        // Extract device ID with CSV content fallback
-        let deviceId = await extractDeviceIdFromFilename(file.fullPath);
-        if (!deviceId) {
-          deviceId = await extractDeviceIdFromFilename(file.fullPath, peekText);
-        }
+        // Resolve device ID using (a)→(d) priority order
+        const resolution = await resolveDeviceId(file.fullPath, peekText);
         
-        if (!deviceId) {
-          logger.warn('❌ Cannot extract device ID from filename or CSV content:', file.fullPath);
+        if (resolution.shouldSkip) {
+          if (resolution.skipReason === 'not_in_allow_list' && resolution.deviceId) {
+            logAllowListSkip(file.fullPath, resolution.deviceId);
+          } else if (resolution.skipReason === 'unknown_device') {
+            logger.warn('❌ SKIPPING: Unknown device (no resolution possible):', { 
+              file: file.fullPath, 
+              behavior: config.deviceResolution.unknownBehavior 
+            });
+          }
           skipped++;
           continue;
         }
         
-        // Check sensor mapping
+        const deviceId = resolution.deviceId!; // Safe since shouldSkip is false
+        
+        // Check sensor mapping (required for processing)
         if (!hasDeviceMapping(deviceId)) {
-          logger.warn('❌ No sensor mapping for device:', { file: file.fullPath, deviceId });
+          logger.warn('❌ No sensor mapping for resolved device:', { 
+            file: file.fullPath, 
+            deviceId, 
+            source: resolution.source 
+          });
           skipped++;
           continue;
         }
