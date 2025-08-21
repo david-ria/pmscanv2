@@ -204,10 +204,12 @@ export function reserveRowForProcessing(fileId: number, rowIndex: number, payloa
     const stmt = db.prepare(`
       INSERT INTO processed_rows (file_id, row_index, payload_hash, status, sent_at)
       VALUES (?, ?, ?, 'processing', CURRENT_TIMESTAMP)
+      ON CONFLICT(file_id, row_index) DO NOTHING
     `);
     const result = stmt.run(fileId, rowIndex, payloadHash);
     
     // If affected rows = 1, we successfully reserved the row
+    // If affected rows = 0, another process already claimed it
     const reserved = result.changes === 1;
     
     logger.debug('Row reservation attempt:', { 
@@ -219,12 +221,6 @@ export function reserveRowForProcessing(fileId: number, rowIndex: number, payloa
     
     return reserved;
   } catch (error) {
-    // UNIQUE constraint violation means another process already reserved this row
-    if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
-      logger.debug('Row already reserved by another process:', { fileId, rowIndex });
-      return false;
-    }
-    
     logger.error('Error reserving row for processing:', error);
     return false;
   }
