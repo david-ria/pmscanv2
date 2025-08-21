@@ -160,6 +160,40 @@ queue_size ${rateLimitingStats.queueSize}
   }
 });
 
+// Configuration endpoint
+fastify.get('/config', async (request, reply) => {
+  try {
+    const configInfo = {
+      ENABLED: true, // Always true if server is running
+      ALLOW_DEVICE_IDS: config.deviceResolution.allowList,
+      UNKNOWN_DEVICE_BEHAVIOR: config.deviceResolution.unknownBehavior,
+      UNKNOWN_MAPPING_BEHAVIOR: config.deviceResolution.unknownMappingBehavior,
+      DASHBOARD_ENDPOINT: config.api.url,
+      DASHBOARD_BEARER: '***masked***',
+      INCLUDE_METRICS: config.metrics.include,
+      UNITS_JSON: config.metrics.units,
+      SUPABASE_BUCKET: config.storage.bucket,
+      SUPABASE_PREFIX: config.storage.pathPrefix,
+      POLL_INTERVAL_MS: config.polling.intervalMs,
+      RATE_MAX_RPS: config.rateLimiting.maxRequestsPerSecond,
+    };
+    
+    reply
+      .status(200)
+      .header('Content-Type', 'application/json')
+      .send(configInfo);
+      
+  } catch (error) {
+    logger.error('Config fetch failed:', error);
+    reply
+      .status(500)
+      .header('Content-Type', 'application/json')
+      .send({
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+  }
+});
+
 // Start the health server
 export async function startHealthServer(): Promise<void> {
   try {
