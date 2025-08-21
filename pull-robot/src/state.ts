@@ -9,7 +9,7 @@ let db: Database.Database;
 // Initialize SQLite database with schema
 export async function initializeDatabase(): Promise<void> {
   try {
-    const dbPath = process.env.SQLITE_PATH || '/app/data/robot-state.db';
+    const dbPath = process.env.DB_PATH || '/app/data/robot-state.db';
     db = new Database(dbPath);
     
     // Enable WAL mode for better concurrent access

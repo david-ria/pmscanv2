@@ -7,7 +7,7 @@ const EnvSchema = z.object({
   SUPABASE_URL: z.string().url('SUPABASE_URL must be a valid URL'),
   SUPABASE_KEY: z.string().min(1, 'SUPABASE_KEY is required and cannot be empty'),
   SUPABASE_BUCKET: z.string().min(1, 'SUPABASE_BUCKET is required and cannot be empty'),
-  SUPABASE_PREFIX: z.string().default('exports/'),
+  SUPABASE_PREFIX: z.string().default('missions/'),
   
   // Dashboard API (MANDATORY)
   DASHBOARD_ENDPOINT: z.string().url('DASHBOARD_ENDPOINT must be a valid URL'),
@@ -29,8 +29,8 @@ const EnvSchema = z.object({
   // Retry Configuration
   MAX_ATTEMPTS: z.coerce.number().default(6).refine(attempts => attempts >= 1 && attempts <= 10, 'MAX_ATTEMPTS must be between 1 and 10'),
   
-  // Batch Processing
-  BATCH_SIZE: z.coerce.number().default(200).refine(size => size > 0 && size <= 1000, 'BATCH_SIZE must be between 1 and 1000'),
+  // Batch Processing (rows per batch, not files)
+  BATCH_SIZE: z.coerce.number().default(200).refine(size => size > 0 && size <= 1000, 'BATCH_SIZE must be between 1 and 1000 rows per batch'),
   
   // Metrics Configuration
   INCLUDE_METRICS: z.string().default('pm1,pm25,pm10').refine(
