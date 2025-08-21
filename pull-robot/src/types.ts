@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Configuration schemas
+// Enhanced config schema with new metrics section
 export const ConfigSchema = z.object({
   supabase: z.object({
     url: z.string().url(),
@@ -38,6 +38,10 @@ export const ConfigSchema = z.object({
   }),
   sensorMap: z.object({
     path: z.string().default('./data/sensor_map.csv'),
+  }),
+  metrics: z.object({
+    include: z.array(z.string()),
+    units: z.record(z.string()),
   }),
 });
 
