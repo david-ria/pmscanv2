@@ -1,33 +1,41 @@
-# Use Node.js 20 Alpine for smaller image
-FROM node:20-alpine
-
-# Install dependencies for better-sqlite3
-RUN apk add --no-cache python3 make g++
-
-# Set working directory
+# ---------- Build stage ----------
+FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copy package files
+# Native deps for better-sqlite3 during build
+RUN apk add --no-cache python3 make g++
+
+# Install all deps (incl. dev) to run TypeScript build
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy source code
+# Copy sources and build
 COPY . .
-
-# Build TypeScript
 RUN npm run build
 
-# Create data directory for SQLite and CSV files
+# ---------- Runtime stage ----------
+FROM node:20-alpine AS runtime
+WORKDIR /app
+
+# Only what we need at runtime
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copy compiled JS and necessary runtime assets
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/data ./data
+COPY --from=build /app/README.md ./README.md
+
+# Ensure data dir exists (for SQLite + sensor_map.csv)
 RUN mkdir -p /app/data
 
-# Expose health check port
+# Health port (make sure app respects PORT env)
+ENV PORT=3000
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+# Built‑in Dockerfile healthcheck (uses Node's global fetch)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://localhost:'+(process.env.PORT||3000)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-# Run the application
-CMD ["npm", "start"]
+# Start compiled app
+CMD ["node","dist/index.js"]
