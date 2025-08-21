@@ -59,6 +59,7 @@ const EnvSchema = z.object({
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   RETRY_DELAY_MS: z.coerce.number().default(1000).refine(ms => ms >= 100, 'RETRY_DELAY_MS must be at least 100ms'),
   BACKOFF_MULTIPLIER: z.coerce.number().default(2).refine(mult => mult >= 1, 'BACKOFF_MULTIPLIER must be at least 1'),
+  REQUEST_TIMEOUT_MS: z.coerce.number().default(30000).refine(ms => ms >= 1000 && ms <= 120000, 'REQUEST_TIMEOUT_MS must be between 1000ms and 120000ms'),
 });
 
 // Enhanced error formatting for missing/invalid environment variables
@@ -133,6 +134,7 @@ function loadConfig(): Config {
         maxRetries: env.MAX_ATTEMPTS - 1, // MAX_ATTEMPTS includes the initial attempt
         delayMs: env.RETRY_DELAY_MS,
         backoffMultiplier: env.BACKOFF_MULTIPLIER,
+        timeoutMs: env.REQUEST_TIMEOUT_MS,
       },
       logging: {
         level: env.LOG_LEVEL,

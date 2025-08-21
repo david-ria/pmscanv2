@@ -26,6 +26,7 @@ export const ConfigSchema = z.object({
     maxRetries: z.number().default(3),
     delayMs: z.number().default(1000),
     backoffMultiplier: z.number().default(2),
+    timeoutMs: z.number().default(30000),
   }),
   logging: z.object({
     level: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
@@ -132,7 +133,9 @@ export interface DeadLetterEntry {
   id: number;
   file_id: number;
   row_index: number;
+  idempotency_key: string;
   payload: string; // JSON string
+  http_status: number | null;
   error_message: string;
   attempt_count: number;
   created_at: string;

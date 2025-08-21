@@ -82,7 +82,7 @@ export async function postPayload(
         // Retryable error but retries exhausted
         retryableFailures++;
         updateRowProcessingStatus(fileId, rowIndex, 'failed', `Max retries exhausted: ${result.error}`);
-        pushDLQ(idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
+        addToDeadLetterQueue(fileId, rowIndex, idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
                 JSON.stringify(payload), result.status, `Max retries exhausted: ${result.error}`);
         logger.warn('Retries exhausted, added to DLQ:', { fileId, rowIndex, status: result.status });
         
@@ -90,7 +90,7 @@ export async function postPayload(
         // Non-retryable error - mark failed and add to DLQ immediately
         nonRetryableFailures++;
         updateRowProcessingStatus(fileId, rowIndex, 'failed', result.error);
-        pushDLQ(idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
+        addToDeadLetterQueue(fileId, rowIndex, idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
                 JSON.stringify(payload), result.status, result.error);
         logger.warn('Non-retryable error, added to DLQ:', { fileId, rowIndex, status: result.status });
       }
@@ -121,7 +121,7 @@ export async function postPayload(
     
     // Mark as failed and add to DLQ
     updateRowProcessingStatus(fileId, rowIndex, 'failed', errorMsg);
-    pushDLQ(idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
+    addToDeadLetterQueue(fileId, rowIndex, idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
             JSON.stringify(payload), undefined, `Max retries exhausted: ${errorMsg}`);
     
     return {
@@ -152,7 +152,7 @@ async function makeAPIRequest(
     
     // Create AbortController for per-attempt timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), config.retry.timeoutMs);
     
     let response: Response;
     try {
@@ -230,7 +230,7 @@ function isRetryableError(status?: number): boolean {
   return status === 429 || (status >= 500 && status < 600);
 }
 
-// Dead Letter Queue helper
+// Dead Letter Queue helper (legacy - use addToDeadLetterQueue directly)
 export function pushDLQ(
   idempotencyKey: string, 
   payload: string, 
@@ -238,16 +238,13 @@ export function pushDLQ(
   errorMessage?: string
 ): void {
   try {
-    // Extract fileId and rowIndex from idempotency key format: device_id|mission_id|timestamp
-    // Note: This is a simplified approach - in production you'd want better tracking
-    logger.warn('Adding to DLQ:', { 
+    logger.warn('Legacy pushDLQ called - use addToDeadLetterQueue directly:', { 
       idempotencyKey, 
       httpStatus, 
       errorMessage: errorMessage?.substring(0, 100) 
     });
     
-    // For now, log the DLQ entry - in production you'd store it properly
-    // This would need enhancement to properly track fileId/rowIndex relationships
+    // For now, just log - this is a legacy function
     console.error(`DLQ Entry: ${idempotencyKey} - Status: ${httpStatus} - Error: ${errorMessage}`);
   } catch (error) {
     logger.error('Error pushing to DLQ:', error);

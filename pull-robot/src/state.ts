@@ -51,7 +51,9 @@ export async function initializeDatabase(): Promise<void> {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         file_id INTEGER NOT NULL,
         row_index INTEGER NOT NULL,
+        idempotency_key TEXT NOT NULL,
         payload TEXT NOT NULL,
+        http_status INTEGER,
         error_message TEXT NOT NULL,
         attempt_count INTEGER NOT NULL DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -286,15 +288,15 @@ export function recordProcessedRow(fileId: number, rowIndex: number, timestamp: 
 }
 
 // Add to dead letter queue
-export function addToDeadLetterQueue(fileId: number, rowIndex: number, payload: string, errorMessage: string): void {
+export function addToDeadLetterQueue(fileId: number, rowIndex: number, idempotencyKey: string, payload: string, httpStatus?: number, errorMessage?: string): void {
   try {
     const stmt = db.prepare(`
-      INSERT INTO dead_letter_queue (file_id, row_index, payload, error_message)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO dead_letter_queue (file_id, row_index, idempotency_key, payload, http_status, error_message)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(fileId, rowIndex, payload, errorMessage);
+    stmt.run(fileId, rowIndex, idempotencyKey, payload, httpStatus || null, errorMessage || 'Unknown error');
     
-    logger.warn('Added to dead letter queue:', { fileId, rowIndex, errorMessage });
+    logger.warn('Added to dead letter queue:', { fileId, rowIndex, idempotencyKey, httpStatus, errorMessage });
   } catch (error) {
     logger.error('Error adding to dead letter queue:', error);
     throw error;

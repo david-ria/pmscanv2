@@ -86,6 +86,80 @@ fastify.get('/metrics', async (request, reply) => {
   }
 });
 
+// Prometheus text/plain metrics endpoint
+fastify.get('/metrics.txt', async (request, reply) => {
+  try {
+    const processingState = await getProcessingState();
+    const posterMetrics = getPosterMetrics();
+    const rateLimitingStats = getRateLimitingStats();
+    
+    const prometheusText = `# HELP files_processed_total Total number of files processed
+# TYPE files_processed_total counter
+files_processed_total ${processingState.filesProcessed}
+
+# HELP rows_processed_total Total number of rows processed
+# TYPE rows_processed_total counter
+rows_processed_total ${processingState.rowsProcessed}
+
+# HELP rows_sent_total Total number of rows successfully sent
+# TYPE rows_sent_total counter
+rows_sent_total ${processingState.rowsSent}
+
+# HELP rows_failed_total Total number of rows failed
+# TYPE rows_failed_total counter
+rows_failed_total ${processingState.rowsFailed}
+
+# HELP dead_letter_count Current number of entries in dead letter queue
+# TYPE dead_letter_count gauge
+dead_letter_count ${processingState.deadLetterCount}
+
+# HELP poster_requests_total Total HTTP requests made by poster
+# TYPE poster_requests_total counter
+poster_requests_total ${posterMetrics.poster_requests_total}
+
+# HELP poster_success_total Total successful HTTP requests
+# TYPE poster_success_total counter
+poster_success_total ${posterMetrics.poster_success_total}
+
+# HELP poster_retryable_fail_total Total retryable failures (429, 5xx)
+# TYPE poster_retryable_fail_total counter
+poster_retryable_fail_total ${posterMetrics.poster_retryable_fail_total}
+
+# HELP poster_nonretryable_fail_total Total non-retryable failures (4xx except 429)
+# TYPE poster_nonretryable_fail_total counter
+poster_nonretryable_fail_total ${posterMetrics.poster_nonretryable_fail_total}
+
+# HELP poster_retries_total Total number of retries attempted
+# TYPE poster_retries_total counter
+poster_retries_total ${posterMetrics.poster_retries_total}
+
+# HELP rps_configured Configured requests per second limit
+# TYPE rps_configured gauge
+rps_configured ${posterMetrics.rps_configured}
+
+# HELP current_rps Current requests per second
+# TYPE current_rps gauge
+current_rps ${rateLimitingStats.currentRPS}
+
+# HELP queue_size Current rate limiter queue size
+# TYPE queue_size gauge
+queue_size ${rateLimitingStats.queueSize}
+`;
+    
+    reply
+      .status(200)
+      .header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
+      .send(prometheusText);
+      
+  } catch (error) {
+    logger.error('Prometheus metrics fetch failed:', error);
+    reply
+      .status(500)
+      .header('Content-Type', 'text/plain')
+      .send(`# ERROR: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
+  }
+});
+
 // Start the health server
 export async function startHealthServer(): Promise<void> {
   try {
