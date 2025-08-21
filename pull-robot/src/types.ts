@@ -65,7 +65,37 @@ export const CSVRowSchema = z.object({
 
 export type CSVRow = z.infer<typeof CSVRowSchema>;
 
-// API payload structure - grouped metrics format
+// API payload structure - ATM format
+export const ATMPayloadSchema = z.object({
+  idSensor: z.string(),
+  time: z.number(), // Timestamp in milliseconds
+  data: z.object({
+    pm1: z.object({
+      value: z.number(),
+      unit: z.literal("ugm3")
+    }),
+    pm25: z.object({
+      value: z.number(),
+      unit: z.literal("ugm3")
+    }),
+    pm10: z.object({
+      value: z.number(),
+      unit: z.literal("ugm3")
+    }),
+    latitude: z.object({
+      value: z.number(),
+      unit: z.literal("degrees")
+    }).optional(),
+    longitude: z.object({
+      value: z.number(),
+      unit: z.literal("degrees")
+    }).optional()
+  })
+});
+
+export type ATMPayload = z.infer<typeof ATMPayloadSchema>;
+
+// Legacy API payload structure for backward compatibility
 export const APIPayloadSchema = z.object({
   device_id: z.string(),
   mission_id: z.string(),

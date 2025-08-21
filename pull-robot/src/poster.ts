@@ -1,7 +1,7 @@
 import Bottleneck from 'bottleneck';
 import { config } from './config.js';
 import { createLogger } from './logger.js';
-import { APIPayloadSchema, type APIPayload } from './types.js';
+import { ATMPayloadSchema, type ATMPayload, type APIPayload } from './types.js';
 import { updateRowProcessingStatus, addToDeadLetterQueue } from './state.js';
 
 const logger = createLogger('poster');
@@ -32,7 +32,7 @@ interface PosterMetrics {
   rps_configured: number;
 }
 
-// Enhanced post with state management integration
+// Enhanced post with state management integration for ATM API
 export async function postPayload(
   payload: APIPayload, 
   fileId: number,
@@ -41,13 +41,16 @@ export async function postPayload(
   idempotencyKey?: string
 ): Promise<{ success: boolean; status?: number; error?: string }> {
   try {
-    // Validate payload structure
-    const validatedPayload = APIPayloadSchema.parse(payload);
+    // Transform legacy payload to ATM format
+    const atmPayload = transformToATMFormat(payload);
     
-    logger.debug('Posting grouped payload:', { 
-      deviceId: validatedPayload.device_id,
-      missionId: validatedPayload.mission_id, 
-      timestamp: validatedPayload.ts, 
+    // Validate ATM payload structure
+    const validatedPayload = ATMPayloadSchema.parse(atmPayload);
+    
+    logger.debug('Posting ATM payload:', { 
+      idSensor: validatedPayload.idSensor,
+      time: validatedPayload.time, 
+      dataKeys: Object.keys(validatedPayload.data),
       idempotencyKey,
       attempt: retryCount + 1 
     });
@@ -82,16 +85,16 @@ export async function postPayload(
         // Retryable error but retries exhausted
         retryableFailures++;
         updateRowProcessingStatus(fileId, rowIndex, 'failed', `Max retries exhausted: ${result.error}`);
-        addToDeadLetterQueue(fileId, rowIndex, idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
-                JSON.stringify(payload), result.status, `Max retries exhausted: ${result.error}`);
+        addToDeadLetterQueue(fileId, rowIndex, idempotencyKey || `${atmPayload.idSensor}|${atmPayload.time}`, 
+                JSON.stringify(atmPayload), result.status, `Max retries exhausted: ${result.error}`);
         logger.warn('Retries exhausted, added to DLQ:', { fileId, rowIndex, status: result.status });
         
       } else {
         // Non-retryable error - mark failed and add to DLQ immediately
         nonRetryableFailures++;
         updateRowProcessingStatus(fileId, rowIndex, 'failed', result.error);
-        addToDeadLetterQueue(fileId, rowIndex, idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
-                JSON.stringify(payload), result.status, result.error);
+        addToDeadLetterQueue(fileId, rowIndex, idempotencyKey || `${atmPayload.idSensor}|${atmPayload.time}`, 
+                JSON.stringify(atmPayload), result.status, result.error);
         logger.warn('Non-retryable error, added to DLQ:', { fileId, rowIndex, status: result.status });
       }
     }
@@ -121,8 +124,9 @@ export async function postPayload(
     
     // Mark as failed and add to DLQ
     updateRowProcessingStatus(fileId, rowIndex, 'failed', errorMsg);
-    addToDeadLetterQueue(fileId, rowIndex, idempotencyKey || `${payload.device_id}|${payload.mission_id}|${payload.ts}`, 
-            JSON.stringify(payload), undefined, `Max retries exhausted: ${errorMsg}`);
+    const atmPayload = transformToATMFormat(payload);
+    addToDeadLetterQueue(fileId, rowIndex, idempotencyKey || `${atmPayload.idSensor}|${atmPayload.time}`, 
+            JSON.stringify(atmPayload), undefined, `Max retries exhausted: ${errorMsg}`);
     
     return {
       success: false,
@@ -131,9 +135,44 @@ export async function postPayload(
   }
 }
 
+// Transform legacy APIPayload to ATM format
+function transformToATMFormat(payload: APIPayload): ATMPayload {
+  return {
+    idSensor: "PMScan3376DF", // Fixed sensor ID as requested
+    time: new Date(payload.ts).getTime(), // Convert ISO to milliseconds
+    data: {
+      pm1: { 
+        value: payload.metrics.PM1 || 0, 
+        unit: "ugm3" 
+      },
+      pm25: { 
+        value: payload.metrics["PM2.5"] || 0, 
+        unit: "ugm3" 
+      },
+      pm10: { 
+        value: payload.metrics.PM10 || 0, 
+        unit: "ugm3" 
+      },
+      // Include coordinates if available
+      ...(payload.metrics.latitude && {
+        latitude: { 
+          value: payload.metrics.latitude, 
+          unit: "degrees" 
+        }
+      }),
+      ...(payload.metrics.longitude && {
+        longitude: { 
+          value: payload.metrics.longitude, 
+          unit: "degrees" 
+        }
+      })
+    }
+  };
+}
+
 // Make the actual HTTP request with idempotency key
 async function makeAPIRequest(
-  payload: APIPayload, 
+  payload: ATMPayload, 
   idempotencyKey?: string
 ): Promise<{ success: boolean; status?: number; error?: string }> {
   const startTime = Date.now();
@@ -141,7 +180,7 @@ async function makeAPIRequest(
   try {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.api.key}`,
+      'Authorization': 'Bearer xjb0qzdnefgurhkdps4qivp8x6lq2h66',
       'User-Agent': 'pull-robot/1.0.0',
     };
     
@@ -155,8 +194,9 @@ async function makeAPIRequest(
     const timeoutId = setTimeout(() => controller.abort(), config.retry.timeoutMs);
     
     let response: Response;
+    let responseBody: string = '';
     try {
-      response = await fetch(config.api.url, {
+      response = await fetch('https://api.atm.ovh/api/v3.0/measurements', {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
@@ -175,12 +215,21 @@ async function makeAPIRequest(
       requestTimes.shift();
     }
     
+    // Always read response body for logging
+    try {
+      responseBody = await response.text();
+    } catch (e) {
+      responseBody = 'Unable to read response body';
+    }
+
     if (response.ok) {
-      logger.debug('API request successful:', { 
+      // ⚠️ CRITICAL LOGGING: Log success details for debugging
+      logger.info('✅ ATM API SUCCESS:', { 
         status: response.status, 
-        time: requestTime,
-        deviceId: payload.device_id,
-        idempotencyKey 
+        responseBody,
+        idempotencyKey,
+        idSensor: payload.idSensor,
+        time: requestTime + 'ms'
       });
       
       return {
@@ -188,21 +237,21 @@ async function makeAPIRequest(
         status: response.status,
       };
     } else {
-      const errorText = await response.text().catch(() => 'Unable to read response');
-      
-      logger.warn('API request failed:', { 
+      // ⚠️ CRITICAL LOGGING: Log failure details for debugging
+      logger.error('❌ ATM API FAILURE:', { 
         status: response.status,
         statusText: response.statusText,
-        error: errorText,
-        deviceId: payload.device_id,
+        responseBody,
         idempotencyKey,
+        idSensor: payload.idSensor,
+        requestTime: requestTime + 'ms',
         isRetryable: isRetryableError(response.status)
       });
       
       return {
         success: false,
         status: response.status,
-        error: `HTTP ${response.status}: ${response.statusText} - ${errorText}`,
+        error: `HTTP ${response.status}: ${response.statusText} - ${responseBody}`,
       };
     }
     
@@ -210,10 +259,11 @@ async function makeAPIRequest(
     const requestTime = Date.now() - startTime;
     requestTimes.push(requestTime);
     
-    logger.error('API request failed with exception:', { 
+    // ⚠️ CRITICAL LOGGING: Log network/exception errors
+    logger.error('🔥 ATM API EXCEPTION:', { 
       error: error instanceof Error ? error.message : 'Unknown error',
-      time: requestTime,
-      deviceId: payload.device_id,
+      requestTime: requestTime + 'ms',
+      idSensor: payload.idSensor,
       idempotencyKey 
     });
     
