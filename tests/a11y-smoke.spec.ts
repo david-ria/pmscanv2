@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import axe, { injectAxe, getViolations } from '@axe-core/playwright';
+import { injectAxe, getViolations } from '@axe-core/playwright';
 import { setupNetworkIsolation } from './network-isolation';
 
 test.describe('Accessibility Smoke Tests', () => {
@@ -19,13 +19,6 @@ test.describe('Accessibility Smoke Tests', () => {
     
     // Wait for page to load
     await page.waitForSelector('h1', { timeout: 10000 });
-    
-    // Check accessibility with axe-core
-    await axe(page, null, {
-      detailedReport: true,
-      detailedReportOptions: { html: true },
-      includedImpacts: ['critical', 'serious']
-    });
     
     // Get violations for detailed logging
     const violations = await getViolations(page, null, {
@@ -57,12 +50,6 @@ test.describe('Accessibility Smoke Tests', () => {
     await page.waitForSelector('[data-testid="dashboard"]', { timeout: 10000 });
     
     // Check accessibility
-    await axe(page, null, {
-      detailedReport: true,
-      detailedReportOptions: { html: true },
-      includedImpacts: ['critical', 'serious']
-    });
-    
     const violations = await getViolations(page, null, {
       includedImpacts: ['critical', 'serious']
     });
@@ -96,12 +83,6 @@ test.describe('Accessibility Smoke Tests', () => {
     await page.waitForSelector('h1', { timeout: 5000 });
     
     // Check accessibility
-    await axe(page, null, {
-      detailedReport: true,
-      detailedReportOptions: { html: true },
-      includedImpacts: ['critical', 'serious']
-    });
-    
     const violations = await getViolations(page, null, {
       includedImpacts: ['critical', 'serious']
     });
