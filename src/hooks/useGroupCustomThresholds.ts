@@ -35,7 +35,7 @@ export const useGroupCustomThresholds = (groupId: string) => {
 
       if (error) throw error;
       setThresholds(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
         description: 'Failed to fetch group thresholds',
@@ -62,10 +62,10 @@ export const useGroupCustomThresholds = (groupId: string) => {
       });
 
       await fetchThresholds();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create group threshold',
+        description: error instanceof Error ? error.message : 'Failed to create group threshold',
         variant: 'destructive',
       });
       throw error;
@@ -90,10 +90,10 @@ export const useGroupCustomThresholds = (groupId: string) => {
       });
 
       await fetchThresholds();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update group threshold',
+        description: error instanceof Error ? error.message : 'Failed to update group threshold',
         variant: 'destructive',
       });
       throw error;
@@ -115,7 +115,7 @@ export const useGroupCustomThresholds = (groupId: string) => {
       });
 
       await fetchThresholds();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to delete group threshold',

@@ -114,7 +114,7 @@ export const useGroups = () => {
       setGroups(groupsWithRole as Group[]);
       hasInitialized.current = true;
       retryCount.current = 0; // Reset retry count on success
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (isRetry) {
         retryCount.current++;
         // Exponential backoff for retries
@@ -126,7 +126,7 @@ export const useGroups = () => {
           variant: 'destructive',
         });
       }
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
@@ -156,10 +156,10 @@ export const useGroups = () => {
 
       await fetchGroups();
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create group',
+        description: error instanceof Error ? error.message : 'Failed to create group',
         variant: 'destructive',
       });
       throw error;
@@ -184,10 +184,10 @@ export const useGroups = () => {
       });
 
       await fetchGroups();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update group',
+        description: error instanceof Error ? error.message : 'Failed to update group',
         variant: 'destructive',
       });
       throw error;
@@ -209,10 +209,10 @@ export const useGroups = () => {
       });
 
       await fetchGroups();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete group',
+        description: error instanceof Error ? error.message : 'Failed to delete group',
         variant: 'destructive',
       });
       throw error;
@@ -238,10 +238,10 @@ export const useGroups = () => {
       });
 
       await fetchGroups();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to leave group',
+        description: error instanceof Error ? error.message : 'Failed to leave group',
         variant: 'destructive',
       });
       throw error;
@@ -314,7 +314,7 @@ export const useGroupMembers = (groupId: string) => {
       } else {
         setMembers([]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching group members:', error);
       toast({
         title: 'Error',
@@ -344,10 +344,10 @@ export const useGroupMembers = (groupId: string) => {
       });
 
       await fetchMembers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update member role',
+        description: error instanceof Error ? error.message : 'Failed to update member role',
         variant: 'destructive',
       });
       throw error;
@@ -369,10 +369,10 @@ export const useGroupMembers = (groupId: string) => {
       });
 
       await fetchMembers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to remove member',
+        description: error instanceof Error ? error.message : 'Failed to remove member',
         variant: 'destructive',
       });
       throw error;
@@ -453,7 +453,7 @@ export const useGroupInvitations = () => {
         })) || [];
 
       setInvitations(invitationsWithDetails);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
         description: 'Failed to fetch invitations',
@@ -479,10 +479,10 @@ export const useGroupInvitations = () => {
         title: 'Success',
         description: 'Invitation sent successfully',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to send invitation',
+        description: error instanceof Error ? error.message : 'Failed to send invitation',
         variant: 'destructive',
       });
       throw error;
@@ -506,10 +506,10 @@ export const useGroupInvitations = () => {
       });
 
       await fetchInvitations();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to accept invitation',
+        description: error instanceof Error ? error.message : 'Failed to accept invitation',
         variant: 'destructive',
       });
       throw error;
@@ -533,10 +533,10 @@ export const useGroupInvitations = () => {
       });
 
       await fetchInvitations();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to decline invitation',
+        description: error instanceof Error ? error.message : 'Failed to decline invitation',
         variant: 'destructive',
       });
       throw error;
