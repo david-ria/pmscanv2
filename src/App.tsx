@@ -4,7 +4,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Suspense, lazy, useEffect } from 'react';
 import { AppProviders } from '@/components/AppProviders';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
 import { preloadCriticalChunks, preloadRouteChunks } from '@/utils/dynamicImports';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -43,22 +43,22 @@ const GlobalDataCollector = lazy(() =>
 
 // Import skeleton screens
 const AppLayoutSkeleton = lazy(() => 
-  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.AppLayoutSkeleton }))
+  import('@/components/shared/AppLayoutSkeleton')
 );
 const RealTimePageSkeleton = lazy(() => 
-  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.RealTimePageSkeleton }))
+  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.default }))
 );
 const HistoryPageSkeleton = lazy(() => 
-  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.HistoryPageSkeleton }))
+  import('@/components/shared/HistoryPageSkeleton')
 );
 const AnalysisPageSkeleton = lazy(() => 
-  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.AnalysisPageSkeleton }))
+  import('@/components/shared/AnalysisPageSkeleton')
 );
 const GroupsPageSkeleton = lazy(() => 
-  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.GroupsPageSkeleton }))
+  import('@/components/shared/GroupsPageSkeleton')
 );
 const ProfilePageSkeleton = lazy(() => 
-  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.ProfilePageSkeleton }))
+  import('@/components/shared/ProfilePageSkeleton')
 );
 
 // Minimal fallback for critical loading states
