@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         const supabase = await getSupabase();
+        attachAuthRefreshGuard(supabase);
         setSupabaseClient(supabase);
 
         // Set up auth state listener
