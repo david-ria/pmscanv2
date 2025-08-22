@@ -187,3 +187,6 @@ Artifacts are saved in perf-report/ and the Playwright HTML report is in playwri
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+<!-- retrigger CI -->
+chore: trigger full CI after fixes
+
