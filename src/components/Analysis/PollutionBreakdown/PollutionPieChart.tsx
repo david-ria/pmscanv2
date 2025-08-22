@@ -31,7 +31,7 @@ export const PollutionPieChart = ({
   const { t } = useTranslation();
 
   // Custom Tooltip Component
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: BreakdownData; value: number }> }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -58,7 +58,7 @@ export const PollutionPieChart = ({
   }
 
   // Custom label function for better mobile display
-  const renderCustomLabel = (entry: any) => {
+  const renderCustomLabel = (entry: BreakdownData) => {
     // Hide labels on very small screens to avoid clutter
     if (window.innerWidth < 400) {
       return null;

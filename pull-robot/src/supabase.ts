@@ -110,7 +110,7 @@ export async function downloadCSVBlob(filename: string): Promise<{ blob: Blob; f
 export async function blobToNodeStream(blob: Blob): Promise<NodeJS.ReadableStream> {
   const { Readable } = await import('stream');
   const webStream = blob.stream();
-  return Readable.fromWeb(webStream as any);
+  return Readable.fromWeb(webStream as ReadableStream);
 }
 
 // Compute file fingerprint after download using fullPath, blob.size, and updatedAt

@@ -50,7 +50,7 @@ export function createEnhancedRowValidator(fileId: number): Transform {
   
   return new Transform({
     objectMode: true,
-    transform(chunk: any, encoding: string, callback: Function) {
+    transform(chunk: unknown, encoding: string, callback: (error?: Error | null, data?: unknown) => void) {
       try {
         rowIndex++;
         
@@ -93,7 +93,7 @@ export function createEnhancedPayloadTransformer(deviceId: string, sensorMapping
   
   return new Transform({
     objectMode: true,
-    transform(chunk: any, encoding: string, callback: Function) {
+    transform(chunk: unknown, encoding: string, callback: (error?: Error | null, data?: unknown) => void) {
       try {
         const csvRow = chunk as CSVRow & { _rowIndex: number; _fileId: number };
         
@@ -194,7 +194,7 @@ export function createPayloadSender(fileId: number, stats: ProcessingStats): Wri
   
   return new Writable({
     objectMode: true,
-    async write(chunk: ProcessedRow, encoding: string, callback: Function) {
+    async write(chunk: ProcessedRow, encoding: string, callback: (error?: Error | null) => void) {
       try {
         stats.totalRows++;
         batchBuffer.push(chunk);
@@ -212,7 +212,7 @@ export function createPayloadSender(fileId: number, stats: ProcessingStats): Wri
       }
     },
     
-    async final(callback: Function) {
+    async final(callback: (error?: Error | null) => void) {
       // Process remaining items in batch
       if (batchBuffer.length > 0) {
         await processBatch();

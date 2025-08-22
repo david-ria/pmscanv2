@@ -1,5 +1,3 @@
-/// <reference types="vitest" />
-/// <reference types="@testing-library/jest-dom" />
 
 import type { Assertion, AsymmetricMatchersContaining } from 'vitest';
 

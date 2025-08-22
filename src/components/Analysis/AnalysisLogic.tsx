@@ -200,7 +200,7 @@ export const useAnalysisLogic = (
       }
 
       const eventTypeMap = new Map<string, {
-        events: any[];
+        events: Array<{ id: string; eventType: string; timestamp: Date; location?: string }>;
         pmMeasurements: { pm1: number; pm25: number; pm10: number; timestamp: Date }[];
         surroundingPmMeasurements: { pm1: number; pm25: number; pm10: number; timestamp: Date }[];
       }>();
