@@ -46,7 +46,7 @@ const AppLayoutSkeleton = lazy(() =>
   import('@/components/shared/AppLayoutSkeleton')
 );
 const RealTimePageSkeleton = lazy(() => 
-  import('@/components/shared/SkeletonScreens').then(module => ({ default: module.default }))
+  import('@/components/shared/SkeletonScreens')
 );
 const HistoryPageSkeleton = lazy(() => 
   import('@/components/shared/HistoryPageSkeleton')
