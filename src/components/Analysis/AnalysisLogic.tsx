@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { dataStorage, MissionData } from '@/lib/dataStorage';
 import {
@@ -59,6 +59,53 @@ export const useAnalysisLogic = (
   const { toast } = useToast();
   const { getEventsByMission } = useEvents();
 
+  // Filter missions based on selected date and period
+  const filteredMissions = useMemo(() => {
+    let startDate: Date;
+    let endDate: Date;
+
+    switch (selectedPeriod) {
+      case 'day':
+        startDate = startOfDay(selectedDate);
+        endDate = endOfDay(selectedDate);
+        break;
+      case 'week':
+        startDate = startOfWeek(selectedDate, { weekStartsOn: 1 });
+        endDate = endOfWeek(selectedDate, { weekStartsOn: 1 });
+        break;
+      case 'month':
+        startDate = startOfMonth(selectedDate);
+        endDate = endOfMonth(selectedDate);
+        break;
+      case 'year':
+        startDate = startOfYear(selectedDate);
+        endDate = endOfYear(selectedDate);
+        break;
+      default:
+        return missions;
+    }
+
+    const filtered = missions.filter((mission) => {
+      const missionDate = new Date(mission.startTime);
+      const isInRange = isWithinInterval(missionDate, {
+        start: startDate,
+        end: endDate,
+      });
+
+      // Debug each mission filtering
+      logger.debug(
+        `Mission "${mission.name}": start=${mission.startTime}, parsed=${missionDate.toISOString()}, inRange=${isInRange}, duration=${mission.durationMinutes}`
+      );
+
+      return isInRange;
+    });
+
+    logger.debug(
+      `Filtered ${filtered.length} out of ${missions.length} missions for period ${selectedPeriod}`
+    );
+    return filtered;
+  }, [missions, selectedDate, selectedPeriod]);
+
   const loadMissions = useCallback(async () => {
     try {
       const missionData = await dataStorage.getAllMissions();
@@ -75,8 +122,7 @@ export const useAnalysisLogic = (
 
   const loadActivityData = useCallback(() => {
     try {
-      const filtered = filteredMissions();
-      if (filtered.length === 0) {
+      if (filteredMissions.length === 0) {
         setActivityData([]);
         return;
       }
@@ -93,7 +139,7 @@ export const useAnalysisLogic = (
         }
       >();
 
-      filtered.forEach((mission) => {
+      filteredMissions.forEach((mission) => {
         const activity =
           mission.activityContext || t('analysis.unknownActivity');
         const respiratoryRate = getRespiratoryRate(
@@ -144,12 +190,11 @@ export const useAnalysisLogic = (
       console.error('Error loading activity data:', error);
       setActivityData([]);
     }
-  }, [missions, selectedDate, selectedPeriod, t]);
+  }, [filteredMissions, t]);
 
   const loadEventAnalysis = useCallback(async () => {
     try {
-      const filtered = filteredMissions();
-      if (filtered.length === 0) {
+      if (filteredMissions.length === 0) {
         setEventAnalysisData([]);
         return;
       }
@@ -161,7 +206,7 @@ export const useAnalysisLogic = (
       }>();
 
       // Load events for each mission and analyze PM levels
-      for (const mission of filtered) {
+      for (const mission of filteredMissions) {
         try {
           const events = await getEventsByMission(mission.id);
           
@@ -259,62 +304,13 @@ export const useAnalysisLogic = (
       console.error('Error loading event analysis:', error);
       setEventAnalysisData([]);
     }
-  }, [missions, selectedDate, selectedPeriod, getEventsByMission]);
-
-  // Filter missions based on selected date and period
-  const filteredMissions = () => {
-    let startDate: Date;
-    let endDate: Date;
-
-    switch (selectedPeriod) {
-      case 'day':
-        startDate = startOfDay(selectedDate);
-        endDate = endOfDay(selectedDate);
-        break;
-      case 'week':
-        startDate = startOfWeek(selectedDate, { weekStartsOn: 1 });
-        endDate = endOfWeek(selectedDate, { weekStartsOn: 1 });
-        break;
-      case 'month':
-        startDate = startOfMonth(selectedDate);
-        endDate = endOfMonth(selectedDate);
-        break;
-      case 'year':
-        startDate = startOfYear(selectedDate);
-        endDate = endOfYear(selectedDate);
-        break;
-      default:
-        return missions;
-    }
-
-    const filtered = missions.filter((mission) => {
-      const missionDate = new Date(mission.startTime);
-      const isInRange = isWithinInterval(missionDate, {
-        start: startDate,
-        end: endDate,
-      });
-
-      // Debug each mission filtering
-      logger.debug(
-        `Mission "${mission.name}": start=${mission.startTime}, parsed=${missionDate.toISOString()}, inRange=${isInRange}, duration=${mission.durationMinutes}`
-      );
-
-      return isInRange;
-    });
-
-    logger.debug(
-      `Filtered ${filtered.length} out of ${missions.length} missions for period ${selectedPeriod}`
-    );
-    return filtered;
-  };
+  }, [filteredMissions, getEventsByMission]);
 
   const generateAnalysis = useCallback(async () => {
     setLoading(true);
     try {
-      const filtered = filteredMissions();
-
       logger.debug('Total missions available:', missions.length);
-      logger.debug('Filtered missions for analysis:', filtered.length);
+      logger.debug('Filtered missions for analysis:', filteredMissions.length);
       logger.debug('Selected period:', selectedPeriod);
       logger.debug('Selected date:', selectedDate);
 
@@ -355,7 +351,7 @@ export const useAnalysisLogic = (
         });
       }
 
-      if (filtered.length === 0) {
+      if (filteredMissions.length === 0) {
         const hasAnyMissions = missions.length > 0;
         if (hasAnyMissions) {
           setStatisticalAnalysis(
@@ -387,7 +383,7 @@ export const useAnalysisLogic = (
               : t('history.periods.year');
 
       // Generate local statistical analysis with PM1, PM2.5, and PM10
-      const validMissions = filtered.filter(
+      const validMissions = filteredMissions.filter(
         (m) =>
           m.avgPm25 != null &&
           !isNaN(m.avgPm25) &&
@@ -397,7 +393,7 @@ export const useAnalysisLogic = (
           !isNaN(m.avgPm10)
       );
 
-      const totalExposureMinutes = filtered.reduce(
+      const totalExposureMinutes = filteredMissions.reduce(
         (sum, m) => sum + (m.durationMinutes || 0),
         0
       );
@@ -434,7 +430,7 @@ export const useAnalysisLogic = (
           : 0;
 
       // Calculate WHO threshold exceedances for each PM type
-      const timeAboveWHO_PM25 = filtered.reduce((total, mission) => {
+      const timeAboveWHO_PM25 = filteredMissions.reduce((total, mission) => {
         if (
           mission.avgPm25 != null &&
           !isNaN(mission.avgPm25) &&
@@ -445,7 +441,7 @@ export const useAnalysisLogic = (
         return total;
       }, 0);
 
-      const timeAboveWHO_PM10 = filtered.reduce((total, mission) => {
+      const timeAboveWHO_PM10 = filteredMissions.reduce((total, mission) => {
         if (
           mission.avgPm10 != null &&
           !isNaN(mission.avgPm10) &&
@@ -457,7 +453,7 @@ export const useAnalysisLogic = (
       }, 0);
 
       // Calculate total cumulative inhaled dose for all missions
-      const totalCumulativeDosePM25 = filtered.reduce((total, mission) => {
+      const totalCumulativeDosePM25 = filteredMissions.reduce((total, mission) => {
         const durationHours = mission.durationMinutes / 60;
         const respiratoryRate = getRespiratoryRate(
           mission.activityContext,
@@ -467,7 +463,7 @@ export const useAnalysisLogic = (
         return total + mission.avgPm25 * durationHours * respiratoryRate;
       }, 0);
 
-      const totalCumulativeDosePM10 = filtered.reduce((total, mission) => {
+      const totalCumulativeDosePM10 = filteredMissions.reduce((total, mission) => {
         const durationHours = mission.durationMinutes / 60;
         const respiratoryRate = getRespiratoryRate(
           mission.activityContext,
@@ -615,7 +611,7 @@ export const useAnalysisLogic = (
       const analysisText = `📊 ${t('analysis.report.title')} - ${timeframeText.toUpperCase()}
 
 🔢 ${t('analysis.report.dataSummary')}:
-• ${t('analysis.report.missionCount')}: ${filtered.length}
+• ${t('analysis.report.missionCount')}: ${filteredMissions.length}
 • ${t('analysis.report.totalExposureTime')}: ${Math.round(totalExposureMinutes)} ${t('analysis.minutes')} (${exposureHours} ${t('analysis.report.hours')})
 
 🌫️ ${t('analysis.report.particleAverages')}:
@@ -629,7 +625,7 @@ export const useAnalysisLogic = (
 • ${t('analysis.report.doseFormula')}: Dose = ∑(Concentration × ${t('analysis.report.exposureTime')} × ${t('analysis.report.respiratoryRate')})
 
 📍 ${t('analysis.report.contextualAnalysis')}:
-${generateContextualAnalysis(filtered)}
+${generateContextualAnalysis(filteredMissions)}
 
 ⚠️ ${t('analysis.report.whoThresholds')}:
 • PM2.5 > 15 μg/m³: ${timeAboveWHO_PM25.toFixed(0)} min (${whoExceedancePercentage_PM25}% ${t('analysis.report.ofTime')})
@@ -637,7 +633,7 @@ ${generateContextualAnalysis(filtered)}
 • PM1.0: ${t('analysis.report.noWhoThresholdPM1')}
 
 🏆 ${t('analysis.report.highestExposureMissions')} (PM2.5):
-${filtered
+${filteredMissions
   .sort((a, b) => (b.avgPm25 || 0) - (a.avgPm25 || 0))
   .slice(0, 3)
   .map(
@@ -672,7 +668,7 @@ ${eventAnalysisData.some(e => e.eventImpact > 50)
 
       setStatisticalAnalysis(analysisText);
       setDataPoints({
-        totalMissions: filtered.length,
+        totalMissions: filteredMissions.length,
         totalExposureMinutes,
         averagePM25: avgPM25,
         maxPM25,
@@ -692,7 +688,7 @@ ${eventAnalysisData.some(e => e.eventImpact > 50)
     } finally {
       setLoading(false);
     }
-  }, [missions, selectedDate, selectedPeriod, t, toast]);
+  }, [filteredMissions, selectedDate, selectedPeriod, t, toast, eventAnalysisData]);
 
   // Load missions on component mount
   useEffect(() => {

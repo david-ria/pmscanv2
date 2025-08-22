@@ -70,7 +70,7 @@ export const GroupComparison = ({
     } finally {
       setLoading(false);
     }
-  }, [activeGroup, userStats, selectedDate]);
+  }, [activeGroup, selectedDate]);
 
   useEffect(() => {
     if (isGroupMode && activeGroup) {

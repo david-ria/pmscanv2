@@ -34,7 +34,7 @@ export function MapboxLazyLoader({ onMapReady, className }: MapboxLazyLoaderProp
     // Example map initialization would go here
     // const map = new mapbox.Map({...})
     // onMapReady?.(map);
-  }, [onMapReady]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={className}>
