@@ -24,7 +24,7 @@ const logger = createLogger('poller');
 
 let isPolling = false;
 let sensorMapping: Map<string, number>;
-let pollStats = {
+const pollStats = {
   totalScanned: 0,
   totalSkipped: 0,
   totalProcessed: 0,
