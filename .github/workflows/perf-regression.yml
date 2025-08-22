@@ -1,0 +1,61 @@
+name: Performance & QA Regression
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  perf-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Start static server (dist)
+        run: npx http-server dist -p 4173 -s &
+      
+      - name: Wait for server
+        run: npx wait-on http://127.0.0.1:4173
+
+      - name: Run Playwright tests (all suites)
+        run: npx playwright test
+
+      - name: Bundle size check
+        run: node scripts/bundle-size-check.js
+
+      - name: Upload Playwright HTML report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload perf-report artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-report
+          path: |
+            perf-report/**
+          if-no-files-found: ignore
+          retention-days: 7

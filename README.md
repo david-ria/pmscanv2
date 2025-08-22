@@ -164,6 +164,26 @@ Automatic context detection can optionally use a TensorFlow.js model. To enable 
 
 When `overrideContext` is active, the application continuously updates the mission activity field with the latest prediction returned by the TensorFlow model. Any change in prediction immediately updates the currently selected activity.
 
+## Performance & QA
+
+Run locally:
+```bash
+npm run build
+npx http-server dist -p 4173 -s &
+npx wait-on http://127.0.0.1:4173
+npx playwright test
+node scripts/bundle-size-check.js
+```
+
+Approve new bundle baseline:
+```bash
+node scripts/bundle-size-check.js --approve-budgets
+git add perf-report/bundle-baseline.json
+git commit -m "chore(perf): approve new bundle baseline"
+```
+
+Artifacts are saved in perf-report/ and the Playwright HTML report is in playwright-report/.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
