@@ -42,6 +42,17 @@ const scheduleNonEssentialWork = () => {
   }
 };
 
+// Register service worker immediately in production for PWA compliance
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(registration => {
+      console.debug('[PWA] Service Worker registered immediately', registration);
+    })
+    .catch(error => {
+      console.error('[PWA] Service Worker registration failed:', error);
+    });
+}
+
 // Start non-essential work scheduling
 scheduleNonEssentialWork();
 

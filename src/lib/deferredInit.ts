@@ -170,7 +170,7 @@ export const initMap = () => {
 export const initServiceWorker = () => {
   deferredInit.addTask({
     name: 'service-worker',
-    priority: 'low',
+    priority: 'high', // Changed to high priority for PWA tests
     task: async () => {
       if (isTestMode()) {
         logTestModeDisabled('Service Worker registration (deferred)');
@@ -179,14 +179,18 @@ export const initServiceWorker = () => {
       
       if ('serviceWorker' in navigator) {
         try {
-          await navigator.serviceWorker.register('/sw.js');
-          console.debug('[PERF] Service Worker registered');
+          const registration = await navigator.serviceWorker.register('/sw.js');
+          console.debug('[PERF] Service Worker registered', registration);
+          
+          // Wait for service worker to be ready and active
+          await navigator.serviceWorker.ready;
+          console.debug('[PERF] Service Worker ready and caching assets');
         } catch (error) {
           console.error('[PERF] Service Worker registration failed:', error);
         }
       }
     },
-    timeout: 5000
+    timeout: 2000 // Reduced timeout for faster registration
   });
 };
 
@@ -239,12 +243,12 @@ export const initNonEssentialFeatures = () => {
   
   // Schedule all deferred tasks in order of priority
   initMainThreadOptimizer(); // Highest priority - performance
+  initServiceWorker();       // High priority - PWA support and caching
   initErrorReporting();      // High priority - error handling
   initBluetooth();          // Medium priority - sensor connectivity  
   initCharts();             // Medium priority - data visualization
   initAnalytics();          // Low priority - tracking
   initMap();                // Low priority - maps
-  initServiceWorker();      // Low priority - offline support
   
   // Start the deferred initialization process
   deferredInit.start();
