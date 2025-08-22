@@ -7,7 +7,7 @@ import { PMTypeSelector } from './PMTypeSelector';
 import { BreakdownTypeSelector } from './BreakdownTypeSelector';
 import { PollutionPieChart } from './PollutionPieChart';
 import { PollutionSummaryTable } from './PollutionSummaryTable';
-import { usePollutionBreakdownData } from './usePollutionBreakdownData';
+import { usePollutionBreakdownData, type BreakdownData } from './usePollutionBreakdownData';
 import { getWHOThreshold } from './utils';
 
 interface PollutionBreakdownChartProps {
@@ -15,7 +15,7 @@ interface PollutionBreakdownChartProps {
   selectedPeriod: 'day' | 'week' | 'month' | 'year';
   selectedDate: Date;
   onBreakdownDataChange?: (data: {
-    breakdownData: any[];
+    breakdownData: BreakdownData[];
     pmType: PMType;
     breakdownType: BreakdownType;
   }) => void;

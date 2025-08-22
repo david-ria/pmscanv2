@@ -17,7 +17,7 @@ import { getRespiratoryRate } from '@/lib/respiratoryRates';
 type BreakdownType = 'location' | 'activity' | 'autocontext';
 type PMType = 'pm1' | 'pm25' | 'pm10';
 
-interface BreakdownData {
+export interface BreakdownData {
   name: string;
   percentage: number;
   avgPM: number;

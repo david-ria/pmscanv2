@@ -87,10 +87,10 @@ export function EditGroupDialog({
       onOpenChange(false);
       // Reload the page to reflect changes
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update group information',
+        description: error instanceof Error ? error.message : 'Failed to update group information',
         variant: 'destructive',
       });
     } finally {

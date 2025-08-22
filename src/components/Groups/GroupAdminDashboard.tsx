@@ -63,7 +63,7 @@ export function GroupAdminDashboard({ group }: GroupAdminDashboardProps) {
   }: {
     title: string;
     description: string;
-    icon: any;
+    icon: React.ComponentType<{ className?: string }>;
     onManage: () => void;
     disabled?: boolean;
     isPremium?: boolean;

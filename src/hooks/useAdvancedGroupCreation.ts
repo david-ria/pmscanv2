@@ -112,10 +112,10 @@ export const useAdvancedGroupCreation = () => {
       });
 
       return group;
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create advanced group',
+        description: error instanceof Error ? error.message : 'Failed to create advanced group',
         variant: 'destructive',
       });
       throw error;

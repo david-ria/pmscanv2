@@ -33,7 +33,7 @@ export const getWHOStatus = (avgPM: number, pmType: string): string => {
 export const getWHOThreshold = (
   pmType: string,
   selectedPeriod: string,
-  t: (key: string, options?: any) => string
+  t: (key: string, options?: Record<string, unknown>) => string
 ): { value: number | null; label: string } => {
   if (pmType === 'pm1') {
     return { value: null, label: t('analysis.noWHOThreshold') };

@@ -2,24 +2,30 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingService } from '@/hooks/useRecordingService';
 import { useMissionSaver } from '@/hooks/useMissionSaver';
-import { PMScanData } from '@/lib/pmscan/types';
+import { PMScanData, PMScanDevice } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
+import { RecordingEntry } from '@/types/recording';
 import * as logger from '@/utils/logger';
+
+interface MissionContext {
+  location: string;
+  activity: string;
+}
 
 interface UnifiedDataState {
   // PMScan data - single source of truth
   currentData: PMScanData | null;
   isConnected: boolean;
   isConnecting: boolean;
-  device: any;
+  device: PMScanDevice | null;
   error: string | null;
   
   // Recording state - single source of truth
   isRecording: boolean;
-  recordingData: any[];
+  recordingData: RecordingEntry[];
   recordingFrequency: string;
-  missionContext: any;
+  missionContext: MissionContext | null;
   recordingStartTime: Date | null;
   
   // GPS data
@@ -33,9 +39,9 @@ interface UnifiedDataState {
   startRecording: (frequency?: string) => void;
   stopRecording: () => void;
   updateMissionContext: (location: string, activity: string) => void;
-  addDataPoint: (pmData: PMScanData, location?: LocationData, context?: any, automaticContext?: string, enrichedLocation?: string, geohash?: string) => void;
+  addDataPoint: (pmData: PMScanData, location?: LocationData, context?: MissionContext, automaticContext?: string, enrichedLocation?: string, geohash?: string) => void;
   clearRecordingData: () => void;
-  saveMission: (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: any[]) => Promise<any>;
+  saveMission: (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: RecordingEntry[]) => Promise<unknown>;
 }
 
 const UnifiedDataContext = createContext<UnifiedDataState | undefined>(undefined);
@@ -134,7 +140,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     updateMissionContext: recording.updateMissionContext,
     addDataPoint: recording.addDataPoint,
     clearRecordingData: recording.clearRecordingData,
-    saveMission: async (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: any[]) => {
+    saveMission: async (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: RecordingEntry[]) => {
       const dataToSave = explicitRecordingData || recording.recordingData;
       return missionSaverFunction(
         dataToSave,

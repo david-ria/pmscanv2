@@ -118,7 +118,7 @@ export const useGroupCustomThresholds = (groupId: string) => {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete group threshold',
+        description: error instanceof Error ? error.message : 'Failed to delete group threshold',
         variant: 'destructive',
       });
       throw error;

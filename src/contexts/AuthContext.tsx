@@ -3,17 +3,22 @@ import { User, Session } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabaseWrapper';
 import { attachAuthRefreshGuard } from '@/utils/authRefreshGuard';
 
+interface AuthError {
+  message: string;
+  [key: string]: unknown;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signUp: (
     email: string,
     password: string,
-    metadata?: any
-  ) => Promise<{ error: any }>;
+    metadata?: Record<string, unknown>
+  ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
-  updatePassword: (newPassword: string) => Promise<{ error: any }>;
+  updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
   loading: boolean;
 }
 
@@ -23,10 +28,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [supabaseClient, setSupabaseClient] = useState<any>(null);
+  const [supabaseClient, setSupabaseClient] = useState<Awaited<ReturnType<typeof getSupabase>> | null>(null);
 
   useEffect(() => {
-    let subscription: any = null;
+    let subscription: ReturnType<Awaited<ReturnType<typeof getSupabase>>['auth']['onAuthStateChange']> | null = null;
 
     const initializeAuth = async () => {
       try {
@@ -76,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, metadata?: any) => {
+  const signUp = async (email: string, password: string, metadata?: Record<string, unknown>) => {
     if (!supabaseClient) {
       return { error: new Error('Supabase client not initialized') };
     }

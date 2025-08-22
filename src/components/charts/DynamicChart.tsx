@@ -9,14 +9,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart3Icon, Loader2 } from 'lucide-react';
 import { loadChartLibrary } from '@/lib/dynamicImports';
 
+interface ChartConfig {
+  [key: string]: {
+    label?: string;
+    color?: string;
+    [key: string]: unknown;
+  };
+}
+
 interface DynamicChartProps {
-  data: any[];
-  config: any;
+  data: Record<string, unknown>[];
+  config: ChartConfig;
   type: 'line' | 'bar' | 'pie' | 'area';
   title?: string;
   height?: number;
   className?: string;
-  children?: (recharts: any) => React.ReactNode;
+  children?: (recharts: Record<string, React.ComponentType<any>>) => React.ReactNode;
 }
 
 export function DynamicChart({
@@ -28,7 +36,7 @@ export function DynamicChart({
   className,
   children
 }: DynamicChartProps) {
-  const [chartLib, setChartLib] = useState<any>(null);
+  const [chartLib, setChartLib] = useState<Record<string, React.ComponentType<any>> | null>(null);
   const [loading, setLoading] = useState(false);
   const [userRequested, setUserRequested] = useState(false);
 

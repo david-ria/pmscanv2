@@ -46,15 +46,19 @@ const DialogContent = React.forwardRef<
   ) => {
     // Check if DialogTitle or DialogDescription exists in children
     const hasTitle = React.Children.toArray(children).some(
-      (child: any) =>
-        child?.type?.displayName === 'DialogTitle' ||
-        child?.props?.children?.type?.displayName === 'DialogTitle'
+      (child) => {
+        if (!React.isValidElement(child)) return false;
+        const type = child.type;
+        return (typeof type === 'function' && 'displayName' in type && type.displayName === 'DialogTitle');
+      }
     );
 
     const hasDescription = React.Children.toArray(children).some(
-      (child: any) =>
-        child?.type?.displayName === 'DialogDescription' ||
-        child?.props?.children?.type?.displayName === 'DialogDescription'
+      (child) => {
+        if (!React.isValidElement(child)) return false;
+        const type = child.type;
+        return (typeof type === 'function' && 'displayName' in type && type.displayName === 'DialogDescription');
+      }
     );
 
     return (
