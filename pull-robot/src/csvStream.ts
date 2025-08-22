@@ -21,7 +21,7 @@ export function createRowValidator(): Transform {
   
   return new Transform({
     objectMode: true,
-    transform(chunk: any, encoding: string, callback: Function) {
+    transform(chunk: Record<string, unknown>, encoding: string, callback: (error?: Error | null, data?: unknown) => void) {
       try {
         rowIndex++;
         
@@ -58,7 +58,7 @@ export function createPayloadTransformer(deviceId: string, sensorMapping: Map<st
   
   return new Transform({
     objectMode: true,
-    transform(chunk: any, encoding: string, callback: Function) {
+    transform(chunk: Record<string, unknown>, encoding: string, callback: (error?: Error | null, data?: unknown) => void) {
       try {
         const csvRow = chunk as CSVRow & { _rowIndex: number };
         
@@ -114,7 +114,7 @@ export async function processCSVStream(
   stream: NodeJS.ReadableStream,
   deviceId: string,
   sensorMapping: Map<string, number>,
-  onPayload: (payload: any) => Promise<void>
+  onPayload: (payload: unknown) => Promise<void>
 ): Promise<{ totalRows: number; successfulRows: number; failedRows: number }> {
   
   return new Promise((resolve, reject) => {

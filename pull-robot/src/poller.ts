@@ -188,7 +188,7 @@ export async function pollAndProcess(): Promise<void> {
 }
 
 // Process a single file with blob streaming using enhanced idempotency processor
-async function processFileWithBlob(blob: Blob, fingerprint: any, deviceId: string): Promise<void> {
+async function processFileWithBlob(blob: Blob, fingerprint: { path: string; fingerprint: string; size: number }, deviceId: string): Promise<void> {
   // Start file processing (creates database record with status='processing')
   const fileId = startFileProcessing(fingerprint.path, fingerprint.fingerprint, deviceId, fingerprint.size);
   
@@ -232,7 +232,7 @@ async function processFileWithBlob(blob: Blob, fingerprint: any, deviceId: strin
 
 // Legacy function - now replaced by enhanced streaming processor
 // Kept for reference but no longer used
-async function processPayload(fileId: number, payload: any): Promise<void> {
+async function processPayload(fileId: number, payload: unknown): Promise<void> {
   // This function is now handled by the enhanced streaming processor
   // which includes proper idempotency checks and payload hashing
   logger.debug('Legacy processPayload called - this should not happen with new streaming processor');

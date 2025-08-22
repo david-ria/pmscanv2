@@ -313,16 +313,16 @@ export async function getProcessingState(): Promise<ProcessingState> {
         SUM(successful_rows) as rows_sent,
         SUM(failed_rows) as rows_failed
       FROM processed_files
-    `).get() as any;
+    `).get() as { files_processed: number; rows_processed: number; rows_sent: number; rows_failed: number };
     
-    const dlqCount = db.prepare('SELECT COUNT(*) as count FROM dead_letter_queue').get() as any;
+    const dlqCount = db.prepare('SELECT COUNT(*) as count FROM dead_letter_queue').get() as { count: number };
     
     const lastFile = db.prepare(`
       SELECT path, processed_at 
       FROM processed_files 
       ORDER BY processed_at DESC 
       LIMIT 1
-    `).get() as any;
+    `).get() as { path: string; processed_at: string } | undefined;
     
     return {
       filesProcessed: stats?.files_processed || 0,
