@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabaseWrapper';
+import { attachAuthRefreshGuard } from '@/utils/authRefreshGuard';
 
 interface AuthContextType {
   user: User | null;
