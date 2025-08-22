@@ -85,8 +85,9 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <main role="main" className="py-12">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-center">
             {t('auth.authentication')}
@@ -183,6 +184,7 @@ export default function Auth() {
           </Tabs>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </main>
   );
 }
