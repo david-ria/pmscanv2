@@ -8,6 +8,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "npx playwright test",
+    "perf:serve": "npx vite preview --port 4173 --strictPort",
+    "test:perf": "npx playwright test tests/performance-budgets.spec.ts tests/energy-usage.spec.ts tests/perf-top-offenders.spec.ts",
     "fix:newlines": "node scripts/ensure-trailing-newline.cjs",
     "format": "prettier --write .",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"scripts/**/*.{js,ts}\""
