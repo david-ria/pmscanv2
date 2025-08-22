@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { injectAxe, checkA11y, getViolations } from '@axe-core/playwright';
+import axe, { injectAxe, getViolations } from '@axe-core/playwright';
 import { setupNetworkIsolation } from './network-isolation';
 
 test.describe('Accessibility Smoke Tests', () => {
@@ -21,7 +21,7 @@ test.describe('Accessibility Smoke Tests', () => {
     await page.waitForSelector('h1', { timeout: 10000 });
     
     // Check accessibility with axe-core
-    await checkA11y(page, null, {
+    await axe(page, null, {
       detailedReport: true,
       detailedReportOptions: { html: true },
       includedImpacts: ['critical', 'serious']
@@ -57,7 +57,7 @@ test.describe('Accessibility Smoke Tests', () => {
     await page.waitForSelector('[data-testid="dashboard"]', { timeout: 10000 });
     
     // Check accessibility
-    await checkA11y(page, null, {
+    await axe(page, null, {
       detailedReport: true,
       detailedReportOptions: { html: true },
       includedImpacts: ['critical', 'serious']
@@ -96,7 +96,7 @@ test.describe('Accessibility Smoke Tests', () => {
     await page.waitForSelector('h1', { timeout: 5000 });
     
     // Check accessibility
-    await checkA11y(page, null, {
+    await axe(page, null, {
       detailedReport: true,
       detailedReportOptions: { html: true },
       includedImpacts: ['critical', 'serious']
