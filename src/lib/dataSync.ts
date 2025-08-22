@@ -59,7 +59,7 @@ async function syncEventsForMission(missionId: string): Promise<boolean> {
     if (!currentUser.data.user) return false;
 
     // Insert events into database
-    const eventsToInsert = missionEvents.map((event: any) => ({
+    const eventsToInsert = missionEvents.map((event: { event_type: string; timestamp: Date; id: string; user_id: string; [key: string]: unknown }) => ({
       id: event.id,
       mission_id: missionId,
       event_type: event.event_type,

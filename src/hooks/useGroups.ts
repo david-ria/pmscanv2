@@ -168,7 +168,14 @@ export const useGroups = () => {
 
   const updateGroup = useCallback(async (
     groupId: string,
-    updates: { name?: string; description?: string; subscription_tier?: 'free' | 'premium' | 'enterprise'; member_quota?: number; custom_locations?: any; custom_activities?: any }
+    updates: { 
+      name?: string; 
+      description?: string; 
+      subscription_tier?: 'free' | 'premium' | 'enterprise'; 
+      member_quota?: number; 
+      custom_locations?: Record<string, string[]>; 
+      custom_activities?: Record<string, string[]>;
+    }
   ) => {
     try {
       const { error } = await supabase

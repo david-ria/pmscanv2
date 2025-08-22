@@ -258,7 +258,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
     return periods;
   }, [chartData, highlightContextType, missionContext, getContextColor]);
 
-  const formatTooltip = (value: any, name: string) => {
+  const formatTooltip = (value: number | string, name: string) => {
     if (name === 'PM1' || name === 'PM25' || name === 'PM10') {
       return [`${value} µg/m³`, name];
     }
@@ -271,7 +271,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
     return [value, name];
   };
 
-  const formatXAxisLabel = (tickItem: any, index: number) => {
+  const formatXAxisLabel = (tickItem: unknown, index: number) => {
     const dataPoint = chartData[index];
     return dataPoint ? dataPoint.timestamp : '';
   };
@@ -432,7 +432,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
           })}
           
           {/* Event markers */}
-          {eventMarkers.map((event: any, eventIndex: number) => {
+          {eventMarkers.map((event: { id: string; event_type?: string; _type?: string; chartPosition: number }, eventIndex: number) => {
             const eventType = event.event_type || event._type || 'Event';
             const displayLabel = eventType === 'undefined' ? 'Event' : eventType;
             

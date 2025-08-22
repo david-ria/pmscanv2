@@ -19,10 +19,12 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Plus, Trash2, MapPin, Activity } from 'lucide-react';
 
+import { UseFormReturn } from 'react-hook-form';
+
 interface LocationWithActivitiesProps {
   locationIndex: number;
   onRemoveLocation: () => void;
-  form: any; // Using any for now to avoid complex type definitions
+  form: UseFormReturn<any>;
 }
 
 export function LocationWithActivities({
@@ -36,7 +38,7 @@ export function LocationWithActivities({
     remove: removeActivity,
   } = useFieldArray({
     control: form.control,
-    name: `custom_locations.${locationIndex}.activities`,
+    name: `custom_locations.${locationIndex}.activities` as const,
   });
 
   const addActivity = () => {

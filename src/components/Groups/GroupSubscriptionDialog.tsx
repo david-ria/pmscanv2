@@ -13,7 +13,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
 interface GroupSubscriptionDialogProps {
-  group: any;
+  group: {
+    id: string;
+    name: string;
+    subscription_tier?: string;
+    [key: string]: unknown;
+  };
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -76,7 +81,7 @@ export function GroupSubscriptionDialog({
   onOpenChange 
 }: GroupSubscriptionDialogProps) {
   const [currentTier, setCurrentTier] = useState<'free' | 'premium' | 'enterprise'>(
-    group?.subscription_tier || 'free'
+    (group?.subscription_tier as 'free' | 'premium' | 'enterprise') || 'free'
   );
   const { updateGroup } = useGroups();
   const { toast } = useToast();

@@ -251,7 +251,7 @@ export function useBackgroundRecording() {
   }, [releaseWakeLock, showNotification]);
 
   const storeDataForBackground = useCallback(
-    (pmData: PMScanData, location?: LocationData, context?: any) => {
+    (pmData: PMScanData, location?: LocationData, context?: { weatherDataId?: string; [key: string]: unknown }) => {
       if (!serviceWorkerRegistration || !isBackgroundEnabled) return;
 
       // Send data to service worker for background storage

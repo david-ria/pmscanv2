@@ -8,7 +8,12 @@ import { useSupabaseLazy } from '@/lib/supabaseWrapper';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface LazyDataContextType {
-  supabase: any;
+  supabase: {
+    from: (table: string) => any;
+    auth: any;
+    storage: any;
+    [key: string]: unknown;
+  };
   loading: boolean;
   error: Error | null;
 }

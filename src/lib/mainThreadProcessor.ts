@@ -1,30 +1,30 @@
 // Fallback processing functions for when Web Workers are not available
-export async function processOnMainThread(type: string, payload: any): Promise<any> {
+export async function processOnMainThread(type: string, payload: unknown): Promise<unknown> {
   // Use time-sliced processing to avoid blocking the main thread
   return new Promise((resolve, reject) => {
     const processTask = async () => {
       try {
-        let result;
+        let result: unknown;
         
         switch (type) {
           case 'PARSE_SENSOR_DATA':
-            result = await parseDataWithTimeSlicing(payload);
+            result = await parseDataWithTimeSlicing(payload as { data: unknown[]; format: string });
             break;
           
           case 'CALCULATE_STATISTICS':
-            result = await calculateStatisticsWithTimeSlicing(payload);
+            result = await calculateStatisticsWithTimeSlicing(payload as { measurements: Record<string, unknown>[]; field: string });
             break;
           
           case 'AGGREGATE_CHART_DATA':
-            result = await aggregateDataWithTimeSlicing(payload);
+            result = await aggregateDataWithTimeSlicing(payload as { measurements: Record<string, unknown>[]; timeInterval: string; fields: string[] });
             break;
           
           case 'PROCESS_MISSION_DATA':
-            result = await processMissionDataWithTimeSlicing(payload);
+            result = await processMissionDataWithTimeSlicing(payload as { missions: Record<string, unknown>[]; groupBy: string });
             break;
           
           case 'CALCULATE_WHO_COMPLIANCE':
-            result = await calculateComplianceWithTimeSlicing(payload);
+            result = await calculateComplianceWithTimeSlicing(payload as { measurements: Record<string, unknown>[] });
             break;
           
           default:
@@ -38,8 +38,8 @@ export async function processOnMainThread(type: string, payload: any): Promise<a
     };
 
     // Use scheduler for non-blocking execution
-    if ('scheduler' in window && 'postTask' in (window as any).scheduler) {
-      (window as any).scheduler.postTask(processTask, { priority: 'background' });
+    if ('scheduler' in window && 'postTask' in (window as unknown as { scheduler: { postTask: (task: () => void, options: { priority: string }) => void } }).scheduler) {
+      (window as unknown as { scheduler: { postTask: (task: () => void, options: { priority: string }) => void } }).scheduler.postTask(processTask, { priority: 'background' });
     } else if ('requestIdleCallback' in window) {
       requestIdleCallback(processTask, { timeout: 2000 });
     } else {
@@ -57,8 +57,8 @@ function shouldYield(): boolean {
 
 async function yieldToMain(): Promise<void> {
   return new Promise(resolve => {
-    if ('scheduler' in window && 'postTask' in (window as any).scheduler) {
-      (window as any).scheduler.postTask(resolve, { priority: 'user-blocking' });
+    if ('scheduler' in window && 'postTask' in (window as unknown as { scheduler: { postTask: (task: () => void, options: { priority: string }) => void } }).scheduler) {
+      (window as unknown as { scheduler: { postTask: (task: () => void, options: { priority: string }) => void } }).scheduler.postTask(resolve, { priority: 'user-blocking' });
     } else {
       setTimeout(resolve, 0);
     }
@@ -66,7 +66,7 @@ async function yieldToMain(): Promise<void> {
 }
 
 // Time-sliced implementations to prevent main thread blocking
-async function parseDataWithTimeSlicing(rawData: any) {
+async function parseDataWithTimeSlicing(rawData: { data: unknown[]; format: string }) {
   const startTime = performance.now();
   
   const { data, format } = rawData;
@@ -103,11 +103,11 @@ async function parseDataWithTimeSlicing(rawData: any) {
   return data;
 }
 
-function parseSensorData(rawData: any) {
+function parseSensorData(rawData: { data: unknown[]; format: string }) {
   const { data, format } = rawData;
   
   if (format === 'pmscan') {
-    return data.map((item: any) => {
+    return data.map((item: unknown) => {
       if (typeof item === 'string') {
         const parts = item.split(',');
         return {
@@ -126,7 +126,7 @@ function parseSensorData(rawData: any) {
   return data;
 }
 
-async function calculateStatisticsWithTimeSlicing(data: any) {
+async function calculateStatisticsWithTimeSlicing(data: { measurements: Record<string, unknown>[]; field: string }) {
   const startTime = performance.now();
   const { measurements, field } = data;
   
@@ -146,8 +146,8 @@ async function calculateStatisticsWithTimeSlicing(data: any) {
     
     const chunk = measurements.slice(i, i + chunkSize);
     const chunkValues = chunk
-      .map((m: any) => m[field])
-      .filter((v: any) => v !== null && v !== undefined && !isNaN(v));
+      .map((m: Record<string, unknown>) => m[field])
+      .filter((v: unknown): v is number => v !== null && v !== undefined && !isNaN(v as number));
     
     values.push(...chunkValues);
   }
@@ -202,7 +202,7 @@ async function calculateStatisticsWithTimeSlicing(data: any) {
   return result;
 }
 
-function calculateStatistics(data: any) {
+function calculateStatistics(data: { measurements: Record<string, unknown>[]; field: string }) {
   const { measurements, field } = data;
   
   if (!measurements || measurements.length === 0) {
@@ -217,8 +217,8 @@ function calculateStatistics(data: any) {
   }
   
   const values = measurements
-    .map((m: any) => m[field])
-    .filter((v: any) => v !== null && v !== undefined && !isNaN(v))
+    .map((m: Record<string, unknown>) => m[field])
+    .filter((v: unknown): v is number => v !== null && v !== undefined && !isNaN(v as number))
     .sort((a: number, b: number) => a - b);
   
   if (values.length === 0) {
@@ -260,7 +260,7 @@ function calculateStatistics(data: any) {
   };
 }
 
-async function aggregateDataWithTimeSlicing(data: any) {
+async function aggregateDataWithTimeSlicing(data: { measurements: Record<string, unknown>[]; timeInterval: string; fields: string[] }) {
   const startTime = performance.now();
   const { measurements, timeInterval, fields } = data;
   
@@ -275,8 +275,8 @@ async function aggregateDataWithTimeSlicing(data: any) {
     if (i > 0) await yieldToMain();
     
     const chunk = measurements.slice(i, i + chunkSize);
-    chunk.forEach((measurement: any) => {
-      const timestamp = new Date(measurement.timestamp);
+    chunk.forEach((measurement: Record<string, unknown>) => {
+      const timestamp = new Date(measurement.timestamp as string);
       const intervalStart = new Date(Math.floor(timestamp.getTime() / intervalMs) * intervalMs);
       const key = intervalStart.toISOString();
       
@@ -287,13 +287,13 @@ async function aggregateDataWithTimeSlicing(data: any) {
     });
   }
   
-  const result = Array.from(groups.entries()).map(([timestamp, groupMeasurements]: [string, any[]]) => {
-    const resultItem: any = { timestamp };
+  const result = Array.from(groups.entries()).map(([timestamp, groupMeasurements]: [string, Record<string, unknown>[]]) => {
+    const resultItem: Record<string, unknown> = { timestamp };
     
     fields.forEach((field: string) => {
       const values = groupMeasurements
-        .map((m: any) => m[field])
-        .filter((v: any) => v !== null && v !== undefined && !isNaN(v));
+        .map((m: Record<string, unknown>) => m[field])
+        .filter((v: unknown): v is number => v !== null && v !== undefined && !isNaN(v as number));
       
       resultItem[field] = values.length > 0
         ? Math.round((values.reduce((sum: number, v: number) => sum + v, 0) / values.length) * 100) / 100
@@ -301,13 +301,13 @@ async function aggregateDataWithTimeSlicing(data: any) {
     });
     
     return resultItem;
-  }).sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }).sort((a: Record<string, unknown>, b: Record<string, unknown>) => new Date(a.timestamp as string).getTime() - new Date(b.timestamp as string).getTime());
   
   console.debug(`[PERF] Aggregated ${measurements.length} measurements in ${performance.now() - startTime}ms`);
   return result;
 }
 
-function aggregateChartData(data: any) {
+function aggregateChartData(data: { measurements: Record<string, unknown>[]; timeInterval: string; fields: string[] }) {
   const { measurements, timeInterval, fields } = data;
   
   if (!measurements || measurements.length === 0) return [];
@@ -315,8 +315,8 @@ function aggregateChartData(data: any) {
   const groups = new Map();
   const intervalMs = getIntervalMs(timeInterval);
   
-  measurements.forEach((measurement: any) => {
-    const timestamp = new Date(measurement.timestamp);
+  measurements.forEach((measurement: Record<string, unknown>) => {
+    const timestamp = new Date(measurement.timestamp as string);
     const intervalStart = new Date(Math.floor(timestamp.getTime() / intervalMs) * intervalMs);
     const key = intervalStart.toISOString();
     
@@ -326,13 +326,13 @@ function aggregateChartData(data: any) {
     groups.get(key).push(measurement);
   });
   
-  return Array.from(groups.entries()).map(([timestamp, groupMeasurements]: [string, any[]]) => {
-    const result: any = { timestamp };
+  return Array.from(groups.entries()).map(([timestamp, groupMeasurements]: [string, Record<string, unknown>[]]) => {
+    const result: Record<string, unknown> = { timestamp };
     
     fields.forEach((field: string) => {
       const values = groupMeasurements
-        .map((m: any) => m[field])
-        .filter((v: any) => v !== null && v !== undefined && !isNaN(v));
+        .map((m: Record<string, unknown>) => m[field])
+        .filter((v: unknown): v is number => v !== null && v !== undefined && !isNaN(v as number));
       
       result[field] = values.length > 0
         ? Math.round((values.reduce((sum: number, v: number) => sum + v, 0) / values.length) * 100) / 100
@@ -340,7 +340,7 @@ function aggregateChartData(data: any) {
     });
     
     return result;
-  }).sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }).sort((a: Record<string, unknown>, b: Record<string, unknown>) => new Date(a.timestamp as string).getTime() - new Date(b.timestamp as string).getTime());
 }
 
 function getIntervalMs(interval: string): number {
@@ -354,7 +354,7 @@ function getIntervalMs(interval: string): number {
   }
 }
 
-async function processMissionDataWithTimeSlicing(data: any) {
+async function processMissionDataWithTimeSlicing(data: { missions: Record<string, unknown>[]; groupBy: string }) {
   const startTime = performance.now();
   const { missions, groupBy } = data;
   
@@ -368,8 +368,8 @@ async function processMissionDataWithTimeSlicing(data: any) {
     if (i > 0) await yieldToMain();
     
     const chunk = missions.slice(i, i + chunkSize);
-    chunk.forEach((mission: any) => {
-      const key = mission[groupBy] || 'Unknown';
+    chunk.forEach((mission: Record<string, unknown>) => {
+      const key = (mission[groupBy] as string) || 'Unknown';
       if (!groups.has(key)) {
         groups.set(key, []);
       }
@@ -377,8 +377,8 @@ async function processMissionDataWithTimeSlicing(data: any) {
     });
   }
   
-  const result = Array.from(groups.entries()).map(([key, groupMissions]: [string, any[]]) => {
-    const measurements = groupMissions.flatMap((m: any) => m.measurements || []);
+  const result = Array.from(groups.entries()).map(([key, groupMissions]: [string, Record<string, unknown>[]]) => {
+    const measurements = groupMissions.flatMap((m: Record<string, unknown>) => (m.measurements as Record<string, unknown>[]) || []);
     
     return {
       group: key,
@@ -394,23 +394,23 @@ async function processMissionDataWithTimeSlicing(data: any) {
   return result;
 }
 
-function processMissionData(data: any) {
+function processMissionData(data: { missions: Record<string, unknown>[]; groupBy: string }) {
   const { missions, groupBy } = data;
   
   if (!missions || missions.length === 0) return [];
   
   const groups = new Map();
   
-  missions.forEach((mission: any) => {
-    const key = mission[groupBy] || 'Unknown';
+  missions.forEach((mission: Record<string, unknown>) => {
+    const key = (mission[groupBy] as string) || 'Unknown';
     if (!groups.has(key)) {
       groups.set(key, []);
     }
     groups.get(key).push(mission);
   });
   
-  return Array.from(groups.entries()).map(([key, groupMissions]: [string, any[]]) => {
-    const measurements = groupMissions.flatMap((m: any) => m.measurements || []);
+  return Array.from(groups.entries()).map(([key, groupMissions]: [string, Record<string, unknown>[]]) => {
+    const measurements = groupMissions.flatMap((m: Record<string, unknown>) => (m.measurements as Record<string, unknown>[]) || []);
     
     return {
       group: key,
@@ -423,7 +423,7 @@ function processMissionData(data: any) {
   });
 }
 
-async function calculateComplianceWithTimeSlicing(data: any) {
+async function calculateComplianceWithTimeSlicing(data: { measurements: Record<string, unknown>[] }) {
   const startTime = performance.now();
   const { measurements } = data;
   
@@ -439,7 +439,7 @@ async function calculateComplianceWithTimeSlicing(data: any) {
     };
   }
   
-  const result: any = {};
+  const result: Record<string, { compliance: number; exceedances: number }> = {};
   
   for (const pollutant of ['pm25', 'pm10']) {
     const values = [];
@@ -451,8 +451,8 @@ async function calculateComplianceWithTimeSlicing(data: any) {
       
       const chunk = measurements.slice(i, i + chunkSize);
       const chunkValues = chunk
-        .map((m: any) => m[pollutant])
-        .filter((v: any) => v !== null && v !== undefined && !isNaN(v));
+        .map((m: Record<string, unknown>) => m[pollutant])
+        .filter((v: unknown): v is number => v !== null && v !== undefined && !isNaN(v as number));
       
       values.push(...chunkValues);
     }
@@ -473,7 +473,7 @@ async function calculateComplianceWithTimeSlicing(data: any) {
   return result;
 }
 
-function calculateWHOCompliance(data: any) {
+function calculateWHOCompliance(data: { measurements: Record<string, unknown>[] }) {
   const { measurements } = data;
   
   const WHO_LIMITS = {
@@ -488,12 +488,12 @@ function calculateWHOCompliance(data: any) {
     };
   }
   
-  const result: any = {};
+  const result: Record<string, { compliance: number; exceedances: number }> = {};
   
-  ['pm25', 'pm10'].forEach((pollutant: string) => {
+  (['pm25', 'pm10'] as const).forEach((pollutant: string) => {
     const values = measurements
-      .map((m: any) => m[pollutant])
-      .filter((v: any) => v !== null && v !== undefined && !isNaN(v));
+      .map((m: Record<string, unknown>) => m[pollutant])
+      .filter((v: unknown): v is number => v !== null && v !== undefined && !isNaN(v as number));
     
     if (values.length === 0) {
       result[pollutant] = { compliance: 100, exceedances: 0 };
@@ -510,20 +510,20 @@ function calculateWHOCompliance(data: any) {
   return result;
 }
 
-function calculateAverage(measurements: any[], field: string): number {
+function calculateAverage(measurements: Record<string, unknown>[], field: string): number {
   const values = measurements
-    .map((m: any) => m[field])
-    .filter((v: any) => v !== null && v !== undefined && !isNaN(v));
+    .map((m: Record<string, unknown>) => m[field])
+    .filter((v: unknown): v is number => v !== null && v !== undefined && !isNaN(v as number));
   
   return values.length > 0
     ? Math.round((values.reduce((sum: number, v: number) => sum + v, 0) / values.length) * 100) / 100
     : 0;
 }
 
-function calculateTotalDuration(missions: any[]): number {
-  return missions.reduce((total: number, mission: any) => {
+function calculateTotalDuration(missions: Record<string, unknown>[]): number {
+  return missions.reduce((total: number, mission: Record<string, unknown>) => {
     if (mission.start_time && mission.end_time) {
-      const duration = new Date(mission.end_time).getTime() - new Date(mission.start_time).getTime();
+      const duration = new Date(mission.end_time as string).getTime() - new Date(mission.start_time as string).getTime();
       return total + Math.max(0, duration);
     }
     return total;
