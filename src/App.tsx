@@ -143,6 +143,10 @@ const AppRoutes = () => {
                         } 
                       />
                       <Route 
+                        path="/main" 
+                        element={<Navigate to="/" replace />}
+                      />
+                      <Route 
                         path="/history" 
                         element={
                           <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><HistoryPageSkeleton /></Suspense>}>
@@ -200,11 +204,7 @@ const AppRoutes = () => {
                       />
                       <Route 
                         path="*" 
-                        element={
-                          <Suspense fallback={<MinimalSkeleton />}>
-                            <NotFound />
-                          </Suspense>
-                        } 
+                        element={<Navigate to="/" replace />}
                       />
                     </Routes>
                   </main>
