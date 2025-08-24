@@ -477,14 +477,36 @@ export function enhanceCookingEventWithFeatures(
     automaticContext
   );
 
-  // Update cooking event with predicted subtype and confidence
+  // Decision logic using simple comparison
+  const boil = featuresWithScores.scores.boiling;
+  const fry = featuresWithScores.scores.frying;
+  
+  const chosen = (boil >= fry) ? "cooking-boiling" : "cooking-frying";
+  const confidence = Math.max(0, Math.min(1, Math.max(boil, fry)));
+  const lowConfidence = confidence < 0.50;
+
+  // Update cooking event with subtype and confidence
   const enhancedEvent: EnhancedCookingEvent = {
     ...cookingEvent,
     features: featuresWithScores,
-    subtype: featuresWithScores.scores.predicted || undefined,
-    confidence: featuresWithScores.scores.confidence,
-    lowConfidence: featuresWithScores.scores.confidence < 0.5
+    subtype: chosen,
+    confidence: confidence,
+    lowConfidence: lowConfidence || undefined // Only set if true
   };
+
+  // Log final cooking event result in JSON format
+  console.log('🍳 Cooking Event Result:', JSON.stringify({
+    type: "cooking",
+    subtype: chosen,
+    confidence: confidence,
+    lowConfidence: lowConfidence || undefined,
+    scores: {
+      boiling: boil,
+      frying: fry
+    },
+    timestamp: enhancedEvent.timestamp.toISOString(),
+    duration: featuresWithScores.duration
+  }, null, 2));
 
   return enhancedEvent;
 }
