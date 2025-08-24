@@ -41,6 +41,13 @@
   
   /* Focus utilities */
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2;
+  }
+  
+  /* Ensure focus is always visible */
+  .ensure-focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
   }
 }
