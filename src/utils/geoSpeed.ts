@@ -1,3 +1,5 @@
+import { AUTO_CTX_CFG } from '@/lib/autoContext.config';
+
 export function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000; // m
   const toRad = (d: number) => d * Math.PI / 180;
@@ -19,10 +21,10 @@ type Fix = { lat: number; lon: number; t: number; acc?: number | null };
 export class GeoSpeedEstimator {
   private prev?: Fix;
   private vEma = 0;              // km/h
-  private readonly alpha = 0.25; // EMA
-  private readonly maxAcc = 20;  // m (au-delà = pauvre)
-  private readonly maxJump = 100;// km/h saut max pr éviter spikes
-  private readonly minDt = 0.5;  // s, ignorer trop rapproché
+  private readonly alpha = AUTO_CTX_CFG.EMA_ALPHA;
+  private readonly maxAcc = AUTO_CTX_CFG.GPS_ACCURACY_MAX;
+  private readonly maxJump = AUTO_CTX_CFG.MAX_JUMP;
+  private readonly minDt = AUTO_CTX_CFG.MIN_DT;
 
   update(fix: Fix): { speedKmh: number; gpsQuality: 'good' | 'poor' } {
     const acc = fix.acc ?? null;

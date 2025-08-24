@@ -74,6 +74,7 @@ export interface AutoContextEvaluationData {
     speed: number;
     isMoving: boolean;
     walkingSignature?: boolean; // calcul temps réel, déjà lissé (10s/30s)
+    dataQuality?: 'good' | 'partial' | 'poor'; // qualité combinée GPS + accéléro
   };
   time: {
     currentHour: number;

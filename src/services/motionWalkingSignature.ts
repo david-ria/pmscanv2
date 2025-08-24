@@ -1,7 +1,10 @@
+import { AUTO_CTX_CFG } from '@/lib/autoContext.config';
+
 export interface WalkingSigSnapshot {
   walkingSignature: boolean;   // booléen lissé
   walkingConfidence: number;   // 0..1 (cadence normalisée)
   lastUpdated: number;         // epoch ms
+  isActive: boolean;           // accelerometer is receiving data
 }
 
 export class MotionWalkingSignature {
@@ -9,6 +12,7 @@ export class MotionWalkingSignature {
     walkingSignature: false,
     walkingConfidence: 0,
     lastUpdated: Date.now(),
+    isActive: false,
   };
 
   private emaG = 0;
@@ -18,7 +22,9 @@ export class MotionWalkingSignature {
   private candidate = false;
   private candidateTrueSince: number | null = null;
   private candidateFalseSince: number | null = null;
-  private highPassHistory: Array<{ value: number; timestamp: number }> = []; // Pour le calcul RMS
+  private highPassHistory: Array<{ value: number; timestamp: number }> = [];
+  private lastMotionEvent = 0; // Track last accelerometer event
+  private timeoutId: number | null = null;
 
   // Demande de permission iOS Safari
   private async requestPermission(): Promise<void> {
@@ -38,11 +44,14 @@ export class MotionWalkingSignature {
   async start(): Promise<void> {
     await this.requestPermission();
     window.addEventListener('devicemotion', this.onMotion, true);
+    this.snapshot.isActive = true;
+    this.startTimeoutMonitoring();
     console.log('MotionWalkingSignature started');
   }
 
   stop(): void {
     window.removeEventListener('devicemotion', this.onMotion, true);
+    this.stopTimeoutMonitoring();
     // Reset state
     this.emaG = 0;
     this.peakHistory = [];
@@ -54,11 +63,36 @@ export class MotionWalkingSignature {
       walkingSignature: false,
       walkingConfidence: 0,
       lastUpdated: Date.now(),
+      isActive: false,
     };
     console.log('MotionWalkingSignature stopped');
   }
 
+  private startTimeoutMonitoring(): void {
+    this.stopTimeoutMonitoring();
+    this.timeoutId = window.setInterval(() => {
+      const now = performance.now();
+      if (now - this.lastMotionEvent > AUTO_CTX_CFG.ACC_TIMEOUT_MS) {
+        console.warn('Accelerometer timeout - forcing walkingSignature to false');
+        this.snapshot.walkingSignature = false;
+        this.snapshot.isActive = false;
+        this.snapshot.lastUpdated = Date.now();
+      }
+    }, 1000); // Check every second
+  }
+
+  private stopTimeoutMonitoring(): void {
+    if (this.timeoutId !== null) {
+      clearInterval(this.timeoutId);
+      this.timeoutId = null;
+    }
+  }
+
   private onMotion = (ev: DeviceMotionEvent): void => {
+    const now = performance.now();
+    this.lastMotionEvent = now;
+    this.snapshot.isActive = true;
+    
     const ax = ev.accelerationIncludingGravity?.x ?? 0;
     const ay = ev.accelerationIncludingGravity?.y ?? 0;
     const az = ev.accelerationIncludingGravity?.z ?? 0;
@@ -71,16 +105,19 @@ export class MotionWalkingSignature {
     const h = m - this.emaG;
     
     // Garder l'historique pour le calcul RMS (dernières 6s)
-    const now = performance.now();
     this.highPassHistory.push({ value: h, timestamp: now });
-    this.highPassHistory = this.highPassHistory.filter(item => now - item.timestamp <= 6000);
+    this.highPassHistory = this.highPassHistory.filter(
+      item => now - item.timestamp <= AUTO_CTX_CFG.ACC_WIN_SEC * 1000
+    );
 
     // Détection de pics avec période réfractaire
-    if (h > 0.8 && (now - this.lastPeak) > 300) {
+    if (h > AUTO_CTX_CFG.ACC_PEAK_THR && (now - this.lastPeak) > AUTO_CTX_CFG.ACC_REFRAC_MS) {
       this.peakHistory.push(now);
       this.lastPeak = now;
       // Garder seulement les dernières 6s
-      this.peakHistory = this.peakHistory.filter(t => now - t <= 6000);
+      this.peakHistory = this.peakHistory.filter(
+        t => now - t <= AUTO_CTX_CFG.ACC_WIN_SEC * 1000
+      );
     }
 
     this.evaluate(now);
@@ -95,7 +132,7 @@ export class MotionWalkingSignature {
     }
 
     // Calcul de la cadence (pics/min)
-    const windowDuration = 6; // 6 secondes
+    const windowDuration = AUTO_CTX_CFG.ACC_WIN_SEC;
     const cadence = (this.peakHistory.length / windowDuration) * 60;
 
     // Calcul de la régularité (coefficient de variation des intervalles)
@@ -113,9 +150,9 @@ export class MotionWalkingSignature {
     }
 
     // Application des critères
-    const cadenceOK = cadence >= 70 && cadence <= 180;
-    const regularityOK = cv <= 0.30;
-    const intensityOK = rms >= 0.5 && rms <= 3.5;
+    const cadenceOK = cadence >= AUTO_CTX_CFG.ACC_CADENCE_MIN && cadence <= AUTO_CTX_CFG.ACC_CADENCE_MAX;
+    const regularityOK = cv <= AUTO_CTX_CFG.ACC_CV_MAX;
+    const intensityOK = rms >= AUTO_CTX_CFG.ACC_RMS_MIN && rms <= AUTO_CTX_CFG.ACC_RMS_MAX;
 
     this.candidate = cadenceOK && regularityOK && intensityOK;
 
@@ -141,8 +178,8 @@ export class MotionWalkingSignature {
       }
       this.candidateFalseSince = null;
       
-      // Basculer à true après 10s consécutifs
-      if ((now - this.candidateTrueSince) / 1000 >= 10) {
+      // Basculer à true après X secondes consécutives
+      if ((now - this.candidateTrueSince) / 1000 >= AUTO_CTX_CFG.ACC_HOLD_ENTER) {
         this.snapshot.walkingSignature = true;
       }
     } else {
@@ -152,15 +189,15 @@ export class MotionWalkingSignature {
       }
       this.candidateTrueSince = null;
       
-      // Basculer à false après 30s consécutifs
-      if ((now - this.candidateFalseSince) / 1000 >= 30) {
+      // Basculer à false après X secondes consécutives
+      if ((now - this.candidateFalseSince) / 1000 >= AUTO_CTX_CFG.ACC_HOLD_EXIT) {
         this.snapshot.walkingSignature = false;
       }
     }
 
     // Calcul de la confiance basée sur la cadence normalisée
-    const cadence = this.peakHistory.length > 0 ? (this.peakHistory.length / 6) * 60 : 0;
-    this.snapshot.walkingConfidence = Math.min(1, Math.max(0, cadence / 180));
+    const cadence = this.peakHistory.length > 0 ? (this.peakHistory.length / AUTO_CTX_CFG.ACC_WIN_SEC) * 60 : 0;
+    this.snapshot.walkingConfidence = Math.min(1, Math.max(0, cadence / AUTO_CTX_CFG.ACC_CADENCE_MAX));
     this.snapshot.lastUpdated = Date.now();
   }
 

@@ -21,6 +21,7 @@ import {
 } from '@/lib/autoContextConfig';
 import { useSensorData } from '@/hooks/useSensorData';
 import { MotionWalkingSignature } from '@/services/motionWalkingSignature';
+import { calculateDataQuality } from '@/lib/autoContext.config';
 
 // Development telemetry logging
 function logTransition(prev: string, next: string, data: AutoContextEvaluationData) {
@@ -31,6 +32,7 @@ function logTransition(prev: string, next: string, data: AutoContextEvaluationDa
     speed: Math.round((data.movement.speed ?? 0) * 10) / 10,
     gpsQuality: data.location.gpsQuality,
     walkingSignature: data.movement.walkingSignature ?? null,
+    dataQuality: data.movement.dataQuality ?? null,
   });
 }
 
@@ -566,6 +568,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
           speed: speedKmh,
           isMoving: speedKmh > 2,
           walkingSignature: motionWalkingSignature.getSnapshot().walkingSignature,
+          dataQuality: calculateDataQuality(gpsQuality, motionWalkingSignature.getSnapshot().isActive),
         },
         time: {
           currentHour,
