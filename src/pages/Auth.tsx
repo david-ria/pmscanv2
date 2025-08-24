@@ -89,9 +89,9 @@ export default function Auth() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center">
+          <h1 className="text-center text-2xl font-bold">
             {t('auth.authentication')}
-          </CardTitle>
+          </h1>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">

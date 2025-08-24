@@ -206,7 +206,9 @@ export default function RealTime() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
+    <main role="main" className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
+      <h1 className="sr-only">AirSentinels - Real-time Air Quality Monitoring</h1>
+      
       {/* Map/Graph Section */}
       <div className="relative">
         {isRecording || localStorage.getItem('recording-confirmed') === 'true' ? (
@@ -300,6 +302,6 @@ export default function RealTime() {
 
 
       {/* Recording Debugger now in App.tsx */}
-    </div>
+    </main>
   );
 }

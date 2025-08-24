@@ -120,7 +120,11 @@ export default function History() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6">
+    <main role="main" className="min-h-screen bg-background px-4 py-6">
+      <h1 className="text-3xl font-bold text-foreground mb-6">
+        {t('history.title', 'Mission History')}
+      </h1>
+      
       {/* Sync Status */}
       <div className="flex items-center justify-end mb-6">
         <div className="flex items-center gap-2">
@@ -181,6 +185,6 @@ export default function History() {
           ))
         )}
       </div>
-    </div>
+    </main>
   );
 }
