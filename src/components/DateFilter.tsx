@@ -102,7 +102,7 @@ export function DateFilter({
               variant={selectedPeriod === period ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onPeriodChange(period)}
-              className="text-xs h-8 px-3"
+              className="text-xs min-h-[40px] px-3"
             >
               {periodLabels[period]}
             </Button>
@@ -115,7 +115,7 @@ export function DateFilter({
             variant="ghost"
             size="sm"
             onClick={() => navigateDate('prev')}
-            className="h-8 w-8 p-0"
+            className="min-h-[40px] min-w-[40px] p-0"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -125,7 +125,7 @@ export function DateFilter({
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
-                className="flex-1 justify-center text-sm font-medium h-8"
+                className="flex-1 justify-center text-sm font-medium min-h-[40px]"
               >
                 <CalendarIcon className="h-4 w-4 mr-2" />
                 {getDateRangeText()}
@@ -152,7 +152,7 @@ export function DateFilter({
             variant="ghost"
             size="sm"
             onClick={() => navigateDate('next')}
-            className="h-8 w-8 p-0"
+            className="min-h-[40px] min-w-[40px] p-0"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
