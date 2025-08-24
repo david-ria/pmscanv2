@@ -33,6 +33,23 @@ export interface CookingFeatures {
 }
 
 /**
+ * Cooking subtype scores based on feature analysis
+ */
+export interface CookingScores {
+  boiling: number;     // 0..1+ score for boiling activity
+  frying: number;      // 0..1+ score for frying activity
+  confidence: number;  // overall confidence in classification
+  predicted: CookSubtype2 | null; // best prediction or null if unclear
+}
+
+/**
+ * Enhanced cooking features with scoring
+ */
+export interface CookingFeaturesWithScores extends CookingFeatures {
+  scores: CookingScores;
+}
+
+/**
  * Utility function for calculating mean of array segment
  */
 function segmentMean(arr: number[], i0: number, i1: number): number {
@@ -259,14 +276,189 @@ export function calculateCookingFeatures(
 }
 
 /**
- * Enhanced cooking event with calculated features
+ * Calculate cooking subtype scores based on feature analysis
  */
-export interface EnhancedCookingEvent extends CookingEvent {
-  features?: CookingFeatures;
+export function calculateCookingScores(features: CookingFeatures): CookingScores {
+  let boilingScore = 0;
+  let fryingScore = 0;
+
+  // === BOILING SCORING RULES ===
+  
+  // +0.50 if ΔRH ≥ 6%
+  if (features.deltaRH >= 6) {
+    boilingScore += 0.50;
+  }
+  
+  // +0.15 if R10 ≤ 1.1
+  if (features.R10 <= 1.1) {
+    boilingScore += 0.15;
+  }
+  
+  // +0.10 if peakHeight < 100
+  if (features.peakHeight < 100) {
+    boilingScore += 0.10;
+  }
+  
+  // +0.05 if 0 ≤ ΔT ≤ 1.5 °C
+  if (features.deltaT >= 0 && features.deltaT <= 1.5) {
+    boilingScore += 0.05;
+  }
+  
+  // +0.05 if R1 ≥ 0.60
+  if (features.R1 >= 0.60) {
+    boilingScore += 0.05;
+  }
+
+  // === FRYING SCORING RULES ===
+  
+  // +0.30 if R1 ∈ [0.35, 0.65]
+  if (features.R1 >= 0.35 && features.R1 <= 0.65) {
+    fryingScore += 0.30;
+  }
+  
+  // +0.25 if peakHeight ≥ 100
+  if (features.peakHeight >= 100) {
+    fryingScore += 0.25;
+  }
+  
+  // +0.20 if riseRate ≥ 15
+  if (features.riseRate >= 15) {
+    fryingScore += 0.20;
+  }
+  
+  // +0.10 if decayHalfLife ≥ 10
+  if (features.decayHalfLife >= 10) {
+    fryingScore += 0.10;
+  }
+  
+  // +0.05 if R10 ≤ 1.2
+  if (features.R10 <= 1.2) {
+    fryingScore += 0.05;
+  }
+
+  // === CONTEXT BONUSES (applied to both) ===
+  
+  let contextBonus = 0;
+  
+  // +0.05 if still
+  if (features.still) {
+    contextBonus += 0.05;
+  }
+  
+  // +0.05 if atHome
+  if (features.atHome) {
+    contextBonus += 0.05;
+  }
+  
+  // +0.10 if kitchenBeacon
+  if (features.kitchenBeacon) {
+    contextBonus += 0.10;
+  }
+  
+  // +0.05 if mealTime
+  if (features.mealTime) {
+    contextBonus += 0.05;
+  }
+
+  // === ANTI-FALSE-POSITIVE PENALTIES (subtract from both) ===
+  
+  let penalties = 0;
+  
+  // −0.25 if !still and R10 > 1.4 (aspirateur)
+  if (!features.still && features.R10 > 1.4) {
+    penalties += 0.25;
+  }
+  
+  // −0.20 if R1 > 0.80 and ΔRH < 2% (tabac/encens)
+  if (features.R1 > 0.80 && features.deltaRH < 2) {
+    penalties += 0.20;
+  }
+  
+  // −0.30 if R10 > 1.8 and ΔRH < 2% (poussière/chantier)
+  if (features.R10 > 1.8 && features.deltaRH < 2) {
+    penalties += 0.30;
+  }
+
+  // Apply context bonuses and penalties
+  boilingScore = Math.max(0, boilingScore + contextBonus - penalties);
+  fryingScore = Math.max(0, fryingScore + contextBonus - penalties);
+
+  // Calculate overall confidence and prediction
+  const maxScore = Math.max(boilingScore, fryingScore);
+  const totalScore = boilingScore + fryingScore;
+  const confidence = totalScore > 0 ? maxScore / Math.max(totalScore, 1) : 0;
+  
+  let predicted: CookSubtype2 | null = null;
+  if (maxScore > 0.3) { // Minimum confidence threshold
+    predicted = boilingScore > fryingScore ? 'cooking-boiling' : 'cooking-frying';
+  }
+
+  const scores: CookingScores = {
+    boiling: Number(boilingScore.toFixed(3)),
+    frying: Number(fryingScore.toFixed(3)),
+    confidence: Number(confidence.toFixed(3)),
+    predicted
+  };
+
+  // Debug logging for development
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('🍳 Cooking Scores Calculated:', {
+      boiling: scores.boiling,
+      frying: scores.frying,
+      confidence: scores.confidence,
+      predicted: scores.predicted,
+      contextBonus: contextBonus.toFixed(3),
+      penalties: penalties.toFixed(3),
+      features: {
+        R1: features.R1.toFixed(3),
+        R10: features.R10.toFixed(3),
+        deltaRH: `${features.deltaRH}%`,
+        deltaT: `${features.deltaT}°C`,
+        peakHeight: `${features.peakHeight} µg/m³`,
+        riseRate: `${features.riseRate} µg/m³/min`,
+        decayHalfLife: `${features.decayHalfLife} min`
+      }
+    });
+  }
+
+  return scores;
 }
 
 /**
- * Detect and enhance cooking events with feature calculation
+ * Calculate comprehensive cooking features with scoring
+ */
+export function calculateCookingFeaturesWithScores(
+  measurements: PMScanData[],
+  episodeStart: Date,
+  episodeEnd: Date,
+  locationContext?: string,
+  automaticContext?: string
+): CookingFeaturesWithScores {
+  const features = calculateCookingFeatures(
+    measurements, 
+    episodeStart, 
+    episodeEnd, 
+    locationContext, 
+    automaticContext
+  );
+  
+  const scores = calculateCookingScores(features);
+
+  return {
+    ...features,
+    scores
+  };
+}
+
+/**
+ * Enhanced cooking event with calculated features and scores
+ */
+export interface EnhancedCookingEvent extends CookingEvent {
+  features?: CookingFeaturesWithScores;
+}
+
+/**
+ * Detect and enhance cooking events with feature calculation and scoring
  */
 export function enhanceCookingEventWithFeatures(
   cookingEvent: CookingEvent,
@@ -277,7 +469,7 @@ export function enhanceCookingEventWithFeatures(
   const episodeStart = new Date(cookingEvent.start);
   const episodeEnd = cookingEvent.end ? new Date(cookingEvent.end) : new Date(episodeStart.getTime() + 30 * 60 * 1000); // Default 30 min
   
-  const features = calculateCookingFeatures(
+  const featuresWithScores = calculateCookingFeaturesWithScores(
     measurements,
     episodeStart,
     episodeEnd,
@@ -285,8 +477,14 @@ export function enhanceCookingEventWithFeatures(
     automaticContext
   );
 
-  return {
+  // Update cooking event with predicted subtype and confidence
+  const enhancedEvent: EnhancedCookingEvent = {
     ...cookingEvent,
-    features
+    features: featuresWithScores,
+    subtype: featuresWithScores.scores.predicted || undefined,
+    confidence: featuresWithScores.scores.confidence,
+    lowConfidence: featuresWithScores.scores.confidence < 0.5
   };
+
+  return enhancedEvent;
 }

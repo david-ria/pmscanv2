@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateCookingFeatures, enhanceCookingEventWithFeatures } from '../cookingFeatures';
+import { calculateCookingFeatures, calculateCookingFeaturesWithScores, enhanceCookingEventWithFeatures } from '../cookingFeatures';
 import { PMScanData } from '@/lib/pmscan/types';
 import { CookingEvent } from '@/utils/eventUtils';
 
