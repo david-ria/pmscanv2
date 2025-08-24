@@ -2,6 +2,9 @@
  * Event management utilities to ensure consistent timestamp and storage handling
  */
 
+// Cooking event subtypes (internal classification)
+export type CookSubtype2 = "cooking-boiling" | "cooking-frying";
+
 export interface StandardEvent {
   id: string;
   missionId: string;
@@ -13,6 +16,18 @@ export interface StandardEvent {
   accuracy?: number;
   createdBy: string;
   timestamp: Date; // Always use Date objects internally
+}
+
+// Enhanced cooking event interface (internal use only - no CSV export impact)
+export interface CookingEvent extends StandardEvent {
+  eventType: "cooking";
+  // Internal enrichment fields (not exported to CSV)
+  subtype?: CookSubtype2;
+  confidence?: number;
+  lowConfidence?: boolean;
+  scoreMax?: number;
+  start?: number;
+  end?: number;
 }
 
 export interface EventStorageFormat {
@@ -54,6 +69,23 @@ export function normalizeEvent(event: any): StandardEvent {
     createdBy: event.created_by || event.createdBy,
     timestamp
   };
+}
+
+/**
+ * Normalize cooking event data (internal enrichment preserved)
+ */
+export function normalizeCookingEvent(event: any): CookingEvent {
+  const baseEvent = normalizeEvent(event) as CookingEvent;
+  
+  // Preserve internal cooking-specific fields if present
+  if (event.subtype) baseEvent.subtype = event.subtype;
+  if (event.confidence !== undefined) baseEvent.confidence = event.confidence;
+  if (event.lowConfidence !== undefined) baseEvent.lowConfidence = event.lowConfidence;
+  if (event.scoreMax !== undefined) baseEvent.scoreMax = event.scoreMax;
+  if (event.start !== undefined) baseEvent.start = event.start;
+  if (event.end !== undefined) baseEvent.end = event.end;
+  
+  return baseEvent;
 }
 
 /**
@@ -136,4 +168,21 @@ export function validateEvent(event: Partial<StandardEvent>): string[] {
   }
   
   return errors;
+}
+
+/**
+ * Helper function to check if an event is a cooking event
+ */
+export function isCookingEvent(event: StandardEvent): event is CookingEvent {
+  return event.eventType === 'cooking';
+}
+
+/**
+ * Helper function to safely cast to cooking event with validation
+ */
+export function asCookingEvent(event: StandardEvent): CookingEvent | null {
+  if (!isCookingEvent(event)) {
+    return null;
+  }
+  return event;
 }
