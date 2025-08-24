@@ -30,6 +30,8 @@ interface UnifiedDataState {
   
   // GPS data
   latestLocation: LocationData | null;
+  speedKmh: number;
+  gpsQuality: 'good' | 'poor';
   locationEnabled: boolean;
   
   // Actions
@@ -64,7 +66,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   // Core data sources
   const bluetooth = usePMScanBluetooth();
   const recording = useRecordingService(); // Single source of truth
-  const { latestLocation, locationEnabled, requestLocationPermission } = useGPS(true, true, recording.recordingFrequency);
+  const { latestLocation, locationEnabled, requestLocationPermission, speedKmh, gpsQuality } = useGPS(true, true, recording.recordingFrequency);
   const { saveMission: missionSaverFunction } = useMissionSaver();
 
   // Enhanced state change tracking
@@ -103,13 +105,13 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
 
   // Unified state object
   console.log('🔄 UNIFIED DATA - GPS STATE:', {
-    hasLatestLocation: !!latestLocation,
-    locationEnabled,
-    location: latestLocation ? {
-      lat: latestLocation.latitude,
-      lng: latestLocation.longitude,
-      accuracy: latestLocation.accuracy
-    } : null
+    hasLocation: !!latestLocation,
+    latitude: latestLocation?.latitude,
+    longitude: latestLocation?.longitude,
+    accuracy: latestLocation?.accuracy,
+    speedKmh,
+    gpsQuality,
+    locationEnabled
   });
 
   const unifiedState: UnifiedDataState = {
@@ -129,6 +131,8 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     
     // GPS data
     latestLocation,
+    speedKmh,
+    gpsQuality,
     locationEnabled,
     
     // Actions

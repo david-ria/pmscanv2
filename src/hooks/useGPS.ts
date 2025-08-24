@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { LocationData } from '@/types/PMScan';
 import { parseFrequencyToMs } from '@/lib/recordingUtils';
+import { GeoSpeedEstimator } from '@/utils/geoSpeed';
 import * as logger from '@/utils/logger';
 
 export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, recordingFrequency?: string) {
@@ -12,6 +13,11 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
   const watchIdRef = useRef<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const lastErrorTimeRef = useRef(0);
+  
+  // Speed estimator instance
+  const speedEstimatorRef = useRef(new GeoSpeedEstimator());
+  const [speedKmh, setSpeedKmh] = useState(0);
+  const [gpsQuality, setGpsQuality] = useState<'good' | 'poor'>('good');
 
   const stopWatching = useCallback(() => {
     if (watchIdRef.current !== null) {
@@ -62,10 +68,23 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
         timestamp: new Date(),
       };
 
+      // Calculate speed and GPS quality using GeoSpeedEstimator
+      const { speedKmh: newSpeed, gpsQuality: newQuality } = speedEstimatorRef.current.update({
+        lat: position.coords.latitude,
+        lon: position.coords.longitude,
+        t: position.timestamp,
+        acc: position.coords.accuracy
+      });
+
+      setSpeedKmh(newSpeed);
+      setGpsQuality(newQuality);
+
       console.log('🧭 === GPS LOCATION UPDATED ===', {
         latitude: locationData.latitude,
         longitude: locationData.longitude,
         accuracy: locationData.accuracy,
+        speedKmh: newSpeed,
+        gpsQuality: newQuality,
         timestamp: locationData.timestamp.toISOString()
       });
 
@@ -231,6 +250,10 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
       setLocationEnabled(false);
       setLatestLocation(null);
       setError(null);
+      // Reset speed estimator when GPS is disabled
+      speedEstimatorRef.current.reset();
+      setSpeedKmh(0);
+      setGpsQuality('good');
     }
   }, [enabled]);
 
@@ -257,6 +280,8 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
   return {
     locationEnabled,
     latestLocation,
+    speedKmh,
+    gpsQuality,
     error,
     requestLocationPermission,
   };

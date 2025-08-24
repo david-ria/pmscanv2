@@ -26,6 +26,8 @@ export function GlobalDataCollector() {
     recordingFrequency,
     missionContext,
     latestLocation,
+    speedKmh,
+    gpsQuality,
     isConnected,
   } = unifiedData;
 
@@ -184,20 +186,9 @@ export function GlobalDataCollector() {
 
         // Handle context and data point recording
         const handleContextAndDataPoint = async () => {
-          // Calculate speed and movement from GPS data
-          let speed = 0;
-          let isMoving = false;
-          
-          if (latestLocation) {
-            const { updateLocationHistory } = await import('@/utils/speedCalculator');
-            const speedData = updateLocationHistory(
-              latestLocation.latitude,
-              latestLocation.longitude,
-              latestLocation.timestamp
-            );
-            speed = speedData.speed;
-            isMoving = speedData.isMoving;
-          }
+          // Use speed from GPS hook (already calculated with EMA smoothing)
+          const speed = speedKmh;
+          const isMoving = speed > 2; // Simple threshold for movement detection
           
           // Get enriched location if available
           let enrichedLocationName = '';

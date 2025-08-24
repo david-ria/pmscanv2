@@ -75,11 +75,10 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   const workCountsKey = 'workWifiCounts';
   // Use external location if provided, otherwise initialize own GPS
   const gpsResult = useGPS(
-    !externalLocation && settings.enabled && enableActiveScanning,
+    enableActiveScanning && settings.enabled && !externalLocation,
     settings.highAccuracy ?? false
   );
-  
-  const { locationEnabled, latestLocation: gpsLocation, requestLocationPermission } = gpsResult;
+  const { locationEnabled, latestLocation: gpsLocation, requestLocationPermission, speedKmh, gpsQuality } = gpsResult;
   const latestLocation = externalLocation || gpsLocation;
   
   const { weatherData } = useWeatherService();
@@ -462,20 +461,19 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       // Real movement detection
       const isMoving = speed > 1;
 
-      console.log(`🔍 AutoContext evaluation:`, {
+      console.log('🧠 AUTO-CONTEXT INPUT DATA:', {
+        latestLocation: location ? `${location.latitude}, ${location.longitude}` : 'none',
+        speed: speedKmh,
+        isMoving: speedKmh > 2,
         newWifiSSID,
         isConnectedToWifi,
         currentHour,
         isWeekend,
-        speed,
-        isMoving,
-        location: location ? `${location.latitude}, ${location.longitude}` : 'none'
+        gpsQuality
       });
 
-      const gpsQuality =
-        location && location.accuracy && location.accuracy < 50
-          ? 'good'
-          : 'poor';
+      // GPS quality and speed are now handled by GeoSpeedEstimator
+      // Remove old manual GPS quality calculation as it's now from the estimator
       
       // Gestion intelligente GPS vs capteurs pour underground
       updateGPSAccuracy(location?.accuracy);
@@ -553,8 +551,8 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
           gpsQuality,
         },
         movement: {
-          speed,
-          isMoving,
+          speed: speedKmh,
+          isMoving: speedKmh > 2,
           walkingSignature: motionWalkingSignature.getSnapshot().walkingSignature,
         },
         time: {
