@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { calculateCookingFeatures, calculateCookingFeaturesWithScores, enhanceCookingEventWithFeatures } from '../cookingFeatures';
+import { 
+  calculateCookingFeatures, 
+  calculateCookingFeaturesWithScores, 
+  enhanceCookingEventWithFeatures,
+  calculateCookingScores,
+  CookingFeatures
+} from '../cookingFeatures';
 import { PMScanData } from '@/lib/pmscan/types';
 import { CookingEvent } from '@/utils/eventUtils';
 
@@ -148,6 +154,116 @@ describe('Cooking Features Calculation', () => {
     expect(enhanced.features!.R1).toBeGreaterThan(0);
     expect(enhanced.features!.peak25).toBeGreaterThan(enhanced.features!.baseline25);
     expect(enhanced.eventType).toBe('cooking');
+  });
+
+  describe('Decision Logic Tests', () => {
+    it('should classify boiling scenario correctly', () => {
+      // Create controlled features for boiling
+      const features: CookingFeatures = {
+        R1: 0.65,
+        R10: 1.0,
+        riseRate: 8,
+        peakHeight: 70,
+        decayHalfLife: 5,
+        deltaRH: 8, // High humidity increase
+        deltaT: 1.0,
+        still: true,
+        atHome: true,
+        kitchenBeacon: true,
+        mealTime: true,
+        duration: 15,
+        baseline25: 10,
+        peak25: 80,
+        startTime: new Date(),
+        dataQuality: 'good',
+        measurementCount: 15
+      };
+      
+      const scores = calculateCookingScores(features);
+      const boil = scores.boiling;
+      const fry = scores.frying;
+      
+      const chosen = (boil >= fry) ? "cooking-boiling" : "cooking-frying";
+      const confidence = Math.max(0, Math.min(1, Math.max(boil, fry)));
+      
+      expect(chosen).toBe('cooking-boiling');
+      expect(confidence).toBeGreaterThanOrEqual(0.6);
+      expect(boil).toBeGreaterThan(fry);
+      
+      console.log('🧪 Boiling Test:', { boil, fry, chosen, confidence });
+    });
+
+    it('should classify frying scenario correctly', () => {
+      // Create controlled features for frying
+      const features: CookingFeatures = {
+        R1: 0.50,
+        R10: 1.15,
+        riseRate: 20, // High rise rate
+        peakHeight: 140, // High peak
+        decayHalfLife: 15, // Long decay
+        deltaRH: 1, // Low humidity change
+        deltaT: 2.5,
+        still: true,
+        atHome: true,
+        kitchenBeacon: true,
+        mealTime: true,
+        duration: 20,
+        baseline25: 15,
+        peak25: 155,
+        startTime: new Date(),
+        dataQuality: 'good',
+        measurementCount: 20
+      };
+      
+      const scores = calculateCookingScores(features);
+      const boil = scores.boiling;
+      const fry = scores.frying;
+      
+      const chosen = (boil >= fry) ? "cooking-boiling" : "cooking-frying";
+      const confidence = Math.max(0, Math.min(1, Math.max(boil, fry)));
+      
+      expect(chosen).toBe('cooking-frying');
+      expect(confidence).toBeGreaterThanOrEqual(0.6);
+      expect(fry).toBeGreaterThan(boil);
+      
+      console.log('🧪 Frying Test:', { boil, fry, chosen, confidence });
+    });
+
+    it('should penalize vacuum cleaner false positive', () => {
+      // Create features that trigger anti-false-positive penalty
+      const features: CookingFeatures = {
+        R1: 0.45,
+        R10: 1.6, // High R10 indicating coarse particles
+        riseRate: 12,
+        peakHeight: 80,
+        decayHalfLife: 8,
+        deltaRH: 0.5, // Very low humidity change
+        deltaT: 0.2,
+        still: false, // Movement detected (vacuum cleaner signature)
+        atHome: true,
+        kitchenBeacon: false,
+        mealTime: false, // Not meal time
+        duration: 10,
+        baseline25: 12,
+        peak25: 92,
+        startTime: new Date(),
+        dataQuality: 'good',
+        measurementCount: 12
+      };
+      
+      const scores = calculateCookingScores(features);
+      const boil = scores.boiling;
+      const fry = scores.frying;
+      
+      const confidence = Math.max(0, Math.min(1, Math.max(boil, fry)));
+      
+      // Should trigger vacuum cleaner penalty (-0.25) and reduce confidence
+      expect(confidence).toBeLessThanOrEqual(0.5);
+      expect(boil).toBeLessThan(0.3); // Both scores should be low after penalty
+      expect(fry).toBeLessThan(0.3);
+      
+      console.log('🧪 Anti-FP Test (Vacuum):', { boil, fry, confidence, penalty_triggered: true });
+    });
   });
 
   it('should detect meal time context correctly', () => {
