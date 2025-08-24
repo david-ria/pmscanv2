@@ -186,18 +186,7 @@
         </main>
       </div>
       
-      <!-- JavaScript fallback - non-critical, can be deferred -->
-      <script defer>
-        // Hide static content when React takes over (non-critical)
-        document.addEventListener('DOMContentLoaded', function() {
-          setTimeout(function() {
-            var staticContent = document.querySelector('#root > div');
-            if (staticContent && window.React) {
-              staticContent.style.display = 'none';
-            }
-          }, 100);
-        });
-      </script>
+      <script src="/static-content-handler.js" defer></script>
     </div>
     <script type="module" src="/src/main.tsx" defer></script>
     
