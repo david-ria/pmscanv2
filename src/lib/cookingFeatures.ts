@@ -1,6 +1,66 @@
 import { PMScanData } from '@/lib/pmscan/types';
 import { CookingEvent, CookSubtype2 } from '@/utils/eventUtils';
 
+/**
+ * Centralized cooking classification parameters for easy tuning
+ */
+export const CookingParams = {
+  // Boiling scoring thresholds
+  dRH_boiling: 6,          // ΔRH ≥ 6% → +0.50
+  R10_boiling: 1.1,        // R10 ≤ 1.1 → +0.15
+  peak_low_boiling: 100,   // peakHeight < 100 → +0.10
+  dT_boiling_max: 1.5,     // 0 ≤ ΔT ≤ 1.5°C → +0.05
+  R1_boiling_min: 0.60,    // R1 ≥ 0.60 → +0.05
+
+  // Frying scoring thresholds
+  R1_frying_min: 0.35,     // R1 ∈ [0.35, 0.65] → +0.30
+  R1_frying_max: 0.65,
+  peak_high_frying: 100,   // peakHeight ≥ 100 → +0.25
+  rise_frying: 15,         // riseRate ≥ 15 → +0.20
+  tHalf_frying: 10,        // decayHalfLife ≥ 10 → +0.10
+  R10_common: 1.2,         // R10 ≤ 1.2 → +0.05
+
+  // Anti-false-positive penalties
+  penalties: {
+    vacR10: 1.4,           // !still & R10 > 1.4 → -0.25 (vacuum)
+    smokeR1: 0.80,         // R1 > 0.80 & ΔRH < 2% → -0.20 (smoke/incense)
+    dustR10: 1.8,          // R10 > 1.8 & ΔRH < 2% → -0.30 (dust/construction)
+    dRH_min: 2             // Minimum ΔRH for smoke/dust penalties
+  },
+
+  // Scoring weights (exact values from rules)
+  weights: {
+    boiling_dRH: 0.50,
+    boiling_R10: 0.15,
+    boiling_peak: 0.10,
+    boiling_dT: 0.05,
+    boiling_R1: 0.05,
+    
+    frying_R1: 0.30,
+    frying_peak: 0.25,
+    frying_rise: 0.20,
+    frying_tHalf: 0.10,
+    frying_R10: 0.05,
+    
+    context_still: 0.05,
+    context_home: 0.05,
+    context_kitchen: 0.10,
+    context_mealtime: 0.05,
+    
+    penalty_vacuum: 0.25,
+    penalty_smoke: 0.20,
+    penalty_dust: 0.30
+  },
+
+  // Debug controls
+  debug: {
+    enabled: process.env.NODE_ENV === 'development',
+    logFeatures: true,
+    logScores: true,
+    logDecision: true
+  }
+};
+
 export interface CookingFeatures {
   // PM ratios in central third
   R1: number;          // mean(PM1/PM2.5)
@@ -253,8 +313,8 @@ export function calculateCookingFeatures(
     measurementCount
   };
 
-  // Debug logging for development
-  if (process.env.NODE_ENV === 'development') {
+  // Controllable debug logging
+  if (CookingParams.debug.enabled && CookingParams.debug.logFeatures) {
     console.debug('🍳 Cooking Features Calculated:', {
       duration: `${features.duration} min`,
       peakHeight: `${features.peakHeight} µg/m³`,
@@ -279,61 +339,62 @@ export function calculateCookingFeatures(
  * Calculate cooking subtype scores based on feature analysis
  */
 export function calculateCookingScores(features: CookingFeatures): CookingScores {
+  const params = CookingParams;
   let boilingScore = 0;
   let fryingScore = 0;
 
   // === BOILING SCORING RULES ===
   
-  // +0.50 if ΔRH ≥ 6%
-  if (features.deltaRH >= 6) {
-    boilingScore += 0.50;
+  // ΔRH ≥ 6% → +0.50
+  if (features.deltaRH >= params.dRH_boiling) {
+    boilingScore += params.weights.boiling_dRH;
   }
   
-  // +0.15 if R10 ≤ 1.1
-  if (features.R10 <= 1.1) {
-    boilingScore += 0.15;
+  // R10 ≤ 1.1 → +0.15
+  if (features.R10 <= params.R10_boiling) {
+    boilingScore += params.weights.boiling_R10;
   }
   
-  // +0.10 if peakHeight < 100
-  if (features.peakHeight < 100) {
-    boilingScore += 0.10;
+  // peakHeight < 100 → +0.10
+  if (features.peakHeight < params.peak_low_boiling) {
+    boilingScore += params.weights.boiling_peak;
   }
   
-  // +0.05 if 0 ≤ ΔT ≤ 1.5 °C
-  if (features.deltaT >= 0 && features.deltaT <= 1.5) {
-    boilingScore += 0.05;
+  // 0 ≤ ΔT ≤ 1.5°C → +0.05
+  if (features.deltaT >= 0 && features.deltaT <= params.dT_boiling_max) {
+    boilingScore += params.weights.boiling_dT;
   }
   
-  // +0.05 if R1 ≥ 0.60
-  if (features.R1 >= 0.60) {
-    boilingScore += 0.05;
+  // R1 ≥ 0.60 → +0.05
+  if (features.R1 >= params.R1_boiling_min) {
+    boilingScore += params.weights.boiling_R1;
   }
 
   // === FRYING SCORING RULES ===
   
-  // +0.30 if R1 ∈ [0.35, 0.65]
-  if (features.R1 >= 0.35 && features.R1 <= 0.65) {
-    fryingScore += 0.30;
+  // R1 ∈ [0.35, 0.65] → +0.30
+  if (features.R1 >= params.R1_frying_min && features.R1 <= params.R1_frying_max) {
+    fryingScore += params.weights.frying_R1;
   }
   
-  // +0.25 if peakHeight ≥ 100
-  if (features.peakHeight >= 100) {
-    fryingScore += 0.25;
+  // peakHeight ≥ 100 → +0.25
+  if (features.peakHeight >= params.peak_high_frying) {
+    fryingScore += params.weights.frying_peak;
   }
   
-  // +0.20 if riseRate ≥ 15
-  if (features.riseRate >= 15) {
-    fryingScore += 0.20;
+  // riseRate ≥ 15 → +0.20
+  if (features.riseRate >= params.rise_frying) {
+    fryingScore += params.weights.frying_rise;
   }
   
-  // +0.10 if decayHalfLife ≥ 10
-  if (features.decayHalfLife >= 10) {
-    fryingScore += 0.10;
+  // decayHalfLife ≥ 10 → +0.10
+  if (features.decayHalfLife >= params.tHalf_frying) {
+    fryingScore += params.weights.frying_tHalf;
   }
   
-  // +0.05 if R10 ≤ 1.2
-  if (features.R10 <= 1.2) {
-    fryingScore += 0.05;
+  // R10 ≤ 1.2 → +0.05
+  if (features.R10 <= params.R10_common) {
+    fryingScore += params.weights.frying_R10;
   }
 
   // === CONTEXT BONUSES (applied to both) ===
@@ -342,41 +403,41 @@ export function calculateCookingScores(features: CookingFeatures): CookingScores
   
   // +0.05 if still
   if (features.still) {
-    contextBonus += 0.05;
+    contextBonus += params.weights.context_still;
   }
   
   // +0.05 if atHome
   if (features.atHome) {
-    contextBonus += 0.05;
+    contextBonus += params.weights.context_home;
   }
   
   // +0.10 if kitchenBeacon
   if (features.kitchenBeacon) {
-    contextBonus += 0.10;
+    contextBonus += params.weights.context_kitchen;
   }
   
   // +0.05 if mealTime
   if (features.mealTime) {
-    contextBonus += 0.05;
+    contextBonus += params.weights.context_mealtime;
   }
 
   // === ANTI-FALSE-POSITIVE PENALTIES (subtract from both) ===
   
   let penalties = 0;
   
-  // −0.25 if !still and R10 > 1.4 (aspirateur)
-  if (!features.still && features.R10 > 1.4) {
-    penalties += 0.25;
+  // −0.25 if !still and R10 > 1.4 (vacuum cleaner)
+  if (!features.still && features.R10 > params.penalties.vacR10) {
+    penalties += params.weights.penalty_vacuum;
   }
   
-  // −0.20 if R1 > 0.80 and ΔRH < 2% (tabac/encens)
-  if (features.R1 > 0.80 && features.deltaRH < 2) {
-    penalties += 0.20;
+  // −0.20 if R1 > 0.80 and ΔRH < 2% (smoke/incense)
+  if (features.R1 > params.penalties.smokeR1 && features.deltaRH < params.penalties.dRH_min) {
+    penalties += params.weights.penalty_smoke;
   }
   
-  // −0.30 if R10 > 1.8 and ΔRH < 2% (poussière/chantier)
-  if (features.R10 > 1.8 && features.deltaRH < 2) {
-    penalties += 0.30;
+  // −0.30 if R10 > 1.8 and ΔRH < 2% (dust/construction)
+  if (features.R10 > params.penalties.dustR10 && features.deltaRH < params.penalties.dRH_min) {
+    penalties += params.weights.penalty_dust;
   }
 
   // Apply context bonuses and penalties
@@ -400,8 +461,8 @@ export function calculateCookingScores(features: CookingFeatures): CookingScores
     predicted
   };
 
-  // Debug logging for development
-  if (process.env.NODE_ENV === 'development') {
+  // Controllable debug logging
+  if (params.debug.enabled && params.debug.logScores) {
     console.debug('🍳 Cooking Scores Calculated:', {
       boiling: scores.boiling,
       frying: scores.frying,
@@ -409,7 +470,16 @@ export function calculateCookingScores(features: CookingFeatures): CookingScores
       predicted: scores.predicted,
       contextBonus: contextBonus.toFixed(3),
       penalties: penalties.toFixed(3),
-      features: {
+      thresholds_used: {
+        dRH_boiling: params.dRH_boiling,
+        R10_boiling: params.R10_boiling,
+        peak_frying: params.peak_high_frying,
+        rise_frying: params.rise_frying
+      }
+    });
+    
+    if (params.debug.logFeatures) {
+      console.debug('🍳 Key Features:', {
         R1: features.R1.toFixed(3),
         R10: features.R10.toFixed(3),
         deltaRH: `${features.deltaRH}%`,
@@ -417,8 +487,8 @@ export function calculateCookingScores(features: CookingFeatures): CookingScores
         peakHeight: `${features.peakHeight} µg/m³`,
         riseRate: `${features.riseRate} µg/m³/min`,
         decayHalfLife: `${features.decayHalfLife} min`
-      }
-    });
+      });
+    }
   }
 
   return scores;
@@ -494,19 +564,21 @@ export function enhanceCookingEventWithFeatures(
     lowConfidence: lowConfidence || undefined // Only set if true
   };
 
-  // Log final cooking event result in JSON format
-  console.log('🍳 Cooking Event Result:', JSON.stringify({
-    type: "cooking",
-    subtype: chosen,
-    confidence: confidence,
-    lowConfidence: lowConfidence || undefined,
-    scores: {
-      boiling: boil,
-      frying: fry
-    },
-    timestamp: enhancedEvent.timestamp.toISOString(),
-    duration: featuresWithScores.duration
-  }, null, 2));
+  // Controllable decision logging
+  if (CookingParams.debug.enabled && CookingParams.debug.logDecision) {
+    console.log('🍳 Cooking Event Result:', JSON.stringify({
+      type: "cooking",
+      subtype: chosen,
+      confidence: confidence,
+      lowConfidence: lowConfidence || undefined,
+      scores: {
+        boiling: boil,
+        frying: fry
+      },
+      timestamp: enhancedEvent.timestamp.toISOString(),
+      duration: featuresWithScores.duration
+    }, null, 2));
+  }
 
   return enhancedEvent;
 }

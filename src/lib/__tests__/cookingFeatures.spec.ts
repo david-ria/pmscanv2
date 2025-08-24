@@ -4,7 +4,8 @@ import {
   calculateCookingFeaturesWithScores, 
   enhanceCookingEventWithFeatures,
   calculateCookingScores,
-  CookingFeatures
+  CookingFeatures,
+  CookingParams
 } from '../cookingFeatures';
 import { PMScanData } from '@/lib/pmscan/types';
 import { CookingEvent } from '@/utils/eventUtils';
@@ -263,6 +264,58 @@ describe('Cooking Features Calculation', () => {
       expect(fry).toBeLessThan(0.3);
       
       console.log('🧪 Anti-FP Test (Vacuum):', { boil, fry, confidence, penalty_triggered: true });
+    });
+
+    it('should respond to parameter changes', () => {
+      // Test that changing CookingParams affects decisions
+      const originalDRH = CookingParams.dRH_boiling;
+      const originalWeight = CookingParams.weights.boiling_dRH;
+      
+      try {
+        // Create borderline boiling scenario
+        const features: CookingFeatures = {
+          R1: 0.65,
+          R10: 1.0,
+          riseRate: 8,
+          peakHeight: 70,
+          decayHalfLife: 5,
+          deltaRH: 5, // Just below original threshold (6)
+          deltaT: 1.0,
+          still: true,
+          atHome: true,
+          kitchenBeacon: true,
+          mealTime: true,
+          duration: 15,
+          baseline25: 10,
+          peak25: 80,
+          startTime: new Date(),
+          dataQuality: 'good',
+          measurementCount: 15
+        };
+        
+        // Test with original parameters
+        const originalScores = calculateCookingScores(features);
+        
+        // Modify parameters to lower threshold
+        CookingParams.dRH_boiling = 4; // Lower threshold should trigger boiling bonus
+        
+        const modifiedScores = calculateCookingScores(features);
+        
+        // Boiling score should increase with lower threshold
+        expect(modifiedScores.boiling).toBeGreaterThan(originalScores.boiling);
+        expect(modifiedScores.boiling - originalScores.boiling).toBeCloseTo(originalWeight, 2);
+        
+        console.log('🧪 Parameter Test:', {
+          original: originalScores.boiling,
+          modified: modifiedScores.boiling,
+          difference: modifiedScores.boiling - originalScores.boiling,
+          expected_difference: originalWeight
+        });
+        
+      } finally {
+        // Restore original parameters
+        CookingParams.dRH_boiling = originalDRH;
+      }
     });
   });
 
