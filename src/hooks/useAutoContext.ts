@@ -22,6 +22,18 @@ import {
 import { useSensorData } from '@/hooks/useSensorData';
 import { MotionWalkingSignature } from '@/services/motionWalkingSignature';
 
+// Development telemetry logging
+function logTransition(prev: string, next: string, data: AutoContextEvaluationData) {
+  if (process.env.NODE_ENV !== 'development') return;
+  if (prev === next) return;
+  // eslint-disable-next-line no-console
+  console.debug('[AutoContext]', `${prev} -> ${next}`, {
+    speed: Math.round((data.movement.speed ?? 0) * 10) / 10,
+    gpsQuality: data.location.gpsQuality,
+    walkingSignature: data.movement.walkingSignature ?? null,
+  });
+}
+
 interface AutoContextInputs {
   pmData?: PMScanData;
   location?: LocationData;
@@ -587,33 +599,37 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
         firstFewRules: rulesToUse.slice(0, 3).map(r => ({ id: r.id, priority: r.priority, result: r.result }))
       });
 
+      // Log transition for development debugging
+      logTransition(latestContext, state, evaluationData);
+
       // Apply ML model if enabled and available
       if (settings.mlEnabled && model) {
         try {
           const tf = await import('@tensorflow/tfjs');
           const mlState = tf.tidy(() => {
-            const tensor = convertToTensor({ ...inputs, isMoving });
+            const tensor = convertToTensor({ ...inputs, isMoving: speedKmh > 2 });
             const prediction = model.predict(tensor) as any;
             const index = prediction.argMax(-1).dataSync()[0];
             return MODEL_LABELS[index];
           });
-          if (mlState) state = mlState;
+          if (mlState) {
+            logTransition(state, mlState, evaluationData);
+            state = mlState;
+          }
         } catch (err) {
           console.error('ML prediction failed', err);
         }
       }
 
-      // Override for high-speed movement detection (enhanced driving detection)
-      if (speed > 15) { // 15 km/h or higher indicates likely vehicle transport
-        if (speed > 25) {
-          state = 'Driving'; // High confidence driving
-        } else {
-          state = 'Transport'; // Could be bus, bike, etc.
-        }
-        logger.debug(`🚗 Override context to ${state} due to speed: ${speed} km/h`);
-      } else if (isCarConnected && speed > 5) {
+      // Reduced overrides - let rules handle most cases
+      // Only override for extreme cases not covered by rules
+      if (speedKmh > 50) { // Very high speed - definitely driving
+        const prevState = state;
         state = 'Driving';
-        logger.debug(`🚗 Override context to Driving due to car bluetooth + speed`);
+        if (prevState !== state) {
+          logTransition(prevState, state, evaluationData);
+          logger.debug(`🚗 Override context to ${state} due to very high speed: ${speedKmh} km/h`);
+        }
       }
 
       console.log(`✅ Final AutoContext result: "${state}"`);
