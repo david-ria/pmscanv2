@@ -20,6 +20,7 @@ import {
   AutoContextConfig,
 } from '@/lib/autoContextConfig';
 import { useSensorData } from '@/hooks/useSensorData';
+import { MotionWalkingSignature } from '@/services/motionWalkingSignature';
 
 interface AutoContextInputs {
   pmData?: PMScanData;
@@ -66,6 +67,10 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
   const [latestContext, setLatestContext] = useState<string>('');
   const [model, setModel] = useState<any | null>(null);
+  
+  // Initialize motion walking signature service
+  const [motionWalkingSignature] = useState(() => new MotionWalkingSignature());
+  
   const homeCountsKey = 'homeWifiCounts';
   const workCountsKey = 'workWifiCounts';
   // Use external location if provided, otherwise initialize own GPS
@@ -138,23 +143,18 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
     }
   }, [settings.mlEnabled, model]);
 
+  // Initialize and manage motion walking signature service
   useEffect(() => {
-    if (settings.enabled && enableActiveScanning && !externalLocation) {
-      requestLocationPermission().catch((err) => {
-        console.error('Failed to request location permission', err);
-      });
-      
-      // Activer les capteurs pour la détection des transports souterrains
-      startSensorListening().catch((err) => {
-        console.error('Failed to start sensor listening', err);
-      });
+    if (settings.enabled) {
+      motionWalkingSignature.start().catch(console.error);
     } else {
-      // Désactiver les capteurs quand l'auto-contexte est désactivé
-      stopSensorListening().catch((err) => {
-        console.error('Failed to stop sensor listening', err);
-      });
+      motionWalkingSignature.stop();
     }
-  }, [settings.enabled, enableActiveScanning, externalLocation, requestLocationPermission, startSensorListening, stopSensorListening]);
+
+    return () => {
+      motionWalkingSignature.stop();
+    };
+  }, [settings.enabled, motionWalkingSignature]);
 
   // Real WiFi detection function
   const getCurrentWifiSSID = useCallback((): string => {
@@ -555,6 +555,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
         movement: {
           speed,
           isMoving,
+          walkingSignature: motionWalkingSignature.getSnapshot().walkingSignature,
         },
         time: {
           currentHour,
