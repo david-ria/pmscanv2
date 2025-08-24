@@ -262,7 +262,7 @@ export function useMenuSections({
           {
             icon: Hash,
             label: 'Geohash Encoding',
-            badge: geohashSettings.enabled ? getGeohashPrecisionDescription(geohashSettings.precision) : null,
+            badge: null,
             toggle: {
               checked: geohashSettings.enabled,
               onCheckedChange: (enabled: boolean) => updateGeohashSettings({ enabled }),

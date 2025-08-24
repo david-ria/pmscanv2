@@ -11,7 +11,7 @@
   "settings": {
     "title": "Configuració",
     "subtitle": "Configuració i compte",
-    "appVersion": "PMSCAN v1.1",
+    "appVersion": "PMSCAN 2.0",
     "dataSync": "Sincr. dades 2 min"
   },
   "account": {
