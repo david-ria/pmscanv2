@@ -118,6 +118,29 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     result: 'Driving',
   },
 
+  {
+    id: 'driving-sticky-unless-walk',
+    name: 'Driving sticky unless walking',
+    description: 'Stay Driving if previous was Driving and no walking signature',
+    priority: 96,
+    conditions: {
+      context: { latestContextStartsWith: 'Driving' }
+    },
+    result: 'Driving',
+  },
+  {
+    id: 'driving-redlight',
+    name: 'Driving red light / slow stop',
+    description: 'Remain Driving at very low speed if no walking signature',
+    priority: 94,
+    conditions: {
+      context: { latestContextStartsWith: 'Driving' },
+      location: { gpsQuality: 'good' },
+      movement: { speed: { max: 5 } }
+    },
+    result: 'Driving',
+  },
+
   // Car bluetooth detection (when available)
   {
     id: 'driving-car-bluetooth',
@@ -135,7 +158,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
   {
     id: 'outdoor-cycling',
     name: 'Cycling',
-    description: 'Medium speed outdoor movement (8-19 km/h)',
+    description: 'Medium speed outdoor movement (8-19 km/h) without walking signature',
     priority: 85,
     conditions: {
       location: { gpsQuality: 'good' },
@@ -145,9 +168,21 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
   },
   
   {
+    id: 'outdoor-jogging-accel',
+    name: 'Jogging',
+    description: 'Jogging speed (7-15 km/h) with walking signature',
+    priority: 82,
+    conditions: {
+      location: { gpsQuality: 'good' },
+      movement: { speed: { min: 7, max: 15 } }
+    },
+    result: 'Outdoor jogging',
+  },
+
+  {
     id: 'outdoor-walking',
     name: 'Walking',
-    description: 'Slow outdoor movement (2-7 km/h)',
+    description: 'Slow outdoor movement (2-7 km/h) with walking signature',
     priority: 80,
     conditions: {
       location: { gpsQuality: 'good' },
@@ -382,6 +417,17 @@ function matchesRule(
       }
     }
   }
+
+  // --- Walking signature hook (minimal diff) ---
+  const needsWalkSig = /with walking signature/i.test(rule.description || '');
+  const forbidWalkSig = /without walking signature/i.test(rule.description || '');
+  const walkSig = data.movement?.walkingSignature === true;
+
+  if (needsWalkSig && !walkSig) return false;
+  if (forbidWalkSig && walkSig) return false;
+
+  // Règle sticky: ne pas matcher si marche détectée
+  if (rule.id === 'driving-sticky-unless-walk' && walkSig) return false;
 
   // Check time conditions
   if (rule.conditions.time) {
