@@ -40,7 +40,7 @@ export function initializeDatabasePoller(config: Config) {
 /**
  * Test database connection
  */
-async function testDatabaseConnection(): Promise<boolean> {
+export async function testDatabaseConnection(): Promise<boolean> {
   try {
     const { data, error } = await supabase
       .from('missions')
@@ -63,7 +63,7 @@ async function testDatabaseConnection(): Promise<boolean> {
 /**
  * Get pending missions from database
  */
-async function getPendingMissions(): Promise<PendingMission[]> {
+export async function getPendingMissions(): Promise<PendingMission[]> {
   if (!supabase || !appConfig) {
     throw new Error('Database poller not initialized');
   }
@@ -103,7 +103,7 @@ async function getPendingMissions(): Promise<PendingMission[]> {
 /**
  * Mark mission as processed in database
  */
-async function markMissionAsProcessed(missionId: string, success: boolean): Promise<void> {
+export async function markMissionAsProcessed(missionId: string, success: boolean): Promise<void> {
   try {
     const updates: any = {
       robot_processed: new Date().toISOString(),
@@ -141,14 +141,14 @@ async function markMissionAsProcessed(missionId: string, success: boolean): Prom
 /**
  * Get processing statistics
  */
-function getProcessingStats(): ProcessingStats {
+export function getProcessingStats(): ProcessingStats {
   return { ...processingStats };
 }
 
 /**
  * Reset processing statistics
  */
-function resetProcessingStats(): void {
+export function resetProcessingStats(): void {
   processingStats = {
     scanned: 0,
     processed: 0,
@@ -157,12 +157,4 @@ function resetProcessingStats(): void {
   };
 }
 
-export {
-  testDatabaseConnection,
-  getPendingMissions,
-  markMissionAsProcessed,
-  getProcessingStats,
-  resetProcessingStats,
-  type PendingMission,
-  type ProcessingStats,
-};
+export type { PendingMission, ProcessingStats };

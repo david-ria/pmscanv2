@@ -44,38 +44,42 @@ async function main() {
     server.get('/health', async (request, reply) => {
       const processorStatus = getProcessorStatus();
       const posterMetrics = getPosterMetrics();
-      const healthy = isHealthy();
+      const isSystemHealthy = isHealthy();
 
       const healthData = {
-        status: healthy ? 'healthy' : 'unhealthy',
+        status: isSystemHealthy ? 'healthy' : 'unhealthy',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         processor: processorStatus,
         poster: posterMetrics,
-        memory: process.memoryUsage(),
+        memory: {
+          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+          total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+        },
       };
 
-      reply.code(healthy ? 200 : 503).send(healthData);
+      reply.code(isSystemHealthy ? 200 : 503).send(healthData);
     });
 
-    // Metrics endpoint
+    // Metrics endpoint  
     server.get('/metrics', async (request, reply) => {
       const processorStatus = getProcessorStatus();
       const posterMetrics = getPosterMetrics();
 
       const metrics = {
-        timestamp: new Date().toISOString(),
         processor: processorStatus,
         poster: posterMetrics,
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
       };
 
       reply.send(metrics);
     });
 
     // Start the server
-    await server.listen({ 
-      port: config.server.port, 
-      host: '0.0.0.0' 
+    await server.listen({
+      port: config.server.port,
+      host: '0.0.0.0', // Listen on all interfaces for Docker
     });
 
     logger.info(`✅ Health server running on port ${config.server.port}`);
@@ -106,24 +110,24 @@ async function main() {
     });
   };
 
-  // Register signal handlers
+  // Handle shutdown signals
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
-  // Handle uncaught exceptions and unhandled rejections
+  // Handle uncaught exceptions and rejections
   process.on('uncaughtException', (error) => {
     logger.error('💥 Uncaught exception:', error);
-    process.exit(1);
+    gracefulShutdown('UNCAUGHT_EXCEPTION');
   });
 
-  process.on('unhandledRejection', (reason) => {
-    logger.error('💥 Unhandled rejection:', reason);
-    process.exit(1);
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error('💥 Unhandled rejection at:', promise, 'reason:', reason);
+    gracefulShutdown('UNHANDLED_REJECTION');
   });
 }
 
 // Start the application
 main().catch((error) => {
-  logger.error('💥 Bootstrap failed:', error);
+  logger.error('💥 Failed to start application:', error);
   process.exit(1);
 });
