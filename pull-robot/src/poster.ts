@@ -1,13 +1,24 @@
 import Bottleneck from 'bottleneck';
-import { config } from './config.js';
 import { logger } from './logger.js';
+import type { Config } from './config.js';
 import type { ATMPayload } from './databaseReader.js';
 
-// Rate limiter
-const limiter = new Bottleneck({
-  maxConcurrent: 1,
-  minTime: Math.floor(1000 / config.polling.maxRps),
-});
+// Rate limiter and config
+let limiter: Bottleneck | null = null;
+let appConfig: Config | null = null;
+
+/**
+ * Initialize the poster with configuration
+ */
+export function initializePoster(config: Config) {
+  appConfig = config;
+  
+  // Initialize rate limiter
+  limiter = new Bottleneck({
+    maxConcurrent: 1,
+    minTime: Math.floor(1000 / config.polling.maxRps),
+  });
+}
 
 // Poster metrics
 interface PosterMetrics {
@@ -33,65 +44,66 @@ let posterMetrics: PosterMetrics = {
 /**
  * Send payload to ATM API
  */
-async function sendToATMAPI(payload: ATMPayload, missionId: string, measurementIndex: number): Promise<boolean> {
-  const idempotencyKey = `${payload.device_id}|${missionId}|${payload.timestamp}`;
+export async function sendToATMAPI(payload: ATMPayload): Promise<boolean> {
+  if (!limiter || !appConfig) {
+    throw new Error('Poster not initialized');
+  }
   
-  try {
+  return limiter.schedule(async () => {
     posterMetrics.totalRequests++;
     posterMetrics.lastRequestTime = new Date().toISOString();
 
-    const response = await limiter.schedule(async () => {
-      return fetch(config.dashboard.endpoint, {
+    try {
+      const response = await fetch(appConfig.dashboard.endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.dashboard.bearer}`,
+          'Authorization': `Bearer ${appConfig.dashboard.bearer}`,
           'User-Agent': 'pull-robot/1.0.0',
-          'Idempotency-Key': idempotencyKey,
         },
         body: JSON.stringify(payload),
       });
-    });
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unknown error');
-      const error = `HTTP ${response.status}: ${errorText}`;
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        const error = `HTTP ${response.status}: ${errorText}`;
+        
+        posterMetrics.failedRequests++;
+        posterMetrics.lastErrorTime = new Date().toISOString();
+        posterMetrics.lastError = error;
+        
+        logger.error(`❌ Failed to send payload to ATM API:`, error);
+        return false;
+      }
+
+      posterMetrics.successfulRequests++;
+      posterMetrics.lastSuccessTime = new Date().toISOString();
       
+      logger.debug(`✅ Successfully sent payload to ATM API`);
+      return true;
+      
+    } catch (error) {
       posterMetrics.failedRequests++;
       posterMetrics.lastErrorTime = new Date().toISOString();
-      posterMetrics.lastError = error;
+      posterMetrics.lastError = error instanceof Error ? error.message : 'Unknown error';
       
-      logger.error(`❌ Failed to send payload ${measurementIndex} for mission ${missionId}:`, error);
+      logger.error(`❌ Network error sending payload to ATM API:`, error);
       return false;
     }
-
-    posterMetrics.successfulRequests++;
-    posterMetrics.lastSuccessTime = new Date().toISOString();
-    
-    logger.debug(`✅ Successfully sent payload ${measurementIndex} for mission ${missionId}`);
-    return true;
-    
-  } catch (error) {
-    posterMetrics.failedRequests++;
-    posterMetrics.lastErrorTime = new Date().toISOString();
-    posterMetrics.lastError = error instanceof Error ? error.message : 'Unknown error';
-    
-    logger.error(`❌ Network error sending payload ${measurementIndex} for mission ${missionId}:`, error);
-    return false;
-  }
+  });
 }
 
 /**
  * Get poster metrics
  */
-function getPosterMetrics(): PosterMetrics {
+export function getPosterMetrics(): PosterMetrics {
   return { ...posterMetrics };
 }
 
 /**
  * Check if poster is healthy
  */
-function isHealthy(): boolean {
+export function isHealthy(): boolean {
   // Consider healthy if we haven't had errors recently or if we haven't made requests yet
   if (posterMetrics.totalRequests === 0) return true;
   
@@ -102,7 +114,7 @@ function isHealthy(): boolean {
 /**
  * Reset poster metrics
  */
-function resetPosterMetrics(): void {
+export function resetPosterMetrics(): void {
   posterMetrics = {
     totalRequests: 0,
     successfulRequests: 0,
@@ -114,10 +126,4 @@ function resetPosterMetrics(): void {
   };
 }
 
-export {
-  sendToATMAPI,
-  getPosterMetrics,
-  isHealthy,
-  resetPosterMetrics,
-  type PosterMetrics,
-};
+export type { PosterMetrics };

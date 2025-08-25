@@ -1,12 +1,16 @@
 import { logger } from './logger.js';
-import { config } from './config.js';
 import fastify from 'fastify';
-import { startDatabaseProcessor, stopDatabaseProcessor, getProcessorStatus } from './databaseProcessor.js';
-import { testDatabaseConnection } from './databasePoller.js';
+import { startDatabaseProcessor, stopDatabaseProcessor, getProcessorStatus, initializeDatabaseProcessor } from './databaseProcessor.js';
+import { testDatabaseConnection, initializeDatabasePoller } from './databasePoller.js';
 import { getPosterMetrics, isHealthy } from './poster.js';
+import { loadConfig } from './config.js';
 
 async function main() {
   logger.info('🤖 Pull Robot starting up...');
+  
+  // Load configuration asynchronously
+  const config = await loadConfig();
+  
   logger.info('📋 Configuration loaded:', {
     supabase: config.supabase.url,
     dashboard: config.dashboard.endpoint,
@@ -14,25 +18,28 @@ async function main() {
     processing: config.processing,
   });
 
+  // Initialize database poller for connection test
+  initializeDatabasePoller(config);
+  
+  // Test database connection
+  const dbConnected = await testDatabaseConnection();
+  if (!dbConnected) {
+    logger.error('❌ Database connection failed. Exiting...');
+    process.exit(1);
+  }
+
+  // Initialize all services with config
+  initializeDatabaseProcessor(config);
+
+  // Start database processor
+  startDatabaseProcessor();
+
   // Create Fastify server
   const server = fastify({
     logger: false, // Use our custom logger instead
   });
 
   try {
-    // Test configuration and connections
-    logger.info('🔧 Testing database connection...');
-    const dbConnected = await testDatabaseConnection();
-    
-    if (!dbConnected) {
-      logger.error('❌ Database connection failed - exiting');
-      process.exit(1);
-    }
-    
-    // Start the database processor
-    logger.info('🚀 Starting services...');
-    startDatabaseProcessor();
-
     // Health check endpoint
     server.get('/health', async (request, reply) => {
       const processorStatus = getProcessorStatus();

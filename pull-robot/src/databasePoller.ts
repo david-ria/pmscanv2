@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { config } from './config.js';
 import { logger } from './logger.js';
+import type { Config } from './config.js';
 
 // Data structures
 interface PendingMission {
@@ -18,9 +18,6 @@ interface ProcessingStats {
   skipped: number;
 }
 
-// Initialize Supabase client
-const supabase = createClient(config.supabase.url, config.supabase.key);
-
 // Processing statistics
 let processingStats: ProcessingStats = {
   scanned: 0,
@@ -28,6 +25,17 @@ let processingStats: ProcessingStats = {
   failed: 0,
   skipped: 0,
 };
+
+let supabase: any = null;
+let appConfig: Config | null = null;
+
+/**
+ * Initialize the database poller with configuration
+ */
+export function initializeDatabasePoller(config: Config) {
+  appConfig = config;
+  supabase = createClient(config.supabase.url, config.supabase.key);
+}
 
 /**
  * Test database connection
@@ -56,6 +64,10 @@ async function testDatabaseConnection(): Promise<boolean> {
  * Get pending missions from database
  */
 async function getPendingMissions(): Promise<PendingMission[]> {
+  if (!supabase || !appConfig) {
+    throw new Error('Database poller not initialized');
+  }
+  
   try {
     let query = supabase
       .from('missions')
@@ -64,11 +76,11 @@ async function getPendingMissions(): Promise<PendingMission[]> {
       .not('device_name', 'is', null)
       .gt('measurements_count', 0)
       .order('start_time', { ascending: true })
-      .limit(config.polling.batchSize);
+      .limit(appConfig.polling.batchSize);
 
     // Apply device filtering if configured
-    if (config.processing.allowDeviceIds && config.processing.allowDeviceIds.length > 0) {
-      query = query.in('device_name', config.processing.allowDeviceIds);
+    if (appConfig.processing.allowDeviceIds && appConfig.processing.allowDeviceIds.length > 0) {
+      query = query.in('device_name', appConfig.processing.allowDeviceIds);
     }
 
     const { data, error } = await query;

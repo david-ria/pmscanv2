@@ -5,8 +5,7 @@ import { logger } from './logger.js';
 const EnvSchema = z.object({
   SUPABASE_URL: z.string().url(),
   SUPABASE_KEY: z.string().min(1),
-  DASHBOARD_ENDPOINT: z.string().url(),
-  DASHBOARD_BEARER: z.string().min(1),
+  ATM_TOKEN_ENDPOINT: z.string().url().default('https://shydpfwuvnlzdzbubmgb.supabase.co/functions/v1/get-atm-token'),
   PORT: z.string().transform(Number).default('3000'),
   POLL_INTERVAL_MS: z.string().transform(Number).default('300000'),
   RATE_MAX_RPS: z.string().transform(Number).default('20'),
@@ -28,6 +27,7 @@ interface Config {
   dashboard: {
     endpoint: string;
     bearer: string;
+    tokenEndpoint: string;
   };
   server: {
     port: number;
@@ -58,6 +58,7 @@ const ConfigSchema = z.object({
   dashboard: z.object({
     endpoint: z.string().url(),
     bearer: z.string().min(1),
+    tokenEndpoint: z.string().url(),
   }),
   server: z.object({
     port: z.number().int().positive(),
@@ -88,12 +89,27 @@ function formatValidationError(error: z.ZodError): string {
   return `Configuration validation failed:\n${issues}`;
 }
 
-function loadConfig(): Config {
+async function loadConfig(): Promise<Config> {
   logger.info('⚙️ Loading configuration from environment variables...');
   
   try {
     // Parse and validate environment variables
     const env = EnvSchema.parse(process.env);
+    
+    // Fetch ATM API configuration from Supabase edge function
+    logger.info('🔄 Fetching ATM API configuration...');
+    let dashboardConfig;
+    try {
+      const response = await fetch(env.ATM_TOKEN_ENDPOINT);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ATM config: ${response.status}`);
+      }
+      dashboardConfig = await response.json();
+      logger.info('✅ ATM API configuration retrieved successfully');
+    } catch (error) {
+      logger.error('❌ Failed to fetch ATM API configuration:', error);
+      throw new Error('Could not retrieve ATM API configuration');
+    }
     
     // Parse JSON fields
     const units = JSON.parse(env.UNITS_JSON);
@@ -109,8 +125,9 @@ function loadConfig(): Config {
         key: env.SUPABASE_KEY,
       },
       dashboard: {
-        endpoint: env.DASHBOARD_ENDPOINT,
-        bearer: env.DASHBOARD_BEARER,
+        endpoint: dashboardConfig.endpoint,
+        bearer: dashboardConfig.token,
+        tokenEndpoint: env.ATM_TOKEN_ENDPOINT,
       },
       server: {
         port: env.PORT,
@@ -160,4 +177,5 @@ function loadConfig(): Config {
   }
 }
 
-export const config = loadConfig();
+// Export the configuration function and type
+export { loadConfig, type Config };
