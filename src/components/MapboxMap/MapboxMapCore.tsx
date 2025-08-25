@@ -1,85 +1,43 @@
-import * as React from 'react';
-import { initializeMap } from '@/lib/mapbox/mapInitializer';
-import type { LocationData } from '@/types/PMScan';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import MapboxMapCore from '../MapboxMapCore';
 
-type MapboxMapCoreProps = {
-  currentLocation?: LocationData | null;
-  thresholds?: unknown;            // keep loose unless you have a type
-  className?: string;
-  style?: React.CSSProperties;
-};
+// Mock the initializer so no real map/network happens
+vi.mock('@/lib/mapbox/mapInitializer', () => {
+  return {
+    initializeMap: vi.fn().mockResolvedValue({
+      on: vi.fn(),
+      off: vi.fn(),
+      addControl: vi.fn(),
+      remove: vi.fn(),
+    }),
+  };
+});
 
-export default function MapboxMapCore({
-  currentLocation = null,
-  thresholds = {},
-  className,
-  style,
-}: MapboxMapCoreProps) {
-  const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const startedRef = React.useRef(false);
-  const mapRef = React.useRef<any | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
+describe('MapboxMapCore', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-  React.useEffect(() => {
-    if (!containerRef.current || startedRef.current) return;
-    startedRef.current = true;
+  it('calls initializeMap after clicking Load Map', async () => {
+    const { initializeMap } = await import('@/lib/mapbox/mapInitializer');
 
-    let cancelled = false;
-
-    (async () => {
-      const map = await initializeMap(
-        containerRef.current!,
-        currentLocation,
-        thresholds,
-        () => {
-          // onLoad: nothing special needed for the test
-        },
-        (err) => {
-          if (!cancelled) setError(err || 'Map failed to load');
-        }
-      );
-      if (!cancelled) {
-        mapRef.current = map;
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      // best-effort cleanup if map exists
-      try {
-        mapRef.current?.remove?.();
-      } catch {
-        // ignore
-      }
-      mapRef.current = null;
-    };
-    // re-run only if the container exists and props change (tests don’t need re-init)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLocation, thresholds]);
-
-  if (error) {
-    return (
-      <div role="alert" className={className}>
-        <p>Map failed to load</p>
-        <button
-          type="button"
-          onClick={() => {
-            setError(null);
-            startedRef.current = false; // allow retry
-          }}
-        >
-          Retry
-        </button>
-      </div>
+    render(
+      <MapboxMapCore
+        currentLocation={{ latitude: 48.8566, longitude: 2.3522 }}
+        thresholds={{}}
+        onMapError={vi.fn()}
+      />
     );
-  }
 
-  return (
-    <div
-      ref={containerRef}
-      data-testid="map-container"
-      className={className}
-      style={{ width: '100%', height: '100%', ...(style || {}) }}
-    />
-  );
-}
+    // Wait for the lazy-init button and click it
+    const btn = await screen.findByRole('button', { name: /load map/i });
+    fireEvent.click(btn);
+
+    // Wait for effect to run and call the initializer
+    await waitFor(
+      () => expect(initializeMap).toHaveBeenCalledTimes(1),
+      { timeout: 3000 }
+    );
+  });
+});
