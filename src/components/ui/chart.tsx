@@ -1,3 +1,10 @@
+cd /workspaces/pmscanv2
+
+# Backup the current file (just in case)
+cp src/components/ui/chart.tsx src/components/ui/chart.tsx.bak
+
+# Overwrite with the corrected version (useMemo called unconditionally)
+cat > src/components/ui/chart.tsx <<'EOF'
 import * as React from 'react';
 import * as RechartsPrimitive from 'recharts';
 
@@ -70,7 +77,7 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     ([_, cfg]) => cfg.theme || cfg.color
   );
 
-  // Always call hooks on every render
+  // Always call hooks on every render (no early return before this)
   const cssVariables = React.useMemo(() => {
     const variables: Record<string, string> = {};
 
@@ -93,11 +100,7 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   }
 
   return (
-    <div
-      data-chart-style={id}
-      style={cssVariables}
-      className="contents"
-    />
+    <div data-chart-style={id} style={cssVariables} className="contents" />
   );
 };
 
@@ -189,18 +192,24 @@ const ChartTooltipContent = React.forwardRef<
           {payload.map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || 'value'}`;
             const itemConfig = getPayloadConfigFromPayload(config, item, key);
-            const indicatorColor = color || item.payload.fill || item.color;
+            const indicatorColor = color || (item as any).payload?.fill || item.color;
 
             return (
               <div
-                key={item.dataKey}
+                key={item.dataKey as any}
                 className={cn(
                   'flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground',
                   indicator === 'dot' && 'items-center'
                 )}
               >
-                {formatter && item?.value !== undefined && item.name ? (
-                  formatter(item.value, item.name, item, index, item.payload)
+                {formatter && (item as any)?.value !== undefined && (item as any).name ? (
+                  formatter(
+                    (item as any).value,
+                    (item as any).name,
+                    item as any,
+                    index,
+                    (item as any).payload
+                  )
                 ) : (
                   <>
                     {itemConfig?.icon ? (
@@ -236,12 +245,12 @@ const ChartTooltipContent = React.forwardRef<
                       <div className="grid gap-1.5">
                         {nestLabel ? tooltipLabel : null}
                         <span className="text-muted-foreground">
-                          {itemConfig?.label || item.name}
+                          {itemConfig?.label || (item as any).name}
                         </span>
                       </div>
-                      {item.value && (
+                      {(item as any).value && (
                         <span className="font-mono font-medium tabular-nums text-foreground">
-                          {item.value.toLocaleString()}
+                          {(item as any).value.toLocaleString()}
                         </span>
                       )}
                     </div>
@@ -288,11 +297,11 @@ const ChartLegendContent = React.forwardRef<
       >
         {payload.map((item) => {
           const key = `${nameKey || item.dataKey || 'value'}`;
-          const itemConfig = getPayloadConfigFromPayload(config, item, key);
+          const itemConfig = getPayloadConfigFromPayload(config, item as any, key);
 
           return (
             <div
-              key={item.value}
+              key={(item as any).value}
               className={cn(
                 'flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground'
               )}
@@ -303,7 +312,7 @@ const ChartLegendContent = React.forwardRef<
                 <div
                   className="h-2 w-2 shrink-0 rounded-[2px]"
                   style={{
-                    backgroundColor: item.color,
+                    backgroundColor: (item as any).color,
                   }}
                 />
               )}
@@ -328,7 +337,7 @@ function getPayloadConfigFromPayload(
   }
 
   const payloadPayload =
-    'payload' in payload &&
+    'payload' in (payload as any) &&
     typeof (payload as any).payload === 'object' &&
     (payload as any).payload !== null
       ? (payload as any).payload
@@ -336,10 +345,7 @@ function getPayloadConfigFromPayload(
 
   let configLabelKey: string = key;
 
-  if (
-    key in (payload as any) &&
-    typeof (payload as any)[key] === 'string'
-  ) {
+  if (key in (payload as any) && typeof (payload as any)[key] === 'string') {
     configLabelKey = (payload as any)[key] as string;
   } else if (
     payloadPayload &&
@@ -364,3 +370,7 @@ export {
   ChartLegendContent,
   ChartStyle,
 };
+EOF
+
+# Re-run lint
+npm run lint:ci
