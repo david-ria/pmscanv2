@@ -1,14 +1,12 @@
+// vitest.unit.config.ts
 import { defineConfig, configDefaults } from 'vitest/config';
-import { fileURLToPath } from 'node:url';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-  // Allow "@/..." imports to resolve to ./src
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
-  },
-
+  plugins: [
+    // makes @/… and other tsconfig "paths" work in tests
+    tsconfigPaths(),
+  ],
   test: {
     include: [
       'src/**/*.{test,spec}.{ts,tsx}',
@@ -20,8 +18,7 @@ export default defineConfig({
       'e2e/**',
     ],
     environment: 'jsdom',
+    setupFiles: ['src/test/setup.ts'], // <- load the setup you just created
     css: false,
-    // Pull in Testing Library matchers & any polyfills you add in src/test/setup.ts
-    setupFiles: ['src/test/setup.ts'],
   },
 });
