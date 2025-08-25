@@ -8,7 +8,11 @@ const { count, size, warnings } = await injectManifest({
   swSrc: 'src/sw.ts',
   swDest: `${outputDir}/sw.js`,
   globDirectory: outputDir,
-  globPatterns: ['**/*.{html,js,css,woff2,png,svg,ico,json}'],
+  globPatterns: [
+    '**/*.{html,js,css,woff2,png,svg,ico,json}',
+    'offline.html', // Ensure offline fallback is always included
+    'manifest.webmanifest'
+  ],
   maximumFileSizeToCacheInBytes: 8 * 1024 * 1024, // 8MB
 });
 

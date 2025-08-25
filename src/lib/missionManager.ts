@@ -170,6 +170,8 @@ function savePendingEventsForMission(missionId: string): void {
   }
 }
 
+import { offlineAwareSupabase } from '@/lib/supabaseSafeWrapper';
+
 export async function deleteMission(missionId: string): Promise<void> {
   // Remove from local storage
   const missions = getLocalMissions().filter((m) => m.id !== missionId);
@@ -177,11 +179,13 @@ export async function deleteMission(missionId: string): Promise<void> {
   removeFromPendingSync(missionId);
 
   // Try to delete from database if online
-  if (navigator.onLine) {
-    try {
-      await supabase.from('missions').delete().eq('id', missionId);
-    } catch (error) {
-      console.error('Failed to delete mission from database:', error);
+  if (!offlineAwareSupabase.isOffline()) {
+    const result = await offlineAwareSupabase.query(
+      supabase.from('missions').delete().eq('id', missionId)
+    );
+    
+    if (result.error && !result.isOffline) {
+      console.error('Failed to delete mission from database:', result.error);
     }
   }
 }

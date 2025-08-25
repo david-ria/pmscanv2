@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineAwareSupabase } from '@/lib/supabaseSafeWrapper';
 
 /**
  * Role validation utilities for secure user role management
@@ -52,17 +53,19 @@ export const elevateUserRole = async (
       changeReason
     });
 
-    // Call the secure database function
-    const { data, error } = await supabase.rpc('elevate_user_role', {
+    // Call the secure database function with safe handling
+    const result = await offlineAwareSupabase.rpc('elevate_user_role', {
       target_user_id: validatedData.targetUserId,
       new_role: validatedData.newRole,
       change_reason: validatedData.changeReason
     });
 
-    if (error) {
+    if (result.error) {
       return {
         success: false,
-        error: error.message
+        error: result.isOffline 
+          ? 'Unable to update role while offline. Please try again when connected.' 
+          : result.error
       };
     }
 
@@ -92,15 +95,17 @@ export const initializeSuperAdmin = async (
     // Validate input
     const validatedData = SuperAdminInitSchema.parse({ targetEmail });
 
-    // Call the secure database function
-    const { data, error } = await supabase.rpc('initialize_super_admin', {
+    // Call the secure database function with safe handling
+    const result = await offlineAwareSupabase.rpc('initialize_super_admin', {
       target_user_email: validatedData.targetEmail
     });
 
-    if (error) {
+    if (result.error) {
       return {
         success: false,
-        error: error.message
+        error: result.isOffline
+          ? 'Unable to initialize super admin while offline. Please try again when connected.'
+          : result.error
       };
     }
 
@@ -172,20 +177,22 @@ export const checkUserRole = async (userId: string): Promise<{
   error?: string;
 }> => {
   try {
-    const { data, error } = await supabase.rpc('get_user_role', {
+    const result = await offlineAwareSupabase.rpc('get_user_role', {
       _user_id: userId
     });
 
-    if (error) {
+    if (result.error) {
       return {
         success: false,
-        error: error.message
+        error: result.isOffline
+          ? 'Unable to check user role while offline'
+          : result.error
       };
     }
 
     return {
       success: true,
-      role: data || 'user'
+      role: result.data as UserRole || 'user'
     };
   } catch (error) {
     return {
