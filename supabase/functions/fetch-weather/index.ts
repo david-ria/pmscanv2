@@ -2,6 +2,18 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
+// Safe JSON parsing utility for edge functions
+async function safeJson<T = unknown>(res: Response): Promise<T | null> {
+  const ct = res.headers.get('content-type') || '';
+  if (!res.ok) return null;
+  if (!ct.includes('application/json')) return null;
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -19,7 +31,16 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { latitude, longitude, timestamp } = await req.json();
+    const requestBody = await safeJson(req);
+    
+    if (!requestBody) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { latitude, longitude, timestamp } = requestBody;
 
     if (!latitude || !longitude || !timestamp) {
       return new Response(
@@ -59,15 +80,14 @@ serve(async (req) => {
       `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric`
     );
 
-    if (!weatherResponse.ok) {
-      console.error('OpenWeatherMap API error:', weatherResponse.status, weatherResponse.statusText);
+    const weatherData = await safeJson(weatherResponse);
+    if (!weatherData) {
+      console.error('OpenWeatherMap API error: Invalid JSON response');
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch weather data from OpenWeatherMap' }),
+        JSON.stringify({ error: 'Failed to parse weather data from OpenWeatherMap' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const weatherData = await weatherResponse.json();
     console.log('Weather API response:', weatherData);
 
     // Store weather data in our database

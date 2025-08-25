@@ -26,12 +26,14 @@ export const warn = (message: string, ...args: any[]) => {
   console.warn(`[WARN] ${message}`, ...args);
 };
 
+import { safeJson } from '@/utils/safeJson';
+
 export const error = (message: string, error?: Error, ...args: any[]) => {
   console.error(`[ERROR] ${message}`, error, ...args);
   
   // In production, you could send to monitoring service here
   if (isProduction && typeof window !== 'undefined') {
-    // Send to monitoring service
+    // Send to monitoring service with error handling
     try {
       fetch('/api/logs', {
         method: 'POST',
@@ -44,8 +46,15 @@ export const error = (message: string, error?: Error, ...args: any[]) => {
           timestamp: new Date().toISOString(),
           url: window.location.href
         })
+      }).then(async (response) => {
+        if (response.ok) {
+          const result = await safeJson(response);
+          if (result) {
+            console.debug('Log sent successfully');
+          }
+        }
       }).catch(() => {
-        // Silently fail
+        // Silently fail - logging should never break the app
       });
     } catch {
       // Silently fail

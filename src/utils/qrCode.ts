@@ -32,6 +32,8 @@ export function generateGroupQRCode(
 /**
  * Downloads a QR code as an image file
  */
+import { safeJson } from '@/utils/safeJson';
+
 export async function downloadGroupQRCode(
   groupId: string,
   filename?: string,
@@ -42,6 +44,10 @@ export async function downloadGroupQRCode(
 
   try {
     const response = await fetch(qrUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch QR code: ${response.status}`);
+    }
+    
     const blob = await response.blob();
 
     const url = window.URL.createObjectURL(blob);
