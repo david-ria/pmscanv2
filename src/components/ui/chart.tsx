@@ -370,7 +370,4 @@ export {
   ChartLegendContent,
   ChartStyle,
 };
-EOF
 
-# Re-run lint
-npm run lint:ci
