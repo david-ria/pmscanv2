@@ -1,43 +1,52 @@
-import { logger } from './logger.js';
-import { config } from './config.js';
 import { createClient } from '@supabase/supabase-js';
+import { config } from './config.js';
+import { logger } from './logger.js';
 import type { PendingMission } from './databasePoller.js';
 
 // Initialize Supabase client
 const supabase = createClient(config.supabase.url, config.supabase.key);
 
-export interface MissionMeasurement {
+// Data interfaces
+interface MissionMeasurement {
+  id: string;
   timestamp: string;
-  pm1: number;
-  pm25: number;
-  pm10: number;
-  latitude?: number;
-  longitude?: number;
-  temperature?: number;
-  humidity?: number;
+  pm1: number | null;
+  pm25: number | null;
+  pm10: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  temperature: number | null;
+  humidity: number | null;
+  pressure: number | null;
 }
 
-export interface ATMPayload {
-  deviceId: string;
+interface ATMPayload {
+  device_id: string;
   timestamp: string;
-  measurements: {
-    [key: string]: {
-      value: number;
-      unit: string;
-    };
-  };
+  measurement_id: string;
+  metrics: Record<string, number>;
+  units: Record<string, string>;
 }
 
 /**
- * Read mission measurements from database
+ * Read measurements for a mission from database
  */
-export async function readMissionMeasurements(missionId: string): Promise<MissionMeasurement[]> {
+async function readMissionMeasurements(missionId: string): Promise<MissionMeasurement[]> {
   try {
-    logger.info(`Reading measurements for mission ${missionId}`);
-
     const { data, error } = await supabase
       .from('measurements')
-      .select('timestamp, pm1, pm25, pm10, latitude, longitude, temperature, humidity')
+      .select(`
+        id,
+        timestamp,
+        pm1,
+        pm25,
+        pm10,
+        latitude,
+        longitude,
+        temperature,
+        humidity,
+        pressure
+      `)
       .eq('mission_id', missionId)
       .order('timestamp', { ascending: true });
 
@@ -46,22 +55,8 @@ export async function readMissionMeasurements(missionId: string): Promise<Missio
       return [];
     }
 
-    if (!data || data.length === 0) {
-      logger.warn(`No measurements found for mission ${missionId}`);
-      return [];
-    }
-
-    logger.info(`Retrieved ${data.length} measurements for mission ${missionId}`);
-    return data.map(row => ({
-      timestamp: row.timestamp,
-      pm1: row.pm1,
-      pm25: row.pm25,
-      pm10: row.pm10,
-      latitude: row.latitude || undefined,
-      longitude: row.longitude || undefined,
-      temperature: row.temperature || undefined,
-      humidity: row.humidity || undefined
-    }));
+    logger.debug(`📊 Read ${data?.length || 0} measurements for mission ${missionId}`);
+    return data || [];
   } catch (error) {
     logger.error(`Error reading measurements for mission ${missionId}:`, error);
     return [];
@@ -69,100 +64,55 @@ export async function readMissionMeasurements(missionId: string): Promise<Missio
 }
 
 /**
- * Transform measurement data to ATM API format
+ * Transform measurement to ATM API payload
  */
-export function transformToATMPayload(
-  mission: PendingMission,
-  measurement: MissionMeasurement
-): ATMPayload {
-  const deviceId = mission.device_name!;
-  const timestamp = new Date(measurement.timestamp).toISOString();
+function transformToATMPayload(mission: PendingMission, measurement: MissionMeasurement): ATMPayload {
+  const metrics: Record<string, number> = {};
+  const units: Record<string, string> = {};
 
-  const measurements: { [key: string]: { value: number; unit: string } } = {};
-
-  // Add PM measurements (always included)
-  if (config.processing.includeMetrics.includes('pm1')) {
-    measurements.pm1 = {
-      value: measurement.pm1,
-      unit: config.processing.units.pm1
-    };
-  }
-
-  if (config.processing.includeMetrics.includes('pm25')) {
-    measurements.pm25 = {
-      value: measurement.pm25,
-      unit: config.processing.units.pm25
-    };
-  }
-
-  if (config.processing.includeMetrics.includes('pm10')) {
-    measurements.pm10 = {
-      value: measurement.pm10,
-      unit: config.processing.units.pm10
-    };
-  }
-
-  // Add location data if available and configured
-  if (measurement.latitude && measurement.longitude) {
-    if (config.processing.includeMetrics.includes('latitude')) {
-      measurements.latitude = {
-        value: measurement.latitude,
-        unit: config.processing.units.latitude
-      };
+  // Add configured metrics
+  for (const metric of config.processing.includeMetrics) {
+    const value = measurement[metric as keyof MissionMeasurement];
+    if (typeof value === 'number' && !isNaN(value)) {
+      metrics[metric] = value;
+      units[metric] = config.processing.units[metric] || 'unknown';
     }
-
-    if (config.processing.includeMetrics.includes('longitude')) {
-      measurements.longitude = {
-        value: measurement.longitude,
-        unit: config.processing.units.longitude
-      };
-    }
-  }
-
-  // Add environmental data if available and configured
-  if (measurement.temperature && config.processing.includeMetrics.includes('temperature')) {
-    measurements.temperature = {
-      value: measurement.temperature,
-      unit: config.processing.units.temperature || 'celsius'
-    };
-  }
-
-  if (measurement.humidity && config.processing.includeMetrics.includes('humidity')) {
-    measurements.humidity = {
-      value: measurement.humidity,
-      unit: config.processing.units.humidity || 'percent'
-    };
   }
 
   return {
-    deviceId,
-    timestamp,
-    measurements
+    device_id: mission.device_name,
+    timestamp: measurement.timestamp,
+    measurement_id: measurement.id,
+    metrics,
+    units,
   };
 }
 
 /**
- * Process mission data and generate ATM payloads
+ * Process mission data and return ATM payloads
  */
-export async function processMissionData(mission: PendingMission): Promise<ATMPayload[]> {
-  try {
-    logger.info(`Processing mission ${mission.id} for device ${mission.device_name}`);
-
-    const measurements = await readMissionMeasurements(mission.id);
-    
-    if (measurements.length === 0) {
-      logger.warn(`No measurements to process for mission ${mission.id}`);
-      return [];
-    }
-
-    const payloads = measurements.map(measurement => 
-      transformToATMPayload(mission, measurement)
-    );
-
-    logger.info(`Generated ${payloads.length} ATM payloads for mission ${mission.id}`);
-    return payloads;
-  } catch (error) {
-    logger.error(`Error processing mission ${mission.id}:`, error);
+async function processMissionData(mission: PendingMission): Promise<ATMPayload[]> {
+  logger.debug(`🔄 Processing mission ${mission.id} for device ${mission.device_name}`);
+  
+  const measurements = await readMissionMeasurements(mission.id);
+  
+  if (measurements.length === 0) {
+    logger.warn(`⚠️ No measurements found for mission ${mission.id}`);
     return [];
   }
+
+  const payloads = measurements.map(measurement => 
+    transformToATMPayload(mission, measurement)
+  );
+
+  logger.debug(`✅ Generated ${payloads.length} payloads for mission ${mission.id}`);
+  return payloads;
 }
+
+export {
+  readMissionMeasurements,
+  transformToATMPayload,
+  processMissionData,
+  type MissionMeasurement,
+  type ATMPayload,
+};

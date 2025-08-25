@@ -1,78 +1,87 @@
-import { logger } from './logger.js';
-import { config } from './config.js';
 import { createClient } from '@supabase/supabase-js';
+import { config } from './config.js';
+import { logger } from './logger.js';
 
-// Initialize Supabase client
-const supabase = createClient(config.supabase.url, config.supabase.key);
-
-export interface PendingMission {
+// Data structures
+interface PendingMission {
   id: string;
-  device_name: string | null;
+  device_name: string;
   start_time: string;
   end_time: string;
   measurements_count: number;
 }
 
-export interface ProcessingStats {
+interface ProcessingStats {
   scanned: number;
   processed: number;
   failed: number;
   skipped: number;
 }
 
+// Initialize Supabase client
+const supabase = createClient(config.supabase.url, config.supabase.key);
+
+// Processing statistics
 let processingStats: ProcessingStats = {
   scanned: 0,
   processed: 0,
   failed: 0,
-  skipped: 0
+  skipped: 0,
 };
 
 /**
  * Test database connection
  */
-export async function testDatabaseConnection(): Promise<boolean> {
+async function testDatabaseConnection(): Promise<boolean> {
   try {
-    const { error } = await supabase.from('missions').select('id').limit(1);
+    const { data, error } = await supabase
+      .from('missions')
+      .select('id')
+      .limit(1);
+
     if (error) {
       logger.error('Database connection test failed:', error);
       return false;
     }
+
     logger.info('✅ Database connection successful');
     return true;
   } catch (error) {
-    logger.error('Database connection test error:', error);
+    logger.error('Database connection test failed:', error);
     return false;
   }
 }
 
 /**
- * Get pending missions that need to be processed by the robot
+ * Get pending missions from database
  */
-export async function getPendingMissions(): Promise<PendingMission[]> {
+async function getPendingMissions(): Promise<PendingMission[]> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('missions')
       .select('id, device_name, start_time, end_time, measurements_count')
-      .eq('processed_by_robot', false)
+      .is('robot_processed', null)
       .not('device_name', 'is', null)
       .gt('measurements_count', 0)
-      .order('created_at', { ascending: true })
-      .limit(config.processing.batchSize);
+      .order('start_time', { ascending: true })
+      .limit(config.polling.batchSize);
+
+    // Apply device filtering if configured
+    if (config.processing.allowDeviceIds && config.processing.allowDeviceIds.length > 0) {
+      query = query.in('device_name', config.processing.allowDeviceIds);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       logger.error('Failed to fetch pending missions:', error);
       return [];
     }
 
-    // Filter by allowed device IDs
-    const filteredMissions = data?.filter(mission => {
-      return mission.device_name && config.processing.allowDeviceIds.includes(mission.device_name);
-    }) || [];
-
     processingStats.scanned += data?.length || 0;
-
-    logger.info(`Found ${filteredMissions.length} pending missions to process`);
-    return filteredMissions;
+    logger.debug(`📊 Found ${data?.length || 0} pending missions`);
+    
+    return data || [];
   } catch (error) {
     logger.error('Error fetching pending missions:', error);
     return [];
@@ -80,68 +89,68 @@ export async function getPendingMissions(): Promise<PendingMission[]> {
 }
 
 /**
- * Mark mission as processed
+ * Mark mission as processed in database
  */
-export async function markMissionAsProcessed(missionId: string, success: boolean): Promise<void> {
+async function markMissionAsProcessed(missionId: string, success: boolean): Promise<void> {
   try {
-    const updateData: any = {
-      robot_processed_at: new Date().toISOString(),
-      robot_processing_attempts: config.processing.maxAttempts
+    const updates: any = {
+      robot_processed: new Date().toISOString(),
+      robot_attempts: 1,
     };
 
-    if (success) {
-      updateData.processed_by_robot = true;
-      processingStats.processed += 1;
-    } else {
-      // Increment attempts, but don't mark as processed if still under max attempts
-      const { data: mission } = await supabase
-        .from('missions')
-        .select('robot_processing_attempts')
-        .eq('id', missionId)
-        .single();
-
-      const currentAttempts = mission?.robot_processing_attempts || 0;
-      const newAttempts = currentAttempts + 1;
-
-      if (newAttempts >= config.processing.maxAttempts) {
-        updateData.processed_by_robot = true; // Mark as processed to avoid infinite retries
-        processingStats.failed += 1;
-        logger.warn(`Mission ${missionId} failed after ${newAttempts} attempts`);
-      }
-
-      updateData.robot_processing_attempts = newAttempts;
+    if (!success) {
+      updates.robot_error = 'Processing failed';
     }
 
     const { error } = await supabase
       .from('missions')
-      .update(updateData)
+      .update(updates)
       .eq('id', missionId);
 
     if (error) {
       logger.error(`Failed to mark mission ${missionId} as processed:`, error);
+      processingStats.failed++;
+      return;
+    }
+
+    if (success) {
+      processingStats.processed++;
+      logger.debug(`✅ Mission ${missionId} marked as processed`);
     } else {
-      logger.info(`Mission ${missionId} marked as ${success ? 'successfully processed' : 'failed'}`);
+      processingStats.failed++;
+      logger.debug(`❌ Mission ${missionId} marked as failed`);
     }
   } catch (error) {
     logger.error(`Error marking mission ${missionId} as processed:`, error);
+    processingStats.failed++;
   }
 }
 
 /**
  * Get processing statistics
  */
-export function getProcessingStats(): ProcessingStats {
+function getProcessingStats(): ProcessingStats {
   return { ...processingStats };
 }
 
 /**
  * Reset processing statistics
  */
-export function resetProcessingStats(): void {
+function resetProcessingStats(): void {
   processingStats = {
     scanned: 0,
     processed: 0,
     failed: 0,
-    skipped: 0
+    skipped: 0,
   };
 }
+
+export {
+  testDatabaseConnection,
+  getPendingMissions,
+  markMissionAsProcessed,
+  getProcessingStats,
+  resetProcessingStats,
+  type PendingMission,
+  type ProcessingStats,
+};

@@ -1,8 +1,9 @@
 import pino from 'pino';
-import { config } from './config.js';
 
+// Create logger instance
 export const logger = pino({
-  level: config.logging.level,
+  name: 'pull-robot',
+  level: process.env.LOG_LEVEL || 'info',
   transport: {
     target: 'pino-pretty',
     options: {
@@ -12,8 +13,3 @@ export const logger = pino({
     },
   },
 });
-
-// Create child loggers for different components
-export const createLogger = (component: string) => {
-  return logger.child({ component });
-};
