@@ -1,48 +1,41 @@
 // src/test/setup.ts
 
-// 1) Add Testing Library's jest-dom matchers to Vitest
-import '@testing-library/jest-dom/vitest';
+// 1) Add Testing Library matchers to Vitest's expect
+import * as matchers from '@testing-library/jest-dom/matchers';
+import { expect, afterEach, vi } from 'vitest';
+expect.extend(matchers);
 
-// 2) Auto-cleanup RTL after each test
+// (optional) also keep the convenience import; harmless if present
+// import '@testing-library/jest-dom/vitest';
+
+// 2) Auto-cleanup RTL between tests
 import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
-
 afterEach(() => {
   cleanup();
 });
 
-// 3) Lightweight polyfills used by components in JSDOM
+// 3) Light JSDOM polyfills/stubs
 
-// ResizeObserver (used by charts, UI libs, etc.)
+// ResizeObserver (commonly needed by UI libs)
 class MockResizeObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
 }
 if (!('ResizeObserver' in globalThis)) {
-  (globalThis as any).ResizeObserver =
-    MockResizeObserver as unknown as typeof ResizeObserver;
+  (globalThis as any).ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 }
 
-// matchMedia (used by responsive logic)
+// matchMedia (used by responsive components)
 if (!('matchMedia' in window)) {
   (window as any).matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(),       // deprecated, some libs still call these
-    removeListener: vi.fn(),
+    addListener: vi.fn(), // deprecated but some libs call it
+    removeListener: vi.fn(), // deprecated but some libs call it
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   }));
 }
-
-// Ensure we don’t accidentally leave fake timers on between tests
-afterEach(() => {
-  try {
-    vi.useRealTimers();
-  } catch {
-    /* ignore */
-  }
-});
