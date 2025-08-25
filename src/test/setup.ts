@@ -1,29 +1,32 @@
-// Make @testing-library/jest-dom matchers (e.g. toBeInTheDocument) available
-import { expect, afterEach, vi } from 'vitest';
-import matchers from '@testing-library/jest-dom/matchers';
+// Vitest + jest-dom matchers (toBeInTheDocument, etc.)
+import '@testing-library/jest-dom/vitest';
+
+import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
-expect.extend(matchers);
-
-// Clean up the DOM and restore mocks between tests
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
 
-// JSDOM polyfills commonly required by libs
-// TextEncoder/TextDecoder
-import { TextEncoder, TextDecoder } from 'util';
-if (!globalThis.TextEncoder) globalThis.TextEncoder = TextEncoder as unknown as typeof globalThis.TextEncoder;
-if (!globalThis.TextDecoder) globalThis.TextDecoder = TextDecoder as unknown as typeof globalThis.TextDecoder;
+// ---- JSDOM polyfills commonly needed ----
 
-// ResizeObserver (silence errors in JSDOM)
+// TextEncoder/TextDecoder for libs that expect them (e.g. whatwg-url)
+import { TextEncoder, TextDecoder } from 'util';
+if (!globalThis.TextEncoder) {
+  // @ts-expect-error test env polyfill
+  globalThis.TextEncoder = TextEncoder;
+}
+if (!globalThis.TextDecoder) {
+  // @ts-expect-error test env polyfill
+  globalThis.TextDecoder = TextDecoder as unknown as typeof globalThis.TextDecoder;
+}
+
+// ResizeObserver — silence errors in jsdom
 class RO {
   observe() {}
   unobserve() {}
   disconnect() {}
 }
-if (!('ResizeObserver' in globalThis)) {
-  // @ts-expect-error - test polyfill
-  globalThis.ResizeObserver = RO;
-}
+// @ts-expect-error test env polyfill
+if (!globalThis.ResizeObserver) globalThis.ResizeObserver = RO;
