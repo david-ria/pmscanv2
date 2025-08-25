@@ -67,17 +67,13 @@ ChartContainer.displayName = 'Chart';
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
-    ([_, config]) => config.theme || config.color
+    ([_, cfg]) => cfg.theme || cfg.color
   );
 
-  if (!colorConfig.length) {
-    return null;
-  }
-
-  // Create CSS custom properties safely without dangerouslySetInnerHTML
+  // Always call hooks on every render
   const cssVariables = React.useMemo(() => {
     const variables: Record<string, string> = {};
-    
+
     colorConfig.forEach(([key, itemConfig]) => {
       Object.entries(THEMES).forEach(([theme]) => {
         const color =
@@ -88,9 +84,13 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
         }
       });
     });
-    
+
     return variables;
   }, [colorConfig]);
+
+  if (!colorConfig.length) {
+    return null;
+  }
 
   return (
     <div
@@ -329,18 +329,18 @@ function getPayloadConfigFromPayload(
 
   const payloadPayload =
     'payload' in payload &&
-    typeof payload.payload === 'object' &&
-    payload.payload !== null
-      ? payload.payload
+    typeof (payload as any).payload === 'object' &&
+    (payload as any).payload !== null
+      ? (payload as any).payload
       : undefined;
 
   let configLabelKey: string = key;
 
   if (
-    key in payload &&
-    typeof payload[key as keyof typeof payload] === 'string'
+    key in (payload as any) &&
+    typeof (payload as any)[key] === 'string'
   ) {
-    configLabelKey = payload[key as keyof typeof payload] as string;
+    configLabelKey = (payload as any)[key] as string;
   } else if (
     payloadPayload &&
     key in payloadPayload &&
