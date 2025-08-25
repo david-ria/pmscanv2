@@ -1,23 +1,36 @@
 import * as React from 'react';
 import type { LocationData } from '@/types/PMScan';
-import { initializeMap } from '@/lib/mapbox/mapInitializer';
+// Import the whole module so we can support both named and default exports in tests
+import * as MapInitializer from '@/lib/mapbox/mapInitializer';
 import { cn } from '@/lib/utils';
 
 export interface MapboxMapCoreProps {
-  /** Optional initial location (lng/lat); if not provided the initializer decides. */
   currentLocation?: LocationData | null;
-  /** Optional className for the outer wrapper */
   className?: string;
-  /** Thresholds passed to map layers (tests don't rely on this; defaults to {}). */
   thresholds?: unknown;
 }
 
-/**
- * Minimal, test-friendly Mapbox map wrapper:
- * - Creates a container div and calls `initializeMap` on mount.
- * - Keeps a ref to the map instance so we don't double-init.
- * - Shows a "Load Map" action and the error text "Map failed to load" if init fails.
- */
+type InitFn = (
+  container: HTMLDivElement,
+  currentLocation: LocationData | null,
+  thresholds: unknown,
+  onLoad: () => void,
+  onError: (err: string) => void
+) => Promise<any | null>;
+
+/** Resolve initializeMap whether tests mock it as a named or default export */
+function getInitializeMap(): InitFn {
+  const maybeNamed = (MapInitializer as any).initializeMap;
+  const maybeDefault = (MapInitializer as any).default;
+  const fn: unknown = maybeNamed ?? maybeDefault;
+  if (typeof fn !== 'function') {
+    throw new Error(
+      'initializeMap not found. Ensure "@/lib/mapbox/mapInitializer" exports a function (named or default).'
+    );
+  }
+  return fn as InitFn;
+}
+
 export default function MapboxMapCore({
   currentLocation = null,
   thresholds = {},
@@ -30,8 +43,10 @@ export default function MapboxMapCore({
   const [error, setError] = React.useState<string | null>(null);
 
   const handleLoadMap = React.useCallback(async () => {
-    if (!containerRef.current) return;
-    if (mapRef.current) return; // already initialized
+    if (!containerRef.current || mapRef.current) return;
+
+    const initializeMap = getInitializeMap();
+
     setIsLoading(true);
     setError(null);
 
@@ -41,16 +56,15 @@ export default function MapboxMapCore({
     };
 
     const onError = (err: string) => {
-      // Tests assert on this exact copy:
-      // "Map failed to load"
       setIsLoading(false);
+      // Tests assert on this exact message when things go wrong:
       setError(err || 'Map failed to load');
     };
 
     const map = await initializeMap(
       containerRef.current,
       currentLocation ?? null,
-      thresholds as any,
+      thresholds,
       onLoad,
       onError
     );
@@ -58,12 +72,12 @@ export default function MapboxMapCore({
     mapRef.current = map;
   }, [currentLocation, thresholds]);
 
-  // Auto-init on mount so tests can `waitFor` initializeMap to be called.
+  // Auto-initialize on mount (the test waits for initializeMap to be called)
   React.useEffect(() => {
     handleLoadMap();
   }, [handleLoadMap]);
 
-  // Cleanup on unmount if the map instance exposes remove()
+  // Cleanup on unmount (if map exposes remove())
   React.useEffect(() => {
     return () => {
       try {
@@ -71,7 +85,7 @@ export default function MapboxMapCore({
           mapRef.current.remove();
         }
       } catch {
-        // ignore
+        /* noop */
       }
     };
   }, []);
@@ -87,7 +101,7 @@ export default function MapboxMapCore({
           className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs"
           aria-label="Load Map"
         >
-          {/* simple icon to match snapshots */}
+          {/* minimal icon that matches snapshots in tests */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -106,7 +120,8 @@ export default function MapboxMapCore({
 
       {error ? (
         <div role="alert" className="rounded-md border p-3 text-sm">
-          {error /* e.g., "Map failed to load" */}
+          {/* tests look for exactly this text when failing */}
+          {error}
         </div>
       ) : (
         <div
