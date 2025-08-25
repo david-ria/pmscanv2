@@ -1,0 +1,43 @@
+name: Refresh Lockfile
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup Node (20.x)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Ensure clean state
+        run: |
+          rm -rf node_modules
+          npm --version
+          node --version
+
+      # Generate a lockfile *without* installing full deps on the runner
+      - name: Regenerate package-lock.json
+        run: npm install --package-lock-only
+
+      - name: Commit updated lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "No lockfile changes to commit."
+          else
+            git commit -m "chore: refresh package-lock.json for Node 20/npm10"
+            git push
+          fi
