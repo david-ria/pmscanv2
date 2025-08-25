@@ -1,37 +1,27 @@
-// Register jest-dom matchers with Vitest's expect
-import * as matchers from '@testing-library/jest-dom/matchers';
-import { expect } from 'vitest';
-expect.extend(matchers);
+// Add @testing-library/jest-dom matchers to Vitest's expect
+import '@testing-library/jest-dom/vitest';
 
-// (Optional) auto-cleanup after each test
-import { cleanup } from '@testing-library/react';
+// Optional: auto-cleanup between tests
 import { afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
 afterEach(() => cleanup());
 
-// ---- Test environment shims/mocks ----
-
-// Mock: IntersectionObserver (used by various components)
+// Optional: small DOM/JS shims used by components
 class MockIntersectionObserver {
   private _cb: IntersectionObserverCallback;
-
   root: Element | Document | null = null;
   rootMargin = '';
   thresholds = [0];
-
-  constructor(cb: IntersectionObserverCallback) {
-    this._cb = cb;
-  }
-
+  constructor(cb: IntersectionObserverCallback) { this._cb = cb; }
   observe = (target: Element) => {
     this._cb(
       [{ isIntersecting: true, target } as unknown as IntersectionObserverEntry],
       this as unknown as IntersectionObserver
     );
   };
-
   unobserve = () => {};
   disconnect = () => {};
   takeRecords = () => [];
 }
-
-(globalThis as any).IntersectionObserver = MockIntersectionObserver;
+// @ts-expect-error test shim
+globalThis.IntersectionObserver = MockIntersectionObserver;
