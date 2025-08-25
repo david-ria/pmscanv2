@@ -2,8 +2,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
+    "build": "vite build && node scripts/inject-sw.mjs",
+    "build:dev": "vite build --mode development && node scripts/inject-sw.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
