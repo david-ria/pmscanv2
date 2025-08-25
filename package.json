@@ -6,7 +6,7 @@
     "build:dev": "vite build --mode development && node scripts/inject-sw.mjs",
     "lint": "eslint \"src/**/*.{ts,tsx}\" \"supabase/**/*.ts\" --config .eslint.ci.config.mjs --quiet",
     "preview": "vite preview",
-    "test": "vitest run --reporter=dot \"src/**/*.{test,spec}.{ts,tsx}\" \"src/**/__tests__/**/*.{ts,tsx}\"",
+    "test": "vitest run -c vitest.unit.config.ts --reporter=dot",
     "test:watch": "vitest",
     "test:e2e": "npx playwright test",
     "perf:serve": "npx vite preview --port 4173 --strictPort",
