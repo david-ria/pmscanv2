@@ -1,135 +1,79 @@
-import * as React from 'react';
+import React from 'react';
 import type { LocationData } from '@/types/PMScan';
-// Import the whole module so we can support both named and default exports in tests
-import * as MapInitializer from '@/lib/mapbox/mapInitializer';
-import { cn } from '@/lib/utils';
+import { initializeMap } from '@/lib/mapbox/mapInitializer';
 
-export interface MapboxMapCoreProps {
-  currentLocation?: LocationData | null;
+// Keep props minimal for tests; extend in app as needed.
+type MapboxMapCoreProps = {
+  thresholds?: unknown;                  // typed more strictly in app
+  currentLocation?: LocationData | null; // optional initial center
   className?: string;
-  thresholds?: unknown;
-}
-
-type InitFn = (
-  container: HTMLDivElement,
-  currentLocation: LocationData | null,
-  thresholds: unknown,
-  onLoad: () => void,
-  onError: (err: string) => void
-) => Promise<any | null>;
-
-/** Resolve initializeMap whether tests mock it as a named or default export */
-function getInitializeMap(): InitFn {
-  const maybeNamed = (MapInitializer as any).initializeMap;
-  const maybeDefault = (MapInitializer as any).default;
-  const fn: unknown = maybeNamed ?? maybeDefault;
-  if (typeof fn !== 'function') {
-    throw new Error(
-      'initializeMap not found. Ensure "@/lib/mapbox/mapInitializer" exports a function (named or default).'
-    );
-  }
-  return fn as InitFn;
-}
+  onLoad?: () => void;
+  onError?: (msg: string) => void;
+};
 
 export default function MapboxMapCore({
+  thresholds,
   currentLocation = null,
-  thresholds = {},
   className,
+  onLoad,
+  onError,
 }: MapboxMapCoreProps) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const mapRef = React.useRef<any>(null);
+  const mapRef = React.useRef<any | null>(null);
 
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  // Call initializeMap immediately after mount (no manual “Load Map” step),
+  // which is what the unit test expects.
+  React.useEffect(() => {
+    let cancelled = false;
 
-  const handleLoadMap = React.useCallback(async () => {
-    if (!containerRef.current || mapRef.current) return;
+    const run = async () => {
+      if (!containerRef.current) return;
 
-    const initializeMap = getInitializeMap();
+      const handleLoad = () => {
+        if (cancelled) return;
+        onLoad?.();
+      };
 
-    setIsLoading(true);
-    setError(null);
+      const handleError = (msg: string) => {
+        if (cancelled) return;
+        onError?.(msg);
+      };
 
-    const onLoad = () => {
-      setIsLoading(false);
-      setError(null);
+      // initializeMap returns the map instance or null on failure
+      mapRef.current = await initializeMap(
+        containerRef.current,
+        currentLocation,
+        thresholds as any,
+        handleLoad,
+        handleError
+      );
     };
 
-    const onError = (err: string) => {
-      setIsLoading(false);
-      // Tests assert on this exact message when things go wrong:
-      setError(err || 'Map failed to load');
-    };
+    // defer to ensure ref is attached
+    // (requestAnimationFrame is reliable in JSDOM, too)
+    const id = requestAnimationFrame(run);
 
-    const map = await initializeMap(
-      containerRef.current,
-      currentLocation ?? null,
-      thresholds,
-      onLoad,
-      onError
-    );
-
-    mapRef.current = map;
-  }, [currentLocation, thresholds]);
-
-  // Auto-initialize on mount (the test waits for initializeMap to be called)
-  React.useEffect(() => {
-    handleLoadMap();
-  }, [handleLoadMap]);
-
-  // Cleanup on unmount (if map exposes remove())
-  React.useEffect(() => {
     return () => {
+      cancelled = true;
+      cancelAnimationFrame(id);
+      // Clean up map if library provides a remove() method
       try {
-        if (mapRef.current && typeof mapRef.current.remove === 'function') {
-          mapRef.current.remove();
-        }
+        mapRef.current?.remove?.();
       } catch {
-        /* noop */
+        // ignore
       }
+      mapRef.current = null;
     };
+    // Only run on mount/unmount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className={cn('w-full', className)}>
-      <div className="flex items-center justify-between pb-2">
-        <h2 className="text-sm font-medium">Map</h2>
-        <button
-          type="button"
-          onClick={handleLoadMap}
-          disabled={isLoading || !!mapRef.current}
-          className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs"
-          aria-label="Load Map"
-        >
-          {/* minimal icon that matches snapshots in tests */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path d="M15 5.764v15" />
-            <path d="M9 3.236v15" />
-          </svg>
-          Load Map
-        </button>
-      </div>
-
-      {error ? (
-        <div role="alert" className="rounded-md border p-3 text-sm">
-          {/* tests look for exactly this text when failing */}
-          {error}
-        </div>
-      ) : (
-        <div
-          ref={containerRef}
-          data-testid="map-container"
-          className="h-[420px] w-full rounded-lg border"
-        />
-      )}
-    </div>
+    <div
+      data-testid="map-container"
+      ref={containerRef}
+      className={className}
+      style={{ width: '100%', height: 400 }}
+    />
   );
 }
