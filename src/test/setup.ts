@@ -1,15 +1,16 @@
-// Vitest + Testing Library globals & matchers
-import '@testing-library/jest-dom/vitest';
+// Register jest-dom matchers with Vitest's expect
+import * as matchers from '@testing-library/jest-dom/matchers';
+import { expect } from 'vitest';
+expect.extend(matchers);
 
-// (Optional) If you want automatic cleanup between tests, TL v14+ does it by default.
-// If you’re on an older version, uncomment:
-// import { cleanup } from '@testing-library/react';
-// import { afterEach } from 'vitest';
-// afterEach(() => cleanup());
+// (Optional) auto-cleanup after each test
+import { cleanup } from '@testing-library/react';
+import { afterEach } from 'vitest';
+afterEach(() => cleanup());
 
 // ---- Test environment shims/mocks ----
 
-// Mock: IntersectionObserver (many components rely on visibility checks)
+// Mock: IntersectionObserver (used by various components)
 class MockIntersectionObserver {
   private _cb: IntersectionObserverCallback;
 
@@ -22,7 +23,6 @@ class MockIntersectionObserver {
   }
 
   observe = (target: Element) => {
-    // Immediately report target as intersecting to unblock components
     this._cb(
       [{ isIntersecting: true, target } as unknown as IntersectionObserverEntry],
       this as unknown as IntersectionObserver
@@ -34,5 +34,4 @@ class MockIntersectionObserver {
   takeRecords = () => [];
 }
 
-// Attach to global
 (globalThis as any).IntersectionObserver = MockIntersectionObserver;
