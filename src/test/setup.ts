@@ -1,6 +1,6 @@
 import { expect, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
-import * as matchers from '@testing-library/jest-dom/matchers';
+import matchers from '@testing-library/jest-dom/matchers'; // ✅ default export
 
 // add jest-dom matchers to Vitest's expect
 expect.extend(matchers);
@@ -8,7 +8,7 @@ expect.extend(matchers);
 // cleanup DOM between tests
 afterEach(() => cleanup());
 
-// light shims commonly needed in JSDOM
+// minimal shims that some components expect in jsdom
 class MockIntersectionObserver {
   private _cb: IntersectionObserverCallback;
   root: Element | Document | null = null;
@@ -16,12 +16,14 @@ class MockIntersectionObserver {
   thresholds = [0];
   constructor(cb: IntersectionObserverCallback) { this._cb = cb; }
   observe = (target: Element) => {
-    this._cb([{ isIntersecting: true, target } as unknown as IntersectionObserverEntry],
-      this as unknown as IntersectionObserver);
+    this._cb(
+      [{ isIntersecting: true, target } as unknown as IntersectionObserverEntry],
+      this as unknown as IntersectionObserver
+    );
   };
   unobserve = () => {};
   disconnect = () => {};
   takeRecords = () => [];
 }
-// @ts-expect-error – test shim
+// @ts-expect-error test shim
 globalThis.IntersectionObserver = MockIntersectionObserver;
