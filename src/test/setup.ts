@@ -1,41 +1,29 @@
-// src/test/setup.ts
-
-// 1) Add Testing Library matchers to Vitest's expect
-import * as matchers from '@testing-library/jest-dom/matchers';
+// Make @testing-library/jest-dom matchers (e.g. toBeInTheDocument) available
 import { expect, afterEach, vi } from 'vitest';
+import matchers from '@testing-library/jest-dom/matchers';
+import { cleanup } from '@testing-library/react';
+
 expect.extend(matchers);
 
-// (optional) also keep the convenience import; harmless if present
-// import '@testing-library/jest-dom/vitest';
-
-// 2) Auto-cleanup RTL between tests
-import { cleanup } from '@testing-library/react';
+// Clean up the DOM and restore mocks between tests
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
-// 3) Light JSDOM polyfills/stubs
+// JSDOM polyfills commonly required by libs
+// TextEncoder/TextDecoder
+import { TextEncoder, TextDecoder } from 'util';
+if (!globalThis.TextEncoder) globalThis.TextEncoder = TextEncoder as unknown as typeof globalThis.TextEncoder;
+if (!globalThis.TextDecoder) globalThis.TextDecoder = TextDecoder as unknown as typeof globalThis.TextDecoder;
 
-// ResizeObserver (commonly needed by UI libs)
-class MockResizeObserver {
+// ResizeObserver (silence errors in JSDOM)
+class RO {
   observe() {}
   unobserve() {}
   disconnect() {}
 }
 if (!('ResizeObserver' in globalThis)) {
-  (globalThis as any).ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
-}
-
-// matchMedia (used by responsive components)
-if (!('matchMedia' in window)) {
-  (window as any).matchMedia = vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(), // deprecated but some libs call it
-    removeListener: vi.fn(), // deprecated but some libs call it
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  }));
+  // @ts-expect-error - test polyfill
+  globalThis.ResizeObserver = RO;
 }
