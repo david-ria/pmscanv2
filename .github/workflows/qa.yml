@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # cache: npm  # Temporarily disabled to force cache purge
+          # cache: npm  # keep disabled until PWA passes reliably
 
       - name: Install deps
         run: npm ci
@@ -24,9 +24,20 @@ jobs:
       - name: Install Playwright (browsers + deps)
         run: npx playwright install --with-deps
 
-      - name: Build app
+      # IMPORTANT: run npm run build so Workbox inject step executes
+      - name: Build app (with Workbox inject)
+        run: npm run build
+        env:
+          # Optional cache buster for clean builds if needed; bump to force fresh caches in CI
+          CACHE_BUSTER: 2025-08-25-01
+
+      - name: Show Workbox output & list build
         run: |
-          npm run build || npx vite build
+          echo "---- DIST ----"
+          ls -la dist || true
+          echo "---- BUILD ----"
+          ls -la build || true
+          echo "If Workbox ran, the previous Build step logs should include: 'Workbox injected <N> files, total <X> bytes'."
 
       - name: Start preview server
         run: |
