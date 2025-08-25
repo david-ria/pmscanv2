@@ -98,7 +98,7 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-interface CreateGroupDialogProps extends BaseDialogProps {}
+type CreateGroupDialogProps = BaseDialogProps;
 
 export function CreateGroupDialog({
   open,
