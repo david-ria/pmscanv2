@@ -42,15 +42,26 @@ const scheduleNonEssentialWork = () => {
   }
 };
 
-// Register service worker immediately in production for PWA compliance
+// Register Workbox service worker with better lifecycle management
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(registration => {
-      console.debug('[PWA] Service Worker registered immediately', registration);
-    })
-    .catch(error => {
-      console.error('[PWA] Service Worker registration failed:', error);
-    });
+  window.addEventListener('load', async () => {
+    try {
+      const { Workbox } = await import('workbox-window');
+      const wb = new Workbox('/sw.js');
+      
+      wb.addEventListener('activated', () => {
+        console.debug('[PWA] Workbox Service Worker activated');
+      });
+      
+      wb.addEventListener('waiting', () => {
+        console.debug('[PWA] New Service Worker waiting, refresh to update');
+      });
+      
+      await wb.register();
+    } catch (error) {
+      console.error('[PWA] Workbox Service Worker registration failed:', error);
+    }
+  });
 }
 
 // Start non-essential work scheduling
