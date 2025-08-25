@@ -1,10 +1,9 @@
-// vitest.unit.config.ts
 import { defineConfig, configDefaults } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   plugins: [
-    // makes @/… and other tsconfig "paths" work in tests
+    // enables @/… path imports in tests
     tsconfigPaths(),
   ],
   test: {
@@ -14,11 +13,15 @@ export default defineConfig({
     ],
     exclude: [
       ...configDefaults.exclude,
-      'tests/**', // exclude Playwright/i18n suites
+      'tests/**', // playwright / i18n suites
       'e2e/**',
     ],
     environment: 'jsdom',
-    setupFiles: ['src/test/setup.ts'], // <- load the setup you just created
+    // Load jest-dom matchers *and* your custom setup.
+    // Keeping both is fine (idempotent).
+    setupFiles: ['@testing-library/jest-dom/vitest', 'src/test/setup.ts'],
     css: false,
+    // optional, but handy if some tests rely on global `expect/test/vi`
+    // globals: true,
   },
 });
