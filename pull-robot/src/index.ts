@@ -1,68 +1,122 @@
-#!/usr/bin/env node
-
+import { logger } from './logger.js';
 import { config } from './config.js';
-import { createLogger } from './logger.js';
-import { startHealthServer } from './health.js';
-import { initializeDatabase } from './state.js';
-import { startPoller } from './poller.js';
+import fastify from 'fastify';
+import { startDatabaseProcessor, stopDatabaseProcessor, getProcessorStatus } from './databaseProcessor.js';
+import { testDatabaseConnection } from './databasePoller.js';
+import { getPosterMetrics, isHealthy } from './poster.js';
 
-const logger = createLogger('main');
-
-async function bootstrap() {
+async function main() {
   logger.info('🤖 Pull Robot starting up...');
-  logger.info('📋 Configuration loaded', {
-    supabaseUrl: config.supabase.url,
-    storageBucket: config.storage.bucket,
-    apiUrl: config.api.url,
-    pollInterval: config.polling.intervalMs,
-    healthPort: config.health.port,
+  logger.info('📋 Configuration loaded:', {
+    supabase: config.supabase.url,
+    dashboard: config.dashboard.endpoint,
+    polling: config.polling,
+    processing: config.processing,
+  });
+
+  // Create Fastify server
+  const server = fastify({
+    logger: false, // Use our custom logger instead
   });
 
   try {
-    // Initialize SQLite database
-    logger.info('💾 Initializing database...');
-    await initializeDatabase();
-    logger.info('✅ Database initialized');
+    // Test configuration and connections
+    logger.info('🔧 Testing database connection...');
+    const dbConnected = await testDatabaseConnection();
+    
+    if (!dbConnected) {
+      logger.error('❌ Database connection failed - exiting');
+      process.exit(1);
+    }
+    
+    // Start the database processor
+    logger.info('🚀 Starting services...');
+    startDatabaseProcessor();
 
-    // Start health/metrics server
-    logger.info('🏥 Starting health server...');
-    await startHealthServer();
-    logger.info(`✅ Health server running on port ${config.health.port}`);
+    // Health check endpoint
+    server.get('/health', async (request, reply) => {
+      const processorStatus = getProcessorStatus();
+      const posterMetrics = getPosterMetrics();
+      const healthy = isHealthy();
 
-    // Start the main polling loop
-    logger.info('🔄 Starting poller...');
-    await startPoller();
-    logger.info('✅ Poller started');
+      const healthData = {
+        status: healthy ? 'healthy' : 'unhealthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        processor: processorStatus,
+        poster: posterMetrics,
+        memory: process.memoryUsage(),
+      };
 
+      reply.code(healthy ? 200 : 503).send(healthData);
+    });
+
+    // Metrics endpoint
+    server.get('/metrics', async (request, reply) => {
+      const processorStatus = getProcessorStatus();
+      const posterMetrics = getPosterMetrics();
+
+      const metrics = {
+        timestamp: new Date().toISOString(),
+        processor: processorStatus,
+        poster: posterMetrics,
+      };
+
+      reply.send(metrics);
+    });
+
+    // Start the server
+    await server.listen({ 
+      port: config.server.port, 
+      host: '0.0.0.0' 
+    });
+
+    logger.info(`✅ Health server running on port ${config.server.port}`);
     logger.info('🚀 Pull Robot is running!');
-    logger.info('📊 Health endpoint: http://localhost:' + config.health.port + '/health');
-    logger.info('📈 Metrics endpoint: http://localhost:' + config.health.port + '/metrics');
+    logger.info(`📊 Health endpoint: http://localhost:${config.server.port}/health`);
+    logger.info(`📈 Metrics endpoint: http://localhost:${config.server.port}/metrics`);
 
   } catch (error) {
     logger.error('💥 Failed to start Pull Robot:', error);
     process.exit(1);
   }
-}
 
-// Graceful shutdown handling
-async function shutdown() {
-  logger.info('🛑 Shutting down Pull Robot...');
-  process.exit(0);
-}
+  // Graceful shutdown
+  const gracefulShutdown = (signal: string) => {
+    logger.info(`🛑 Received ${signal}, shutting down gracefully...`);
+    
+    // Stop the database processor
+    stopDatabaseProcessor();
+    
+    server.close((err) => {
+      if (err) {
+        logger.error('Error during server shutdown:', err);
+        process.exit(1);
+      }
+      
+      logger.info('✅ Server closed successfully');
+      process.exit(0);
+    });
+  };
 
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
-process.on('uncaughtException', (error) => {
-  logger.error('💥 Uncaught exception:', error);
-  process.exit(1);
-});
-process.on('unhandledRejection', (reason) => {
-  logger.error('💥 Unhandled rejection:', reason);
-  process.exit(1);
-});
+  // Register signal handlers
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+  // Handle uncaught exceptions and unhandled rejections
+  process.on('uncaughtException', (error) => {
+    logger.error('💥 Uncaught exception:', error);
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    logger.error('💥 Unhandled rejection:', reason);
+    process.exit(1);
+  });
+}
 
 // Start the application
-bootstrap().catch((error) => {
+main().catch((error) => {
   logger.error('💥 Bootstrap failed:', error);
   process.exit(1);
 });

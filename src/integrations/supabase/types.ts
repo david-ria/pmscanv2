@@ -623,7 +623,10 @@ export type Database = {
           max_pm25: number
           measurements_count: number
           name: string
+          processed_by_robot: boolean | null
           recording_frequency: string | null
+          robot_processed_at: string | null
+          robot_processing_attempts: number | null
           shared: boolean | null
           start_epoch_ms: number | null
           start_time: string
@@ -647,7 +650,10 @@ export type Database = {
           max_pm25: number
           measurements_count?: number
           name: string
+          processed_by_robot?: boolean | null
           recording_frequency?: string | null
+          robot_processed_at?: string | null
+          robot_processing_attempts?: number | null
           shared?: boolean | null
           start_epoch_ms?: number | null
           start_time: string
@@ -671,7 +677,10 @@ export type Database = {
           max_pm25?: number
           measurements_count?: number
           name?: string
+          processed_by_robot?: boolean | null
           recording_frequency?: string | null
+          robot_processed_at?: string | null
+          robot_processing_attempts?: number | null
           shared?: boolean | null
           start_epoch_ms?: number | null
           start_time?: string
