@@ -108,4 +108,14 @@ export const isLogLevelEnabled = (level: 'debug' | 'info' | 'warn' | 'error') =>
   return true; // All levels enabled in development
 };
 
-export default { debug, info, warn, error, rateLimitedDebug, getLogLevel, isLogLevelEnabled };
+// Default export that includes devLogger for namespace imports
+export default { 
+  debug, 
+  info, 
+  warn, 
+  error, 
+  rateLimitedDebug, 
+  getLogLevel, 
+  isLogLevelEnabled,
+  devLogger // Add devLogger to support logger.devLogger.debug() syntax
+};
