@@ -150,9 +150,16 @@ export const logger = new OptimizedLogger({
   enablePerformanceTracking: process.env.NODE_ENV === 'development',
 });
 
-// Convenience exports
-export const { debug, info, warn, error, time, timeEnd } = logger;
-export const { rateLimitedDebug, rateLimitedInfo, rateLimitedWarn } = logger;
+// Convenience exports - properly bound methods
+export const debug = logger.debug.bind(logger);
+export const info = logger.info.bind(logger);
+export const warn = logger.warn.bind(logger);
+export const error = logger.error.bind(logger);
+export const time = logger.time.bind(logger);
+export const timeEnd = logger.timeEnd.bind(logger);
+export const rateLimitedDebug = logger.rateLimitedDebug.bind(logger);
+export const rateLimitedInfo = logger.rateLimitedInfo.bind(logger);
+export const rateLimitedWarn = logger.rateLimitedWarn.bind(logger);
 
 // Development-only logger
 export const devLogger = {
