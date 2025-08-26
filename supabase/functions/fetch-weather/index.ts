@@ -2,8 +2,19 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
-// Safe JSON parsing utility for edge functions
-async function safeJson<T = unknown>(res: Response): Promise<T | null> {
+// Safe JSON parsing utility for requests
+async function safeJsonFromRequest<T = unknown>(req: Request): Promise<T | null> {
+  const ct = req.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) return null;
+  try {
+    return await req.json();
+  } catch {
+    return null;
+  }
+}
+
+// Safe JSON parsing utility for responses
+async function safeJsonFromResponse<T = unknown>(res: Response): Promise<T | null> {
   const ct = res.headers.get('content-type') || '';
   if (!res.ok) return null;
   if (!ct.includes('application/json')) return null;
@@ -31,9 +42,15 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const requestBody = await safeJson(req);
+    
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    
+    const requestBody = await safeJsonFromRequest(req);
+    console.log('Parsed request body:', requestBody);
     
     if (!requestBody) {
+      console.error('Invalid or missing JSON in request body');
       return new Response(
         JSON.stringify({ error: 'Invalid JSON in request body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -41,11 +58,30 @@ serve(async (req) => {
     }
 
     const { latitude, longitude, timestamp } = requestBody;
+    console.log('Extracted parameters:', { latitude, longitude, timestamp });
 
     if (!latitude || !longitude || !timestamp) {
+      console.error('Missing parameters:', { 
+        hasLatitude: !!latitude, 
+        hasLongitude: !!longitude, 
+        hasTimestamp: !!timestamp,
+        actualValues: { latitude, longitude, timestamp }
+      });
       return new Response(
-        JSON.stringify({ error: 'Missing required parameters: latitude, longitude, timestamp' }),
+        JSON.stringify({ 
+          error: 'Missing required parameters: latitude, longitude, timestamp',
+          received: { latitude, longitude, timestamp }
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if OpenWeatherMap API key is available
+    if (!openWeatherApiKey) {
+      console.error('OpenWeatherMap API key is missing');
+      return new Response(
+        JSON.stringify({ error: 'Weather service configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -80,7 +116,7 @@ serve(async (req) => {
       `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric`
     );
 
-    const weatherData = await safeJson(weatherResponse);
+    const weatherData = await safeJsonFromResponse(weatherResponse);
     if (!weatherData) {
       console.error('OpenWeatherMap API error: Invalid JSON response');
       return new Response(
