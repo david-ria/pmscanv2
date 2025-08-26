@@ -26,6 +26,13 @@ button[role="switch"],
   min-height: unset;
 }
 
+/* Exception for radio group items - smaller sizing for compact layouts */
+button[role="radio"],
+[role="radio"] {
+  min-width: 20px;
+  min-height: 20px;
+}
+
 /* Exception for very small icons inside larger clickable areas */
 button svg, 
 a[href] svg, 
