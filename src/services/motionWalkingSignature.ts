@@ -1,5 +1,5 @@
 import { AUTO_CTX_CFG } from '@/lib/autoContext.config';
-import { rateLimitedWarn, rateLimitedDebug } from '@/utils/optimizedLogger';
+import * as logger from '@/utils/logger';
 
 export interface WalkingSigSnapshot {
   walkingSignature: boolean;   // booléen lissé
@@ -78,7 +78,7 @@ export class MotionWalkingSignature {
     // Check device support first
     this.snapshot.isSupported = this.isDeviceSupported();
     if (!this.snapshot.isSupported) {
-      rateLimitedDebug('motion-unsupported', 30000, 'MotionWalkingSignature: Device does not support motion events or is not mobile');
+      logger.rateLimitedDebug('motion-unsupported', 30000, 'MotionWalkingSignature: Device does not support motion events or is not mobile');
       return;
     }
 
@@ -89,9 +89,9 @@ export class MotionWalkingSignature {
       this.snapshot.isActive = true;
       this.startTimeoutMonitoring();
       this.started = true;
-      rateLimitedDebug('motion-started', 30000, 'MotionWalkingSignature started successfully');
+      logger.rateLimitedDebug('motion-started', 30000, 'MotionWalkingSignature started successfully');
     } catch (error) {
-      rateLimitedWarn('motion-permission-error', 60000, 'MotionWalkingSignature: Failed to start due to permission error:', error);
+      logger.warn('MotionWalkingSignature: Failed to start due to permission error:', error);
       this.snapshot.isSupported = false;
     }
   }
@@ -119,7 +119,7 @@ export class MotionWalkingSignature {
       isActive: false,
       isSupported: this.snapshot.isSupported, // Preserve support status
     };
-    rateLimitedDebug('motion-stopped', 30000, 'MotionWalkingSignature stopped');
+    logger.rateLimitedDebug('motion-stopped', 30000, 'MotionWalkingSignature stopped');
   }
 
   private startTimeoutMonitoring(): void {
@@ -128,7 +128,7 @@ export class MotionWalkingSignature {
       const now = performance.now();
       if (now - this.lastMotionEvent > AUTO_CTX_CFG.ACC_TIMEOUT_MS) {
         // Use rate-limited warning to prevent console spam
-        rateLimitedWarn('accelerometer-timeout', 30000, 'Accelerometer timeout - no motion data received');
+        logger.warn('Accelerometer timeout - no motion data received');
         this.snapshot.walkingSignature = false;
         this.snapshot.isActive = false;
         this.snapshot.lastUpdated = Date.now();
@@ -213,7 +213,7 @@ export class MotionWalkingSignature {
 
     // Rate-limited debug logging only in development
     if (this.peakHistory.length >= 3) {
-      rateLimitedDebug('walking-detection', 5000, 'Walking detection:', {
+      logger.rateLimitedDebug('walking-detection', 5000, 'Walking detection:', {
         cadence: cadence.toFixed(1),
         regularity: cv.toFixed(3),
         intensity: rms.toFixed(2),

@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
+import * as logger from '@/utils/logger';
 import { useLocationEnrichmentSettings } from './useLocationEnrichmentSettings';
 import { useSmartLocationEnrichment } from './useSmartLocationEnrichment';
 import { useGPS } from './useGPS';
@@ -12,7 +12,7 @@ export function useLocationEnrichmentIntegration() {
   const { enrichLocation, preEnrichFrequentLocations } = useSmartLocationEnrichment();
   const { latestLocation } = useGPS(true, true);
 
-  rateLimitedDebug('location-enrichment-integration-state', 3000, '🔧 useLocationEnrichmentIntegration state:', {
+  logger.rateLimitedDebug('location-enrichment-integration-state', 3000, '🔧 useLocationEnrichmentIntegration state:', {
     isEnabled,
     hasEnrichFunction: !!enrichLocation,
     hasLocation: !!latestLocation,
@@ -48,7 +48,7 @@ export function useLocationEnrichmentIntegration() {
     return () => clearInterval(interval);
   }, [isEnabled, preEnrichFrequentLocations]);
 
-  devLogger.debug('🔧 useLocationEnrichmentIntegration returning:', {
+  logger.devLogger.debug('🔧 useLocationEnrichmentIntegration returning:', {
     hasEnrichFunction: !!enrichLocation,
     enrichLocation: isEnabled ? enrichLocation : null,
     isEnabled

@@ -1,3 +1,5 @@
+import { safeJson } from '@/utils/safeJson';
+
 /**
  * Enhanced logger utility that maintains compatibility with existing logging
  * while providing structured logging for production environments
@@ -6,6 +8,9 @@
 // Check if we're in production mode
 const isProduction = import.meta.env.PROD;
 const isDevelopment = import.meta.env.DEV;
+
+// Rate-limited logging for development
+const lastLogTimes: Record<string, number> = {};
 
 // Simple logger interface that mirrors console methods
 export const debug = (message: string, ...args: any[]) => {
@@ -25,8 +30,6 @@ export const info = (message: string, ...args: any[]) => {
 export const warn = (message: string, ...args: any[]) => {
   console.warn(`[WARN] ${message}`, ...args);
 };
-
-import { safeJson } from '@/utils/safeJson';
 
 export const error = (message: string, error?: Error, ...args: any[]) => {
   console.error(`[ERROR] ${message}`, error, ...args);
@@ -62,9 +65,6 @@ export const error = (message: string, error?: Error, ...args: any[]) => {
   }
 };
 
-// Rate-limited logging for development
-const lastLogTimes: Record<string, number> = {};
-
 export function rateLimitedDebug(
   key: string,
   intervalMs: number,
@@ -78,6 +78,21 @@ export function rateLimitedDebug(
     console.debug(...args);
   }
 }
+
+// Development logger object for compatibility
+export const devLogger = {
+  debug: (message: string, ...args: any[]) => debug(message, ...args),
+  info: (message: string, ...args: any[]) => info(message, ...args),
+  performance: (label: string, fn: () => void) => {
+    if (!isProduction && isDevelopment) {
+      console.time(label);
+      fn();
+      console.timeEnd(label);
+    } else {
+      fn();
+    }
+  },
+};
 
 // Utility to check current log level
 export const getLogLevel = () => {

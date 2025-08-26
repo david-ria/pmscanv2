@@ -7,7 +7,6 @@ import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
 import { RecordingEntry } from '@/types/recording';
 import * as logger from '@/utils/logger';
-import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
 import { MotionWalkingSignature, WalkingSigSnapshot } from '@/services/motionWalkingSignature';
 
 interface MissionContext {
@@ -83,7 +82,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     // Start motion service when recording starts
     if (recording.isRecording) {
       motionService.start().catch(error => {
-        rateLimitedDebug('motion-start-error', 30000, 'Failed to start motion service:', error);
+        logger.rateLimitedDebug('motion-start-error', 30000, 'Failed to start motion service:', error);
       });
     } else {
       motionService.stop();
@@ -101,7 +100,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
 
   // Enhanced state change tracking - rate limited
   useEffect(() => {
-    rateLimitedDebug('unified-recording-state', 2000, '🔄 UNIFIED DATA - RECORDING STATE CHANGED:', {
+    logger.rateLimitedDebug('unified-recording-state', 2000, '🔄 UNIFIED DATA - RECORDING STATE CHANGED:', {
       isRecording: recording.isRecording,
       hasAddDataPoint: !!recording.addDataPoint,
       timestamp: new Date().toISOString()
@@ -109,7 +108,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   }, [recording.isRecording, recording.addDataPoint]);
 
   useEffect(() => {
-    rateLimitedDebug('unified-bluetooth-state', 1000, '🔄 UNIFIED DATA - BLUETOOTH STATE CHANGED:', {
+    logger.rateLimitedDebug('unified-bluetooth-state', 1000, '🔄 UNIFIED DATA - BLUETOOTH STATE CHANGED:', {
       hasCurrentData: !!bluetooth.currentData,
       isConnected: bluetooth.isConnected,
       pm25: bluetooth.currentData?.pm25,
@@ -119,7 +118,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
 
   // Enhanced unified state logging - rate limited to prevent spam
   useEffect(() => {
-    rateLimitedDebug('unified-complete-state', 2000, '🔄 UNIFIED DATA COMPLETE STATE:', {
+    logger.rateLimitedDebug('unified-complete-state', 2000, '🔄 UNIFIED DATA COMPLETE STATE:', {
       hasCurrentData: !!bluetooth.currentData,
       currentDataPM25: bluetooth.currentData?.pm25,
       isConnected: bluetooth.isConnected,
@@ -134,7 +133,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   }, [bluetooth.currentData, bluetooth.isConnected, recording.isRecording, recording.recordingData.length, latestLocation, recording.addDataPoint]);
 
   // Unified state object - GPS state logging
-  rateLimitedDebug('unified-gps-state', 3000, '🔄 UNIFIED DATA - GPS STATE:', {
+  logger.rateLimitedDebug('unified-gps-state', 3000, '🔄 UNIFIED DATA - GPS STATE:', {
     hasLocation: !!latestLocation,
     latitude: latestLocation?.latitude,
     longitude: latestLocation?.longitude,

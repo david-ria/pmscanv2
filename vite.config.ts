@@ -19,8 +19,8 @@ export default defineConfig(({ mode }) => {
         }
         // Remove development-only logging in production
         let transformedCode = code
-          .replace(/devLogger\.(debug|info)\([^)]*\);?/g, '')
-          .replace(/rateLimitedDebug\([^)]*\);?/g, '')
+          .replace(/logger\.devLogger\.(debug|info)\([^)]*\);?/g, '')
+          .replace(/logger\.rateLimitedDebug\([^)]*\);?/g, '')
           .replace(/console\.debug\([^)]*\);?/g, '')
           .replace(/console\.log(?!\s*\(.*error.*\))\([^)]*\);?/g, ''); // Keep error logs
         
@@ -157,7 +157,7 @@ export default defineConfig(({ mode }) => {
           compress: {
             drop_console: ['log', 'debug'],
             drop_debugger: true,
-            pure_funcs: ['console.log', 'console.debug', 'devLogger.debug', 'devLogger.info', 'rateLimitedDebug'],
+            pure_funcs: ['console.log', 'console.debug', 'logger.devLogger.debug', 'logger.devLogger.info', 'logger.rateLimitedDebug'],
           },
         },
       }),

@@ -20,10 +20,10 @@ export default defineConfig({
         if (id.includes('node_modules') || !id.includes('.ts') && !id.includes('.js')) {
           return null;
         }
-        // Remove devLogger calls in production
+        // Remove logger calls in production
         let transformedCode = code
-          .replace(/devLogger\.(debug|info)\([^)]*\);?/g, '')
-          .replace(/rateLimitedDebug\([^)]*\);?/g, '')
+          .replace(/logger\.devLogger\.(debug|info)\([^)]*\);?/g, '')
+          .replace(/logger\.rateLimitedDebug\([^)]*\);?/g, '')
           .replace(/console\.debug\([^)]*\);?/g, '')
           .replace(/console\.log\([^)]*\);?/g, '');
         
@@ -45,7 +45,7 @@ export default defineConfig({
         // Remove console statements in production
         drop_console: ['log', 'debug'],
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.debug', 'devLogger.debug', 'devLogger.info'],
+        pure_funcs: ['console.log', 'console.debug', 'logger.devLogger.debug', 'logger.devLogger.info', 'logger.rateLimitedDebug'],
       },
     },
     rollupOptions: {
