@@ -45,8 +45,8 @@ export function encodeGeohash(latitude: number, longitude: number, precision: nu
     throw new Error('Precision must be between 1 and 12');
   }
 
-  const latRange = [-90.0, 90.0];
-  const lngRange = [-180.0, 180.0];
+  let latRange = [-90.0, 90.0];
+  let lngRange = [-180.0, 180.0];
   let geohash = '';
   let bits = 0;
   let bit = 0;
@@ -96,8 +96,8 @@ export function decodeGeohash(geohash: string): GeohashBounds {
     throw new Error('Invalid geohash string');
   }
 
-  const latRange = [-90.0, 90.0];
-  const lngRange = [-180.0, 180.0];
+  let latRange = [-90.0, 90.0];
+  let lngRange = [-180.0, 180.0];
   let even = true; // Start with longitude
 
   for (const char of geohash) {

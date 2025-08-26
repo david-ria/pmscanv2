@@ -27,7 +27,7 @@ import { calculateDataQuality } from '@/lib/autoContext.config';
 function logTransition(prev: string, next: string, data: AutoContextEvaluationData) {
   if (process.env.NODE_ENV !== 'development') return;
   if (prev === next) return;
-   
+  // eslint-disable-next-line no-console
   console.debug('[AutoContext]', `${prev} -> ${next}`, {
     speed: Math.round((data.movement.speed ?? 0) * 10) / 10,
     gpsQuality: data.location.gpsQuality,

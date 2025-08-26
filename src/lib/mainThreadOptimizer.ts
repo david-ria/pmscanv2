@@ -196,7 +196,7 @@ export async function optimizeComputation<T>(
   return mainThreadOptimizer.scheduleTask(
     async () => {
       const startTime = performance.now();
-      const result = computation();
+      let result = computation();
       
       // If computation takes too long, yield and continue
       if (performance.now() - startTime > maxExecutionTime) {

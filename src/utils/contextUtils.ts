@@ -1,4 +1,3 @@
-import { DEFAULT_LOCATIONS } from "@/lib/locationsActivities";
 /**
  * Centralized context management utilities to ensure consistency
  * across recording, storage, and display of location/activity contexts
@@ -71,7 +70,7 @@ export function getEffectiveContext(
  */
 export function validateLocationActivityPair(location: string, activity: string): boolean {
   // Import here to avoid circular dependency
-  
+  const { DEFAULT_LOCATIONS } = require('@/lib/locationsActivities');
   
   const locationData = DEFAULT_LOCATIONS.find((loc: any) => 
     loc.name === location || loc.id === location

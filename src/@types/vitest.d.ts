@@ -1,13 +1,11 @@
-import type {
-  Assertion as VitestAssertion,
-  AsymmetricMatchersContaining as VitestAsymmetricMatchersContaining,
-} from 'vitest';
+
+import type { Assertion, AsymmetricMatchersContaining } from 'vitest';
 
 interface CustomMatchers<R = unknown> {
   toBeInTheDocument(): R;
 }
 
 declare module 'vitest' {
-  interface Assertion<T = unknown> extends VitestAssertion<T>, CustomMatchers<T> {}
-  interface AsymmetricMatchersContaining extends VitestAsymmetricMatchersContaining, CustomMatchers {}
+  interface Assertion<T = any> extends CustomMatchers<T> {}
+  interface AsymmetricMatchersContaining extends CustomMatchers {}
 }

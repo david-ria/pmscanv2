@@ -15,9 +15,9 @@ import { cn } from '@/lib/utils';
 import { EVENT_TYPES } from '@/utils/eventTypes';
 import { createTimestamp, formatTime } from '@/utils/timeFormat';
 
-type EventButtonProps = Record<string, never>;
+interface EventButtonProps {}
 
-export function EventButton() {
+export function EventButton({}: EventButtonProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { createEvent, isLoading } = useEvents();

@@ -1,86 +1,332 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { initializeMap } from '@/lib/mapbox/mapInitializer';
-import type { LocationData } from '@/types/PMScan';
-import type { PMScanData } from '@/lib/pmscan/types';
+import { Loader2, AlertTriangle, Map as MapIcon } from 'lucide-react';
+import { LocationData } from '@/types/PMScan';
+import { useThresholds } from '@/contexts/ThresholdContext';
 
-interface TrackPoint {
-  longitude: number;
-  latitude: number;
-  pm25: number;
-  timestamp: Date;
-}
+// Dynamic imports - no static imports for mapbox or related modules
+// These will be loaded only when the map is actually requested
 
 interface MapboxMapCoreProps {
   currentLocation?: LocationData | null;
-  thresholds?: unknown;
-  onMapError?: (error: string) => void;
-  pmData?: PMScanData;
-  trackPoints?: TrackPoint[];
+  pmData?: {
+    pm1: number;
+    pm25: number;
+    pm10: number;
+    timestamp: Date;
+  } | null;
+  trackPoints?: Array<{
+    longitude: number;
+    latitude: number;
+    pm25: number;
+    timestamp: Date;
+  }>;
   isRecording?: boolean;
   className?: string;
   autoLoadOnRecording?: boolean;
 }
 
-export default function MapboxMapCore({ 
-  currentLocation, 
-  thresholds, 
-  onMapError,
+export const MapboxMapCore = ({
+  currentLocation,
   pmData,
-  trackPoints,
-  isRecording,
+  trackPoints = [],
+  isRecording = false,
   className,
-  autoLoadOnRecording
-}: MapboxMapCoreProps) {
+  autoLoadOnRecording = false,
+}: MapboxMapCoreProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const map = useRef<any>(null);
+  const marker = useRef<any>(null);
+  const [mapboxLoaded, setMapboxLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSatellite, setIsSatellite] = useState(false);
+  const [userRequested, setUserRequested] = useState(false);
+  const { thresholds, getAirQualityLevel } = useThresholds();
 
-  // Auto-load map when recording starts if autoLoadOnRecording is true
-  useEffect(() => {
-    if (autoLoadOnRecording && isRecording && !mapLoaded) {
-      handleLoadMap();
-    }
-  }, [autoLoadOnRecording, isRecording, mapLoaded]);
+  // Lazy load mapbox modules and utilities
+  const loadMapboxModules = async () => {
+    const [
+      { initializeMap },
+      { createLocationMarker },
+      { updateTrackData, updateLayerStyles },
+      { toggleMapStyle },
+      MapboxMapControls
+    ] = await Promise.all([
+      import('@/lib/mapbox/mapInitializer'),
+      import('@/lib/mapbox/mapMarker'),
+      import('@/lib/mapbox/mapLayers'),
+      import('@/lib/mapbox/mapStyleToggle'),
+      import('./MapboxMapControls').then(m => m.MapboxMapControls)
+    ]);
+    
+    return {
+      initializeMap,
+      createLocationMarker,
+      updateTrackData,
+      updateLayerStyles,
+      toggleMapStyle,
+      MapboxMapControls
+    };
+  };
 
+  // Handler for user-initiated map loading
   const handleLoadMap = async () => {
-    if (!mapContainer.current || mapLoaded) return;
-    
-    setIsLoading(true);
-    
+    if (!mapContainer.current || map.current || loading) return;
+
+    setLoading(true);
+    setError(null);
+    setUserRequested(true);
+
     try {
-      await initializeMap(mapContainer.current, {
+      console.debug('[PERF] 🗺️ User requested map - loading Mapbox GL...');
+      
+      // Load all mapbox modules dynamically
+      const modules = await loadMapboxModules();
+      
+      const mapInstance = await modules.initializeMap(
+        mapContainer.current,
         currentLocation,
-        thresholds
-      });
-      setMapLoaded(true);
-    } catch (error) {
-      console.error('Failed to initialize map:', error);
-      onMapError?.(error instanceof Error ? error.message : 'Map initialization failed');
-    } finally {
-      setIsLoading(false);
+        thresholds,
+        () => {
+          setLoading(false);
+          setMapboxLoaded(true);
+          console.debug('[PERF] ✅ Mapbox GL fully loaded and initialized');
+        },
+        (errorMsg) => {
+          setError(errorMsg);
+          setLoading(false);
+        }
+      );
+
+      map.current = mapInstance;
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load map';
+      setError(errorMsg);
+      setLoading(false);
+      console.error('[PERF] ❌ Failed to load Mapbox GL:', err);
     }
   };
 
-  if (!mapLoaded) {
+  // Auto-load map based on context
+  useEffect(() => {
+    const recordingConfirmed = localStorage.getItem('recording-confirmed') === 'true';
+    
+    console.debug('[PERF] 🗺️ Map auto-load check:', {
+      autoLoadOnRecording,
+      isRecording,
+      recordingConfirmed,
+      trackPointsLength: trackPoints.length,
+      mapboxLoaded,
+      loading,
+      userRequested
+    });
+    
+    // Only load map if recording is active AND frequency has been selected
+    if (autoLoadOnRecording && isRecording && recordingConfirmed && !mapboxLoaded && !loading) {
+      console.debug('[PERF] 🎬 Recording confirmed after frequency selection - auto-loading map...');
+      handleLoadMap();
+      // Clear the flag after use
+      localStorage.removeItem('recording-confirmed');
+      return;
+    }
+
+    // Auto-load for historical data viewing (when trackPoints exist and not recording)
+    if (trackPoints.length > 0 && !isRecording && !mapboxLoaded && !loading) {
+      console.debug('[PERF] 📊 Historical data detected - auto-loading map for', trackPoints.length, 'points...');
+      handleLoadMap();
+      return;
+    }
+
+    // Auto-load if user has previously interacted with the map OR if recording is active
+    const shouldAutoLoad = localStorage.getItem('mapbox-user-preference') === 'enabled';
+    if ((shouldAutoLoad || isRecording) && !mapboxLoaded && !loading) {
+      console.debug('[PERF] 🔄 Auto-loading map for recording or returning user...');
+      handleLoadMap();
+    }
+  }, [autoLoadOnRecording, isRecording, trackPoints.length, mapboxLoaded, userRequested, loading]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      if (map.current) {
+        try {
+          if (map.current.getContainer()) {
+            map.current.remove();
+          }
+        } catch (error) {
+          console.warn('Error removing map:', error);
+        } finally {
+          map.current = null;
+        }
+      }
+    };
+  }, []);
+
+  // Update marker when location changes (only if map is loaded)
+  useEffect(() => {
+    console.log('🗺️ === MAP LOCATION UPDATE ===', {
+      hasMap: !!map.current,
+      hasCurrentLocation: !!currentLocation,
+      mapboxLoaded,
+      currentLocation: currentLocation ? {
+        lat: currentLocation.latitude,
+        lng: currentLocation.longitude,
+        accuracy: currentLocation.accuracy
+      } : null
+    });
+
+    if (!map.current || !currentLocation || !mapboxLoaded) {
+      console.log('🗺️ Skipping marker update - missing requirements');
+      return;
+    }
+
+    (async () => {
+      console.log('🗺️ Creating location marker for:', {
+        lat: currentLocation.latitude,
+        lng: currentLocation.longitude,
+        pm25: pmData?.pm25
+      });
+      const { createLocationMarker } = await import('@/lib/mapbox/mapMarker');
+      marker.current = createLocationMarker(
+        map.current,
+        currentLocation,
+        pmData,
+        getAirQualityLevel,
+        marker.current
+      );
+      console.log('🗺️ Location marker created successfully');
+    })();
+  }, [currentLocation, pmData, getAirQualityLevel, mapboxLoaded]);
+
+  // Update track visualization when trackPoints change (only if map is loaded)
+  useEffect(() => {
+    if (!map.current || !mapboxLoaded) return;
+    
+    (async () => {
+      const { updateTrackData } = await import('@/lib/mapbox/mapLayers');
+      updateTrackData(map.current, trackPoints, isRecording);
+    })();
+  }, [trackPoints, isRecording, mapboxLoaded]);
+
+  // Update map styling when thresholds change (only if map is loaded)
+  useEffect(() => {
+    if (!map.current || !mapboxLoaded) return;
+    
+    (async () => {
+      const { updateLayerStyles } = await import('@/lib/mapbox/mapLayers');
+      updateLayerStyles(map.current, thresholds);
+    })();
+  }, [thresholds, mapboxLoaded]);
+
+  // Toggle between satellite and map view
+  const handleToggleMapStyle = async () => {
+    if (!map.current || !mapboxLoaded) return;
+
+    const { toggleMapStyle } = await import('@/lib/mapbox/mapStyleToggle');
+    toggleMapStyle(
+      map.current,
+      isSatellite,
+      trackPoints,
+      thresholds,
+      setIsSatellite
+    );
+  };
+
+  // Save user preference when they first load the map or when recording starts
+  const handleUserMapLoad = () => {
+    localStorage.setItem('mapbox-user-preference', 'enabled');
+    handleLoadMap();
+  };
+
+  if (error) {
     return (
-      <div className={`h-64 flex flex-col items-center justify-center space-y-4 ${className || ''}`}>
-        {isLoading ? (
-          <Skeleton className="h-64 w-full" />
-        ) : (
-          <>
-            <p className="text-muted-foreground">Map not loaded</p>
-            <Button onClick={handleLoadMap} disabled={isLoading}>
-              Load Map
-            </Button>
-          </>
-        )}
-      </div>
+      <Card className={`p-6 ${className || ''}`}>
+        <div className="flex flex-col items-center justify-center h-full text-center">
+          <AlertTriangle className="h-8 w-8 text-destructive mb-3" />
+          <p className="text-sm text-muted-foreground mb-4">{error}</p>
+          <Button 
+            variant="outline" 
+            onClick={handleLoadMap}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Retrying...
+              </>
+            ) : (
+              'Retry Map Load'
+            )}
+          </Button>
+        </div>
+      </Card>
     );
   }
 
-  return <div ref={mapContainer} className={`h-64 w-full ${className || ''}`} />;
-}
+  // Show map load button if map hasn't been loaded yet AND not recording AND no track points
+  if (!mapboxLoaded && !isRecording && trackPoints.length === 0) {
+    return (
+      <Card className={`p-6 ${className || ''}`}>
+        <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+          <div className="p-4 rounded-full bg-primary/10">
+            <MapIcon className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2">Interactive Map</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Load the map to visualize air quality data and track your location
+            </p>
+            <Badge variant="secondary" className="text-xs mb-4">
+              ~2MB • Loads on demand
+            </Badge>
+          </div>
+          <Button onClick={handleUserMapLoad}>
+            <MapIcon className="h-4 w-4 mr-2" />
+            Load Map
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
-export { MapboxMapCore };
+  return (
+    <div className={`relative ${className || ''}`}>
+      {loading && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading interactive map...</p>
+            <Badge variant="secondary" className="text-xs">
+              Loading Mapbox GL (~2MB)
+            </Badge>
+          </div>
+        </div>
+      )}
+
+      <div
+        ref={mapContainer}
+        className="w-full h-full rounded-lg overflow-hidden"
+      />
+
+      {mapboxLoaded && (
+        <React.Suspense fallback={<div>Loading controls...</div>}>
+          {/* Lazy load controls only when map is ready */}
+          <LazyMapControls
+            isSatellite={isSatellite}
+            onToggleMapStyle={handleToggleMapStyle}
+            currentLocation={currentLocation}
+          />
+        </React.Suspense>
+      )}
+    </div>
+  );
+};
+
+// Lazy-loaded map controls component
+const LazyMapControls = React.lazy(async () => {
+  const { MapboxMapControls } = await import('./MapboxMapControls');
+  return { default: MapboxMapControls };
+});

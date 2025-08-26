@@ -4,18 +4,16 @@
     "dev": "vite",
     "build": "vite build && node scripts/inject-sw.mjs",
     "build:dev": "vite build --mode development && node scripts/inject-sw.mjs",
-    "lint": "eslint \"src/**/*.{ts,tsx}\" \"supabase/**/*.ts\" --config .eslint.ci.config.mjs --quiet",
+    "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run -c vitest.unit.config.ts --reporter=dot",
+    "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npx playwright test",
     "perf:serve": "npx vite preview --port 4173 --strictPort",
     "test:perf": "npx playwright test tests/performance-budgets.spec.ts tests/energy-usage.spec.ts tests/perf-top-offenders.spec.ts",
     "fix:newlines": "node scripts/ensure-trailing-newline.cjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"scripts/**/*.{js,ts}\"",
-    "prepare": "husky install",
-    "lint:ci": "eslint \"src/**/*.{ts,tsx}\" \"supabase/**/*.ts\" --config .eslint.ci.config.mjs --quiet"
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"scripts/**/*.{js,ts}\""
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -94,7 +92,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.9.0",
     "@tailwindcss/typography": "^0.5.15",
     "@testing-library/dom": "^10.4.0",
@@ -109,7 +106,6 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
-    "husky": "^8.0.0",
     "jsdom": "^26.1.0",
     "lovable-tagger": "^1.1.7",
     "postcss": "^8.4.47",

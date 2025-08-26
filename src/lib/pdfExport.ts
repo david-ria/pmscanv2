@@ -114,13 +114,12 @@ const getPeriodText = (period: string, date: Date): string => {
   switch (period) {
     case 'day':
       return format(date, 'dd MMMM yyyy', formatOptions);
-    case 'week': {
+    case 'week':
       const weekStart = new Date(date);
       weekStart.setDate(date.getDate() - date.getDay() + 1);
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);
       return `Semaine du ${format(weekStart, 'dd MMM', formatOptions)} au ${format(weekEnd, 'dd MMM yyyy', formatOptions)}`;
-}
     case 'month':
       return format(date, 'MMMM yyyy', formatOptions);
     case 'year':

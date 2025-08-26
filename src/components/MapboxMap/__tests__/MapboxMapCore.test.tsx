@@ -1,45 +1,51 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import MapboxMapCore from '../MapboxMapCore';
+import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { ThresholdProvider } from '@/contexts/ThresholdContext';
 
-// Mock the initializer so we don't hit Mapbox/network
-vi.mock('@/lib/mapbox/mapInitializer', () => {
-  return {
-    initializeMap: vi.fn().mockResolvedValue({
-      on: vi.fn(),
-      off: vi.fn(),
-      addControl: vi.fn(),
-      remove: vi.fn(),
-    }),
-  };
-});
+vi.mock('mapbox-gl/dist/mapbox-gl.css', () => ({}));
+vi.mock('mapbox-gl', () => ({ default: {} }));
+
+vi.mock('@/lib/mapbox/mapInitializer', () => ({
+  initializeMap: vi.fn(),
+}));
+
+import { initializeMap } from '@/lib/mapbox/mapInitializer';
+const mockInitializeMap = vi.mocked(initializeMap);
+import { MapboxMapCore } from '../MapboxMapCore';
 
 describe('MapboxMapCore', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('calls initializeMap after clicking Load Map', async () => {
-    const { initializeMap } = await import('@/lib/mapbox/mapInitializer');
-
-    render(
-      <MapboxMapCore
-        currentLocation={{ 
-          latitude: 48.8566, 
-          longitude: 2.3522,
-          accuracy: 10,
-          timestamp: new Date()
-        }}
-        thresholds={{}}
-        onMapError={vi.fn()}
-      />
+  it('shows error when initialization fails', async () => {
+    mockInitializeMap.mockImplementation(
+      async (container, loc, thr, onLoad, onError) => {
+        onError('Map failed to load');
+        return null;
+      }
     );
 
-    // Trigger lazy init
-    fireEvent.click(screen.getByRole('button', { name: /load map/i }));
+    render(
+      <ThresholdProvider>
+        <MapboxMapCore />
+      </ThresholdProvider>
+    );
 
-    await waitFor(() => {
-      expect(initializeMap).toHaveBeenCalled();
-    });
+    expect(await screen.findByText('Map failed to load')).toBeInTheDocument();
+    expect(screen.getByText('Map Unavailable')).toBeInTheDocument();
+  });
+
+  it('calls initializeMap on mount', async () => {
+    mockInitializeMap.mockImplementation(
+      async (container, loc, thr, onLoad) => {
+        onLoad();
+        return { remove: vi.fn() } as any;
+      }
+    );
+
+    render(
+      <ThresholdProvider>
+        <MapboxMapCore />
+      </ThresholdProvider>
+    );
+
+    await waitFor(() => expect(mockInitializeMap).toHaveBeenCalled());
   });
 });

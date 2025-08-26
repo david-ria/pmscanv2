@@ -55,15 +55,10 @@ export function DateFilter({
     switch (selectedPeriod) {
       case 'day':
         return format(selectedDate, 'EEEE d MMMM yyyy', { locale });
-      case 'week': {
+      case 'week':
         const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
         const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
-        return `${format(weekStart, 'd MMM', { locale })} - ${format(
-          weekEnd,
-          'd MMM yyyy',
-          { locale }
-        )}`;
-      }
+        return `${format(weekStart, 'd MMM', { locale })} - ${format(weekEnd, 'd MMM yyyy', { locale })}`;
       case 'month':
         return format(selectedDate, 'MMMM yyyy', { locale });
       case 'year':
@@ -74,27 +69,23 @@ export function DateFilter({
   };
 
   const navigateDate = (direction: 'prev' | 'next') => {
-    const newDate = new Date(selectedDate);
+    let newDate = new Date(selectedDate);
 
     switch (selectedPeriod) {
-      case 'day': {
+      case 'day':
         newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
         break;
-      }
-      case 'week': {
+      case 'week':
         newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
         break;
-      }
-      case 'month': {
+      case 'month':
         newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
         break;
-      }
-      case 'year': {
+      case 'year':
         newDate.setFullYear(
           newDate.getFullYear() + (direction === 'next' ? 1 : -1)
         );
         break;
-      }
     }
 
     onDateChange(newDate);
