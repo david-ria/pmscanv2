@@ -7,6 +7,7 @@ import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
 import { RecordingEntry } from '@/types/recording';
 import * as logger from '@/utils/logger';
+import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
 
 interface MissionContext {
   location: string;
@@ -69,9 +70,9 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   const { latestLocation, locationEnabled, requestLocationPermission, speedKmh, gpsQuality } = useGPS(true, true, recording.recordingFrequency);
   const { saveMission: missionSaverFunction } = useMissionSaver();
 
-  // Enhanced state change tracking
+  // Enhanced state change tracking - rate limited
   useEffect(() => {
-    console.log('🔄 UNIFIED DATA - RECORDING STATE CHANGED:', {
+    rateLimitedDebug('unified-recording-state', 2000, '🔄 UNIFIED DATA - RECORDING STATE CHANGED:', {
       isRecording: recording.isRecording,
       hasAddDataPoint: !!recording.addDataPoint,
       timestamp: new Date().toISOString()
@@ -79,7 +80,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   }, [recording.isRecording, recording.addDataPoint]);
 
   useEffect(() => {
-    console.log('🔄 UNIFIED DATA - BLUETOOTH STATE CHANGED:', {
+    rateLimitedDebug('unified-bluetooth-state', 1000, '🔄 UNIFIED DATA - BLUETOOTH STATE CHANGED:', {
       hasCurrentData: !!bluetooth.currentData,
       isConnected: bluetooth.isConnected,
       pm25: bluetooth.currentData?.pm25,
@@ -87,9 +88,9 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     });
   }, [bluetooth.currentData, bluetooth.isConnected]);
 
-  // Enhanced unified state logging
+  // Enhanced unified state logging - rate limited to prevent spam
   useEffect(() => {
-    console.log('🔄 UNIFIED DATA COMPLETE STATE:', {
+    rateLimitedDebug('unified-complete-state', 2000, '🔄 UNIFIED DATA COMPLETE STATE:', {
       hasCurrentData: !!bluetooth.currentData,
       currentDataPM25: bluetooth.currentData?.pm25,
       isConnected: bluetooth.isConnected,
@@ -103,8 +104,8 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     });
   }, [bluetooth.currentData, bluetooth.isConnected, recording.isRecording, recording.recordingData.length, latestLocation, recording.addDataPoint]);
 
-  // Unified state object
-  console.log('🔄 UNIFIED DATA - GPS STATE:', {
+  // Unified state object - GPS state logging
+  rateLimitedDebug('unified-gps-state', 3000, '🔄 UNIFIED DATA - GPS STATE:', {
     hasLocation: !!latestLocation,
     latitude: latestLocation?.latitude,
     longitude: latestLocation?.longitude,

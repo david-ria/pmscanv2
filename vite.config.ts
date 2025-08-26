@@ -6,7 +6,28 @@ import type { PreRenderedAsset } from 'rollup';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
+  const isProduction = mode === 'production';
   const plugins: PluginOption[] = [react()];
+
+  // Add production log removal plugin
+  if (isProduction) {
+    plugins.push({
+      name: 'remove-dev-logs',
+      transform(code: string, id: string) {
+        if (id.includes('node_modules') || (!id.includes('.ts') && !id.includes('.js'))) {
+          return null;
+        }
+        // Remove development-only logging in production
+        let transformedCode = code
+          .replace(/devLogger\.(debug|info)\([^)]*\);?/g, '')
+          .replace(/rateLimitedDebug\([^)]*\);?/g, '')
+          .replace(/console\.debug\([^)]*\);?/g, '')
+          .replace(/console\.log(?!\s*\(.*error.*\))\([^)]*\);?/g, ''); // Keep error logs
+        
+        return transformedCode !== code ? transformedCode : null;
+      },
+    });
+  }
 
   // Note: componentTagger temporarily disabled to prevent console errors
   // Will be re-enabled when the issue is resolved
@@ -130,7 +151,16 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: true, // Split CSS into separate files with hashes
       sourcemap: false, // Disable source maps in production for better performance
       // Enable compression and minification
-      minify: 'esbuild',
+      minify: isProduction ? 'terser' : 'esbuild',
+      ...(isProduction && {
+        terserOptions: {
+          compress: {
+            drop_console: ['log', 'debug'],
+            drop_debugger: true,
+            pure_funcs: ['console.log', 'console.debug', 'devLogger.debug', 'devLogger.info', 'rateLimitedDebug'],
+          },
+        },
+      }),
       // Target modern browsers for better optimization
       target: 'es2022',
       // Optimize chunk size warnings
