@@ -1,18 +1,23 @@
 import { AUTO_CTX_CFG } from '@/lib/autoContext.config';
+import { rateLimitedWarn, rateLimitedDebug } from '@/utils/optimizedLogger';
 
 export interface WalkingSigSnapshot {
   walkingSignature: boolean;   // booléen lissé
   walkingConfidence: number;   // 0..1 (cadence normalisée)
   lastUpdated: number;         // epoch ms
   isActive: boolean;           // accelerometer is receiving data
+  isSupported: boolean;        // device supports accelerometer
 }
 
 export class MotionWalkingSignature {
+  private static instance: MotionWalkingSignature | null = null;
+  
   private snapshot: WalkingSigSnapshot = {
     walkingSignature: false,
     walkingConfidence: 0,
     lastUpdated: Date.now(),
     isActive: false,
+    isSupported: false,
   };
 
   private emaG = 0;
@@ -25,6 +30,30 @@ export class MotionWalkingSignature {
   private highPassHistory: Array<{ value: number; timestamp: number }> = [];
   private lastMotionEvent = 0; // Track last accelerometer event
   private timeoutId: number | null = null;
+  private started = false;
+
+  // Singleton pattern to prevent multiple instances
+  static getInstance(): MotionWalkingSignature {
+    if (!MotionWalkingSignature.instance) {
+      MotionWalkingSignature.instance = new MotionWalkingSignature();
+    }
+    return MotionWalkingSignature.instance;
+  }
+
+  // Check if device supports motion events
+  private isDeviceSupported(): boolean {
+    // Check if DeviceMotionEvent is available
+    if (typeof DeviceMotionEvent === 'undefined') {
+      return false;
+    }
+
+    // Check if we're on a mobile device (basic heuristic)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                     ('ontouchstart' in window) ||
+                     (navigator.maxTouchPoints > 0);
+    
+    return isMobile;
+  }
 
   // Demande de permission iOS Safari
   private async requestPermission(): Promise<void> {
@@ -42,16 +71,40 @@ export class MotionWalkingSignature {
   }
 
   async start(): Promise<void> {
-    await this.requestPermission();
-    window.addEventListener('devicemotion', this.onMotion, true);
-    this.snapshot.isActive = true;
-    this.startTimeoutMonitoring();
-    console.log('MotionWalkingSignature started');
+    if (this.started) {
+      return; // Already started
+    }
+
+    // Check device support first
+    this.snapshot.isSupported = this.isDeviceSupported();
+    if (!this.snapshot.isSupported) {
+      rateLimitedDebug('motion-unsupported', 30000, 'MotionWalkingSignature: Device does not support motion events or is not mobile');
+      return;
+    }
+
+    try {
+      await this.requestPermission();
+      this.lastMotionEvent = performance.now(); // Initialize to current time
+      window.addEventListener('devicemotion', this.onMotion, true);
+      this.snapshot.isActive = true;
+      this.startTimeoutMonitoring();
+      this.started = true;
+      rateLimitedDebug('motion-started', 30000, 'MotionWalkingSignature started successfully');
+    } catch (error) {
+      rateLimitedWarn('motion-permission-error', 60000, 'MotionWalkingSignature: Failed to start due to permission error:', error);
+      this.snapshot.isSupported = false;
+    }
   }
 
   stop(): void {
+    if (!this.started) {
+      return; // Already stopped
+    }
+
     window.removeEventListener('devicemotion', this.onMotion, true);
     this.stopTimeoutMonitoring();
+    this.started = false;
+    
     // Reset state
     this.emaG = 0;
     this.peakHistory = [];
@@ -64,8 +117,9 @@ export class MotionWalkingSignature {
       walkingConfidence: 0,
       lastUpdated: Date.now(),
       isActive: false,
+      isSupported: this.snapshot.isSupported, // Preserve support status
     };
-    console.log('MotionWalkingSignature stopped');
+    rateLimitedDebug('motion-stopped', 30000, 'MotionWalkingSignature stopped');
   }
 
   private startTimeoutMonitoring(): void {
@@ -73,12 +127,13 @@ export class MotionWalkingSignature {
     this.timeoutId = window.setInterval(() => {
       const now = performance.now();
       if (now - this.lastMotionEvent > AUTO_CTX_CFG.ACC_TIMEOUT_MS) {
-        console.warn('Accelerometer timeout - forcing walkingSignature to false');
+        // Use rate-limited warning to prevent console spam
+        rateLimitedWarn('accelerometer-timeout', 30000, 'Accelerometer timeout - no motion data received');
         this.snapshot.walkingSignature = false;
         this.snapshot.isActive = false;
         this.snapshot.lastUpdated = Date.now();
       }
-    }, 1000); // Check every second
+    }, 5000); // Check every 5 seconds instead of every second
   }
 
   private stopTimeoutMonitoring(): void {
@@ -156,9 +211,9 @@ export class MotionWalkingSignature {
 
     this.candidate = cadenceOK && regularityOK && intensityOK;
 
-    // Debug logging
+    // Rate-limited debug logging only in development
     if (this.peakHistory.length >= 3) {
-      console.log('Walking detection:', {
+      rateLimitedDebug('walking-detection', 5000, 'Walking detection:', {
         cadence: cadence.toFixed(1),
         regularity: cv.toFixed(3),
         intensity: rms.toFixed(2),

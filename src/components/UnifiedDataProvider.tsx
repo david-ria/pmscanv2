@@ -8,6 +8,7 @@ import { useGPS } from '@/hooks/useGPS';
 import { RecordingEntry } from '@/types/recording';
 import * as logger from '@/utils/logger';
 import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
+import { MotionWalkingSignature, WalkingSigSnapshot } from '@/services/motionWalkingSignature';
 
 interface MissionContext {
   location: string;
@@ -34,6 +35,9 @@ interface UnifiedDataState {
   speedKmh: number;
   gpsQuality: 'good' | 'poor';
   locationEnabled: boolean;
+  
+  // Motion data
+  walkingSignature: WalkingSigSnapshot;
   
   // Actions
   requestDevice: () => Promise<void>;
@@ -69,6 +73,31 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   const recording = useRecordingService(); // Single source of truth
   const { latestLocation, locationEnabled, requestLocationPermission, speedKmh, gpsQuality } = useGPS(true, true, recording.recordingFrequency);
   const { saveMission: missionSaverFunction } = useMissionSaver();
+  
+  // Centralized motion service - single instance
+  const [motionService] = useState(() => MotionWalkingSignature.getInstance());
+  const [walkingSnapshot, setWalkingSnapshot] = useState<WalkingSigSnapshot>(() => motionService.getSnapshot());
+
+  // Motion service lifecycle management
+  useEffect(() => {
+    // Start motion service when recording starts
+    if (recording.isRecording) {
+      motionService.start().catch(error => {
+        rateLimitedDebug('motion-start-error', 30000, 'Failed to start motion service:', error);
+      });
+    } else {
+      motionService.stop();
+    }
+  }, [recording.isRecording, motionService]);
+
+  // Update walking snapshot periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWalkingSnapshot(motionService.getSnapshot());
+    }, 1000); // Update every second
+
+    return () => clearInterval(interval);
+  }, [motionService]);
 
   // Enhanced state change tracking - rate limited
   useEffect(() => {
@@ -135,6 +164,9 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     speedKmh,
     gpsQuality,
     locationEnabled,
+    
+    // Motion data
+    walkingSignature: walkingSnapshot,
     
     // Actions
     requestDevice: bluetooth.requestDevice,

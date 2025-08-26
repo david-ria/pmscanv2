@@ -20,8 +20,8 @@ import {
   AutoContextConfig,
 } from '@/lib/autoContextConfig';
 import { useSensorData } from '@/hooks/useSensorData';
-import { MotionWalkingSignature } from '@/services/motionWalkingSignature';
 import { calculateDataQuality } from '@/lib/autoContext.config';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 
 // Development telemetry logging
 function logTransition(prev: string, next: string, data: AutoContextEvaluationData) {
@@ -76,14 +76,14 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
     DEFAULT_SETTINGS
   );
   const { features } = useSubscription();
+  
+  // Use unified data for motion detection
+  const unifiedData = useUnifiedData();
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
   const [latestContext, setLatestContext] = useState<string>('');
   const [model, setModel] = useState<any | null>(null);
-  
-  // Initialize motion walking signature service
-  const [motionWalkingSignature] = useState(() => new MotionWalkingSignature());
   
   const homeCountsKey = 'homeWifiCounts';
   const workCountsKey = 'workWifiCounts';
@@ -155,19 +155,6 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       });
     }
   }, [settings.mlEnabled, model]);
-
-  // Initialize and manage motion walking signature service
-  useEffect(() => {
-    if (settings.enabled) {
-      motionWalkingSignature.start().catch(console.error);
-    } else {
-      motionWalkingSignature.stop();
-    }
-
-    return () => {
-      motionWalkingSignature.stop();
-    };
-  }, [settings.enabled, motionWalkingSignature]);
 
   // Real WiFi detection function
   const getCurrentWifiSSID = useCallback((): string => {
@@ -567,8 +554,8 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
         movement: {
           speed: speedKmh,
           isMoving: speedKmh > 2,
-          walkingSignature: motionWalkingSignature.getSnapshot().walkingSignature,
-          dataQuality: calculateDataQuality(gpsQuality, motionWalkingSignature.getSnapshot().isActive),
+          walkingSignature: unifiedData.walkingSignature.walkingSignature,
+          dataQuality: calculateDataQuality(gpsQuality, unifiedData.walkingSignature.isActive),
         },
         time: {
           currentHour,
