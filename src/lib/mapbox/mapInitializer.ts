@@ -1,8 +1,9 @@
 // src/lib/mapbox/mapInitializer.ts
 import type { LocationData } from '@/types/PMScan';
+import { loadMapboxGL } from './mapboxLoader';
+import { MAP_STYLES } from './mapStyles';
 
-// Simple mock initializer for testing/development
-// TODO: Replace with actual mapbox initialization when ready
+// Real Mapbox map initializer
 async function legacyInitializeMap(
   container: HTMLDivElement,
   location: LocationData | null,
@@ -11,21 +12,35 @@ async function legacyInitializeMap(
   onError: (err: string) => void
 ) {
   try {
-    // Mock map instance
-    const mockMap = {
-      remove: () => {},
-      on: () => {},
-      off: () => {},
-      addControl: () => {},
-    };
+    // Load Mapbox GL dynamically
+    const mapboxgl = await loadMapboxGL();
     
-    // Simulate async loading
-    setTimeout(() => {
+    // Create the map
+    const map = new mapboxgl.Map({
+      container,
+      style: MAP_STYLES.LIGHT,
+      center: location ? [location.longitude, location.latitude] : [2.3522, 48.8566], // Default to Paris
+      zoom: location ? 14 : 10,
+      pitch: 0,
+      bearing: 0
+    });
+
+    // Add navigation controls
+    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    
+    // Wait for map to load
+    map.on('load', () => {
       onLoad();
-    }, 100);
+    });
     
-    return mockMap;
+    map.on('error', (e) => {
+      console.error('Mapbox map error:', e);
+      onError('Map failed to load');
+    });
+    
+    return map;
   } catch (error) {
+    console.error('Failed to initialize map:', error);
     onError(error instanceof Error ? error.message : 'Map failed to load');
     return null;
   }
