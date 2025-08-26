@@ -1,43 +1,86 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import MapboxMapCore from '../MapboxMapCore';
+import React, { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { initializeMap } from '@/lib/mapbox/mapInitializer';
+import type { LocationData } from '@/types/PMScan';
+import type { PMScanData } from '@/lib/pmscan/types';
 
-// Mock the initializer so no real map/network happens
-vi.mock('@/lib/mapbox/mapInitializer', () => {
-  return {
-    initializeMap: vi.fn().mockResolvedValue({
-      on: vi.fn(),
-      off: vi.fn(),
-      addControl: vi.fn(),
-      remove: vi.fn(),
-    }),
+interface TrackPoint {
+  longitude: number;
+  latitude: number;
+  pm25: number;
+  timestamp: Date;
+}
+
+interface MapboxMapCoreProps {
+  currentLocation?: LocationData | null;
+  thresholds?: unknown;
+  onMapError?: (error: string) => void;
+  pmData?: PMScanData;
+  trackPoints?: TrackPoint[];
+  isRecording?: boolean;
+  className?: string;
+  autoLoadOnRecording?: boolean;
+}
+
+export default function MapboxMapCore({ 
+  currentLocation, 
+  thresholds, 
+  onMapError,
+  pmData,
+  trackPoints,
+  isRecording,
+  className,
+  autoLoadOnRecording
+}: MapboxMapCoreProps) {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  // Auto-load map when recording starts if autoLoadOnRecording is true
+  useEffect(() => {
+    if (autoLoadOnRecording && isRecording && !mapLoaded) {
+      handleLoadMap();
+    }
+  }, [autoLoadOnRecording, isRecording, mapLoaded]);
+
+  const handleLoadMap = async () => {
+    if (!mapContainer.current || mapLoaded) return;
+    
+    setIsLoading(true);
+    
+    try {
+      await initializeMap(mapContainer.current, {
+        currentLocation,
+        thresholds
+      });
+      setMapLoaded(true);
+    } catch (error) {
+      console.error('Failed to initialize map:', error);
+      onMapError?.(error instanceof Error ? error.message : 'Map initialization failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
-});
 
-describe('MapboxMapCore', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('calls initializeMap after clicking Load Map', async () => {
-    const { initializeMap } = await import('@/lib/mapbox/mapInitializer');
-
-    render(
-      <MapboxMapCore
-        currentLocation={{ latitude: 48.8566, longitude: 2.3522 }}
-        thresholds={{}}
-        onMapError={vi.fn()}
-      />
+  if (!mapLoaded) {
+    return (
+      <div className={`h-64 flex flex-col items-center justify-center space-y-4 ${className || ''}`}>
+        {isLoading ? (
+          <Skeleton className="h-64 w-full" />
+        ) : (
+          <>
+            <p className="text-muted-foreground">Map not loaded</p>
+            <Button onClick={handleLoadMap} disabled={isLoading}>
+              Load Map
+            </Button>
+          </>
+        )}
+      </div>
     );
+  }
 
-    // Wait for the lazy-init button and click it
-    const btn = await screen.findByRole('button', { name: /load map/i });
-    fireEvent.click(btn);
+  return <div ref={mapContainer} className={`h-64 w-full ${className || ''}`} />;
+}
 
-    // Wait for effect to run and call the initializer
-    await waitFor(
-      () => expect(initializeMap).toHaveBeenCalledTimes(1),
-      { timeout: 3000 }
-    );
-  });
-});
+export { MapboxMapCore };

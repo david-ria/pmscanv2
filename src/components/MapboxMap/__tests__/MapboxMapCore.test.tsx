@@ -24,7 +24,12 @@ describe('MapboxMapCore', () => {
 
     render(
       <MapboxMapCore
-        currentLocation={{ latitude: 48.8566, longitude: 2.3522 }}
+        currentLocation={{ 
+          latitude: 48.8566, 
+          longitude: 2.3522,
+          accuracy: 10,
+          timestamp: new Date()
+        }}
         thresholds={{}}
         onMapError={vi.fn()}
       />

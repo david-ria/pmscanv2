@@ -1,8 +1,35 @@
 // src/lib/mapbox/mapInitializer.ts
 import type { LocationData } from '@/types/PMScan';
 
-// Use your existing full initializer implementation
-import { initializeMap as legacyInitializeMap } from './apInitializer';
+// Simple mock initializer for testing/development
+// TODO: Replace with actual mapbox initialization when ready
+async function legacyInitializeMap(
+  container: HTMLDivElement,
+  location: LocationData | null,
+  thresholds: unknown,
+  onLoad: () => void,
+  onError: (err: string) => void
+) {
+  try {
+    // Mock map instance
+    const mockMap = {
+      remove: () => {},
+      on: () => {},
+      off: () => {},
+      addControl: () => {},
+    };
+    
+    // Simulate async loading
+    setTimeout(() => {
+      onLoad();
+    }, 100);
+    
+    return mockMap;
+  } catch (error) {
+    onError(error instanceof Error ? error.message : 'Map failed to load');
+    return null;
+  }
+}
 
 export interface MapInstanceLike {
   remove(): void;

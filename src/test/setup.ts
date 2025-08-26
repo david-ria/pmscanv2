@@ -25,5 +25,5 @@ class MockIntersectionObserver {
   disconnect = () => {};
   takeRecords = () => [];
 }
-// @ts-expect-error test shim
+// Set up IntersectionObserver mock for components that need it
 globalThis.IntersectionObserver = MockIntersectionObserver;
