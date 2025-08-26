@@ -39,40 +39,24 @@ export default function MapboxMapCore({
 
   // Auto-load map when recording starts if autoLoadOnRecording is true
   useEffect(() => {
-    console.log('🗺️ MapboxMapCore auto-load effect:', { 
-      autoLoadOnRecording, 
-      isRecording, 
-      mapLoaded,
-      willTrigger: autoLoadOnRecording && isRecording && !mapLoaded 
-    });
-    
     if (autoLoadOnRecording && isRecording && !mapLoaded) {
-      console.log('🗺️ Auto-loading map due to recording start');
       handleLoadMap();
     }
   }, [autoLoadOnRecording, isRecording, mapLoaded]);
 
   const handleLoadMap = async () => {
-    if (!mapContainer.current || mapLoaded) {
-      console.log('🗺️ Skipping map load:', { 
-        hasContainer: !!mapContainer.current, 
-        mapLoaded 
-      });
-      return;
-    }
+    if (!mapContainer.current || mapLoaded) return;
     
-    console.log('🗺️ Starting map initialization...');
     setIsLoading(true);
     
     try {
-      const map = await initializeMap(mapContainer.current, {
+      await initializeMap(mapContainer.current, {
         currentLocation,
         thresholds
       });
-      console.log('🗺️ Map initialized successfully:', map);
       setMapLoaded(true);
     } catch (error) {
-      console.error('🗺️ Failed to initialize map:', error);
+      console.error('Failed to initialize map:', error);
       onMapError?.(error instanceof Error ? error.message : 'Map initialization failed');
     } finally {
       setIsLoading(false);
