@@ -1,9 +1,9 @@
 /* Tap Target Size Compliance - Ensures all interactive elements meet 40x40px minimum */
 
-button, 
+button:not([role="switch"]), 
 a[href], 
-[role="button"], 
-[tabindex="0"],
+[role="button"]:not([role="switch"]), 
+[tabindex="0"]:not([role="switch"]),
 input[type="button"], 
 input[type="submit"], 
 input[type="reset"],
@@ -17,6 +17,13 @@ input[type="reset"],
     min-width: 44px;
     min-height: 44px;
   }
+}
+
+/* Exception for switch components - they have their own sizing */
+button[role="switch"],
+[role="switch"] {
+  min-width: unset;
+  min-height: unset;
 }
 
 /* Exception for very small icons inside larger clickable areas */
