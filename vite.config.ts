@@ -17,12 +17,12 @@ export default defineConfig(({ mode }) => {
         if (id.includes('node_modules') || (!id.includes('.ts') && !id.includes('.js'))) {
           return null;
         }
-        // Remove development-only logging in production
+        // Remove development-only logging in production - more precise patterns
         let transformedCode = code
-          .replace(/logger\.devLogger\.(debug|info)\([^)]*\);?/g, '')
-          .replace(/logger\.rateLimitedDebug\([^)]*\);?/g, '')
-          .replace(/console\.debug\([^)]*\);?/g, '')
-          .replace(/console\.log\([^)]*\);?/g, ''); // Consistent with production config
+          .replace(/logger\.devLogger\.(debug|info)\([^;]*\);?\s*/g, '')
+          .replace(/logger\.rateLimitedDebug\([^;]*\);?\s*/g, '')
+          .replace(/console\.debug\([^;]*\);?\s*/g, '')
+          .replace(/console\.log\([^;]*\);?\s*/g, ''); // More precise regex
         
         return transformedCode !== code ? transformedCode : null;
       },

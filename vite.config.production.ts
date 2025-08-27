@@ -20,12 +20,12 @@ export default defineConfig({
         if (id.includes('node_modules') || !id.includes('.ts') && !id.includes('.js')) {
           return null;
         }
-        // Remove logger calls in production
+        // Remove logger calls in production - more precise patterns
         let transformedCode = code
-          .replace(/logger\.devLogger\.(debug|info)\([^)]*\);?/g, '')
-          .replace(/logger\.rateLimitedDebug\([^)]*\);?/g, '')
-          .replace(/console\.debug\([^)]*\);?/g, '')
-          .replace(/console\.log\([^)]*\);?/g, '');
+          .replace(/logger\.devLogger\.(debug|info)\([^;]*\);?\s*/g, '')
+          .replace(/logger\.rateLimitedDebug\([^;]*\);?\s*/g, '')
+          .replace(/console\.debug\([^;]*\);?\s*/g, '')
+          .replace(/console\.log\([^;]*\);?\s*/g, '');
         
         // Only return if changes were made
         return transformedCode !== code ? transformedCode : null;

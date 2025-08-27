@@ -1,4 +1,4 @@
-import * as logger from './logger';
+import * as logger from '@/utils/logger';
 
 /**
  * Professional error handling utilities
