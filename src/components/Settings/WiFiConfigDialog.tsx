@@ -23,7 +23,7 @@ interface WiFiConfigDialogProps {
 export function WiFiConfigDialog({ children }: WiFiConfigDialogProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { settings, updateSettings } = useAutoContext();
+  const { settings, updateSettings } = useAutoContext(false, null);
   const [isOpen, setIsOpen] = useState(false);
   const [homeWifi, setHomeWifi] = useState(settings.homeWifiSSID || '');
   const [workWifi, setWorkWifi] = useState(settings.workWifiSSID || '');

@@ -15,7 +15,7 @@ export function useAutoContextSampling({
 }: AutoContextSamplingProps) {
   const lastContextUpdateTime = useRef<Date | null>(null);
   const [currentAutoContext, setCurrentAutoContext] = useState<string>('');
-  const { determineContext, updateLatestContext, isEnabled: autoContextEnabled } = useAutoContext();
+  const { determineContext, updateLatestContext, isEnabled: autoContextEnabled } = useAutoContext(false, null);
 
   const updateContextIfNeeded = useCallback(async (
     pmData?: PMScanData,
