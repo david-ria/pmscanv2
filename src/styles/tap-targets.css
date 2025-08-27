@@ -9,12 +9,7 @@ input[type="submit"],
 input[type="reset"],
 .clickable,
 .tap-target {
-  min-width: 40px;
-  
-  /* Ensure proper touch target for mobile */
-  @media (hover: none) and (pointer: coarse) {
-    min-width: 44px;
-  }
+  /* No minimum width constraints - allow natural button shapes */
 }
 
 /* Exception for very small icons inside larger clickable areas */
