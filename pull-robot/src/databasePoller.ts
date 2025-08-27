@@ -25,9 +25,6 @@ const processingStats: ProcessingStats = {
   failed: 0,
 };
 
-/**
- * Test database connection
- */
 export async function testDatabaseConnection(): Promise<boolean> {
   try {
     const { data, error } = await supabase
@@ -48,9 +45,6 @@ export async function testDatabaseConnection(): Promise<boolean> {
   }
 }
 
-/**
- * Get pending missions from database
- */
 export async function getPendingMissions(): Promise<PendingMission[]> {
   try {
     const { data, error } = await supabase
@@ -60,7 +54,7 @@ export async function getPendingMissions(): Promise<PendingMission[]> {
       .not('device_name', 'is', null)
       .gt('measurements_count', 0)
       .order('created_at', { ascending: true })
-      .limit(config.processing.batchSize);
+      .limit(config.polling.batchSize);
 
     if (error) {
       logger.error('Failed to fetch pending missions:', error);
@@ -83,9 +77,6 @@ export async function getPendingMissions(): Promise<PendingMission[]> {
   }
 }
 
-/**
- * Mark mission as processed
- */
 export async function markMissionAsProcessed(missionId: string, success: boolean): Promise<void> {
   try {
     const updateData: any = {
@@ -114,16 +105,10 @@ export async function markMissionAsProcessed(missionId: string, success: boolean
   }
 }
 
-/**
- * Get processing statistics
- */
 export function getProcessingStats(): ProcessingStats {
   return { ...processingStats };
 }
 
-/**
- * Reset processing statistics
- */
 export function resetProcessingStats(): void {
   processingStats.scanned = 0;
   processingStats.processed = 0;

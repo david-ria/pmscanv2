@@ -12,9 +12,6 @@ export interface ATMPayload {
   measurements: Record<string, { value: number; unit: string }>;
 }
 
-/**
- * Read mission measurements from database
- */
 async function readMissionMeasurements(missionId: string): Promise<any[]> {
   try {
     const { data, error } = await supabase
@@ -35,9 +32,6 @@ async function readMissionMeasurements(missionId: string): Promise<any[]> {
   }
 }
 
-/**
- * Transform measurement data to ATM API format
- */
 export function transformToATMPayload(
   mission: PendingMission,
   measurement: any
@@ -88,9 +82,6 @@ export function transformToATMPayload(
   };
 }
 
-/**
- * Process mission data and generate ATM payloads
- */
 export async function processMissionData(mission: PendingMission): Promise<ATMPayload[]> {
   try {
     logger.info(`Reading measurements for mission ${mission.id}`);
