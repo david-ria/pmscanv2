@@ -48,9 +48,9 @@ export async function getPendingMissions(cutoffDate?: string) {
 
     // Only process missions created after cutoff date
     if (cutoffDate) {
-      // Convert to proper timestamp format for PostgreSQL comparison
-      const timestamp = new Date(cutoffDate).toISOString();
-      query = query.gte('created_at', timestamp);
+      // Use the cutoff date directly - Supabase handles the conversion
+      logger.info(`Using cutoff date: ${cutoffDate}`);
+      query = query.gte('created_at', cutoffDate);
     }
 
     const { data, error } = await query
