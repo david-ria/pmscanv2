@@ -31,11 +31,6 @@ const ContextSelectors = lazy(() =>
     default: module.ContextSelectors 
   }))
 );
-const AutoContextDisplay = lazy(() => 
-  import('@/components/AutoContextDisplay').then(module => ({ 
-    default: module.AutoContextDisplay 
-  }))
-);
 const DataLogger = lazy(() => 
   import('@/components/DataLogger').then(module => ({ 
     default: module.DataLogger 
@@ -276,13 +271,6 @@ export default function RealTime() {
             onActivityChange={setSelectedActivity}
             isRecording={isRecording}
           />
-        </Suspense>
-      </div>
-
-      {/* Auto Context Display - Lazy loaded */}
-      <div className="mb-4 auto-context-display">
-        <Suspense fallback={<div className="h-16 bg-muted/20 rounded-lg animate-pulse" />}>
-          <AutoContextDisplay />
         </Suspense>
       </div>
 
