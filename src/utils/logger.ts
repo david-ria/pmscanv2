@@ -79,7 +79,7 @@ export function rateLimitedDebug(
   }
 }
 
-// Development logger object for compatibility
+// Development logger object for compatibility - MUST be named export for namespace imports
 export const devLogger = {
   debug: (message: string, ...args: any[]) => debug(message, ...args),
   info: (message: string, ...args: any[]) => info(message, ...args),
@@ -108,7 +108,7 @@ export const isLogLevelEnabled = (level: 'debug' | 'info' | 'warn' | 'error') =>
   return true; // All levels enabled in development
 };
 
-// Default export that includes devLogger for namespace imports
+// Default export for direct imports
 export default { 
   debug, 
   info, 
@@ -117,5 +117,5 @@ export default {
   rateLimitedDebug, 
   getLogLevel, 
   isLogLevelEnabled,
-  devLogger // Add devLogger to support logger.devLogger.debug() syntax
+  devLogger
 };
