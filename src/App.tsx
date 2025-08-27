@@ -22,24 +22,12 @@ const Auth = lazy(() => import('./pages/Auth'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Lazy load heavy components
-const Header = lazy(() => 
-  import('@/components/Header').then(module => ({ default: module.Header }))
-);
-const BottomNavigation = lazy(() => 
-  import('@/components/BottomNavigation').then(module => ({ default: module.BottomNavigation }))
-);
-const UnifiedDataProvider = lazy(() => 
-  import('@/components/UnifiedDataProvider').then(module => ({ default: module.UnifiedDataProvider }))
-);
-const CrashRecoveryInitializer = lazy(() => 
-  import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
-);
-const PMLineGraph = lazy(() => 
-  import('@/components/PMLineGraph').then(module => ({ default: module.PMLineGraph }))
-);
-const GlobalDataCollector = lazy(() => 
-  import('@/components/GlobalDataCollector').then(module => ({ default: module.GlobalDataCollector }))
-);
+const Header = lazy(() => import('@/components/Header'));
+const BottomNavigation = lazy(() => import('@/components/BottomNavigation'));
+const UnifiedDataProvider = lazy(() => import('@/components/UnifiedDataProvider'));
+const CrashRecoveryInitializer = lazy(() => import('@/components/CrashRecoveryInitializer'));
+const PMLineGraph = lazy(() => import('@/components/PMLineGraph'));
+const GlobalDataCollector = lazy(() => import('@/components/GlobalDataCollector'));
 
 // Import skeleton screens
 const AppLayoutSkeleton = lazy(() => 

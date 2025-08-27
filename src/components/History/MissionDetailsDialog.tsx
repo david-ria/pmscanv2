@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapboxMap } from '@/components/MapboxMap';
-import { PMLineGraph } from '@/components/PMLineGraph';
+import PMLineGraph from '@/components/PMLineGraph';
 import { GraphContextSelector } from './GraphContextSelector';
 import { MissionData } from '@/lib/dataStorage';
 import { WeatherInfo } from '@/components/WeatherInfo';

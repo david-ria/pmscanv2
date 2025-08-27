@@ -1,7 +1,7 @@
 import { WifiOff, Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MapboxMap } from '@/components/MapboxMap';
-import { PMLineGraph } from '@/components/PMLineGraph';
+import PMLineGraph from '@/components/PMLineGraph';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { PMScanDevice } from '@/lib/pmscan/types';

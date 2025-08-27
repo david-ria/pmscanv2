@@ -16,7 +16,7 @@ const navigationItems: NavigationItem[] = [
   { to: '/groups', icon: Users, labelKey: 'navigation.groups' },
 ];
 
-export function BottomNavigation() {
+function BottomNavigation() {
   const { t } = useTranslation();
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border z-[60] safe-area-pb">
@@ -47,3 +47,5 @@ export function BottomNavigation() {
     </nav>
   );
 }
+
+export default BottomNavigation;

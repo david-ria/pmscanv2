@@ -45,7 +45,7 @@ interface PMLineGraphProps {
   };
 }
 
-export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext }: PMLineGraphProps) {
+function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext }: PMLineGraphProps) {
   // Transform data for the chart - ensure proper chronological ordering
   const chartData = React.useMemo(() => {
     if (!data || !Array.isArray(data) || data.length === 0) return [];
@@ -474,3 +474,5 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
     </div>
   );
 }
+
+export default PMLineGraph;
