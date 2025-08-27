@@ -63,7 +63,7 @@ export async function readMissionMeasurements(missionId: string): Promise<Missio
       humidity: row.humidity || undefined
     }));
   } catch (error) {
-    logger.error(`Error reading measurements for mission ${missionId}:`, error);
+    logger.error(`Error reading measurements for mission ${missionId}:`, { error: error instanceof Error ? error.message : 'Unknown error' });
     return [];
   }
 }

@@ -7,12 +7,12 @@ import { getPosterMetrics, isHealthy } from './poster.js';
 
 async function main() {
   logger.info('🤖 Pull Robot starting up...');
-  logger.info('📋 Configuration loaded:', {
-    supabase: config.supabase.url,
-    dashboard: config.dashboard.endpoint,
-    polling: config.polling,
-    processing: config.processing,
-  });
+    logger.info('📋 Configuration loaded:', {
+      supabase: config.supabase.url,
+      dashboard: config.dashboard.endpoint,
+      polling: config.polling,
+      processing: config.processing,
+    });
 
   // Create Fastify server
   const server = fastify({
@@ -77,7 +77,7 @@ async function main() {
     logger.info(`📈 Metrics endpoint: http://localhost:${config.server.port}/metrics`);
 
   } catch (error) {
-    logger.error('💥 Failed to start Pull Robot:', error);
+    logger.error('💥 Failed to start Pull Robot:', { error: error instanceof Error ? error.message : 'Unknown error' });
     process.exit(1);
   }
 
@@ -88,12 +88,7 @@ async function main() {
     // Stop the database processor
     stopDatabaseProcessor();
     
-    server.close((err) => {
-      if (err) {
-        logger.error('Error during server shutdown:', err);
-        process.exit(1);
-      }
-      
+    server.close(() => {
       logger.info('✅ Server closed successfully');
       process.exit(0);
     });
@@ -117,6 +112,6 @@ async function main() {
 
 // Start the application
 main().catch((error) => {
-  logger.error('💥 Bootstrap failed:', error);
+  logger.error('💥 Bootstrap failed:', { error: error instanceof Error ? error.message : 'Unknown error' });
   process.exit(1);
 });

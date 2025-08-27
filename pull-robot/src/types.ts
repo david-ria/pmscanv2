@@ -217,14 +217,16 @@ export interface MetricsResponse extends ProcessingState {
     averageRPS: number;
     queueSize: number;
   };
-  poster: {
-    poster_requests_total: number;
-    poster_success_total: number;
-    poster_retryable_fail_total: number;
-    poster_nonretryable_fail_total: number;
-    poster_retries_total: number;
-    rps_configured: number;
-  };
+  poster: PosterMetrics;
+}
+
+export interface PosterMetrics {
+  poster_requests_total: number;
+  poster_success_total: number;
+  poster_retryable_fail_total: number;
+  poster_nonretryable_fail_total: number;
+  poster_retries_total: number;
+  rps_configured: number;
 }
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';

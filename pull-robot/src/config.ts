@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { logger } from './logger.js';
 
 // Environment Variable Schema Definition using Zod
 const EnvSchema = z.object({
@@ -41,7 +40,7 @@ const EnvSchema = z.object({
 });
 
 // Strongly-typed configuration interface derived from environment validation
-interface Config {
+export interface Config {
   supabase: {
     url: string;
     key: string;
@@ -72,7 +71,7 @@ interface Config {
     batchSize: number;
     includeMetrics: string[];
     units: Record<string, string>;
-    allowDeviceIds: string[];
+    allowDeviceIds?: string[];
     unknownDeviceBehavior: 'skip' | 'process';
   };
   logging: {
@@ -112,7 +111,7 @@ const ConfigSchema = z.object({
     batchSize: z.number().min(1),
     includeMetrics: z.array(z.string()),
     units: z.record(z.string()),
-    allowDeviceIds: z.array(z.string()),
+    allowDeviceIds: z.array(z.string()).optional(),
     unknownDeviceBehavior: z.enum(['skip', 'process']),
   }),
   logging: z.object({
@@ -155,12 +154,12 @@ function formatValidationError(error: z.ZodError): string {
 
 function loadConfig(): Config {
   try {
-    logger.info('🔧 Loading and validating configuration...');
+    console.log('🔧 Loading and validating configuration...');
     
     // Parse and validate environment variables with detailed error reporting
     const env = EnvSchema.parse(process.env);
     
-    logger.info('✅ Environment validation passed');
+    console.log('✅ Environment validation passed');
 
     // Transform and structure the configuration
     const transformedConfig: Config = {
@@ -194,7 +193,7 @@ function loadConfig(): Config {
         batchSize: env.BATCH_SIZE,
         includeMetrics: env.INCLUDE_METRICS.split(',').map(s => s.trim()),
         units: JSON.parse(env.UNITS_JSON),
-        allowDeviceIds: env.ALLOW_DEVICE_IDS.split(',').map(s => s.trim()),
+        allowDeviceIds: env.ALLOW_DEVICE_IDS ? env.ALLOW_DEVICE_IDS.split(',').map(s => s.trim()) : undefined,
         unknownDeviceBehavior: env.UNKNOWN_DEVICE_BEHAVIOR,
       },
       logging: {
@@ -203,7 +202,7 @@ function loadConfig(): Config {
     };
 
     // Log loaded configuration (excluding sensitive data)
-    logger.info('📋 Configuration loaded successfully:', {
+    console.log('📋 Configuration loaded successfully:', {
       supabase: {
         url: transformedConfig.supabase.url,
       },
@@ -226,9 +225,9 @@ function loadConfig(): Config {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const formattedError = formatValidationError(error);
-      logger.error(formattedError);
+      console.error(formattedError);
     } else {
-      logger.error('💥 Unexpected configuration error:', error);
+      console.error('💥 Unexpected configuration error:', error);
     }
     
     // Exit with non-zero code to indicate failure

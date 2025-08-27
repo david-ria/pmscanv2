@@ -102,7 +102,7 @@ export async function postPayload(
     return result;
     
   } catch (error) {
-    logger.error('Error posting grouped payload:', { payload, error, attempt: retryCount + 1 });
+    logger.error('Error posting grouped payload:', { payload, error: error instanceof Error ? error.message : 'Unknown error', attempt: retryCount + 1 });
     
     // Retry logic with exponential backoff for retryable errors only
     if (retryCount < config.retry.maxRetries) {
@@ -297,7 +297,7 @@ export function pushDLQ(
     // For now, just log - this is a legacy function
     console.error(`DLQ Entry: ${idempotencyKey} - Status: ${httpStatus} - Error: ${errorMessage}`);
   } catch (error) {
-    logger.error('Error pushing to DLQ:', error);
+    logger.error('Error pushing to DLQ:', { error: error instanceof Error ? error.message : 'Unknown error' });
   }
 }
 

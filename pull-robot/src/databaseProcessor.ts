@@ -18,7 +18,7 @@ export function startDatabaseProcessor(): void {
 
   logger.info('🤖 Starting database processor...');
   logger.info(`📊 Polling interval: ${config.polling.intervalMs}ms`);
-  logger.info(`🎯 Allowed devices: ${config.processing.allowDeviceIds.join(', ')}`);
+  logger.info(`🎯 Allowed devices: ${config.processing.allowDeviceIds?.join(', ') || 'All devices'}`);
   logger.info(`📦 Batch size: ${config.processing.batchSize}`);
 
   // Start immediate processing
@@ -152,7 +152,7 @@ async function sendPayloadToAPI(payload: ATMPayload, missionId: string, measurem
     const result = await postPayload(legacyPayload, 0, measurementIndex, 0, `${payload.deviceId}|${missionId}|${payload.timestamp}`);
     return result.success;
   } catch (error) {
-    logger.error(`Error sending measurement ${measurementIndex} for mission ${missionId}:`, error);
+    logger.error(`Error sending measurement ${measurementIndex} for mission ${missionId}:`, { error: error instanceof Error ? error.message : 'Unknown error' });
     return false;
   }
 }
