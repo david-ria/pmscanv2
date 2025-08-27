@@ -32,7 +32,7 @@ const EnvSchema = z.object({
   UNITS_JSON: z.string().min(2).default('{"pm1":"ugm3","pm25":"ugm3","pm10":"ugm3","latitude":"degrees","longitude":"degrees"}'),
 
   // Device Configuration
-  ALLOW_DEVICE_IDS: z.string().min(1).default('PMScan3376DF'),
+  ALLOW_DEVICE_IDS: z.string().optional().default('PMScan3376DF'),
   UNKNOWN_DEVICE_BEHAVIOR: z.enum(['skip', 'process']).default('skip'),
 
   // Logging
@@ -71,7 +71,7 @@ export interface Config {
     batchSize: number;
     includeMetrics: string[];
     units: Record<string, string>;
-    allowDeviceIds: string[];
+    allowDeviceIds?: string[];
     unknownDeviceBehavior: 'skip' | 'process';
   };
   logging: {
@@ -120,7 +120,7 @@ function loadConfig(): Config {
         batchSize: env.BATCH_SIZE,
         includeMetrics: env.INCLUDE_METRICS.split(',').map(s => s.trim()),
         units: JSON.parse(env.UNITS_JSON),
-        allowDeviceIds: env.ALLOW_DEVICE_IDS.split(',').map(s => s.trim()),
+        allowDeviceIds: env.ALLOW_DEVICE_IDS ? env.ALLOW_DEVICE_IDS.split(',').map(s => s.trim()) : undefined,
         unknownDeviceBehavior: env.UNKNOWN_DEVICE_BEHAVIOR,
       },
       logging: {

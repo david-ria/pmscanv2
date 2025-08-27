@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { config } from './config.js';
-import { createLogger } from './logger.js';
+import { logger } from './logger.js';
 import type { PendingMission } from './databasePoller.js';
 
-const logger = createLogger('database-reader');
+
 const supabase = createClient(config.supabase.url, config.supabase.key);
 
 export interface ATMPayload {
@@ -27,7 +27,7 @@ async function readMissionMeasurements(missionId: string): Promise<any[]> {
 
     return data || [];
   } catch (error) {
-    logger.error(`Error reading measurements for mission ${missionId}:`, error);
+    logger.error(`Error reading measurements for mission ${missionId}:`, { error: error instanceof Error ? error.message : String(error) });
     return [];
   }
 }
@@ -100,7 +100,7 @@ export async function processMissionData(mission: PendingMission): Promise<ATMPa
         const payload = transformToATMPayload(mission, measurement);
         payloads.push(payload);
       } catch (error) {
-        logger.error(`Failed to transform measurement ${measurement.id}:`, error);
+        logger.error(`Failed to transform measurement ${measurement.id}:`, { error: error instanceof Error ? error.message : String(error) });
       }
     }
 
@@ -108,7 +108,7 @@ export async function processMissionData(mission: PendingMission): Promise<ATMPa
     return payloads;
 
   } catch (error) {
-    logger.error(`Error processing mission data for ${mission.id}:`, error);
+    logger.error(`Error processing mission data for ${mission.id}:`, { error: error instanceof Error ? error.message : String(error) });
     return [];
   }
 }

@@ -1,8 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { config } from './config.js';
-import { createLogger } from './logger.js';
-
-const logger = createLogger('database-poller');
+import { logger } from './logger.js';
 const supabase = createClient(config.supabase.url, config.supabase.key);
 
 export interface PendingMission {
@@ -40,7 +38,7 @@ export async function testDatabaseConnection(): Promise<boolean> {
     logger.info('✅ Database connection successful');
     return true;
   } catch (error) {
-    logger.error('Database connection test failed:', error);
+    logger.error('Database connection test failed:', { error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 }
@@ -63,7 +61,7 @@ export async function getPendingMissions(): Promise<PendingMission[]> {
 
     // Filter by allowed device IDs if configured
     const filteredMissions = data?.filter((mission: any) => {
-      return mission.device_name && config.processing.allowDeviceIds.includes(mission.device_name);
+      return mission.device_name && (!config.processing.allowDeviceIds || config.processing.allowDeviceIds.includes(mission.device_name));
     }) || [];
 
     processingStats.scanned += data?.length || 0;
@@ -72,7 +70,7 @@ export async function getPendingMissions(): Promise<PendingMission[]> {
     return filteredMissions;
 
   } catch (error) {
-    logger.error('Error fetching pending missions:', error);
+    logger.error('Error fetching pending missions:', { error: error instanceof Error ? error.message : String(error) });
     return [];
   }
 }
@@ -101,7 +99,7 @@ export async function markMissionAsProcessed(missionId: string, success: boolean
       logger.info(`Mission ${missionId} marked as ${success ? 'processed' : 'failed'}`);
     }
   } catch (error) {
-    logger.error(`Error marking mission ${missionId} as processed:`, error);
+    logger.error(`Error marking mission ${missionId} as processed:`, { error: error instanceof Error ? error.message : String(error) });
   }
 }
 

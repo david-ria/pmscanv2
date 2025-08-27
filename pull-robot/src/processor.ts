@@ -1,4 +1,4 @@
-import { createLogger } from './logger.js';
+import { logger } from './logger.js';
 import { config } from './config.js';
 import { getPendingMissions, markMissionAsProcessed, getProcessingStats } from './databasePoller.js';
 import { processMissionData } from './databaseReader.js';
@@ -6,7 +6,7 @@ import { postPayload } from './poster.js';
 import type { PendingMission } from './databasePoller.js';
 import type { ATMPayload } from './databaseReader.js';
 
-const logger = createLogger('processor');
+
 
 let pollingInterval: NodeJS.Timeout | null = null;
 let isProcessing = false;
@@ -45,7 +45,7 @@ async function processAndSchedule(): Promise<void> {
     isProcessing = true;
     await processPendingMissions();
   } catch (error) {
-    logger.error('💥 Error in processing cycle:', error);
+    logger.error('💥 Error in processing cycle:', { error: error instanceof Error ? error.message : String(error) });
   } finally {
     isProcessing = false;
     
@@ -68,7 +68,7 @@ async function processPendingMissions(): Promise<void> {
     try {
       await processSingleMission(mission);
     } catch (error) {
-      logger.error(`💥 Failed to process mission ${mission.id}:`, error);
+      logger.error(`💥 Failed to process mission ${mission.id}:`, { error: error instanceof Error ? error.message : String(error) });
       await markMissionAsProcessed(mission.id, false);
     }
   }
@@ -89,7 +89,14 @@ async function processSingleMission(mission: PendingMission): Promise<void> {
   
   for (let i = 0; i < payloads.length; i++) {
     const payload = payloads[i];
-    const result = await postPayload(payload);
+    const result = await postPayload({
+      device_id: payload.deviceId,
+      ts: payload.timestamp, 
+      metrics: Object.entries(payload.measurements).reduce((acc, [key, val]) => {
+        acc[key] = val.value;
+        return acc;
+      }, {} as Record<string, number>)
+    }, 0, i, 0, `${payload.deviceId}|${mission.id}|${payload.timestamp}`);
     
     if (result.success) {
       successCount++;

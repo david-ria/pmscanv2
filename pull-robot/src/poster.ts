@@ -1,8 +1,6 @@
 import Bottleneck from 'bottleneck';
 import { config } from './config.js';
-import { createLogger } from './logger.js';
-
-const logger = createLogger('poster');
+import { logger } from './logger.js';
 
 // Create rate limiter using Bottleneck
 const rateLimiter = new Bottleneck({
