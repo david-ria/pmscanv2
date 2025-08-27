@@ -52,8 +52,9 @@ export const error = (message: string, error?: Error, ...args: any[]) => {
       }).then(async (response) => {
         if (response.ok) {
           const result = await safeJson(response);
-          if (result) {
-            console.debug('Log sent successfully');
+          if (result && isDevelopment) {
+            // Only log in development to avoid production console conflicts
+            console.info('[Logger] Error sent to monitoring service');
           }
         }
       }).catch(() => {
