@@ -48,7 +48,9 @@ export async function getPendingMissions(cutoffDate?: string) {
 
     // Only process missions created after cutoff date
     if (cutoffDate) {
-      query = query.gte('created_at', cutoffDate);
+      // Convert to proper timestamp format for PostgreSQL comparison
+      const timestamp = new Date(cutoffDate).toISOString();
+      query = query.gte('created_at', timestamp);
     }
 
     const { data, error } = await query
