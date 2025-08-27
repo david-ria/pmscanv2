@@ -71,85 +71,12 @@ export interface Config {
     batchSize: number;
     includeMetrics: string[];
     units: Record<string, string>;
-    allowDeviceIds?: string[];
+    allowDeviceIds: string[];
     unknownDeviceBehavior: 'skip' | 'process';
   };
   logging: {
     level: 'debug' | 'info' | 'warn' | 'error';
   };
-}
-
-// Configuration Schema for final validation
-const ConfigSchema = z.object({
-  supabase: z.object({
-    url: z.string().url(),
-    key: z.string().min(1),
-  }),
-  dashboard: z.object({
-    endpoint: z.string().url(),
-    bearer: z.string().min(1),
-  }),
-  server: z.object({
-    port: z.number().min(1).max(65535),
-  }),
-  polling: z.object({
-    intervalMs: z.number().min(1000),
-    maxRps: z.number().min(1),
-  }),
-  rateLimiting: z.object({
-    maxRequestsPerSecond: z.number().min(1),
-    maxConcurrentRequests: z.number().min(1),
-  }),
-  retry: z.object({
-    maxRetries: z.number().min(1),
-    delayMs: z.number().min(100),
-    backoffMultiplier: z.number().min(1),
-    timeoutMs: z.number().min(1000),
-  }),
-  processing: z.object({
-    maxAttempts: z.number().min(1),
-    batchSize: z.number().min(1),
-    includeMetrics: z.array(z.string()),
-    units: z.record(z.string()),
-    allowDeviceIds: z.array(z.string()).optional(),
-    unknownDeviceBehavior: z.enum(['skip', 'process']),
-  }),
-  logging: z.object({
-    level: z.enum(['debug', 'info', 'warn', 'error']),
-  }),
-});
-
-// Error formatting function
-function formatValidationError(error: z.ZodError): string {
-  const missingRequired = [];
-  const invalidValues = [];
-  
-  for (const issue of error.issues) {
-    const path = issue.path.join('.');
-    
-    if (issue.code === 'invalid_type' && issue.received === 'undefined') {
-      missingRequired.push(`❌ MISSING: ${path} is required`);
-    } else {
-      invalidValues.push(`❌ INVALID: ${path} - ${issue.message}`);
-    }
-  }
-  
-  let errorMessage = '\n🚨 CONFIGURATION ERROR - Pull Robot cannot start!\n\n';
-  
-  if (missingRequired.length > 0) {
-    errorMessage += '📋 MISSING REQUIRED ENVIRONMENT VARIABLES:\n';
-    errorMessage += missingRequired.join('\n') + '\n\n';
-  }
-  
-  if (invalidValues.length > 0) {
-    errorMessage += '⚠️  INVALID ENVIRONMENT VARIABLES:\n';
-    errorMessage += invalidValues.join('\n') + '\n\n';
-  }
-  
-  errorMessage += '💡 FIX: Check your .env file and ensure all required variables are set.\n';
-  errorMessage += '📖 See .env.example for correct format and default values.\n';
-  
-  return errorMessage;
 }
 
 function loadConfig(): Config {
@@ -193,7 +120,7 @@ function loadConfig(): Config {
         batchSize: env.BATCH_SIZE,
         includeMetrics: env.INCLUDE_METRICS.split(',').map(s => s.trim()),
         units: JSON.parse(env.UNITS_JSON),
-        allowDeviceIds: env.ALLOW_DEVICE_IDS?.split(',').map(s => s.trim()),
+        allowDeviceIds: env.ALLOW_DEVICE_IDS.split(',').map(s => s.trim()),
         unknownDeviceBehavior: env.UNKNOWN_DEVICE_BEHAVIOR,
       },
       logging: {
@@ -201,36 +128,11 @@ function loadConfig(): Config {
       },
     };
 
-    // Log loaded configuration (excluding sensitive data)
-    console.log('📋 Configuration loaded successfully:', JSON.stringify({
-      supabase: {
-        url: transformedConfig.supabase.url,
-      },
-      dashboard: {
-        endpoint: transformedConfig.dashboard.endpoint,
-        bearer: `${transformedConfig.dashboard.bearer.substring(0, 8)}...`,
-      },
-      server: transformedConfig.server,
-      polling: transformedConfig.polling,
-      processing: {
-        ...transformedConfig.processing,
-        units: Object.keys(transformedConfig.processing.units),
-      },
-      logging: transformedConfig.logging,
-    }, null, 2));
+    console.log('📋 Configuration loaded successfully');
+    return transformedConfig;
 
-    // Final validation against the Config schema
-    return ConfigSchema.parse(transformedConfig);
-
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const formattedError = formatValidationError(error);
-      console.error(formattedError);
-    } else {
-      console.error('💥 Unexpected configuration error:', error instanceof Error ? error.message : String(error));
-    }
-    
-    // Exit with non-zero code to indicate failure
+  } catch (error: any) {
+    console.error('💥 Configuration error:', error?.message || error);
     process.exit(1);
   }
 }
