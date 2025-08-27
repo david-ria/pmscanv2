@@ -7,7 +7,6 @@ import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
 import { RecordingEntry } from '@/types/recording';
 import * as logger from '@/utils/logger';
-import { MotionWalkingSignature, WalkingSigSnapshot } from '@/services/motionWalkingSignature';
 
 interface MissionContext {
   location: string;
@@ -34,9 +33,6 @@ interface UnifiedDataState {
   speedKmh: number;
   gpsQuality: 'good' | 'poor';
   locationEnabled: boolean;
-  
-  // Motion data
-  walkingSignature: WalkingSigSnapshot;
   
   // Actions
   requestDevice: () => Promise<void>;
@@ -72,35 +68,10 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   const recording = useRecordingService(); // Single source of truth
   const { latestLocation, locationEnabled, requestLocationPermission, speedKmh, gpsQuality } = useGPS(true, true, recording.recordingFrequency);
   const { saveMission: missionSaverFunction } = useMissionSaver();
-  
-  // Centralized motion service - single instance
-  const [motionService] = useState(() => MotionWalkingSignature.getInstance());
-  const [walkingSnapshot, setWalkingSnapshot] = useState<WalkingSigSnapshot>(() => motionService.getSnapshot());
 
-  // Motion service lifecycle management
+  // Enhanced state change tracking
   useEffect(() => {
-    // Start motion service when recording starts
-    if (recording.isRecording) {
-      motionService.start().catch(error => {
-        logger.rateLimitedDebug('motion-start-error', 30000, 'Failed to start motion service:', error);
-      });
-    } else {
-      motionService.stop();
-    }
-  }, [recording.isRecording, motionService]);
-
-  // Update walking snapshot periodically
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setWalkingSnapshot(motionService.getSnapshot());
-    }, 1000); // Update every second
-
-    return () => clearInterval(interval);
-  }, [motionService]);
-
-  // Enhanced state change tracking - rate limited
-  useEffect(() => {
-    logger.rateLimitedDebug('unified-recording-state', 2000, '🔄 UNIFIED DATA - RECORDING STATE CHANGED:', {
+    console.log('🔄 UNIFIED DATA - RECORDING STATE CHANGED:', {
       isRecording: recording.isRecording,
       hasAddDataPoint: !!recording.addDataPoint,
       timestamp: new Date().toISOString()
@@ -108,7 +79,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   }, [recording.isRecording, recording.addDataPoint]);
 
   useEffect(() => {
-    logger.rateLimitedDebug('unified-bluetooth-state', 1000, '🔄 UNIFIED DATA - BLUETOOTH STATE CHANGED:', {
+    console.log('🔄 UNIFIED DATA - BLUETOOTH STATE CHANGED:', {
       hasCurrentData: !!bluetooth.currentData,
       isConnected: bluetooth.isConnected,
       pm25: bluetooth.currentData?.pm25,
@@ -116,9 +87,9 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     });
   }, [bluetooth.currentData, bluetooth.isConnected]);
 
-  // Enhanced unified state logging - rate limited to prevent spam
+  // Enhanced unified state logging
   useEffect(() => {
-    logger.rateLimitedDebug('unified-complete-state', 2000, '🔄 UNIFIED DATA COMPLETE STATE:', {
+    console.log('🔄 UNIFIED DATA COMPLETE STATE:', {
       hasCurrentData: !!bluetooth.currentData,
       currentDataPM25: bluetooth.currentData?.pm25,
       isConnected: bluetooth.isConnected,
@@ -132,8 +103,8 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     });
   }, [bluetooth.currentData, bluetooth.isConnected, recording.isRecording, recording.recordingData.length, latestLocation, recording.addDataPoint]);
 
-  // Unified state object - GPS state logging
-  logger.rateLimitedDebug('unified-gps-state', 3000, '🔄 UNIFIED DATA - GPS STATE:', {
+  // Unified state object
+  console.log('🔄 UNIFIED DATA - GPS STATE:', {
     hasLocation: !!latestLocation,
     latitude: latestLocation?.latitude,
     longitude: latestLocation?.longitude,
@@ -163,9 +134,6 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     speedKmh,
     gpsQuality,
     locationEnabled,
-    
-    // Motion data
-    walkingSignature: walkingSnapshot,
     
     // Actions
     requestDevice: bluetooth.requestDevice,
@@ -198,4 +166,3 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     </UnifiedDataContext.Provider>
   );
 }
-

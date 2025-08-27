@@ -16,7 +16,7 @@ import { createTimestamp } from '@/utils/timeFormat';
  * Global data collector that runs independently of page navigation
  * This ensures recording continues even when navigating away from real-time page
  */
-function GlobalDataCollector() {
+export function GlobalDataCollector() {
   // Get all data from unified source
   const unifiedData = useUnifiedData();
   const {
@@ -31,8 +31,8 @@ function GlobalDataCollector() {
     isConnected,
   } = unifiedData;
 
-  // Enhanced debugging for recording state - rate limited to avoid spam
-  logger.rateLimitedDebug('global-data-collector-state', 2000, '🔍 GlobalDataCollector FULL STATE DEBUG:', {
+  // Enhanced debugging for recording state
+  console.log('🔍 GlobalDataCollector FULL STATE DEBUG:', {
     isRecording,
     hasCurrentData: !!currentData,
     currentDataTimestamp: currentData?.timestamp?.toISOString(),
@@ -69,12 +69,12 @@ function GlobalDataCollector() {
   // Get geohash settings
   const { settings: geohashSettings } = useGeohashSettings();
 
-  logger.devLogger.debug('🔧 GlobalDataCollector - Location enrichment state:', {
+  console.log('🔧 GlobalDataCollector - Location enrichment state:', {
     hasEnrichLocation: !!enrichLocation,
     enrichLocationType: typeof enrichLocation
   });
 
-  logger.devLogger.debug('🗺️ GEOHASH DEBUG STATE:', {
+  console.log('🗺️ GEOHASH DEBUG STATE:', {
     geohashEnabled: geohashSettings.enabled,
     geohashPrecision: geohashSettings.precision,
     hasLatestLocation: !!latestLocation,
@@ -105,12 +105,12 @@ function GlobalDataCollector() {
 
   // Track recording state changes
   useEffect(() => {
-    logger.devLogger.info('🚨 RECORDING STATE CHANGED:', { isRecording, timestamp: new Date().toISOString() });
+    console.log('🚨 RECORDING STATE CHANGED:', { isRecording, timestamp: new Date().toISOString() });
   }, [isRecording]);
 
   // Track currentData changes
   useEffect(() => {
-    logger.devLogger.info('📊 CURRENT DATA CHANGED:', { 
+    console.log('📊 CURRENT DATA CHANGED:', { 
       hasData: !!currentData, 
       pm25: currentData?.pm25,
       timestamp: currentData?.timestamp?.toISOString()
@@ -119,7 +119,7 @@ function GlobalDataCollector() {
 
   // Track addDataPoint availability
   useEffect(() => {
-    logger.devLogger.debug('🔧 ADD DATA POINT AVAILABILITY:', { 
+    console.log('🔧 ADD DATA POINT AVAILABILITY:', { 
       hasAddDataPoint: !!addDataPoint,
       timestamp: new Date().toISOString()
     });
@@ -127,7 +127,7 @@ function GlobalDataCollector() {
 
   // Global data collection effect with proper frequency control
   useEffect(() => {
-    logger.rateLimitedDebug('data-collection-trigger', 1000, '🔍 GlobalDataCollector: Data collection effect triggered:', {
+    console.log('🔍 GlobalDataCollector: Data collection effect triggered:', {
       isRecording,
       hasCurrentData: !!currentData,
       isConnected,
@@ -137,7 +137,7 @@ function GlobalDataCollector() {
     });
 
     if (!addDataPoint) {
-      logger.devLogger.debug('🔄 GlobalDataCollector: Recording service not ready, skipping data collection');
+      console.log('🔄 GlobalDataCollector: Recording service not ready, skipping data collection');
       return;
     }
 
@@ -157,7 +157,7 @@ function GlobalDataCollector() {
       const shouldRecord = !lastRecordedTimeRef.current || 
         (now - lastRecordedTimeRef.current.getTime()) >= frequencyMs;
 
-      logger.rateLimitedDebug('frequency-check', 5000, '🔍 Frequency check:', {
+      console.log('🔍 Frequency check:', {
         recordingFrequency,
         frequencyMs,
         lastRecordedTime: lastRecordedTimeRef.current?.toISOString(),
@@ -168,7 +168,7 @@ function GlobalDataCollector() {
       });
 
         if (shouldRecord) {
-          logger.devLogger.debug('✅ shouldRecord is TRUE - proceeding with enrichment check');
+          console.log('✅ shouldRecord is TRUE - proceeding with enrichment check');
         // We have data, that's what matters - connection status can be unreliable
         // Prevent duplicate data points by checking if this is actually new data
         const currentTimestamp = currentData.timestamp.getTime();
@@ -178,7 +178,7 @@ function GlobalDataCollector() {
           Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
 
         if (!isDuplicate) {
-          logger.devLogger.info('🔍 GlobalDataCollector: Adding data point!', {
+          console.log('🔍 GlobalDataCollector: Adding data point!', {
             pm25: currentData.pm25,
             timestamp: currentData.timestamp,
             frequency: recordingFrequency
@@ -192,7 +192,7 @@ function GlobalDataCollector() {
           
           // Get enriched location if available
           let enrichedLocationName = '';
-          logger.devLogger.debug('🔍 Location enrichment check:', {
+          console.log('🔍 Location enrichment check:', {
             hasEnrichFunction: !!enrichLocation,
             hasLocation: !!(latestLocation?.latitude && latestLocation?.longitude),
             location: latestLocation ? {
@@ -205,7 +205,7 @@ function GlobalDataCollector() {
           
           if (shouldRecord && enrichLocation && latestLocation?.latitude && latestLocation?.longitude) {
             try {
-              logger.devLogger.debug('🌍 Enriching location during recording:', {
+              console.log('🌍 Enriching location during recording:', {
                 lat: latestLocation.latitude,
                 lng: latestLocation.longitude,
                 timestamp: currentData.timestamp.toISOString()
@@ -217,13 +217,13 @@ function GlobalDataCollector() {
                 currentData.timestamp.toISOString()
               );
               
-              logger.devLogger.debug('📍 Enrichment result:', enrichmentResult);
+              console.log('📍 Enrichment result:', enrichmentResult);
               
               if (enrichmentResult?.display_name) {
                 // Use display_name for actual location (street address)
                 enrichedLocationName = enrichmentResult.display_name;
-                logger.devLogger.info('✅ Location enriched successfully:', enrichedLocationName);
-                logger.devLogger.debug('🌍 === UNIFIED ENRICHMENT RESULT ===', {
+                console.log('✅ Location enriched successfully:', enrichedLocationName);
+                console.log('🌍 === UNIFIED ENRICHMENT RESULT ===', {
                   display_name: enrichmentResult.display_name, // Street address from Nominatim
                   enhanced_context: enrichmentResult.enhanced_context, // Activity context (separate)
                   source: enrichmentResult.source,
@@ -231,13 +231,13 @@ function GlobalDataCollector() {
                   timestamp: currentData.timestamp.toISOString()
                 });
               } else {
-                logger.devLogger.debug('⚠️ No display_name in enrichment result');
+                console.log('⚠️ No display_name in enrichment result');
               }
             } catch (error) {
-              logger.warn('⚠️ Failed to enrich location during recording:', error);
+              console.warn('⚠️ Failed to enrich location during recording:', error);
             }
           } else {
-            logger.devLogger.debug('⏭️ Skipping location enrichment - missing requirements');
+            console.log('⏭️ Skipping location enrichment - missing requirements');
           }
 
           const automaticContext = autoContextSettings.enabled ? await updateContextIfNeeded(
@@ -312,7 +312,9 @@ function GlobalDataCollector() {
     if (isRecording) {
       import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
         clearLocationHistory();
-        logger.devLogger.debug('🏃 Cleared location history for new recording session (global)');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🏃 Cleared location history for new recording session (global)');
+        }
       });
     }
   }, [isRecording]);

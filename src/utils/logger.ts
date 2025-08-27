@@ -1,5 +1,3 @@
-import { safeJson } from '@/utils/safeJson';
-
 /**
  * Enhanced logger utility that maintains compatibility with existing logging
  * while providing structured logging for production environments
@@ -8,9 +6,6 @@ import { safeJson } from '@/utils/safeJson';
 // Check if we're in production mode
 const isProduction = import.meta.env.PROD;
 const isDevelopment = import.meta.env.DEV;
-
-// Rate-limited logging for development
-const lastLogTimes: Record<string, number> = {};
 
 // Simple logger interface that mirrors console methods
 export const debug = (message: string, ...args: any[]) => {
@@ -30,6 +25,8 @@ export const info = (message: string, ...args: any[]) => {
 export const warn = (message: string, ...args: any[]) => {
   console.warn(`[WARN] ${message}`, ...args);
 };
+
+import { safeJson } from '@/utils/safeJson';
 
 export const error = (message: string, error?: Error, ...args: any[]) => {
   console.error(`[ERROR] ${message}`, error, ...args);
@@ -52,9 +49,8 @@ export const error = (message: string, error?: Error, ...args: any[]) => {
       }).then(async (response) => {
         if (response.ok) {
           const result = await safeJson(response);
-          if (result && isDevelopment) {
-            // Only log in development to avoid production console conflicts
-            console.info('[Logger] Error sent to monitoring service');
+          if (result) {
+            console.debug('Log sent successfully');
           }
         }
       }).catch(() => {
@@ -65,6 +61,9 @@ export const error = (message: string, error?: Error, ...args: any[]) => {
     }
   }
 };
+
+// Rate-limited logging for development
+const lastLogTimes: Record<string, number> = {};
 
 export function rateLimitedDebug(
   key: string,
@@ -80,21 +79,6 @@ export function rateLimitedDebug(
   }
 }
 
-// Development logger object for compatibility - MUST be named export for namespace imports
-export const devLogger = {
-  debug: (message: string, ...args: any[]) => debug(message, ...args),
-  info: (message: string, ...args: any[]) => info(message, ...args),
-  performance: (label: string, fn: () => void) => {
-    if (!isProduction && isDevelopment) {
-      console.time(label);
-      fn();
-      console.timeEnd(label);
-    } else {
-      fn();
-    }
-  },
-};
-
 // Utility to check current log level
 export const getLogLevel = () => {
   if (isProduction) return 'warn'; // Only warn/error in production
@@ -109,5 +93,4 @@ export const isLogLevelEnabled = (level: 'debug' | 'info' | 'warn' | 'error') =>
   return true; // All levels enabled in development
 };
 
-// Named exports for namespace imports (no default export to avoid conflicts)
-// This ensures import * as logger from '@/utils/logger' works correctly
+export default { debug, info, warn, error, rateLimitedDebug, getLogLevel, isLogLevelEnabled };

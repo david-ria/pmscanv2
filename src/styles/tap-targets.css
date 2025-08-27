@@ -1,9 +1,9 @@
 /* Tap Target Size Compliance - Ensures all interactive elements meet 40x40px minimum */
 
-button:not([role="switch"]), 
+button, 
 a[href], 
-[role="button"]:not([role="switch"]), 
-[tabindex="0"]:not([role="switch"]),
+[role="button"], 
+[tabindex="0"],
 input[type="button"], 
 input[type="submit"], 
 input[type="reset"],
@@ -17,20 +17,6 @@ input[type="reset"],
     min-width: 44px;
     min-height: 44px;
   }
-}
-
-/* Exception for switch components - they have their own sizing */
-button[role="switch"],
-[role="switch"] {
-  min-width: unset;
-  min-height: unset;
-}
-
-/* Exception for radio group items - smaller sizing for compact layouts */
-button[role="radio"],
-[role="radio"] {
-  min-width: 20px;
-  min-height: 20px;
 }
 
 /* Exception for very small icons inside larger clickable areas */

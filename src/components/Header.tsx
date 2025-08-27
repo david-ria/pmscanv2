@@ -16,7 +16,7 @@ import { MobileNavigation } from './MobileNavigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-function Header() {
+export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -96,5 +96,3 @@ function Header() {
     </header>
   );
 }
-
-export default Header;

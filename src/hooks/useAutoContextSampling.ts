@@ -15,7 +15,7 @@ export function useAutoContextSampling({
 }: AutoContextSamplingProps) {
   const lastContextUpdateTime = useRef<Date | null>(null);
   const [currentAutoContext, setCurrentAutoContext] = useState<string>('');
-  const { determineContext, updateLatestContext, isEnabled: autoContextEnabled } = useAutoContext(false, null);
+  const { determineContext, updateLatestContext, isEnabled: autoContextEnabled } = useAutoContext();
 
   const updateContextIfNeeded = useCallback(async (
     pmData?: PMScanData,
@@ -35,7 +35,12 @@ export function useAutoContextSampling({
     lastContextUpdateTime.current = new Date();
 
     // Get rule-based context first
-    const ruleBasedContext = await determineContext();
+    const ruleBasedContext = await determineContext({
+      pmData,
+      location,
+      speed,
+      isMoving,
+    });
 
     // Use ONLY rule-based context from sensors/heuristics - no location mixing
     const formattedContext = ruleBasedContext || '';
@@ -67,7 +72,12 @@ export function useAutoContextSampling({
       return;
     }
 
-    const automaticContext = await determineContext();
+    const automaticContext = await determineContext({
+      pmData,
+      location,
+      speed,
+      isMoving,
+    });
 
     if (automaticContext) {
       updateLatestContext(automaticContext);

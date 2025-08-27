@@ -1,81 +1,61 @@
 import { logger } from './logger.js';
-import type { Config } from './config.js';
-import { getPendingMissions, markMissionAsProcessed, getProcessingStats, initializeDatabasePoller, type PendingMission } from './databasePoller.js';
-import { processMissionData, initializeDatabaseReader, type ATMPayload } from './databaseReader.js';
-import { sendToATMAPI, initializePoster } from './poster.js';
+import { config } from './config.js';
+import { getPendingMissions, markMissionAsProcessed, getProcessingStats, type PendingMission } from './databasePoller.js';
+import { processMissionData, type ATMPayload } from './databaseReader.js';
+import { postPayload } from './poster.js';
 
-// Processing state
-let processingInterval: NodeJS.Timeout | null = null;
 let isProcessing = false;
-let startTime = Date.now();
-let appConfig: Config | null = null;
-
-interface ProcessorStatus {
-  active: boolean;
-  processing: boolean;
-  uptime: number;
-  stats: ReturnType<typeof getProcessingStats>;
-}
-
-/**
- * Initialize the database processor with configuration
- */
-export function initializeDatabaseProcessor(config: Config) {
-  appConfig = config;
-  initializeDatabasePoller(config);
-  initializeDatabaseReader(config);
-  initializePoster(config);
-}
+let pollerHandle: NodeJS.Timeout | null = null;
 
 /**
  * Start the database processor
  */
 export function startDatabaseProcessor(): void {
-  if (!appConfig) {
-    throw new Error('Database processor not initialized');
-  }
-  
-  if (processingInterval) {
-    logger.warn('⚠️ Database processor is already running');
+  if (pollerHandle) {
+    logger.warn('Database processor already running');
     return;
   }
 
-  logger.info('🚀 Starting database processor...');
-  logger.info(`📊 Polling interval: ${appConfig.polling.intervalMs}ms`);
-  logger.info(`🎯 Batch size: ${appConfig.polling.batchSize} missions`);
-  logger.info(`⚡ Rate limit: ${appConfig.polling.maxRps} requests/second`);
+  logger.info('🤖 Starting database processor...');
+  logger.info(`📊 Polling interval: ${config.polling.intervalMs}ms`);
+  logger.info(`🎯 Allowed devices: ${config.processing.allowDeviceIds.join(', ')}`);
+  logger.info(`📦 Batch size: ${config.processing.batchSize}`);
 
-  // Start processing immediately
-  processAndSchedule();
+  // Start immediate processing
+  void processAndSchedule();
 
-  // Schedule recurring processing
-  processingInterval = setInterval(processAndSchedule, appConfig.polling.intervalMs);
+  // Schedule regular processing
+  pollerHandle = setInterval(() => {
+    void processAndSchedule();
+  }, config.polling.intervalMs);
+
+  logger.info('✅ Database processor started successfully');
 }
 
 /**
  * Stop the database processor
  */
 export function stopDatabaseProcessor(): void {
-  if (processingInterval) {
-    clearInterval(processingInterval);
-    processingInterval = null;
-    logger.info('⏹️ Database processor stopped');
+  if (pollerHandle) {
+    clearInterval(pollerHandle);
+    pollerHandle = null;
+    logger.info('🛑 Database processor stopped');
   }
 }
 
 /**
- * Process and schedule next run
+ * Process missions and schedule next run
  */
 async function processAndSchedule(): Promise<void> {
   if (isProcessing) {
-    logger.debug('⏳ Processing already in progress, skipping this cycle');
+    logger.debug('Skipping processing cycle - already in progress');
     return;
   }
 
   try {
     await processPendingMissions();
   } catch (error) {
-    logger.error('💥 Error in processing cycle:', error);
+    logger.error('Error in processing cycle:', error);
   }
 }
 
@@ -84,29 +64,26 @@ async function processAndSchedule(): Promise<void> {
  */
 async function processPendingMissions(): Promise<void> {
   isProcessing = true;
-  logger.debug('🔄 Starting mission processing cycle...');
-
+  
   try {
-    const missions = await getPendingMissions();
+    logger.info('🔍 Checking for pending missions...');
     
-    if (missions.length === 0) {
-      logger.debug('📭 No pending missions found');
+    const pendingMissions = await getPendingMissions();
+    
+    if (pendingMissions.length === 0) {
+      logger.debug('No pending missions found');
       return;
     }
 
-    logger.info(`📋 Processing ${missions.length} pending missions`);
+    logger.info(`📋 Processing ${pendingMissions.length} pending missions`);
 
-    for (const mission of missions) {
-      try {
-        await processSingleMission(mission);
-      } catch (error) {
-        logger.error(`💥 Failed to process mission ${mission.id}:`, error);
-        await markMissionAsProcessed(mission.id, false);
-      }
+    for (const mission of pendingMissions) {
+      await processSingleMission(mission);
     }
 
+    // Log processing stats
     const stats = getProcessingStats();
-    logger.info(`📊 Processing cycle complete:`, stats);
+    logger.info('📊 Processing stats:', stats);
 
   } finally {
     isProcessing = false;
@@ -117,97 +94,81 @@ async function processPendingMissions(): Promise<void> {
  * Process a single mission
  */
 async function processSingleMission(mission: PendingMission): Promise<void> {
-  if (!appConfig) {
-    throw new Error('Database processor not initialized');
-  }
-  
-  logger.debug(`🎯 Processing mission ${mission.id} for device ${mission.device_name}`);
-
   try {
-    // Read and transform mission data
+    logger.info(`🚀 Processing mission ${mission.id} from device ${mission.device_name}`);
+
+    // Generate ATM payloads from mission data
     const payloads = await processMissionData(mission);
-    
+
     if (payloads.length === 0) {
-      logger.warn(`⚠️ No payloads generated for mission ${mission.id}`);
+      logger.warn(`No valid payloads generated for mission ${mission.id}`);
       await markMissionAsProcessed(mission.id, false);
       return;
     }
 
-    // Send all payloads to API
+    // Send each measurement to the ATM API
     let successCount = 0;
+    let failureCount = 0;
+
     for (let i = 0; i < payloads.length; i++) {
       const payload = payloads[i];
-      const success = await sendPayloadToAPI(payload, mission.id, i + 1);
+      const success = await sendPayloadToAPI(payload, mission.id, i);
+      
       if (success) {
         successCount++;
+      } else {
+        failureCount++;
       }
     }
 
-    // Mark mission as processed if we had some success
-    const overallSuccess = successCount > 0;
-    const successRate = (successCount / payloads.length * 100).toFixed(1);
-    
-    if (overallSuccess) {
-      logger.info(`✅ Mission ${mission.id} processed: ${successCount}/${payloads.length} payloads sent (${successRate}%)`);
-    } else {
-      logger.error(`❌ Mission ${mission.id} failed: 0/${payloads.length} payloads sent`);
-    }
+    // Mark mission as processed if all payloads were sent successfully
+    const allSuccessful = failureCount === 0;
+    await markMissionAsProcessed(mission.id, allSuccessful);
 
-    await markMissionAsProcessed(mission.id, overallSuccess);
+    logger.info(`✅ Mission ${mission.id} processed: ${successCount} successful, ${failureCount} failed`);
 
   } catch (error) {
-    logger.error(`💥 Error processing mission ${mission.id}:`, error);
+    logger.error(`❌ Error processing mission ${mission.id}:`, error);
     await markMissionAsProcessed(mission.id, false);
   }
 }
 
 /**
- * Send a single payload to the API with retries
+ * Send payload to ATM API
  */
 async function sendPayloadToAPI(payload: ATMPayload, missionId: string, measurementIndex: number): Promise<boolean> {
-  if (!appConfig) {
-    throw new Error('Database processor not initialized');
-  }
-  
-  let lastError: Error | null = null;
-  
-  for (let attempt = 1; attempt <= appConfig.polling.maxAttempts; attempt++) {
-    try {
-      const success = await sendToATMAPI(payload);
-      if (success) {
-        if (attempt > 1) {
-          logger.info(`✅ Payload ${measurementIndex} for mission ${missionId} succeeded on attempt ${attempt}`);
-        }
-        return true;
-      }
-      
-      // If sendToATMAPI returns false, it already logged the error
-      lastError = new Error('API request failed');
-      
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error('Unknown error');
-      logger.debug(`🔄 Attempt ${attempt}/${appConfig.polling.maxAttempts} failed for payload ${measurementIndex} of mission ${missionId}: ${lastError.message}`);
-    }
+  try {
+    const identifier = `${missionId}-${measurementIndex}`;
     
-    // Wait before retry (exponential backoff)
-    if (attempt < appConfig.polling.maxAttempts) {
-      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 30000); // Max 30s
-      await new Promise(resolve => setTimeout(resolve, delay));
+    const success = await postPayload(
+      payload,
+      missionId,
+      measurementIndex,
+      0, // retryCount starts at 0
+      identifier
+    );
+
+    if (success) {
+      logger.debug(`📤 Successfully sent measurement ${measurementIndex} for mission ${missionId}`);
+    } else {
+      logger.warn(`❌ Failed to send measurement ${measurementIndex} for mission ${missionId}`);
     }
+
+    return success;
+  } catch (error) {
+    logger.error(`Error sending measurement ${measurementIndex} for mission ${missionId}:`, error);
+    return false;
   }
-  
-  logger.error(`❌ All ${appConfig.polling.maxAttempts} attempts failed for payload ${measurementIndex} of mission ${missionId}. Last error: ${lastError?.message}`);
-  return false;
 }
 
 /**
  * Get processor status
  */
-export function getProcessorStatus(): ProcessorStatus {
+export function getProcessorStatus() {
   return {
-    active: processingInterval !== null,
-    processing: isProcessing,
-    uptime: Date.now() - startTime,
-    stats: getProcessingStats(),
+    active: pollerHandle !== null,
+    polling: isProcessing,
+    pollingInterval: config.polling.intervalMs,
+    stats: getProcessingStats()
   };
 }

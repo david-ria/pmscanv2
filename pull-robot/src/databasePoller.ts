@@ -1,99 +1,78 @@
-import { createClient } from '@supabase/supabase-js';
 import { logger } from './logger.js';
-import type { Config } from './config.js';
+import { config } from './config.js';
+import { createClient } from '@supabase/supabase-js';
 
-// Data structures
-interface PendingMission {
+// Initialize Supabase client
+const supabase = createClient(config.supabase.url, config.supabase.key);
+
+export interface PendingMission {
   id: string;
-  device_name: string;
+  device_name: string | null;
   start_time: string;
   end_time: string;
   measurements_count: number;
 }
 
-interface ProcessingStats {
+export interface ProcessingStats {
   scanned: number;
   processed: number;
   failed: number;
   skipped: number;
 }
 
-// Processing statistics
 let processingStats: ProcessingStats = {
   scanned: 0,
   processed: 0,
   failed: 0,
-  skipped: 0,
+  skipped: 0
 };
-
-let supabase: any = null;
-let appConfig: Config | null = null;
-
-/**
- * Initialize the database poller with configuration
- */
-export function initializeDatabasePoller(config: Config) {
-  appConfig = config;
-  supabase = createClient(config.supabase.url, config.supabase.key);
-}
 
 /**
  * Test database connection
  */
 export async function testDatabaseConnection(): Promise<boolean> {
   try {
-    const { data, error } = await supabase
-      .from('missions')
-      .select('id')
-      .limit(1);
-
+    const { error } = await supabase.from('missions').select('id').limit(1);
     if (error) {
       logger.error('Database connection test failed:', error);
       return false;
     }
-
     logger.info('✅ Database connection successful');
     return true;
   } catch (error) {
-    logger.error('Database connection test failed:', error);
+    logger.error('Database connection test error:', error);
     return false;
   }
 }
 
 /**
- * Get pending missions from database
+ * Get pending missions that need to be processed by the robot
  */
 export async function getPendingMissions(): Promise<PendingMission[]> {
-  if (!supabase || !appConfig) {
-    throw new Error('Database poller not initialized');
-  }
-  
   try {
-    let query = supabase
+    const { data, error } = await supabase
       .from('missions')
       .select('id, device_name, start_time, end_time, measurements_count')
-      .is('robot_processed', null)
+      .eq('processed_by_robot', false)
       .not('device_name', 'is', null)
       .gt('measurements_count', 0)
-      .order('start_time', { ascending: true })
-      .limit(appConfig.polling.batchSize);
-
-    // Apply device filtering if configured
-    if (appConfig.processing.allowDeviceIds && appConfig.processing.allowDeviceIds.length > 0) {
-      query = query.in('device_name', appConfig.processing.allowDeviceIds);
-    }
-
-    const { data, error } = await query;
+      .order('created_at', { ascending: true })
+      .limit(config.processing.batchSize);
 
     if (error) {
       logger.error('Failed to fetch pending missions:', error);
       return [];
     }
 
+    // Filter by allowed device IDs
+    const filteredMissions = data?.filter(mission => {
+      return mission.device_name && config.processing.allowDeviceIds.includes(mission.device_name);
+    }) || [];
+
     processingStats.scanned += data?.length || 0;
-    logger.debug(`📊 Found ${data?.length || 0} pending missions`);
-    
-    return data || [];
+
+    logger.info(`Found ${filteredMissions.length} pending missions to process`);
+    return filteredMissions;
   } catch (error) {
     logger.error('Error fetching pending missions:', error);
     return [];
@@ -101,40 +80,50 @@ export async function getPendingMissions(): Promise<PendingMission[]> {
 }
 
 /**
- * Mark mission as processed in database
+ * Mark mission as processed
  */
 export async function markMissionAsProcessed(missionId: string, success: boolean): Promise<void> {
   try {
-    const updates: any = {
-      robot_processed: new Date().toISOString(),
-      robot_attempts: 1,
+    const updateData: any = {
+      robot_processed_at: new Date().toISOString(),
+      robot_processing_attempts: config.processing.maxAttempts
     };
 
-    if (!success) {
-      updates.robot_error = 'Processing failed';
+    if (success) {
+      updateData.processed_by_robot = true;
+      processingStats.processed += 1;
+    } else {
+      // Increment attempts, but don't mark as processed if still under max attempts
+      const { data: mission } = await supabase
+        .from('missions')
+        .select('robot_processing_attempts')
+        .eq('id', missionId)
+        .single();
+
+      const currentAttempts = mission?.robot_processing_attempts || 0;
+      const newAttempts = currentAttempts + 1;
+
+      if (newAttempts >= config.processing.maxAttempts) {
+        updateData.processed_by_robot = true; // Mark as processed to avoid infinite retries
+        processingStats.failed += 1;
+        logger.warn(`Mission ${missionId} failed after ${newAttempts} attempts`);
+      }
+
+      updateData.robot_processing_attempts = newAttempts;
     }
 
     const { error } = await supabase
       .from('missions')
-      .update(updates)
+      .update(updateData)
       .eq('id', missionId);
 
     if (error) {
       logger.error(`Failed to mark mission ${missionId} as processed:`, error);
-      processingStats.failed++;
-      return;
-    }
-
-    if (success) {
-      processingStats.processed++;
-      logger.debug(`✅ Mission ${missionId} marked as processed`);
     } else {
-      processingStats.failed++;
-      logger.debug(`❌ Mission ${missionId} marked as failed`);
+      logger.info(`Mission ${missionId} marked as ${success ? 'successfully processed' : 'failed'}`);
     }
   } catch (error) {
     logger.error(`Error marking mission ${missionId} as processed:`, error);
-    processingStats.failed++;
   }
 }
 
@@ -153,8 +142,6 @@ export function resetProcessingStats(): void {
     scanned: 0,
     processed: 0,
     failed: 0,
-    skipped: 0,
+    skipped: 0
   };
 }
-
-export type { PendingMission, ProcessingStats };

@@ -62,7 +62,7 @@ export function useMenuSections({
   const { userRole } = useUserRole();
   const { theme = 'light', setTheme } = useTheme();
   const { isEnabled: autoContextEnabled, toggleEnabled: toggleAutoContext } =
-    useAutoContext(false, null);
+    useAutoContext();
   const {
     isBackgroundEnabled,
     enableRecordingBackground,

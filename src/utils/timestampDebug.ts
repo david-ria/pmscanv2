@@ -3,7 +3,7 @@
  * Use these functions to identify timestamp discrepancies during development
  */
 
-import * as logger from '@/utils/logger';
+import * as logger from './logger';
 
 interface TimestampDebugInfo {
   component: string;

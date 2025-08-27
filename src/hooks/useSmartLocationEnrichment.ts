@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import * as logger from '@/utils/logger';
 import { 
   LocationPoint, 
   EnrichmentCache, 
@@ -79,7 +78,7 @@ export function useSmartLocationEnrichment() {
       try {
         const shouldThrottle = await shouldThrottleEnrichment();
         if (shouldThrottle) {
-          logger.devLogger.debug('🔋 Throttling location enrichment due to device state');
+          console.log('🔋 Throttling location enrichment due to device state');
           return;
         }
         
@@ -154,7 +153,7 @@ export function useSmartLocationEnrichment() {
     location: LocationPoint
   ): Promise<SmartEnrichmentResult | null> => {
     try {
-      logger.devLogger.debug(`🗺️ API enriching location: ${location.latitude}, ${location.longitude}`);
+      console.log(`🗺️ API enriching location: ${location.latitude}, ${location.longitude}`);
       
       const { data, error: enrichError } = await supabase.functions.invoke('enhance-location-context', {
         body: {
@@ -216,7 +215,7 @@ export function useSmartLocationEnrichment() {
       // Check local cache first
       const cached = findInCache(location);
       if (cached) {
-        logger.devLogger.debug('🎯 Using local cache for location enrichment');
+        console.log('🎯 Using local cache for location enrichment');
         cached.hitCount++;
         cached.lastUsed = Date.now();
         
@@ -234,7 +233,7 @@ export function useSmartLocationEnrichment() {
       if (!shouldEnrichNow) {
         // Add to queue for background processing
         enrichmentQueue.current.push(location);
-        logger.devLogger.debug('📋 Added location to enrichment queue');
+        console.log('📋 Added location to enrichment queue');
         
         // Return best guess from nearby cache
         const nearbyCache = cache
@@ -270,7 +269,7 @@ export function useSmartLocationEnrichment() {
   }, [findInCache, recentLocations, cache, enrichLocationFromAPI]);
 
   const preEnrichFrequentLocations = useCallback(async () => {
-    logger.devLogger.debug('🔮 Starting predictive enrichment for frequent locations');
+    console.log('🔮 Starting predictive enrichment for frequent locations');
     
     // Identify frequent locations from patterns
     const frequentLocations = patterns
@@ -320,7 +319,7 @@ export function useSmartLocationEnrichment() {
     }
   }, [recentLocations, updateMovementPatterns]);
 
-  logger.rateLimitedDebug('smart-location-enrichment-state', 5000, '🔧 useSmartLocationEnrichment state:', {
+  console.log('🔧 useSmartLocationEnrichment state:', {
     hasEnrichLocation: !!enrichLocation,
     loading,
     error,

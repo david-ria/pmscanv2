@@ -5,7 +5,7 @@
  */
 
 import { createTimestamp, ensureDate, formatDateTime, isValidTimestamp } from './timeFormat';
-import * as logger from '@/utils/logger';
+import * as logger from './logger';
 
 interface TimestampIssue {
   location: string;

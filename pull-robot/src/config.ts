@@ -1,24 +1,40 @@
 import { z } from 'zod';
 import { logger } from './logger.js';
 
-// Environment variables schema
+// Environment Variable Schema Definition using Zod
 const EnvSchema = z.object({
-  SUPABASE_URL: z.string().url(),
+  // Supabase Configuration
+  SUPABASE_URL: z.string().url().min(1),
   SUPABASE_KEY: z.string().min(1),
-  ATM_TOKEN_ENDPOINT: z.string().url().default('https://shydpfwuvnlzdzbubmgb.supabase.co/functions/v1/get-atm-token'),
-  PORT: z.string().transform(Number).default('3000'),
-  POLL_INTERVAL_MS: z.string().transform(Number).default('300000'),
-  RATE_MAX_RPS: z.string().transform(Number).default('20'),
-  MAX_ATTEMPTS: z.string().transform(Number).default('6'),
-  BATCH_SIZE: z.string().transform(Number).default('200'),
-  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
-  ALLOW_DEVICE_IDS: z.string().optional(),
+
+  // Dashboard API Configuration
+  DASHBOARD_ENDPOINT: z.string().url().min(1),
+  DASHBOARD_BEARER: z.string().min(1),
+
+  // Server Configuration
+  PORT: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1).max(65535)).default('3000'),
+
+  // Database Polling Configuration
+  POLL_INTERVAL_MS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1000)).default('300000'), // 5 minutes
+  RATE_MAX_RPS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('20'),
+
+  // Processing Configuration
+  MAX_ATTEMPTS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('6'),
+  BATCH_SIZE: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('200'),
+
+  // Metrics Configuration
+  INCLUDE_METRICS: z.string().min(1).default('pm1,pm25,pm10,latitude,longitude'),
+  UNITS_JSON: z.string().min(2).default('{"pm1":"ugm3","pm25":"ugm3","pm10":"ugm3","latitude":"degrees","longitude":"degrees"}'),
+
+  // Device Configuration
+  ALLOW_DEVICE_IDS: z.string().min(1).default('PMScan3376DF'),
   UNKNOWN_DEVICE_BEHAVIOR: z.enum(['skip', 'process']).default('skip'),
-  INCLUDE_METRICS: z.string().default('pm1,pm25,pm10,latitude,longitude'),
-  UNITS_JSON: z.string().default('{"pm1":"ugm3","pm25":"ugm3","pm10":"ugm3","latitude":"degrees","longitude":"degrees"}'),
+
+  // Logging
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
 
-// Strongly-typed configuration interface
+// Strongly-typed configuration interface derived from environment validation
 interface Config {
   supabase: {
     url: string;
@@ -27,7 +43,6 @@ interface Config {
   dashboard: {
     endpoint: string;
     bearer: string;
-    tokenEndpoint: string;
   };
   server: {
     port: number;
@@ -35,21 +50,21 @@ interface Config {
   polling: {
     intervalMs: number;
     maxRps: number;
-    maxAttempts: number;
-    batchSize: number;
   };
   processing: {
-    allowDeviceIds?: string[];
-    unknownDeviceBehavior: 'skip' | 'process';
+    maxAttempts: number;
+    batchSize: number;
     includeMetrics: string[];
     units: Record<string, string>;
+    allowDeviceIds: string[];
+    unknownDeviceBehavior: 'skip' | 'process';
   };
   logging: {
-    level: 'error' | 'warn' | 'info' | 'debug';
+    level: 'debug' | 'info' | 'warn' | 'error';
   };
 }
 
-// Final configuration schema
+// Configuration Schema for final validation
 const ConfigSchema = z.object({
   supabase: z.object({
     url: z.string().url(),
@@ -58,76 +73,78 @@ const ConfigSchema = z.object({
   dashboard: z.object({
     endpoint: z.string().url(),
     bearer: z.string().min(1),
-    tokenEndpoint: z.string().url(),
   }),
   server: z.object({
-    port: z.number().int().positive(),
+    port: z.number().min(1).max(65535),
   }),
   polling: z.object({
-    intervalMs: z.number().int().positive(),
-    maxRps: z.number().int().positive(),
-    maxAttempts: z.number().int().positive(),
-    batchSize: z.number().int().positive(),
+    intervalMs: z.number().min(1000),
+    maxRps: z.number().min(1),
   }),
   processing: z.object({
-    allowDeviceIds: z.array(z.string()).optional(),
-    unknownDeviceBehavior: z.enum(['skip', 'process']),
+    maxAttempts: z.number().min(1),
+    batchSize: z.number().min(1),
     includeMetrics: z.array(z.string()),
     units: z.record(z.string()),
+    allowDeviceIds: z.array(z.string()),
+    unknownDeviceBehavior: z.enum(['skip', 'process']),
   }),
   logging: z.object({
-    level: z.enum(['error', 'warn', 'info', 'debug']),
+    level: z.enum(['debug', 'info', 'warn', 'error']),
   }),
 });
 
+// Error formatting function
 function formatValidationError(error: z.ZodError): string {
-  const issues = error.issues.map(issue => {
-    const path = issue.path.join('.');
-    return `- ${path}: ${issue.message}`;
-  }).join('\n');
+  const missingRequired = [];
+  const invalidValues = [];
   
-  return `Configuration validation failed:\n${issues}`;
+  for (const issue of error.issues) {
+    const path = issue.path.join('.');
+    
+    if (issue.code === 'invalid_type' && issue.received === 'undefined') {
+      missingRequired.push(`❌ MISSING: ${path} is required`);
+    } else {
+      invalidValues.push(`❌ INVALID: ${path} - ${issue.message}`);
+    }
+  }
+  
+  let errorMessage = '\n🚨 CONFIGURATION ERROR - Pull Robot cannot start!\n\n';
+  
+  if (missingRequired.length > 0) {
+    errorMessage += '📋 MISSING REQUIRED ENVIRONMENT VARIABLES:\n';
+    errorMessage += missingRequired.join('\n') + '\n\n';
+  }
+  
+  if (invalidValues.length > 0) {
+    errorMessage += '⚠️  INVALID ENVIRONMENT VARIABLES:\n';
+    errorMessage += invalidValues.join('\n') + '\n\n';
+  }
+  
+  errorMessage += '💡 FIX: Check your .env file and ensure all required variables are set.\n';
+  errorMessage += '📖 See .env.example for correct format and default values.\n';
+  
+  return errorMessage;
 }
 
-async function loadConfig(): Promise<Config> {
-  logger.info('⚙️ Loading configuration from environment variables...');
-  
+function loadConfig(): Config {
   try {
-    // Parse and validate environment variables
+    logger.info('🔧 Loading and validating configuration...');
+    
+    // Parse and validate environment variables with detailed error reporting
     const env = EnvSchema.parse(process.env);
     
-    // Fetch ATM API configuration from Supabase edge function
-    logger.info('🔄 Fetching ATM API configuration...');
-    let dashboardConfig;
-    try {
-      const response = await fetch(env.ATM_TOKEN_ENDPOINT);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ATM config: ${response.status}`);
-      }
-      dashboardConfig = await response.json();
-      logger.info('✅ ATM API configuration retrieved successfully');
-    } catch (error) {
-      logger.error('❌ Failed to fetch ATM API configuration:', error);
-      throw new Error('Could not retrieve ATM API configuration');
-    }
-    
-    // Parse JSON fields
-    const units = JSON.parse(env.UNITS_JSON);
-    const includeMetrics = env.INCLUDE_METRICS.split(',').map(m => m.trim());
-    const allowDeviceIds = env.ALLOW_DEVICE_IDS ? 
-      env.ALLOW_DEVICE_IDS.split(',').map(id => id.trim()) : 
-      undefined;
-    
-    // Build structured configuration
-    const config: Config = {
+    logger.info('✅ Environment validation passed');
+
+    // Transform and structure the configuration
+    const transformedConfig: Config = {
       supabase: {
         url: env.SUPABASE_URL,
         key: env.SUPABASE_KEY,
       },
       dashboard: {
-        endpoint: dashboardConfig.endpoint,
-        bearer: dashboardConfig.token,
-        tokenEndpoint: env.ATM_TOKEN_ENDPOINT,
+        endpoint: env.DASHBOARD_ENDPOINT,
+        bearer: env.DASHBOARD_BEARER,
       },
       server: {
         port: env.PORT,
@@ -135,47 +152,52 @@ async function loadConfig(): Promise<Config> {
       polling: {
         intervalMs: env.POLL_INTERVAL_MS,
         maxRps: env.RATE_MAX_RPS,
-        maxAttempts: env.MAX_ATTEMPTS,
-        batchSize: env.BATCH_SIZE,
       },
       processing: {
-        allowDeviceIds,
+        maxAttempts: env.MAX_ATTEMPTS,
+        batchSize: env.BATCH_SIZE,
+        includeMetrics: env.INCLUDE_METRICS.split(',').map(s => s.trim()),
+        units: JSON.parse(env.UNITS_JSON),
+        allowDeviceIds: env.ALLOW_DEVICE_IDS.split(',').map(s => s.trim()),
         unknownDeviceBehavior: env.UNKNOWN_DEVICE_BEHAVIOR,
-        includeMetrics,
-        units,
       },
       logging: {
         level: env.LOG_LEVEL,
       },
     };
-    
-    // Final validation with strongly-typed schema
-    const validatedConfig = ConfigSchema.parse(config);
-    
-    logger.info('✅ Configuration loaded successfully');
-    logger.debug('📊 Configuration details:', {
-      supabase: { url: validatedConfig.supabase.url },
-      dashboard: { endpoint: validatedConfig.dashboard.endpoint },
-      polling: validatedConfig.polling,
-      processing: {
-        ...validatedConfig.processing,
-        allowDeviceIds: validatedConfig.processing.allowDeviceIds?.length || 0,
+
+    // Log loaded configuration (excluding sensitive data)
+    logger.info('📋 Configuration loaded successfully:', {
+      supabase: {
+        url: transformedConfig.supabase.url,
       },
+      dashboard: {
+        endpoint: transformedConfig.dashboard.endpoint,
+        bearer: `${transformedConfig.dashboard.bearer.substring(0, 8)}...`,
+      },
+      server: transformedConfig.server,
+      polling: transformedConfig.polling,
+      processing: {
+        ...transformedConfig.processing,
+        units: Object.keys(transformedConfig.processing.units),
+      },
+      logging: transformedConfig.logging,
     });
-    
-    return validatedConfig;
-    
+
+    // Final validation against the Config schema
+    return ConfigSchema.parse(transformedConfig);
+
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const message = formatValidationError(error);
-      logger.error('❌ Configuration validation failed:', message);
+      const formattedError = formatValidationError(error);
+      logger.error(formattedError);
     } else {
-      logger.error('❌ Failed to load configuration:', error);
+      logger.error('💥 Unexpected configuration error:', error);
     }
     
+    // Exit with non-zero code to indicate failure
     process.exit(1);
   }
 }
 
-// Export the configuration function and type
-export { loadConfig, type Config };
+export const config = loadConfig();
