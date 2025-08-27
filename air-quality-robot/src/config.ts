@@ -10,6 +10,10 @@ export const config = {
   polling: {
     intervalMs: parseInt(process.env.POLL_INTERVAL_MS || '300000') // 5 minutes default
   },
+  device: {
+    allowedDeviceIds: process.env.ALLOW_DEVICE_IDS ? process.env.ALLOW_DEVICE_IDS.split(',') : [],
+    unknownDeviceBehavior: process.env.UNKNOWN_DEVICE_BEHAVIOR || 'skip'
+  },
   processing: {
     // Only process missions created after this date (ISO string)
     // If not set, uses robot startup time

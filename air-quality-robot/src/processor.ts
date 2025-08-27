@@ -1,6 +1,7 @@
 import { supabase } from './supabase.js';
 import { postToATM } from './poster.js';
 import { logger } from './logger.js';
+import { config } from './config.js';
 
 export interface Mission {
   id: string;
@@ -23,6 +24,16 @@ export interface Measurement {
 export async function processMission(mission: Mission): Promise<boolean> {
   try {
     logger.info(`🔄 Processing mission ${mission.id} for device ${mission.device_name}`);
+    
+    // Check if device is allowed
+    if (config.device.allowedDeviceIds.length > 0 && mission.device_name) {
+      if (!config.device.allowedDeviceIds.includes(mission.device_name)) {
+        if (config.device.unknownDeviceBehavior === 'skip') {
+          logger.info(`⏭️ Skipping mission ${mission.id} - device ${mission.device_name} not in allowed list`);
+          return true; // Consider it "processed" so it doesn't get retried
+        }
+      }
+    }
     
     // Get measurements for this mission
     const { data: measurements, error } = await supabase
