@@ -9,5 +9,12 @@ export const config = {
   },
   polling: {
     intervalMs: parseInt(process.env.POLL_INTERVAL_MS || '300000') // 5 minutes default
+  },
+  processing: {
+    // Only process missions created after this date (ISO string)
+    // If not set, uses robot startup time
+    cutoffDate: process.env.CUTOFF_DATE || null,
+    // Whether to mark all existing missions as processed on startup
+    markExistingAsProcessed: process.env.MARK_EXISTING_PROCESSED === 'true'
   }
 };

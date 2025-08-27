@@ -24,12 +24,19 @@ export async function testConnection() {
   }
 }
 
-export async function getPendingMissions() {
+export async function getPendingMissions(cutoffDate?: string) {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('missions')
       .select('*')
-      .eq('processed_by_robot', false)
+      .eq('processed_by_robot', false);
+
+    // Only process missions created after cutoff date
+    if (cutoffDate) {
+      query = query.gte('created_at', cutoffDate);
+    }
+
+    const { data, error } = await query
       .order('created_at', { ascending: true })
       .limit(10);
 
@@ -38,11 +45,41 @@ export async function getPendingMissions() {
       return [];
     }
 
-    logger.info(`Found ${data?.length || 0} pending missions`);
+    if (cutoffDate) {
+      logger.info(`Found ${data?.length || 0} pending missions (created after ${cutoffDate})`);
+    } else {
+      logger.info(`Found ${data?.length || 0} pending missions`);
+    }
+    
     return data || [];
   } catch (error) {
     logger.error('Error in getPendingMissions:', error);
     return [];
+  }
+}
+
+export async function markAllExistingMissionsAsProcessed(beforeDate: string) {
+  try {
+    const { count, error } = await supabase
+      .from('missions')
+      .update({ 
+        processed_by_robot: true,
+        robot_processed_at: new Date().toISOString()
+      })
+      .eq('processed_by_robot', false)
+      .lt('created_at', beforeDate);
+
+    if (error) {
+      logger.error('Error marking existing missions as processed:', error.message);
+      return 0;
+    }
+
+    const markedCount = count || 0;
+    logger.info(`✅ Marked ${markedCount} existing missions as processed (created before ${beforeDate})`);
+    return markedCount;
+  } catch (error) {
+    logger.error('Error in markAllExistingMissionsAsProcessed:', error);
+    return 0;
   }
 }
 

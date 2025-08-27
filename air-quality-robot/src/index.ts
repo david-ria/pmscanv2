@@ -1,17 +1,30 @@
 import { logger } from './logger.js';
 import { config } from './config.js';
-import { testConnection, getPendingMissions, markMissionProcessed } from './supabase.js';
+import { testConnection, getPendingMissions, markMissionProcessed, markAllExistingMissionsAsProcessed } from './supabase.js';
 import { processMission } from './processor.js';
 
+let robotStartTime: string;
+
 async function main() {
+  // Initialize robot start time
+  robotStartTime = config.processing.cutoffDate || new Date().toISOString();
+  
   logger.info('🤖 Air Quality Robot starting...');
   logger.info(`📊 Config: Database=${config.supabase.url}, API=${config.dashboard.endpoint}`);
+  logger.info(`🕒 Processing missions created after: ${robotStartTime}`);
   
   // Test connection first
   const connected = await testConnection();
   if (!connected) {
     logger.error('❌ Failed to connect to Supabase. Exiting.');
     process.exit(1);
+  }
+
+  // Mark existing missions as processed if requested
+  if (config.processing.markExistingAsProcessed) {
+    logger.info('🔄 Marking existing missions as processed...');
+    const markedCount = await markAllExistingMissionsAsProcessed(robotStartTime);
+    logger.info(`✅ Marked ${markedCount} existing missions as processed`);
   }
 
   // Start processing loop
@@ -35,13 +48,13 @@ async function processOnce() {
   try {
     logger.info('🔍 Checking for pending missions...');
     
-    const missions = await getPendingMissions();
+    const missions = await getPendingMissions(robotStartTime);
     if (missions.length === 0) {
-      logger.info('📭 No pending missions found');
+      logger.info('📭 No new pending missions found');
       return;
     }
 
-    logger.info(`📥 Found ${missions.length} pending missions to process`);
+    logger.info(`📥 Found ${missions.length} new pending missions to process`);
     
     let processed = 0;
     for (const mission of missions) {
