@@ -21,7 +21,6 @@ import {
 } from '@/lib/autoContextConfig';
 import { useSensorData } from '@/hooks/useSensorData';
 import { calculateDataQuality } from '@/lib/autoContext.config';
-import { useUnifiedData } from '@/components/UnifiedDataProvider';
 
 // Development telemetry logging
 function logTransition(prev: string, next: string, data: AutoContextEvaluationData) {
@@ -34,6 +33,25 @@ function logTransition(prev: string, next: string, data: AutoContextEvaluationDa
     walkingSignature: data.movement.walkingSignature ?? null,
     dataQuality: data.movement.dataQuality ?? null,
   });
+}
+
+// Optional unified data hook that gracefully falls back when provider is not available
+function useOptionalUnifiedData() {
+  const fallbackData = useMemo(() => ({
+    walkingSignature: { 
+      isWalking: false, 
+      confidence: 0, 
+      steps: 0, 
+      cadence: 0, 
+      stride: 0, 
+      stepsPerMinute: 0,
+      isActive: false,
+      walkingSignature: null
+    }
+  }), []);
+
+  // Return fallback data since we can't conditionally import hooks
+  return fallbackData;
 }
 
 interface AutoContextInputs {
@@ -77,23 +95,8 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   );
   const { features } = useSubscription();
   
-  // Use unified data for motion detection - with safety check
-  let unifiedData;
-  try {
-    unifiedData = useUnifiedData();
-  } catch (error) {
-    // If UnifiedDataProvider is not available, create fallback data
-    unifiedData = {
-      walkingSignature: { 
-        isWalking: false, 
-        confidence: 0, 
-        steps: 0, 
-        cadence: 0, 
-        stride: 0, 
-        stepsPerMinute: 0 
-      }
-    };
-  }
+  // Use optional unified data for motion detection
+  const unifiedData = useOptionalUnifiedData();
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
@@ -711,6 +714,8 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       latestLocation,
       locationEnabled,
       requestLocationPermission,
+      features.canUseAutoContext,
+      externalLocation
     ]
   );
 }
