@@ -108,14 +108,5 @@ export const isLogLevelEnabled = (level: 'debug' | 'info' | 'warn' | 'error') =>
   return true; // All levels enabled in development
 };
 
-// Default export for direct imports
-export default { 
-  debug, 
-  info, 
-  warn, 
-  error, 
-  rateLimitedDebug, 
-  getLogLevel, 
-  isLogLevelEnabled,
-  devLogger
-};
+// Named exports for namespace imports (no default export to avoid conflicts)
+// This ensures import * as logger from '@/utils/logger' works correctly
