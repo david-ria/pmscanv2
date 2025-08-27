@@ -138,23 +138,19 @@ async function processSingleMission(mission: PendingMission): Promise<void> {
  */
 async function sendPayloadToAPI(payload: ATMPayload, missionId: string, measurementIndex: number): Promise<boolean> {
   try {
-    const identifier = `${missionId}-${measurementIndex}`;
-    
-    const success = await postPayload(
-      payload,
-      missionId,
-      measurementIndex,
-      0, // retryCount starts at 0
-      identifier
-    );
+    // Transform ATMPayload to legacy APIPayload format expected by poster
+    const legacyPayload = {
+      device_id: payload.deviceId,
+      mission_id: missionId,  
+      ts: payload.timestamp,
+      metrics: Object.entries(payload.measurements).reduce((acc, [key, val]: [string, any]) => {
+        acc[key] = val.value;
+        return acc;
+      }, {} as Record<string, number>)
+    };
 
-    if (success) {
-      logger.debug(`📤 Successfully sent measurement ${measurementIndex} for mission ${missionId}`);
-    } else {
-      logger.warn(`❌ Failed to send measurement ${measurementIndex} for mission ${missionId}`);
-    }
-
-    return success;
+    const result = await postPayload(legacyPayload, 0, measurementIndex, 0, `${payload.deviceId}|${missionId}|${payload.timestamp}`);
+    return result.success;
   } catch (error) {
     logger.error(`Error sending measurement ${measurementIndex} for mission ${missionId}:`, error);
     return false;
