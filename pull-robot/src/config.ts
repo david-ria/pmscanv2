@@ -22,6 +22,12 @@ const EnvSchema = z.object({
   MAX_ATTEMPTS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('6'),
   BATCH_SIZE: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('200'),
 
+  // Retry Configuration
+  RETRY_DELAY_MS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(100)).default('1000'),
+  RETRY_BACKOFF_MULTIPLIER: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('2'),
+  RETRY_TIMEOUT_MS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1000)).default('30000'),
+  MAX_CONCURRENT_REQUESTS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('5'),
+
   // Metrics Configuration
   INCLUDE_METRICS: z.string().min(1).default('pm1,pm25,pm10,latitude,longitude'),
   UNITS_JSON: z.string().min(2).default('{"pm1":"ugm3","pm25":"ugm3","pm10":"ugm3","latitude":"degrees","longitude":"degrees"}'),
@@ -50,6 +56,16 @@ interface Config {
   polling: {
     intervalMs: number;
     maxRps: number;
+  };
+  rateLimiting: {
+    maxRequestsPerSecond: number;
+    maxConcurrentRequests: number;
+  };
+  retry: {
+    maxRetries: number;
+    delayMs: number;
+    backoffMultiplier: number;
+    timeoutMs: number;
   };
   processing: {
     maxAttempts: number;
@@ -80,6 +96,16 @@ const ConfigSchema = z.object({
   polling: z.object({
     intervalMs: z.number().min(1000),
     maxRps: z.number().min(1),
+  }),
+  rateLimiting: z.object({
+    maxRequestsPerSecond: z.number().min(1),
+    maxConcurrentRequests: z.number().min(1),
+  }),
+  retry: z.object({
+    maxRetries: z.number().min(1),
+    delayMs: z.number().min(100),
+    backoffMultiplier: z.number().min(1),
+    timeoutMs: z.number().min(1000),
   }),
   processing: z.object({
     maxAttempts: z.number().min(1),
@@ -152,6 +178,16 @@ function loadConfig(): Config {
       polling: {
         intervalMs: env.POLL_INTERVAL_MS,
         maxRps: env.RATE_MAX_RPS,
+      },
+      rateLimiting: {
+        maxRequestsPerSecond: env.RATE_MAX_RPS,
+        maxConcurrentRequests: env.MAX_CONCURRENT_REQUESTS,
+      },
+      retry: {
+        maxRetries: env.MAX_ATTEMPTS,
+        delayMs: env.RETRY_DELAY_MS,
+        backoffMultiplier: env.RETRY_BACKOFF_MULTIPLIER,
+        timeoutMs: env.RETRY_TIMEOUT_MS,
       },
       processing: {
         maxAttempts: env.MAX_ATTEMPTS,

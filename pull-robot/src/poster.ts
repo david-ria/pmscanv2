@@ -138,7 +138,7 @@ export async function postPayload(
 // Transform legacy APIPayload to ATM format
 function transformToATMFormat(payload: APIPayload): ATMPayload {
   return {
-    idSensor: "PMScan3376DF", // Fixed sensor ID as requested
+    idSensor: "PMScan3376DF", // Use configured device ID
     time: new Date(payload.ts).getTime(), // Convert ISO to milliseconds
     data: {
       pm1: { 
@@ -180,7 +180,7 @@ async function makeAPIRequest(
   try {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer xjb0qzdnefgurhkdps4qivp8x6lq2h66',
+      'Authorization': `Bearer ${config.dashboard.bearer}`,
       'User-Agent': 'pull-robot/1.0.0',
     };
     
@@ -196,7 +196,7 @@ async function makeAPIRequest(
     let response: Response;
     let responseBody: string = '';
     try {
-      response = await fetch('https://api.atm.ovh/api/v3.0/measurements', {
+      response = await fetch(config.dashboard.endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
