@@ -1,3 +1,18 @@
+// Polyfill for Node 16 - add global Headers API
+import fetch, { Headers, Request, Response } from 'node-fetch';
+
+// @ts-ignore
+if (!globalThis.fetch) {
+  // @ts-ignore
+  globalThis.fetch = fetch;
+  // @ts-ignore
+  globalThis.Headers = Headers;
+  // @ts-ignore
+  globalThis.Request = Request;
+  // @ts-ignore
+  globalThis.Response = Response;
+}
+
 import { createClient } from '@supabase/supabase-js';
 import { config } from './config.js';
 import { logger } from './logger.js';
