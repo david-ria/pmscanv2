@@ -16,7 +16,7 @@ import { createTimestamp } from '@/utils/timeFormat';
  * Global data collector that runs independently of page navigation
  * This ensures recording continues even when navigating away from real-time page
  */
-export function GlobalDataCollector() {
+function GlobalDataCollector() {
   // Get all data from unified source
   const unifiedData = useUnifiedData();
   const {

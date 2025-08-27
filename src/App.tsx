@@ -24,7 +24,7 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 // Lazy load heavy components
 const Header = lazy(() => import('@/components/Header'));
 const BottomNavigation = lazy(() => import('@/components/BottomNavigation'));
-const UnifiedDataProvider = lazy(() => import('@/components/UnifiedDataProvider'));
+const UnifiedDataProvider = lazy(() => import('@/components/UnifiedDataProvider').then(m => ({ default: m.UnifiedDataProvider })));
 const CrashRecoveryInitializer = lazy(() => import('@/components/CrashRecoveryInitializer'));
 const PMLineGraph = lazy(() => import('@/components/PMLineGraph'));
 const GlobalDataCollector = lazy(() => import('@/components/GlobalDataCollector'));

@@ -64,7 +64,7 @@ interface UnifiedDataProviderProps {
   children: ReactNode;
 }
 
-function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
+export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   const [dataFlowEnabled, setDataFlowEnabled] = useState(true);
   
   // Core data sources
@@ -199,4 +199,3 @@ function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   );
 }
 
-export default UnifiedDataProvider;
