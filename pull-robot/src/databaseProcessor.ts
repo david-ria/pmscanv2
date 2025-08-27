@@ -55,7 +55,7 @@ async function processAndSchedule(): Promise<void> {
   try {
     await processPendingMissions();
   } catch (error) {
-    logger.error('Error in processing cycle:', error);
+    logger.error('💥 Error in processing cycle:', { error: error instanceof Error ? error.message : String(error) });
   }
 }
 
@@ -78,12 +78,16 @@ async function processPendingMissions(): Promise<void> {
     logger.info(`📋 Processing ${pendingMissions.length} pending missions`);
 
     for (const mission of pendingMissions) {
-      await processSingleMission(mission);
+      try {
+        await processSingleMission(mission);
+      } catch (error) {
+        logger.error(`💥 Failed to process mission ${mission.id}:`, { error: error instanceof Error ? error.message : String(error) });
+      }
     }
 
     // Log processing stats
     const stats = getProcessingStats();
-    logger.info('📊 Processing stats:', stats);
+    logger.info('📊 Processing cycle complete:', stats);
 
   } finally {
     isProcessing = false;
@@ -112,10 +116,14 @@ async function processSingleMission(mission: PendingMission): Promise<void> {
 
     for (let i = 0; i < payloads.length; i++) {
       const payload = payloads[i];
-      const success = await sendPayloadToAPI(payload, mission.id, i);
-      
-      if (success) {
-        successCount++;
+      if (payload) {
+        const success = await sendPayloadToAPI(payload, mission.id, i + 1);
+        
+        if (success) {
+          successCount++;
+        } else {
+          failureCount++;
+        }
       } else {
         failureCount++;
       }
@@ -128,7 +136,7 @@ async function processSingleMission(mission: PendingMission): Promise<void> {
     logger.info(`✅ Mission ${mission.id} processed: ${successCount} successful, ${failureCount} failed`);
 
   } catch (error) {
-    logger.error(`❌ Error processing mission ${mission.id}:`, error);
+    logger.error(`💥 Error processing mission ${mission.id}:`, { error: error instanceof Error ? error.message : String(error) });
     await markMissionAsProcessed(mission.id, false);
   }
 }
@@ -152,7 +160,7 @@ async function sendPayloadToAPI(payload: ATMPayload, missionId: string, measurem
     const result = await postPayload(legacyPayload, 0, measurementIndex, 0, `${payload.deviceId}|${missionId}|${payload.timestamp}`);
     return result.success;
   } catch (error) {
-    logger.error(`Error sending measurement ${measurementIndex} for mission ${missionId}:`, { error: error instanceof Error ? error.message : 'Unknown error' });
+    logger.error(`Error sending measurement ${measurementIndex} for mission ${missionId}:`, { error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 }

@@ -63,7 +63,7 @@ export async function readMissionMeasurements(missionId: string): Promise<Missio
       humidity: row.humidity || undefined
     }));
   } catch (error) {
-    logger.error(`Error reading measurements for mission ${missionId}:`, { error: error instanceof Error ? error.message : 'Unknown error' });
+    logger.error(`Error reading measurements for mission ${missionId}:`, { error: error.message });
     return [];
   }
 }
@@ -162,7 +162,7 @@ export async function processMissionData(mission: PendingMission): Promise<ATMPa
     logger.info(`Generated ${payloads.length} ATM payloads for mission ${mission.id}`);
     return payloads;
   } catch (error) {
-    logger.error(`Error processing mission ${mission.id}:`, error);
+    logger.error(`Error processing mission ${mission.id}:`, { error: error instanceof Error ? error.message : String(error) });
     return [];
   }
 }

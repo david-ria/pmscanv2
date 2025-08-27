@@ -7,12 +7,12 @@ import { getPosterMetrics, isHealthy } from './poster.js';
 
 async function main() {
   logger.info('🤖 Pull Robot starting up...');
-    logger.info('📋 Configuration loaded:', {
-      supabase: config.supabase.url,
-      dashboard: config.dashboard.endpoint,
-      polling: config.polling,
-      processing: config.processing,
-    });
+  logger.info('📋 Configuration loaded:', {
+    supabase: config.supabase.url,
+    dashboard: config.dashboard.endpoint,
+    polling: config.polling,
+    processing: config.processing,
+  });
 
   // Create Fastify server
   const server = fastify({
@@ -77,7 +77,7 @@ async function main() {
     logger.info(`📈 Metrics endpoint: http://localhost:${config.server.port}/metrics`);
 
   } catch (error) {
-    logger.error('💥 Failed to start Pull Robot:', { error: error instanceof Error ? error.message : 'Unknown error' });
+    logger.error('💥 Failed to start Pull Robot:', { error: error instanceof Error ? error.message : String(error) });
     process.exit(1);
   }
 
@@ -100,18 +100,18 @@ async function main() {
 
   // Handle uncaught exceptions and unhandled rejections
   process.on('uncaughtException', (error) => {
-    logger.error('💥 Uncaught exception:', error);
+    logger.error('💥 Uncaught exception:', { error: error.message });
     process.exit(1);
   });
 
-  process.on('unhandledRejection', (reason) => {
-    logger.error('💥 Unhandled rejection:', reason);
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error('💥 Unhandled rejection at:', { promise: String(promise), reason: String(reason) });
     process.exit(1);
   });
 }
 
 // Start the application
 main().catch((error) => {
-  logger.error('💥 Bootstrap failed:', { error: error instanceof Error ? error.message : 'Unknown error' });
+  logger.error('💥 Bootstrap failed:', { error: error instanceof Error ? error.message : String(error) });
   process.exit(1);
 });

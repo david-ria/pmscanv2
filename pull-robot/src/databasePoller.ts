@@ -74,7 +74,7 @@ export async function getPendingMissions(): Promise<PendingMission[]> {
     logger.info(`Found ${filteredMissions.length} pending missions to process`);
     return filteredMissions;
   } catch (error) {
-    logger.error('Error fetching pending missions:', error);
+    logger.error('Error fetching pending missions:', { error: error.message });
     return [];
   }
 }
@@ -123,7 +123,7 @@ export async function markMissionAsProcessed(missionId: string, success: boolean
       logger.info(`Mission ${missionId} marked as ${success ? 'successfully processed' : 'failed'}`);
     }
   } catch (error) {
-    logger.error(`Error marking mission ${missionId} as processed:`, { error: error instanceof Error ? error.message : 'Unknown error' });
+    logger.error(`Error marking mission ${missionId} as processed:`, { error: error.message });
   }
 }
 

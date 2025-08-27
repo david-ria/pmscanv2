@@ -193,7 +193,7 @@ function loadConfig(): Config {
         batchSize: env.BATCH_SIZE,
         includeMetrics: env.INCLUDE_METRICS.split(',').map(s => s.trim()),
         units: JSON.parse(env.UNITS_JSON),
-        allowDeviceIds: env.ALLOW_DEVICE_IDS ? env.ALLOW_DEVICE_IDS.split(',').map(s => s.trim()) : undefined,
+        allowDeviceIds: env.ALLOW_DEVICE_IDS?.split(',').map(s => s.trim()),
         unknownDeviceBehavior: env.UNKNOWN_DEVICE_BEHAVIOR,
       },
       logging: {
@@ -202,7 +202,7 @@ function loadConfig(): Config {
     };
 
     // Log loaded configuration (excluding sensitive data)
-    console.log('📋 Configuration loaded successfully:', {
+    console.log('📋 Configuration loaded successfully:', JSON.stringify({
       supabase: {
         url: transformedConfig.supabase.url,
       },
@@ -217,7 +217,7 @@ function loadConfig(): Config {
         units: Object.keys(transformedConfig.processing.units),
       },
       logging: transformedConfig.logging,
-    });
+    }, null, 2));
 
     // Final validation against the Config schema
     return ConfigSchema.parse(transformedConfig);
@@ -227,7 +227,7 @@ function loadConfig(): Config {
       const formattedError = formatValidationError(error);
       console.error(formattedError);
     } else {
-      console.error('💥 Unexpected configuration error:', error);
+      console.error('💥 Unexpected configuration error:', error instanceof Error ? error.message : String(error));
     }
     
     // Exit with non-zero code to indicate failure
