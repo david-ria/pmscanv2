@@ -77,8 +77,23 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   );
   const { features } = useSubscription();
   
-  // Use unified data for motion detection
-  const unifiedData = useUnifiedData();
+  // Use unified data for motion detection - with safety check
+  let unifiedData;
+  try {
+    unifiedData = useUnifiedData();
+  } catch (error) {
+    // If UnifiedDataProvider is not available, create fallback data
+    unifiedData = {
+      walkingSignature: { 
+        isWalking: false, 
+        confidence: 0, 
+        steps: 0, 
+        cadence: 0, 
+        stride: 0, 
+        stepsPerMinute: 0 
+      }
+    };
+  }
 
   const [previousWifiSSID, setPreviousWifiSSID] = useState<string>('');
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
