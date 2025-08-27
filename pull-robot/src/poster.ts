@@ -38,9 +38,9 @@ export async function postPayload(
       idSensor: payload.device_id || "PMScan3376DF",
       time: new Date(payload.ts).getTime(),
       data: {
-        pm1: { value: payload.metrics.PM1 || 0, unit: "ugm3" },
-        pm25: { value: payload.metrics["PM2.5"] || 0, unit: "ugm3" },
-        pm10: { value: payload.metrics.PM10 || 0, unit: "ugm3" },
+        pm1: { value: payload.metrics.PM1 || payload.metrics.pm1 || 0, unit: "ugm3" },
+        pm25: { value: payload.metrics["PM2.5"] || payload.metrics.pm25 || 0, unit: "ugm3" },
+        pm10: { value: payload.metrics.PM10 || payload.metrics.pm10 || 0, unit: "ugm3" },
         ...(payload.metrics.latitude && {
           latitude: { value: payload.metrics.latitude, unit: "degrees" }
         }),

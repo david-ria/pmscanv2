@@ -3,7 +3,6 @@ import { config } from './config.js';
 import { logger } from './logger.js';
 import type { PendingMission } from './databasePoller.js';
 
-
 const supabase = createClient(config.supabase.url, config.supabase.key);
 
 export interface ATMPayload {
@@ -21,13 +20,13 @@ async function readMissionMeasurements(missionId: string): Promise<any[]> {
       .order('timestamp', { ascending: true });
 
     if (error) {
-      logger.error(`Error reading measurements for mission ${missionId}:`, error);
+      logger.error(`Error reading measurements for mission ${missionId}:`, { error: error.message });
       return [];
     }
 
     return data || [];
-  } catch (error) {
-    logger.error(`Error reading measurements for mission ${missionId}:`, { error: error instanceof Error ? error.message : String(error) });
+  } catch (error: any) {
+    logger.error(`Error reading measurements for mission ${missionId}:`, { error: error.message });
     return [];
   }
 }
@@ -99,16 +98,16 @@ export async function processMissionData(mission: PendingMission): Promise<ATMPa
       try {
         const payload = transformToATMPayload(mission, measurement);
         payloads.push(payload);
-      } catch (error) {
-        logger.error(`Failed to transform measurement ${measurement.id}:`, { error: error instanceof Error ? error.message : String(error) });
+      } catch (error: any) {
+        logger.error(`Failed to transform measurement ${measurement.id}:`, { error: error.message });
       }
     }
 
     logger.info(`Generated ${payloads.length} payloads for mission ${mission.id}`);
     return payloads;
 
-  } catch (error) {
-    logger.error(`Error processing mission data for ${mission.id}:`, { error: error instanceof Error ? error.message : String(error) });
+  } catch (error: any) {
+    logger.error(`Error processing mission data for ${mission.id}:`, { error: error.message });
     return [];
   }
 }

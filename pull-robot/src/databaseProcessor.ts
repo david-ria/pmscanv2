@@ -18,7 +18,7 @@ export function startDatabaseProcessor(): void {
 
   logger.info('🤖 Starting database processor...');
   logger.info(`📊 Polling interval: ${config.polling.intervalMs}ms`);
-  logger.info(`🎯 Allowed devices: ${config.processing.allowDeviceIds?.join(', ') || 'All devices'}`);
+  logger.info(`🎯 Allowed devices: ${config.processing.allowDeviceIds.join(', ')}`);
   logger.info(`📦 Batch size: ${config.processing.batchSize}`);
 
   // Start immediate processing
@@ -54,8 +54,8 @@ async function processAndSchedule(): Promise<void> {
 
   try {
     await processPendingMissions();
-  } catch (error) {
-    logger.error('💥 Error in processing cycle:', { error: error instanceof Error ? error.message : String(error) });
+  } catch (error: any) {
+    logger.error('💥 Error in processing cycle:', { error: error.message });
   }
 }
 
@@ -80,8 +80,8 @@ async function processPendingMissions(): Promise<void> {
     for (const mission of pendingMissions) {
       try {
         await processSingleMission(mission);
-      } catch (error) {
-        logger.error(`💥 Failed to process mission ${mission.id}:`, { error: error instanceof Error ? error.message : String(error) });
+      } catch (error: any) {
+        logger.error(`💥 Failed to process mission ${mission.id}:`, { error: error.message });
       }
     }
 
@@ -135,8 +135,8 @@ async function processSingleMission(mission: PendingMission): Promise<void> {
 
     logger.info(`✅ Mission ${mission.id} processed: ${successCount} successful, ${failureCount} failed`);
 
-  } catch (error) {
-    logger.error(`💥 Error processing mission ${mission.id}:`, { error: error instanceof Error ? error.message : String(error) });
+  } catch (error: any) {
+    logger.error(`💥 Error processing mission ${mission.id}:`, { error: error.message });
     await markMissionAsProcessed(mission.id, false);
   }
 }
@@ -159,8 +159,8 @@ async function sendPayloadToAPI(payload: ATMPayload, missionId: string, measurem
 
     const result = await postPayload(legacyPayload, 0, measurementIndex, 0, `${payload.deviceId}|${missionId}|${payload.timestamp}`);
     return result.success;
-  } catch (error) {
-    logger.error(`Error sending measurement ${measurementIndex} for mission ${missionId}:`, { error: error instanceof Error ? error.message : String(error) });
+  } catch (error: any) {
+    logger.error(`Error sending measurement ${measurementIndex} for mission ${missionId}:`, { error: error.message });
     return false;
   }
 }

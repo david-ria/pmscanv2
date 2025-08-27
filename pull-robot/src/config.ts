@@ -1,45 +1,4 @@
-import { z } from 'zod';
-
-// Environment Variable Schema Definition using Zod
-const EnvSchema = z.object({
-  // Supabase Configuration
-  SUPABASE_URL: z.string().url().min(1),
-  SUPABASE_KEY: z.string().min(1),
-
-  // Dashboard API Configuration
-  DASHBOARD_ENDPOINT: z.string().url().min(1),
-  DASHBOARD_BEARER: z.string().min(1),
-
-  // Server Configuration
-  PORT: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1).max(65535)).default('3000'),
-
-  // Database Polling Configuration
-  POLL_INTERVAL_MS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1000)).default('300000'), // 5 minutes
-  RATE_MAX_RPS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('20'),
-
-  // Processing Configuration
-  MAX_ATTEMPTS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('6'),
-  BATCH_SIZE: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('200'),
-
-  // Retry Configuration
-  RETRY_DELAY_MS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(100)).default('1000'),
-  RETRY_BACKOFF_MULTIPLIER: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('2'),
-  RETRY_TIMEOUT_MS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1000)).default('30000'),
-  MAX_CONCURRENT_REQUESTS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('5'),
-
-  // Metrics Configuration
-  INCLUDE_METRICS: z.string().min(1).default('pm1,pm25,pm10,latitude,longitude'),
-  UNITS_JSON: z.string().min(2).default('{"pm1":"ugm3","pm25":"ugm3","pm10":"ugm3","latitude":"degrees","longitude":"degrees"}'),
-
-  // Device Configuration
-  ALLOW_DEVICE_IDS: z.string().optional().default('PMScan3376DF'),
-  UNKNOWN_DEVICE_BEHAVIOR: z.enum(['skip', 'process']).default('skip'),
-
-  // Logging
-  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-});
-
-// Strongly-typed configuration interface derived from environment validation
+// Simple config loader without complex validation
 export interface Config {
   supabase: {
     url: string;
@@ -54,7 +13,6 @@ export interface Config {
   };
   polling: {
     intervalMs: number;
-    maxRps: number;
   };
   rateLimiting: {
     maxRequestsPerSecond: number;
@@ -67,74 +25,49 @@ export interface Config {
     timeoutMs: number;
   };
   processing: {
-    maxAttempts: number;
     batchSize: number;
     includeMetrics: string[];
     units: Record<string, string>;
-    allowDeviceIds?: string[];
-    unknownDeviceBehavior: 'skip' | 'process';
-  };
-  logging: {
-    level: 'debug' | 'info' | 'warn' | 'error';
+    allowDeviceIds: string[];
   };
 }
 
 function loadConfig(): Config {
-  try {
-    console.log('🔧 Loading and validating configuration...');
-    
-    // Parse and validate environment variables with detailed error reporting
-    const env = EnvSchema.parse(process.env);
-    
-    console.log('✅ Environment validation passed');
+  const config: Config = {
+    supabase: {
+      url: process.env.SUPABASE_URL || 'https://shydpfwuvnlzdzbubmgb.supabase.co',
+      key: process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoeWRwZnd1dm5semR6YnVibWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5NzM1MjcsImV4cCI6MjA2NzU0OTUyN30.l_PAPBy1hlb4J-amKx7qPJ1lPIFseA9GznwL6CcyaQQ',
+    },
+    dashboard: {
+      endpoint: process.env.DASHBOARD_ENDPOINT || 'https://api.atm.ovh/api/v3.0/measurements',
+      bearer: process.env.DASHBOARD_BEARER || 'xjb0qzdnefgurhkdps4qivp8x6lq2h66',
+    },
+    server: {
+      port: parseInt(process.env.PORT || '3000'),
+    },
+    polling: {
+      intervalMs: parseInt(process.env.POLL_INTERVAL_MS || '300000'),
+    },
+    rateLimiting: {
+      maxRequestsPerSecond: parseInt(process.env.RATE_MAX_RPS || '20'),
+      maxConcurrentRequests: parseInt(process.env.MAX_CONCURRENT_REQUESTS || '5'),
+    },
+    retry: {
+      maxRetries: parseInt(process.env.MAX_ATTEMPTS || '6'),
+      delayMs: parseInt(process.env.RETRY_DELAY_MS || '1000'),
+      backoffMultiplier: parseInt(process.env.RETRY_BACKOFF_MULTIPLIER || '2'),
+      timeoutMs: parseInt(process.env.RETRY_TIMEOUT_MS || '30000'),
+    },
+    processing: {
+      batchSize: parseInt(process.env.BATCH_SIZE || '200'),
+      includeMetrics: (process.env.INCLUDE_METRICS || 'pm1,pm25,pm10,latitude,longitude').split(',').map(s => s.trim()),
+      units: JSON.parse(process.env.UNITS_JSON || '{"pm1":"ugm3","pm25":"ugm3","pm10":"ugm3","latitude":"degrees","longitude":"degrees"}'),
+      allowDeviceIds: (process.env.ALLOW_DEVICE_IDS || 'PMScan3376DF').split(',').map(s => s.trim()),
+    },
+  };
 
-    // Transform and structure the configuration
-    const transformedConfig: Config = {
-      supabase: {
-        url: env.SUPABASE_URL,
-        key: env.SUPABASE_KEY,
-      },
-      dashboard: {
-        endpoint: env.DASHBOARD_ENDPOINT,
-        bearer: env.DASHBOARD_BEARER,
-      },
-      server: {
-        port: env.PORT,
-      },
-      polling: {
-        intervalMs: env.POLL_INTERVAL_MS,
-        maxRps: env.RATE_MAX_RPS,
-      },
-      rateLimiting: {
-        maxRequestsPerSecond: env.RATE_MAX_RPS,
-        maxConcurrentRequests: env.MAX_CONCURRENT_REQUESTS,
-      },
-      retry: {
-        maxRetries: env.MAX_ATTEMPTS,
-        delayMs: env.RETRY_DELAY_MS,
-        backoffMultiplier: env.RETRY_BACKOFF_MULTIPLIER,
-        timeoutMs: env.RETRY_TIMEOUT_MS,
-      },
-      processing: {
-        maxAttempts: env.MAX_ATTEMPTS,
-        batchSize: env.BATCH_SIZE,
-        includeMetrics: env.INCLUDE_METRICS.split(',').map(s => s.trim()),
-        units: JSON.parse(env.UNITS_JSON),
-        allowDeviceIds: env.ALLOW_DEVICE_IDS ? env.ALLOW_DEVICE_IDS.split(',').map(s => s.trim()) : undefined,
-        unknownDeviceBehavior: env.UNKNOWN_DEVICE_BEHAVIOR,
-      },
-      logging: {
-        level: env.LOG_LEVEL,
-      },
-    };
-
-    console.log('📋 Configuration loaded successfully');
-    return transformedConfig;
-
-  } catch (error: any) {
-    console.error('💥 Configuration error:', error?.message || error);
-    process.exit(1);
-  }
+  console.log('✅ Configuration loaded');
+  return config;
 }
 
 export const config = loadConfig();

@@ -76,8 +76,8 @@ async function main() {
     logger.info(`📊 Health endpoint: http://localhost:${config.server.port}/health`);
     logger.info(`📈 Metrics endpoint: http://localhost:${config.server.port}/metrics`);
 
-  } catch (error) {
-    logger.error('💥 Failed to start Pull Robot:', { error: error instanceof Error ? error.message : String(error) });
+  } catch (error: any) {
+    logger.error('💥 Failed to start Pull Robot:', { error: error.message });
     process.exit(1);
   }
 
