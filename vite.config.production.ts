@@ -39,6 +39,7 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
+    sourcemap: false, // Disable sourcemaps in production
     minify: 'terser',
     terserOptions: {
       compress: {

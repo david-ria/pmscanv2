@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
           .replace(/logger\.devLogger\.(debug|info)\([^)]*\);?/g, '')
           .replace(/logger\.rateLimitedDebug\([^)]*\);?/g, '')
           .replace(/console\.debug\([^)]*\);?/g, '')
-          .replace(/console\.log(?!\s*\(.*error.*\))\([^)]*\);?/g, ''); // Keep error logs
+          .replace(/console\.log\([^)]*\);?/g, ''); // Consistent with production config
         
         return transformedCode !== code ? transformedCode : null;
       },
@@ -161,8 +161,8 @@ export default defineConfig(({ mode }) => {
           },
         },
       }),
-      // Target modern browsers for better optimization
-      target: 'es2022',
+      // Target modern browsers for better optimization  
+      target: 'esnext',
       // Optimize chunk size warnings
       chunkSizeWarningLimit: 1000,
     },
