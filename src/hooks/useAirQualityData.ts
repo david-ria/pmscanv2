@@ -15,7 +15,10 @@ interface AirQualityData {
   updated_at: string;
 }
 
-interface LocationData {
+import { LocationData as PMScanLocationData } from '@/types/PMScan';
+
+// Simple coordinate interface for basic lat/lng usage
+export interface LocationCoords {
   latitude: number;
   longitude: number;
 }
@@ -24,7 +27,7 @@ export function useAirQualityData() {
   const [isLoading, setIsLoading] = useState(false);
   const [airQualityData, setAirQualityData] = useState<AirQualityData | null>(null);
 
-  const fetchAirQualityData = useCallback(async (location: LocationData, timestamp?: Date): Promise<AirQualityData | null> => {
+  const fetchAirQualityData = useCallback(async (location: LocationCoords, timestamp?: Date): Promise<AirQualityData | null> => {
     logger.debug('Air quality data functionality has been removed');
     return null;
   }, []);

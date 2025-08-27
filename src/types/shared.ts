@@ -78,14 +78,8 @@ export interface PMData {
   pm10: number;
 }
 
-export interface LocationData {
-  latitude?: number;
-  longitude?: number;
-  accuracy?: number;
-}
-
 export interface EnvironmentalData extends PMData {
-  temperature?: number;
+  temp?: number; // Changed from 'temperature' to match PMScanData
   humidity?: number;
   timestamp: string | Date;
 }

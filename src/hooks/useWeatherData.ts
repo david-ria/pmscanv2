@@ -20,7 +20,10 @@ interface WeatherData {
   updated_at: string;
 }
 
-interface LocationData {
+import { LocationData as PMScanLocationData } from '@/types/PMScan';
+
+// Simple coordinate interface for basic lat/lng usage  
+export interface LocationCoords {
   latitude: number;
   longitude: number;
 }
@@ -29,7 +32,7 @@ export function useWeatherData() {
   const [isLoading, setIsLoading] = useState(false);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
-  const fetchWeatherData = useCallback(async (location: LocationData, timestamp?: Date): Promise<WeatherData | null> => {
+  const fetchWeatherData = useCallback(async (location: LocationCoords, timestamp?: Date): Promise<WeatherData | null> => {
     if (!location?.latitude || !location?.longitude) {
       logger.debug('❌ Cannot fetch weather data: missing location');
       return null;

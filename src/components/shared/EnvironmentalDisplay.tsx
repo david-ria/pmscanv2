@@ -26,9 +26,9 @@ export default function EnvironmentalDisplay({
       {showPM && <PMDisplay data={data} />}
       
       <div className="flex items-center gap-2">
-        {data.temperature !== undefined && (
+        {data.temp !== undefined && (
           <Badge variant="secondary">
-            🌡️ {Math.round(data.temperature)}°C
+            🌡️ {Math.round(data.temp)}°C
           </Badge>
         )}
         {data.humidity !== undefined && (
