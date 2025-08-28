@@ -7,9 +7,12 @@ let robotStartTime: string;
 
 async function main() {
   // Initialize robot start time
+  logger.info('🤖 Air Quality Robot starting...');
+  logger.info(`🔧 DEBUG: process.env.CUTOFF_DATE = "${process.env.CUTOFF_DATE}"`);
+  logger.info(`🔧 DEBUG: config.processing.cutoffDate = "${config.processing.cutoffDate}"`);
+  
   robotStartTime = config.processing.cutoffDate || new Date().toISOString();
   
-  logger.info('🤖 Air Quality Robot starting...');
   logger.info(`📊 Config: Database=${config.supabase.url}, API=${config.dashboard.endpoint}`);
   logger.info(`🕒 Processing missions created after: ${robotStartTime}`);
   
