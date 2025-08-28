@@ -23,13 +23,22 @@ export interface Measurement {
 
 export async function processMission(mission: Mission): Promise<boolean> {
   try {
-    logger.info(`🔄 Processing mission ${mission.id} for device ${mission.device_name}`);
+    logger.info(`🔄 Processing mission ${mission.id} for device ${mission.device_name || 'null'}`);
     
-    // Check if device is allowed
-    if (config.device.allowedDeviceIds.length > 0 && mission.device_name) {
-      if (!config.device.allowedDeviceIds.includes(mission.device_name)) {
+    // Check if device is allowed (apply filtering to all missions, including those with null device names)
+    if (config.device.allowedDeviceIds.length > 0) {
+      const deviceName = mission.device_name;
+      
+      if (!deviceName) {
+        // Handle null/undefined device names
         if (config.device.unknownDeviceBehavior === 'skip') {
-          logger.info(`⏭️ Skipping mission ${mission.id} - device ${mission.device_name} not in allowed list`);
+          logger.info(`⏭️ Skipping mission ${mission.id} - device name is null/undefined`);
+          return true; // Consider it "processed" so it doesn't get retried
+        }
+      } else if (!config.device.allowedDeviceIds.includes(deviceName)) {
+        // Handle known device names that aren't in allowed list
+        if (config.device.unknownDeviceBehavior === 'skip') {
+          logger.info(`⏭️ Skipping mission ${mission.id} - device ${deviceName} not in allowed list`);
           return true; // Consider it "processed" so it doesn't get retried
         }
       }

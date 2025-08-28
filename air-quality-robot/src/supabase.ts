@@ -41,34 +41,55 @@ export async function testConnection() {
 
 export async function getPendingMissions(cutoffDate?: string) {
   try {
+    logger.info(`🔍 Getting pending missions with config: allowedDeviceIds=${JSON.stringify(config.device.allowedDeviceIds)}, unknownDeviceBehavior=${config.device.unknownDeviceBehavior}`);
+    
     let query = supabase
       .from('missions')
       .select('*')
       .eq('processed_by_robot', false);
 
+    // Filter by device ID at database level for efficiency
+    if (config.device.allowedDeviceIds.length > 0) {
+      if (config.device.unknownDeviceBehavior === 'skip') {
+        // Only get missions from allowed devices (excludes null device names)
+        query = query.in('device_name', config.device.allowedDeviceIds);
+        logger.info(`🎯 Filtering database query to only include allowed devices: ${JSON.stringify(config.device.allowedDeviceIds)}`);
+      }
+    }
+
     // Only process missions created after cutoff date
     if (cutoffDate) {
-      // Use the cutoff date directly - Supabase handles the conversion
-      logger.info(`Using cutoff date: ${cutoffDate}`);
+      logger.info(`📅 Using cutoff date: ${cutoffDate}`);
       query = query.gte('created_at', cutoffDate);
     }
 
+    logger.info('🚀 Executing database query...');
     const { data, error } = await query
       .order('created_at', { ascending: true })
       .limit(10);
 
     if (error) {
-      logger.error('Error fetching missions:', error.message);
+      logger.error('❌ Error fetching missions:', error.message);
       return [];
     }
 
+    const missions = data || [];
+    logger.info(`📊 Database query result: ${missions.length} missions found`);
+    
+    if (missions.length > 0) {
+      logger.info('📋 Mission details:');
+      missions.forEach(mission => {
+        logger.info(`  - Mission ${mission.id}: device=${mission.device_name || 'null'}, created=${mission.created_at}`);
+      });
+    }
+
     if (cutoffDate) {
-      logger.info(`Found ${data?.length || 0} pending missions (created after ${cutoffDate})`);
+      logger.info(`✅ Found ${missions.length} pending missions (created after ${cutoffDate})`);
     } else {
-      logger.info(`Found ${data?.length || 0} pending missions`);
+      logger.info(`✅ Found ${missions.length} pending missions`);
     }
     
-    return data || [];
+    return missions;
   } catch (error) {
     logger.error('Error in getPendingMissions:', error);
     return [];
