@@ -3,8 +3,8 @@ import { config } from './config.js';
 import { logger } from './logger.js';
 
 export interface ATMPayload {
-  device: string;       // internal field → maps to idSensor
-  timestamp: string;    // internal field → maps to time (ISO 8601)
+  device: string;       // internal -> idSensor
+  timestamp: string;    // internal -> time (ISO 8601)
   values: {
     pm1?: number;
     pm25?: number;
@@ -13,22 +13,21 @@ export interface ATMPayload {
     longitude?: number;
   };
   units?: {
-    pm1?: string;       // e.g. "ugm3", "µg/m³", "mg/m3"… (normalized below)
+    pm1?: string;       // normalized to "ugm3" or "mgm3"
     pm25?: string;
     pm10?: string;
   };
 }
 
-// ATM API expected top-level shape
 type ATMApiPayload = {
   idSensor: string;
-  time: string;          // ISO string
+  time: string;
   data: {
     pm1?: { value: number; unit: string };
     pm25?: { value: number; unit: string };
     pm10?: { value: number; unit: string };
-    latitude?: number;
-    longitude?: number;
+    latitude?: { value: number; unit: string };
+    longitude?: { value: number; unit: string };
   };
 };
 
@@ -41,46 +40,29 @@ function toISOorThrow(ts: string): string {
   return iso;
 }
 
-/**
- * Normalize various user/probe-provided notations to the EXACT tokens
- * the ATM API accepts: "ugm3" (micrograms/m³) or "mgm3" (milligrams/m³).
- * Defaults to "ugm3" if nothing/unknown is provided.
- */
-function normalizeUnit(u?: string): string {
+/** Normalize to EXACT tokens the API accepts: "ugm3" / "mgm3" */
+function normalizePmUnit(u?: string): string {
   if (!u) return 'ugm3';
   const s = u.toLowerCase().replace(/\s+/g, '');
-
-  // map common microgram variants -> "ugm3"
   if (
     s === 'µg/m³' || s === 'µg/m3' ||
     s === 'ug/m³' || s === 'ug/m3' ||
     s === 'ugm3'  || s === 'microgramperm3' || s === 'microgramsperm3'
   ) return 'ugm3';
-
-  // map common milligram variants -> "mgm3"
-  if (s === 'mg/m3' || s === 'mg/m³' || s === 'mgm3' || s === 'milligramperm3')
-    return 'mgm3';
-
-  // default
+  if (s === 'mg/m3' || s === 'mg/m³' || s === 'mgm3' || s === 'milligramperm3') return 'mgm3';
   return 'ugm3';
 }
 
 function buildApiPayload(payload: ATMPayload): ATMApiPayload {
   const data: ATMApiPayload['data'] = {};
 
-  if (payload.values.pm1 !== undefined) {
-    data.pm1 = { value: payload.values.pm1, unit: normalizeUnit(payload.units?.pm1) };
-  }
-  if (payload.values.pm25 !== undefined) {
-    data.pm25 = { value: payload.values.pm25, unit: normalizeUnit(payload.units?.pm25) };
-  }
-  if (payload.values.pm10 !== undefined) {
-    data.pm10 = { value: payload.values.pm10, unit: normalizeUnit(payload.units?.pm10) };
-  }
+  if (payload.values.pm1  !== undefined) data.pm1  = { value: payload.values.pm1,  unit: normalizePmUnit(payload.units?.pm1) };
+  if (payload.values.pm25 !== undefined) data.pm25 = { value: payload.values.pm25, unit: normalizePmUnit(payload.units?.pm25) };
+  if (payload.values.pm10 !== undefined) data.pm10 = { value: payload.values.pm10, unit: normalizePmUnit(payload.units?.pm10) };
 
-  // Geo stays as plain numbers unless API later requires {value, unit}
-  if (payload.values.latitude !== undefined)  data.latitude  = payload.values.latitude;
-  if (payload.values.longitude !== undefined) data.longitude = payload.values.longitude;
+  // Geo must also be { value, unit }
+  if (payload.values.latitude  !== undefined) data.latitude  = { value: payload.values.latitude,  unit: 'deg' };
+  if (payload.values.longitude !== undefined) data.longitude = { value: payload.values.longitude, unit: 'deg' };
 
   if (!data.pm1 && !data.pm25 && !data.pm10) {
     throw new Error('ATM API payload requires at least one PM field with {value, unit}.');
