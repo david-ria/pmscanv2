@@ -3,8 +3,8 @@ import { config } from './config.js';
 import { logger } from './logger.js';
 
 export interface ATMPayload {
-  device: string;       // internal field (will be mapped to idSensor)
-  timestamp: string;    // internal field (will be mapped to time, ISO 8601)
+  device: string;       // internal field → maps to idSensor
+  timestamp: string;    // internal field → maps to time (ISO 8601)
   values: {
     pm1?: number;
     pm25?: number;
@@ -13,19 +13,23 @@ export interface ATMPayload {
     longitude?: number;
   };
   units?: {
-    pm1?: string;
+    pm1?: string;       // expected like "µg/m³" (or "ug/m3")
     pm25?: string;
     pm10?: string;
-    latitude?: string;
-    longitude?: string;
   };
 }
 
-// ATM API expected shape
+// ATM API expected top-level shape
 type ATMApiPayload = {
-  idSensor: string;     // device identifier (string or number as string)
-  time: string;         // ISO 8601 date-time
-  data: Record<string, number>; // non-empty object of numeric fields
+  idSensor: string;
+  time: string;          // ISO string
+  data: {
+    pm1?: { value: number; unit: string };
+    pm25?: { value: number; unit: string };
+    pm10?: { value: number; unit: string };
+    latitude?: number;
+    longitude?: number;
+  };
 };
 
 function toISOorThrow(ts: string): string {
@@ -37,17 +41,32 @@ function toISOorThrow(ts: string): string {
   return iso;
 }
 
-function buildApiPayload(payload: ATMPayload): ATMApiPayload {
-  const data: Record<string, number> = {};
+function normalizeUnit(u?: string): string {
+  // Accept common variants and normalize to a single string
+  if (!u) return 'µg/m³';
+  const s = u.replace(/ug\/?m3|ugm3/i, 'µg/m³');
+  return s;
+}
 
-  if (payload.values.pm1 !== undefined) data.pm1 = payload.values.pm1;
-  if (payload.values.pm25 !== undefined) data.pm25 = payload.values.pm25;
-  if (payload.values.pm10 !== undefined) data.pm10 = payload.values.pm10;
+function buildApiPayload(payload: ATMPayload): ATMApiPayload {
+  const data: ATMApiPayload['data'] = {};
+
+  if (payload.values.pm1 !== undefined) {
+    data.pm1 = { value: payload.values.pm1, unit: normalizeUnit(payload.units?.pm1) };
+  }
+  if (payload.values.pm25 !== undefined) {
+    data.pm25 = { value: payload.values.pm25, unit: normalizeUnit(payload.units?.pm25) };
+  }
+  if (payload.values.pm10 !== undefined) {
+    data.pm10 = { value: payload.values.pm10, unit: normalizeUnit(payload.units?.pm10) };
+  }
+
+  // Geo stays as plain numbers (most APIs accept this)
   if (payload.values.latitude !== undefined) data.latitude = payload.values.latitude;
   if (payload.values.longitude !== undefined) data.longitude = payload.values.longitude;
 
-  if (Object.keys(data).length === 0) {
-    throw new Error('ATM API payload requires a non-empty "data" object');
+  if (!data.pm1 && !data.pm25 && !data.pm10) {
+    throw new Error('ATM API payload requires at least one PM field with {value, unit}.');
   }
 
   return {
