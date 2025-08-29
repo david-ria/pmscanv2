@@ -3,45 +3,50 @@ import { config } from './config.js';
 import { logger } from './logger.js';
 
 export interface ATMPayload {
-  device: string;       // internal -> idSensor
-  timestamp: string;    // internal -> time (ISO 8601)
+  device: string;       // interne -> idSensor
+  timestamp: string;    // interne -> time (epoch ms)
   values: {
     pm1?: number;
     pm25?: number;
     pm10?: number;
     latitude?: number;
     longitude?: number;
+    temperature?: number; // optionnel (°C)
+    humidity?: number;    // optionnel (%)
   };
   units?: {
-    pm1?: string;       // normalized to "ugm3" or "mgm3"
+    pm1?: string;       // normalisé en "ugm3"/"mgm3"
     pm25?: string;
     pm10?: string;
+    temperature?: string; // "c"
+    humidity?: string;    // "percent"
   };
 }
 
 type ATMApiPayload = {
-  idSensor: string;
-  time: string;
+  idSensor: string | number;
+  time: number; // epoch ms
   data: {
-    pm1?: { value: number; unit: string };
-    pm25?: { value: number; unit: string };
-    pm10?: { value: number; unit: string };
-    latitude?: { value: number; unit: string };
-    longitude?: { value: number; unit: string };
+    pm1?:        { value: number; unit: 'ugm3' | 'mgm3' };
+    pm25?:       { value: number; unit: 'ugm3' | 'mgm3' };
+    pm10?:       { value: number; unit: 'ugm3' | 'mgm3' };
+    temperature?:{ value: number; unit: 'c' };
+    humidity?:   { value: number; unit: 'percent' };
+    latitude?:   { value: number; unit: 'degrees' };
+    longitude?:  { value: number; unit: 'degrees' };
   };
 };
 
-function toISOorThrow(ts: string): string {
-  const d = new Date(ts);
-  const iso = d.toISOString();
-  if (iso === 'Invalid Date') {
-    throw new Error(`Invalid timestamp '${ts}' – must be ISO 8601 or Unix ms`);
+function toEpochMsOrThrow(ts: string): number {
+  const ms = new Date(ts).getTime();
+  if (!Number.isFinite(ms) || ms <= 0) {
+    throw new Error(`Invalid timestamp '${ts}' – expected ISO string convertible to epoch ms`);
   }
-  return iso;
+  return ms;
 }
 
-/** Normalize to EXACT tokens the API accepts: "ugm3" / "mgm3" */
-function normalizePmUnit(u?: string): string {
+/** Normalise strict → "ugm3" | "mgm3" (API n’accepte que ces tokens) */
+function normalizePmUnit(u?: string): 'ugm3' | 'mgm3' {
   if (!u) return 'ugm3';
   const s = u.toLowerCase().replace(/\s+/g, '');
   if (
@@ -53,6 +58,19 @@ function normalizePmUnit(u?: string): string {
   return 'ugm3';
 }
 
+/** Temp & RH : l’API attend "c" et "percent" */
+function normalizeTempUnit(u?: string): 'c' {
+  return 'c';
+}
+function normalizeHumidityUnit(u?: string): 'percent' {
+  return 'percent';
+}
+
+/** Lat/Lon : l’API attend "degrees" */
+function geoUnit(): 'degrees' {
+  return 'degrees';
+}
+
 function buildApiPayload(payload: ATMPayload): ATMApiPayload {
   const data: ATMApiPayload['data'] = {};
 
@@ -60,17 +78,24 @@ function buildApiPayload(payload: ATMPayload): ATMApiPayload {
   if (payload.values.pm25 !== undefined) data.pm25 = { value: payload.values.pm25, unit: normalizePmUnit(payload.units?.pm25) };
   if (payload.values.pm10 !== undefined) data.pm10 = { value: payload.values.pm10, unit: normalizePmUnit(payload.units?.pm10) };
 
-  // Geo must also be { value, unit }
-  if (payload.values.latitude  !== undefined) data.latitude  = { value: payload.values.latitude,  unit: 'deg' };
-  if (payload.values.longitude !== undefined) data.longitude = { value: payload.values.longitude, unit: 'deg' };
+  if (payload.values.temperature !== undefined) {
+    data.temperature = { value: payload.values.temperature, unit: normalizeTempUnit(payload.units?.temperature) };
+  }
+  if (payload.values.humidity !== undefined) {
+    data.humidity = { value: payload.values.humidity, unit: normalizeHumidityUnit(payload.units?.humidity) };
+  }
 
-  if (!data.pm1 && !data.pm25 && !data.pm10) {
-    throw new Error('ATM API payload requires at least one PM field with {value, unit}.');
+  if (payload.values.latitude  !== undefined) data.latitude  = { value: payload.values.latitude,  unit: geoUnit() };
+  if (payload.values.longitude !== undefined) data.longitude = { value: payload.values.longitude, unit: geoUnit() };
+
+  // l’API demande au moins un champ dans data
+  if (Object.keys(data).length === 0) {
+    throw new Error('ATM API payload requires a non-empty "data" object.');
   }
 
   return {
     idSensor: String(payload.device),
-    time: toISOorThrow(payload.timestamp),
+    time: toEpochMsOrThrow(payload.timestamp),
     data,
   };
 }
