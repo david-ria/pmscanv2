@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { logger } from './logger.js';
 import { config } from './config.js';
 import { testConnection, getPendingMissions, markMissionProcessed, markAllExistingMissionsAsProcessed } from './supabase.js';
