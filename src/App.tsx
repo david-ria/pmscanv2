@@ -202,6 +202,10 @@ const AppRoutes = () => {
                           </Suspense>
                         }
                       />
+                       <Route 
+                        path="/index.html" 
+                        element={<Navigate to="/" replace />}
+                      />
                       <Route 
                         path="*" 
                         element={<Navigate to="/" replace />}

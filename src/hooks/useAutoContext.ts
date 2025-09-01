@@ -17,7 +17,6 @@ import {
   AutoContextRule,
   AutoContextEvaluationData,
   evaluateAutoContextRules,
-  AutoContextConfig,
 } from '@/lib/autoContextConfig';
 import { useSensorData } from '@/hooks/useSensorData';
 import { MotionWalkingSignature } from '@/services/motionWalkingSignature';
