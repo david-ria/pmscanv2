@@ -91,7 +91,7 @@ registerRoute(
   new StaleWhileRevalidate({ cacheName: 'pmscan-static' })
 );
 
-// Runtime cache for JSON/API (safe offline behavior)
+// Runtime cache for JSON/API with enhanced offline behavior
 registerRoute(
   ({ url, request }) => request.method === 'GET' && (url.pathname.endsWith('.json') || url.pathname.startsWith('/api/')),
   new NetworkFirst({
@@ -103,3 +103,109 @@ registerRoute(
     ],
   })
 );
+
+// Cache user preferences and settings for offline access
+registerRoute(
+  ({ url }) => url.pathname.includes('/settings') || url.pathname.includes('/preferences'),
+  new StaleWhileRevalidate({
+    cacheName: 'pmscan-settings',
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 30 * 24 * 3600 }),
+    ],
+  })
+);
+
+// Cache air quality data for offline access
+registerRoute(
+  ({ url }) => url.pathname.includes('/air-quality') || url.pathname.includes('/missions'),
+  new NetworkFirst({
+    cacheName: 'pmscan-data',
+    networkTimeoutSeconds: 5,
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 24 * 3600 }),
+    ],
+  })
+);
+
+// Background sync for data synchronization
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'background-sync-air-quality') {
+    event.waitUntil(syncAirQualityData());
+  }
+  if (event.tag === 'background-sync-missions') {
+    event.waitUntil(syncMissionData());
+  }
+});
+
+// Background sync functions
+async function syncAirQualityData() {
+  try {
+    // Get offline data from IndexedDB and sync when online
+    const offlineData = await getOfflineData('air-quality');
+    if (offlineData.length > 0) {
+      await Promise.all(offlineData.map(data => syncDataToServer(data)));
+      await clearOfflineData('air-quality');
+    }
+  } catch (error) {
+    console.error('[SW] Air quality sync failed:', error);
+  }
+}
+
+async function syncMissionData() {
+  try {
+    const offlineData = await getOfflineData('missions');
+    if (offlineData.length > 0) {
+      await Promise.all(offlineData.map(data => syncDataToServer(data)));
+      await clearOfflineData('missions');
+    }
+  } catch (error) {
+    console.error('[SW] Mission sync failed:', error);
+  }
+}
+
+// IndexedDB helper functions for offline data storage
+async function getOfflineData(storeName: string): Promise<any[]> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('pmscan-offline', 1);
+    request.onsuccess = () => {
+      const db = request.result;
+      const transaction = db.transaction([storeName], 'readonly');
+      const store = transaction.objectStore(storeName);
+      const getAllRequest = store.getAll();
+      getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
+      getAllRequest.onerror = () => reject(getAllRequest.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function clearOfflineData(storeName: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('pmscan-offline', 1);
+    request.onsuccess = () => {
+      const db = request.result;
+      const transaction = db.transaction([storeName], 'readwrite');
+      const store = transaction.objectStore(storeName);
+      const clearRequest = store.clear();
+      clearRequest.onsuccess = () => resolve();
+      clearRequest.onerror = () => reject(clearRequest.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function syncDataToServer(data: any) {
+  try {
+    const response = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('[SW] Failed to sync data:', error);
+    return false;
+  }
+}

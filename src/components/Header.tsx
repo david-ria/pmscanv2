@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { MobileNavigation } from './MobileNavigation';
+import { OfflineStatusIndicator } from './OfflineStatusIndicator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -61,8 +62,9 @@ export function Header() {
           </div>
         </div>
 
-        {/* Right side - user menu */}
+        {/* Right side - offline status and user menu */}
         <div className="flex items-center gap-2">
+          <OfflineStatusIndicator />
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
