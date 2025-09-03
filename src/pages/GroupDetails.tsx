@@ -234,7 +234,7 @@ export default function GroupDetails() {
                   <Calendar className="h-4 w-4" />
                   <span>Created {new Date(group.created_at).toLocaleDateString()}</span>
                 </div>
-                {group.custom_locations && Object.keys(group.custom_locations).length > 0 && (
+                {group.custom_locations && typeof group.custom_locations === 'object' && Object.keys(group.custom_locations).length > 0 && (
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
                     <span>{Object.keys(group.custom_locations).length} location{Object.keys(group.custom_locations).length !== 1 ? 's' : ''}</span>
