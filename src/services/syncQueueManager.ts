@@ -116,7 +116,7 @@ class SyncQueueManager {
         } catch (error) {
           item.retryCount++;
           item.lastAttempt = new Date();
-          logger.error('❌ Error processing queue item:', item.id);
+          logger.error(`❌ Error processing queue item: ${item.id}`);
         }
       }
 
@@ -229,7 +229,7 @@ class SyncQueueManager {
       }
       return success;
     } catch (error) {
-      logger.error('❌ Failed to retry item:', id);
+      logger.error(`❌ Failed to retry item: ${id}`);
       return false;
     }
   }
