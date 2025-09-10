@@ -558,6 +558,8 @@ export type Database = {
           created_at: string
           date_utc: string | null
           enriched_location: string | null
+          external_humidity: number | null
+          external_temperature: number | null
           geohash: string | null
           humidity: number | null
           id: string
@@ -565,6 +567,11 @@ export type Database = {
           location_context: string | null
           longitude: number | null
           mission_id: string
+          particles_02_05: number | null
+          particles_05_10: number | null
+          particles_10_25: number | null
+          particles_25_50: number | null
+          particles_50_100: number | null
           pm1: number
           pm10: number
           pm25: number
@@ -579,6 +586,8 @@ export type Database = {
           created_at?: string
           date_utc?: string | null
           enriched_location?: string | null
+          external_humidity?: number | null
+          external_temperature?: number | null
           geohash?: string | null
           humidity?: number | null
           id?: string
@@ -586,6 +595,11 @@ export type Database = {
           location_context?: string | null
           longitude?: number | null
           mission_id: string
+          particles_02_05?: number | null
+          particles_05_10?: number | null
+          particles_10_25?: number | null
+          particles_25_50?: number | null
+          particles_50_100?: number | null
           pm1: number
           pm10: number
           pm25: number
@@ -600,6 +614,8 @@ export type Database = {
           created_at?: string
           date_utc?: string | null
           enriched_location?: string | null
+          external_humidity?: number | null
+          external_temperature?: number | null
           geohash?: string | null
           humidity?: number | null
           id?: string
@@ -607,6 +623,11 @@ export type Database = {
           location_context?: string | null
           longitude?: number | null
           mission_id?: string
+          particles_02_05?: number | null
+          particles_05_10?: number | null
+          particles_10_25?: number | null
+          particles_25_50?: number | null
+          particles_50_100?: number | null
           pm1?: number
           pm10?: number
           pm25?: number
