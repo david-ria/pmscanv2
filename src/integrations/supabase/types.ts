@@ -648,6 +648,7 @@ export type Database = {
       missions: {
         Row: {
           activity_context: string | null
+          actual_recording_minutes: number | null
           air_quality_data_id: string | null
           avg_pm1: number
           avg_pm10: number
@@ -657,12 +658,14 @@ export type Database = {
           duration_minutes: number
           end_epoch_ms: number | null
           end_time: string
+          gap_detected: boolean | null
           id: string
           location_context: string | null
           max_pm25: number
           measurements_count: number
           name: string
           processed_by_robot: boolean | null
+          recording_coverage_percentage: number | null
           recording_frequency: string | null
           robot_processed_at: string | null
           robot_processing_attempts: number | null
@@ -675,6 +678,7 @@ export type Database = {
         }
         Insert: {
           activity_context?: string | null
+          actual_recording_minutes?: number | null
           air_quality_data_id?: string | null
           avg_pm1: number
           avg_pm10: number
@@ -684,12 +688,14 @@ export type Database = {
           duration_minutes: number
           end_epoch_ms?: number | null
           end_time: string
+          gap_detected?: boolean | null
           id?: string
           location_context?: string | null
           max_pm25: number
           measurements_count?: number
           name: string
           processed_by_robot?: boolean | null
+          recording_coverage_percentage?: number | null
           recording_frequency?: string | null
           robot_processed_at?: string | null
           robot_processing_attempts?: number | null
@@ -702,6 +708,7 @@ export type Database = {
         }
         Update: {
           activity_context?: string | null
+          actual_recording_minutes?: number | null
           air_quality_data_id?: string | null
           avg_pm1?: number
           avg_pm10?: number
@@ -711,12 +718,14 @@ export type Database = {
           duration_minutes?: number
           end_epoch_ms?: number | null
           end_time?: string
+          gap_detected?: boolean | null
           id?: string
           location_context?: string | null
           max_pm25?: number
           measurements_count?: number
           name?: string
           processed_by_robot?: boolean | null
+          recording_coverage_percentage?: number | null
           recording_frequency?: string | null
           robot_processed_at?: string | null
           robot_processing_attempts?: number | null

@@ -9,6 +9,7 @@ import {
 } from './localStorage';
 import { supabase } from '@/integrations/supabase/client';
 import * as logger from '@/utils/logger';
+import { parseFrequencyToMs } from './recordingUtils';
 
 export function createMissionFromRecording(
   measurements: Array<{
@@ -71,6 +72,14 @@ export function createMissionFromRecording(
     measurementData.length;
   const maxPm25 = Math.max(...pm25Values);
 
+  // Calculate actual recording duration and coverage
+  const actualRecordingMetrics = calculateActualRecordingDuration(
+    measurementData,
+    startTime,
+    endTime,
+    recordingFrequency || '30s'
+  );
+
   const mission: MissionData = {
     id: missionId || crypto.randomUUID(),
     name: missionName,
@@ -79,6 +88,9 @@ export function createMissionFromRecording(
     durationMinutes: Math.round(
       (endTime.getTime() - startTime.getTime()) / (1000 * 60)
     ),
+    actualRecordingMinutes: actualRecordingMetrics.actualMinutes,
+    recordingCoveragePercentage: actualRecordingMetrics.coveragePercentage,
+    gapDetected: actualRecordingMetrics.gapDetected,
     avgPm1,
     avgPm25,
     avgPm10,
@@ -96,6 +108,73 @@ export function createMissionFromRecording(
   };
 
   return mission;
+}
+
+/**
+ * Calculate actual recording duration excluding gaps
+ */
+function calculateActualRecordingDuration(
+  measurements: MeasurementData[],
+  startTime: Date,
+  endTime: Date,
+  recordingFrequency: string
+): {
+  actualMinutes: number;
+  coveragePercentage: number;
+  gapDetected: boolean;
+} {
+  if (measurements.length === 0) {
+    return { actualMinutes: 0, coveragePercentage: 0, gapDetected: true };
+  }
+
+  const frequencyMs = parseFrequencyToMs(recordingFrequency);
+  const expectedIntervalMinutes = frequencyMs / (1000 * 60);
+  const totalSessionMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+
+  // Sort measurements by timestamp
+  const sortedMeasurements = [...measurements].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+
+  let actualRecordingMinutes = 0;
+  let significantGaps = 0;
+  const gapThreshold = expectedIntervalMinutes * 3; // Significant gap = 3x expected interval
+
+  // For single measurement, use expected interval
+  if (sortedMeasurements.length === 1) {
+    actualRecordingMinutes = expectedIntervalMinutes;
+  } else {
+    // Calculate actual recording time based on intervals between measurements
+    for (let i = 1; i < sortedMeasurements.length; i++) {
+      const prevTime = new Date(sortedMeasurements[i - 1].timestamp).getTime();
+      const currTime = new Date(sortedMeasurements[i].timestamp).getTime();
+      const intervalMinutes = (currTime - prevTime) / (1000 * 60);
+
+      if (intervalMinutes <= gapThreshold) {
+        // Normal interval - add the expected recording time
+        actualRecordingMinutes += expectedIntervalMinutes;
+      } else {
+        // Gap detected - only count one expected interval, not the gap
+        actualRecordingMinutes += expectedIntervalMinutes;
+        significantGaps++;
+      }
+    }
+
+    // Add recording time for the last measurement
+    actualRecordingMinutes += expectedIntervalMinutes;
+  }
+
+  const coveragePercentage = totalSessionMinutes > 0 
+    ? Math.min(100, (actualRecordingMinutes / totalSessionMinutes) * 100)
+    : 0;
+
+  const gapDetected = significantGaps > 0 || coveragePercentage < 80;
+
+  return {
+    actualMinutes: Math.round(actualRecordingMinutes * 100) / 100, // Round to 2 decimal places
+    coveragePercentage: Math.round(coveragePercentage * 100) / 100,
+    gapDetected
+  };
 }
 
 export function saveMissionLocally(mission: MissionData): void {

@@ -53,6 +53,9 @@ export function formatDatabaseMission(dbMission: {
   start_time: string;
   end_time: string;
   duration_minutes: number;
+  actual_recording_minutes?: number; // NEW: Actual recording duration
+  recording_coverage_percentage?: number; // NEW: Recording coverage
+  gap_detected?: boolean; // NEW: Gap detection flag
   avg_pm1: number;
   avg_pm25: number;
   avg_pm10: number;
@@ -89,6 +92,9 @@ export function formatDatabaseMission(dbMission: {
     startTime: new Date(dbMission.start_time),
     endTime: new Date(dbMission.end_time),
     durationMinutes: dbMission.duration_minutes,
+    actualRecordingMinutes: dbMission.actual_recording_minutes, // NEW: Include actual recording duration
+    recordingCoveragePercentage: dbMission.recording_coverage_percentage, // NEW: Include recording coverage
+    gapDetected: dbMission.gap_detected, // NEW: Include gap detection flag
     avgPm1: dbMission.avg_pm1,
     avgPm25: dbMission.avg_pm25,
     avgPm10: dbMission.avg_pm10,
