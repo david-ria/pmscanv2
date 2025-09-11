@@ -309,7 +309,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
-          margin={{ top: 20, right: 5, left: 0, bottom: 80 }}
+          margin={{ top: 80, right: 5, left: 0, bottom: 80 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
@@ -375,8 +375,8 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
             const isShortPeriod = periodWidth < 20; // Consider periods less than 20 data points as short
             
             // Calculate staggered positioning for overlapping labels
-            const verticalOffset = index % 2 === 0 ? 5 : 45;
-            const labelOffset = index % 2 === 0 ? 25 : 65;
+            const verticalOffset = index % 3 === 0 ? 5 : index % 3 === 1 ? 25 : 45;
+            const labelOffset = index % 3 === 0 ? 25 : index % 3 === 1 ? 45 : 65;
             
             return (
               <React.Fragment key={`period-${index}`}>

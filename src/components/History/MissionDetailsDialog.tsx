@@ -485,7 +485,7 @@ export function MissionDetailsDialog({
               <CardTitle className="text-lg">{t('realTime.map')}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64 w-full">
+              <div className="h-80 sm:h-96 w-full">
                 {trackPoints.length > 0 ? (
                   <MapboxMap
                     currentLocation={
