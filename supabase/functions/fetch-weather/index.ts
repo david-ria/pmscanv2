@@ -2,13 +2,17 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
-// Safe JSON parsing utility for edge functions
-async function safeJson<T = unknown>(res: Response): Promise<T | null> {
-  const ct = res.headers.get('content-type') || '';
-  if (!res.ok) return null;
-  if (!ct.includes('application/json')) return null;
+// Safe JSON parsing utility for edge functions (works with Request or Response)
+async function safeJson<T = unknown>(reqOrRes: Request | Response): Promise<T | null> {
+  const ct = reqOrRes.headers.get('content-type') || '';
+  // If it's a Response, respect the HTTP status
+  if (reqOrRes instanceof Response) {
+    if (!reqOrRes.ok) return null;
+  }
+  if (!ct.toLowerCase().includes('application/json')) return null;
   try {
-    return await res.json();
+    // Both Request and Response have .json()
+    return await (reqOrRes as any).json();
   } catch {
     return null;
   }
