@@ -3,6 +3,7 @@ import { useAutoContext } from './useAutoContext';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { formatAutomaticContext } from '@/utils/contextFormatter';
+import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
 
 interface AutoContextSamplingProps {
   recordingFrequency: string;
@@ -45,19 +46,23 @@ export function useAutoContextSampling({
     // Use ONLY rule-based context from sensors/heuristics - no location mixing
     const formattedContext = ruleBasedContext || '';
     
-    console.log('🤖 === PURE AUTOCONTEXT (sensors + heuristics) ===', {
-      ruleBasedContext,
-      finalContext: formattedContext,
-      source: 'sensors and movement heuristics only'
-    });
+    // Rate-limited autocontext logging
+    rateLimitedDebug(
+      'autocontext-determination',
+      5000,
+      '🤖 Autocontext:', {
+        ruleBasedContext,
+        finalContext: formattedContext,
+        source: 'sensors and movement heuristics'
+      }
+    );
     
     if (formattedContext) {
-      console.log('🏷️ Autocontext determined:', formattedContext);
+      devLogger.info('Autocontext determined', formattedContext);
       updateLatestContext(formattedContext);
       setCurrentAutoContext(formattedContext);
       return formattedContext;
     } else {
-      console.log('🔄 No autocontext determined');
       return currentAutoContext;
     }
   }, [autoContextEnabled, recordingFrequency, determineContext, updateLatestContext, currentAutoContext]);

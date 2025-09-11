@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 // Lazy load TensorFlow to reduce initial bundle size
-import * as logger from '@/utils/logger';
+import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
@@ -26,8 +26,7 @@ import { calculateDataQuality } from '@/lib/autoContext.config';
 function logTransition(prev: string, next: string, data: AutoContextEvaluationData) {
   if (process.env.NODE_ENV !== 'development') return;
   if (prev === next) return;
-  // eslint-disable-next-line no-console
-  console.debug('[AutoContext]', `${prev} -> ${next}`, {
+  devLogger.debug(`AutoContext transition: ${prev} -> ${next}`, {
     speed: Math.round((data.movement.speed ?? 0) * 10) / 10,
     gpsQuality: data.location.gpsQuality,
     walkingSignature: data.movement.walkingSignature ?? null,
@@ -81,8 +80,9 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   const [latestContext, setLatestContext] = useState<string>('');
   const [model, setModel] = useState<any | null>(null);
   
-  // Initialize motion walking signature service
+  // Initialize motion walking signature service lazily
   const [motionWalkingSignature] = useState(() => new MotionWalkingSignature());
+  const [isMotionServiceActive, setIsMotionServiceActive] = useState(false);
   
   const homeCountsKey = 'homeWifiCounts';
   const workCountsKey = 'workWifiCounts';
@@ -155,18 +155,39 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
     }
   }, [settings.mlEnabled, model]);
 
-  // Initialize and manage motion walking signature service
-  useEffect(() => {
-    if (settings.enabled) {
-      motionWalkingSignature.start().catch(console.error);
-    } else {
+  // Only start motion service when actively needed (during recording/active context determination)
+  const startMotionServiceIfNeeded = useCallback(() => {
+    if (settings.enabled && !isMotionServiceActive) {
+      devLogger.debug('Starting motion walking signature service');
+      motionWalkingSignature.start().catch((error) => {
+        console.error('Failed to start motion walking signature:', error);
+      });
+      setIsMotionServiceActive(true);
+    }
+  }, [settings.enabled, isMotionServiceActive, motionWalkingSignature]);
+
+  const stopMotionService = useCallback(() => {
+    if (isMotionServiceActive) {
+      devLogger.debug('Stopping motion walking signature service');
       motionWalkingSignature.stop();
+      setIsMotionServiceActive(false);
+    }
+  }, [isMotionServiceActive, motionWalkingSignature]);
+
+  // Clean up motion service when auto-context is disabled
+  useEffect(() => {
+    if (!settings.enabled && isMotionServiceActive) {
+      stopMotionService();
     }
 
     return () => {
-      motionWalkingSignature.stop();
+      // Always stop on unmount
+      if (isMotionServiceActive) {
+        motionWalkingSignature.stop();
+        setIsMotionServiceActive(false);
+      }
     };
-  }, [settings.enabled, motionWalkingSignature]);
+  }, [settings.enabled, isMotionServiceActive, stopMotionService, motionWalkingSignature]);
 
   // Real WiFi detection function
   const getCurrentWifiSSID = useCallback((): string => {
@@ -186,8 +207,8 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       const effectiveType = connection.effectiveType;
       
       // Use rate-limited logging to prevent excessive console spam
-      logger.rateLimitedDebug(
-        'autocontext.network',
+      rateLimitedDebug(
+        'autocontext-network',
         30000, // Log at most once every 30 seconds
         'Network connection details:',
         {
@@ -200,20 +221,20 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       
       // Check if connection type indicates WiFi
       if (connectionType === 'wifi' || connectionType === 'ethernet') {
-        logger.rateLimitedDebug('autocontext.wifi', 30000, 'WiFi detection - detected WiFi connection');
+        rateLimitedDebug('autocontext-wifi', 30000, 'WiFi connection detected');
         return 'WiFi-Connection';
       } else if (connectionType === 'cellular') {
-        logger.rateLimitedDebug('autocontext.cellular', 30000, 'WiFi detection - detected cellular connection');
+        rateLimitedDebug('autocontext-cellular', 30000, 'Cellular connection detected');
         return '';
       } else if (effectiveType && ['4g', '3g'].includes(effectiveType)) {
         // High-speed connection but unclear type - be conservative
-        logger.rateLimitedDebug('autocontext.highspeed', 30000, 'WiFi detection - high-speed connection, type unclear');
+        rateLimitedDebug('autocontext-highspeed', 30000, 'High-speed connection, type unclear');
         return ''; // Don't assume WiFi
       }
     }
     
     // Fallback: don't assume WiFi if we can't detect it properly
-    logger.rateLimitedDebug('autocontext.fallback', 30000, 'WiFi detection - Network API not available or inconclusive, not assuming WiFi');
+    rateLimitedDebug('autocontext-fallback', 30000, 'Network API not available, not assuming WiFi');
     return '';
   }, []);
 
@@ -223,7 +244,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       // Only use Bluetooth on native platforms
       if (!Capacitor.isNativePlatform()) {
         // On web platforms, use speed-based detection as a proxy for driving
-        logger.debug('Bluetooth: Web platform - using speed-based car detection');
+        devLogger.debug('Web platform - using speed-based car detection');
         return false; // Let speed detection handle it
       }
 
@@ -233,7 +254,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       // Check if Bluetooth is enabled
       const isEnabled = await BleClient.isEnabled();
       if (!isEnabled) {
-        logger.debug('Bluetooth: Not enabled');
+        devLogger.debug('Bluetooth not enabled');
         return false;
       }
 
@@ -265,12 +286,12 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
 
       const isCarConnected = carDevices.length > 0;
       if (isCarConnected) {
-        logger.debug('Bluetooth: Car device connected', carDevices[0].name);
+        devLogger.debug('Car device connected', carDevices[0].name);
       }
       
       return isCarConnected;
     } catch (error) {
-      logger.error('Bluetooth: Error checking car connection', error);
+      devLogger.debug('Error checking car connection', error);
       return false;
     }
   }, []);
@@ -432,8 +453,12 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
           times.weekend < times.workday * 0.3;
 
         if (isHomePatter && ssid !== settings.homeWifiSSID) {
-          logger.debug(
-            `🏠 Auto-detected HOME WiFi: ${ssid} (morning: ${times.morning}, evening: ${times.evening}, weekend: ${times.weekend})`
+          devLogger.debug(
+            `Auto-detected HOME WiFi: ${ssid}`, {
+              morning: times.morning, 
+              evening: times.evening, 
+              weekend: times.weekend
+            }
           );
           updateSettings({ homeWifiSSID: ssid });
           persistSSID('home_wifi_ssid', ssid);
@@ -444,8 +469,12 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
           ssid !== settings.workWifiSSID &&
           ssid !== settings.homeWifiSSID
         ) {
-          logger.debug(
-            `🏢 Auto-detected WORK WiFi: ${ssid} (workday: ${times.workday}, morning: ${times.morning}, evening: ${times.evening})`
+          devLogger.debug(
+            `Auto-detected WORK WiFi: ${ssid}`, {
+              workday: times.workday, 
+              morning: times.morning, 
+              evening: times.evening
+            }
           );
           updateSettings({ workWifiSSID: ssid });
           persistSSID('work_wifi_ssid', ssid);
@@ -474,16 +503,23 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       // Real movement detection
       const isMoving = speed > 1;
 
-      console.log('🧠 AUTO-CONTEXT INPUT DATA:', {
-        latestLocation: location ? `${location.latitude}, ${location.longitude}` : 'none',
-        speed: speedKmh,
-        isMoving: speedKmh > 2,
-        newWifiSSID,
-        isConnectedToWifi,
-        currentHour,
-        isWeekend,
-        gpsQuality
-      });
+      // Start motion service when actively determining context
+      startMotionServiceIfNeeded();
+
+      // Rate-limited auto-context input logging
+      rateLimitedDebug(
+        'autocontext-input-data',
+        10000,
+        'AUTO-CONTEXT INPUT:', {
+          location: location ? `${location.latitude}, ${location.longitude}` : 'none',
+          speed: speedKmh,
+          isMoving: speedKmh > 2,
+          hasWifi: !!newWifiSSID,
+          currentHour,
+          isWeekend,
+          gpsQuality
+        }
+      );
 
       // GPS quality and speed are now handled by GeoSpeedEstimator
       // Remove old manual GPS quality calculation as it's now from the estimator
@@ -505,7 +541,10 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       if (hasLowGPSAccuracy && settings.enabled) {
         const undergroundActivity = detectUndergroundActivity(sensorData);
         if (undergroundActivity !== 'unknown') {
-          logger.debug(`🚇 Transport souterrain détecté: ${undergroundActivity} (GPS accuracy: ${location?.accuracy || 'none'}, altitude relative: ${sensorData.barometer_relativeAltitude})`);
+          devLogger.debug(`Underground transport detected: ${undergroundActivity}`, {
+            gpsAccuracy: location?.accuracy || 'none',
+            relativeAltitude: sensorData.barometer_relativeAltitude
+          });
           
           // Mapper les activités détectées vers les contextes de l'app
           switch (undergroundActivity) {
@@ -630,11 +669,11 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
         state = 'Driving';
         if (prevState !== state) {
           logTransition(prevState, state, evaluationData);
-          logger.debug(`🚗 Override context to ${state} due to very high speed: ${speedKmh} km/h`);
+          devLogger.debug(`Override context to ${state} due to very high speed: ${speedKmh} km/h`);
         }
       }
 
-      console.log(`✅ Final AutoContext result: "${state}"`);
+      devLogger.info(`Final AutoContext result: "${state}"`);
       return state;
     },
     [
@@ -697,6 +736,8 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       latestLocation,
       locationEnabled: externalLocation ? true : locationEnabled,
       requestLocationPermission,
+      startMotionServiceIfNeeded,
+      stopMotionService,
     }),
     [
       settings,
@@ -708,6 +749,8 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       latestLocation,
       locationEnabled,
       requestLocationPermission,
+      startMotionServiceIfNeeded,
+      stopMotionService,
     ]
   );
 }

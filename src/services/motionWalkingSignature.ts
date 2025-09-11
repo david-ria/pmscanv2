@@ -1,4 +1,5 @@
 import { AUTO_CTX_CFG } from '@/lib/autoContext.config';
+import { rateLimitedWarn, devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
 
 export interface WalkingSigSnapshot {
   walkingSignature: boolean;   // booléen lissé
@@ -46,7 +47,7 @@ export class MotionWalkingSignature {
     window.addEventListener('devicemotion', this.onMotion, true);
     this.snapshot.isActive = true;
     this.startTimeoutMonitoring();
-    console.log('MotionWalkingSignature started');
+    devLogger.debug('MotionWalkingSignature started');
   }
 
   stop(): void {
@@ -65,7 +66,7 @@ export class MotionWalkingSignature {
       lastUpdated: Date.now(),
       isActive: false,
     };
-    console.log('MotionWalkingSignature stopped');
+    devLogger.debug('MotionWalkingSignature stopped');
   }
 
   private startTimeoutMonitoring(): void {
@@ -73,7 +74,12 @@ export class MotionWalkingSignature {
     this.timeoutId = window.setInterval(() => {
       const now = performance.now();
       if (now - this.lastMotionEvent > AUTO_CTX_CFG.ACC_TIMEOUT_MS) {
-        console.warn('Accelerometer timeout - forcing walkingSignature to false');
+        // Rate-limited warning to prevent spam
+        rateLimitedWarn(
+          'accelerometer-timeout',
+          30000,
+          'Accelerometer timeout - forcing walkingSignature to false'
+        );
         this.snapshot.walkingSignature = false;
         this.snapshot.isActive = false;
         this.snapshot.lastUpdated = Date.now();
@@ -156,15 +162,18 @@ export class MotionWalkingSignature {
 
     this.candidate = cadenceOK && regularityOK && intensityOK;
 
-    // Debug logging
+    // Rate-limited debug logging for walking detection
     if (this.peakHistory.length >= 3) {
-      console.log('Walking detection:', {
-        cadence: cadence.toFixed(1),
-        regularity: cv.toFixed(3),
-        intensity: rms.toFixed(2),
-        candidate: this.candidate,
-        criteria: { cadenceOK, regularityOK, intensityOK }
-      });
+      rateLimitedDebug(
+        'walking-detection',
+        10000,
+        'Walking detection:', {
+          cadence: cadence.toFixed(1),
+          regularity: cv.toFixed(3),
+          intensity: rms.toFixed(2),
+          candidate: this.candidate
+        }
+      );
     }
 
     this.updateHysteresis(now);
