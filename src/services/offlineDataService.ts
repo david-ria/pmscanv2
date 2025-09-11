@@ -88,17 +88,29 @@ class OfflineDataService {
       const results: OfflineDataItem[] = [];
       
       for (const storeName of stores) {
-        const transaction = db.transaction([storeName], 'readonly');
-        const store = transaction.objectStore(storeName);
-        const index = store.index('synced');
-        const request = index.getAll(IDBKeyRange.only(false));
-        
-        const items = await new Promise<OfflineDataItem[]>((resolve, reject) => {
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => reject(request.error);
-        });
-        
-        results.push(...items);
+        try {
+          const transaction = db.transaction([storeName], 'readonly');
+          const store = transaction.objectStore(storeName);
+          
+          // Check if the index exists before using it
+          if (!store.indexNames.contains('synced')) {
+            logger.warn(`Index 'synced' not found in store '${storeName}', skipping`);
+            continue;
+          }
+          
+          const index = store.index('synced');
+          const request = index.getAll(IDBKeyRange.only(false));
+          
+          const items = await new Promise<OfflineDataItem[]>((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          });
+          
+          results.push(...items);
+        } catch (storeError) {
+          logger.warn(`Failed to access store '${storeName}':`, storeError);
+          continue;
+        }
       }
       
       return results.sort((a, b) => a.timestamp - b.timestamp);
@@ -195,11 +207,16 @@ class OfflineDataService {
           countRequest.onsuccess = () => resolve(countRequest.result);
         });
         
-        const unsyncedIndex = store.index('synced');
-        const unsyncedRequest = unsyncedIndex.getAll(IDBKeyRange.only(false));
-        const unsynced = await new Promise<number>((resolve) => {
-          unsyncedRequest.onsuccess = () => resolve(unsyncedRequest.result.length);
-        });
+        // Check if the index exists before using it
+        let unsynced = 0;
+        if (store.indexNames.contains('synced')) {
+          const unsyncedIndex = store.index('synced');
+          const unsyncedRequest = unsyncedIndex.getAll(IDBKeyRange.only(false));
+          unsynced = await new Promise<number>((resolve, reject) => {
+            unsyncedRequest.onsuccess = () => resolve(unsyncedRequest.result.length);
+            unsyncedRequest.onerror = () => resolve(0); // Fallback to 0 on error
+          });
+        }
         
         totalItems += total;
         unsyncedItems += unsynced;
