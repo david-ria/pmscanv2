@@ -563,7 +563,7 @@ export const useAnalysisLogic = (
           analysis += `🏠 ${t('analysis.report.locationAnalysis')}:\n`;
           locationEntries.slice(0, 3).forEach((entry, i) => {
             const respiratoryRate = getRespiratoryRate(undefined, entry.name, undefined);
-            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³, débit=${respiratoryRate} m³/h)\n`;
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} ${t('analysis.units.ug')} (${(entry.exposure / 60).toFixed(1)}${t('analysis.units.hours')}, PM2.5=${entry.avgPM.toFixed(1)} ${t('analysis.units.ugm3')}, ${t('analysis.units.rate')}=${respiratoryRate} ${t('analysis.units.m3h')})\n`;
           });
           analysis += '\n';
         }
@@ -582,7 +582,7 @@ export const useAnalysisLogic = (
           analysis += `🏃 ${t('analysis.report.activityAnalysis')}:\n`;
           activityEntries.slice(0, 3).forEach((entry, i) => {
             const respiratoryRate = getRespiratoryRate(entry.name, undefined, undefined);
-            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³, débit=${respiratoryRate} m³/h)\n`;
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} ${t('analysis.units.ug')} (${(entry.exposure / 60).toFixed(1)}${t('analysis.units.hours')}, PM2.5=${entry.avgPM.toFixed(1)} ${t('analysis.units.ugm3')}, ${t('analysis.units.rate')}=${respiratoryRate} ${t('analysis.units.m3h')})\n`;
           });
           analysis += '\n';
         }
@@ -601,7 +601,7 @@ export const useAnalysisLogic = (
           analysis += `🤖 ${t('analysis.report.autoContextAnalysis')}:\n`;
           autoEntries.slice(0, 3).forEach((entry, i) => {
             const respiratoryRate = getRespiratoryRate(undefined, undefined, entry.name);
-            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} μg (${(entry.exposure / 60).toFixed(1)}h, PM2.5=${entry.avgPM.toFixed(1)} μg/m³, débit=${respiratoryRate} m³/h)\n`;
+            analysis += `${i + 1}. ${entry.name}: ${entry.dose.toFixed(1)} ${t('analysis.units.ug')} (${(entry.exposure / 60).toFixed(1)}${t('analysis.units.hours')}, PM2.5=${entry.avgPM.toFixed(1)} ${t('analysis.units.ugm3')}, ${t('analysis.units.rate')}=${respiratoryRate} ${t('analysis.units.m3h')})\n`;
           });
         }
 

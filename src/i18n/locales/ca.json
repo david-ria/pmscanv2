@@ -260,7 +260,22 @@
     "doseCalculation": {
       "title": "Càlcul de dosi inhalada",
       "formula": "Fórmula",
-      "explanation": "Aquesta fórmula estima la quantitat de partícules inhalades segons la vostra activitat i el temps d'exposició."
+      "explanation": "Aquesta fórmula estima la quantitat de partícules inhalades segons la vostra activitat i el temps d'exposició.",
+      "formulaText": "Dosi inhalada (μg) = Concentració × Temps × Taxa respiratòria",
+      "concentration": "Concentració",
+      "concentrationDesc": "Partícules PM en μg/m³",
+      "time": "Temps",
+      "timeDesc": "Durada d'exposició en hores",
+      "respiratoryRate": "Taxa respiratòria",
+      "respiratoryRateDesc": "Variable segons l'activitat (0,4-3,5 m³/h)"
+    },
+    "units": {
+      "ugm3": "μg/m³",
+      "m3h": "m³/h",
+      "ug": "μg",
+      "hours": "h",
+      "minutes": "min",
+      "rate": "taxa"
     },
     "whoComplianceTitle": "Compliment dels llindars OMS",
     "timeBelowWHO": "Temps per sota del llindar OMS (15 μg/m³)",
