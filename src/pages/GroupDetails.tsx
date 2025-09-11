@@ -129,9 +129,9 @@ export default function GroupDetails() {
       <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto p-6">
           <div className="flex items-center gap-4 mb-8">
-            <Button variant="ghost" onClick={() => navigate('/groups')}>
+            <Button variant="ghost" onClick={() => navigate(isSuperAdmin ? '/groups' : '/')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Groups
+              Back to {isSuperAdmin ? 'Groups' : 'Dashboard'}
             </Button>
           </div>
           <div className="text-center py-16">
@@ -145,7 +145,7 @@ export default function GroupDetails() {
     );
   }
 
-  const memberUsage = group.member_quota 
+  const memberUsage = group.member_quota
     ? Math.round((members.length / group.member_quota) * 100)
     : 0;
 
