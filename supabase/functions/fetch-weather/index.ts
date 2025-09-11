@@ -40,16 +40,23 @@ serve(async (req) => {
       );
     }
 
-    const { latitude, longitude, timestamp } = requestBody;
+    const { latitude, longitude, timestamp } = requestBody as any;
 
-    if (!latitude || !longitude || !timestamp) {
+    const latNum = Number(latitude);
+    const lonNum = Number(longitude);
+
+    if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) {
       return new Response(
-        JSON.stringify({ error: 'Missing required parameters: latitude, longitude, timestamp' }),
+        JSON.stringify({ error: 'Invalid or missing latitude/longitude' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const requestTime = new Date(timestamp);
+    // Use provided timestamp or default to now
+    let requestTime = timestamp ? new Date(timestamp) : new Date();
+    if (isNaN(requestTime.getTime())) {
+      requestTime = new Date();
+    }
     const oneHourAgo = new Date(requestTime.getTime() - 60 * 60 * 1000);
 
     // Check if we have recent weather data for this location (within 1 hour and ~1km radius)
@@ -58,10 +65,10 @@ serve(async (req) => {
       .select('*')
       .gte('timestamp', oneHourAgo.toISOString())
       .lte('timestamp', requestTime.toISOString())
-      .gte('latitude', latitude - 0.01) // ~1km radius
-      .lte('latitude', latitude + 0.01)
-      .gte('longitude', longitude - 0.01)
-      .lte('longitude', longitude + 0.01)
+      .gte('latitude', latNum - 0.01) // ~1km radius
+      .lte('latitude', latNum + 0.01)
+      .gte('longitude', lonNum - 0.01)
+      .lte('longitude', lonNum + 0.01)
       .order('timestamp', { ascending: false })
       .limit(1);
 
@@ -74,10 +81,18 @@ serve(async (req) => {
     }
 
     // Fetch new weather data from OpenWeatherMap
-    console.log('Fetching new weather data for:', latitude, longitude);
+    if (!openWeatherApiKey) {
+      console.error('Missing OPENWEATHERMAP_API_KEY');
+      return new Response(
+        JSON.stringify({ error: 'Weather service temporarily unavailable' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Fetching new weather data for:', latNum, lonNum);
     
     const weatherResponse = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric`
+      `https://api.openweathermap.org/data/2.5/weather?lat=${latNum}&lon=${lonNum}&appid=${openWeatherApiKey}&units=metric`
     );
 
     const weatherData = await safeJson(weatherResponse);
@@ -92,14 +107,14 @@ serve(async (req) => {
 
     // Store weather data in our database
     const weatherRecord = {
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
+      latitude: latNum,
+      longitude: lonNum,
       timestamp: requestTime.toISOString(),
-      temperature: weatherData.main.temp,
-      humidity: weatherData.main.humidity,
-      pressure: weatherData.main.pressure,
-      weather_main: weatherData.weather[0].main,
-      weather_description: weatherData.weather[0].description,
+      temperature: weatherData.main?.temp,
+      humidity: weatherData.main?.humidity,
+      pressure: weatherData.main?.pressure,
+      weather_main: weatherData.weather?.[0]?.main,
+      weather_description: weatherData.weather?.[0]?.description,
       wind_speed: weatherData.wind?.speed || null,
       wind_direction: weatherData.wind?.deg || null,
       visibility: weatherData.visibility ? weatherData.visibility / 1000 : null, // Convert to km
