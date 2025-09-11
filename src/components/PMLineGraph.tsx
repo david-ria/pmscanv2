@@ -309,7 +309,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
-          margin={{ top: 20, right: 5, left: 0, bottom: 120 }}
+          margin={{ top: 20, right: 5, left: 0, bottom: 80 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
@@ -397,7 +397,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                   label={{
                     value: `${period.pm25Average.toFixed(1)} µg/m³`,
                     position: 'top',
-                    fontSize: 10,
+                    fontSize: 12,
                     fill: '#ef4444',
                     textAnchor: 'middle',
                     fontWeight: 'bold',
@@ -416,7 +416,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                   label={{
                     value: period.label,
                     position: 'top',
-                    fontSize: 12,
+                    fontSize: 14,
                     fill: period.color,
                     textAnchor: 'middle',
                     fontWeight: 'bold',
