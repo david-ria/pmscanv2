@@ -19,6 +19,8 @@ interface AuthContextType {
   ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
+  resendConfirmationEmail: (email: string) => Promise<{ error: AuthError | null }>;
+  signInWithMagicLink: (email: string) => Promise<{ error: AuthError | null }>;
   loading: boolean;
 }
 
@@ -119,6 +121,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const resendConfirmationEmail = async (email: string) => {
+    if (!supabaseClient) {
+      return { error: new Error('Supabase client not initialized') };
+    }
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabaseClient.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+    return { error };
+  };
+
+  const signInWithMagicLink = async (email: string) => {
+    if (!supabaseClient) {
+      return { error: new Error('Supabase client not initialized') };
+    }
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabaseClient.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+    return { error };
+  };
+
   const value = {
     user,
     session,
@@ -126,6 +159,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     updatePassword,
+    resendConfirmationEmail,
+    signInWithMagicLink,
     loading,
   };
 
