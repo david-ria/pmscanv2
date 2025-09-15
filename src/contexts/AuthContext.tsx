@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseClient) {
       return { error: new Error('Supabase client not initialized') };
     }
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/auth`;
 
     const { error } = await supabaseClient.auth.signUp({
       email,
@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseClient) {
       return { error: new Error('Supabase client not initialized') };
     }
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/auth`;
     
     const { error } = await supabaseClient.auth.resend({
       type: 'signup',
@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseClient) {
       return { error: new Error('Supabase client not initialized') };
     }
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/auth`;
     
     const { error } = await supabaseClient.auth.signInWithOtp({
       email,
