@@ -13,7 +13,13 @@
     "test:perf": "npx playwright test tests/performance-budgets.spec.ts tests/energy-usage.spec.ts tests/perf-top-offenders.spec.ts",
     "fix:newlines": "node scripts/ensure-trailing-newline.cjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"scripts/**/*.{js,ts}\""
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"scripts/**/*.{js,ts}\"",
+
+    "cap:add:android": "cap add android",
+    "cap:copy": "cap copy android",
+    "cap:sync": "cap sync android",
+    "android:open": "cap open android",
+    "android:run": "cap run android"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
