@@ -7,6 +7,7 @@ import { AppProviders } from '@/components/AppProviders';
 import { ErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
 import { preloadCriticalChunks, preloadRouteChunks } from '@/utils/dynamicImports';
 import { useAuth } from '@/contexts/AuthContext';
+import { ensureBleReady } from '@/lib/bleReady'; // ⬅️ NEW
 
 // Lazy load page components for code splitting
 const RealTime = lazy(() => import('./pages/RealTime'));
@@ -22,42 +23,42 @@ const Auth = lazy(() => import('./pages/Auth'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Lazy load heavy components
-const Header = lazy(() => 
+const Header = lazy(() =>
   import('@/components/Header').then(module => ({ default: module.Header }))
 );
-const BottomNavigation = lazy(() => 
+const BottomNavigation = lazy(() =>
   import('@/components/BottomNavigation').then(module => ({ default: module.BottomNavigation }))
 );
-const UnifiedDataProvider = lazy(() => 
+const UnifiedDataProvider = lazy(() =>
   import('@/components/UnifiedDataProvider').then(module => ({ default: module.UnifiedDataProvider }))
 );
-const CrashRecoveryInitializer = lazy(() => 
+const CrashRecoveryInitializer = lazy(() =>
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
-const PMLineGraph = lazy(() => 
+const PMLineGraph = lazy(() =>
   import('@/components/PMLineGraph').then(module => ({ default: module.PMLineGraph }))
 );
-const GlobalDataCollector = lazy(() => 
+const GlobalDataCollector = lazy(() =>
   import('@/components/GlobalDataCollector').then(module => ({ default: module.GlobalDataCollector }))
 );
 
 // Import skeleton screens
-const AppLayoutSkeleton = lazy(() => 
+const AppLayoutSkeleton = lazy(() =>
   import('@/components/shared/AppLayoutSkeleton')
 );
-const RealTimePageSkeleton = lazy(() => 
+const RealTimePageSkeleton = lazy(() =>
   import('@/components/shared/SkeletonScreens')
 );
-const HistoryPageSkeleton = lazy(() => 
+const HistoryPageSkeleton = lazy(() =>
   import('@/components/shared/HistoryPageSkeleton')
 );
-const AnalysisPageSkeleton = lazy(() => 
+const AnalysisPageSkeleton = lazy(() =>
   import('@/components/shared/AnalysisPageSkeleton')
 );
-const GroupsPageSkeleton = lazy(() => 
+const GroupsPageSkeleton = lazy(() =>
   import('@/components/shared/GroupsPageSkeleton')
 );
-const ProfilePageSkeleton = lazy(() => 
+const ProfilePageSkeleton = lazy(() =>
   import('@/components/shared/ProfilePageSkeleton')
 );
 
@@ -77,6 +78,11 @@ const App = () => {
     } else {
       setTimeout(preloadCriticalChunks, 100);
     }
+  }, []);
+
+  // ⬇️ NEW: Init BLE + permissions at startup (Android géré automatiquement)
+  useEffect(() => {
+    ensureBleReady();
   }, []);
 
   return (
@@ -202,7 +208,7 @@ const AppRoutes = () => {
                           </Suspense>
                         }
                       />
-                       <Route 
+                      <Route 
                         path="/index.html" 
                         element={<Navigate to="/" replace />}
                       />
@@ -218,7 +224,6 @@ const AppRoutes = () => {
                   <Suspense fallback={null}>
                     <GlobalDataCollector />
                   </Suspense>
-                  
                   
                   {/* Keep chart alive across pages - hidden but still mounted */}
                   <div className={location.pathname === '/' ? 'hidden' : 'hidden absolute -top-[9999px]'}>
