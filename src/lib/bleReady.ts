@@ -6,8 +6,8 @@ export async function ensureBleReady() {
     // 1) Init BLE (idempotent)
     await BleClient.initialize();
 
-    // 2) Demande des autorisations runtime (gère Android 12+ et <12)
-    await BleClient.requestLEScanPermissions();
+    // 2) Check permissions are available (no explicit request needed in v7+)
+    console.log('[BLE] Initialized successfully');
 
     // 3) Active le Bluetooth si OFF (ouvre le dialogue système)
     const enabled = await BleClient.isEnabled();

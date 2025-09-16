@@ -1,53 +1,51 @@
 
 /* Custom utility classes for common patterns */
-@layer utilities {
-  /* Text utilities */
-  .text-balance {
-    text-wrap: balance;
-  }
-  
-  /* Spacing utilities */
-  .space-y-responsive {
-    @apply space-y-2 sm:space-y-4;
-  }
-  
-  /* Flexbox utilities */
-  .flex-center {
-    @apply flex items-center justify-center;
-  }
-  
-  .flex-between {
-    @apply flex items-center justify-between;
-  }
-  
-  /* Grid utilities */
-  .grid-center {
-    @apply grid place-items-center;
-  }
-  
-  /* Accessibility utilities */
-  .sr-only-focusable {
-    @apply sr-only focus:not-sr-only focus:absolute focus:left-1 focus:top-1 focus:z-10 focus:rounded focus:bg-background focus:px-2 focus:py-1;
-  }
-  
-  /* Performance utilities */
-  .will-change-transform {
-    will-change: transform;
-  }
-  
-  .will-change-opacity {
-    will-change: opacity;
-  }
-  
-  /* Focus utilities */
-  .focus-ring {
-    @apply focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2;
-  }
-  
-  /* Ensure focus is always visible */
-  .ensure-focus-visible {
-    outline: 2px solid hsl(var(--ring));
-    outline-offset: 2px;
-    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
-  }
+/* Text utilities */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Spacing utilities */
+.space-y-responsive {
+  @apply space-y-2 sm:space-y-4;
+}
+
+/* Flexbox utilities */
+.flex-center {
+  @apply flex items-center justify-center;
+}
+
+.flex-between {
+  @apply flex items-center justify-between;
+}
+
+/* Grid utilities */
+.grid-center {
+  @apply grid place-items-center;
+}
+
+/* Accessibility utilities */
+.sr-only-focusable {
+  @apply sr-only focus:not-sr-only focus:absolute focus:left-1 focus:top-1 focus:z-10 focus:rounded focus:bg-background focus:px-2 focus:py-1;
+}
+
+/* Performance utilities */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Focus utilities */
+.focus-ring {
+  @apply focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2;
+}
+
+/* Ensure focus is always visible */
+.ensure-focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
 }
