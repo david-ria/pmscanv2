@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">pmscanv2</string>
+    <string name="title_activity_main">pmscanv2</string>
+    <string name="package_name">app.lovable.d8e7ca00b3774793af43f6fcf3d043bd</string>
+    <string name="custom_url_scheme">app.lovable.d8e7ca00b3774793af43f6fcf3d043bd</string>
+</resources>

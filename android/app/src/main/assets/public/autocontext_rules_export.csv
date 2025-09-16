@@ -1,0 +1,11 @@
+id,name,description,priority,result,wifi_home,wifi_work,wifi_known,location_insideHome,location_insideWork,location_gpsQuality,movement_speed_min,movement_speed_max,movement_isMoving,time_hourRange_start,time_hourRange_end,connectivity_cellularSignal,connectivity_carBluetooth,weather_main,weather_temperature_min,weather_temperature_max,weather_humidity_min,weather_humidity_max,context_previousWifi,context_latestContextStartsWith
+driving-car,Driving,Car bluetooth connected with movement,100,Driving,,,,,,,5,,,,,true,,,,,,,
+wifi-home,At home,Connected to home WiFi,90,Indoor at home,true,,,,,,,,,,,,,,,,,,
+wifi-work,At work,Connected to work WiFi,85,Indoor at work,,true,,,,,,,,,,,,,,,,,
+outdoor-transport,High-speed transport,High speed movement without car bluetooth,75,Outdoor transport,,,,,good,25,,,,,false,,,,,,,
+outdoor-cycling,Cycling,Medium speed outdoor movement,70,Outdoor cycling,,,,,good,8,24,,,,,,,,,,,
+outdoor-walking,Walking,Slow outdoor movement,65,Outdoor walking,,,,,good,,7,,,,,,,,,,,
+gps-home-outdoor,Outdoor at home,Good GPS in home area without home WiFi,60,Outdoor at home,false,,,true,good,,5,,,,,,,,,,,
+gps-work-outdoor,Outdoor at work,Good GPS in work area without work WiFi,55,Outdoor at work,,false,,false,true,good,,5,,,,,,,,,,,
+generic-outdoor,Generic outdoor,Good GPS outside known areas,50,Outdoor,,,,,false,false,good,,,,,,,,,,,,,
+generic-indoor,Generic indoor,Default indoor when conditions unclear,10,Indoor,,,,,,,,,,,,,,,,,,,

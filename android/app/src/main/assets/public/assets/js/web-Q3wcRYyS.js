@@ -1,0 +1,1 @@
+import{W as e}from"./bluetooth-BEoGU70i.js";import"./supabase--OITQzG1.js";import"./vendor-CRCfYjC_.js";class n extends e{constructor(){super(),this.registerWindowListener("devicemotion","accel"),this.registerWindowListener("deviceorientation","orientation")}}export{n as MotionWeb};

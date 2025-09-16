@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AirSentinels - Mesure de particules fines</title>
+    <link rel="icon" href="/lovable-uploads/83ccf48a-d0be-4ac1-9039-4c4a8295958c.png" type="image/png">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/lovable-uploads/83ccf48a-d0be-4ac1-9039-4c4a8295958c.png">
+    
+    <!-- Preconnect to external font services for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- DNS prefetch for other external services -->
+    <link rel="dns-prefetch" href="https://api.mapbox.com">
+    <link rel="dns-prefetch" href="https://shydpfwuvnlzdzbubmgb.supabase.co">
+    
+    <!-- Critical CSS for immediate rendering -->
+    <style>
+      /* Essential CSS variables for immediate rendering */
+      :root {
+        --background: 0 0% 99%;
+        --foreground: 215 25% 27%;
+        --primary: 142 76% 36%;
+        --muted-foreground: 215.4 16.3% 46.9%;
+        --border: 214.3 31.8% 91.4%;
+        --card: 0 0% 100%;
+        --muted: 210 40% 96.1%;
+      }
+      
+      /* Critical typography for H1 and large text */
+      h1.text-lg, .text-lg { 
+        font-size: 1.125rem; 
+        line-height: 1.75rem;
+      }
+      
+      h1.text-xl, .text-xl { 
+        font-size: 1.25rem; 
+        line-height: 1.75rem;
+      }
+      
+      h1.text-2xl, .text-2xl { 
+        font-size: 1.5rem; 
+        line-height: 2rem;
+      }
+      
+      .font-bold { font-weight: 700; }
+      .font-semibold { font-weight: 600; }
+      
+      /* Critical color utilities */
+      .text-foreground { color: hsl(var(--foreground)); }
+      .text-primary { color: hsl(var(--primary)); }
+      .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+      
+      /* Critical layout utilities */
+      .bg-background { background-color: hsl(var(--background)); }
+      .bg-card { background-color: hsl(var(--card)); }
+      .bg-muted { background-color: hsl(var(--muted)); }
+      .border-border { border-color: hsl(var(--border)); }
+      .min-h-screen { min-height: 100vh; }
+      .fixed { position: fixed; }
+      .top-0 { top: 0; }
+      .left-0 { left: 0; }
+      .right-0 { right: 0; }
+      .z-50 { z-index: 50; }
+      .border-b { border-bottom-width: 1px; }
+      .flex { display: flex; }
+      .items-center { align-items: center; }
+      .justify-between { justify-content: space-between; }
+      .gap-3 { gap: 0.75rem; }
+      .h-14 { height: 3.5rem; }
+      .h-9 { height: 2.25rem; }
+      .w-9 { width: 2.25rem; }
+      .px-4 { padding-left: 1rem; padding-right: 1rem; }
+      .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+      .pt-14 { padding-top: 3.5rem; }
+      .pb-20 { padding-bottom: 5rem; }
+      .p-4 { padding: 1rem; }
+      .mb-1 { margin-bottom: 0.25rem; }
+      .max-w-7xl { max-width: 80rem; }
+      .mx-auto { margin-left: auto; margin-right: auto; }
+      .rounded { border-radius: 0.25rem; }
+      .rounded-lg { border-radius: 0.5rem; }
+      .rounded-full { border-radius: 9999px; }
+      .border { border-width: 1px; }
+      .text-center { text-align: center; }
+      .text-xs { font-size: 0.75rem; line-height: 1rem; }
+      .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+      .space-y-6 > * + * { margin-top: 1.5rem; }
+      
+      /* Prevent layout shift by setting initial container styles */
+      #root {
+        min-height: 100vh;
+        background-color: hsl(var(--background));
+      }
+      
+      /* Critical styles for air quality cards to prevent layout shift */
+      .grid-cols-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+      }
+      
+      /* Loading skeleton styles */
+      .skeleton {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+      }
+      
+      @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+    </style>
+    <meta
+      name="description"
+      content="Application de mesure et contextualisation de l'exposition aux particules fines"
+    />
+    <meta name="author" content="Lovable" />
+
+    <!-- Content Security Policy for Google APIs, Supabase, and Mapbox -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.gstatic.com https://cdn.gpteng.co; connect-src 'self' https://accounts.google.com https://apis.google.com https://www.googleapis.com https://*.supabase.co https://shydpfwuvnlzdzbubmgb.supabase.co https://*.mapbox.com https://api.mapbox.com; frame-src https://accounts.google.com; style-src 'self' 'unsafe-inline' https://*.gstatic.com https://api.mapbox.com; font-src 'self' data: https://*.gstatic.com https://api.mapbox.com; img-src 'self' data: https://*.mapbox.com; worker-src 'self' blob:; object-src 'none';"
+    />
+
+    <meta property="og:title" content="d8e7ca00-b377-4793-af43-f6fcf3d043bd" />
+    <meta property="og:description" content="Lovable Generated Project" />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="https://lovable.dev/opengraph-image-p98pqg.png"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@lovable_dev" />
+    <meta
+      name="twitter:image"
+      content="https://lovable.dev/opengraph-image-p98pqg.png"
+    />
+    <script type="module" crossorigin src="/assets/js/index-DnKT6hDb.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-CRCfYjC_.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/supabase--OITQzG1.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/query-BewfWFH7.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/router-D6wdMmGF.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/theme-D-6-9UvQ.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/ui-core-CibF-ClQ.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/utils-EL5wpLGY.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/notifications-6vUXhpBr.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/i18n-DZz6YkIP.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-BOVYw4lO.css">
+  </head>
+
+  <body>
+    <div id="root">
+      <!-- Static HTML for immediate rendering (SSR-like) -->
+      <div class="min-h-screen bg-background">
+        <!-- Static Header -->
+        <header class="fixed top-0 left-0 right-0 bg-background border-b border-border z-50">
+          <div class="flex items-center justify-between h-14 px-4 max-w-7xl mx-auto">
+            <div class="flex items-center gap-3">
+              <div class="h-9 w-9 bg-muted rounded"></div>
+              <h1 class="text-lg font-bold text-foreground">AirSentinels</h1>
+            </div>
+            <div class="h-9 w-9 bg-muted rounded-full"></div>
+          </div>
+        </header>
+        
+        <!-- Static Main Content -->
+        <main class="pt-14 pb-20 px-4 max-w-7xl mx-auto">
+          <div class="space-y-6 py-6">
+            <!-- Static Air Quality Cards placeholders -->
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-card border border-border rounded-lg p-4 text-center">
+                <div class="text-xs text-muted-foreground mb-1">PM2.5</div>
+                <div class="text-lg font-bold text-foreground">--</div>
+                <div class="text-xs text-muted-foreground">μg/m³</div>
+              </div>
+              <div class="bg-card border border-border rounded-lg p-4 text-center">
+                <div class="text-xs text-muted-foreground mb-1">PM10</div>
+                <div class="text-lg font-bold text-foreground">--</div>
+                <div class="text-xs text-muted-foreground">μg/m³</div>
+              </div>
+              <div class="bg-card border border-border rounded-lg p-4 text-center">
+                <div class="text-xs text-muted-foreground mb-1">Quality</div>
+                <div class="text-lg font-bold text-foreground">--</div>
+              </div>
+            </div>
+            
+            <!-- Static connection status -->
+            <div class="text-center text-sm text-muted-foreground p-4 bg-muted/20 rounded-lg">
+              Connect your PM sensor to start measurements
+            </div>
+          </div>
+        </main>
+      </div>
+      
+      <script src="/static-content-handler.js" defer></script>
+    </div>
+    
+    <!-- Add performance optimizations -->
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </body>
+</html>

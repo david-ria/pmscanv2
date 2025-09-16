@@ -1,0 +1,93 @@
+# Cache Control Headers for Static Assets
+# This file provides cache configuration examples for different hosting platforms
+
+# ===============================
+# Netlify Configuration (_headers)
+# ===============================
+# Place this in public/_headers for Netlify hosting
+
+/assets/js/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/css/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# ===============================
+# Vercel Configuration (vercel.json)
+# ===============================
+{
+  "headers": [
+    {
+      "source": "/assets/js/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/css/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control", 
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/images/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/fonts/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}
+
+# ===============================
+# Apache Configuration (.htaccess)
+# ===============================
+<IfModule mod_expires.c>
+  ExpiresActive on
+  
+  # JavaScript and CSS files with hash
+  <FilesMatch "\.(js|css)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  
+  # Images with hash
+  <FilesMatch "\.(jpg|jpeg|png|gif|svg|webp|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  
+  # Fonts with hash
+  <FilesMatch "\.(woff|woff2|eot|ttf|otf)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+# ===============================
+# Nginx Configuration
+# ===============================
+location ~* /assets/.*\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|eot|ttf|otf)$ {
+    add_header Cache-Control "public, max-age=31536000, immutable";
+    expires 1y;
+}
