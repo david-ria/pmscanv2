@@ -6,9 +6,11 @@ import { globalConnectionManager } from '@/lib/pmscan/globalConnectionManager';
 import { PMScanConnectionUtils } from '@/lib/pmscan/connectionUtils';
 import { FoundDevice } from '@/lib/bleScan';
 import { Capacitor } from '@capacitor/core';
+import { useToast } from '@/hooks/use-toast';
 import * as logger from '@/utils/logger';
 
 export function usePMScanBluetooth() {
+  const { toast } = useToast();
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [device, setDevice] = useState<PMScanDevice | null>(null);
@@ -116,7 +118,20 @@ export function usePMScanBluetooth() {
         setError(null);
       } catch (error) {
         console.error('❌ Error initializing device:', error);
-        setError('Failed to initialize device');
+        const errorMessage = error instanceof Error ? error.message : 'Failed to initialize device';
+        
+        // Show user-friendly toast
+        toast({
+          title: "Échec de l'initialisation",
+          description: errorMessage.includes('timeout') 
+            ? 'Délai d\'attente dépassé lors de la lecture des données de l\'appareil'
+            : errorMessage.includes('startNotifications')
+            ? 'Impossible de configurer les notifications. Redémarrage de l\'appareil recommandé.'
+            : 'Impossible d\'initialiser l\'appareil PMScan',
+          variant: "destructive",
+        });
+        
+        setError(errorMessage);
         setIsConnecting(false);
       }
     },
@@ -145,7 +160,16 @@ export function usePMScanBluetooth() {
       (server) => onDeviceConnected(server),
       () => {
         logger.debug('❌ Failed to reconnect.');
-        setError('Failed to reconnect');
+        const errorMessage = 'Failed to reconnect';
+        
+        // Show user-friendly toast for reconnection failure
+        toast({
+          title: "Échec de la reconnexion",
+          description: 'Impossible de se reconnecter automatiquement à l\'appareil PMScan',  
+          variant: "destructive",
+        });
+        
+        setError(errorMessage);
         setIsConnecting(false);
       }
     );
@@ -171,9 +195,22 @@ export function usePMScanBluetooth() {
       connect();
     } catch (error) {
       console.error('❌ Error requesting device:', error);
-      setError(
-        error instanceof Error ? error.message : 'Failed to connect to device'
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Failed to connect to device';
+      
+      // Show user-friendly toast
+      toast({
+        title: "Échec de la sélection d'appareil",
+        description: errorMessage.includes('timeout') 
+          ? 'Délai d\'attente dépassé lors de la recherche d\'appareils'
+          : errorMessage.includes('No PMScan devices found')
+          ? 'Aucun appareil PMScan trouvé. Vérifiez que votre appareil est allumé et à proximité.'
+          : errorMessage.includes('user cancelled')
+          ? 'Sélection annulée'
+          : 'Erreur lors de la sélection de l\'appareil',
+        variant: "destructive",
+      });
+      
+      setError(errorMessage);
       setIsConnecting(false);
     }
   }, [connect, onDeviceDisconnected]);
@@ -259,7 +296,16 @@ export function usePMScanBluetooth() {
           .catch((error) => {
             if (!mounted) return;
             console.error('❌ Failed to restore connection:', error);
-            setError('Failed to restore connection');
+            const errorMessage = 'Failed to restore connection';
+            
+            // Show user-friendly toast for restore failure
+            toast({
+              title: "Échec de la restauration",
+              description: 'Impossible de restaurer la connexion existante',
+              variant: "destructive",
+            });
+            
+            setError(errorMessage);
           });
       } else {
         // Ensure state is clean if no connection exists

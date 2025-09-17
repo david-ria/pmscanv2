@@ -8,6 +8,7 @@ import { BleClient } from '@capacitor-community/bluetooth-le';
 import { Capacitor } from '@capacitor/core';
 import { runBleScan, FoundDevice } from '@/lib/bleScan';
 import { PMScan_SERVICE_UUID, PMScan_MODE_UUID } from './constants';
+import { BleOperationWrapper } from './bleOperationWrapper';
 import {
   getGlobalRecording,
   getBackgroundRecording,
@@ -85,7 +86,7 @@ export class PMScanConnectionManager {
       }
 
       logger.debug('🔌 Connecting to native BLE device...');
-      await BleClient.connect(this.nativeDeviceId);
+      await BleOperationWrapper.connect(this.nativeDeviceId);
       this.nativeConnected = true;
       
       // Return a shim object for compatibility
@@ -96,7 +97,7 @@ export class PMScanConnectionManager {
       throw new Error('No device available or should not connect');
     }
 
-    const server = await PMScanConnectionUtils.connectToDevice(this.device);
+    const server = await BleOperationWrapper.connect(this.device) as BluetoothRemoteGATTServer;
     this.server = server;
     return server;
   }
@@ -168,11 +169,11 @@ export class PMScanConnectionManager {
           // Send disconnect command
           const modeToWrite = new Uint8Array(1);
           modeToWrite[0] = this.deviceState.state.mode | 0x40;
-          await BleClient.write(
+          await BleOperationWrapper.write(
             this.nativeDeviceId,
+            modeToWrite,
             PMScan_SERVICE_UUID,
-            PMScan_MODE_UUID,
-            new DataView(modeToWrite.buffer)
+            PMScan_MODE_UUID
           );
           
           // Disconnect

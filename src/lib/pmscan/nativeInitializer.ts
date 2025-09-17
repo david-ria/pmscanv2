@@ -14,6 +14,7 @@ import {
 } from './constants';
 import { PMScanDeviceState } from './deviceState';
 import { PMScanDevice } from './types';
+import { BleOperationWrapper } from './bleOperationWrapper';
 import * as logger from '@/utils/logger';
 
 /**
@@ -33,98 +34,98 @@ export class PMScanNativeInitializer {
     logger.debug('🔍 Reading characteristics...');
 
     // Read battery level
-    const batteryData = await BleClient.read(deviceId, PMScan_SERVICE_UUID, PMScan_BATTERY_UUID);
-    const battery = new DataView(batteryData.buffer).getUint8(0);
+    const batteryValue = await BleOperationWrapper.read(deviceId, PMScan_SERVICE_UUID, PMScan_BATTERY_UUID);
+    const battery = batteryValue.getUint8(0);
     logger.debug(`🔋 Battery: ${battery}%`);
     this.deviceState.updateBattery(battery);
 
     // Start RT data notifications
-    await BleClient.startNotifications(
+    await BleOperationWrapper.startNotifications(
       deviceId,
-      PMScan_SERVICE_UUID,
-      PMScan_RT_DATA_UUID,
       (value) => {
         const event = new CustomEvent('characteristicvaluechanged', {
-          detail: { target: { value: new DataView(value.buffer) } }
+          detail: { target: { value } }
         }) as any;
-        event.target = { value: new DataView(value.buffer) };
+        event.target = { value };
         onRTData(event);
-      }
+      },
+      PMScan_SERVICE_UUID,
+      PMScan_RT_DATA_UUID
     );
 
     // Start IM data notifications
-    await BleClient.startNotifications(
+    await BleOperationWrapper.startNotifications(
       deviceId,
-      PMScan_SERVICE_UUID,
-      PMScan_IM_DATA_UUID,
       (value) => {
         const event = new CustomEvent('characteristicvaluechanged', {
-          detail: { target: { value: new DataView(value.buffer) } }
+          detail: { target: { value } }
         }) as any;
-        event.target = { value: new DataView(value.buffer) };
+        event.target = { value };
         onIMData(event);
-      }
+      },
+      PMScan_SERVICE_UUID,
+      PMScan_IM_DATA_UUID
     );
 
     // Start battery notifications
-    await BleClient.startNotifications(
+    await BleOperationWrapper.startNotifications(
       deviceId,
-      PMScan_SERVICE_UUID,
-      PMScan_BATTERY_UUID,
       (value) => {
         const event = new CustomEvent('characteristicvaluechanged', {
-          detail: { target: { value: new DataView(value.buffer) } }
+          detail: { target: { value } }
         }) as any;
-        event.target = { value: new DataView(value.buffer) };
+        event.target = { value };
         onBatteryData(event);
-      }
+      },
+      PMScan_SERVICE_UUID,
+      PMScan_BATTERY_UUID
     );
 
     // Start charging notifications
-    await BleClient.startNotifications(
+    await BleOperationWrapper.startNotifications(
       deviceId,
-      PMScan_SERVICE_UUID,
-      PMScan_CHARGING_UUID,
       (value) => {
         const event = new CustomEvent('characteristicvaluechanged', {
-          detail: { target: { value: new DataView(value.buffer) } }
+          detail: { target: { value } }
         }) as any;
-        event.target = { value: new DataView(value.buffer) };
+        event.target = { value };
         onChargingData(event);
-      }
+      },
+      PMScan_SERVICE_UUID,
+      PMScan_CHARGING_UUID
     );
 
     // Read and sync time if needed
     await this.syncDeviceTime(deviceId);
 
     // Read charging status
-    const chargingData = await BleClient.read(deviceId, PMScan_SERVICE_UUID, PMScan_CHARGING_UUID);
-    const charging = new DataView(chargingData.buffer).getUint8(0);
+    const chargingValue = await BleOperationWrapper.read(deviceId, PMScan_SERVICE_UUID, PMScan_CHARGING_UUID);
+    const charging = chargingValue.getUint8(0);
     logger.debug(`⚡ Charging: ${charging}`);
     this.deviceState.updateCharging(charging);
 
     // Read version
-    const versionData = await BleClient.read(deviceId, PMScan_SERVICE_UUID, PMScan_OTH_UUID);
-    const version = new DataView(versionData.buffer).getUint8(0) >> 2;
+    const versionValue = await BleOperationWrapper.read(deviceId, PMScan_SERVICE_UUID, PMScan_OTH_UUID);
+    const version = versionValue.getUint8(0) >> 2;
     logger.debug(`📋 Version: ${version}`);
     this.deviceState.updateVersion(version);
 
     // Read interval
-    const intervalData = await BleClient.read(deviceId, PMScan_SERVICE_UUID, PMScan_INTERVAL_UUID);
-    const interval = new DataView(intervalData.buffer).getUint8(0);
+    const intervalValue = await BleOperationWrapper.read(deviceId, PMScan_SERVICE_UUID, PMScan_INTERVAL_UUID);
+    const interval = intervalValue.getUint8(0);
     logger.debug(`⏱️ Interval: ${interval}`);
     this.deviceState.updateInterval(interval);
 
     // Read mode
-    const modeData = await BleClient.read(deviceId, PMScan_SERVICE_UUID, PMScan_MODE_UUID);
-    const mode = new DataView(modeData.buffer).getUint8(0);
+    const modeValue = await BleOperationWrapper.read(deviceId, PMScan_SERVICE_UUID, PMScan_MODE_UUID);
+    const mode = modeValue.getUint8(0);
     logger.debug(`⚙️ Mode: ${mode}`);
     this.deviceState.updateMode(mode);
 
     // Read display settings
-    const displayData = await BleClient.read(deviceId, PMScan_SERVICE_UUID, PMScan_DISPLAY_UUID);
-    logger.debug(`🖥️ Display: ${new DataView(displayData.buffer).getUint8(0)}`);
-    this.deviceState.updateDisplay(new Uint8Array(displayData.buffer));
+    const displayValue = await BleOperationWrapper.read(deviceId, PMScan_SERVICE_UUID, PMScan_DISPLAY_UUID);
+    logger.debug(`🖥️ Display: ${displayValue.getUint8(0)}`);
+    this.deviceState.updateDisplay(new Uint8Array(displayValue.buffer));
 
     logger.debug('🎉 Native init finished');
 
@@ -140,8 +141,8 @@ export class PMScanNativeInitializer {
   }
 
   private async syncDeviceTime(deviceId: string): Promise<void> {
-    const timeData = await BleClient.read(deviceId, PMScan_SERVICE_UUID, PMScan_TIME_UUID);
-    const deviceTime = new DataView(timeData.buffer).getUint32(0, true);
+    const timeValue = await BleOperationWrapper.read(deviceId, PMScan_SERVICE_UUID, PMScan_TIME_UUID);
+    const deviceTime = timeValue.getUint32(0, true);
     logger.debug(`⏰ Time is ${deviceTime}`);
 
     if (deviceTime === 0) {
@@ -153,7 +154,7 @@ export class PMScanNativeInitializer {
       time[2] = (timeDt2000 >> 16) & 0xff;
       time[3] = (timeDt2000 >> 24) & 0xff;
       
-      await BleClient.write(deviceId, PMScan_SERVICE_UUID, PMScan_TIME_UUID, new DataView(time.buffer));
+      await BleOperationWrapper.write(deviceId, time, PMScan_SERVICE_UUID, PMScan_TIME_UUID);
     } else {
       logger.debug('⏰ Time already sync');
     }

@@ -1,4 +1,5 @@
 import { PMScan_SERVICE_UUID, PMScan_MODE_UUID } from './constants';
+import { BleOperationWrapper } from './bleOperationWrapper';
 import * as logger from '@/utils/logger';
 import { runBleScan, FoundDevice } from '@/lib/bleScan';
 import { PMScanDeviceStorage } from './deviceStorage';
@@ -143,7 +144,7 @@ export class PMScanConnectionUtils {
     device: BluetoothDevice
   ): Promise<BluetoothRemoteGATTServer> {
     logger.debug('🔌 Connecting to Bluetooth Device...');
-    const server = await device.gatt!.connect();
+    const server = await BleOperationWrapper.connect(device) as BluetoothRemoteGATTServer;
     return server;
   }
 
@@ -153,13 +154,13 @@ export class PMScanConnectionUtils {
   ): Promise<void> {
     try {
       logger.debug('🔌 Requesting disconnect...');
-      const modeChar = await service.getCharacteristic(PMScan_MODE_UUID);
+      const modeChar = await BleOperationWrapper.getCharacteristic(service, PMScan_MODE_UUID);
       const modeToWrite = new Uint8Array(1);
       modeToWrite[0] = mode | 0x40;
-      await modeChar.writeValueWithResponse(modeToWrite);
+      await BleOperationWrapper.write(modeChar, modeToWrite);
     } catch (err) {
       console.error('❌ Failed to send disconnect command:', err);
-      throw err;
+      throw err;  
     }
   }
 }
