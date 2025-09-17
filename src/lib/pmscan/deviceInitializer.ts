@@ -16,7 +16,7 @@ import { PMScanDevice } from './types';
 import { BleOperationWrapper } from './bleOperationWrapper';
 import { MtuManager, FragmentManager } from './mtuManager';
 import * as logger from '@/utils/logger';
-import { bleDebugger } from '@/lib/bleDebug';
+import { safeBleDebugger } from '@/lib/bleSafeWrapper';
 
 /**
  * Handles PMScan device initialization and service discovery
@@ -35,18 +35,18 @@ export class PMScanDeviceInitializer {
     deviceInfo: PMScanDevice;
     service: BluetoothRemoteGATTService;
   }> {
-    bleDebugger.info('INIT', 'PMScan web device connected');
+    safeBleDebugger.info('INIT', 'PMScan web device connected');
     
-    const service = await bleDebugger.timeOperation('SERVICE', 'Service Discovery', async () => {
-      bleDebugger.info('SERVICE', 'Discovering PMScan service');
+    const service = await safeBleDebugger.timeOperation('SERVICE', 'Service Discovery', async () => {
+      safeBleDebugger.info('SERVICE', 'Discovering PMScan service');
       return await BleOperationWrapper.getService(server, PMScan_SERVICE_UUID);
     });
     
     // Negotiate MTU for optimal performance
-    const mtuInfo = await bleDebugger.timeOperation('MTU', 'MTU Negotiation', async () => {
+    const mtuInfo = await safeBleDebugger.timeOperation('MTU', 'MTU Negotiation', async () => {
       return await MtuManager.negotiateMtu(server);
     });
-    bleDebugger.info('MTU', `MTU negotiated: ${mtuInfo.negotiated} bytes (${mtuInfo.effective} effective)`, undefined, mtuInfo);
+    safeBleDebugger.info('MTU', `MTU negotiated: ${mtuInfo.negotiated} bytes (${mtuInfo.effective} effective)`, undefined, mtuInfo);
 
     // Read battery level
     const batteryChar = await BleOperationWrapper.getCharacteristic(service, PMScan_BATTERY_UUID);

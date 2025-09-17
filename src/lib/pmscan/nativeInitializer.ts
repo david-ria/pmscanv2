@@ -17,7 +17,7 @@ import { PMScanDevice } from './types';
 import { BleOperationWrapper } from './bleOperationWrapper';
 import { MtuManager, FragmentManager } from './mtuManager';
 import * as logger from '@/utils/logger';
-import { bleDebugger } from '@/lib/bleDebug';
+import { safeBleDebugger } from '@/lib/bleSafeWrapper';
 
 /**
  * Handles PMScan device initialization using Capacitor BLE (native)

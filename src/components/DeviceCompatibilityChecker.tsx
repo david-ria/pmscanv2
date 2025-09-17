@@ -4,6 +4,7 @@ import { AndroidPermissionManager } from '../services/androidPermissions';
 import { deviceLogger } from '../services/deviceLogger';
 import { MtuInfoDisplay } from './MtuInfoDisplay';
 import { BleDebugControl } from './BleDebugControl';
+import { BleDebugDiagnostic } from './BleDebugDiagnostic';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
@@ -192,12 +193,13 @@ export const DeviceCompatibilityChecker: React.FC<DeviceCompatibilityCheckerProp
         </Card>
       )}
 
-  {/* MTU Performance Information */}
-      <MtuInfoDisplay isConnected={isConnected} />
-
-      {/* BLE Debug Control */}
+      {/* Development Tools */}
       {process.env.NODE_ENV === 'development' && (
-        <BleDebugControl />
+        <div className="grid gap-4">
+          <BleDebugDiagnostic />
+          <BleDebugControl />
+          <MtuInfoDisplay isConnected={isConnected} />
+        </div>
       )}
     </div>
   );
