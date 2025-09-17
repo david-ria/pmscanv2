@@ -44,8 +44,10 @@ const DataLogger = lazy(() =>
 );
 
 // Load debug tools in development
-if (process.env.NODE_ENV === 'development') {
-  import('@/lib/blePickerDebug');
+if (import.meta.env.DEV) {
+  import('@/lib/blePickerDebug').catch(() => {
+    // Ignore errors in debug module loading
+  });
 }
 
 export default function RealTime() {
