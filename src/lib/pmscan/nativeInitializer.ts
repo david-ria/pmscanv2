@@ -15,6 +15,7 @@ import {
 import { PMScanDeviceState } from './deviceState';
 import { PMScanDevice } from './types';
 import { BleOperationWrapper } from './bleOperationWrapper';
+import { MtuManager, FragmentManager } from './mtuManager';
 import * as logger from '@/utils/logger';
 
 /**
@@ -33,6 +34,10 @@ export class PMScanNativeInitializer {
     logger.debug('✅ PMScan Native Device Connected');
     logger.debug('🔍 Reading characteristics...');
 
+    // Negotiate MTU for optimal performance
+    const mtuInfo = await MtuManager.negotiateMtu(deviceId);
+    logger.debug(`📡 MTU negotiated: ${mtuInfo.negotiated} bytes (${mtuInfo.effective} effective)`);
+
     // Read battery level
     const batteryValue = await BleOperationWrapper.read(deviceId, PMScan_SERVICE_UUID, PMScan_BATTERY_UUID);
     const battery = batteryValue.getUint8(0);
@@ -41,28 +46,32 @@ export class PMScanNativeInitializer {
 
     // Start all notifications in parallel with Promise.allSettled
     const notificationResults = await Promise.allSettled([
-      // Critical: RT data notifications
+      // Critical: RT data notifications with fragmentation handling
       BleOperationWrapper.startNotifications(
         deviceId,
         (value) => {
-          const event = new CustomEvent('characteristicvaluechanged', {
-            detail: { target: { value } }
-          }) as any;
-          event.target = { value };
-          onRTData(event);
+          FragmentManager.processNotification(PMScan_RT_DATA_UUID, value, (assembledData) => {
+            const event = new CustomEvent('characteristicvaluechanged', {
+              detail: { target: { value: new DataView(assembledData.buffer) } }
+            }) as any;
+            event.target = { value: new DataView(assembledData.buffer) };
+            onRTData(event);
+          });
         },
         PMScan_SERVICE_UUID,
         PMScan_RT_DATA_UUID
       ),
-      // Non-critical: IM data notifications
+      // Non-critical: IM data notifications with fragmentation handling
       BleOperationWrapper.startNotifications(
         deviceId,
         (value) => {
-          const event = new CustomEvent('characteristicvaluechanged', {
-            detail: { target: { value } }
-          }) as any;
-          event.target = { value };
-          onIMData(event);
+          FragmentManager.processNotification(PMScan_IM_DATA_UUID, value, (assembledData) => {
+            const event = new CustomEvent('characteristicvaluechanged', {
+              detail: { target: { value: new DataView(assembledData.buffer) } }
+            }) as any;
+            event.target = { value: new DataView(assembledData.buffer) };
+            onIMData(event);
+          });
         },
         PMScan_SERVICE_UUID,
         PMScan_IM_DATA_UUID

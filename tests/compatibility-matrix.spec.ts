@@ -70,9 +70,20 @@ ANDROID_VERSIONS.forEach(({ name, userAgent }) => {
         await page.waitForTimeout(1000);
       }
       
-      // Should not crash the app
-      const appContainer = page.locator('[data-testid="app-container"]');
-      await expect(appContainer).toBeVisible();
+      // Test BLE operations
+      await expect(page.getByTestId('device-connect-button')).toBeVisible();
+      
+      // Verify compatibility info is displayed
+      await expect(page.getByTestId('compatibility-info')).toBeVisible();
+      
+      // Check for permission requirements
+      if (androidVersion >= 31) {
+        await expect(page.getByText(/BLUETOOTH_SCAN/)).toBeVisible();
+        await expect(page.getByText(/BLUETOOTH_CONNECT/)).toBeVisible();
+      }
+      
+      // Test MTU optimization features
+      await expect(page.getByTestId('mtu-info')).toBeVisible();
     });
 
     test('should persist state across navigation', async ({ page }) => {

@@ -14,6 +14,7 @@ import {
 import { PMScanDeviceState } from './deviceState';
 import { PMScanDevice } from './types';
 import { BleOperationWrapper } from './bleOperationWrapper';
+import { MtuManager, FragmentManager } from './mtuManager';
 import * as logger from '@/utils/logger';
 
 /**
@@ -37,6 +38,10 @@ export class PMScanDeviceInitializer {
     logger.debug('🔍 Discovering services...');
 
     const service = await BleOperationWrapper.getService(server, PMScan_SERVICE_UUID);
+    
+    // Negotiate MTU for optimal performance
+    const mtuInfo = await MtuManager.negotiateMtu(server);
+    logger.debug(`📡 MTU negotiated: ${mtuInfo.negotiated} bytes (${mtuInfo.effective} effective)`);
 
     // Read battery level
     const batteryChar = await BleOperationWrapper.getCharacteristic(service, PMScan_BATTERY_UUID);
@@ -52,15 +57,19 @@ export class PMScanDeviceInitializer {
 
     // Start all notifications in parallel with Promise.allSettled
     const notificationResults = await Promise.allSettled([
-      // Critical: RT data notifications
+      // Critical: RT data notifications with fragmentation handling
       BleOperationWrapper.startNotifications(rtDataChar, (value) => {
-        const event = { target: { value } } as any;
-        onRTData(event);
+        FragmentManager.processNotification(PMScan_RT_DATA_UUID, value, (assembledData) => {
+          const event = { target: { value: new DataView(assembledData.buffer) } } as any;
+          onRTData(event);
+        });
       }),
-      // Non-critical: IM data notifications
+      // Non-critical: IM data notifications with fragmentation handling
       BleOperationWrapper.startNotifications(imDataChar, (value) => {
-        const event = { target: { value } } as any;
-        onIMData(event);
+        FragmentManager.processNotification(PMScan_IM_DATA_UUID, value, (assembledData) => {
+          const event = { target: { value: new DataView(assembledData.buffer) } } as any;
+          onIMData(event);
+        });
       }),
       // Non-critical: Battery notifications
       BleOperationWrapper.startNotifications(batteryChar, (value) => {

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAndroidApiLevel } from '../hooks/useAndroidApiLevel';
 import { AndroidPermissionManager } from '../services/androidPermissions';
 import { deviceLogger } from '../services/deviceLogger';
+import { MtuInfoDisplay } from './MtuInfoDisplay';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
@@ -14,7 +15,13 @@ interface CompatibilityCheck {
   recommendations: string[];
 }
 
-export const DeviceCompatibilityChecker: React.FC = () => {
+interface DeviceCompatibilityCheckerProps {
+  isConnected?: boolean;
+}
+
+export const DeviceCompatibilityChecker: React.FC<DeviceCompatibilityCheckerProps> = ({ 
+  isConnected = false 
+}) => {
   const androidInfo = useAndroidApiLevel();
   const [compatibility, setCompatibility] = useState<CompatibilityCheck | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -183,6 +190,9 @@ export const DeviceCompatibilityChecker: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* MTU Performance Information */}
+      <MtuInfoDisplay isConnected={isConnected} />
     </div>
   );
 };
