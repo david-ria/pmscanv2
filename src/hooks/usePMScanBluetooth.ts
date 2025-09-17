@@ -31,6 +31,11 @@ export function usePMScanBluetooth() {
         connectionManager.state
       );
 
+      if (!data) {
+        // Invalid packet - skip processing
+        return;
+      }
+
       // Only update and log if data is significantly different to avoid duplicates
       setCurrentData((prevData) => {
         const isDifferent =
@@ -66,6 +71,11 @@ export function usePMScanBluetooth() {
         target.value,
         connectionManager.state
       );
+
+      if (!data) {
+        // Invalid packet - skip processing
+        return;
+      }
 
       // Skip IM data entirely to avoid duplicates - RT data is sufficient for real-time display
     }
