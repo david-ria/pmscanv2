@@ -46,7 +46,7 @@ const ANDROID_SCAN_FORCE_UNFILTERED =
 export async function runBleScanCapacitor(
   timeoutMs: number = SCAN_DURATION_MS,
   services?: string[]
-): Promise<FoundDevice[]> {
+): Promise<{ filteredDevices: FoundDevice[], rawDevices: FoundDevice[] }> {
   await ensureBleReady();
 
   const foundFiltered: FoundDevice[] = [];
@@ -211,11 +211,11 @@ export async function runBleScanCapacitor(
 
   safeBleDebugger.info('SCAN', '[BLE:SCAN] summary', undefined, summaryLogData);
 
-  return allFound;
+  return { filteredDevices: allFound, rawDevices: allRawDevices };
 }
 
 // ---- Scan Web (ouvre le chooser navigateur)
-export async function runBleScanWeb(services?: string[]): Promise<FoundDevice[]> {
+export async function runBleScanWeb(services?: string[]): Promise<{ filteredDevices: FoundDevice[], rawDevices: FoundDevice[] }> {
   if (!navigator.bluetooth) throw new Error('Bluetooth not available in this browser');
 
   console.log('Opening Web Bluetooth chooser via runBleScanWeb()');
@@ -229,20 +229,20 @@ export async function runBleScanWeb(services?: string[]): Promise<FoundDevice[]>
 
   console.log('✅ [BLE Web] Device selected from chooser:', { id: device.id, name: device.name });
 
-  return [
-    {
-      deviceId: device.id,
-      name: device.name || undefined,
-      rssi: undefined, // Web Bluetooth ne fournit pas le RSSI au scan
-    },
-  ];
+  const deviceResult = {
+    deviceId: device.id,
+    name: device.name || undefined,
+    rssi: undefined, // Web Bluetooth ne fournit pas le RSSI au scan
+  };
+  
+  return { filteredDevices: [deviceResult], rawDevices: [deviceResult] };
 }
 
 // ---- Entrée unifiée
 export async function runBleScan(opts: {
   timeoutMs?: number;
   services?: string[];
-} = {}): Promise<FoundDevice[]> {
+} = {}): Promise<{ filteredDevices: FoundDevice[], rawDevices: FoundDevice[] }> {
   const { timeoutMs = SCAN_DURATION_MS, services } = opts;
   return Capacitor.isNativePlatform()
     ? runBleScanCapacitor(timeoutMs, services)

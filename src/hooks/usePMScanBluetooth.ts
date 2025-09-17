@@ -17,7 +17,8 @@ export function usePMScanBluetooth() {
   const [currentData, setCurrentData] = useState<PMScanData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showDevicePicker, setShowDevicePicker] = useState(false);
-  const [availableDevices, setAvailableDevices] = useState<FoundDevice[]>([]);
+  const [filteredDevices, setFilteredDevices] = useState<FoundDevice[]>([]);
+  const [rawDevices, setRawDevices] = useState<FoundDevice[]>([]);
   const [isScanning, setIsScanning] = useState(false);
 
   // Use global connection manager to persist across component unmounts
@@ -256,9 +257,13 @@ export function usePMScanBluetooth() {
   // Handle device picker events
   useEffect(() => {
     const handleShowDevicePicker = (event: CustomEvent) => {
-      const { devices, enableRescan } = event.detail;
-      safeBleDebugger.info('PICKER', '[BLE:PICKER] state=open', undefined, { count: devices.length });
-      setAvailableDevices(devices);
+      const { filteredDevices, rawDevices, enableRescan } = event.detail;
+      safeBleDebugger.info('PICKER', '[BLE:PICKER] state=open', undefined, { 
+        filteredCount: (filteredDevices || []).length,
+        rawCount: (rawDevices || []).length
+      });
+      setFilteredDevices(filteredDevices || []);
+      setRawDevices(rawDevices || []);
       setShowDevicePicker(true);
       setIsScanning(false); // Reset scanning state when picker shows
     };
@@ -368,7 +373,8 @@ export function usePMScanBluetooth() {
     disconnect,
     // Device picker state and handlers
     showDevicePicker,
-    availableDevices,
+    filteredDevices,
+    rawDevices,
     onDevicePickerSelect: handleDevicePickerSelect,
     onDevicePickerCancel: handleDevicePickerCancel,
     onForgetDevice: handleForgetDevice,

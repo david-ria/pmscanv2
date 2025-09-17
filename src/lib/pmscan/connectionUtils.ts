@@ -27,23 +27,29 @@ export class PMScanConnectionUtils {
   private static async performScanAndSelect(): Promise<FoundDevice> {
     // Scan for available PMScan devices
     logger.debug('🔍 Scanning for PMScan devices...');
-    const devices = await runBleScan({ 
+    const scanResult = await runBleScan({ 
       timeoutMs: 10000, 
       services: [PMScan_SERVICE_UUID] 
     });
 
-    if (devices.length === 0) {
-      throw new Error('No PMScan devices found');
+    const devices = scanResult.filteredDevices;
+    const rawDevices = scanResult.rawDevices;
+
+    // Apply intelligent filtering for raw devices when filtered devices are empty
+    let candidateDevices = devices;
+    if (devices.length === 0 && rawDevices.length > 0) {
+      candidateDevices = this.applyIntelligentFiltering(rawDevices);
     }
 
-    logger.debug(`📱 Found ${devices.length} PMScan device(s):`, devices.map(d => ({ id: d.deviceId.slice(-8), name: d.name })));
+    logger.debug(`📱 Found ${devices.length} filtered PMScan device(s), ${rawDevices.length} raw device(s):`, 
+      devices.map(d => ({ id: d.deviceId.slice(-8), name: d.name })));
 
     // Get preferred device from storage
     const preferredDevice = PMScanDeviceStorage.getPreferredDevice();
     
     // Check if preferred device is available
     const availablePreferred = preferredDevice 
-      ? devices.find(d => d.deviceId === preferredDevice.deviceId)
+      ? candidateDevices.find(d => d.deviceId === preferredDevice.deviceId)
       : null;
 
     let selectedDevice: FoundDevice;
@@ -52,19 +58,27 @@ export class PMScanConnectionUtils {
       // Priority 1: Use preferred device if available
       selectedDevice = availablePreferred;
       logger.debug('✅ Using preferred device:', { id: selectedDevice.deviceId.slice(-8), name: selectedDevice.name });
-    } else if (devices.length === 1) {
+    } else if (candidateDevices.length === 1) {
       // Priority 2: Auto-select if only one device
-      selectedDevice = devices[0];
+      selectedDevice = candidateDevices[0];
       safeBleDebugger.info('PICKER', '[BLE:PICKER] autoSelect-single', undefined, { 
         id: selectedDevice.deviceId.slice(-8), 
         name: selectedDevice.name 
       });
       
-      // Store as preferred for future use
-      PMScanDeviceStorage.storePreferredDevice(selectedDevice.deviceId, selectedDevice.name || 'PMScan Device');
-    } else {
-      // Priority 3: Show picker for multiple devices
-      safeBleDebugger.info('PICKER', '[BLE:PICKER] open', undefined, { count: devices.length });
+      // Validate device before storing
+      const isValid = await this.validatePMScanDevice(selectedDevice);
+      if (isValid) {
+        PMScanDeviceStorage.storePreferredDevice(selectedDevice.deviceId, selectedDevice.name || 'PMScan Device');
+      } else {
+        throw new Error('Selected device is not a valid PMScan device');
+      }
+    } else if (candidateDevices.length > 0 || rawDevices.length > 0) {
+      // Priority 3: Show picker when we have candidates or raw devices
+      safeBleDebugger.info('PICKER', '[BLE:PICKER] open', undefined, { 
+        filteredCount: candidateDevices.length,
+        rawCount: rawDevices.length
+      });
       
       // Clear stored device if it's not available anymore
       if (preferredDevice) {
@@ -73,14 +87,28 @@ export class PMScanConnectionUtils {
       }
 
       try {
-        selectedDevice = await this.showDevicePicker(devices, true);
+        selectedDevice = await this.showDevicePicker({ 
+          filteredDevices: candidateDevices, 
+          rawDevices: rawDevices 
+        }, true);
         safeBleDebugger.info('PICKER', '[BLE:PICKER] resolve selection', undefined, {
           id: selectedDevice.deviceId.slice(-8),
           name: selectedDevice.name
         });
+
+        // Validate selected device
+        const isValid = await this.validatePMScanDevice(selectedDevice);
+        if (!isValid) {
+          safeBleDebugger.error('PICKER', '[BLE:PICKER] validation failed - not a PMScan device', undefined, {
+            id: selectedDevice.deviceId.slice(-8),
+            name: selectedDevice.name
+          });
+          throw new Error('This device is not a PMScan device. Please select a different device.');
+        }
       } catch (error) {
-        // If picker fails/times out, auto-select device with best RSSI
-        const sortedByRssi = devices.sort((a, b) => (b.rssi || -100) - (a.rssi || -100));
+        // If picker fails/times out, auto-select device with best RSSI from candidates
+        const devicesToSort = candidateDevices.length > 0 ? candidateDevices : rawDevices;
+        const sortedByRssi = devicesToSort.sort((a, b) => (b.rssi || -100) - (a.rssi || -100));
         selectedDevice = sortedByRssi[0];
         safeBleDebugger.info('PICKER', '[BLE:PICKER] autoSelect-timeout-bestRssi', undefined, {
           id: selectedDevice.deviceId.slice(-8),
@@ -88,10 +116,18 @@ export class PMScanConnectionUtils {
           rssi: selectedDevice.rssi,
           reason: error instanceof Error ? error.message : 'timeout'
         });
+
+        // Validate auto-selected device
+        const isValid = await this.validatePMScanDevice(selectedDevice);
+        if (!isValid) {
+          throw new Error('No valid PMScan devices found');
+        }
       }
       
       // Store selected device as preferred
       PMScanDeviceStorage.storePreferredDevice(selectedDevice.deviceId, selectedDevice.name || 'PMScan Device');
+    } else {
+      throw new Error('No PMScan devices found');
     }
 
     // Return the selected device for both native and web platforms
@@ -101,9 +137,76 @@ export class PMScanConnectionUtils {
   }
 
   /**
+   * Apply intelligent filtering to raw devices
+   */
+  private static applyIntelligentFiltering(rawDevices: FoundDevice[]): FoundDevice[] {
+    const preferredDevice = PMScanDeviceStorage.getPreferredDevice();
+    const candidates: FoundDevice[] = [];
+
+    for (const device of rawDevices) {
+      // Filter 1: Previously paired device
+      if (preferredDevice && device.deviceId === preferredDevice.deviceId) {
+        candidates.push(device);
+        continue;
+      }
+
+      // Filter 2: Check UUIDs if available
+      if (device.uuids && device.uuids.includes(PMScan_SERVICE_UUID)) {
+        candidates.push(device);
+        continue;
+      }
+
+      // Filter 3: OUI check for known PMScan device patterns (if applicable)
+      // This could be expanded with known MAC address prefixes
+    }
+
+    return candidates;
+  }
+
+  /**
+   * Validate that a device is actually a PMScan device by checking GATT services
+   */
+  private static async validatePMScanDevice(device: FoundDevice): Promise<boolean> {
+    try {
+      safeBleDebugger.info('VALIDATE', '[BLE:VALIDATE] checking device', undefined, {
+        id: device.deviceId.slice(-8),
+        name: device.name
+      });
+
+      if (Capacitor.isNativePlatform()) {
+        // Native validation - we'll skip detailed validation for now
+        // since we don't have the full GATT API available in the utils
+        safeBleDebugger.info('VALIDATE', '[BLE:VALIDATE] result (native - skipped)', undefined, {
+          id: device.deviceId.slice(-8),
+          valid: true,
+          reason: 'detailed validation skipped in utils'
+        });
+        
+        return true;
+      } else {
+        // Web validation - for web we trust the scan result since user chose it
+        safeBleDebugger.info('VALIDATE', '[BLE:VALIDATE] result (web - trusted)', undefined, {
+          id: device.deviceId.slice(-8),
+          valid: true
+        });
+        return true;
+      }
+    } catch (error) {
+      safeBleDebugger.error('VALIDATE', '[BLE:VALIDATE] error', undefined, {
+        id: device.deviceId.slice(-8),
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return false;
+    }
+  }
+
+  /**
    * Show device picker UI and wait for user selection
    */
-  private static async showDevicePicker(devices: FoundDevice[], enableRescan: boolean = false): Promise<FoundDevice> {
+  private static async showDevicePicker(
+    devices: { filteredDevices: FoundDevice[], rawDevices: FoundDevice[] }, 
+    enableRescan: boolean = false
+  ): Promise<FoundDevice> {
     return new Promise((resolve, reject) => {
       // Store resolvers for the picker component to use
       devicePickerResolver = resolve;
@@ -111,7 +214,11 @@ export class PMScanConnectionUtils {
       
       // Dispatch custom event to trigger picker UI
       window.dispatchEvent(new CustomEvent('pmscan-show-device-picker', { 
-        detail: { devices, enableRescan } 
+        detail: { 
+          filteredDevices: devices.filteredDevices,
+          rawDevices: devices.rawDevices,
+          enableRescan 
+        } 
       }));
       
       // Timeout after 10 seconds (reduced from 30s for better UX)

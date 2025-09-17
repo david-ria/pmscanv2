@@ -36,7 +36,8 @@ interface UnifiedDataState {
   
   // Device picker state
   showDevicePicker: boolean;
-  availableDevices: any[];
+  filteredDevices: any[];
+  rawDevices: any[];
   onDevicePickerSelect: (device: any) => void;
   onDevicePickerCancel: () => void;
   onForgetDevice: () => void;
@@ -146,7 +147,8 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     
     // Device picker state
     showDevicePicker: bluetooth.showDevicePicker,
-    availableDevices: bluetooth.availableDevices,
+    filteredDevices: bluetooth.filteredDevices,
+    rawDevices: bluetooth.rawDevices,
     onDevicePickerSelect: bluetooth.onDevicePickerSelect,
     onDevicePickerCancel: bluetooth.onDevicePickerCancel,
     onForgetDevice: bluetooth.onForgetDevice,

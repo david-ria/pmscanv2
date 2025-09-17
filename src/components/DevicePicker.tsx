@@ -10,12 +10,13 @@ import { Bluetooth, Battery, Signal, Trash2, RotateCcw } from 'lucide-react';
 import { FoundDevice } from '@/lib/bleScan';
 import { PMScanDeviceStorage } from '@/lib/pmscan/deviceStorage';
 import { safeBleDebugger } from '@/lib/bleSafeWrapper';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 interface DevicePickerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  devices: FoundDevice[];
+  filteredDevices: FoundDevice[];
+  rawDevices: FoundDevice[];
   onDeviceSelected: (device: FoundDevice) => void;
   onForgetDevice?: () => void;
   onRescan?: () => void;
@@ -25,22 +26,32 @@ interface DevicePickerProps {
 export const DevicePicker = ({
   open,
   onOpenChange,
-  devices,
+  filteredDevices,
+  rawDevices,
   onDeviceSelected,
   onForgetDevice,
   onRescan,
   isScanning = false,
 }: DevicePickerProps) => {
   const preferredDevice = PMScanDeviceStorage.getPreferredDevice();
+  const [showAllDevices, setShowAllDevices] = useState(false);
+
+  // Determine which devices to show
+  const devicesToShow = showAllDevices ? rawDevices : filteredDevices;
+  const hasFilteredDevices = filteredDevices.length > 0;
+  const hasRawDevices = rawDevices.length > 0;
 
   // Log picker UI state changes
   useEffect(() => {
     if (open) {
-      safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] mount/open', undefined, { count: devices.length });
+      safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] mount/open', undefined, { 
+        filteredCount: filteredDevices.length,
+        rawCount: rawDevices.length 
+      });
     } else {
       safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] close');
     }
-  }, [open, devices.length]);
+  }, [open, filteredDevices.length, rawDevices.length]);
 
   const handleDeviceSelect = (device: FoundDevice) => {
     safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] select', undefined, {
@@ -66,46 +77,95 @@ export const DevicePicker = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-3">
-          {devices.map((device) => {
-            const isPreferred = preferredDevice?.deviceId === device.deviceId;
+        <div className="space-y-4">
+          {/* Device list header with toggle */}
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium">
+              {hasFilteredDevices 
+                ? `PMScan Devices (${filteredDevices.length})` 
+                : `Available Devices (${rawDevices.length})`}
+            </h4>
             
-            return (
-              <div
-                key={device.deviceId}
-                className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50 ${
-                  isPreferred ? 'border-primary bg-primary/5' : 'border-border'
-                }`}
-                onClick={() => handleDeviceSelect(device)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium">{device.name || 'PMScan Device'}</h4>
-                      {isPreferred && (
-                        <Badge variant="secondary" className="text-xs">
-                          Preferred
-                        </Badge>
-                      )}
+            {!hasFilteredDevices && hasRawDevices && (
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="show-all-devices"
+                  checked={showAllDevices}
+                  onChange={(e) => setShowAllDevices(e.target.checked)}
+                  className="rounded border-border text-primary"
+                />
+                <label htmlFor="show-all-devices" className="text-xs text-muted-foreground cursor-pointer">
+                  Show all nearby devices (debug)
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* No devices message */}
+          {devicesToShow.length === 0 && (
+            <div className="text-center py-6 text-muted-foreground">
+              <p>No devices found.</p>
+              <p className="text-xs mt-1">Try rescanning or move closer to your PMScan device.</p>
+            </div>
+          )}
+
+          {/* Device list */}
+          <div className="space-y-3">
+            {devicesToShow.map((device) => {
+              const isPreferred = preferredDevice?.deviceId === device.deviceId;
+              const isPMScanDevice = filteredDevices.some(d => d.deviceId === device.deviceId);
+              
+              return (
+                <div
+                  key={device.deviceId}
+                  className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50 ${
+                    isPreferred ? 'border-primary bg-primary/5' : 'border-border'
+                  }`}
+                  onClick={() => handleDeviceSelect(device)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">
+                          {device.name || (isPMScanDevice ? 'PMScan Device' : 'Unknown Device')}
+                        </h4>
+                        {isPreferred && (
+                          <Badge variant="secondary" className="text-xs">
+                            Preferred
+                          </Badge>
+                        )}
+                        {!isPMScanDevice && showAllDevices && (
+                          <Badge variant="outline" className="text-xs">
+                            Unfiltered
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        <p className="font-mono">...{device.deviceId.slice(-4)}</p>
+                        {device.rssi && (
+                          <p className="flex items-center gap-1">
+                            <Signal className="h-3 w-3" />
+                            {device.rssi} dBm
+                          </p>
+                        )}
+                        {device.uuids && device.uuids.length > 0 && (
+                          <p className="text-xs truncate">
+                            UUIDs: {device.uuids.slice(0, 2).join(', ')}
+                            {device.uuids.length > 2 ? '...' : ''}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      <p className="font-mono">...{device.deviceId.slice(-4)}</p>
-                      {device.rssi && (
-                        <p className="flex items-center gap-1">
-                          <Signal className="h-3 w-3" />
-                          {device.rssi} dBm
-                        </p>
-                      )}
+                    
+                    <div className="flex items-center">
+                      <Bluetooth className="h-4 w-4 text-blue-500" />
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <Bluetooth className="h-4 w-4 text-blue-500" />
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         <div className="flex justify-between items-center pt-4 gap-2">

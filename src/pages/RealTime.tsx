@@ -79,7 +79,8 @@ export default function RealTime() {
     locationEnabled,
     // Device picker state
     showDevicePicker,
-    availableDevices, 
+    filteredDevices,
+    rawDevices,
     onDevicePickerSelect,
     onDevicePickerCancel,
     onForgetDevice,
@@ -316,7 +317,8 @@ export default function RealTime() {
       <DevicePicker
         open={showDevicePicker}
         onOpenChange={() => {}} // Controlled by device selection logic
-        devices={availableDevices}
+        filteredDevices={filteredDevices}
+        rawDevices={rawDevices}
         onDeviceSelected={onDevicePickerSelect}
         onForgetDevice={onForgetDevice}
         onRescan={onRescan}

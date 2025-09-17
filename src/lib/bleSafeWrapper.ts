@@ -6,7 +6,7 @@
 import * as logger from '@/utils/logger';
 import { Capacitor } from '@capacitor/core';
 
-export type BlePhase = 'INIT' | 'SCAN' | 'CONNECT' | 'NOTIFY' | 'DISCONNECT' | 'MTU' | 'CHARS' | 'SERVICE' | 'PICKER';
+export type BlePhase = 'INIT' | 'SCAN' | 'CONNECT' | 'NOTIFY' | 'DISCONNECT' | 'MTU' | 'CHARS' | 'SERVICE' | 'PICKER' | 'VALIDATE';
 
 interface SafeBleDebugger {
   info: (phase: BlePhase, message: string, deviceInfo?: any, metadata?: Record<string, any>) => void;
@@ -25,7 +25,7 @@ class SafeBleDebuggerImpl implements SafeBleDebugger {
   private realDebugger: any = null;
   private debuggerAvailable = false;
   private enabled = false;
-  private phases = new Set<BlePhase>(['CONNECT', 'DISCONNECT', 'MTU']);
+  private phases = new Set<BlePhase>(['CONNECT', 'DISCONNECT', 'MTU', 'PICKER', 'VALIDATE']);
 
   constructor() {
     this.initializeDebugger();
