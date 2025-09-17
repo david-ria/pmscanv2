@@ -3,6 +3,7 @@ import { PMScanData, PMScanDevice } from '@/lib/pmscan/types';
 import { parsePMScanDataPayload } from '@/lib/pmscan/dataParser';
 import { exponentialBackoff } from '@/lib/pmscan/utils';
 import { globalConnectionManager } from '@/lib/pmscan/globalConnectionManager';
+import { Capacitor } from '@capacitor/core';
 import * as logger from '@/utils/logger';
 
 export function usePMScanBluetooth() {
@@ -154,11 +155,14 @@ export function usePMScanBluetooth() {
       const manager = connectionManager;
       const device = await manager.requestDevice();
 
-      device.addEventListener('gattserverdisconnected', () => {
-        logger.debug('🔌 PMScan Device disconnected');
-        onDeviceDisconnected();
-        connect();
-      });
+      // Only add gattserverdisconnected listener for web platform
+      if (!Capacitor.isNativePlatform()) {
+        device.addEventListener('gattserverdisconnected', () => {
+          logger.debug('🔌 PMScan Device disconnected');
+          onDeviceDisconnected();
+          connect();
+        });
+      }
 
       connect();
     } catch (error) {

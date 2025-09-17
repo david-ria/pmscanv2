@@ -5,8 +5,6 @@ export async function ensureBleReady() {
   try {
     // 1) Init BLE (idempotent)
     await BleClient.initialize();
-
-    // 2) Check permissions are available (no explicit request needed in v7+)
     console.log('[BLE] Initialized successfully');
 
     // 3) Active le Bluetooth si OFF (ouvre le dialogue système)

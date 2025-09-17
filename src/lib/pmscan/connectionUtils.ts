@@ -19,10 +19,10 @@ export class PMScanConnectionUtils {
       throw new Error('No PMScan devices found');
     }
 
-    // On Capacitor, we need to convert to Web Bluetooth interface
+    // On Capacitor, the connection is handled by the connection manager
     if (Capacitor.isNativePlatform()) {
-      // For now, throw error as full Capacitor connection flow needs more implementation
-      throw new Error('Capacitor BLE connection flow not fully implemented yet');
+      // This should not be called directly on native - use connection manager
+      throw new Error('Use PMScanConnectionManager for native BLE connections');
     }
 
     // Web fallback - the scan already triggered requestDevice

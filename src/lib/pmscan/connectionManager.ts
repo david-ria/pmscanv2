@@ -1,8 +1,13 @@
 import { PMScanDevice } from './types';
 import { PMScanDeviceState } from './deviceState';
 import { PMScanDeviceInitializer } from './deviceInitializer';
+import { PMScanNativeInitializer } from './nativeInitializer';
 import { PMScanEventManager } from './eventManager';
 import { PMScanConnectionUtils } from './connectionUtils';
+import { BleClient } from '@capacitor-community/bluetooth-le';
+import { Capacitor } from '@capacitor/core';
+import { runBleScan } from '@/lib/bleScan';
+import { PMScan_SERVICE_UUID, PMScan_MODE_UUID } from './constants';
 import {
   getGlobalRecording,
   getBackgroundRecording,
@@ -15,14 +20,20 @@ export class PMScanConnectionManager {
   private service: BluetoothRemoteGATTService | null = null;
   private isInited = false;
   private shouldConnect = false;
+  
+  // Native (Capacitor) BLE support
+  private nativeDeviceId: string | null = null;
+  private nativeConnected = false;
 
   private deviceState: PMScanDeviceState;
   private deviceInitializer: PMScanDeviceInitializer;
+  private nativeInitializer: PMScanNativeInitializer;
   private eventManager: PMScanEventManager;
 
   constructor() {
     this.deviceState = new PMScanDeviceState();
     this.deviceInitializer = new PMScanDeviceInitializer(this.deviceState);
+    this.nativeInitializer = new PMScanNativeInitializer(this.deviceState);
     this.eventManager = new PMScanEventManager(this.deviceState);
   }
 
@@ -31,6 +42,9 @@ export class PMScanConnectionManager {
   }
 
   public isConnected(): boolean {
+    if (Capacitor.isNativePlatform()) {
+      return this.nativeConnected && this.isInited;
+    }
     return (this.device?.gatt?.connected && this.isInited) || false;
   }
 
@@ -39,6 +53,34 @@ export class PMScanConnectionManager {
   }
 
   public async requestDevice(): Promise<BluetoothDevice> {
+    if (Capacitor.isNativePlatform()) {
+      // Use unified BLE scan for native platforms
+      logger.debug('🔍 Scanning for PMScan devices on native platform...');
+      const devices = await runBleScan({ 
+        timeoutMs: 10000, 
+        services: [PMScan_SERVICE_UUID] 
+      });
+
+      if (devices.length === 0) {
+        throw new Error('No PMScan devices found');
+      }
+
+      // Auto-select first PMScan device
+      const selectedDevice = devices.find(d => d.name?.includes('PMScan')) || devices[0];
+      this.nativeDeviceId = selectedDevice.deviceId;
+      this.isInited = false;
+      this.shouldConnect = true;
+      
+      logger.debug('📱 Selected PMScan device:', selectedDevice.name);
+      
+      // Return a shim object for compatibility
+      return {
+        id: selectedDevice.deviceId,
+        name: selectedDevice.name || 'PMScan Device',
+        gatt: {} as BluetoothRemoteGATTServer
+      } as BluetoothDevice;
+    }
+
     const device = await PMScanConnectionUtils.requestBluetoothDevice();
     this.device = device;
     this.isInited = false;
@@ -47,6 +89,19 @@ export class PMScanConnectionManager {
   }
 
   public async connect(): Promise<BluetoothRemoteGATTServer> {
+    if (Capacitor.isNativePlatform()) {
+      if (!this.nativeDeviceId || !this.shouldConnect) {
+        throw new Error('No native device ID available or should not connect');
+      }
+
+      logger.debug('🔌 Connecting to native BLE device...');
+      await BleClient.connect(this.nativeDeviceId);
+      this.nativeConnected = true;
+      
+      // Return a shim object for compatibility
+      return {} as BluetoothRemoteGATTServer;
+    }
+
     if (!this.device || !this.shouldConnect) {
       throw new Error('No device available or should not connect');
     }
@@ -62,6 +117,25 @@ export class PMScanConnectionManager {
     onBatteryData: (event: Event) => void,
     onChargingData: (event: Event) => void
   ): Promise<PMScanDevice> {
+    if (Capacitor.isNativePlatform()) {
+      if (!this.nativeDeviceId || !this.nativeConnected) {
+        throw new Error('No native device connection available');
+      }
+
+      this.isInited = false;
+
+      const deviceInfo = await this.nativeInitializer.initializeDevice(
+        this.nativeDeviceId,
+        onRTData,
+        onIMData,
+        onBatteryData,
+        onChargingData
+      );
+
+      this.isInited = true;
+      return deviceInfo;
+    }
+
     if (!this.server || !this.device) {
       throw new Error('No server connection available');
     }
@@ -98,7 +172,27 @@ export class PMScanConnectionManager {
 
     this.shouldConnect = false;
 
-    if (this.device?.gatt?.connected && this.service) {
+    if (Capacitor.isNativePlatform()) {
+      if (this.nativeDeviceId && this.nativeConnected) {
+        try {
+          // Send disconnect command
+          const modeToWrite = new Uint8Array(1);
+          modeToWrite[0] = this.deviceState.state.mode | 0x40;
+          await BleClient.write(
+            this.nativeDeviceId,
+            PMScan_SERVICE_UUID,
+            PMScan_MODE_UUID,
+            new DataView(modeToWrite.buffer)
+          );
+          
+          // Disconnect
+          await BleClient.disconnect(this.nativeDeviceId);
+          this.nativeConnected = false;
+        } catch (err) {
+          console.error('❌ Failed to send native disconnect command:', err);
+        }
+      }
+    } else if (this.device?.gatt?.connected && this.service) {
       try {
         await PMScanConnectionUtils.sendDisconnectCommand(
           this.service,
@@ -132,9 +226,15 @@ export class PMScanConnectionManager {
       this.shouldConnect = false;
     }
 
-    this.device = null;
-    this.server = null;
-    this.service = null;
+    // Reset connection state
+    if (Capacitor.isNativePlatform()) {
+      this.nativeConnected = false;
+      this.nativeDeviceId = null;
+    } else {
+      this.device = null;
+      this.server = null;
+      this.service = null;
+    }
   }
 
   public async reestablishEventListeners(
@@ -143,7 +243,24 @@ export class PMScanConnectionManager {
     onBatteryData: (event: Event) => void,
     onChargingData: (event: Event) => void
   ): Promise<PMScanDevice | null> {
-    if (!this.isConnected() || !this.service || !this.device) {
+    if (!this.isConnected()) {
+      return null;
+    }
+
+    if (Capacitor.isNativePlatform()) {
+      if (!this.nativeDeviceId) return null;
+
+      // Re-establish native notifications
+      return await this.nativeInitializer.initializeDevice(
+        this.nativeDeviceId,
+        onRTData,
+        onIMData,
+        onBatteryData,
+        onChargingData
+      );
+    }
+
+    if (!this.service || !this.device) {
       return null;
     }
 
