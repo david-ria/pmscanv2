@@ -11,8 +11,6 @@ import * as logger from '@/utils/logger';
 
 export function usePMScanBluetooth() {
   const { toast } = useToast();
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [device, setDevice] = useState<PMScanDevice | null>(null);
   const [currentData, setCurrentData] = useState<PMScanData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +19,10 @@ export function usePMScanBluetooth() {
 
   // Use global connection manager to persist across component unmounts
   const connectionManager = globalConnectionManager;
+
+  // Get connection state from state machine
+  const isConnected = connectionManager.isConnected();
+  const isConnecting = connectionManager.isConnecting();
 
   // Event handlers
   const handleRTData = useCallback((event: Event) => {
@@ -114,8 +116,6 @@ export function usePMScanBluetooth() {
   const onDeviceConnected = useCallback(
     async (deviceInfo: PMScanDevice) => {
       setDevice(deviceInfo);
-      setIsConnected(true);
-      setIsConnecting(false);
       setError(null);
     },
     []
@@ -123,7 +123,6 @@ export function usePMScanBluetooth() {
 
   const onDeviceDisconnected = useCallback(() => {
     connectionManager.onDisconnected();
-    setIsConnected(false);
     setDevice((prev) => (prev ? { ...prev, connected: false } : null));
   }, []);
 
@@ -169,7 +168,6 @@ export function usePMScanBluetooth() {
           });
           
           setError(`Device connection failed: Essential data stream unavailable`);
-          setIsConnecting(false);
           return false;
         }
         
@@ -186,7 +184,6 @@ export function usePMScanBluetooth() {
           });
           
           setError(`Connection failed after ${maxRetries} attempts: ${errorMessage}`);
-          setIsConnecting(false);
           return false;
         }
         
@@ -197,14 +194,12 @@ export function usePMScanBluetooth() {
       }
     }
 
-    setIsConnecting(false);
     return false;
   }, [onDeviceConnected, handleRTData, handleIMData, handleBatteryData, handleChargingData]);
 
   const requestDevice = useCallback(async () => {
     try {
       setError(null);
-      setIsConnecting(true);
 
       const manager = connectionManager;
       const device = await manager.requestDevice();
@@ -237,14 +232,12 @@ export function usePMScanBluetooth() {
       });
       
       setError(errorMessage);
-      setIsConnecting(false);
     }
   }, [connect, onDeviceDisconnected]);
 
   const disconnect = useCallback(async () => {
     const success = await connectionManager.disconnect();
     if (success) {
-      setIsConnected(false);
       setDevice(null);
       setCurrentData(null);
     } else {
@@ -280,7 +273,6 @@ export function usePMScanBluetooth() {
   const handleDevicePickerCancel = useCallback(() => {
     PMScanConnectionUtils.rejectDevicePicker();
     setShowDevicePicker(false);
-    setIsConnecting(false);
   }, []);
 
   const handleForgetDevice = useCallback(() => {
@@ -300,8 +292,6 @@ export function usePMScanBluetooth() {
       if (!mounted) return;
       
       if (manager.isConnected()) {
-        setIsConnected(true);
-
         // Re-establish event listeners for the existing connection
         manager
           .reestablishEventListeners(
@@ -336,7 +326,6 @@ export function usePMScanBluetooth() {
       } else {
         // Ensure state is clean if no connection exists
         if (mounted) {
-          setIsConnected(false);
           setDevice(null);
           setCurrentData(null);
         }
