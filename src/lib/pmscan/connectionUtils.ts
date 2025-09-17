@@ -4,6 +4,7 @@ import * as logger from '@/utils/logger';
 import { runBleScan, FoundDevice } from '@/lib/bleScan';
 import { PMScanDeviceStorage } from './deviceStorage';
 import { Capacitor } from '@capacitor/core';
+import { safeBleDebugger } from '@/lib/bleSafeWrapper';
 
 // Device picker state management
 let devicePickerResolver: ((device: FoundDevice) => void) | null = null;
@@ -54,13 +55,16 @@ export class PMScanConnectionUtils {
     } else if (devices.length === 1) {
       // Priority 2: Auto-select if only one device
       selectedDevice = devices[0];
-      logger.debug('✅ Auto-selected single device:', { id: selectedDevice.deviceId.slice(-8), name: selectedDevice.name });
+      safeBleDebugger.info('PICKER', '[BLE:PICKER] autoSelect-single', undefined, { 
+        id: selectedDevice.deviceId.slice(-8), 
+        name: selectedDevice.name 
+      });
       
       // Store as preferred for future use
       PMScanDeviceStorage.storePreferredDevice(selectedDevice.deviceId, selectedDevice.name || 'PMScan Device');
     } else {
       // Priority 3: Show picker for multiple devices
-      logger.debug('🎯 Multiple devices found, showing picker...');
+      safeBleDebugger.info('PICKER', '[BLE:PICKER] open', undefined, { count: devices.length });
       
       // Clear stored device if it's not available anymore
       if (preferredDevice) {
@@ -68,7 +72,23 @@ export class PMScanConnectionUtils {
         PMScanDeviceStorage.forgetPreferredDevice();
       }
 
-      selectedDevice = await this.showDevicePicker(devices, true);
+      try {
+        selectedDevice = await this.showDevicePicker(devices, true);
+        safeBleDebugger.info('PICKER', '[BLE:PICKER] resolve selection', undefined, {
+          id: selectedDevice.deviceId.slice(-8),
+          name: selectedDevice.name
+        });
+      } catch (error) {
+        // If picker fails/times out, auto-select device with best RSSI
+        const sortedByRssi = devices.sort((a, b) => (b.rssi || -100) - (a.rssi || -100));
+        selectedDevice = sortedByRssi[0];
+        safeBleDebugger.info('PICKER', '[BLE:PICKER] autoSelect-timeout-bestRssi', undefined, {
+          id: selectedDevice.deviceId.slice(-8),
+          name: selectedDevice.name,
+          rssi: selectedDevice.rssi,
+          reason: error instanceof Error ? error.message : 'timeout'
+        });
+      }
       
       // Store selected device as preferred
       PMScanDeviceStorage.storePreferredDevice(selectedDevice.deviceId, selectedDevice.name || 'PMScan Device');
@@ -94,14 +114,15 @@ export class PMScanConnectionUtils {
         detail: { devices, enableRescan } 
       }));
       
-      // Timeout after 30 seconds
+      // Timeout after 10 seconds (reduced from 30s for better UX)
       setTimeout(() => {
         if (devicePickerResolver) {
+          safeBleDebugger.info('PICKER', '[BLE:PICKER] timeout', undefined, { timeoutMs: 10000 });
           devicePickerRejecter?.(new Error('Device selection timeout'));
           devicePickerResolver = null;
           devicePickerRejecter = null;
         }
-      }, 30000);
+      }, 10000);
     });
   }
 
@@ -121,6 +142,9 @@ export class PMScanConnectionUtils {
    */
   public static rejectDevicePicker(error?: Error): void {
     if (devicePickerRejecter) {
+      safeBleDebugger.info('PICKER', '[BLE:PICKER] cancel', undefined, { 
+        reason: error?.message || 'user cancelled' 
+      });
       devicePickerRejecter(error || new Error('Device selection cancelled'));
       devicePickerResolver = null;
       devicePickerRejecter = null;

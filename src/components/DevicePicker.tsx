@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Bluetooth, Battery, Signal, Trash2, RotateCcw } from 'lucide-react';
 import { FoundDevice } from '@/lib/bleScan';
 import { PMScanDeviceStorage } from '@/lib/pmscan/deviceStorage';
+import { safeBleDebugger } from '@/lib/bleSafeWrapper';
+import { useEffect } from 'react';
 
 interface DevicePickerProps {
   open: boolean;
@@ -31,7 +33,20 @@ export const DevicePicker = ({
 }: DevicePickerProps) => {
   const preferredDevice = PMScanDeviceStorage.getPreferredDevice();
 
+  // Log picker UI state changes
+  useEffect(() => {
+    if (open) {
+      safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] mount/open', undefined, { count: devices.length });
+    } else {
+      safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] close');
+    }
+  }, [open, devices.length]);
+
   const handleDeviceSelect = (device: FoundDevice) => {
+    safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] select', undefined, {
+      id: device.deviceId.slice(-8),
+      name: device.name
+    });
     onDeviceSelected(device);
     onOpenChange(false);
   };

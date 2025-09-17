@@ -6,7 +6,7 @@
 import * as logger from '@/utils/logger';
 import { Capacitor } from '@capacitor/core';
 
-export type BlePhase = 'INIT' | 'SCAN' | 'CONNECT' | 'NOTIFY' | 'DISCONNECT' | 'MTU' | 'CHARS' | 'SERVICE';
+export type BlePhase = 'INIT' | 'SCAN' | 'CONNECT' | 'NOTIFY' | 'DISCONNECT' | 'MTU' | 'CHARS' | 'SERVICE' | 'PICKER';
 
 interface SafeBleDebugger {
   info: (phase: BlePhase, message: string, deviceInfo?: any, metadata?: Record<string, any>) => void;

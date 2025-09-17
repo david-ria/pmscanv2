@@ -134,10 +134,14 @@ export class PMScanConnectionManager {
             throw new Error('No native device ID available or should not connect');
           }
 
-          safeBleDebugger.info('CONNECT', `Connecting to native device: ${this.nativeDeviceId}`);
+          safeBleDebugger.info('CONNECT', '[BLE:CONNECT] connecting', undefined, { 
+            deviceId: this.nativeDeviceId.slice(-8) 
+          });
           await BleOperationWrapper.connect(this.nativeDeviceId);
           
-          safeBleDebugger.info('CONNECT', 'Native BLE connection established');
+          safeBleDebugger.info('CONNECT', '[BLE:CONNECT] success (native)', undefined, { 
+            deviceId: this.nativeDeviceId.slice(-8) 
+          });
           // Return a shim object for compatibility
           return {} as BluetoothRemoteGATTServer;
         }
@@ -146,14 +150,24 @@ export class PMScanConnectionManager {
           throw new Error('No device available or should not connect');
         }
 
-        safeBleDebugger.info('CONNECT', `Connecting to web device: ${this.device.name}`, undefined, { deviceId: this.device.id });
+        safeBleDebugger.info('CONNECT', '[BLE:CONNECT] connecting', undefined, { 
+          deviceId: this.device.id.slice(-8) 
+        });
         const server = await BleOperationWrapper.connect(this.device) as BluetoothRemoteGATTServer;
         this.server = server;
         
-        safeBleDebugger.info('CONNECT', 'Web BLE GATT server connected');
+        safeBleDebugger.info('CONNECT', '[BLE:CONNECT] success (web)', undefined, { 
+          deviceId: this.device.id.slice(-8) 
+        });
         return server;
       });
     } catch (error) {
+      safeBleDebugger.error('CONNECT', '[BLE:CONNECT] error', undefined, {
+        error: error instanceof Error ? error.message : String(error),
+        deviceId: Capacitor.isNativePlatform() ? 
+          (this.nativeDeviceId ? this.nativeDeviceId.slice(-8) : 'unknown') :
+          (this.device ? this.device.id.slice(-8) : 'unknown')
+      });
       this.stateMachine.transitionToError(error instanceof Error ? error : new Error(String(error)), 'Connection failed');
       throw error;
     }
@@ -183,10 +197,14 @@ export class PMScanConnectionManager {
             onChargingData
           );
 
-          safeBleDebugger.info('INIT', 'Native device initialization complete', undefined, { 
+          safeBleDebugger.info('INIT', '[BLE:INIT] services/characteristics discovered (native)', undefined, {
+            deviceId: this.nativeDeviceId.slice(-8),
             version: deviceInfo.version, 
             battery: deviceInfo.battery,
             mode: deviceInfo.mode
+          });
+          safeBleDebugger.info('NOTIFY', '[BLE:NOTIFY] started (native)', undefined, {
+            deviceId: this.nativeDeviceId.slice(-8)
           });
           this.stateMachine.transition(PMScanConnectionState.CONNECTED, 'Native initialization complete');
           return deviceInfo;
@@ -208,10 +226,14 @@ export class PMScanConnectionManager {
           );
 
         this.service = service;
-        safeBleDebugger.info('INIT', 'Web device initialization complete', undefined, { 
-          version: deviceInfo.version, 
+        safeBleDebugger.info('INIT', '[BLE:INIT] services/characteristics discovered (web)', undefined, {
+          deviceId: this.device.id.slice(-8),
+          version: deviceInfo.version,
           battery: deviceInfo.battery,
           mode: deviceInfo.mode
+        });
+        safeBleDebugger.info('NOTIFY', '[BLE:NOTIFY] started (web)', undefined, {
+          deviceId: this.device.id.slice(-8)
         });
         this.stateMachine.transition(PMScanConnectionState.CONNECTED, 'Web initialization complete');
 

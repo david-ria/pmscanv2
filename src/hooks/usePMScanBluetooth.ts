@@ -9,6 +9,7 @@ import { FoundDevice } from '@/lib/bleScan';
 import { Capacitor } from '@capacitor/core';
 import { useToast } from '@/hooks/use-toast';
 import * as logger from '@/utils/logger';
+import { safeBleDebugger } from '@/lib/bleSafeWrapper';
 
 export function usePMScanBluetooth() {
   const { toast } = useToast();
@@ -256,6 +257,7 @@ export function usePMScanBluetooth() {
   useEffect(() => {
     const handleShowDevicePicker = (event: CustomEvent) => {
       const { devices, enableRescan } = event.detail;
+      safeBleDebugger.info('PICKER', '[BLE:PICKER] state=open', undefined, { count: devices.length });
       setAvailableDevices(devices);
       setShowDevicePicker(true);
       setIsScanning(false); // Reset scanning state when picker shows
@@ -270,11 +272,13 @@ export function usePMScanBluetooth() {
 
   const handleDevicePickerSelect = useCallback((device: FoundDevice) => {
     PMScanConnectionUtils.resolveDevicePicker(device);
+    safeBleDebugger.info('PICKER', '[BLE:PICKER] state=closed', undefined, { reason: 'selected' });
     setShowDevicePicker(false);
   }, []);
 
   const handleDevicePickerCancel = useCallback(() => {
     PMScanConnectionUtils.rejectDevicePicker();
+    safeBleDebugger.info('PICKER', '[BLE:PICKER] state=closed', undefined, { reason: 'cancelled' });
     setShowDevicePicker(false);
   }, []);
 
