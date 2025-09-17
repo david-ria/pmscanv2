@@ -76,7 +76,8 @@ export class PMScanConnectionManager {
   }
 
   public shouldAutoConnect(): boolean {
-    return this.shouldConnect;
+    // Auto-connect if we have recording enabled and we're not already connected
+    return (getGlobalRecording() || getBackgroundRecording()) && !this.isConnected();
   }
 
   public async requestDevice(): Promise<BluetoothDevice> {

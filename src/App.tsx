@@ -41,6 +41,9 @@ const PMLineGraph = lazy(() =>
 const GlobalDataCollector = lazy(() =>
   import('@/components/GlobalDataCollector').then(module => ({ default: module.GlobalDataCollector }))
 );
+const AppLifecycleManager = lazy(() =>
+  import('@/components/AppLifecycleManager').then(module => ({ default: module.AppLifecycleManager }))
+);
 
 // Import skeleton screens
 const AppLayoutSkeleton = lazy(() =>
@@ -136,6 +139,7 @@ const AppRoutes = () => {
             <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
               <UnifiedDataProvider>
                 <CrashRecoveryInitializer />
+                <AppLifecycleManager />
                 <div className="min-h-screen bg-background">
                   <Header />
                   <main className="pt-14 pb-16">
