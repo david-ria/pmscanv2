@@ -39,61 +39,90 @@ export class PMScanNativeInitializer {
     logger.debug(`🔋 Battery: ${battery}%`);
     this.deviceState.updateBattery(battery);
 
-    // Start RT data notifications
-    await BleOperationWrapper.startNotifications(
-      deviceId,
-      (value) => {
-        const event = new CustomEvent('characteristicvaluechanged', {
-          detail: { target: { value } }
-        }) as any;
-        event.target = { value };
-        onRTData(event);
-      },
-      PMScan_SERVICE_UUID,
-      PMScan_RT_DATA_UUID
-    );
+    // Start all notifications in parallel with Promise.allSettled
+    const notificationResults = await Promise.allSettled([
+      // Critical: RT data notifications
+      BleOperationWrapper.startNotifications(
+        deviceId,
+        (value) => {
+          const event = new CustomEvent('characteristicvaluechanged', {
+            detail: { target: { value } }
+          }) as any;
+          event.target = { value };
+          onRTData(event);
+        },
+        PMScan_SERVICE_UUID,
+        PMScan_RT_DATA_UUID
+      ),
+      // Non-critical: IM data notifications
+      BleOperationWrapper.startNotifications(
+        deviceId,
+        (value) => {
+          const event = new CustomEvent('characteristicvaluechanged', {
+            detail: { target: { value } }
+          }) as any;
+          event.target = { value };
+          onIMData(event);
+        },
+        PMScan_SERVICE_UUID,
+        PMScan_IM_DATA_UUID
+      ),
+      // Non-critical: Battery notifications
+      BleOperationWrapper.startNotifications(
+        deviceId,
+        (value) => {
+          const event = new CustomEvent('characteristicvaluechanged', {
+            detail: { target: { value } }
+          }) as any;
+          event.target = { value };
+          onBatteryData(event);
+        },
+        PMScan_SERVICE_UUID,
+        PMScan_BATTERY_UUID
+      ),
+      // Non-critical: Charging notifications
+      BleOperationWrapper.startNotifications(
+        deviceId,
+        (value) => {
+          const event = new CustomEvent('characteristicvaluechanged', {
+            detail: { target: { value } }
+          }) as any;
+          event.target = { value };
+          onChargingData(event);
+        },
+        PMScan_SERVICE_UUID,
+        PMScan_CHARGING_UUID
+      )
+    ]);
 
-    // Start IM data notifications
-    await BleOperationWrapper.startNotifications(
-      deviceId,
-      (value) => {
-        const event = new CustomEvent('characteristicvaluechanged', {
-          detail: { target: { value } }
-        }) as any;
-        event.target = { value };
-        onIMData(event);
-      },
-      PMScan_SERVICE_UUID,
-      PMScan_IM_DATA_UUID
-    );
+    // Check critical notifications (RT data)
+    if (notificationResults[0].status === 'rejected') {
+      logger.error('❌ Critical RT data notifications failed:', notificationResults[0].reason);
+      throw new Error('Failed to start critical RT data notifications');
+    }
 
-    // Start battery notifications
-    await BleOperationWrapper.startNotifications(
-      deviceId,
-      (value) => {
-        const event = new CustomEvent('characteristicvaluechanged', {
-          detail: { target: { value } }
-        }) as any;
-        event.target = { value };
-        onBatteryData(event);
-      },
-      PMScan_SERVICE_UUID,
-      PMScan_BATTERY_UUID
-    );
+    // Log non-critical notification failures but continue
+    const failureMessages = [];
+    if (notificationResults[1].status === 'rejected') {
+      logger.warn('⚠️ IM data notifications failed:', notificationResults[1].reason);
+      failureMessages.push('IM data');
+    }
+    if (notificationResults[2].status === 'rejected') {
+      logger.warn('⚠️ Battery notifications failed:', notificationResults[2].reason);
+      failureMessages.push('Battery');
+    }
+    if (notificationResults[3].status === 'rejected') {
+      logger.warn('⚠️ Charging notifications failed:', notificationResults[3].reason);
+      failureMessages.push('Charging');
+    }
 
-    // Start charging notifications
-    await BleOperationWrapper.startNotifications(
-      deviceId,
-      (value) => {
-        const event = new CustomEvent('characteristicvaluechanged', {
-          detail: { target: { value } }
-        }) as any;
-        event.target = { value };
-        onChargingData(event);
-      },
-      PMScan_SERVICE_UUID,
-      PMScan_CHARGING_UUID
-    );
+    if (failureMessages.length > 0) {
+      logger.warn(`⚠️ Some non-critical notifications failed: ${failureMessages.join(', ')}`);
+    }
+
+    logger.debug('✅ RT data notifications started successfully');
+    const successCount = notificationResults.filter(r => r.status === 'fulfilled').length;
+    logger.debug(`📊 ${successCount}/4 notifications active`);
 
     // Read and sync time if needed
     await this.syncDeviceTime(deviceId);

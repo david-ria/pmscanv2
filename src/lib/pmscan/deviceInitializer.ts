@@ -45,32 +45,63 @@ export class PMScanDeviceInitializer {
     logger.debug(`🔋 Battery: ${battery}%`);
     this.deviceState.updateBattery(battery);
 
-    // Start RT data notifications
+    // Get all characteristics first
     const rtDataChar = await BleOperationWrapper.getCharacteristic(service, PMScan_RT_DATA_UUID);
-    await BleOperationWrapper.startNotifications(rtDataChar, (value) => {
-      const event = { target: { value } } as any;
-      onRTData(event);
-    });
-
-    // Start IM data notifications
     const imDataChar = await BleOperationWrapper.getCharacteristic(service, PMScan_IM_DATA_UUID);
-    await BleOperationWrapper.startNotifications(imDataChar, (value) => {
-      const event = { target: { value } } as any;
-      onIMData(event);
-    });
-
-    // Start battery notifications
-    await BleOperationWrapper.startNotifications(batteryChar, (value) => {
-      const event = { target: { value } } as any;
-      onBatteryData(event);
-    });
-
-    // Start charging notifications
     const chargingChar = await BleOperationWrapper.getCharacteristic(service, PMScan_CHARGING_UUID);
-    await BleOperationWrapper.startNotifications(chargingChar, (value) => {
-      const event = { target: { value } } as any;
-      onChargingData(event);
-    });
+
+    // Start all notifications in parallel with Promise.allSettled
+    const notificationResults = await Promise.allSettled([
+      // Critical: RT data notifications
+      BleOperationWrapper.startNotifications(rtDataChar, (value) => {
+        const event = { target: { value } } as any;
+        onRTData(event);
+      }),
+      // Non-critical: IM data notifications
+      BleOperationWrapper.startNotifications(imDataChar, (value) => {
+        const event = { target: { value } } as any;
+        onIMData(event);
+      }),
+      // Non-critical: Battery notifications
+      BleOperationWrapper.startNotifications(batteryChar, (value) => {
+        const event = { target: { value } } as any;
+        onBatteryData(event);
+      }),
+      // Non-critical: Charging notifications
+      BleOperationWrapper.startNotifications(chargingChar, (value) => {
+        const event = { target: { value } } as any;
+        onChargingData(event);
+      })
+    ]);
+
+    // Check critical notifications (RT data)
+    if (notificationResults[0].status === 'rejected') {
+      logger.error('❌ Critical RT data notifications failed:', notificationResults[0].reason);
+      throw new Error('Failed to start critical RT data notifications');
+    }
+
+    // Log non-critical notification failures but continue
+    const failureMessages = [];
+    if (notificationResults[1].status === 'rejected') {
+      logger.warn('⚠️ IM data notifications failed:', notificationResults[1].reason);
+      failureMessages.push('IM data');
+    }
+    if (notificationResults[2].status === 'rejected') {
+      logger.warn('⚠️ Battery notifications failed:', notificationResults[2].reason);
+      failureMessages.push('Battery');
+    }
+    if (notificationResults[3].status === 'rejected') {
+      logger.warn('⚠️ Charging notifications failed:', notificationResults[3].reason);
+      failureMessages.push('Charging');
+    }
+
+    if (failureMessages.length > 0) {
+      logger.warn(`⚠️ Some non-critical notifications failed: ${failureMessages.join(', ')}`);
+    }
+
+    logger.debug('✅ RT data notifications started successfully');
+    const successCount = notificationResults.filter(r => r.status === 'fulfilled').length;
+    logger.debug(`📊 ${successCount}/4 notifications active`);
 
     // Read and sync time if needed
     await this.syncDeviceTime(service);

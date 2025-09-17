@@ -102,40 +102,13 @@ export function usePMScanBluetooth() {
   }, []);
 
   const onDeviceConnected = useCallback(
-    async (server: BluetoothRemoteGATTServer) => {
-      try {
-        const manager = connectionManager;
-        const deviceInfo = await manager.initializeDevice(
-          handleRTData,
-          handleIMData,
-          handleBatteryData,
-          handleChargingData
-        );
-
-        setDevice(deviceInfo);
-        setIsConnected(true);
-        setIsConnecting(false);
-        setError(null);
-      } catch (error) {
-        console.error('❌ Error initializing device:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to initialize device';
-        
-        // Show user-friendly toast
-        toast({
-          title: "Échec de l'initialisation",
-          description: errorMessage.includes('timeout') 
-            ? 'Délai d\'attente dépassé lors de la lecture des données de l\'appareil'
-            : errorMessage.includes('startNotifications')
-            ? 'Impossible de configurer les notifications. Redémarrage de l\'appareil recommandé.'
-            : 'Impossible d\'initialiser l\'appareil PMScan',
-          variant: "destructive",
-        });
-        
-        setError(errorMessage);
-        setIsConnecting(false);
-      }
+    async (deviceInfo: PMScanDevice) => {
+      setDevice(deviceInfo);
+      setIsConnected(true);
+      setIsConnecting(false);
+      setError(null);
     },
-    [handleRTData, handleIMData, handleBatteryData, handleChargingData]
+    []
   );
 
   const onDeviceDisconnected = useCallback(() => {
@@ -144,36 +117,79 @@ export function usePMScanBluetooth() {
     setDevice((prev) => (prev ? { ...prev, connected: false } : null));
   }, []);
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async (): Promise<boolean> => {
     const manager = connectionManager;
     logger.debug(
       '🔄 connect() called, shouldConnect:',
       manager.shouldAutoConnect()
     );
 
-    if (!manager.shouldAutoConnect()) return;
+    if (!manager.shouldAutoConnect()) return false;
 
-    exponentialBackoff(
-      10,
-      1.2,
-      () => manager.connect(),
-      (server) => onDeviceConnected(server),
-      () => {
-        logger.debug('❌ Failed to reconnect.');
-        const errorMessage = 'Failed to reconnect';
+    const maxRetries = 3;
+    const baseDelay = 1000;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        logger.debug(`🔄 Connection attempt ${attempt + 1}/${maxRetries}`);
         
-        // Show user-friendly toast for reconnection failure
-        toast({
-          title: "Échec de la reconnexion",
-          description: 'Impossible de se reconnecter automatiquement à l\'appareil PMScan',  
-          variant: "destructive",
-        });
+        const server = await manager.connect();
+        const deviceInfo = await manager.initializeDevice(
+          handleRTData,
+          handleIMData,
+          handleBatteryData,
+          handleChargingData
+        );
+
+        await onDeviceConnected(deviceInfo);
+        logger.debug('✅ PMScan connection successful');
+        return true;
+      } catch (error: any) {
+        const errorMessage = error?.message || 'Unknown connection error';
+        logger.error(`❌ Connection attempt ${attempt + 1} failed:`, errorMessage);
         
-        setError(errorMessage);
-        setIsConnecting(false);
+        // Check if this is a critical notification failure
+        if (errorMessage.includes('critical') && errorMessage.includes('notifications')) {
+          logger.error('🚨 Critical notification failure - cannot continue');
+          
+          toast({
+            title: "Échec critique de connexion",
+            description: 'Les données essentielles de l\'appareil ne sont pas disponibles. Redémarrez l\'appareil.',
+            variant: "destructive",
+          });
+          
+          setError(`Device connection failed: Essential data stream unavailable`);
+          setIsConnecting(false);
+          return false;
+        }
+        
+        if (attempt === maxRetries - 1) {
+          // Final attempt failed
+          toast({
+            title: "Échec de connexion",
+            description: errorMessage.includes('timeout') 
+              ? 'Délai d\'attente dépassé lors de la connexion'
+              : errorMessage.includes('startNotifications')
+              ? 'Impossible de configurer les notifications. Redémarrage recommandé.'
+              : `Connexion échouée après ${maxRetries} tentatives`,
+            variant: "destructive",
+          });
+          
+          setError(`Connection failed after ${maxRetries} attempts: ${errorMessage}`);
+          setIsConnecting(false);
+          return false;
+        }
+        
+        // Exponential backoff delay
+        const delay = baseDelay * Math.pow(2, attempt);
+        logger.debug(`⏳ Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-    );
-  }, [onDeviceConnected]);
+    }
+
+    setIsConnecting(false);
+    return false;
+  }, [onDeviceConnected, handleRTData, handleIMData, handleBatteryData, handleChargingData]);
 
   const requestDevice = useCallback(async () => {
     try {
