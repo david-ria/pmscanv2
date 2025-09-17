@@ -312,51 +312,93 @@ export function usePMScanBluetooth() {
     const manager = connectionManager;
 
     // Use requestIdleCallback for non-critical connection check to improve LCP
-    const idleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 0));
-    
-    idleCallback(() => {
-      if (!mounted) return;
-      
-      if (manager.isConnected()) {
-        // Re-establish event listeners for the existing connection
-        manager
-          .reestablishEventListeners(
-            handleRTData,
-            handleIMData,
-            handleBatteryData,
-            handleChargingData
-          )
-          .then((deviceInfo) => {
-            if (!mounted) return;
-            if (deviceInfo) {
-              setDevice(deviceInfo);
-              logger.debug(
-                '🔄 Restored existing PMScan connection with event listeners'
-              );
-            }
-          })
-          .catch((error) => {
-            if (!mounted) return;
-            console.error('❌ Failed to restore connection:', error);
-            const errorMessage = 'Failed to restore connection';
-            
-            // Show user-friendly toast for restore failure
-            toast({
-              title: "Échec de la restauration",
-              description: 'Impossible de restaurer la connexion existante',
-              variant: "destructive",
+    if ('requestIdleCallback' in window) {
+      (requestIdleCallback as any)(() => {
+        if (!mounted) return;
+        if (manager.isConnected()) {
+          // Re-establish event listeners for the existing connection
+          manager
+            .reestablishEventListeners(
+              handleRTData,
+              handleIMData,
+              handleBatteryData,
+              handleChargingData
+            )
+            .then((deviceInfo) => {
+              if (!mounted) return;
+              if (deviceInfo) {
+                setDevice(deviceInfo);
+                logger.debug(
+                  '🔄 Restored existing PMScan connection with event listeners'
+                );
+              }
+            })
+            .catch((error) => {
+              if (!mounted) return;
+              console.error('❌ Failed to restore connection:', error);
+              const errorMessage = 'Failed to restore connection';
+              
+              // Show user-friendly toast for restore failure
+              toast({
+                title: "Échec de la restauration",
+                description: 'Impossible de restaurer la connexion existante',
+                variant: "destructive",
+              });
+              
+              setError(errorMessage);
             });
-            
-            setError(errorMessage);
-          });
-      } else {
-        // Ensure state is clean if no connection exists
-        if (mounted) {
-          setDevice(null);
-          setCurrentData(null);
+        } else {
+          // Ensure state is clean if no connection exists
+          if (mounted) {
+            setDevice(null);
+            setCurrentData(null);
+          }
         }
-      }
-    });
+      });
+    } else {
+      setTimeout(() => {
+        if (!mounted) return;
+        if (manager.isConnected()) {
+          // Re-establish event listeners for the existing connection
+          manager
+            .reestablishEventListeners(
+              handleRTData,
+              handleIMData,
+              handleBatteryData,
+              handleChargingData
+            )
+            .then((deviceInfo) => {
+              if (!mounted) return;
+              if (deviceInfo) {
+                setDevice(deviceInfo);
+                logger.debug(
+                  '🔄 Restored existing PMScan connection with event listeners'
+                );
+              }
+            })
+            .catch((error) => {
+              if (!mounted) return;
+              console.error('❌ Failed to restore connection:', error);
+              const errorMessage = 'Failed to restore connection';
+              
+              // Show user-friendly toast for restore failure
+              toast({
+                title: "Échec de la restauration",
+                description: 'Impossible de restaurer la connexion existante',
+                variant: "destructive",
+              });
+              
+              setError(errorMessage);
+            });
+        } else {
+          // Ensure state is clean if no connection exists
+          if (mounted) {
+            setDevice(null);
+            setCurrentData(null);
+          }
+        }
+      }, 0);
+    }
 
     return () => {
       mounted = false;
