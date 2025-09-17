@@ -204,9 +204,14 @@ export function usePMScanBluetooth() {
   const requestDevice = useCallback(async () => {
     try {
       setError(null);
+      safeBleDebugger.info('PICKER', '[BLE:PICKER] requestDevice started', undefined, {});
 
       const manager = connectionManager;
       const device = await manager.requestDevice();
+
+      safeBleDebugger.info('PICKER', '[BLE:PICKER] requestDevice completed, starting connection', undefined, { 
+        deviceId: (device as any).id?.slice(-8) || 'unknown' 
+      });
 
       // Only add gattserverdisconnected listener for web platform
       if (!Capacitor.isNativePlatform()) {
@@ -217,10 +222,25 @@ export function usePMScanBluetooth() {
         });
       }
 
-      connect();
+      // Start connection process immediately
+      const connectionResult = await connect();
+      
+      if (connectionResult) {
+        safeBleDebugger.info('PICKER', '[BLE:PICKER] connection flow completed successfully', undefined, {
+          deviceId: (device as any).id?.slice(-8) || 'unknown'
+        });
+      } else {
+        safeBleDebugger.error('PICKER', '[BLE:PICKER] connection flow failed', undefined, {
+          deviceId: (device as any).id?.slice(-8) || 'unknown'
+        });
+      }
     } catch (error) {
       console.error('❌ Error requesting device:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to connect to device';
+      
+      safeBleDebugger.error('PICKER', '[BLE:PICKER] requestDevice failed', undefined, {
+        error: errorMessage
+      });
       
       // Show user-friendly toast
       toast({

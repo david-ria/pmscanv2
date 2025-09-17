@@ -43,6 +43,11 @@ const DataLogger = lazy(() =>
   }))
 );
 
+// Load debug tools in development
+if (process.env.NODE_ENV === 'development') {
+  import('@/lib/blePickerDebug');
+}
+
 export default function RealTime() {
   // Fast LCP - defer heavy initialization
   const [initialized, setInitialized] = useState(false);

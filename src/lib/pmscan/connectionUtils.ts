@@ -4,6 +4,8 @@ import * as logger from '@/utils/logger';
 import { runBleScan, FoundDevice } from '@/lib/bleScan';
 import { PMScanDeviceStorage } from './deviceStorage';
 import { Capacitor } from '@capacitor/core';
+import { BleClient } from '@capacitor-community/bluetooth-le';
+import { ensureBleReady } from '@/lib/bleReady';
 import { safeBleDebugger } from '@/lib/bleSafeWrapper';
 
 // Device picker state management
@@ -19,6 +21,19 @@ export class PMScanConnectionUtils {
    */
   public static async requestBluetoothDeviceWithPicker(): Promise<FoundDevice> {
     return this.performScanAndSelect();
+  }
+
+  /**
+   * Check if picker should be forced to show (debug flag)
+   */
+  private static shouldForceShowPicker(): boolean {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const forceShow = localStorage.getItem('BLE_PICKER_FORCE_SHOW');
+        return forceShow === 'true' || forceShow === '1';
+      }
+    } catch {}
+    return false;
   }
 
   /**
@@ -52,14 +67,22 @@ export class PMScanConnectionUtils {
       ? candidateDevices.find(d => d.deviceId === preferredDevice.deviceId)
       : null;
 
+    // Check debug flag to force picker
+    const forceShowPicker = this.shouldForceShowPicker();
+
     let selectedDevice: FoundDevice;
 
-    if (availablePreferred) {
-      // Priority 1: Use preferred device if available
+    if (availablePreferred && !forceShowPicker) {
+      // Priority 1: Use preferred device if available (unless debug flag is set)
       selectedDevice = availablePreferred;
       logger.debug('✅ Using preferred device:', { id: selectedDevice.deviceId.slice(-8), name: selectedDevice.name });
-    } else if (candidateDevices.length === 1) {
-      // Priority 2: Auto-select if only one device
+      
+      safeBleDebugger.info('PICKER', '[BLE:PICKER] proceed-connect (preferred)', undefined, {
+        id: selectedDevice.deviceId.slice(-8),
+        name: selectedDevice.name
+      });
+    } else if (candidateDevices.length === 1 && !forceShowPicker) {
+      // Priority 2: Auto-select if only one device (unless debug flag is set)
       selectedDevice = candidateDevices[0];
       safeBleDebugger.info('PICKER', '[BLE:PICKER] autoSelect-single', undefined, { 
         id: selectedDevice.deviceId.slice(-8), 
@@ -70,18 +93,24 @@ export class PMScanConnectionUtils {
       const isValid = await this.validatePMScanDevice(selectedDevice);
       if (isValid) {
         PMScanDeviceStorage.storePreferredDevice(selectedDevice.deviceId, selectedDevice.name || 'PMScan Device');
+        
+        safeBleDebugger.info('PICKER', '[BLE:PICKER] proceed-connect (autoSelect)', undefined, {
+          id: selectedDevice.deviceId.slice(-8),
+          name: selectedDevice.name
+        });
       } else {
         throw new Error('Selected device is not a valid PMScan device');
       }
-    } else if (candidateDevices.length > 0 || rawDevices.length > 0) {
-      // Priority 3: Show picker when we have candidates or raw devices
+    } else if (candidateDevices.length > 0 || rawDevices.length > 0 || forceShowPicker) {
+      // Priority 3: Show picker when we have candidates or raw devices or debug flag is set
       safeBleDebugger.info('PICKER', '[BLE:PICKER] open', undefined, { 
         filteredCount: candidateDevices.length,
-        rawCount: rawDevices.length
+        rawCount: rawDevices.length,
+        forceShow: forceShowPicker
       });
       
       // Clear stored device if it's not available anymore
-      if (preferredDevice) {
+      if (preferredDevice && !forceShowPicker) {
         logger.debug('⚠️ Preferred device not available, clearing storage');
         PMScanDeviceStorage.forgetPreferredDevice();
       }
@@ -96,7 +125,7 @@ export class PMScanConnectionUtils {
           name: selectedDevice.name
         });
 
-        // Validate selected device
+        // Validate selected device (especially important for manually selected raw devices)
         const isValid = await this.validatePMScanDevice(selectedDevice);
         if (!isValid) {
           safeBleDebugger.error('PICKER', '[BLE:PICKER] validation failed - not a PMScan device', undefined, {
@@ -105,6 +134,11 @@ export class PMScanConnectionUtils {
           });
           throw new Error('This device is not a PMScan device. Please select a different device.');
         }
+
+        safeBleDebugger.info('PICKER', '[BLE:PICKER] proceed-connect (manual)', undefined, {
+          id: selectedDevice.deviceId.slice(-8),
+          name: selectedDevice.name
+        });
       } catch (error) {
         // If picker fails/times out, auto-select device with best RSSI from candidates
         const devicesToSort = candidateDevices.length > 0 ? candidateDevices : rawDevices;
@@ -174,15 +208,49 @@ export class PMScanConnectionUtils {
       });
 
       if (Capacitor.isNativePlatform()) {
-        // Native validation - we'll skip detailed validation for now
-        // since we don't have the full GATT API available in the utils
-        safeBleDebugger.info('VALIDATE', '[BLE:VALIDATE] result (native - skipped)', undefined, {
-          id: device.deviceId.slice(-8),
-          valid: true,
-          reason: 'detailed validation skipped in utils'
-        });
-        
-        return true;
+        // For native, we can try to connect and check the service
+        // This is especially important for manually selected raw devices
+        try {
+          await ensureBleReady();
+          
+          // Try to discover services
+          const services = await BleClient.getServices(device.deviceId);
+          const hasPMScanService = services.some(service => 
+            service.uuid.toLowerCase() === PMScan_SERVICE_UUID.toLowerCase()
+          );
+          
+          safeBleDebugger.info('VALIDATE', '[BLE:VALIDATE] result (native - GATT check)', undefined, {
+            id: device.deviceId.slice(-8),
+            valid: hasPMScanService,
+            servicesFound: services.length,
+            hasPMScanService
+          });
+          
+          return hasPMScanService;
+        } catch (connectError) {
+          // If we can't connect, fall back to less strict validation
+          safeBleDebugger.warn('VALIDATE', '[BLE:VALIDATE] GATT connection failed, using fallback', undefined, {
+            id: device.deviceId.slice(-8),
+            error: connectError instanceof Error ? connectError.message : String(connectError)
+          });
+          
+          // Check if device name or UUIDs suggest it's a PMScan device
+          const hasGoodName = device.name && device.name.includes('PMScan');
+          const hasGoodUuid = device.uuids && device.uuids.some(uuid => 
+            uuid.toLowerCase() === PMScan_SERVICE_UUID.toLowerCase()
+          );
+          
+          const isValid = hasGoodName || hasGoodUuid;
+          safeBleDebugger.info('VALIDATE', '[BLE:VALIDATE] result (native - fallback)', undefined, {
+            id: device.deviceId.slice(-8),
+            valid: isValid,
+            hasGoodName,
+            hasGoodUuid,
+            reason: 'GATT check failed, using name/uuid heuristics'
+          });
+          
+          return isValid;
+        }
       } else {
         // Web validation - for web we trust the scan result since user chose it
         safeBleDebugger.info('VALIDATE', '[BLE:VALIDATE] result (web - trusted)', undefined, {
