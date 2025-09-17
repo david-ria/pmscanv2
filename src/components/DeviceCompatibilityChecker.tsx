@@ -194,7 +194,7 @@ export const DeviceCompatibilityChecker: React.FC<DeviceCompatibilityCheckerProp
       )}
 
       {/* Development Tools */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <div className="grid gap-4">
           <BleDebugDiagnostic />
           <BleDebugControl />

@@ -25,7 +25,7 @@ import { calculateDataQuality } from '@/lib/autoContext.config';
 
 // Development telemetry logging
 function logTransition(prev: string, next: string, data: AutoContextEvaluationData) {
-  if (process.env.NODE_ENV !== 'development') return;
+  if (!import.meta.env.DEV) return;
   if (prev === next) return;
   devLogger.debug(`AutoContext transition: ${prev} -> ${next}`, {
     speed: Math.round((data.movement.speed ?? 0) * 10) / 10,

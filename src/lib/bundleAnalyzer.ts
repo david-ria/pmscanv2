@@ -82,7 +82,7 @@ export const trackDynamicImport = (moduleName: string) => {
 
 // Development helper to simulate different network conditions
 export const simulateSlowNetwork = (delayMs: number = 1000) => {
-  if (process.env.NODE_ENV !== 'development') return;
+  if (!import.meta.env.DEV) return;
   
   console.warn(`🐌 Simulating slow network (${delayMs}ms delay)`);
   

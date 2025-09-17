@@ -129,7 +129,7 @@ export default function RealTime() {
 
   // Initial autocontext effect - runs only when autocontext is toggled
   useEffect(() => {
-    if (initialized && process.env.NODE_ENV === 'development') {
+    if (initialized && import.meta.env.DEV) {
       console.log('Autocontext effect triggered:', { 
         autoContextEnabled, 
         hasCurrentData: !!currentData, 

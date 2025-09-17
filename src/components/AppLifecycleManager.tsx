@@ -37,7 +37,7 @@ export function AppLifecycleManager() {
   });
 
   // Debug info in development
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     logger.debug(`🔄 App Lifecycle State: ${appState}, Visible: ${isVisible}, Orientation: ${orientation}, Restoring: ${isRestoring}`);
   }
 

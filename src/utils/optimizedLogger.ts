@@ -33,7 +33,7 @@ class OptimizedLogger {
       error: 3,
     };
 
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isDevelopment = import.meta.env.DEV;
     
     if (!isDevelopment && !this.config.enableInProduction) {
       return level === 'error'; // Only errors in production
@@ -144,10 +144,10 @@ class OptimizedLogger {
 
 // Global logger instance
 export const logger = new OptimizedLogger({
-  level: process.env.NODE_ENV === 'development' ? 'debug' : 'warn',
+  level: import.meta.env.DEV ? 'debug' : 'warn',
   enableInProduction: false,
   prefix: '[AirSentinels]',
-  enablePerformanceTracking: process.env.NODE_ENV === 'development',
+  enablePerformanceTracking: import.meta.env.DEV,
 });
 
 // Convenience exports (bound wrappers to preserve context)
@@ -168,17 +168,17 @@ export const rateLimitedWarn = (key: string, intervalMs: number, message: string
 // Development-only logger
 export const devLogger = {
   debug: (message: string, ...args: any[]) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       logger.debug(message, ...args);
     }
   },
   info: (message: string, ...args: any[]) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       logger.info(message, ...args);
     }
   },
   performance: (label: string, fn: () => void) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       logger.time(label);
       fn();
       logger.timeEnd(label);

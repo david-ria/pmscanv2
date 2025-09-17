@@ -54,7 +54,7 @@ export const CookingParams = {
 
   // Debug controls
   debug: {
-    enabled: process.env.NODE_ENV === 'development',
+    enabled: import.meta.env.DEV,
     logFeatures: true,
     logScores: true,
     logDecision: true
