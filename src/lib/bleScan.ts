@@ -8,10 +8,6 @@ export type FoundDevice = { deviceId: string; name?: string; rssi?: number; uuid
 // Configurable scan duration
 export const SCAN_DURATION_MS = 10000;
 
-// Android diagnostic flags (runtime toggles)
-const ANDROID_SCAN_RAW_LOGS = true; // Force print full arrays even if large
-const ANDROID_SCAN_FORCE_UNFILTERED = false; // Skip filtered phase, only do unfiltered
-
 // Cache the actual Web BluetoothDevice so we don't need to call requestDevice again
 const webDeviceCache = new Map<string, BluetoothDevice>();
 export function getWebBluetoothDeviceById(id: string) {
