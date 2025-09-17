@@ -21,28 +21,27 @@ export function BleDebugDiagnostic() {
     setIsRunning(true);
     const diagnosticResults: DiagnosticResult[] = [];
 
-    // Test 1: Check if bleDebugger can be imported
+    // Test 1: Check if safeBleDebugger is available
     try {
-      const { bleDebugger } = await import('@/lib/bleDebug');
       diagnosticResults.push({
         component: 'BLE Debugger Import',
         status: 'ok',
-        message: 'BLE debugger imported successfully'
+        message: 'Safe BLE debugger is available'
       });
 
-      // Test 2: Check if bleDebugger methods work
+      // Test 2: Check if safeBleDebugger methods work
       try {
-        const isEnabled = bleDebugger.isEnabled();
+        const isEnabled = safeBleDebugger.isEnabled();
         diagnosticResults.push({
           component: 'BLE Debugger Methods',
           status: 'ok',
-          message: `BLE debugger methods working (enabled: ${isEnabled})`
+          message: `Safe BLE debugger methods working (enabled: ${isEnabled})`
         });
       } catch (error) {
         diagnosticResults.push({
           component: 'BLE Debugger Methods',
           status: 'error',
-          message: 'BLE debugger methods failing',
+          message: 'Safe BLE debugger methods failing',
           details: error instanceof Error ? error.message : String(error)
         });
       }
@@ -50,7 +49,7 @@ export function BleDebugDiagnostic() {
       diagnosticResults.push({
         component: 'BLE Debugger Import',
         status: 'error',
-        message: 'Failed to import BLE debugger',
+        message: 'Failed to access safe BLE debugger',
         details: error instanceof Error ? error.message : String(error)
       });
     }
