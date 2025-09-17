@@ -120,10 +120,10 @@ export class PMScanConnectionUtils {
     }
   }
 
-  public static async requestBluetoothDevice(): Promise<BluetoothDevice> {
+  public static async requestBluetoothDevice(): Promise<BluetoothDevice | FoundDevice> {
     // Legacy method - now uses the smart picker
     const result = await this.requestBluetoothDeviceWithPicker();
-    return result as BluetoothDevice;
+    return result;
   }
 
   public static async connectToDevice(
