@@ -56,8 +56,8 @@ export class PMScanDeviceInitializer {
     this.deviceState.updateBattery(battery);
 
     // Get all characteristics first
-    const [rtDataChar, imDataChar, chargingChar] = await bleDebugger.timeOperation('CHARS', 'Characteristics Discovery', async () => {
-      bleDebugger.info('CHARS', 'Discovering BLE characteristics');
+    const [rtDataChar, imDataChar, chargingChar] = await safeBleDebugger.timeOperation('CHARS', 'Characteristics Discovery', async () => {
+      safeBleDebugger.info('CHARS', 'Discovering BLE characteristics');
       return await Promise.all([
         BleOperationWrapper.getCharacteristic(service, PMScan_RT_DATA_UUID),
         BleOperationWrapper.getCharacteristic(service, PMScan_IM_DATA_UUID),
@@ -66,8 +66,8 @@ export class PMScanDeviceInitializer {
     });
 
     // Start all notifications in parallel with Promise.allSettled
-    const notificationResults = await bleDebugger.timeOperation('NOTIFY', 'Notification Setup', async () => {
-      bleDebugger.info('NOTIFY', 'Starting BLE notifications for all characteristics');
+    const notificationResults = await safeBleDebugger.timeOperation('NOTIFY', 'Notification Setup', async () => {
+      safeBleDebugger.info('NOTIFY', 'Starting BLE notifications for all characteristics');
       return await Promise.allSettled([
         // Critical: RT data notifications with fragmentation handling
         BleOperationWrapper.startNotifications(rtDataChar, (value) => {
@@ -98,35 +98,35 @@ export class PMScanDeviceInitializer {
 
     // Check critical notifications (RT data)
     if (notificationResults[0].status === 'rejected') {
-      bleDebugger.error('NOTIFY', 'Critical RT data notifications failed', undefined, { error: notificationResults[0].reason });
+      safeBleDebugger.error('NOTIFY', 'Critical RT data notifications failed', undefined, { error: notificationResults[0].reason });
       throw new Error('Failed to start critical RT data notifications');
     }
 
     // Log non-critical notification failures but continue
     const failureMessages = [];
     if (notificationResults[1].status === 'rejected') {
-      bleDebugger.warn('NOTIFY', 'IM data notifications failed', undefined, { error: notificationResults[1].reason });
+      safeBleDebugger.warn('NOTIFY', 'IM data notifications failed', undefined, { error: notificationResults[1].reason });
       failureMessages.push('IM data');
     }
     if (notificationResults[2].status === 'rejected') {
-      bleDebugger.warn('NOTIFY', 'Battery notifications failed', undefined, { error: notificationResults[2].reason });
+      safeBleDebugger.warn('NOTIFY', 'Battery notifications failed', undefined, { error: notificationResults[2].reason });
       failureMessages.push('Battery');
     }
     if (notificationResults[3].status === 'rejected') {
-      bleDebugger.warn('NOTIFY', 'Charging notifications failed', undefined, { error: notificationResults[3].reason });
+      safeBleDebugger.warn('NOTIFY', 'Charging notifications failed', undefined, { error: notificationResults[3].reason });
       failureMessages.push('Charging');
     }
 
     const successCount = notificationResults.filter(r => r.status === 'fulfilled').length;
     if (failureMessages.length > 0) {
-      bleDebugger.warn('NOTIFY', `Some notifications failed: ${failureMessages.join(', ')}`, undefined, { 
+      safeBleDebugger.warn('NOTIFY', `Some notifications failed: ${failureMessages.join(', ')}`, undefined, { 
         successCount, 
         totalCount: 4,
         failures: failureMessages 
       });
     }
 
-    bleDebugger.info('NOTIFY', `Notifications active: ${successCount}/4`, undefined, { successCount });
+    safeBleDebugger.info('NOTIFY', `Notifications active: ${successCount}/4`, undefined, { successCount });
 
     // Read and sync time if needed
     await this.syncDeviceTime(service);

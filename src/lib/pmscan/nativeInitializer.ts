@@ -32,13 +32,13 @@ export class PMScanNativeInitializer {
     onBatteryData: (event: Event) => void,
     onChargingData: (event: Event) => void
   ): Promise<PMScanDevice> {
-    bleDebugger.info('INIT', 'PMScan native device connected', undefined, { deviceId });
+    safeBleDebugger.info('INIT', 'PMScan native device connected', undefined, { deviceId });
     
     // Negotiate MTU for optimal performance
-    const mtuInfo = await bleDebugger.timeOperation('MTU', 'MTU Negotiation', async () => {
+    const mtuInfo = await safeBleDebugger.timeOperation('MTU', 'MTU Negotiation', async () => {
       return await MtuManager.negotiateMtu(deviceId);
     });
-    bleDebugger.info('MTU', `MTU negotiated: ${mtuInfo.negotiated} bytes (${mtuInfo.effective} effective)`, undefined, mtuInfo);
+    safeBleDebugger.info('MTU', `MTU negotiated: ${mtuInfo.negotiated} bytes (${mtuInfo.effective} effective)`, undefined, mtuInfo);
 
     // Read battery level
     const batteryValue = await BleOperationWrapper.read(deviceId, PMScan_SERVICE_UUID, PMScan_BATTERY_UUID);
@@ -47,8 +47,8 @@ export class PMScanNativeInitializer {
     this.deviceState.updateBattery(battery);
 
     // Start all notifications in parallel with Promise.allSettled
-    const notificationResults = await bleDebugger.timeOperation('NOTIFY', 'Notification Setup', async () => {
-      bleDebugger.info('NOTIFY', 'Starting native BLE notifications for all characteristics');
+    const notificationResults = await safeBleDebugger.timeOperation('NOTIFY', 'Notification Setup', async () => {
+      safeBleDebugger.info('NOTIFY', 'Starting native BLE notifications for all characteristics');
       return await Promise.allSettled([
       // Critical: RT data notifications with fragmentation handling
       BleOperationWrapper.startNotifications(
@@ -111,35 +111,35 @@ export class PMScanNativeInitializer {
 
     // Check critical notifications (RT data)
     if (notificationResults[0].status === 'rejected') {
-      bleDebugger.error('NOTIFY', 'Critical RT data notifications failed', undefined, { error: notificationResults[0].reason });
+      safeBleDebugger.error('NOTIFY', 'Critical RT data notifications failed', undefined, { error: notificationResults[0].reason });
       throw new Error('Failed to start critical RT data notifications');
     }
 
     // Log non-critical notification failures but continue
     const failureMessages = [];
     if (notificationResults[1].status === 'rejected') {
-      bleDebugger.warn('NOTIFY', 'IM data notifications failed', undefined, { error: notificationResults[1].reason });
+      safeBleDebugger.warn('NOTIFY', 'IM data notifications failed', undefined, { error: notificationResults[1].reason });
       failureMessages.push('IM data');
     }
     if (notificationResults[2].status === 'rejected') {
-      bleDebugger.warn('NOTIFY', 'Battery notifications failed', undefined, { error: notificationResults[2].reason });
+      safeBleDebugger.warn('NOTIFY', 'Battery notifications failed', undefined, { error: notificationResults[2].reason });
       failureMessages.push('Battery');
     }
     if (notificationResults[3].status === 'rejected') {
-      bleDebugger.warn('NOTIFY', 'Charging notifications failed', undefined, { error: notificationResults[3].reason });
+      safeBleDebugger.warn('NOTIFY', 'Charging notifications failed', undefined, { error: notificationResults[3].reason });
       failureMessages.push('Charging');
     }
 
     const successCount = notificationResults.filter(r => r.status === 'fulfilled').length;
     if (failureMessages.length > 0) {
-      bleDebugger.warn('NOTIFY', `Some notifications failed: ${failureMessages.join(', ')}`, undefined, { 
+      safeBleDebugger.warn('NOTIFY', `Some notifications failed: ${failureMessages.join(', ')}`, undefined, { 
         successCount, 
         totalCount: 4,
         failures: failureMessages 
       });
     }
 
-    bleDebugger.info('NOTIFY', `Native notifications active: ${successCount}/4`, undefined, { successCount });
+    safeBleDebugger.info('NOTIFY', `Native notifications active: ${successCount}/4`, undefined, { successCount });
 
     // Read and sync time if needed
     await this.syncDeviceTime(deviceId);
