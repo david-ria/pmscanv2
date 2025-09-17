@@ -45,8 +45,9 @@ export function useCrashRecovery() {
         const recoveryDataStr = localStorage.getItem(CRASH_RECOVERY_KEY);
         if (recoveryDataStr) {
           const recoveryData: RecoveryData = JSON.parse(recoveryDataStr);
-          const isVeryOld =
-            Date.now() - new Date(recoveryData.timestamp).getTime() > 24 * 60 * 60 * 1000;
+          const timestampDate = new Date(recoveryData.timestamp);
+          const isVeryOld = !timestampDate.getTime || 
+            Date.now() - timestampDate.getTime() > 24 * 60 * 60 * 1000;
 
           if (isVeryOld) {
             logger.debug('🧹 Clearing old crash recovery data (>24h)');
@@ -66,20 +67,23 @@ export function useCrashRecovery() {
         if (recoveryDataStr) {
           const recoveryData: RecoveryData = JSON.parse(recoveryDataStr);
 
-          // Convert timestamps back to Date objects
+          // Convert timestamps back to Date objects safely
           const restoredRecordingData = recoveryData.recordingData.map(
             (entry) => ({
               ...entry,
               pmData: {
                 ...entry.pmData,
-                timestamp: new Date(entry.pmData.timestamp),
+                timestamp: entry.pmData.timestamp instanceof Date 
+                  ? entry.pmData.timestamp 
+                  : new Date(entry.pmData.timestamp),
               },
             })
           );
 
           // Only process if data is meaningful and recent (within 24 hours)
-          const isRecent =
-            Date.now() - new Date(recoveryData.timestamp).getTime() < 24 * 60 * 60 * 1000;
+          const recoveryTimestamp = new Date(recoveryData.timestamp);
+          const isRecent = recoveryTimestamp.getTime && 
+            Date.now() - recoveryTimestamp.getTime() < 24 * 60 * 60 * 1000;
           const hasData = restoredRecordingData.length > 0;
 
           if (isRecent && hasData) {
@@ -87,10 +91,16 @@ export function useCrashRecovery() {
               '🔄 Found crash recovery data, auto-saving mission...'
             );
 
-        // Create and save the recovered mission
+        // Create and save the recovered mission with safe date handling
+        const startTime = recoveryData.recordingStartTime 
+          ? (recoveryData.recordingStartTime instanceof Date 
+             ? recoveryData.recordingStartTime 
+             : new Date(recoveryData.recordingStartTime))
+          : null;
+        
         const mission = await saveMission(
-          recoveryData.recordingData,
-          recoveryData.recordingStartTime,
+          restoredRecordingData,
+          startTime,
           `Recovered-${new Date().toISOString().slice(0, 16)}`,
           recoveryData.missionContext.location,
           recoveryData.missionContext.activity,

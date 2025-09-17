@@ -17,8 +17,14 @@ clientsClaim();
 setCacheNameDetails({ prefix: 'pmscan', suffix: 'v1' });
 
 // Injected at build time: all hashed build assets, index.html, etc.
-precacheAndRoute(self.__WB_MANIFEST);
-cleanupOutdatedCaches();
+// Check if manifest exists before precaching
+const manifest = (self as any).__WB_MANIFEST;
+if (manifest && Array.isArray(manifest)) {
+  precacheAndRoute(manifest);
+  cleanupOutdatedCaches();
+} else {
+  console.warn('[SW] No manifest found, skipping precaching');
+}
 
 // Offline fallback page 
 const OFFLINE_FALLBACK_URL = '/offline.html';
