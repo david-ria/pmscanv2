@@ -1,3 +1,5 @@
+import { supabase } from '@/integrations/supabase/client';
+
 /**
  * Dynamic import utilities for code splitting heavy libraries
  * Reduces initial bundle size by loading dependencies only when needed
@@ -39,22 +41,19 @@ export const loadMapboxGL = async () => {
 };
 
 /**
- * Supabase client dynamic import - uses shared singleton
+ * Supabase client static reference - Note: Supabase is already loaded statically
+ * This function is kept for compatibility but returns the static client
  */
 export const loadSupabaseClient = async () => {
   if (moduleCache.has('supabase-client')) {
     return moduleCache.get('supabase-client');
   }
 
-  console.debug('[PERF] Loading Supabase client dynamically...');
-  trackImport('supabase');
+  console.debug('[PERF] Using statically loaded Supabase client');
   
-  // Use the existing shared client instead of creating a new one
-  const { supabase } = await import('@/integrations/supabase/client');
-
+  // Use the existing static client - no dynamic import needed
   const client = { supabase };
   moduleCache.set('supabase-client', client);
-  console.debug('[PERF] Supabase client loaded');
   
   return client;
 };
