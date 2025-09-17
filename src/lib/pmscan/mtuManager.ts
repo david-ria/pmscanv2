@@ -1,5 +1,5 @@
 import * as logger from '@/utils/logger';
-import { bleDebugger } from '@/lib/bleDebug';
+import { safeBleDebugger } from '@/lib/bleSafeWrapper';
 
 /**
  * MTU configuration and limits
@@ -29,14 +29,14 @@ export class MtuManager {
    * Negotiate MTU with device after connection
    */
   static async negotiateMtu(deviceIdOrServer: string | BluetoothRemoteGATTServer): Promise<MtuInfo> {
-    bleDebugger.info('MTU', 'Starting MTU negotiation');
+    safeBleDebugger.info('MTU', 'Starting MTU negotiation');
     
     try {
       if (typeof deviceIdOrServer === 'string') {
         // Native platform - current plugin API doesn't expose requestMtu; fall back to default
         const info = this.createMtuInfo(MTU_CONFIG.DEFAULT);
         this.currentMtu = info;
-        bleDebugger.info('MTU', 'Native MTU negotiation not supported by plugin; using default', undefined, {
+        safeBleDebugger.info('MTU', 'Native MTU negotiation not supported by plugin; using default', undefined, {
           negotiated: info.negotiated,
           effective: info.effective,
           isOptimal: info.isOptimal,
@@ -45,13 +45,13 @@ export class MtuManager {
         return info;
       } else {
         // Web platform - MTU negotiation not supported, use default
-        bleDebugger.info('MTU', 'Web platform: Using default MTU (no negotiation available)');
+        safeBleDebugger.info('MTU', 'Web platform: Using default MTU (no negotiation available)');
         const info = this.createMtuInfo(MTU_CONFIG.DEFAULT);
         this.currentMtu = info;
         return info;
       }
     } catch (error) {
-      bleDebugger.error('MTU', 'MTU negotiation error', undefined, { error: error instanceof Error ? error.message : String(error) });
+      safeBleDebugger.error('MTU', 'MTU negotiation error', undefined, { error: error instanceof Error ? error.message : String(error) });
       const info = this.createMtuInfo(MTU_CONFIG.DEFAULT);
       this.currentMtu = info;
       return info;
