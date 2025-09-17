@@ -5,18 +5,26 @@
 
 import * as logger from '@/utils/logger';
 
-type BlePhase = 'INIT' | 'SCAN' | 'CONNECT' | 'NOTIFY' | 'DISCONNECT' | 'MTU' | 'CHARS' | 'SERVICE';
+export type BlePhase = 'INIT' | 'SCAN' | 'CONNECT' | 'NOTIFY' | 'DISCONNECT' | 'MTU' | 'CHARS' | 'SERVICE';
 
 interface SafeBleDebugger {
   info: (phase: BlePhase, message: string, deviceInfo?: any, metadata?: Record<string, any>) => void;
   warn: (phase: BlePhase, message: string, deviceInfo?: any, metadata?: Record<string, any>) => void;
   error: (phase: BlePhase, message: string, deviceInfo?: any, metadata?: Record<string, any>) => void;
   timeOperation: <T>(phase: BlePhase, operation: string, fn: () => Promise<T>, deviceInfo?: any) => Promise<T>;
+  // Extended management API for UI components (no-op fallbacks when real debugger is absent)
+  setEnabled?: (enabled: boolean) => void;
+  isEnabled?: () => boolean;
+  isPhaseEnabled?: (phase: BlePhase) => boolean;
+  exportDebugLogs?: () => string;
+  getDiagnostics?: () => string;
 }
 
 class SafeBleDebuggerImpl implements SafeBleDebugger {
   private realDebugger: any = null;
   private debuggerAvailable = false;
+  private enabled = false;
+  private phases = new Set<BlePhase>(['CONNECT', 'DISCONNECT', 'MTU']);
 
   constructor() {
     this.initializeDebugger();
@@ -125,12 +133,79 @@ class SafeBleDebuggerImpl implements SafeBleDebugger {
       return result;
     } catch (error) {
       const duration = performance.now() - startTime;
-      this.fallbackLog('error', phase, `Failed ${operation} (${duration.toFixed(1)}ms): ${error}`, { 
-        duration, 
-        error: error instanceof Error ? error.message : String(error) 
+      this.fallbackLog('error', phase, `Failed ${operation} (${duration.toFixed(1)}ms): ${error}`, {
+        duration,
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
+  }
+
+  // Management API (fallbacks when real debugger missing)
+  setEnabled(enabled: boolean) {
+    if (this.debuggerAvailable && this.realDebugger?.setEnabled) {
+      try {
+        this.realDebugger.setEnabled(enabled);
+        return;
+      } catch (error) {
+        console.warn('[BLE SAFE] setEnabled failed on real debugger, using fallback');
+      }
+    }
+    this.enabled = enabled;
+  }
+
+  isEnabled(): boolean {
+    if (this.debuggerAvailable && this.realDebugger?.isEnabled) {
+      try {
+        return this.realDebugger.isEnabled();
+      } catch {}
+    }
+    return this.enabled;
+  }
+
+  isPhaseEnabled(phase: BlePhase): boolean {
+    const enabled = this.isEnabled();
+    if (!enabled) return false;
+    if (this.debuggerAvailable && this.realDebugger?.isPhaseEnabled) {
+      try {
+        return this.realDebugger.isPhaseEnabled(phase);
+      } catch {}
+    }
+    return this.phases.has(phase);
+  }
+
+  exportDebugLogs(): string {
+    if (this.debuggerAvailable && this.realDebugger?.exportDebugLogs) {
+      try {
+        return this.realDebugger.exportDebugLogs();
+      } catch (error) {
+        console.warn('[BLE SAFE] exportDebugLogs failed on real debugger, using fallback');
+      }
+    }
+    return JSON.stringify({
+      exportTime: new Date().toISOString(),
+      debugConfig: { enabled: this.enabled, phases: Array.from(this.phases) },
+      totalLogs: 0,
+      logs: []
+    }, null, 2);
+  }
+
+  getDiagnostics(): string {
+    if (this.debuggerAvailable && this.realDebugger?.getDiagnostics) {
+      try {
+        return this.realDebugger.getDiagnostics();
+      } catch (error) {
+        console.warn('[BLE SAFE] getDiagnostics failed on real debugger, using fallback');
+      }
+    }
+    return [
+      'BLE Debug Diagnostics',
+      '====================',
+      `Debug Mode: ${this.isEnabled() ? 'ENABLED' : 'DISABLED'}`,
+      `Active Phases: ${Array.from(this.phases).join(', ')}`,
+      '',
+      'Note: Using safe fallback logger; detailed metrics require full debugger.'
+    ].join('\n');
   }
 }
 

@@ -6,25 +6,25 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Download, Eye, EyeOff, Settings } from 'lucide-react';
-import { bleDebugger, type BlePhase } from '@/lib/bleDebug';
+import { safeBleDebugger, type BlePhase } from '@/lib/bleSafeWrapper';
 import { toast } from 'sonner';
 
 const BLE_PHASES: BlePhase[] = ['INIT', 'SCAN', 'CONNECT', 'NOTIFY', 'DISCONNECT', 'MTU', 'CHARS', 'SERVICE'];
 
 export function BleDebugControl() {
-  const [isEnabled, setIsEnabled] = useState(bleDebugger.isEnabled());
+  const [isEnabled, setIsEnabled] = useState(safeBleDebugger.isEnabled());
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsEnabled(bleDebugger.isEnabled());
+      setIsEnabled(safeBleDebugger.isEnabled());
     }, 1000);
     
     return () => clearInterval(interval);
   }, []);
 
   const handleToggle = (enabled: boolean) => {
-    bleDebugger.setEnabled(enabled);
+    safeBleDebugger.setEnabled(enabled);
     setIsEnabled(enabled);
     
     if (enabled) {
@@ -38,7 +38,7 @@ export function BleDebugControl() {
 
   const handleExportLogs = () => {
     try {
-      const logs = bleDebugger.exportDebugLogs();
+      const logs = safeBleDebugger.exportDebugLogs();
       const blob = new Blob([logs], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -55,7 +55,7 @@ export function BleDebugControl() {
     }
   };
 
-  const diagnostics = showDiagnostics ? bleDebugger.getDiagnostics() : '';
+  const diagnostics = showDiagnostics ? safeBleDebugger.getDiagnostics() : '';
 
   return (
     <Card className="w-full">
@@ -89,7 +89,7 @@ export function BleDebugControl() {
                 {BLE_PHASES.map((phase) => (
                   <Badge 
                     key={phase}
-                    variant={bleDebugger.isPhaseEnabled(phase) ? "default" : "secondary"}
+                    variant={safeBleDebugger.isPhaseEnabled(phase) ? "default" : "secondary"}
                     className="text-xs"
                   >
                     {phase}
