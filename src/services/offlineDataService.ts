@@ -7,7 +7,7 @@ export interface OfflineDataItem {
   type: 'air-quality' | 'mission' | 'settings';
   data: any;
   timestamp: number;
-  synced: boolean;
+  synced: number; // 0 = false, 1 = true (IndexedDB compatible)
   retryCount: number;
 }
 
@@ -48,7 +48,7 @@ class OfflineDataService {
         type: 'air-quality',
         data: { pmData, location, context },
         timestamp: Date.now(),
-        synced: false,
+        synced: 0, // Use 0 instead of false for IndexedDB compatibility
         retryCount: 0
       };
       
@@ -70,7 +70,7 @@ class OfflineDataService {
         type: 'mission',
         data: missionData,
         timestamp: Date.now(),
-        synced: false,
+        synced: 0, // Use 0 instead of false for IndexedDB compatibility
         retryCount: 0
       };
       
@@ -133,7 +133,7 @@ class OfflineDataService {
       });
       
       if (item) {
-        item.synced = true;
+        item.synced = 1; // Use 1 instead of true for IndexedDB compatibility
         await store.put(item);
         logger.debug('✅ Data marked as synced', { id });
       }
@@ -211,7 +211,8 @@ class OfflineDataService {
         let unsynced = 0;
         if (store.indexNames.contains('synced')) {
           const unsyncedIndex = store.index('synced');
-          const unsyncedRequest = unsyncedIndex.getAll(IDBKeyRange.only(false));
+          // Use number 0 instead of boolean false for IndexedDB key
+          const unsyncedRequest = unsyncedIndex.getAll(IDBKeyRange.only(0));
           unsynced = await new Promise<number>((resolve, reject) => {
             unsyncedRequest.onsuccess = () => resolve(unsyncedRequest.result.length);
             unsyncedRequest.onerror = () => resolve(0); // Fallback to 0 on error

@@ -1,45 +1,55 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Offline - PMScan Air Quality Monitor</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMScan - Offline</title>
     <style>
-      body { 
-        font-family: system-ui, Arial, sans-serif; 
-        margin: 2rem; 
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        color: white;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .box { 
-        max-width: 560px; 
-        text-align: center; 
-        padding: 2rem;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-      }
-      h1 {
-        font-size: 2rem;
-        margin-bottom: 1rem;
-        color: #60a5fa;
-      }
-      p {
-        font-size: 1.1rem;
-        line-height: 1.6;
-        opacity: 0.9;
-      }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .offline-container {
+            max-width: 400px;
+        }
+        h1 { margin-bottom: 1rem; }
+        p { margin-bottom: 2rem; }
+        .btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
     </style>
-  </head>
-  <body>
-    <div class="box">
-      <h1>You're offline</h1>
-      <p>The PMScan app will keep working for cached pages and assets. Some data may be unavailable until you're back online.</p>
+</head>
+<body>
+    <div class="offline-container">
+        <h1>🌐 You're Offline</h1>
+        <p>No internet connection detected. The app will keep working for cached pages and saved data.</p>
+        <a href="/" class="btn">Try Again</a>
     </div>
-  </body>
+    
+    <script>
+        // Auto-refresh when online
+        window.addEventListener('online', () => {
+            window.location.href = '/';
+        });
+    </script>
+</body>
 </html>
