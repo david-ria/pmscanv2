@@ -4,6 +4,7 @@
  */
 
 import * as logger from '@/utils/logger';
+import { Capacitor } from '@capacitor/core';
 
 export type BlePhase = 'INIT' | 'SCAN' | 'CONNECT' | 'NOTIFY' | 'DISCONNECT' | 'MTU' | 'CHARS' | 'SERVICE';
 
@@ -43,8 +44,8 @@ class SafeBleDebuggerImpl implements SafeBleDebugger {
   }
 
   info(phase: BlePhase, message: string, deviceInfo?: any, metadata?: Record<string, any>) {
-    // Always use fallback for Android to ensure Logcat visibility
-    if (typeof (globalThis as any).Capacitor !== 'undefined') {
+    // Always mirror to console on native for Logcat visibility
+    if (Capacitor.isNativePlatform()) {
       this.fallbackLog('info', phase, message, metadata);
       return;
     }
@@ -62,8 +63,8 @@ class SafeBleDebuggerImpl implements SafeBleDebugger {
   }
 
   warn(phase: BlePhase, message: string, deviceInfo?: any, metadata?: Record<string, any>) {
-    // Always use fallback for Android to ensure Logcat visibility
-    if (typeof (globalThis as any).Capacitor !== 'undefined') {
+    // Always mirror to console on native for Logcat visibility
+    if (Capacitor.isNativePlatform()) {
       this.fallbackLog('warn', phase, message, metadata);
       return;
     }
@@ -81,8 +82,8 @@ class SafeBleDebuggerImpl implements SafeBleDebugger {
   }
 
   error(phase: BlePhase, message: string, deviceInfo?: any, metadata?: Record<string, any>) {
-    // Always use fallback for Android to ensure Logcat visibility
-    if (typeof (globalThis as any).Capacitor !== 'undefined') {
+    // Always mirror to console on native for Logcat visibility
+    if (Capacitor.isNativePlatform()) {
       this.fallbackLog('error', phase, message, metadata);
       return;
     }

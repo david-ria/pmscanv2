@@ -17,6 +17,25 @@ const webDeviceCache = new Map<string, BluetoothDevice>();
 export function getWebBluetoothDeviceById(id: string) {
   return webDeviceCache.get(id);
 }
+
+// Android diagnostic flags (runtime toggles; Android native only)
+const isAndroidNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+const getDiagFlag = (name: string): boolean => {
+  try {
+    const w: any = typeof globalThis !== 'undefined' ? (globalThis as any) : undefined;
+    if (isAndroidNative && w && typeof w[name] !== 'undefined') {
+      const val = w[name];
+      return val === true || String(val).toLowerCase() === 'true' || val === 1 || val === '1';
+    }
+    if (typeof localStorage !== 'undefined') {
+      const v = localStorage.getItem(name);
+      if (v != null) return v === 'true' || v === '1';
+    }
+  } catch {}
+  return false;
+};
+const ANDROID_SCAN_RAW_LOGS = isAndroidNative && getDiagFlag('ANDROID_SCAN_RAW_LOGS');
+const ANDROID_SCAN_FORCE_UNFILTERED = isAndroidNative && getDiagFlag('ANDROID_SCAN_FORCE_UNFILTERED');
 export async function runBleScanCapacitor(timeoutMs = SCAN_DURATION_MS, services?: string[]) {
   await ensureBleReady();
   const foundFiltered: FoundDevice[] = [];
