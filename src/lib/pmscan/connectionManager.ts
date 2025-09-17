@@ -6,7 +6,7 @@ import { PMScanEventManager } from './eventManager';
 import { PMScanConnectionUtils } from './connectionUtils';
 import { BleClient } from '@capacitor-community/bluetooth-le';
 import { Capacitor } from '@capacitor/core';
-import { runBleScan } from '@/lib/bleScan';
+import { runBleScan, FoundDevice } from '@/lib/bleScan';
 import { PMScan_SERVICE_UUID, PMScan_MODE_UUID } from './constants';
 import {
   getGlobalRecording,
@@ -53,39 +53,29 @@ export class PMScanConnectionManager {
   }
 
   public async requestDevice(): Promise<BluetoothDevice> {
+    // This method is now a wrapper that calls the new smart device selection
+    const result = await PMScanConnectionUtils.requestBluetoothDeviceWithPicker();
+    
     if (Capacitor.isNativePlatform()) {
-      // Use unified BLE scan for native platforms
-      logger.debug('🔍 Scanning for PMScan devices on native platform...');
-      const devices = await runBleScan({ 
-        timeoutMs: 10000, 
-        services: [PMScan_SERVICE_UUID] 
-      });
-
-      if (devices.length === 0) {
-        throw new Error('No PMScan devices found');
-      }
-
-      // Auto-select first PMScan device
-      const selectedDevice = devices.find(d => d.name?.includes('PMScan')) || devices[0];
-      this.nativeDeviceId = selectedDevice.deviceId;
+      // For native platforms, result is FoundDevice
+      const foundDevice = result as FoundDevice;
+      this.nativeDeviceId = foundDevice.deviceId;
       this.isInited = false;
       this.shouldConnect = true;
       
-      logger.debug('📱 Selected PMScan device:', selectedDevice.name);
-      
       // Return a shim object for compatibility
       return {
-        id: selectedDevice.deviceId,
-        name: selectedDevice.name || 'PMScan Device',
+        id: foundDevice.deviceId,
+        name: foundDevice.name || 'PMScan Device',
         gatt: {} as BluetoothRemoteGATTServer
       } as BluetoothDevice;
     }
 
-    const device = await PMScanConnectionUtils.requestBluetoothDevice();
-    this.device = device;
+    // For web platforms, result is BluetoothDevice
+    this.device = result as BluetoothDevice;
     this.isInited = false;
     this.shouldConnect = true;
-    return device;
+    return result as BluetoothDevice;
   }
 
   public async connect(): Promise<BluetoothRemoteGATTServer> {

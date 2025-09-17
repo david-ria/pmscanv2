@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
 import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
+import { DevicePicker } from '@/components/DevicePicker';
 // RecordingDebugger now loaded in App.tsx to avoid duplication
 
 // Import critical hooks immediately for core functionality
@@ -76,6 +77,12 @@ export default function RealTime() {
     updateMissionContext,
     latestLocation,
     locationEnabled,
+    // Device picker state
+    showDevicePicker,
+    availableDevices, 
+    onDevicePickerSelect,
+    onDevicePickerCancel,
+    onForgetDevice,
   } = unifiedData;
 
   // Only initialize autocontext if the user has enabled it
@@ -302,6 +309,15 @@ export default function RealTime() {
 
 
       {/* Recording Debugger now in App.tsx */}
+      
+      {/* Device Picker Dialog */}
+      <DevicePicker
+        open={showDevicePicker}
+        onOpenChange={() => {}} // Controlled by device selection logic
+        devices={availableDevices}
+        onDeviceSelected={onDevicePickerSelect}
+        onForgetDevice={onForgetDevice}
+      />
     </main>
   );
 }
