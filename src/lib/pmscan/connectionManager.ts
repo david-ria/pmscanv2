@@ -22,6 +22,7 @@ import {
   getBackgroundRecording,
 } from './globalConnectionManager';
 import * as logger from '@/utils/logger';
+import { bleDebugger } from '@/lib/bleDebug';
 
 export class PMScanConnectionManager {
   private device: BluetoothDevice | null = null;
@@ -82,28 +83,36 @@ export class PMScanConnectionManager {
 
   public async requestDevice(): Promise<BluetoothDevice> {
     this.stateMachine.transition(PMScanConnectionState.SCANNING, 'Starting device scan');
-
+    
     try {
-      const result = await PMScanConnectionUtils.requestBluetoothDeviceWithPicker();
-      
-      if (Capacitor.isNativePlatform()) {
-        // For native platforms, result is FoundDevice
-        const foundDevice = result as FoundDevice;
-        this.nativeDeviceId = foundDevice.deviceId;
+      return await bleDebugger.timeOperation('SCAN', 'Device Discovery', async () => {
+        bleDebugger.info('SCAN', 'Starting Bluetooth device scan');
+        
+        const result = await PMScanConnectionUtils.requestBluetoothDeviceWithPicker();
+        
+        if (Capacitor.isNativePlatform()) {
+          // For native platforms, result is FoundDevice
+          const foundDevice = result as FoundDevice;
+          this.nativeDeviceId = foundDevice.deviceId;
+          this.shouldConnect = true;
+          
+          bleDebugger.info('SCAN', `Native device found: ${foundDevice.name}`, undefined, { deviceId: foundDevice.deviceId });
+          
+          // Return a shim object for compatibility
+          return {
+            id: foundDevice.deviceId,
+            name: foundDevice.name || 'PMScan Device',
+            gatt: {} as BluetoothRemoteGATTServer
+          } as BluetoothDevice;
+        }
+
+        // For web platforms, result is BluetoothDevice
+        this.device = result as BluetoothDevice;
         this.shouldConnect = true;
         
-        // Return a shim object for compatibility
-        return {
-          id: foundDevice.deviceId,
-          name: foundDevice.name || 'PMScan Device',
-          gatt: {} as BluetoothRemoteGATTServer
-        } as BluetoothDevice;
-      }
-
-      // For web platforms, result is BluetoothDevice
-      this.device = result as BluetoothDevice;
-      this.shouldConnect = true;
-      return result as BluetoothDevice;
+        bleDebugger.info('SCAN', `Web device found: ${this.device.name}`, undefined, { deviceId: this.device.id });
+        return result as BluetoothDevice;
+      });
     } catch (error) {
       this.stateMachine.transitionToError(error instanceof Error ? error : new Error(String(error)), 'Device scan failed');
       throw error;
@@ -114,25 +123,31 @@ export class PMScanConnectionManager {
     this.stateMachine.transition(PMScanConnectionState.CONNECTING, 'Starting connection');
 
     try {
-      if (Capacitor.isNativePlatform()) {
-        if (!this.nativeDeviceId || !this.shouldConnect) {
-          throw new Error('No native device ID available or should not connect');
+      return await bleDebugger.timeOperation('CONNECT', 'BLE Connection', async () => {
+        if (Capacitor.isNativePlatform()) {
+          if (!this.nativeDeviceId || !this.shouldConnect) {
+            throw new Error('No native device ID available or should not connect');
+          }
+
+          bleDebugger.info('CONNECT', `Connecting to native device: ${this.nativeDeviceId}`);
+          await BleOperationWrapper.connect(this.nativeDeviceId);
+          
+          bleDebugger.info('CONNECT', 'Native BLE connection established');
+          // Return a shim object for compatibility
+          return {} as BluetoothRemoteGATTServer;
         }
 
-        logger.debug('🔌 Connecting to native BLE device...');
-        await BleOperationWrapper.connect(this.nativeDeviceId);
+        if (!this.device || !this.shouldConnect) {
+          throw new Error('No device available or should not connect');
+        }
+
+        bleDebugger.info('CONNECT', `Connecting to web device: ${this.device.name}`, undefined, { deviceId: this.device.id });
+        const server = await BleOperationWrapper.connect(this.device) as BluetoothRemoteGATTServer;
+        this.server = server;
         
-        // Return a shim object for compatibility
-        return {} as BluetoothRemoteGATTServer;
-      }
-
-      if (!this.device || !this.shouldConnect) {
-        throw new Error('No device available or should not connect');
-      }
-
-      const server = await BleOperationWrapper.connect(this.device) as BluetoothRemoteGATTServer;
-      this.server = server;
-      return server;
+        bleDebugger.info('CONNECT', 'Web BLE GATT server connected');
+        return server;
+      });
     } catch (error) {
       this.stateMachine.transitionToError(error instanceof Error ? error : new Error(String(error)), 'Connection failed');
       throw error;
@@ -148,41 +163,55 @@ export class PMScanConnectionManager {
     this.stateMachine.transition(PMScanConnectionState.INITIALIZING, 'Starting device initialization');
 
     try {
-      if (Capacitor.isNativePlatform()) {
-        if (!this.nativeDeviceId) {
-          throw new Error('No native device connection available');
+      return await bleDebugger.timeOperation('INIT', 'Device Initialization', async () => {
+        if (Capacitor.isNativePlatform()) {
+          if (!this.nativeDeviceId) {
+            throw new Error('No native device connection available');
+          }
+
+          bleDebugger.info('INIT', `Initializing native device: ${this.nativeDeviceId}`);
+          const deviceInfo = await this.nativeInitializer.initializeDevice(
+            this.nativeDeviceId,
+            onRTData,
+            onIMData,
+            onBatteryData,
+            onChargingData
+          );
+
+          bleDebugger.info('INIT', 'Native device initialization complete', undefined, { 
+            version: deviceInfo.version, 
+            battery: deviceInfo.battery,
+            mode: deviceInfo.mode
+          });
+          this.stateMachine.transition(PMScanConnectionState.CONNECTED, 'Native initialization complete');
+          return deviceInfo;
         }
 
-        const deviceInfo = await this.nativeInitializer.initializeDevice(
-          this.nativeDeviceId,
-          onRTData,
-          onIMData,
-          onBatteryData,
-          onChargingData
-        );
+        if (!this.server || !this.device) {
+          throw new Error('No server connection available');
+        }
 
-        this.stateMachine.transition(PMScanConnectionState.CONNECTED, 'Native initialization complete');
+        bleDebugger.info('INIT', `Initializing web device: ${this.device.name}`, undefined, { deviceId: this.device.id });
+        const { deviceInfo, service } =
+          await this.deviceInitializer.initializeDevice(
+            this.server,
+            this.device,
+            onRTData,
+            onIMData,
+            onBatteryData,
+            onChargingData
+          );
+
+        this.service = service;
+        bleDebugger.info('INIT', 'Web device initialization complete', undefined, { 
+          version: deviceInfo.version, 
+          battery: deviceInfo.battery,
+          mode: deviceInfo.mode
+        });
+        this.stateMachine.transition(PMScanConnectionState.CONNECTED, 'Web initialization complete');
+
         return deviceInfo;
-      }
-
-      if (!this.server || !this.device) {
-        throw new Error('No server connection available');
-      }
-
-      const { deviceInfo, service } =
-        await this.deviceInitializer.initializeDevice(
-          this.server,
-          this.device,
-          onRTData,
-          onIMData,
-          onBatteryData,
-          onChargingData
-        );
-
-      this.service = service;
-      this.stateMachine.transition(PMScanConnectionState.CONNECTED, 'Web initialization complete');
-
-      return deviceInfo;
+      });
     } catch (error) {
       this.stateMachine.transitionToError(error instanceof Error ? error : new Error(String(error)), 'Initialization failed');
       throw error;
@@ -195,9 +224,11 @@ export class PMScanConnectionManager {
       getGlobalRecording() || getBackgroundRecording();
 
     if (shouldPreventDisconnect && !force) {
-      logger.debug(
-        '🚫 Cannot disconnect PMScan while recording is active or background mode is enabled'
-      );
+      bleDebugger.warn('DISCONNECT', 'Cannot disconnect while recording is active', undefined, { 
+        globalRecording: getGlobalRecording(),
+        backgroundRecording: getBackgroundRecording(),
+        force
+      });
       return false;
     }
 
@@ -205,54 +236,62 @@ export class PMScanConnectionManager {
     this.shouldConnect = false;
 
     try {
-      if (Capacitor.isNativePlatform()) {
-        if (this.nativeDeviceId) {
+      return await bleDebugger.timeOperation('DISCONNECT', 'Device Disconnection', async () => {
+        if (Capacitor.isNativePlatform()) {
+          if (this.nativeDeviceId) {
+            bleDebugger.info('DISCONNECT', `Disconnecting native device: ${this.nativeDeviceId}`);
+            
+            // Send disconnect command with retry
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                const modeToWrite = new Uint8Array(1);
+                modeToWrite[0] = this.deviceState.state.mode | 0x40;
+                await BleOperationWrapper.write(
+                  this.nativeDeviceId,
+                  modeToWrite,
+                  PMScan_SERVICE_UUID,
+                  PMScan_MODE_UUID
+                );
+                bleDebugger.info('DISCONNECT', `Disconnect command sent (attempt ${attempt})`);
+                break;
+              } catch (err) {
+                bleDebugger.warn('DISCONNECT', `Disconnect command failed (attempt ${attempt})`, undefined, { error: err });
+                if (attempt === 3) {
+                  bleDebugger.error('DISCONNECT', 'All disconnect command attempts failed');
+                }
+              }
+            }
+            
+            // Force disconnect
+            await BleClient.disconnect(this.nativeDeviceId);
+            bleDebugger.info('DISCONNECT', 'Native BLE disconnection complete');
+          }
+        } else if (this.device?.gatt?.connected && this.service) {
+          bleDebugger.info('DISCONNECT', `Disconnecting web device: ${this.device.name}`);
+          
           // Send disconnect command with retry
           for (let attempt = 1; attempt <= 3; attempt++) {
             try {
-              const modeToWrite = new Uint8Array(1);
-              modeToWrite[0] = this.deviceState.state.mode | 0x40;
-              await BleOperationWrapper.write(
-                this.nativeDeviceId,
-                modeToWrite,
-                PMScan_SERVICE_UUID,
-                PMScan_MODE_UUID
+              await PMScanConnectionUtils.sendDisconnectCommand(
+                this.service,
+                this.deviceState.state.mode
               );
-              logger.debug('✅ Disconnect command sent successfully');
+              bleDebugger.info('DISCONNECT', `Disconnect command sent (attempt ${attempt})`);
               break;
             } catch (err) {
-              logger.warn(`⚠️ Disconnect command attempt ${attempt} failed:`, err);
+              bleDebugger.warn('DISCONNECT', `Disconnect command failed (attempt ${attempt})`, undefined, { error: err });
               if (attempt === 3) {
-                logger.error('❌ All disconnect command attempts failed');
+                bleDebugger.error('DISCONNECT', 'All disconnect command attempts failed');
               }
             }
           }
-          
-          // Force disconnect
-          await BleClient.disconnect(this.nativeDeviceId);
+          this.device.gatt.disconnect();
+          bleDebugger.info('DISCONNECT', 'Web BLE disconnection complete');
         }
-      } else if (this.device?.gatt?.connected && this.service) {
-        // Send disconnect command with retry
-        for (let attempt = 1; attempt <= 3; attempt++) {
-          try {
-            await PMScanConnectionUtils.sendDisconnectCommand(
-              this.service,
-              this.deviceState.state.mode
-            );
-            logger.debug('✅ Disconnect command sent successfully');
-            break;
-          } catch (err) {
-            logger.warn(`⚠️ Disconnect command attempt ${attempt} failed:`, err);
-            if (attempt === 3) {
-              logger.error('❌ All disconnect command attempts failed');
-            }
-          }
-        }
-        this.device.gatt.disconnect();
-      }
 
-      this.stateMachine.transition(PMScanConnectionState.IDLE, 'Disconnection complete');
-      return true;
+        this.stateMachine.transition(PMScanConnectionState.IDLE, 'Disconnection complete');
+        return true;
+      });
     } catch (error) {
       this.stateMachine.transitionToError(error instanceof Error ? error : new Error(String(error)), 'Disconnection failed');
       // Still return true as we want to reset state

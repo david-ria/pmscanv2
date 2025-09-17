@@ -1,6 +1,7 @@
 import { BleClient } from '@capacitor-community/bluetooth-le';
 import { Capacitor } from '@capacitor/core';
 import * as logger from '@/utils/logger';
+import { bleDebugger } from '@/lib/bleDebug';
 
 /**
  * MTU configuration and limits
@@ -28,46 +29,46 @@ export class MtuManager {
   /**
    * Negotiate MTU with device after connection
    */
-  public static async negotiateMtu(
-    deviceIdOrServer: string | BluetoothRemoteGATTServer
-  ): Promise<MtuInfo> {
+  static async negotiateMtu(deviceIdOrServer: string | BluetoothRemoteGATTServer): Promise<MtuInfo> {
+    bleDebugger.info('MTU', 'Starting MTU negotiation');
+    
     try {
-      let negotiatedMtu = MTU_CONFIG.DEFAULT;
-
-      if (Capacitor.isNativePlatform()) {
-        const deviceId = deviceIdOrServer as string;
-        logger.debug(`📡 Negotiating MTU for native device ${deviceId.slice(-8)}...`);
-        
+      if (typeof deviceIdOrServer === 'string') {
+        // Native platform - use Capacitor BLE
         try {
-          // Note: Check if MTU request is available (newer versions of the plugin)
-          // For now, we simulate MTU negotiation on Android by assuming success
-          // In real implementation, this would use the native MTU request
-          await new Promise(resolve => setTimeout(resolve, 100)); // Simulate negotiation delay
+          bleDebugger.info('MTU', `Requesting native MTU: ${MTU_CONFIG.PREFERRED} bytes`, undefined, { deviceId: deviceIdOrServer, requestedMtu: MTU_CONFIG.PREFERRED });
+          const result = await BleClient.requestMtu(deviceIdOrServer, MTU_CONFIG.PREFERRED);
+          const negotiated = result.value;
           
-          // Common negotiated MTU on Android devices is around 185-247 bytes
-          negotiatedMtu = 185; // Conservative estimate for Android
-          logger.debug(`✅ MTU negotiation simulated, using ${negotiatedMtu} bytes`);
+          const info: MtuInfo = {
+            negotiated,
+            effective: Math.max(negotiated - MTU_CONFIG.BLE_OVERHEAD, MTU_CONFIG.MIN_EFFECTIVE),
+            isOptimal: negotiated >= MTU_CONFIG.PREFERRED
+          };
+          
+          this.currentMtu = info;
+          bleDebugger.info('MTU', `Native MTU negotiated successfully`, undefined, { 
+            negotiated,
+            effective: info.effective,
+            isOptimal: info.isOptimal,
+            overhead: MTU_CONFIG.BLE_OVERHEAD
+          });
+          
+          return info;
         } catch (error) {
-          logger.warn('⚠️ MTU negotiation failed, using default:', error);
-          negotiatedMtu = MTU_CONFIG.DEFAULT;
+          bleDebugger.warn('MTU', 'Native MTU negotiation failed, using default', undefined, { error: error instanceof Error ? error.message : String(error) });
+          return this.getDefaultMtu();
         }
       } else {
-        // Web Bluetooth doesn't support MTU negotiation
-        // We're stuck with the default MTU (23 bytes)
-        logger.debug('📡 Web platform: Using default MTU (no negotiation available)');
-        negotiatedMtu = MTU_CONFIG.DEFAULT;
+        // Web platform - MTU negotiation not supported, use default
+        bleDebugger.info('MTU', 'Web platform: Using default MTU (no negotiation available)');
+        const info = this.getDefaultMtu();
+        this.currentMtu = info;
+        return info;
       }
-
-      const mtuInfo = this.createMtuInfo(negotiatedMtu);
-      this.currentMtu = mtuInfo;
-      
-      this.logMtuInfo(mtuInfo);
-      return mtuInfo;
     } catch (error) {
-      logger.error('❌ MTU negotiation error:', error);
-      const fallbackMtu = this.createMtuInfo(MTU_CONFIG.DEFAULT);
-      this.currentMtu = fallbackMtu;
-      return fallbackMtu;
+      bleDebugger.error('MTU', 'MTU negotiation error', undefined, { error: error instanceof Error ? error.message : String(error) });
+      return this.getDefaultMtu();
     }
   }
 

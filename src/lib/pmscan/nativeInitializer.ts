@@ -17,6 +17,7 @@ import { PMScanDevice } from './types';
 import { BleOperationWrapper } from './bleOperationWrapper';
 import { MtuManager, FragmentManager } from './mtuManager';
 import * as logger from '@/utils/logger';
+import { bleDebugger } from '@/lib/bleDebug';
 
 /**
  * Handles PMScan device initialization using Capacitor BLE (native)
@@ -31,12 +32,13 @@ export class PMScanNativeInitializer {
     onBatteryData: (event: Event) => void,
     onChargingData: (event: Event) => void
   ): Promise<PMScanDevice> {
-    logger.debug('✅ PMScan Native Device Connected');
-    logger.debug('🔍 Reading characteristics...');
-
+    bleDebugger.info('INIT', 'PMScan native device connected', undefined, { deviceId });
+    
     // Negotiate MTU for optimal performance
-    const mtuInfo = await MtuManager.negotiateMtu(deviceId);
-    logger.debug(`📡 MTU negotiated: ${mtuInfo.negotiated} bytes (${mtuInfo.effective} effective)`);
+    const mtuInfo = await bleDebugger.timeOperation('MTU', 'MTU Negotiation', async () => {
+      return await MtuManager.negotiateMtu(deviceId);
+    });
+    bleDebugger.info('MTU', `MTU negotiated: ${mtuInfo.negotiated} bytes (${mtuInfo.effective} effective)`, undefined, mtuInfo);
 
     // Read battery level
     const batteryValue = await BleOperationWrapper.read(deviceId, PMScan_SERVICE_UUID, PMScan_BATTERY_UUID);
@@ -45,7 +47,9 @@ export class PMScanNativeInitializer {
     this.deviceState.updateBattery(battery);
 
     // Start all notifications in parallel with Promise.allSettled
-    const notificationResults = await Promise.allSettled([
+    const notificationResults = await bleDebugger.timeOperation('NOTIFY', 'Notification Setup', async () => {
+      bleDebugger.info('NOTIFY', 'Starting native BLE notifications for all characteristics');
+      return await Promise.allSettled([
       // Critical: RT data notifications with fragmentation handling
       BleOperationWrapper.startNotifications(
         deviceId,
@@ -101,37 +105,41 @@ export class PMScanNativeInitializer {
         },
         PMScan_SERVICE_UUID,
         PMScan_CHARGING_UUID
-      )
-    ]);
+        )
+      ]);
+    });
 
     // Check critical notifications (RT data)
     if (notificationResults[0].status === 'rejected') {
-      logger.error('❌ Critical RT data notifications failed:', notificationResults[0].reason);
+      bleDebugger.error('NOTIFY', 'Critical RT data notifications failed', undefined, { error: notificationResults[0].reason });
       throw new Error('Failed to start critical RT data notifications');
     }
 
     // Log non-critical notification failures but continue
     const failureMessages = [];
     if (notificationResults[1].status === 'rejected') {
-      logger.warn('⚠️ IM data notifications failed:', notificationResults[1].reason);
+      bleDebugger.warn('NOTIFY', 'IM data notifications failed', undefined, { error: notificationResults[1].reason });
       failureMessages.push('IM data');
     }
     if (notificationResults[2].status === 'rejected') {
-      logger.warn('⚠️ Battery notifications failed:', notificationResults[2].reason);
+      bleDebugger.warn('NOTIFY', 'Battery notifications failed', undefined, { error: notificationResults[2].reason });
       failureMessages.push('Battery');
     }
     if (notificationResults[3].status === 'rejected') {
-      logger.warn('⚠️ Charging notifications failed:', notificationResults[3].reason);
+      bleDebugger.warn('NOTIFY', 'Charging notifications failed', undefined, { error: notificationResults[3].reason });
       failureMessages.push('Charging');
     }
 
+    const successCount = notificationResults.filter(r => r.status === 'fulfilled').length;
     if (failureMessages.length > 0) {
-      logger.warn(`⚠️ Some non-critical notifications failed: ${failureMessages.join(', ')}`);
+      bleDebugger.warn('NOTIFY', `Some notifications failed: ${failureMessages.join(', ')}`, undefined, { 
+        successCount, 
+        totalCount: 4,
+        failures: failureMessages 
+      });
     }
 
-    logger.debug('✅ RT data notifications started successfully');
-    const successCount = notificationResults.filter(r => r.status === 'fulfilled').length;
-    logger.debug(`📊 ${successCount}/4 notifications active`);
+    bleDebugger.info('NOTIFY', `Native notifications active: ${successCount}/4`, undefined, { successCount });
 
     // Read and sync time if needed
     await this.syncDeviceTime(deviceId);

@@ -3,6 +3,7 @@ import { useAndroidApiLevel } from '../hooks/useAndroidApiLevel';
 import { AndroidPermissionManager } from '../services/androidPermissions';
 import { deviceLogger } from '../services/deviceLogger';
 import { MtuInfoDisplay } from './MtuInfoDisplay';
+import { BleDebugControl } from './BleDebugControl';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
@@ -191,8 +192,13 @@ export const DeviceCompatibilityChecker: React.FC<DeviceCompatibilityCheckerProp
         </Card>
       )}
 
-      {/* MTU Performance Information */}
+  {/* MTU Performance Information */}
       <MtuInfoDisplay isConnected={isConnected} />
+
+      {/* BLE Debug Control */}
+      {process.env.NODE_ENV === 'development' && (
+        <BleDebugControl />
+      )}
     </div>
   );
 };

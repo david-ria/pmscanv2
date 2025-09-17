@@ -16,6 +16,7 @@ import { PMScanDevice } from './types';
 import { BleOperationWrapper } from './bleOperationWrapper';
 import { MtuManager, FragmentManager } from './mtuManager';
 import * as logger from '@/utils/logger';
+import { bleDebugger } from '@/lib/bleDebug';
 
 /**
  * Handles PMScan device initialization and service discovery
@@ -34,14 +35,18 @@ export class PMScanDeviceInitializer {
     deviceInfo: PMScanDevice;
     service: BluetoothRemoteGATTService;
   }> {
-    logger.debug('✅ PMScan Device Connected');
-    logger.debug('🔍 Discovering services...');
-
-    const service = await BleOperationWrapper.getService(server, PMScan_SERVICE_UUID);
+    bleDebugger.info('INIT', 'PMScan web device connected');
+    
+    const service = await bleDebugger.timeOperation('SERVICE', 'Service Discovery', async () => {
+      bleDebugger.info('SERVICE', 'Discovering PMScan service');
+      return await BleOperationWrapper.getService(server, PMScan_SERVICE_UUID);
+    });
     
     // Negotiate MTU for optimal performance
-    const mtuInfo = await MtuManager.negotiateMtu(server);
-    logger.debug(`📡 MTU negotiated: ${mtuInfo.negotiated} bytes (${mtuInfo.effective} effective)`);
+    const mtuInfo = await bleDebugger.timeOperation('MTU', 'MTU Negotiation', async () => {
+      return await MtuManager.negotiateMtu(server);
+    });
+    bleDebugger.info('MTU', `MTU negotiated: ${mtuInfo.negotiated} bytes (${mtuInfo.effective} effective)`, undefined, mtuInfo);
 
     // Read battery level
     const batteryChar = await BleOperationWrapper.getCharacteristic(service, PMScan_BATTERY_UUID);
@@ -51,66 +56,77 @@ export class PMScanDeviceInitializer {
     this.deviceState.updateBattery(battery);
 
     // Get all characteristics first
-    const rtDataChar = await BleOperationWrapper.getCharacteristic(service, PMScan_RT_DATA_UUID);
-    const imDataChar = await BleOperationWrapper.getCharacteristic(service, PMScan_IM_DATA_UUID);
-    const chargingChar = await BleOperationWrapper.getCharacteristic(service, PMScan_CHARGING_UUID);
+    const [rtDataChar, imDataChar, chargingChar] = await bleDebugger.timeOperation('CHARS', 'Characteristics Discovery', async () => {
+      bleDebugger.info('CHARS', 'Discovering BLE characteristics');
+      return await Promise.all([
+        BleOperationWrapper.getCharacteristic(service, PMScan_RT_DATA_UUID),
+        BleOperationWrapper.getCharacteristic(service, PMScan_IM_DATA_UUID),
+        BleOperationWrapper.getCharacteristic(service, PMScan_CHARGING_UUID)
+      ]);
+    });
 
     // Start all notifications in parallel with Promise.allSettled
-    const notificationResults = await Promise.allSettled([
-      // Critical: RT data notifications with fragmentation handling
-      BleOperationWrapper.startNotifications(rtDataChar, (value) => {
-        FragmentManager.processNotification(PMScan_RT_DATA_UUID, value, (assembledData) => {
-          const event = { target: { value: new DataView(assembledData.buffer) } } as any;
-          onRTData(event);
-        });
-      }),
-      // Non-critical: IM data notifications with fragmentation handling
-      BleOperationWrapper.startNotifications(imDataChar, (value) => {
-        FragmentManager.processNotification(PMScan_IM_DATA_UUID, value, (assembledData) => {
-          const event = { target: { value: new DataView(assembledData.buffer) } } as any;
-          onIMData(event);
-        });
-      }),
-      // Non-critical: Battery notifications
-      BleOperationWrapper.startNotifications(batteryChar, (value) => {
-        const event = { target: { value } } as any;
-        onBatteryData(event);
-      }),
-      // Non-critical: Charging notifications
-      BleOperationWrapper.startNotifications(chargingChar, (value) => {
-        const event = { target: { value } } as any;
-        onChargingData(event);
-      })
-    ]);
+    const notificationResults = await bleDebugger.timeOperation('NOTIFY', 'Notification Setup', async () => {
+      bleDebugger.info('NOTIFY', 'Starting BLE notifications for all characteristics');
+      return await Promise.allSettled([
+        // Critical: RT data notifications with fragmentation handling
+        BleOperationWrapper.startNotifications(rtDataChar, (value) => {
+          FragmentManager.processNotification(PMScan_RT_DATA_UUID, value, (assembledData) => {
+            const event = { target: { value: new DataView(assembledData.buffer) } } as any;
+            onRTData(event);
+          });
+        }),
+        // Non-critical: IM data notifications with fragmentation handling
+        BleOperationWrapper.startNotifications(imDataChar, (value) => {
+          FragmentManager.processNotification(PMScan_IM_DATA_UUID, value, (assembledData) => {
+            const event = { target: { value: new DataView(assembledData.buffer) } } as any;
+            onIMData(event);
+          });
+        }),
+        // Non-critical: Battery notifications
+        BleOperationWrapper.startNotifications(batteryChar, (value) => {
+          const event = { target: { value } } as any;
+          onBatteryData(event);
+        }),
+        // Non-critical: Charging notifications
+        BleOperationWrapper.startNotifications(chargingChar, (value) => {
+          const event = { target: { value } } as any;
+          onChargingData(event);
+        })
+      ]);
+    });
 
     // Check critical notifications (RT data)
     if (notificationResults[0].status === 'rejected') {
-      logger.error('❌ Critical RT data notifications failed:', notificationResults[0].reason);
+      bleDebugger.error('NOTIFY', 'Critical RT data notifications failed', undefined, { error: notificationResults[0].reason });
       throw new Error('Failed to start critical RT data notifications');
     }
 
     // Log non-critical notification failures but continue
     const failureMessages = [];
     if (notificationResults[1].status === 'rejected') {
-      logger.warn('⚠️ IM data notifications failed:', notificationResults[1].reason);
+      bleDebugger.warn('NOTIFY', 'IM data notifications failed', undefined, { error: notificationResults[1].reason });
       failureMessages.push('IM data');
     }
     if (notificationResults[2].status === 'rejected') {
-      logger.warn('⚠️ Battery notifications failed:', notificationResults[2].reason);
+      bleDebugger.warn('NOTIFY', 'Battery notifications failed', undefined, { error: notificationResults[2].reason });
       failureMessages.push('Battery');
     }
     if (notificationResults[3].status === 'rejected') {
-      logger.warn('⚠️ Charging notifications failed:', notificationResults[3].reason);
+      bleDebugger.warn('NOTIFY', 'Charging notifications failed', undefined, { error: notificationResults[3].reason });
       failureMessages.push('Charging');
     }
 
+    const successCount = notificationResults.filter(r => r.status === 'fulfilled').length;
     if (failureMessages.length > 0) {
-      logger.warn(`⚠️ Some non-critical notifications failed: ${failureMessages.join(', ')}`);
+      bleDebugger.warn('NOTIFY', `Some notifications failed: ${failureMessages.join(', ')}`, undefined, { 
+        successCount, 
+        totalCount: 4,
+        failures: failureMessages 
+      });
     }
 
-    logger.debug('✅ RT data notifications started successfully');
-    const successCount = notificationResults.filter(r => r.status === 'fulfilled').length;
-    logger.debug(`📊 ${successCount}/4 notifications active`);
+    bleDebugger.info('NOTIFY', `Notifications active: ${successCount}/4`, undefined, { successCount });
 
     // Read and sync time if needed
     await this.syncDeviceTime(service);
