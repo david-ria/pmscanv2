@@ -43,6 +43,12 @@ class SafeBleDebuggerImpl implements SafeBleDebugger {
   }
 
   info(phase: BlePhase, message: string, deviceInfo?: any, metadata?: Record<string, any>) {
+    // Always use fallback for Android to ensure Logcat visibility
+    if (typeof (globalThis as any).Capacitor !== 'undefined') {
+      this.fallbackLog('info', phase, message, metadata);
+      return;
+    }
+    
     if (this.debuggerAvailable && this.realDebugger) {
       try {
         this.realDebugger.info(phase, message, deviceInfo, metadata);
@@ -56,6 +62,12 @@ class SafeBleDebuggerImpl implements SafeBleDebugger {
   }
 
   warn(phase: BlePhase, message: string, deviceInfo?: any, metadata?: Record<string, any>) {
+    // Always use fallback for Android to ensure Logcat visibility
+    if (typeof (globalThis as any).Capacitor !== 'undefined') {
+      this.fallbackLog('warn', phase, message, metadata);
+      return;
+    }
+    
     if (this.debuggerAvailable && this.realDebugger) {
       try {
         this.realDebugger.warn(phase, message, deviceInfo, metadata);
@@ -69,6 +81,12 @@ class SafeBleDebuggerImpl implements SafeBleDebugger {
   }
 
   error(phase: BlePhase, message: string, deviceInfo?: any, metadata?: Record<string, any>) {
+    // Always use fallback for Android to ensure Logcat visibility
+    if (typeof (globalThis as any).Capacitor !== 'undefined') {
+      this.fallbackLog('error', phase, message, metadata);
+      return;
+    }
+    
     if (this.debuggerAvailable && this.realDebugger) {
       try {
         this.realDebugger.error(phase, message, deviceInfo, metadata);
@@ -102,18 +120,25 @@ class SafeBleDebuggerImpl implements SafeBleDebugger {
   private fallbackLog(level: 'info' | 'warn' | 'error', phase: BlePhase, message: string, metadata?: Record<string, any>) {
     const formattedMessage = `[BLE:${phase}] ${message}`;
     
+    // Always mirror to console for Android/Capacitor Logcat visibility
+    const consoleMethod = level === 'error' ? console.error : level === 'warn' ? console.warn : console.log;
+    
     try {
-      // Try to use the regular logger if available
-      if (level === 'error') {
-        logger.error(formattedMessage, undefined, metadata);
-      } else if (level === 'warn') {
-        logger.warn(formattedMessage, metadata);
+      // For Android, always use console to ensure Logcat visibility
+      if (typeof (globalThis as any).Capacitor !== 'undefined') {
+        consoleMethod(formattedMessage, metadata ? JSON.stringify(metadata, null, 2) : '');
       } else {
-        logger.info(formattedMessage, metadata);
+        // Web: try logger first, fallback to console
+        if (level === 'error') {
+          logger.error(formattedMessage, undefined, metadata);
+        } else if (level === 'warn') {
+          logger.warn(formattedMessage, metadata);
+        } else {
+          logger.info(formattedMessage, metadata);
+        }
       }
     } catch (loggerError) {
       // Final fallback to console
-      const consoleMethod = level === 'error' ? console.error : level === 'warn' ? console.warn : console.log;
       consoleMethod(`[BLE SAFE FALLBACK] ${formattedMessage}`, metadata);
     }
   }

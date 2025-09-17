@@ -8,6 +8,10 @@ export type FoundDevice = { deviceId: string; name?: string; rssi?: number; uuid
 // Configurable scan duration
 export const SCAN_DURATION_MS = 10000;
 
+// Android diagnostic flags (runtime toggles)
+const ANDROID_SCAN_RAW_LOGS = true; // Force print full arrays even if large
+const ANDROID_SCAN_FORCE_UNFILTERED = false; // Skip filtered phase, only do unfiltered
+
 // Cache the actual Web BluetoothDevice so we don't need to call requestDevice again
 const webDeviceCache = new Map<string, BluetoothDevice>();
 export function getWebBluetoothDeviceById(id: string) {
@@ -18,16 +22,20 @@ export async function runBleScanCapacitor(timeoutMs = SCAN_DURATION_MS, services
   const foundFiltered: FoundDevice[] = [];
   const foundFallback: FoundDevice[] = [];
   const allRawDevices: FoundDevice[] = [];
+  const scanStartTime = Date.now();
 
   const namePrefix = "PMScan";
 
-  // Phase 1: Filtered scan with service UUID + namePrefix
-  if (services && services.length > 0) {
+  // Phase 1: Filtered scan with service UUID + namePrefix (skip if ANDROID_SCAN_FORCE_UNFILTERED)
+  if (services && services.length > 0 && !ANDROID_SCAN_FORCE_UNFILTERED) {
     safeBleDebugger.info('SCAN', '[BLE:SCAN] start (filtered)', undefined, { 
       serviceUuids: services, 
       namePrefix, 
-      durationMs: timeoutMs 
+      durationMs: timeoutMs,
+      flags: { ANDROID_SCAN_RAW_LOGS, ANDROID_SCAN_FORCE_UNFILTERED }
     });
+    
+    const rawResultsFiltered: FoundDevice[] = [];
     
     await BleClient.requestLEScan(
       { allowDuplicates: false, services },
@@ -38,6 +46,11 @@ export async function runBleScanCapacitor(timeoutMs = SCAN_DURATION_MS, services
           rssi: result.rssi,
           uuids: result.uuids 
         };
+        
+        // Store ALL raw results before any filtering
+        if (!rawResultsFiltered.find(x => x.deviceId === d.deviceId)) {
+          rawResultsFiltered.push(d);
+        }
         
         // Add to filtered results if matches name prefix and not already added
         if (d.name && d.name.includes(namePrefix)) {
@@ -51,29 +64,36 @@ export async function runBleScanCapacitor(timeoutMs = SCAN_DURATION_MS, services
     await new Promise(res => setTimeout(res, timeoutMs));
     await BleClient.stopLEScan();
 
-    // Log filtered results (even if 0)
-    const filteredResults = foundFiltered.map(d => ({ 
-      id: d.deviceId, 
-      name: d.name, 
-      rssi: d.rssi, 
-      uuids: d.uuids 
-    }));
-    safeBleDebugger.info('SCAN', '[BLE:SCAN] results (filtered)', undefined, { 
-      devices: filteredResults, 
-      count: foundFiltered.length 
-    });
+    // Log filtered results with raw data before filtering
+    const filteredLogData: any = { 
+      filteredDevices: foundFiltered.map(d => ({ id: d.deviceId, name: d.name, rssi: d.rssi, uuids: d.uuids })),
+      count: foundFiltered.length,
+      rawDevicesSeenBeforeFiltering: rawResultsFiltered.map(d => ({ id: d.deviceId, name: d.name, rssi: d.rssi, uuids: d.uuids })),
+      totalRawBeforeFiltering: rawResultsFiltered.length
+    };
+    
+    if (ANDROID_SCAN_RAW_LOGS) {
+      filteredLogData.completeRawArrayBeforeFiltering = rawResultsFiltered;
+    }
+    
+    safeBleDebugger.info('SCAN', '[BLE:SCAN] results (filtered)', undefined, filteredLogData);
 
     // If devices found with filter, use them but continue with fallback to see everything
     if (foundFiltered.length > 0) {
       safeBleDebugger.info('SCAN', `Found ${foundFiltered.length} device(s) with service filter, proceeding with fallback scan for complete visibility`);
     }
+  } else if (ANDROID_SCAN_FORCE_UNFILTERED) {
+    safeBleDebugger.info('SCAN', '[BLE:SCAN] start (filtered) - SKIPPED due to ANDROID_SCAN_FORCE_UNFILTERED flag', undefined, { 
+      flags: { ANDROID_SCAN_RAW_LOGS, ANDROID_SCAN_FORCE_UNFILTERED }
+    });
   }
 
   // Phase 2: Fallback scan without service filter
   safeBleDebugger.info('SCAN', '[BLE:SCAN] start (fallback)', undefined, { 
     serviceUuids: [], 
     namePrefix, 
-    durationMs: timeoutMs 
+    durationMs: timeoutMs,
+    flags: { ANDROID_SCAN_RAW_LOGS, ANDROID_SCAN_FORCE_UNFILTERED }
   });
   
   await BleClient.requestLEScan(
@@ -103,38 +123,53 @@ export async function runBleScanCapacitor(timeoutMs = SCAN_DURATION_MS, services
   await new Promise(res => setTimeout(res, timeoutMs));
   await BleClient.stopLEScan();
   
-  // Log raw device list (all devices seen by phone)
-  const rawResults = allRawDevices.map(d => ({ 
-    id: d.deviceId, 
-    name: d.name, 
-    rssi: d.rssi, 
-    uuids: d.uuids 
-  }));
-  
-  // Log fallback results with raw list
-  safeBleDebugger.info('SCAN', '[BLE:SCAN] results (fallback)', undefined, { 
-    devices: foundFallback.map(d => ({ id: d.deviceId, name: d.name, rssi: d.rssi, uuids: d.uuids })),
+  // Log fallback results with complete raw data
+  const fallbackLogData: any = { 
+    filteredDevices: foundFallback.map(d => ({ id: d.deviceId, name: d.name, rssi: d.rssi, uuids: d.uuids })),
     count: foundFallback.length,
-    rawDevicesSeen: rawResults,
-    totalRawCount: allRawDevices.length
-  });
+    rawDevicesSeenBeforeFiltering: allRawDevices.map(d => ({ id: d.deviceId, name: d.name, rssi: d.rssi, uuids: d.uuids })),
+    totalRawBeforeFiltering: allRawDevices.length
+  };
+  
+  if (ANDROID_SCAN_RAW_LOGS) {
+    fallbackLogData.completeRawArrayBeforeFiltering = allRawDevices;
+  }
+  
+  safeBleDebugger.info('SCAN', '[BLE:SCAN] results (fallback)', undefined, fallbackLogData);
 
   // Deduplicate by deviceId: combine filtered + fallback results
   const allFound = [...foundFiltered];
+  const deduplicationLog: any[] = [];
+  
   foundFallback.forEach(fallbackDevice => {
     if (!allFound.find(x => x.deviceId === fallbackDevice.deviceId)) {
       allFound.push(fallbackDevice);
+      deduplicationLog.push({ action: 'added_from_fallback', device: { id: fallbackDevice.deviceId, name: fallbackDevice.name } });
+    } else {
+      deduplicationLog.push({ action: 'skipped_duplicate', device: { id: fallbackDevice.deviceId, name: fallbackDevice.name } });
     }
   });
 
-  // Summary log
-  safeBleDebugger.info('SCAN', '[BLE:SCAN] summary', undefined, { 
+  const scanEndTime = Date.now();
+  const totalScanDuration = scanEndTime - scanStartTime;
+
+  // Summary log with detailed deduplication info
+  const summaryLogData: any = { 
     totalDeduplicated: allFound.length,
     filteredCount: foundFiltered.length,
     fallbackCount: foundFallback.length,
     deviceChosen: allFound.length > 0 ? 'picker-will-show' : 'none',
-    finalDevices: allFound.map(d => ({ id: d.deviceId, name: d.name, rssi: d.rssi }))
-  });
+    finalDevices: allFound.map(d => ({ id: d.deviceId, name: d.name, rssi: d.rssi })),
+    effectiveScanDurationMs: totalScanDuration,
+    configuredDurationMs: timeoutMs,
+    flags: { ANDROID_SCAN_RAW_LOGS, ANDROID_SCAN_FORCE_UNFILTERED }
+  };
+  
+  if (ANDROID_SCAN_RAW_LOGS) {
+    summaryLogData.deduplicationDetails = deduplicationLog;
+  }
+  
+  safeBleDebugger.info('SCAN', '[BLE:SCAN] summary', undefined, summaryLogData);
   
   return allFound;
 }
