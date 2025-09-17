@@ -222,12 +222,11 @@ export const loadBluetoothLE = async () => {
 };
 
 /**
- * i18n dynamic load
+ * i18n dynamic load - Note: i18n is already loaded in main.tsx
+ * This function is kept for compatibility but doesn't do anything
  */
 export const loadI18n = async () => {
-  console.debug('[PERF] Loading i18n configuration...');
-  await import('@/i18n/config');
-  console.debug('[PERF] i18n loaded');
+  console.debug('[PERF] i18n already loaded statically in main.tsx');
 };
 
 /**
