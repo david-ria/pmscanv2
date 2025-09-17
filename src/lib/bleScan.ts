@@ -61,13 +61,13 @@ export async function runBleScanWeb(services?: string[]) {
     throw new Error('Bluetooth not available in this browser');
   }
 
-  console.log('🔍 [BLE Web] Requesting PMScan device with name filter...');
+  console.log('🔍 [BLE Web] Opening Web Bluetooth chooser for PMScan devices...');
   const device = await navigator.bluetooth.requestDevice({
     filters: [{ namePrefix: 'PMScan' }],
     optionalServices: services || [],
   });
 
-  console.log('✅ [BLE Web] Found PMScan device:', { 
+  console.log('✅ [BLE Web] Device selected from chooser:', {
     id: device.id, 
     name: device.name 
   });

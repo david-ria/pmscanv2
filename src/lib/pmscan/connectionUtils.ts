@@ -67,24 +67,10 @@ export class PMScanConnectionUtils {
       PMScanDeviceStorage.storePreferredDevice(selectedDevice.deviceId, selectedDevice.name || 'PMScan Device');
     }
 
-    // Handle platform-specific connection
-    if (Capacitor.isNativePlatform()) {
-      // For native platforms, return the selected device info
-      return selectedDevice;
-    }
-
-    // For web, use the standard Web Bluetooth API
-    if (!navigator.bluetooth) {
-      throw new Error('Bluetooth not available in this browser');
-    }
-
-    const device = await navigator.bluetooth.requestDevice({
-      filters: [{ namePrefix: 'PMScan' }],
-      optionalServices: [PMScan_SERVICE_UUID],
-    });
-
-    logger.debug('📱 Connected to web device:', device.name);
-    return device;
+    // Return the selected device for both native and web platforms
+    // The web device selection is already handled in runBleScanWeb()
+    logger.debug('📱 Selected device:', { id: selectedDevice.deviceId.slice(-8), name: selectedDevice.name });
+    return selectedDevice;
   }
 
   /**
