@@ -107,11 +107,12 @@ export class PMScanConnectionManager {
         }
 
         // For web platforms, result is BluetoothDevice
-        this.device = result as BluetoothDevice;
+        const webDevice = result as BluetoothDevice;
+        this.device = webDevice;
         this.shouldConnect = true;
         
-        safeBleDebugger.info('SCAN', `Web device found: ${this.device.name}`, undefined, { deviceId: this.device.id });
-        return result as BluetoothDevice;
+        safeBleDebugger.info('SCAN', `Web device found: ${webDevice.name}`, undefined, { deviceId: webDevice.id });
+        return webDevice;
       });
     } catch (error) {
       this.stateMachine.transitionToError(error instanceof Error ? error : new Error(String(error)), 'Device scan failed');
