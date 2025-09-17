@@ -140,7 +140,7 @@ const AppRoutes = () => {
               <UnifiedDataProvider>
                 <CrashRecoveryInitializer />
                 <AppLifecycleManager />
-                <div className="min-h-screen bg-background">
+                <div className="min-h-screen bg-background" data-testid="app-container">
                   <Header />
                   <main className="pt-14 pb-16">
                     <Routes>

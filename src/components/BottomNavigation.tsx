@@ -38,6 +38,7 @@ export function BottomNavigation() {
             <NavLink
               key={item.to}
               to={item.to}
+              data-testid={`${item.to === '/' ? 'scan' : item.to.slice(1)}-tab`}
               className={({ isActive }) =>
                 cn(
                   'flex flex-col items-center justify-center space-y-1 px-4 py-2 rounded-lg transition-colors min-w-[70px] min-h-[44px]',
