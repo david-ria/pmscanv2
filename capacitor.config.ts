@@ -1,13 +1,22 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
+const IS_DEV = process.env.NODE_ENV !== 'production';
+
 const config: CapacitorConfig = {
-  appId: 'app.lovable.d8e7ca00b3774793af43f6fcf3d043bd',
-  appName: 'pmscanv2',
+  appId: 'com.tera.pmscan',
+  appName: 'PMScan',
   webDir: 'dist',
-  server: {
-    url: 'https://d8e7ca00-b377-4793-af43-f6fcf3d043bd.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
+  bundledWebRuntime: false,
+  server: IS_DEV
+    ? {
+        // (optional) use your dev URL during web/dev only
+        // url: 'http://192.168.1.10:5173', // <= adjust, or leave undefined
+        // cleartext: true,
+      }
+    : {
+        // PRODUCTION (APK/AAB): load bundled assets inside the app
+        androidScheme: 'https',
+      },
   plugins: {
     SplashScreen: {
       launchShowDuration: 3000,
