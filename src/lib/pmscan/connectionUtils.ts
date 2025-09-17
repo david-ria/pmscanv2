@@ -17,6 +17,13 @@ export class PMScanConnectionUtils {
    * Smart device selection with persistent storage and picker UI
    */
   public static async requestBluetoothDeviceWithPicker(): Promise<FoundDevice> {
+    return this.performScanAndSelect();
+  }
+
+  /**
+   * Perform scan and device selection logic (used by both initial and rescan)
+   */
+  private static async performScanAndSelect(): Promise<FoundDevice> {
     // Scan for available PMScan devices
     logger.debug('🔍 Scanning for PMScan devices...');
     const devices = await runBleScan({ 
@@ -61,7 +68,7 @@ export class PMScanConnectionUtils {
         PMScanDeviceStorage.forgetPreferredDevice();
       }
 
-      selectedDevice = await this.showDevicePicker(devices);
+      selectedDevice = await this.showDevicePicker(devices, true);
       
       // Store selected device as preferred
       PMScanDeviceStorage.storePreferredDevice(selectedDevice.deviceId, selectedDevice.name || 'PMScan Device');
@@ -76,7 +83,7 @@ export class PMScanConnectionUtils {
   /**
    * Show device picker UI and wait for user selection
    */
-  private static async showDevicePicker(devices: FoundDevice[]): Promise<FoundDevice> {
+  private static async showDevicePicker(devices: FoundDevice[], enableRescan: boolean = false): Promise<FoundDevice> {
     return new Promise((resolve, reject) => {
       // Store resolvers for the picker component to use
       devicePickerResolver = resolve;
@@ -84,7 +91,7 @@ export class PMScanConnectionUtils {
       
       // Dispatch custom event to trigger picker UI
       window.dispatchEvent(new CustomEvent('pmscan-show-device-picker', { 
-        detail: { devices } 
+        detail: { devices, enableRescan } 
       }));
       
       // Timeout after 30 seconds
@@ -117,6 +124,28 @@ export class PMScanConnectionUtils {
       devicePickerRejecter(error || new Error('Device selection cancelled'));
       devicePickerResolver = null;
       devicePickerRejecter = null;
+    }
+  }
+
+  /**
+   * Called by DevicePicker component when user requests rescan
+   */
+  public static async rescanDevices(): Promise<void> {
+    // Close current picker
+    if (devicePickerRejecter) {
+      devicePickerRejecter(new Error('Rescan requested'));
+      devicePickerResolver = null;
+      devicePickerRejecter = null;
+    }
+
+    // Trigger new scan and selection process
+    try {
+      const selectedDevice = await this.performScanAndSelect();
+      // The new picker will be shown automatically by performScanAndSelect
+    } catch (error) {
+      logger.error('Rescan failed:', error);
+      // Re-throw to handle in UI
+      throw error;
     }
   }
 

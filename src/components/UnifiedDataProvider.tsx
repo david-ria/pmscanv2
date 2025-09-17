@@ -40,6 +40,8 @@ interface UnifiedDataState {
   onDevicePickerSelect: (device: any) => void;
   onDevicePickerCancel: () => void;
   onForgetDevice: () => void;
+  onRescan: () => void;
+  isScanning: boolean;
   
   // Actions
   requestDevice: () => Promise<void>;
@@ -148,6 +150,8 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     onDevicePickerSelect: bluetooth.onDevicePickerSelect,
     onDevicePickerCancel: bluetooth.onDevicePickerCancel,
     onForgetDevice: bluetooth.onForgetDevice,
+    onRescan: bluetooth.onRescan,
+    isScanning: bluetooth.isScanning,
     
     // Actions
     requestDevice: bluetooth.requestDevice,

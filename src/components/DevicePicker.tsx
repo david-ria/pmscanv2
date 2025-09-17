@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bluetooth, Battery, Signal, Trash2 } from 'lucide-react';
+import { Bluetooth, Battery, Signal, Trash2, RotateCcw } from 'lucide-react';
 import { FoundDevice } from '@/lib/bleScan';
 import { PMScanDeviceStorage } from '@/lib/pmscan/deviceStorage';
 
@@ -16,6 +16,8 @@ interface DevicePickerProps {
   devices: FoundDevice[];
   onDeviceSelected: (device: FoundDevice) => void;
   onForgetDevice?: () => void;
+  onRescan?: () => void;
+  isScanning?: boolean;
 }
 
 export const DevicePicker = ({
@@ -24,6 +26,8 @@ export const DevicePicker = ({
   devices,
   onDeviceSelected,
   onForgetDevice,
+  onRescan,
+  isScanning = false,
 }: DevicePickerProps) => {
   const preferredDevice = PMScanDeviceStorage.getPreferredDevice();
 
@@ -69,18 +73,18 @@ export const DevicePicker = ({
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground font-mono">
-                      ID: {device.deviceId.slice(-8)}
-                    </p>
+                    <div className="text-sm text-muted-foreground">
+                      <p className="font-mono">...{device.deviceId.slice(-4)}</p>
+                      {device.rssi && (
+                        <p className="flex items-center gap-1">
+                          <Signal className="h-3 w-3" />
+                          {device.rssi} dBm
+                        </p>
+                      )}
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-3">
-                    {device.rssi && (
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Signal className="h-3 w-3" />
-                        <span>{device.rssi}dBm</span>
-                      </div>
-                    )}
+                  <div className="flex items-center">
                     <Bluetooth className="h-4 w-4 text-blue-500" />
                   </div>
                 </div>
@@ -89,20 +93,33 @@ export const DevicePicker = ({
           })}
         </div>
 
-        <div className="flex justify-between pt-4">
-          {preferredDevice && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleForgetDevice}
-              className="flex items-center gap-2 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-3 w-3" />
-              Forget Preferred Device
-            </Button>
-          )}
-          
-          <div className="flex-1" />
+        <div className="flex justify-between items-center pt-4 gap-2">
+          <div className="flex items-center gap-2">
+            {preferredDevice && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleForgetDevice}
+                className="flex items-center gap-2 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3 w-3" />
+                Forget Preferred Device
+              </Button>
+            )}
+            
+            {onRescan && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRescan}
+                disabled={isScanning}
+                className="flex items-center gap-2"
+              >
+                <RotateCcw className={`h-3 w-3 ${isScanning ? 'animate-spin' : ''}`} />
+                {isScanning ? 'Scanning...' : 'Rescan'}
+              </Button>
+            )}
+          </div>
           
           <Button
             variant="outline"

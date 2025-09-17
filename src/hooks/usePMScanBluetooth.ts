@@ -4,6 +4,7 @@ import { parsePMScanDataPayload } from '@/lib/pmscan/dataParser';
 import { exponentialBackoff } from '@/lib/pmscan/utils';
 import { globalConnectionManager } from '@/lib/pmscan/globalConnectionManager';
 import { PMScanConnectionUtils } from '@/lib/pmscan/connectionUtils';
+import { PMScanDeviceStorage } from '@/lib/pmscan/deviceStorage';
 import { FoundDevice } from '@/lib/bleScan';
 import { Capacitor } from '@capacitor/core';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +17,7 @@ export function usePMScanBluetooth() {
   const [error, setError] = useState<string | null>(null);
   const [showDevicePicker, setShowDevicePicker] = useState(false);
   const [availableDevices, setAvailableDevices] = useState<FoundDevice[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
 
   // Use global connection manager to persist across component unmounts
   const connectionManager = globalConnectionManager;
@@ -253,9 +255,10 @@ export function usePMScanBluetooth() {
   // Handle device picker events
   useEffect(() => {
     const handleShowDevicePicker = (event: CustomEvent) => {
-      const { devices } = event.detail;
+      const { devices, enableRescan } = event.detail;
       setAvailableDevices(devices);
       setShowDevicePicker(true);
+      setIsScanning(false); // Reset scanning state when picker shows
     };
 
     window.addEventListener('pmscan-show-device-picker', handleShowDevicePicker as EventListener);
@@ -276,8 +279,22 @@ export function usePMScanBluetooth() {
   }, []);
 
   const handleForgetDevice = useCallback(() => {
+    PMScanDeviceStorage.forgetPreferredDevice();
     // This will trigger a new scan and selection process
     setShowDevicePicker(false);
+  }, []);
+
+  const handleRescan = useCallback(async () => {
+    setIsScanning(true);
+    setShowDevicePicker(false);
+    
+    try {
+      await PMScanConnectionUtils.rescanDevices();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Rescan failed');
+    } finally {
+      setIsScanning(false);
+    }
   }, []);
 
   // Check for existing connection on component mount and re-establish event listeners
@@ -351,5 +368,7 @@ export function usePMScanBluetooth() {
     onDevicePickerSelect: handleDevicePickerSelect,
     onDevicePickerCancel: handleDevicePickerCancel,
     onForgetDevice: handleForgetDevice,
+    onRescan: handleRescan,
+    isScanning,
   };
 }

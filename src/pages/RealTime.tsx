@@ -83,6 +83,8 @@ export default function RealTime() {
     onDevicePickerSelect,
     onDevicePickerCancel,
     onForgetDevice,
+    onRescan,
+    isScanning,
   } = unifiedData;
 
   // Only initialize autocontext if the user has enabled it
@@ -317,6 +319,8 @@ export default function RealTime() {
         devices={availableDevices}
         onDeviceSelected={onDevicePickerSelect}
         onForgetDevice={onForgetDevice}
+        onRescan={onRescan}
+        isScanning={isScanning}
       />
     </main>
   );
