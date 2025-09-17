@@ -14,7 +14,7 @@ import {
 } from './connectionState';
 import { BleClient } from '@capacitor-community/bluetooth-le';
 import { Capacitor } from '@capacitor/core';
-import { runBleScan, FoundDevice } from '@/lib/bleScan';
+import { runBleScan, FoundDevice, getWebBluetoothDeviceById } from '@/lib/bleScan';
 import { PMScan_SERVICE_UUID, PMScan_MODE_UUID } from './constants';
 import { BleOperationWrapper } from './bleOperationWrapper';
 import {
@@ -106,8 +106,12 @@ export class PMScanConnectionManager {
           } as BluetoothDevice;
         }
 
-        // For web platforms, result is BluetoothDevice
-        const webDevice = result as BluetoothDevice;
+        // For web platforms, result is FoundDevice; retrieve cached BluetoothDevice
+        const selected = result as FoundDevice;
+        const webDevice = getWebBluetoothDeviceById(selected.deviceId);
+        if (!webDevice) {
+          throw new Error('Selected device not available in Web Bluetooth cache');
+        }
         this.device = webDevice;
         this.shouldConnect = true;
         

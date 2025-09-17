@@ -16,7 +16,7 @@ export class PMScanConnectionUtils {
   /**
    * Smart device selection with persistent storage and picker UI
    */
-  public static async requestBluetoothDeviceWithPicker(): Promise<BluetoothDevice | FoundDevice> {
+  public static async requestBluetoothDeviceWithPicker(): Promise<FoundDevice> {
     // Scan for available PMScan devices
     logger.debug('🔍 Scanning for PMScan devices...');
     const devices = await runBleScan({ 
@@ -120,7 +120,7 @@ export class PMScanConnectionUtils {
     }
   }
 
-  public static async requestBluetoothDevice(): Promise<BluetoothDevice | FoundDevice> {
+  public static async requestBluetoothDevice(): Promise<FoundDevice> {
     // Legacy method - now uses the smart picker
     const result = await this.requestBluetoothDeviceWithPicker();
     return result;

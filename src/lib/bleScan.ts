@@ -4,6 +4,11 @@ import { Capacitor } from '@capacitor/core';
 
 export type FoundDevice = { deviceId: string; name?: string; rssi?: number };
 
+// Cache the actual Web BluetoothDevice so we don't need to call requestDevice again
+const webDeviceCache = new Map<string, BluetoothDevice>();
+export function getWebBluetoothDeviceById(id: string) {
+  return webDeviceCache.get(id);
+}
 export async function runBleScanCapacitor(timeoutMs = 10000, services?: string[]) {
   await ensureBleReady();
   const found: FoundDevice[] = [];
@@ -61,11 +66,14 @@ export async function runBleScanWeb(services?: string[]) {
     throw new Error('Bluetooth not available in this browser');
   }
 
-  console.log('🔍 [BLE Web] Opening Web Bluetooth chooser for PMScan devices...');
+  console.log('Opening Web Bluetooth chooser via runBleScanWeb()');
   const device = await navigator.bluetooth.requestDevice({
     filters: [{ namePrefix: 'PMScan' }],
     optionalServices: services || [],
   });
+
+  // Cache the selected device for later connection
+  webDeviceCache.set(device.id, device);
 
   console.log('✅ [BLE Web] Device selected from chooser:', {
     id: device.id, 
