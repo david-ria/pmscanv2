@@ -12,6 +12,7 @@ import { STORAGE_KEYS } from '@/services/storageService';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Capacitor } from '@capacitor/core';
 import { BleClient } from '@capacitor-community/bluetooth-le';
+import { ensureBleReady } from '@/lib/bleReady';
 import {
   DEFAULT_AUTO_CONTEXT_RULES,
   AutoContextRule,
@@ -249,7 +250,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       }
 
       // Initialize BLE if not already done
-      await BleClient.initialize();
+      await ensureBleReady();
 
       // Check if Bluetooth is enabled
       const isEnabled = await BleClient.isEnabled();
