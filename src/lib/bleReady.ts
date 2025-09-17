@@ -1,19 +1,51 @@
-// src/lib/bleReady.ts
 import { BleClient } from '@capacitor-community/bluetooth-le';
+import { Capacitor } from '@capacitor/core';
 
-export async function ensureBleReady() {
-  try {
-    // 1) Init BLE (idempotent)
+let initialized = false;
+let initInFlight: Promise<void> | null = null;
+
+async function doInit() {
+  if (!initialized) {
+    console.log('[BLE] initialize()');
     await BleClient.initialize();
-    console.log('[BLE] Initialized successfully');
-
-    // 3) Active le Bluetooth si OFF (ouvre le dialogue système)
-    const enabled = await BleClient.isEnabled();
-    if (!enabled) {
-      await BleClient.enable();
-    }
-  } catch (e) {
-    // Log doux (évite de crasher l'app si l'utilisateur refuse)
-    console.warn('[BLE] init/permissions skipped or failed:', e);
+    initialized = true;
   }
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      console.log('[BLE] requestPermissions()');
+      // @ts-ignore
+      if (typeof (BleClient as any).requestPermissions === 'function') {
+        await (BleClient as any).requestPermissions();
+      }
+    } catch (e) {
+      console.warn('[BLE] requestPermissions failed or not needed:', e);
+    }
+
+    try {
+      const enabled = await BleClient.isEnabled();
+      console.log('[BLE] isEnabled =', enabled);
+      if (!enabled) {
+        // @ts-ignore
+        if (typeof (BleClient as any).enableBluetooth === 'function') {
+          console.log('[BLE] enableBluetooth()');
+          // @ts-ignore
+          await (BleClient as any).enableBluetooth();
+        } else if (typeof (BleClient as any).openBluetoothSettings === 'function') {
+          console.log('[BLE] openBluetoothSettings()');
+          await (BleClient as any).openBluetoothSettings();
+        } else {
+          console.warn('[BLE] No enableBluetooth/openBluetoothSettings API available.');
+        }
+      }
+    } catch (e) {
+      console.warn('[BLE] enable check failed:', e);
+    }
+  }
+}
+
+export async function ensureBleReady(): Promise<void> {
+  if (initialized) return;
+  if (!initInFlight) initInFlight = doInit().finally(() => (initInFlight = null));
+  return initInFlight;
 }
