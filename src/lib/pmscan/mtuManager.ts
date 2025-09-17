@@ -1,5 +1,3 @@
-import { BleClient } from '@capacitor-community/bluetooth-le';
-import { Capacitor } from '@capacitor/core';
 import * as logger from '@/utils/logger';
 import { bleDebugger } from '@/lib/bleDebug';
 
@@ -8,9 +6,10 @@ import { bleDebugger } from '@/lib/bleDebug';
  */
 export const MTU_CONFIG = {
   DEFAULT: 23 as number,          // Default MTU for BLE
-  PREFERRED: 512 as number,       // Preferred MTU size
+  PREFERRED: 512 as number,       // Preferred MTU size (may not be negotiated on web)
   MIN_EFFECTIVE: 20 as number,    // Minimum effective payload (MTU - 3)
   NEGOTIATION_TIMEOUT: 5000 as number,
+  BLE_OVERHEAD: 3 as number,      // ATT/LL overhead bytes
 } as const;
 
 export interface MtuInfo {
@@ -34,41 +33,28 @@ export class MtuManager {
     
     try {
       if (typeof deviceIdOrServer === 'string') {
-        // Native platform - use Capacitor BLE
-        try {
-          bleDebugger.info('MTU', `Requesting native MTU: ${MTU_CONFIG.PREFERRED} bytes`, undefined, { deviceId: deviceIdOrServer, requestedMtu: MTU_CONFIG.PREFERRED });
-          const result = await BleClient.requestMtu(deviceIdOrServer, MTU_CONFIG.PREFERRED);
-          const negotiated = result.value;
-          
-          const info: MtuInfo = {
-            negotiated,
-            effective: Math.max(negotiated - MTU_CONFIG.BLE_OVERHEAD, MTU_CONFIG.MIN_EFFECTIVE),
-            isOptimal: negotiated >= MTU_CONFIG.PREFERRED
-          };
-          
-          this.currentMtu = info;
-          bleDebugger.info('MTU', `Native MTU negotiated successfully`, undefined, { 
-            negotiated,
-            effective: info.effective,
-            isOptimal: info.isOptimal,
-            overhead: MTU_CONFIG.BLE_OVERHEAD
-          });
-          
-          return info;
-        } catch (error) {
-          bleDebugger.warn('MTU', 'Native MTU negotiation failed, using default', undefined, { error: error instanceof Error ? error.message : String(error) });
-          return this.getDefaultMtu();
-        }
+        // Native platform - current plugin API doesn't expose requestMtu; fall back to default
+        const info = this.createMtuInfo(MTU_CONFIG.DEFAULT);
+        this.currentMtu = info;
+        bleDebugger.info('MTU', 'Native MTU negotiation not supported by plugin; using default', undefined, {
+          negotiated: info.negotiated,
+          effective: info.effective,
+          isOptimal: info.isOptimal,
+          overhead: MTU_CONFIG.BLE_OVERHEAD,
+        });
+        return info;
       } else {
         // Web platform - MTU negotiation not supported, use default
         bleDebugger.info('MTU', 'Web platform: Using default MTU (no negotiation available)');
-        const info = this.getDefaultMtu();
+        const info = this.createMtuInfo(MTU_CONFIG.DEFAULT);
         this.currentMtu = info;
         return info;
       }
     } catch (error) {
       bleDebugger.error('MTU', 'MTU negotiation error', undefined, { error: error instanceof Error ? error.message : String(error) });
-      return this.getDefaultMtu();
+      const info = this.createMtuInfo(MTU_CONFIG.DEFAULT);
+      this.currentMtu = info;
+      return info;
     }
   }
 
