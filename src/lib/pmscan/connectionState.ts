@@ -17,10 +17,14 @@ export interface PMScanStateTransition {
   context?: string;
 }
 
+export type StateChangeCallback = (from: PMScanConnectionState, to: PMScanConnectionState, context?: string) => void;
+export type ErrorCallback = (error: Error, state: PMScanConnectionState) => void;
+export type TimeoutCallback = (state: PMScanConnectionState) => void;
+
 export interface PMScanStateMachineCallbacks {
-  onStateChange?: (from: PMScanConnectionState, to: PMScanConnectionState, context?: string) => void;
-  onError?: (error: Error, state: PMScanConnectionState) => void;
-  onTimeout?: (state: PMScanConnectionState) => void;
+  onStateChange?: StateChangeCallback;
+  onError?: ErrorCallback;
+  onTimeout?: TimeoutCallback;
 }
 
 export const STATE_TIMEOUTS = {

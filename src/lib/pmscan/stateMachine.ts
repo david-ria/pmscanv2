@@ -58,7 +58,7 @@ export class PMScanStateMachine {
       const error = new Error(
         `Invalid state transition from ${previousState} to ${newState}`
       );
-      logger.error('❌ Invalid state transition:', error.message);
+      logger.error('❌ Invalid state transition:', error);
       this.callbacks.onError?.(error, previousState);
       return false;
     }
@@ -109,7 +109,7 @@ export class PMScanStateMachine {
   }
 
   public transitionToError(error: Error, context?: string): void {
-    logger.error('❌ PMScan State Machine error:', error.message);
+    logger.error('❌ PMScan State Machine error:', error);
     
     if (this.errorCount >= this.maxErrors) {
       logger.error('❌ Max errors reached, forcing IDLE state');

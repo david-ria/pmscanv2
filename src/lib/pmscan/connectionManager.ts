@@ -5,7 +5,13 @@ import { PMScanNativeInitializer } from './nativeInitializer';
 import { PMScanEventManager } from './eventManager';
 import { PMScanConnectionUtils } from './connectionUtils';
 import { PMScanStateMachine } from './stateMachine';
-import { PMScanConnectionState } from './connectionState';
+import { 
+  PMScanConnectionState, 
+  PMScanStateMachineCallbacks,
+  StateChangeCallback,
+  ErrorCallback,
+  TimeoutCallback 
+} from './connectionState';
 import { BleClient } from '@capacitor-community/bluetooth-le';
 import { Capacitor } from '@capacitor/core';
 import { runBleScan, FoundDevice } from '@/lib/bleScan';
@@ -37,17 +43,20 @@ export class PMScanConnectionManager {
     this.deviceInitializer = new PMScanDeviceInitializer(this.deviceState);
     this.nativeInitializer = new PMScanNativeInitializer(this.deviceState);
     this.eventManager = new PMScanEventManager(this.deviceState);
-    this.stateMachine = new PMScanStateMachine({
-      onStateChange: (from, to, context) => {
+    
+    const callbacks: PMScanStateMachineCallbacks = {
+      onStateChange: ((from: PMScanConnectionState, to: PMScanConnectionState, context?: string) => {
         logger.debug(`🔄 PMScan: ${from} → ${to}${context ? ` (${context})` : ''}`);
-      },
-      onError: (error, state) => {
-        logger.error(`❌ PMScan error in state ${state}:`, error.message);
-      },
-      onTimeout: (state) => {
+      }) as StateChangeCallback,
+      onError: ((error: Error, state: PMScanConnectionState) => {
+        logger.error(`❌ PMScan error in state ${state}:`, error);
+      }) as ErrorCallback,
+      onTimeout: ((state: PMScanConnectionState) => {
         logger.warn(`⏰ PMScan timeout in state ${state}`);
-      }
-    });
+      }) as TimeoutCallback
+    };
+    
+    this.stateMachine = new PMScanStateMachine(callbacks);
   }
 
   public get state() {
