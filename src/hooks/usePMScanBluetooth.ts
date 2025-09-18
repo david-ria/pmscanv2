@@ -141,12 +141,7 @@ export function usePMScanBluetooth() {
       deviceName: deviceInfo?.name || 'unknown'
     });
     
-    logger.debug(
-      '🔄 connect() called, shouldConnect:',
-      manager.shouldAutoConnect()
-    );
-
-    if (!manager.shouldAutoConnect()) return false;
+    logger.debug('🔄 connect() called - proceeding with user-initiated connection');
 
       const maxRetries = 3;
       const baseDelay = 1000;
