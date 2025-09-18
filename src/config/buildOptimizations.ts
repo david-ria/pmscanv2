@@ -181,9 +181,9 @@ export const FeatureFlags = {
 };
 
 // Export configuration based on environment
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = !import.meta.env.DEV;
 export const currentConfig = isProduction 
   ? EnvironmentConfig.production 
   : EnvironmentConfig.development;
 
-console.debug('[BUILD] 🚀 Build optimizations configured for:', process.env.NODE_ENV);
+console.debug('[BUILD] 🚀 Build optimizations configured for:', import.meta.env.MODE);

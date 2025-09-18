@@ -139,64 +139,70 @@ export function usePMScanBluetooth() {
 
     if (!manager.shouldAutoConnect()) return false;
 
-    const maxRetries = 3;
-    const baseDelay = 1000;
+      const maxRetries = 3;
+      const baseDelay = 1000;
 
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        logger.debug(`🔄 Connection attempt ${attempt + 1}/${maxRetries}`);
-        
-        const server = await manager.connect();
-        const deviceInfo = await manager.initializeDevice(
-          handleRTData,
-          handleIMData,
-          handleBatteryData,
-          handleChargingData
-        );
-
-        await onDeviceConnected(deviceInfo);
-        logger.debug('✅ PMScan connection successful');
-        return true;
-      } catch (error: any) {
-        const errorMessage = error?.message || 'Unknown connection error';
-        logger.error(`❌ Connection attempt ${attempt + 1} failed:`, errorMessage);
-        
-        // Check if this is a critical notification failure
-        if (errorMessage.includes('critical') && errorMessage.includes('notifications')) {
-          logger.error('🚨 Critical notification failure - cannot continue');
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          logger.debug(`🔄 Connection attempt ${attempt + 1}/${maxRetries}`);
+          safeBleDebugger.info('CONNECT', `[BLE:CONNECT] connecting (attempt ${attempt + 1})`, undefined, {});
           
-          toast({
-            title: "Échec critique de connexion",
-            description: 'Les données essentielles de l\'appareil ne sont pas disponibles. Redémarrez l\'appareil.',
-            variant: "destructive",
-          });
+          const server = await manager.connect();
+          safeBleDebugger.info('CONNECT', '[BLE:CONNECT] success', undefined, {});
           
-          setError(`Device connection failed: Essential data stream unavailable`);
-          return false;
+          safeBleDebugger.info('INIT', '[BLE:INIT] services/characteristics', undefined, {});
+          const deviceInfo = await manager.initializeDevice(
+            handleRTData,
+            handleIMData,
+            handleBatteryData,
+            handleChargingData
+          );
+          
+          safeBleDebugger.info('NOTIFY', '[BLE:NOTIFY] started', undefined, {});
+          await onDeviceConnected(deviceInfo);
+          logger.debug('✅ PMScan connection successful');
+          return true;
+        } catch (error: any) {
+          const errorMessage = error?.message || 'Unknown connection error';
+          logger.error(`❌ Connection attempt ${attempt + 1} failed:`, errorMessage);
+          safeBleDebugger.error('CONNECT', `[BLE:CONNECT] error (attempt ${attempt + 1})`, undefined, { error: errorMessage });
+          
+          // Check if this is a critical notification failure
+          if (errorMessage.includes('critical') && errorMessage.includes('notifications')) {
+            logger.error('🚨 Critical notification failure - cannot continue');
+            
+            toast({
+              title: "Échec critique de connexion",
+              description: 'Les données essentielles de l\'appareil ne sont pas disponibles. Redémarrez l\'appareil.',
+              variant: "destructive",
+            });
+            
+            setError(`Device connection failed: Essential data stream unavailable`);
+            return false;
+          }
+          
+          if (attempt === maxRetries - 1) {
+            // Final attempt failed
+            toast({
+              title: "Échec de connexion",
+              description: errorMessage.includes('timeout') 
+                ? 'Délai d\'attente dépassé lors de la connexion'
+                : errorMessage.includes('startNotifications')
+                ? 'Impossible de configurer les notifications. Redémarrage recommandé.'
+                : `Connexion échouée après ${maxRetries} tentatives`,
+              variant: "destructive",
+            });
+            
+            setError(`Connection failed after ${maxRetries} attempts: ${errorMessage}`);
+            return false;
+          }
+          
+          // Exponential backoff delay
+          const delay = baseDelay * Math.pow(2, attempt);
+          logger.debug(`⏳ Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
-        
-        if (attempt === maxRetries - 1) {
-          // Final attempt failed
-          toast({
-            title: "Échec de connexion",
-            description: errorMessage.includes('timeout') 
-              ? 'Délai d\'attente dépassé lors de la connexion'
-              : errorMessage.includes('startNotifications')
-              ? 'Impossible de configurer les notifications. Redémarrage recommandé.'
-              : `Connexion échouée après ${maxRetries} tentatives`,
-            variant: "destructive",
-          });
-          
-          setError(`Connection failed after ${maxRetries} attempts: ${errorMessage}`);
-          return false;
-        }
-        
-        // Exponential backoff delay
-        const delay = baseDelay * Math.pow(2, attempt);
-        logger.debug(`⏳ Retrying in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
       }
-    }
 
     return false;
   }, [onDeviceConnected, handleRTData, handleIMData, handleBatteryData, handleChargingData]);

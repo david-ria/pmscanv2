@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs';
 const outputDir = existsSync('dist') ? 'dist' : 'build';
 
 const { count, size, warnings } = await injectManifest({
-  swSrc: 'src/sw.ts',
+  swSrc: 'src/sw.js',
   swDest: `${outputDir}/sw.js`,
   globDirectory: outputDir,
   globPatterns: [
