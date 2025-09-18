@@ -88,16 +88,16 @@ export class PMScanConnectionUtils {
         name: selectedDevice.name
       });
 
-      // Start timeout for fallback to picker if connection doesn't start
-      ConnectionTimeoutManager.startConnectionTimeout(() => {
-        // If connection hasn't started within timeout, show picker as fallback
-        this.showDevicePicker({ 
-          filteredDevices: candidateDevices, 
-          rawDevices: rawDevices 
-        }, true).catch(() => {
-          // Ignore picker errors in fallback mode
-        });
-      });
+      // TEMPORARILY DISABLED: Start timeout for fallback to picker if connection doesn't start
+      // ConnectionTimeoutManager.startConnectionTimeout(() => {
+      //   // If connection hasn't started within timeout, show picker as fallback
+      //   this.showDevicePicker({ 
+      //     filteredDevices: candidateDevices, 
+      //     rawDevices: rawDevices 
+      //   }, true).catch(() => {
+      //     // Ignore picker errors in fallback mode
+      //   });
+      // });
     } else if (candidateDevices.length === 1 && !forceShowPicker) {
       // Priority 2: Auto-select if only one device (unless debug flag is set)
       selectedDevice = candidateDevices[0];
@@ -117,16 +117,16 @@ export class PMScanConnectionUtils {
           name: selectedDevice.name
         });
 
-        // Start timeout for fallback to picker if connection doesn't start
-        ConnectionTimeoutManager.startConnectionTimeout(() => {
-          // If connection hasn't started within timeout, show picker as fallback
-          this.showDevicePicker({ 
-            filteredDevices: candidateDevices, 
-            rawDevices: rawDevices 
-          }, true).catch(() => {
-            // Ignore picker errors in fallback mode
-          });
-        });
+        // TEMPORARILY DISABLED: Start timeout for fallback to picker if connection doesn't start
+        // ConnectionTimeoutManager.startConnectionTimeout(() => {
+        //   // If connection hasn't started within timeout, show picker as fallback
+        //   this.showDevicePicker({ 
+        //     filteredDevices: candidateDevices, 
+        //     rawDevices: rawDevices 
+        //   }, true).catch(() => {
+        //     // Ignore picker errors in fallback mode
+        //   });
+        // });
       } else {
         throw new Error('Selected device is not a valid PMScan device');
       }
@@ -208,6 +208,13 @@ export class PMScanConnectionUtils {
       decision,
       deviceChosen: selectedDevice.deviceId.slice(-8),
       deviceName: selectedDevice.name
+    });
+
+    // Add granular logging right before return
+    safeBleDebugger.info('SCAN', '[BLE:SCAN] returning-device', undefined, {
+      id: selectedDevice.deviceId.slice(-8),
+      name: selectedDevice.name,
+      decision
     });
 
     // Return the selected device for both native and web platforms
