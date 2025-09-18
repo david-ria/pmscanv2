@@ -72,7 +72,16 @@ export function validatePMValues(
 ): PacketValidationResult {
   const warnings: string[] = [];
 
-  // PM value validation
+  // Check for truly corrupt data (NaN, Infinity, null, undefined)
+  if (!Number.isFinite(pm1) || !Number.isFinite(pm25) || !Number.isFinite(pm10) || 
+      !Number.isFinite(temp) || !Number.isFinite(humidity)) {
+    return {
+      isValid: false,
+      error: 'Corrupt data - non-finite values detected'
+    };
+  }
+
+  // PM value validation - add warnings but don't reject
   if (pm1 < VALIDATION_RANGES.PM_MIN || pm1 > VALIDATION_RANGES.PM_MAX) {
     warnings.push(`PM1 out of range: ${pm1} µg/m³`);
   }
@@ -83,17 +92,17 @@ export function validatePMValues(
     warnings.push(`PM10 out of range: ${pm10} µg/m³`);
   }
 
-  // Temperature validation
+  // Temperature validation - add warnings but don't reject
   if (temp < VALIDATION_RANGES.TEMP_MIN || temp > VALIDATION_RANGES.TEMP_MAX) {
     warnings.push(`Temperature out of range: ${temp}°C`);
   }
 
-  // Humidity validation
+  // Humidity validation - add warnings but don't reject
   if (humidity < VALIDATION_RANGES.HUMIDITY_MIN || humidity > VALIDATION_RANGES.HUMIDITY_MAX) {
     warnings.push(`Humidity out of range: ${humidity}%`);
   }
 
-  // Physical consistency checks
+  // Physical consistency checks - add warnings but don't reject
   if (pm1 > pm25) {
     warnings.push('PM1 > PM2.5 - physically inconsistent');
   }
@@ -102,7 +111,7 @@ export function validatePMValues(
   }
 
   return {
-    isValid: warnings.length === 0,
+    isValid: true, // Always valid unless data is truly corrupt
     warnings: warnings.length > 0 ? warnings : undefined
   };
 }
