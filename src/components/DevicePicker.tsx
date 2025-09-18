@@ -44,18 +44,18 @@ export const DevicePicker = ({
   // Log picker UI state changes
   useEffect(() => {
     if (open) {
-      safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] mount/open', undefined, { 
+      safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] open', undefined, { 
         filteredCount: filteredDevices.length,
         rawCount: rawDevices.length 
       });
     } else {
-      safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] close');
+      safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] close', undefined, {});
     }
   }, [open, filteredDevices.length, rawDevices.length]);
 
   const handleDeviceSelect = (device: FoundDevice) => {
     safeBleDebugger.info('PICKER', '[BLE:PICKER:UI] select', undefined, {
-      id: device.deviceId.slice(-8),
+      deviceId: device.deviceId.slice(-8),
       name: device.name
     });
     onDeviceSelected(device);

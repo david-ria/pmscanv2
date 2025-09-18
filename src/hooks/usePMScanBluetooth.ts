@@ -130,8 +130,17 @@ export function usePMScanBluetooth() {
     setDevice((prev) => (prev ? { ...prev, connected: false } : null));
   }, []);
 
-  const connect = useCallback(async (): Promise<boolean> => {
+  const connect = useCallback(async (deviceInfo?: { deviceId?: string; name?: string }): Promise<boolean> => {
+    // Clear any pending connection timeout since connection is starting
+    const { ConnectionTimeoutManager } = await import('@/lib/pmscan/connectionTimeoutManager');
+    ConnectionTimeoutManager.clearTimeout();
+    
     const manager = connectionManager;
+    safeBleDebugger.info('CONNECT', '[BLE:CONNECT] connecting', undefined, {
+      deviceId: deviceInfo?.deviceId?.slice(-8) || 'unknown',
+      deviceName: deviceInfo?.name || 'unknown'
+    });
+    
     logger.debug(
       '🔄 connect() called, shouldConnect:',
       manager.shouldAutoConnect()
@@ -145,7 +154,6 @@ export function usePMScanBluetooth() {
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
           logger.debug(`🔄 Connection attempt ${attempt + 1}/${maxRetries}`);
-          safeBleDebugger.info('CONNECT', `[BLE:CONNECT] connecting (attempt ${attempt + 1})`, undefined, {});
           
           const server = await manager.connect();
           safeBleDebugger.info('CONNECT', '[BLE:CONNECT] success', undefined, {});
@@ -215,7 +223,7 @@ export function usePMScanBluetooth() {
       const manager = connectionManager;
       const device = await manager.requestDevice();
 
-      safeBleDebugger.info('PICKER', '[BLE:PICKER] requestDevice completed, starting connection', undefined, { 
+      safeBleDebugger.info('PICKER', '[BLE:PICKER] requestDevice completed', undefined, { 
         deviceId: (device as any).id?.slice(-8) || 'unknown' 
       });
 
@@ -228,8 +236,11 @@ export function usePMScanBluetooth() {
         });
       }
 
-      // Start connection process immediately
-      const connectionResult = await connect();
+      // Start connection process immediately after device selection
+      const connectionResult = await connect({
+        deviceId: (device as any).id,
+        name: device.name
+      });
       
       if (connectionResult) {
         safeBleDebugger.info('PICKER', '[BLE:PICKER] connection flow completed successfully', undefined, {
