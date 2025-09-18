@@ -29,6 +29,7 @@ export class PMScanConnectionManager {
   private server: BluetoothRemoteGATTServer | null = null;
   private service: BluetoothRemoteGATTService | null = null;
   private shouldConnect = false;
+  private isUserInitiatedConnection = false; // Track if user initiated this connection
   
   // Native (Capacitor) BLE support
   private nativeDeviceId: string | null = null;
@@ -95,7 +96,9 @@ export class PMScanConnectionManager {
           const foundDevice = result as FoundDevice;
           this.nativeDeviceId = foundDevice.deviceId;
           this.shouldConnect = true;
+          this.isUserInitiatedConnection = true;
           
+          logger.debug(`🔗 PMScan: shouldConnect set to TRUE (user initiated, native)`, { deviceId: foundDevice.deviceId });
           safeBleDebugger.info('SCAN', `Native device found: ${foundDevice.name}`, undefined, { deviceId: foundDevice.deviceId });
           
           // Return a shim object for compatibility
@@ -114,7 +117,9 @@ export class PMScanConnectionManager {
         }
         this.device = webDevice;
         this.shouldConnect = true;
+        this.isUserInitiatedConnection = true;
         
+        logger.debug(`🔗 PMScan: shouldConnect set to TRUE (user initiated, web)`, { deviceId: webDevice.id });
         safeBleDebugger.info('SCAN', `Web device found: ${webDevice.name}`, undefined, { deviceId: webDevice.id });
         return webDevice;
       });
@@ -131,6 +136,7 @@ export class PMScanConnectionManager {
       return await safeBleDebugger.timeOperation('CONNECT', 'BLE Connection', async () => {
         if (Capacitor.isNativePlatform()) {
           if (!this.nativeDeviceId || !this.shouldConnect) {
+            logger.error(`❌ PMScan: Connection blocked - nativeDeviceId: ${!!this.nativeDeviceId}, shouldConnect: ${this.shouldConnect}, userInitiated: ${this.isUserInitiatedConnection}`);
             throw new Error('No native device ID available or should not connect');
           }
 
@@ -147,6 +153,7 @@ export class PMScanConnectionManager {
         }
 
         if (!this.device || !this.shouldConnect) {
+          logger.error(`❌ PMScan: Connection blocked - device: ${!!this.device}, shouldConnect: ${this.shouldConnect}, userInitiated: ${this.isUserInitiatedConnection}`);
           throw new Error('No device available or should not connect');
         }
 
@@ -207,6 +214,7 @@ export class PMScanConnectionManager {
             deviceId: this.nativeDeviceId.slice(-8)
           });
           this.stateMachine.transition(PMScanConnectionState.CONNECTED, 'Native initialization complete');
+          this.isUserInitiatedConnection = false; // Reset after successful connection
           return deviceInfo;
         }
 
@@ -236,6 +244,7 @@ export class PMScanConnectionManager {
           deviceId: this.device.id.slice(-8)
         });
         this.stateMachine.transition(PMScanConnectionState.CONNECTED, 'Web initialization complete');
+        this.isUserInitiatedConnection = false; // Reset after successful connection
 
         return deviceInfo;
       });
@@ -261,6 +270,8 @@ export class PMScanConnectionManager {
 
     this.stateMachine.transition(PMScanConnectionState.DISCONNECTING, 'Starting disconnection');
     this.shouldConnect = false;
+    this.isUserInitiatedConnection = false;
+    logger.debug(`🔗 PMScan: shouldConnect set to FALSE (manual disconnect)`);
 
     try {
       return await safeBleDebugger.timeOperation('DISCONNECT', 'Device Disconnection', async () => {
@@ -339,8 +350,14 @@ export class PMScanConnectionManager {
       this.stateMachine.transition(PMScanConnectionState.RECONNECTING, 'Auto-reconnect initiated');
       // Don't set shouldConnect to false as we want to reconnect
     } else {
-      this.shouldConnect = false;
-      this.stateMachine.transition(PMScanConnectionState.IDLE, 'Manual disconnection');
+      // Don't reset shouldConnect if this is a user-initiated connection in progress
+      if (!this.isUserInitiatedConnection) {
+        this.shouldConnect = false;
+        logger.debug(`🔗 PMScan: shouldConnect set to FALSE (auto disconnect cleanup)`);
+      } else {
+        logger.debug(`🔗 PMScan: shouldConnect preserved (user connection in progress)`);
+      }
+      this.stateMachine.transition(PMScanConnectionState.IDLE, 'Disconnection cleanup');
     }
 
     // Reset connection state
