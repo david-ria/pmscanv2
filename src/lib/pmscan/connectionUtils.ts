@@ -107,8 +107,8 @@ export class PMScanConnectionUtils {
         name: selectedDevice.name 
       });
       
-      // Validate device before storing
-      const isValid = await this.validatePMScanDevice(selectedDevice);
+      // Validate device before storing (use isAutoSelected=true for lenient validation)
+      const isValid = await this.validatePMScanDevice(selectedDevice, true);
       if (isValid) {
         PMScanDeviceStorage.storePreferredDevice(selectedDevice.deviceId, selectedDevice.name || 'PMScan Device');
         
@@ -128,7 +128,12 @@ export class PMScanConnectionUtils {
         //   });
         // });
       } else {
-        throw new Error('Selected device is not a valid PMScan device');
+        // Log warning but don't block auto-selected devices
+        safeBleDebugger.warn('PICKER', '[BLE:PICKER] validation failed but proceeding (auto-selected)', undefined, {
+          id: selectedDevice.deviceId.slice(-8),
+          name: selectedDevice.name
+        });
+        PMScanDeviceStorage.storePreferredDevice(selectedDevice.deviceId, selectedDevice.name || 'PMScan Device');
       }
     } else if (candidateDevices.length > 0 || rawDevices.length > 0 || forceShowPicker) {
       // Priority 3: Show picker when we have candidates or raw devices or debug flag is set
@@ -186,10 +191,13 @@ export class PMScanConnectionUtils {
           reason: error instanceof Error ? error.message : 'timeout'
         });
 
-        // Validate auto-selected device
-        const isValid = await this.validatePMScanDevice(selectedDevice);
+        // Validate auto-selected device (lenient for timeout fallback)
+        const isValid = await this.validatePMScanDevice(selectedDevice, true);
         if (!isValid) {
-          throw new Error('No valid PMScan devices found');
+          safeBleDebugger.warn('PICKER', '[BLE:PICKER] validation failed but proceeding (timeout fallback)', undefined, {
+            id: selectedDevice.deviceId.slice(-8),
+            name: selectedDevice.name
+          });
         }
         
         safeBleDebugger.info('PICKER', '[BLE:PICKER] proceed-connect (timeout-fallback)', undefined, {
@@ -252,21 +260,45 @@ export class PMScanConnectionUtils {
   /**
    * Validate that a device is actually a PMScan device by checking GATT services
    */
-  private static async validatePMScanDevice(device: FoundDevice): Promise<boolean> {
+  private static async validatePMScanDevice(device: FoundDevice, isAutoSelected: boolean = false): Promise<boolean> {
     try {
       safeBleDebugger.info('VALIDATE', '[BLE:VALIDATE] checking device', undefined, {
         id: device.deviceId.slice(-8),
-        name: device.name
+        name: device.name,
+        autoSelected: isAutoSelected
       });
 
       if (Capacitor.isNativePlatform()) {
-        // For native, we can try to connect and check the service
-        // This is especially important for manually selected raw devices
+        // For auto-selected devices from filtered scan, trust the scan result more
+        if (isAutoSelected) {
+          const hasGoodName = device.name && device.name.toLowerCase().includes('pmscan');
+          const hasGoodUuid = device.uuids && device.uuids.some(uuid => 
+            uuid.toLowerCase() === PMScan_SERVICE_UUID.toLowerCase()
+          );
+          
+          if (hasGoodName || hasGoodUuid) {
+            safeBleDebugger.info('VALIDATE', '[BLE:VALIDATE] result (native - auto-selected trusted)', undefined, {
+              id: device.deviceId.slice(-8),
+              valid: true,
+              hasGoodName,
+              hasGoodUuid,
+              reason: 'auto-selected device with good indicators'
+            });
+            return true;
+          }
+        }
+
+        // For manually selected devices, do more thorough validation
         try {
           await ensureBleReady();
           
-          // Try to discover services
-          const services = await BleClient.getServices(device.deviceId);
+          // Add timeout wrapper around service discovery
+          const serviceCheckPromise = BleClient.getServices(device.deviceId);
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Service discovery timeout')), 3000);
+          });
+          
+          const services = await Promise.race([serviceCheckPromise, timeoutPromise]);
           const hasPMScanService = services.some(service => 
             service.uuid.toLowerCase() === PMScan_SERVICE_UUID.toLowerCase()
           );
@@ -287,18 +319,21 @@ export class PMScanConnectionUtils {
           });
           
           // Check if device name or UUIDs suggest it's a PMScan device
-          const hasGoodName = device.name && device.name.includes('PMScan');
+          const hasGoodName = device.name && device.name.toLowerCase().includes('pmscan');
           const hasGoodUuid = device.uuids && device.uuids.some(uuid => 
             uuid.toLowerCase() === PMScan_SERVICE_UUID.toLowerCase()
           );
           
-          const isValid = hasGoodName || hasGoodUuid;
+          // For auto-selected devices, be more lenient in fallback
+          const isValid = isAutoSelected ? true : (hasGoodName || hasGoodUuid);
+          
           safeBleDebugger.info('VALIDATE', '[BLE:VALIDATE] result (native - fallback)', undefined, {
             id: device.deviceId.slice(-8),
             valid: isValid,
             hasGoodName,
             hasGoodUuid,
-            reason: 'GATT check failed, using name/uuid heuristics'
+            autoSelected: isAutoSelected,
+            reason: 'GATT check failed, using name/uuid heuristics or auto-selected trust'
           });
           
           return isValid;
@@ -314,9 +349,11 @@ export class PMScanConnectionUtils {
     } catch (error) {
       safeBleDebugger.error('VALIDATE', '[BLE:VALIDATE] error', undefined, {
         id: device.deviceId.slice(-8),
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
+        autoSelected: isAutoSelected
       });
-      return false;
+      // For auto-selected devices, return true on validation error to not block flow
+      return isAutoSelected;
     }
   }
 
