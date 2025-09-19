@@ -32,6 +32,12 @@ export function usePMScanBluetooth() {
   const handleRTData = useCallback((event: Event) => {
     const target = event.target as BluetoothRemoteGATTCharacteristic;
     if (target.value) {
+      // Debug logging for data reception tracking
+      logger.rateLimitedDebug(
+        'pmbluetooth.rtdata',
+        5000, // Rate limit to every 5 seconds
+        `📡 RT data notification received: ${target.value.byteLength} bytes`
+      );
       const data = parsePMScanDataPayload(
         target.value,
         connectionManager.state

@@ -149,7 +149,7 @@ export class FragmentManager {
     data: DataView,
     onComplete: (assembledData: Uint8Array) => void
   ): void {
-    const dataArray = new Uint8Array(data.buffer);
+    const dataArray = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
     
     // Check if this looks like a fragment (simple heuristic)
     if (this.isFragment(dataArray)) {

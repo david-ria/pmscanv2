@@ -16,7 +16,7 @@ export function parsePMScanDataPayload(
   pmScanState: PMScanInternalState
 ): PMScanData | null {
   try {
-    const rawData = new Uint8Array(charValue.buffer);
+    const rawData = new Uint8Array(charValue.buffer, charValue.byteOffset, charValue.byteLength);
     
     // Step 1: Validate packet integrity
     const packetValidation = validatePMScanPacket(rawData);
@@ -32,7 +32,7 @@ export function parsePMScanDataPayload(
     }
 
     // Step 2: Parse core data using proper DataView methods
-    const dataView = new DataView(rawData.buffer);
+    const dataView = new DataView(rawData.buffer, rawData.byteOffset, rawData.byteLength);
     
     // Parse timestamp (little-endian)
     const ts2000 = dataView.getUint32(0, true);
