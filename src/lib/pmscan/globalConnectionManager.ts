@@ -47,7 +47,7 @@ const startAutoReconnection = () => {
     if (!isBackgroundRecording && !isGlobalRecording) return;
 
     // Check if we're still connected
-    if (!globalConnectionManager.isConnected()) {
+    if (!globalConnectionManager.isConnected() && !globalConnectionManager.isConnecting()) {
       logger.debug(
         '🔄 PMScan disconnected during recording, attempting reconnection...'
       );

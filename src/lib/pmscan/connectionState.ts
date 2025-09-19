@@ -38,6 +38,8 @@ export const STATE_TIMEOUTS = {
 export const VALID_TRANSITIONS: Record<PMScanConnectionState, PMScanConnectionState[]> = {
   [PMScanConnectionState.IDLE]: [
     PMScanConnectionState.SCANNING,
+    PMScanConnectionState.CONNECTING,
+    PMScanConnectionState.RECONNECTING,
     PMScanConnectionState.ERROR
   ],
   [PMScanConnectionState.SCANNING]: [

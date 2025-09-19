@@ -136,6 +136,16 @@ export class PMScanConnectionManager {
       this.stateMachine.transition(PMScanConnectionState.IDLE, 'Reset from ERROR', true);
     }
 
+    // If we're already connected or connecting, avoid duplicate attempts
+    if (this.isConnected()) {
+      logger.debug('🔌 PMScan already connected - skipping connect');
+      return this.server ?? ({} as BluetoothRemoteGATTServer);
+    }
+    if (this.stateMachine.isConnecting()) {
+      logger.warn('⏳ PMScan connection in progress - skipping duplicate connect()');
+      return this.server ?? ({} as BluetoothRemoteGATTServer);
+    }
+
     // Ensure we have a target device before attempting to connect
     try {
       if (Capacitor.isNativePlatform()) {
