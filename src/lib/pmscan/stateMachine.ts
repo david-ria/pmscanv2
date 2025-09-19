@@ -111,6 +111,13 @@ export class PMScanStateMachine {
   public transitionToError(error: Error, context?: string): void {
     logger.error('❌ PMScan State Machine error:', error);
     
+    // Avoid invalid ERROR → ERROR transitions by short-circuiting when already in ERROR
+    if (this.currentState === PMScanConnectionState.ERROR) {
+      this.errorCount++;
+      this.callbacks.onError?.(error, this.currentState);
+      return;
+    }
+    
     if (this.errorCount >= this.maxErrors) {
       logger.error('❌ Max errors reached, forcing IDLE state');
       this.transition(PMScanConnectionState.IDLE, 'Max errors reached', true);

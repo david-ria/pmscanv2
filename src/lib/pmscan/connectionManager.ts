@@ -130,6 +130,32 @@ export class PMScanConnectionManager {
   }
 
   public async connect(): Promise<BluetoothRemoteGATTServer> {
+    // If we're in an ERROR state, reset to IDLE to allow a valid flow
+    const current = this.stateMachine.getState();
+    if (current === PMScanConnectionState.ERROR) {
+      this.stateMachine.transition(PMScanConnectionState.IDLE, 'Reset from ERROR', true);
+    }
+
+    // Ensure we have a target device before attempting to connect
+    try {
+      if (Capacitor.isNativePlatform()) {
+        if (!this.nativeDeviceId && this.shouldConnect) {
+          // Use the smart device selection flow (preferred/auto/picker)
+          await this.requestDevice();
+        }
+      } else {
+        if (!this.device && this.shouldConnect) {
+          // Use the smart device selection flow (preferred/auto/picker)
+          await this.requestDevice();
+        }
+      }
+    } catch (err) {
+      // Device selection failed (e.g., no devices or user cancelled)
+      this.stateMachine.transitionToError(err instanceof Error ? err : new Error(String(err)), 'Device selection failed');
+      throw err;
+    }
+
+    // Proceed with connection attempt
     this.stateMachine.transition(PMScanConnectionState.CONNECTING, 'Starting connection');
 
     try {
