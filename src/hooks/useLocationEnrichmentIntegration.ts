@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { useLocationEnrichmentSettings } from './useLocationEnrichmentSettings';
 import { useSmartLocationEnrichment } from './useSmartLocationEnrichment';
 import { useGPS } from './useGPS';
+import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
 
 /**
  * Integration hook that connects location enrichment with GPS and recording state
@@ -11,14 +12,11 @@ export function useLocationEnrichmentIntegration() {
   const { enrichLocation, preEnrichFrequentLocations } = useSmartLocationEnrichment();
   const { latestLocation } = useGPS(true, true);
 
-  console.log('🔧 useLocationEnrichmentIntegration state:', {
+  // Rate limited state logging
+  rateLimitedDebug('enrichment-integration-state', 15000, '🔧 Enrichment integration state:', {
     isEnabled,
     hasEnrichFunction: !!enrichLocation,
-    hasLocation: !!latestLocation,
-    location: latestLocation ? {
-      lat: latestLocation.latitude,
-      lng: latestLocation.longitude
-    } : null
+    hasLocation: !!latestLocation
   });
 
   // Auto-enrich current location when enabled
@@ -47,10 +45,10 @@ export function useLocationEnrichmentIntegration() {
     return () => clearInterval(interval);
   }, [isEnabled, preEnrichFrequentLocations]);
 
-  console.log('🔧 useLocationEnrichmentIntegration returning:', {
-    hasEnrichFunction: !!enrichLocation,
-    enrichLocation: isEnabled ? enrichLocation : null,
-    isEnabled
+  // Development-only return logging
+  devLogger.debug('🔧 Enrichment integration returning function:', { 
+    isEnabled, 
+    hasFunction: !!enrichLocation 
   });
 
   return {
