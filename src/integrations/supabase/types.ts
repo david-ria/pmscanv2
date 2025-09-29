@@ -344,43 +344,61 @@ export type Database = {
       }
       group_settings: {
         Row: {
+          activity_auto_suggest: boolean | null
           alarm_enabled: boolean | null
+          auto_share_stats: boolean | null
           created_at: string
           custom_alarms: Json | null
           default_activity: string | null
           default_location: string | null
+          event_notifications: boolean | null
           group_id: string
           id: string
+          location_auto_detect: boolean | null
+          notification_frequency: string | null
           pm1_threshold: number | null
           pm10_threshold: number | null
           pm25_threshold: number | null
           updated_at: string
+          weekly_reports: boolean | null
         }
         Insert: {
+          activity_auto_suggest?: boolean | null
           alarm_enabled?: boolean | null
+          auto_share_stats?: boolean | null
           created_at?: string
           custom_alarms?: Json | null
           default_activity?: string | null
           default_location?: string | null
+          event_notifications?: boolean | null
           group_id: string
           id?: string
+          location_auto_detect?: boolean | null
+          notification_frequency?: string | null
           pm1_threshold?: number | null
           pm10_threshold?: number | null
           pm25_threshold?: number | null
           updated_at?: string
+          weekly_reports?: boolean | null
         }
         Update: {
+          activity_auto_suggest?: boolean | null
           alarm_enabled?: boolean | null
+          auto_share_stats?: boolean | null
           created_at?: string
           custom_alarms?: Json | null
           default_activity?: string | null
           default_location?: string | null
+          event_notifications?: boolean | null
           group_id?: string
           id?: string
+          location_auto_detect?: boolean | null
+          notification_frequency?: string | null
           pm1_threshold?: number | null
           pm10_threshold?: number | null
           pm25_threshold?: number | null
           updated_at?: string
+          weekly_reports?: boolean | null
         }
         Relationships: [
           {
@@ -540,6 +558,8 @@ export type Database = {
           created_at: string
           date_utc: string | null
           enriched_location: string | null
+          external_humidity: number | null
+          external_temperature: number | null
           geohash: string | null
           humidity: number | null
           id: string
@@ -547,6 +567,11 @@ export type Database = {
           location_context: string | null
           longitude: number | null
           mission_id: string
+          particles_02_05: number | null
+          particles_05_10: number | null
+          particles_10_25: number | null
+          particles_25_50: number | null
+          particles_50_100: number | null
           pm1: number
           pm10: number
           pm25: number
@@ -561,6 +586,8 @@ export type Database = {
           created_at?: string
           date_utc?: string | null
           enriched_location?: string | null
+          external_humidity?: number | null
+          external_temperature?: number | null
           geohash?: string | null
           humidity?: number | null
           id?: string
@@ -568,6 +595,11 @@ export type Database = {
           location_context?: string | null
           longitude?: number | null
           mission_id: string
+          particles_02_05?: number | null
+          particles_05_10?: number | null
+          particles_10_25?: number | null
+          particles_25_50?: number | null
+          particles_50_100?: number | null
           pm1: number
           pm10: number
           pm25: number
@@ -582,6 +614,8 @@ export type Database = {
           created_at?: string
           date_utc?: string | null
           enriched_location?: string | null
+          external_humidity?: number | null
+          external_temperature?: number | null
           geohash?: string | null
           humidity?: number | null
           id?: string
@@ -589,6 +623,11 @@ export type Database = {
           location_context?: string | null
           longitude?: number | null
           mission_id?: string
+          particles_02_05?: number | null
+          particles_05_10?: number | null
+          particles_10_25?: number | null
+          particles_25_50?: number | null
+          particles_50_100?: number | null
           pm1?: number
           pm10?: number
           pm25?: number
@@ -609,6 +648,7 @@ export type Database = {
       missions: {
         Row: {
           activity_context: string | null
+          actual_recording_minutes: number | null
           air_quality_data_id: string | null
           avg_pm1: number
           avg_pm10: number
@@ -618,12 +658,14 @@ export type Database = {
           duration_minutes: number
           end_epoch_ms: number | null
           end_time: string
+          gap_detected: boolean | null
           id: string
           location_context: string | null
           max_pm25: number
           measurements_count: number
           name: string
           processed_by_robot: boolean | null
+          recording_coverage_percentage: number | null
           recording_frequency: string | null
           robot_processed_at: string | null
           robot_processing_attempts: number | null
@@ -636,6 +678,7 @@ export type Database = {
         }
         Insert: {
           activity_context?: string | null
+          actual_recording_minutes?: number | null
           air_quality_data_id?: string | null
           avg_pm1: number
           avg_pm10: number
@@ -645,12 +688,14 @@ export type Database = {
           duration_minutes: number
           end_epoch_ms?: number | null
           end_time: string
+          gap_detected?: boolean | null
           id?: string
           location_context?: string | null
           max_pm25: number
           measurements_count?: number
           name: string
           processed_by_robot?: boolean | null
+          recording_coverage_percentage?: number | null
           recording_frequency?: string | null
           robot_processed_at?: string | null
           robot_processing_attempts?: number | null
@@ -663,6 +708,7 @@ export type Database = {
         }
         Update: {
           activity_context?: string | null
+          actual_recording_minutes?: number | null
           air_quality_data_id?: string | null
           avg_pm1?: number
           avg_pm10?: number
@@ -672,12 +718,14 @@ export type Database = {
           duration_minutes?: number
           end_epoch_ms?: number | null
           end_time?: string
+          gap_detected?: boolean | null
           id?: string
           location_context?: string | null
           max_pm25?: number
           measurements_count?: number
           name?: string
           processed_by_robot?: boolean | null
+          recording_coverage_percentage?: number | null
           recording_frequency?: string | null
           robot_processed_at?: string | null
           robot_processing_attempts?: number | null
