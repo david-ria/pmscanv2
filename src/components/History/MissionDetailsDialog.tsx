@@ -320,6 +320,21 @@ export function MissionDetailsDialog({
       yPosition += 5;
       pdf.text(`Duration: ${formatDurationHHMM(mission.durationMinutes)}`, 20, yPosition);
       yPosition += 5;
+      
+      // Add data quality information
+      if (mission.actualRecordingMinutes && mission.actualRecordingMinutes !== mission.durationMinutes) {
+        pdf.text(`Actual Recording Time: ${Math.round(mission.actualRecordingMinutes)} min`, 20, yPosition);
+        yPosition += 5;
+      }
+      if (mission.recordingCoveragePercentage && mission.recordingCoveragePercentage < 100) {
+        pdf.text(`Recording Coverage: ${mission.recordingCoveragePercentage}%`, 20, yPosition);
+        yPosition += 5;
+      }
+      if (mission.gapDetected) {
+        pdf.text(`Data Quality: Signal gaps detected`, 20, yPosition);
+        yPosition += 5;
+      }
+      
       pdf.text(`Measurements: ${mission.measurementsCount}`, 20, yPosition);
       yPosition += 5;
       
@@ -465,6 +480,31 @@ export function MissionDetailsDialog({
                 </div>
               </div>
             </div>
+
+            {/* Data Quality Indicators */}
+            {(mission.gapDetected || (mission.recordingCoveragePercentage && mission.recordingCoveragePercentage < 95)) && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg dark:bg-amber-900/20 dark:border-amber-800">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                      Data Quality Warning
+                    </p>
+                    <div className="text-xs text-amber-700 dark:text-amber-300 space-y-1">
+                      {mission.gapDetected && (
+                        <p>• Signal gaps detected during recording</p>
+                      )}
+                      {mission.recordingCoveragePercentage && mission.recordingCoveragePercentage < 95 && (
+                        <p>• Recording coverage: {mission.recordingCoveragePercentage}% (expected continuous recording)</p>
+                      )}
+                      {mission.actualRecordingMinutes && mission.actualRecordingMinutes !== mission.durationMinutes && (
+                        <p>• Actual recording time: {Math.round(mission.actualRecordingMinutes)} min of {mission.durationMinutes} min session</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Weather and Air Quality Info */}
             <div className="space-y-2">

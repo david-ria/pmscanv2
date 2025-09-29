@@ -40,21 +40,28 @@ export function useHistoryStats(filteredMissions: MissionData[]) {
       ];
     }
 
+    // Use actual recording time where available, fall back to duration
     const totalDuration = filteredMissions.reduce(
-      (sum, m) => sum + m.durationMinutes,
+      (sum, m) => sum + (m.actualRecordingMinutes ?? m.durationMinutes),
       0
     );
-    const avgPm25 =
-      filteredMissions.reduce((sum, m) => sum + m.avgPm25, 0) /
-      filteredMissions.length;
+    
+    // Calculate weighted average PM2.5 using actual recording time
+    const weightedPm25Sum = filteredMissions.reduce((sum, m) => {
+      const recordingTime = m.actualRecordingMinutes ?? m.durationMinutes;
+      return sum + (m.avgPm25 * recordingTime);
+    }, 0);
+    const avgPm25 = totalDuration > 0 ? weightedPm25Sum / totalDuration : 0;
 
-    // Calculate time above WHO thresholds
+    // Calculate time above WHO thresholds using actual recording time
     const timeAboveWHO_PM25 = filteredMissions.reduce((sum, m) => {
-      return m.avgPm25 > 15 ? sum + m.durationMinutes : sum;
+      const recordingTime = m.actualRecordingMinutes ?? m.durationMinutes;
+      return m.avgPm25 > 15 ? sum + recordingTime : sum;
     }, 0);
 
     const timeAboveWHO_PM10 = filteredMissions.reduce((sum, m) => {
-      return m.avgPm10 > 45 ? sum + m.durationMinutes : sum;
+      const recordingTime = m.actualRecordingMinutes ?? m.durationMinutes;
+      return m.avgPm10 > 45 ? sum + recordingTime : sum;
     }, 0);
 
     const getColorFromPm25 = (pm25: number) => {

@@ -9,6 +9,7 @@ import {
 } from './localStorage';
 import { supabase } from '@/integrations/supabase/client';
 import * as logger from '@/utils/logger';
+import { parseFrequencyToMs } from './recordingUtils';
 
 export function createMissionFromRecording(
   measurements: Array<{
@@ -71,14 +72,41 @@ export function createMissionFromRecording(
     measurementData.length;
   const maxPm25 = Math.max(...pm25Values);
 
+  // Calculate gap detection and actual recording coverage
+  const frequencyMs = parseFrequencyToMs(recordingFrequency || '30s');
+  const totalDurationMinutes = Math.round(
+    (endTime.getTime() - startTime.getTime()) / (1000 * 60)
+  );
+  const expectedMeasurements = Math.floor((totalDurationMinutes * 60 * 1000) / frequencyMs);
+  const actualMeasurements = measurementData.length;
+  
+  // Calculate actual recording minutes based on measurement count and frequency
+  const actualRecordingMinutes = Math.round((actualMeasurements * frequencyMs) / (1000 * 60));
+  const recordingCoveragePercentage = expectedMeasurements > 0 ? 
+    Math.round((actualMeasurements / expectedMeasurements) * 100) : 100;
+  
+  // Detect gaps by checking timestamp intervals
+  let gapDetected = false;
+  if (measurementData.length > 1) {
+    const maxExpectedGap = frequencyMs * 2; // Allow up to 2x the recording frequency
+    for (let i = 1; i < measurementData.length; i++) {
+      const timeDiff = measurementData[i].timestamp.getTime() - measurementData[i-1].timestamp.getTime();
+      if (timeDiff > maxExpectedGap) {
+        gapDetected = true;
+        break;
+      }
+    }
+  }
+
   const mission: MissionData = {
     id: missionId || crypto.randomUUID(),
     name: missionName,
     startTime,
     endTime,
-    durationMinutes: Math.round(
-      (endTime.getTime() - startTime.getTime()) / (1000 * 60)
-    ),
+    durationMinutes: totalDurationMinutes,
+    actualRecordingMinutes,
+    recordingCoveragePercentage,
+    gapDetected,
     avgPm1,
     avgPm25,
     avgPm10,

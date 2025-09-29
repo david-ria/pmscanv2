@@ -107,9 +107,9 @@ export const usePollutionBreakdownData = (
               weightedPM: 0,
               cumulativeDose: 0,
             };
-            // Assume each measurement represents equal time exposure
-            const measurementDuration =
-              mission.durationMinutes / mission.measurements.length;
+            // Use actual recording time and account for recording frequency
+            const recordingTime = mission.actualRecordingMinutes ?? mission.durationMinutes;
+            const measurementDuration = recordingTime / mission.measurements.length;
             const measurementDurationHours = measurementDuration / 60;
             
             // Get respiratory rate for this measurement
@@ -169,9 +169,9 @@ export const usePollutionBreakdownData = (
               weightedPM: 0,
               cumulativeDose: 0,
             };
-            // Assume each measurement represents equal time exposure
-            const measurementDuration =
-              mission.durationMinutes / mission.measurements.length;
+            // Use actual recording time and account for recording frequency
+            const recordingTime = mission.actualRecordingMinutes ?? mission.durationMinutes;
+            const measurementDuration = recordingTime / mission.measurements.length;
             const measurementDurationHours = measurementDuration / 60;
             
             // Get respiratory rate for this measurement
