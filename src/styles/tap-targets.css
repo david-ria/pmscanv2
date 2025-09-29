@@ -1,12 +1,8 @@
 /* Tap Target Size Compliance - Ensures all interactive elements meet 40x40px minimum */
+/* Note: Buttons excluded to respect design system sizing */
 
-button, 
 a[href], 
-[role="button"], 
 [tabindex="0"],
-input[type="button"], 
-input[type="submit"], 
-input[type="reset"],
 .clickable,
 .tap-target {
   min-width: 40px;
@@ -21,14 +17,12 @@ input[type="reset"],
 
 /* Exception for very small icons inside larger clickable areas */
 button svg, 
-a[href] svg, 
-[role="button"] svg {
+a[href] svg {
   pointer-events: none;
 }
 
 /* Ensure proper spacing for adjacent tap targets */
 button + button,
-a[href] + a[href],
-[role="button"] + [role="button"] {
+a[href] + a[href] {
   margin-left: 2px;
 }
