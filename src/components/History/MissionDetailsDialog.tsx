@@ -530,7 +530,7 @@ export function MissionDetailsDialog({
                 onContextTypeChange={setSelectedContextType}
               />
               {/* Graph container with better mobile responsive height */}
-              <div className="h-[400px] sm:h-[500px] w-full overflow-hidden" ref={graphRef}>
+              <div className="h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] w-full overflow-hidden" ref={graphRef}>
                 <PMLineGraph 
                   data={graphData} 
                   events={events} 
