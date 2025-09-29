@@ -374,9 +374,9 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
             const centerX = period.start + periodWidth / 2;
             const isShortPeriod = periodWidth < 20; // Consider periods less than 20 data points as short
             
-            // Calculate staggered positioning for overlapping labels
-            const verticalOffset = index % 2 === 0 ? 5 : 45;
-            const labelOffset = index % 2 === 0 ? 25 : 65;
+            // Use fixed offsets so labels align horizontally across periods
+            const PM_AVG_OFFSET = 28; // PM2.5 average label offset from top
+            const CONTEXT_LABEL_OFFSET = 48; // Context label offset from top
             
             return (
               <React.Fragment key={`period-${index}`}>
@@ -401,7 +401,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                     fill: '#ef4444',
                     textAnchor: 'middle',
                     fontWeight: 'bold',
-                    offset: verticalOffset,
+                    offset: PM_AVG_OFFSET,
                     style: {
                       textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
                       fontWeight: 'bold'
@@ -420,7 +420,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                     fill: period.color,
                     textAnchor: 'middle',
                     fontWeight: 'bold',
-                    offset: labelOffset,
+                    offset: CONTEXT_LABEL_OFFSET,
                     style: {
                       textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
                       fontWeight: 'bold'
