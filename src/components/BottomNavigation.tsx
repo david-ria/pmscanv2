@@ -2,6 +2,7 @@ import { Home, History, BarChart3, Users, LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface NavigationItem {
   to: string;
@@ -18,10 +19,21 @@ const navigationItems: NavigationItem[] = [
 
 export function BottomNavigation() {
   const { t } = useTranslation();
+  const { userRole } = useUserRole();
+  
+  // Filter navigation items based on user role
+  const filteredNavigationItems = navigationItems.filter(item => {
+    // Only show Groups to super admin users
+    if (item.to === '/groups') {
+      return userRole === 'super_admin';
+    }
+    return true;
+  });
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border z-[60] safe-area-pb">
       <div className="flex items-center justify-around h-16 px-1 max-w-lg mx-auto">
-        {navigationItems.map((item) => {
+        {filteredNavigationItems.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
