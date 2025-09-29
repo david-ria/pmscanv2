@@ -152,7 +152,12 @@ export const logger = new OptimizedLogger({
 
 // Convenience exports
 export const { debug, info, warn, error, time, timeEnd } = logger;
-export const { rateLimitedDebug, rateLimitedInfo, rateLimitedWarn } = logger;
+export const rateLimitedDebug = (key: string, intervalMs: number, message: string, ...args: any[]) => 
+  logger.rateLimitedDebug(key, intervalMs, message, ...args);
+export const rateLimitedInfo = (key: string, intervalMs: number, message: string, ...args: any[]) => 
+  logger.rateLimitedInfo(key, intervalMs, message, ...args);
+export const rateLimitedWarn = (key: string, intervalMs: number, message: string, ...args: any[]) => 
+  logger.rateLimitedWarn(key, intervalMs, message, ...args);
 
 // Development-only logger
 export const devLogger = {
