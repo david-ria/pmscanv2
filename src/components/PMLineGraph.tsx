@@ -403,7 +403,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                     fontWeight: 'bold',
                     offset: verticalOffset,
                     style: {
-                      textShadow: '2px 2px 4px rgba(255,255,255,0.9)',
+                      textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
                       fontWeight: 'bold'
                     }
                   }}
@@ -422,7 +422,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                     fontWeight: 'bold',
                     offset: labelOffset,
                     style: {
-                      textShadow: '2px 2px 4px rgba(255,255,255,0.8)',
+                      textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
                       fontWeight: 'bold'
                     }
                   }}
