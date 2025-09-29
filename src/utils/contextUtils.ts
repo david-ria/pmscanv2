@@ -151,7 +151,7 @@ export function debugContext(
   context: StandardContext,
   source: string
 ): void {
-  if (import.meta.env.DEV) {
+  if (process.env.NODE_ENV === 'development') {
     console.log(`🏷️ [${component}] Context from ${source}:`, {
       location: context.location || 'none',
       activity: context.activity || 'none', 

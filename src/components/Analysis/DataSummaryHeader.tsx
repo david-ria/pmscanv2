@@ -19,8 +19,8 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
       <Card className="mb-6">
         <CardContent className="p-4">
           <div className="flex items-center gap-4 text-muted-foreground">
-            <span className="text-sm">📊 {t('analysis.dataSummary')}</span>
-            <span>{t('analysis.noDataAvailable')}</span>
+            <span className="text-sm">📊 Résumé des données</span>
+            <span>Aucune donnée disponible pour cette période</span>
           </div>
         </CardContent>
       </Card>
@@ -55,7 +55,7 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-primary font-medium">
-              📊 {t('analysis.dataSummary')}
+              📊 Résumé des données
             </span>
           </div>
 
@@ -63,7 +63,7 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
             <span className="font-bold text-foreground text-lg">
               {dataPoints.totalMissions}
             </span>
-            <span className="text-muted-foreground text-xs">{t('analysis.missions')}</span>
+            <span className="text-muted-foreground text-xs">Missions</span>
           </div>
 
           <div className="flex items-center gap-1 bg-muted/50 px-3 py-1 rounded-lg">
@@ -71,7 +71,7 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
               {formatDurationHHMM(dataPoints.totalExposureMinutes)}
             </span>
             <span className="text-muted-foreground text-xs">
-              {t('analysis.exposureTime')}
+              Temps d'exposition
             </span>
           </div>
 
@@ -80,7 +80,7 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
               {formatDurationHHMM(dataPoints.timeAboveWHO)}
             </span>
             <span className="text-muted-foreground text-xs">
-              {t('analysis.minutesAboveWHO')}
+              Min {'>'}seuil OMS
             </span>
           </div>
 
@@ -95,7 +95,7 @@ export const DataSummaryHeader = ({ dataPoints }: DataSummaryHeaderProps) => {
             <span
               className={`${getPM25SubtextColor(dataPoints.averagePM25)} text-xs`}
             >
-              {t('analysis.averagePM25')} ({t('analysis.units.ugm3')})
+              PM2.5 moyen (μg/m³)
             </span>
           </div>
         </div>

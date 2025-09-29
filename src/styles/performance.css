@@ -1,41 +1,45 @@
 
 /* Performance optimizations */
-/* Optimize font loading */
-@font-face {
-  font-family: 'Inter';
-  font-display: swap;
-  font-weight: 100 900;
-}
-
-/* Optimize animations for better performance */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+@layer base {
+  /* Optimize font loading */
+  @font-face {
+    font-family: 'Inter';
+    font-display: swap;
+    font-weight: 100 900;
+  }
+  
+  /* Optimize animations for better performance */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  /* Optimize rendering */
+  .optimize-rendering {
+    contain: layout style paint;
+    will-change: auto;
+  }
+  
+  /* GPU acceleration for smooth animations */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
   }
 }
 
-/* Optimize rendering */
-.optimize-rendering {
-  contain: layout style paint;
-  will-change: auto;
-}
-
-/* GPU acceleration for smooth animations */
-.gpu-accelerated {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-}
-
 /* Critical CSS for above-the-fold content */
-.critical-above-fold {
-  @apply min-h-screen bg-background text-foreground;
-}
-
-.lazy-load-placeholder {
-  @apply bg-gradient-to-r from-muted via-muted/80 to-muted animate-pulse-soft min-h-32 rounded-lg;
+@layer utilities {
+  .critical-above-fold {
+    @apply min-h-screen bg-background text-foreground;
+  }
+  
+  .lazy-load-placeholder {
+    @apply skeleton-pulse min-h-32 rounded-lg;
+  }
 }

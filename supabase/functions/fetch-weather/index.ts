@@ -2,17 +2,13 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
-// Safe JSON parsing utility for edge functions (works with Request or Response)
-async function safeJson<T = unknown>(reqOrRes: Request | Response): Promise<T | null> {
-  const ct = reqOrRes.headers.get('content-type') || '';
-  // If it's a Response, respect the HTTP status
-  if (reqOrRes instanceof Response) {
-    if (!reqOrRes.ok) return null;
-  }
-  if (!ct.toLowerCase().includes('application/json')) return null;
+// Safe JSON parsing utility for edge functions
+async function safeJson<T = unknown>(res: Response): Promise<T | null> {
+  const ct = res.headers.get('content-type') || '';
+  if (!res.ok) return null;
+  if (!ct.includes('application/json')) return null;
   try {
-    // Both Request and Response have .json()
-    return await (reqOrRes as any).json();
+    return await res.json();
   } catch {
     return null;
   }
@@ -44,23 +40,16 @@ serve(async (req) => {
       );
     }
 
-    const { latitude, longitude, timestamp } = requestBody as any;
+    const { latitude, longitude, timestamp } = requestBody;
 
-    const latNum = Number(latitude);
-    const lonNum = Number(longitude);
-
-    if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) {
+    if (!latitude || !longitude || !timestamp) {
       return new Response(
-        JSON.stringify({ error: 'Invalid or missing latitude/longitude' }),
+        JSON.stringify({ error: 'Missing required parameters: latitude, longitude, timestamp' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Use provided timestamp or default to now
-    let requestTime = timestamp ? new Date(timestamp) : new Date();
-    if (isNaN(requestTime.getTime())) {
-      requestTime = new Date();
-    }
+    const requestTime = new Date(timestamp);
     const oneHourAgo = new Date(requestTime.getTime() - 60 * 60 * 1000);
 
     // Check if we have recent weather data for this location (within 1 hour and ~1km radius)
@@ -69,10 +58,10 @@ serve(async (req) => {
       .select('*')
       .gte('timestamp', oneHourAgo.toISOString())
       .lte('timestamp', requestTime.toISOString())
-      .gte('latitude', latNum - 0.01) // ~1km radius
-      .lte('latitude', latNum + 0.01)
-      .gte('longitude', lonNum - 0.01)
-      .lte('longitude', lonNum + 0.01)
+      .gte('latitude', latitude - 0.01) // ~1km radius
+      .lte('latitude', latitude + 0.01)
+      .gte('longitude', longitude - 0.01)
+      .lte('longitude', longitude + 0.01)
       .order('timestamp', { ascending: false })
       .limit(1);
 
@@ -85,18 +74,10 @@ serve(async (req) => {
     }
 
     // Fetch new weather data from OpenWeatherMap
-    if (!openWeatherApiKey) {
-      console.error('Missing OPENWEATHERMAP_API_KEY');
-      return new Response(
-        JSON.stringify({ error: 'Weather service temporarily unavailable' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('Fetching new weather data for:', latNum, lonNum);
+    console.log('Fetching new weather data for:', latitude, longitude);
     
     const weatherResponse = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${latNum}&lon=${lonNum}&appid=${openWeatherApiKey}&units=metric`
+      `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric`
     );
 
     const weatherData = await safeJson(weatherResponse);
@@ -111,14 +92,14 @@ serve(async (req) => {
 
     // Store weather data in our database
     const weatherRecord = {
-      latitude: latNum,
-      longitude: lonNum,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
       timestamp: requestTime.toISOString(),
-      temperature: weatherData.main?.temp,
-      humidity: weatherData.main?.humidity,
-      pressure: weatherData.main?.pressure,
-      weather_main: weatherData.weather?.[0]?.main,
-      weather_description: weatherData.weather?.[0]?.description,
+      temperature: weatherData.main.temp,
+      humidity: weatherData.main.humidity,
+      pressure: weatherData.main.pressure,
+      weather_main: weatherData.weather[0].main,
+      weather_description: weatherData.weather[0].description,
       wind_speed: weatherData.wind?.speed || null,
       wind_direction: weatherData.wind?.deg || null,
       visibility: weatherData.visibility ? weatherData.visibility / 1000 : null, // Convert to km

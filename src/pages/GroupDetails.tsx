@@ -129,9 +129,9 @@ export default function GroupDetails() {
       <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto p-6">
           <div className="flex items-center gap-4 mb-8">
-            <Button variant="ghost" onClick={() => navigate(isSuperAdmin ? '/groups' : '/')}>
+            <Button variant="ghost" onClick={() => navigate('/groups')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to {isSuperAdmin ? 'Groups' : 'Dashboard'}
+              Back to Groups
             </Button>
           </div>
           <div className="text-center py-16">
@@ -145,7 +145,7 @@ export default function GroupDetails() {
     );
   }
 
-  const memberUsage = group.member_quota
+  const memberUsage = group.member_quota 
     ? Math.round((members.length / group.member_quota) * 100)
     : 0;
 
@@ -234,7 +234,7 @@ export default function GroupDetails() {
                   <Calendar className="h-4 w-4" />
                   <span>Created {new Date(group.created_at).toLocaleDateString()}</span>
                 </div>
-                {group.custom_locations && typeof group.custom_locations === 'object' && Object.keys(group.custom_locations).length > 0 && (
+                {group.custom_locations && Object.keys(group.custom_locations).length > 0 && (
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
                     <span>{Object.keys(group.custom_locations).length} location{Object.keys(group.custom_locations).length !== 1 ? 's' : ''}</span>

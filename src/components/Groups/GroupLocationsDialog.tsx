@@ -35,14 +35,14 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
     ? Object.entries(group.custom_locations).map(([id, data]: [string, any]) => ({
         id,
         name: data.name || id,
-        activities: Array.isArray(data.activities) ? data.activities.filter((a: any) => typeof a === 'string') : [],
+        activities: data.activities || [],
       }))
     : [];
 
   const handleCreateLocation = async () => {
     if (!newLocation.name.trim()) return;
     
-    const filteredActivities = newLocation.activities.filter(a => typeof a === 'string' && a.trim());
+    const filteredActivities = newLocation.activities.filter(a => a.trim());
     if (filteredActivities.length === 0) return;
 
     const locationId = crypto.randomUUID();
@@ -212,7 +212,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {location.activities.filter(a => typeof a === 'string' && a.trim()).map((activity, index) => (
+                      {location.activities.filter(a => a.trim()).map((activity, index) => (
                         <Badge key={index} variant="secondary">
                           {activity}
                         </Badge>
@@ -290,7 +290,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                 <div className="flex gap-2">
                   <Button 
                     onClick={handleCreateLocation} 
-                    disabled={!newLocation.name.trim() || !newLocation.activities.some(a => typeof a === 'string' && a.trim())}
+                    disabled={!newLocation.name.trim() || !newLocation.activities.some(a => a.trim())}
                   >
                     Create Location
                   </Button>

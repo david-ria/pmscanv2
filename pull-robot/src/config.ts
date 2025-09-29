@@ -1,13 +1,203 @@
-export const config = {
+import { z } from 'zod';
+import { logger } from './logger.js';
+
+// Environment Variable Schema Definition using Zod
+const EnvSchema = z.object({
+  // Supabase Configuration
+  SUPABASE_URL: z.string().url().min(1),
+  SUPABASE_KEY: z.string().min(1),
+
+  // Dashboard API Configuration
+  DASHBOARD_ENDPOINT: z.string().url().min(1),
+  DASHBOARD_BEARER: z.string().min(1),
+
+  // Server Configuration
+  PORT: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1).max(65535)).default('3000'),
+
+  // Database Polling Configuration
+  POLL_INTERVAL_MS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1000)).default('300000'), // 5 minutes
+  RATE_MAX_RPS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('20'),
+
+  // Processing Configuration
+  MAX_ATTEMPTS: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('6'),
+  BATCH_SIZE: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().min(1)).default('200'),
+
+  // Metrics Configuration
+  INCLUDE_METRICS: z.string().min(1).default('pm1,pm25,pm10,latitude,longitude'),
+  UNITS_JSON: z.string().min(2).default('{"pm1":"ugm3","pm25":"ugm3","pm10":"ugm3","latitude":"degrees","longitude":"degrees"}'),
+
+  // Device Configuration
+  ALLOW_DEVICE_IDS: z.string().min(1).default('PMScan3376DF'),
+  UNKNOWN_DEVICE_BEHAVIOR: z.enum(['skip', 'process']).default('skip'),
+
+  // Logging
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+});
+
+// Strongly-typed configuration interface derived from environment validation
+interface Config {
   supabase: {
-    url: process.env.SUPABASE_URL || 'https://shydpfwuvnlzdzbubmgb.supabase.co',
-    key: process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoeWRwZnd1dm5semR6YnVibWdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5NzM1MjcsImV4cCI6MjA2NzU0OTUyN30.l_PAPBy1hlb4J-amKx7qPJ1lPIFseA9GznwL6CcyaQQ'
-  },
+    url: string;
+    key: string;
+  };
   dashboard: {
-    endpoint: process.env.DASHBOARD_ENDPOINT || 'https://api.atm.ovh/api/v3.0/measurements',
-    bearer: process.env.DASHBOARD_BEARER || 'xjb0qzdnefgurhkdps4qivp8x6lq2h66'
-  },
+    endpoint: string;
+    bearer: string;
+  };
+  server: {
+    port: number;
+  };
   polling: {
-    intervalMs: parseInt(process.env.POLL_INTERVAL_MS || '300000') // 5 minutes default
+    intervalMs: number;
+    maxRps: number;
+  };
+  processing: {
+    maxAttempts: number;
+    batchSize: number;
+    includeMetrics: string[];
+    units: Record<string, string>;
+    allowDeviceIds: string[];
+    unknownDeviceBehavior: 'skip' | 'process';
+  };
+  logging: {
+    level: 'debug' | 'info' | 'warn' | 'error';
+  };
+}
+
+// Configuration Schema for final validation
+const ConfigSchema = z.object({
+  supabase: z.object({
+    url: z.string().url(),
+    key: z.string().min(1),
+  }),
+  dashboard: z.object({
+    endpoint: z.string().url(),
+    bearer: z.string().min(1),
+  }),
+  server: z.object({
+    port: z.number().min(1).max(65535),
+  }),
+  polling: z.object({
+    intervalMs: z.number().min(1000),
+    maxRps: z.number().min(1),
+  }),
+  processing: z.object({
+    maxAttempts: z.number().min(1),
+    batchSize: z.number().min(1),
+    includeMetrics: z.array(z.string()),
+    units: z.record(z.string()),
+    allowDeviceIds: z.array(z.string()),
+    unknownDeviceBehavior: z.enum(['skip', 'process']),
+  }),
+  logging: z.object({
+    level: z.enum(['debug', 'info', 'warn', 'error']),
+  }),
+});
+
+// Error formatting function
+function formatValidationError(error: z.ZodError): string {
+  const missingRequired = [];
+  const invalidValues = [];
+  
+  for (const issue of error.issues) {
+    const path = issue.path.join('.');
+    
+    if (issue.code === 'invalid_type' && issue.received === 'undefined') {
+      missingRequired.push(`❌ MISSING: ${path} is required`);
+    } else {
+      invalidValues.push(`❌ INVALID: ${path} - ${issue.message}`);
+    }
   }
-};
+  
+  let errorMessage = '\n🚨 CONFIGURATION ERROR - Pull Robot cannot start!\n\n';
+  
+  if (missingRequired.length > 0) {
+    errorMessage += '📋 MISSING REQUIRED ENVIRONMENT VARIABLES:\n';
+    errorMessage += missingRequired.join('\n') + '\n\n';
+  }
+  
+  if (invalidValues.length > 0) {
+    errorMessage += '⚠️  INVALID ENVIRONMENT VARIABLES:\n';
+    errorMessage += invalidValues.join('\n') + '\n\n';
+  }
+  
+  errorMessage += '💡 FIX: Check your .env file and ensure all required variables are set.\n';
+  errorMessage += '📖 See .env.example for correct format and default values.\n';
+  
+  return errorMessage;
+}
+
+function loadConfig(): Config {
+  try {
+    logger.info('🔧 Loading and validating configuration...');
+    
+    // Parse and validate environment variables with detailed error reporting
+    const env = EnvSchema.parse(process.env);
+    
+    logger.info('✅ Environment validation passed');
+
+    // Transform and structure the configuration
+    const transformedConfig: Config = {
+      supabase: {
+        url: env.SUPABASE_URL,
+        key: env.SUPABASE_KEY,
+      },
+      dashboard: {
+        endpoint: env.DASHBOARD_ENDPOINT,
+        bearer: env.DASHBOARD_BEARER,
+      },
+      server: {
+        port: env.PORT,
+      },
+      polling: {
+        intervalMs: env.POLL_INTERVAL_MS,
+        maxRps: env.RATE_MAX_RPS,
+      },
+      processing: {
+        maxAttempts: env.MAX_ATTEMPTS,
+        batchSize: env.BATCH_SIZE,
+        includeMetrics: env.INCLUDE_METRICS.split(',').map(s => s.trim()),
+        units: JSON.parse(env.UNITS_JSON),
+        allowDeviceIds: env.ALLOW_DEVICE_IDS.split(',').map(s => s.trim()),
+        unknownDeviceBehavior: env.UNKNOWN_DEVICE_BEHAVIOR,
+      },
+      logging: {
+        level: env.LOG_LEVEL,
+      },
+    };
+
+    // Log loaded configuration (excluding sensitive data)
+    logger.info('📋 Configuration loaded successfully:', {
+      supabase: {
+        url: transformedConfig.supabase.url,
+      },
+      dashboard: {
+        endpoint: transformedConfig.dashboard.endpoint,
+        bearer: `${transformedConfig.dashboard.bearer.substring(0, 8)}...`,
+      },
+      server: transformedConfig.server,
+      polling: transformedConfig.polling,
+      processing: {
+        ...transformedConfig.processing,
+        units: Object.keys(transformedConfig.processing.units),
+      },
+      logging: transformedConfig.logging,
+    });
+
+    // Final validation against the Config schema
+    return ConfigSchema.parse(transformedConfig);
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const formattedError = formatValidationError(error);
+      logger.error(formattedError);
+    } else {
+      logger.error('💥 Unexpected configuration error:', error);
+    }
+    
+    // Exit with non-zero code to indicate failure
+    process.exit(1);
+  }
+}
+
+export const config = loadConfig();

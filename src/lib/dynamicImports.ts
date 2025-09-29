@@ -1,5 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
-
 /**
  * Dynamic import utilities for code splitting heavy libraries
  * Reduces initial bundle size by loading dependencies only when needed
@@ -41,19 +39,22 @@ export const loadMapboxGL = async () => {
 };
 
 /**
- * Supabase client static reference - Note: Supabase is already loaded statically
- * This function is kept for compatibility but returns the static client
+ * Supabase client dynamic import - uses shared singleton
  */
 export const loadSupabaseClient = async () => {
   if (moduleCache.has('supabase-client')) {
     return moduleCache.get('supabase-client');
   }
 
-  console.debug('[PERF] Using statically loaded Supabase client');
+  console.debug('[PERF] Loading Supabase client dynamically...');
+  trackImport('supabase');
   
-  // Use the existing static client - no dynamic import needed
+  // Use the existing shared client instead of creating a new one
+  const { supabase } = await import('@/integrations/supabase/client');
+
   const client = { supabase };
   moduleCache.set('supabase-client', client);
+  console.debug('[PERF] Supabase client loaded');
   
   return client;
 };
@@ -221,11 +222,12 @@ export const loadBluetoothLE = async () => {
 };
 
 /**
- * i18n dynamic load - Note: i18n is already loaded in main.tsx
- * This function is kept for compatibility but doesn't do anything
+ * i18n dynamic load
  */
 export const loadI18n = async () => {
-  console.debug('[PERF] i18n already loaded statically in main.tsx');
+  console.debug('[PERF] Loading i18n configuration...');
+  await import('@/i18n/config');
+  console.debug('[PERF] i18n loaded');
 };
 
 /**

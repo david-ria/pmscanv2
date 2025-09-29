@@ -25,9 +25,6 @@ export interface MissionData {
   startTime: Date;
   endTime: Date;
   durationMinutes: number;
-  actualRecordingMinutes?: number; // NEW: Actual recording time excluding gaps
-  recordingCoveragePercentage?: number; // NEW: Percentage of intended recording captured
-  gapDetected?: boolean; // NEW: Flag for significant recording gaps
   avgPm1: number;
   avgPm25: number;
   avgPm10: number;

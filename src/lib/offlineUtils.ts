@@ -9,17 +9,7 @@ export async function offlineSafeFetch<T = unknown>(
   options?: RequestInit
 ): Promise<{ data: T | null; error: string | null }> {
   try {
-    // Add timeout to prevent hanging requests
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
-    const fetchOptions = {
-      ...options,
-      signal: controller.signal
-    };
-    
-    const response = await fetch(url, fetchOptions);
-    clearTimeout(timeoutId);
+    const response = await fetch(url, options);
     
     if (!response.ok) {
       return { 
@@ -40,16 +30,6 @@ export async function offlineSafeFetch<T = unknown>(
     return { data, error: null };
     
   } catch (fetchError) {
-    // Handle specific error types
-    if (fetchError instanceof Error) {
-      if (fetchError.name === 'AbortError') {
-        return { 
-          data: null, 
-          error: 'Request timeout - check your connection' 
-        };
-      }
-    }
-    
     // Network errors, including offline scenarios
     const errorMessage = fetchError instanceof Error 
       ? fetchError.message 
@@ -59,54 +39,6 @@ export async function offlineSafeFetch<T = unknown>(
       data: null, 
       error: `Network error: ${errorMessage}` 
     };
-  }
-}
-
-/**
- * Retry mechanism for important requests
- */
-export async function retryFetch<T = unknown>(
-  url: string,
-  options?: RequestInit,
-  maxRetries = 3,
-  delayMs = 1000
-): Promise<{ data: T | null; error: string | null }> {
-  let lastError = '';
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    const result = await offlineSafeFetch<T>(url, options);
-    
-    if (result.data !== null) {
-      return result;
-    }
-    
-    lastError = result.error || 'Unknown error';
-    
-    // Don't retry on certain error types
-    if (lastError.includes('404') || lastError.includes('401') || lastError.includes('403')) {
-      break;
-    }
-    
-    if (attempt < maxRetries) {
-      await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
-    }
-  }
-  
-  return { data: null, error: lastError };
-}
-
-/**
- * Check network connectivity with a simple ping
- */
-export async function checkConnectivity(): Promise<boolean> {
-  try {
-    const response = await fetch('/health.json', { 
-      method: 'HEAD',
-      cache: 'no-cache'
-    });
-    return response.ok;
-  } catch {
-    return false;
   }
 }
 

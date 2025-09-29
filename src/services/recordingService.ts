@@ -156,43 +156,10 @@ class RecordingService {
       recordingData: [...this.state.recordingData, entry],
     };
 
-    // Auto-save progress for crash recovery every 5 data points or if significant time has passed
-    this.autoSaveProgress();
-
     this.notify();
     
     console.log('🚨✅ === UNIFIED RECORDING SYSTEM ===');
     logger.debug('📊 Data point added to UNIFIED RecordingService. Total entries:', this.state.recordingData.length);
-  }
-
-  private lastAutoSave: number | null = null;
-  private readonly AUTO_SAVE_INTERVAL = 30000; // 30 seconds
-  private readonly AUTO_SAVE_DATA_POINTS = 5; // Every 5 data points
-
-  private autoSaveProgress(): void {
-    const now = Date.now();
-    const shouldSaveByTime = !this.lastAutoSave || 
-      (now - this.lastAutoSave) >= this.AUTO_SAVE_INTERVAL;
-    const shouldSaveByCount = this.state.recordingData.length % this.AUTO_SAVE_DATA_POINTS === 0;
-    
-    if (shouldSaveByTime || shouldSaveByCount) {
-      try {
-        // Import and call crash recovery function
-        import('@/hooks/useCrashRecovery').then(({ saveRecordingProgressToStorage }) => {
-          saveRecordingProgressToStorage({
-            recordingData: this.state.recordingData,
-            recordingStartTime: this.state.recordingStartTime,
-            frequency: this.state.recordingFrequency,
-            missionContext: this.state.missionContext,
-            timestamp: new Date()
-          });
-          this.lastAutoSave = now;
-          logger.debug('💾 Auto-saved recording progress:', this.state.recordingData.length, 'entries');
-        });
-      } catch (error) {
-        logger.error('❌ Failed to auto-save recording progress:', error);
-      }
-    }
   }
 
   updateMissionContext(location: string, activity: string): void {

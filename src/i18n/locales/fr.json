@@ -293,14 +293,7 @@
     "doseCalculation": {
       "title": "Calcul de dose inhalée",
       "formula": "Formule",
-      "explanation": "Cette formule estime la quantité de particules inhalées selon votre activité et le temps d'exposition.",
-      "formulaText": "Dose inhalée (μg) = Concentration × Temps × Débit respiratoire",
-      "concentration": "Concentration",
-      "concentrationDesc": "Particules PM en μg/m³",
-      "time": "Temps",
-      "timeDesc": "Durée d'exposition en heures",
-      "respiratoryRate": "Débit respiratoire",
-      "respiratoryRateDesc": "Variable selon l'activité (0,4-3,5 m³/h)"
+      "explanation": "Cette formule estime la quantité de particules inhalées selon votre activité et le temps d'exposition."
     },
     "report": {
       "title": "RAPPORT D'ANALYSE",

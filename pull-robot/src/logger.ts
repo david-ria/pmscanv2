@@ -1,6 +1,19 @@
-export const logger = {
-  info: (msg: string, ...args: any[]) => console.log(`[INFO] ${new Date().toISOString()} ${msg}`, ...args),
-  error: (msg: string, ...args: any[]) => console.error(`[ERROR] ${new Date().toISOString()} ${msg}`, ...args),
-  warn: (msg: string, ...args: any[]) => console.warn(`[WARN] ${new Date().toISOString()} ${msg}`, ...args),
-  debug: (msg: string, ...args: any[]) => console.log(`[DEBUG] ${new Date().toISOString()} ${msg}`, ...args)
+import pino from 'pino';
+import { config } from './config.js';
+
+export const logger = pino({
+  level: config.logging.level,
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'yyyy-mm-dd HH:MM:ss',
+      ignore: 'pid,hostname',
+    },
+  },
+});
+
+// Create child loggers for different components
+export const createLogger = (component: string) => {
+  return logger.child({ component });
 };

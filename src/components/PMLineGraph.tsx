@@ -309,7 +309,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
-          margin={{ top: 80, right: 5, left: 0, bottom: 80 }}
+          margin={{ top: 20, right: 5, left: 0, bottom: 120 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
@@ -374,9 +374,9 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
             const centerX = period.start + periodWidth / 2;
             const isShortPeriod = periodWidth < 20; // Consider periods less than 20 data points as short
             
-            // Calculate consistent positioning for all labels on same line
-            const labelYPosition = 65; // Fixed position for all context labels
-            const pm25YPosition = 25;  // Fixed position for all PM2.5 values
+            // Calculate staggered positioning for overlapping labels
+            const verticalOffset = index % 2 === 0 ? 5 : 45;
+            const labelOffset = index % 2 === 0 ? 25 : 65;
             
             return (
               <React.Fragment key={`period-${index}`}>
@@ -397,11 +397,11 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                   label={{
                     value: `${period.pm25Average.toFixed(1)} µg/m³`,
                     position: 'top',
-                    fontSize: 12,
+                    fontSize: 10,
                     fill: '#ef4444',
                     textAnchor: 'middle',
                     fontWeight: 'bold',
-                    offset: pm25YPosition,
+                    offset: verticalOffset,
                     style: {
                       textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
                       fontWeight: 'bold'
@@ -416,11 +416,11 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                   label={{
                     value: period.label,
                     position: 'top',
-                    fontSize: 14,
+                    fontSize: 12,
                     fill: period.color,
                     textAnchor: 'middle',
                     fontWeight: 'bold',
-                    offset: labelYPosition,
+                    offset: labelOffset,
                     style: {
                       textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
                       fontWeight: 'bold'

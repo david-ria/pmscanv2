@@ -42,57 +42,21 @@ export class PMScanEventManager {
         onChargingData
       );
 
-      // Start all notifications in parallel with Promise.allSettled
-      const notificationResults = await Promise.allSettled([
-        // Critical: RT data
-        (async () => {
-          await rtDataChar.startNotifications();
-          rtDataChar.addEventListener('characteristicvaluechanged', onRTData);
-        })(),
-        // Non-critical: IM data
-        (async () => {
-          await imDataChar.startNotifications();
-          imDataChar.addEventListener('characteristicvaluechanged', onIMData);
-        })(),
-        // Non-critical: Battery
-        (async () => {
-          await batteryChar.startNotifications();
-          batteryChar.addEventListener('characteristicvaluechanged', onBatteryData);
-        })(),
-        // Non-critical: Charging
-        (async () => {
-          await chargingChar.startNotifications();
-          chargingChar.addEventListener('characteristicvaluechanged', onChargingData);
-        })()
-      ]);
+      // Add new listeners and start notifications
+      await rtDataChar.startNotifications();
+      rtDataChar.addEventListener('characteristicvaluechanged', onRTData);
 
-      // Check critical notifications (RT data)
-      if (notificationResults[0].status === 'rejected') {
-        logger.error('❌ Critical RT data re-establishment failed:', notificationResults[0].reason);
-        throw new Error('Failed to re-establish critical RT data notifications');
-      }
+      await imDataChar.startNotifications();
+      imDataChar.addEventListener('characteristicvaluechanged', onIMData);
 
-      // Log non-critical notification failures but continue
-      const failureMessages = [];
-      if (notificationResults[1].status === 'rejected') {
-        logger.warn('⚠️ IM data re-establishment failed:', notificationResults[1].reason);
-        failureMessages.push('IM data');
-      }
-      if (notificationResults[2].status === 'rejected') {
-        logger.warn('⚠️ Battery re-establishment failed:', notificationResults[2].reason);
-        failureMessages.push('Battery');
-      }
-      if (notificationResults[3].status === 'rejected') {
-        logger.warn('⚠️ Charging re-establishment failed:', notificationResults[3].reason);
-        failureMessages.push('Charging');
-      }
+      await batteryChar.startNotifications();
+      batteryChar.addEventListener('characteristicvaluechanged', onBatteryData);
 
-      if (failureMessages.length > 0) {
-        logger.warn(`⚠️ Some non-critical notifications failed to re-establish: ${failureMessages.join(', ')}`);
-      }
-
-      const successCount = notificationResults.filter(r => r.status === 'fulfilled').length;
-      logger.debug(`📊 ${successCount}/4 notifications re-established`);
+      await chargingChar.startNotifications();
+      chargingChar.addEventListener(
+        'characteristicvaluechanged',
+        onChargingData
+      );
 
       logger.debug(
         '🔄 Event listeners re-established and notifications started'

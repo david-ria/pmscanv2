@@ -2,7 +2,6 @@ import { useCallback, useEffect } from 'react';
 import { useLocationEnrichmentSettings } from './useLocationEnrichmentSettings';
 import { useSmartLocationEnrichment } from './useSmartLocationEnrichment';
 import { useGPS } from './useGPS';
-import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
 
 /**
  * Integration hook that connects location enrichment with GPS and recording state
@@ -12,18 +11,15 @@ export function useLocationEnrichmentIntegration() {
   const { enrichLocation, preEnrichFrequentLocations } = useSmartLocationEnrichment();
   const { latestLocation } = useGPS(true, true);
 
-  // Rate-limited state logging - only when enabled
-  if (isEnabled) {
-    rateLimitedDebug(
-      'location-enrichment-integration-state',
-      10000,
-      '🔧 LocationEnrichmentIntegration state:', {
-        isEnabled,
-        hasEnrichFunction: !!enrichLocation,
-        hasLocation: !!latestLocation
-      }
-    );
-  }
+  console.log('🔧 useLocationEnrichmentIntegration state:', {
+    isEnabled,
+    hasEnrichFunction: !!enrichLocation,
+    hasLocation: !!latestLocation,
+    location: latestLocation ? {
+      lat: latestLocation.latitude,
+      lng: latestLocation.longitude
+    } : null
+  });
 
   // Auto-enrich current location when enabled
   useEffect(() => {
@@ -33,9 +29,7 @@ export function useLocationEnrichmentIntegration() {
           latestLocation.latitude,
           latestLocation.longitude,
           new Date().toISOString()
-        ).catch((error) => {
-          console.error('Location enrichment error:', error);
-        });
+        ).catch(console.error);
       }, 2000); // Small delay to avoid too frequent calls
 
       return () => clearTimeout(enrichWithDelay);
@@ -47,21 +41,17 @@ export function useLocationEnrichmentIntegration() {
     if (!isEnabled) return;
 
     const interval = setInterval(() => {
-      preEnrichFrequentLocations().catch((error) => {
-        devLogger.debug('Predictive enrichment error:', error);
-      });
+      preEnrichFrequentLocations().catch(console.error);
     }, 10 * 60 * 1000); // Every 10 minutes
 
     return () => clearInterval(interval);
   }, [isEnabled, preEnrichFrequentLocations]);
 
-  // Only log return state in development when enabled
-  if (isEnabled) {
-    devLogger.debug('LocationEnrichmentIntegration returning', {
-      hasEnrichFunction: !!enrichLocation,
-      isEnabled
-    });
-  }
+  console.log('🔧 useLocationEnrichmentIntegration returning:', {
+    hasEnrichFunction: !!enrichLocation,
+    enrichLocation: isEnabled ? enrichLocation : null,
+    isEnabled
+  });
 
   return {
     enrichLocation: isEnabled ? enrichLocation : null

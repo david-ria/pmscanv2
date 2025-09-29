@@ -485,7 +485,7 @@ export function MissionDetailsDialog({
               <CardTitle className="text-lg">{t('realTime.map')}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-80 sm:h-96 w-full">
+              <div className="h-64 w-full">
                 {trackPoints.length > 0 ? (
                   <MapboxMap
                     currentLocation={
@@ -529,8 +529,8 @@ export function MissionDetailsDialog({
                 selectedContextType={selectedContextType}
                 onContextTypeChange={setSelectedContextType}
               />
-              {/* Graph container with optimized height */}
-              <div className="h-[450px] sm:h-[520px] w-full overflow-hidden" ref={graphRef}>
+              {/* Graph container with better mobile responsive height */}
+              <div className="h-[400px] sm:h-[500px] w-full overflow-hidden" ref={graphRef}>
                 <PMLineGraph 
                   data={graphData} 
                   events={events} 

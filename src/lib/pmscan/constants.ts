@@ -12,12 +12,3 @@ export const PMScan_DISPLAY_UUID = 'f364190a-00b0-4240-ba50-05ca45bf8abc';
 
 // Date constant for PMScan timestamp conversion
 export const DT_2000 = 946684800;
-
-// BLE operation timeouts (ms)
-export const BLE_TIMEOUTS = {
-  CONNECT: 10000,
-  READ: 5000,
-  WRITE: 5000,
-  START_NOTIFICATIONS: 8000,
-  OPERATION_DEFAULT: 5000,
-} as const;

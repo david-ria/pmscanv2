@@ -1,20 +1,11 @@
-// Temporary no-op: Service Worker injection disabled to stabilize builds
-// Re-enable by running with FORCE_SW_INJECT=1
-const FORCE = process.env.FORCE_SW_INJECT === '1';
-
-if (!FORCE) {
-  console.log('[SW] Workbox injection disabled (temporary). To enable, run: FORCE_SW_INJECT=1 node scripts/inject-sw.mjs');
-  process.exit(0);
-}
-
-const { existsSync } = await import('node:fs');
-const { injectManifest } = await import('workbox-build');
+import { injectManifest } from 'workbox-build';
+import { existsSync } from 'node:fs';
 
 // Adjust outputDir if your build emits to "build" instead of "dist"
 const outputDir = existsSync('dist') ? 'dist' : 'build';
 
 const { count, size, warnings } = await injectManifest({
-  swSrc: 'src/sw.js',
+  swSrc: 'src/sw.ts',
   swDest: `${outputDir}/sw.js`,
   globDirectory: outputDir,
   globPatterns: [

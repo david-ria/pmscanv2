@@ -1,6 +1,6 @@
 /* Tap Target Size Compliance - Ensures all interactive elements meet 40x40px minimum */
 
-button,
+button, 
 a[href], 
 [role="button"], 
 [tabindex="0"],
@@ -9,7 +9,14 @@ input[type="submit"],
 input[type="reset"],
 .clickable,
 .tap-target {
-  /* No minimum width constraints - allow natural button shapes */
+  min-width: 40px;
+  min-height: 40px;
+  
+  /* Ensure proper touch target for mobile */
+  @media (hover: none) and (pointer: coarse) {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 /* Exception for very small icons inside larger clickable areas */

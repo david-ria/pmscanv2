@@ -1,0 +1,390 @@
+import Database from 'better-sqlite3';
+import { config } from './config.js';
+import { createLogger } from './logger.js';
+import type { ProcessedFile, ProcessedRow, DeadLetterEntry, ProcessingState } from './types.js';
+
+const logger = createLogger('state');
+let db: Database.Database;
+
+// Initialize SQLite database with schema
+export async function initializeDatabase(): Promise<void> {
+  try {
+    const dbPath = process.env.DB_PATH || '/app/data/robot-state.db';
+    db = new Database(dbPath);
+    
+    // Enable WAL mode for better concurrent access
+    db.pragma('journal_mode = WAL');
+    
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS processed_files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        path TEXT NOT NULL,
+        fingerprint TEXT NOT NULL,
+        device_id TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'processing',
+        processed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        finished_at DATETIME,
+        total_rows INTEGER NOT NULL DEFAULT 0,
+        successful_rows INTEGER NOT NULL DEFAULT 0,
+        failed_rows INTEGER NOT NULL DEFAULT 0,
+        last_row_timestamp TEXT,
+        file_size INTEGER NOT NULL DEFAULT 0,
+        error_message TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(path, fingerprint)
+      );
+      
+      CREATE TABLE IF NOT EXISTS processed_rows (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        file_id INTEGER NOT NULL,
+        row_index INTEGER NOT NULL,
+        payload_hash TEXT NOT NULL,
+        sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        status TEXT NOT NULL DEFAULT 'sent',
+        error_message TEXT,
+        FOREIGN KEY (file_id) REFERENCES processed_files (id),
+        UNIQUE(file_id, row_index)
+      );
+      
+      CREATE TABLE IF NOT EXISTS dead_letter_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        file_id INTEGER NOT NULL,
+        row_index INTEGER NOT NULL,
+        idempotency_key TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        http_status INTEGER,
+        error_message TEXT NOT NULL,
+        attempt_count INTEGER NOT NULL DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_attempt_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (file_id) REFERENCES processed_files (id)
+      );
+      
+      CREATE INDEX IF NOT EXISTS idx_processed_files_path ON processed_files(path);
+      CREATE INDEX IF NOT EXISTS idx_processed_files_fingerprint ON processed_files(fingerprint);
+      CREATE INDEX IF NOT EXISTS idx_processed_files_status ON processed_files(status);
+      CREATE INDEX IF NOT EXISTS idx_processed_files_device_id ON processed_files(device_id);
+      CREATE INDEX IF NOT EXISTS idx_processed_rows_file_id ON processed_rows(file_id);
+      CREATE INDEX IF NOT EXISTS idx_processed_rows_payload_hash ON processed_rows(payload_hash);
+      CREATE INDEX IF NOT EXISTS idx_processed_rows_status ON processed_rows(status);
+      CREATE INDEX IF NOT EXISTS idx_dlq_file_id ON dead_letter_queue(file_id);
+      CREATE INDEX IF NOT EXISTS idx_dlq_attempt_count ON dead_letter_queue(attempt_count);
+    `);
+    
+    logger.info('Database schema initialized with fingerprinting support');
+  } catch (error) {
+    logger.error('Failed to initialize database:', error);
+    throw error;
+  }
+}
+
+// Test database connection
+export async function testDatabaseConnection(): Promise<boolean> {
+  try {
+    if (!db) return false;
+    db.prepare('SELECT 1').get();
+    return true;
+  } catch (error) {
+    logger.error('Database connection test failed:', error);
+    return false;
+  }
+}
+
+// Check if a file with specific fingerprint has been fully processed (status='done')
+export function isFileProcessed(path: string, fingerprint: string): boolean {
+  try {
+    const stmt = db.prepare('SELECT id, status FROM processed_files WHERE path = ? AND fingerprint = ?');
+    const result = stmt.get(path, fingerprint) as { id: number; status: string } | undefined;
+    
+    const isProcessed = result?.status === 'done';
+    
+    logger.debug('File processed check:', { 
+      path, 
+      fingerprint: fingerprint.substring(0, 16) + '...', 
+      status: result?.status || 'not_found',
+      isProcessed 
+    });
+    return isProcessed;
+  } catch (error) {
+    logger.error('Error checking if file is processed:', error);
+    return false;
+  }
+}
+
+// Start processing a file (status='processing') with upsert behavior
+export function startFileProcessing(path: string, fingerprint: string, deviceId: string, fileSize: number): number {
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO processed_files (path, fingerprint, device_id, file_size, status, total_rows, started_at)
+      VALUES (?, ?, ?, ?, 'processing', 0, CURRENT_TIMESTAMP)
+      ON CONFLICT(path, fingerprint) DO UPDATE SET 
+        status = 'processing',
+        started_at = CURRENT_TIMESTAMP,
+        finished_at = NULL,
+        error_message = NULL
+    `);
+    const result = stmt.run(path, fingerprint, deviceId, fileSize);
+    
+    // Get the file ID (either inserted or updated)
+    const selectStmt = db.prepare('SELECT id FROM processed_files WHERE path = ? AND fingerprint = ?');
+    const fileRecord = selectStmt.get(path, fingerprint) as { id: number } | undefined;
+    
+    if (fileRecord) {
+      logger.info('File processing started/restarted:', { 
+        path, 
+        fingerprint: fingerprint.substring(0, 16) + '...', 
+        deviceId, 
+        fileSize, 
+        fileId: fileRecord.id 
+      });
+      return fileRecord.id;
+    } else {
+      throw new Error('Failed to get file ID');
+    }
+  } catch (error) {
+    logger.error('Error starting file processing:', error);
+    throw error;
+  }
+}
+
+// Finish processing a file (status='done' or 'failed')
+export function finishFileProcessing(fileId: number, status: 'done' | 'failed', totalRows: number, successfulRows: number, failedRows: number, errorMessage?: string): void {
+  try {
+    const stmt = db.prepare(`
+      UPDATE processed_files 
+      SET status = ?, 
+          total_rows = ?, 
+          successful_rows = ?, 
+          failed_rows = ?, 
+          finished_at = CURRENT_TIMESTAMP,
+          error_message = ?
+      WHERE id = ?
+    `);
+    
+    stmt.run(status, totalRows, successfulRows, failedRows, errorMessage || null, fileId);
+    
+    logger.info('File processing finished:', { 
+      fileId, 
+      status, 
+      totalRows, 
+      successfulRows, 
+      failedRows,
+      errorMessage 
+    });
+  } catch (error) {
+    logger.error('Error finishing file processing:', error);
+    throw error;
+  }
+}
+
+// Legacy function - kept for backward compatibility but use startFileProcessing instead
+export function markFileProcessed(path: string, fingerprint: string, deviceId: string, fileSize: number): number {
+  return startFileProcessing(path, fingerprint, deviceId, fileSize);
+}
+
+// Update file processing stats
+export function updateFileStats(fileId: number, totalRows: number, successfulRows: number, failedRows: number, lastRowTimestamp?: string): void {
+  try {
+    const stmt = db.prepare(`
+      UPDATE processed_files 
+      SET total_rows = ?, successful_rows = ?, failed_rows = ?, last_row_timestamp = ?, processed_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `);
+    stmt.run(totalRows, successfulRows, failedRows, lastRowTimestamp || null, fileId);
+    
+    logger.debug('Updated file stats:', { fileId, totalRows, successfulRows, failedRows });
+  } catch (error) {
+    logger.error('Error updating file stats:', error);
+    throw error;
+  }
+}
+
+// Atomic row reservation for race-condition-free processing
+export function reserveRowForProcessing(fileId: number, rowIndex: number, payloadHash: string): boolean {
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO processed_rows (file_id, row_index, payload_hash, status, sent_at)
+      VALUES (?, ?, ?, 'processing', CURRENT_TIMESTAMP)
+      ON CONFLICT(file_id, row_index) DO NOTHING
+    `);
+    const result = stmt.run(fileId, rowIndex, payloadHash);
+    
+    // If affected rows = 1, we successfully reserved the row
+    // If affected rows = 0, another process already claimed it
+    const reserved = result.changes === 1;
+    
+    logger.debug('Row reservation attempt:', { 
+      fileId, 
+      rowIndex, 
+      reserved,
+      payloadHash: payloadHash.substring(0, 16) + '...'
+    });
+    
+    return reserved;
+  } catch (error) {
+    logger.error('Error reserving row for processing:', error);
+    return false;
+  }
+}
+
+// Update row status after processing attempt
+export function updateRowProcessingStatus(fileId: number, rowIndex: number, status: 'sent' | 'failed', errorMessage?: string): void {
+  try {
+    const stmt = db.prepare(`
+      UPDATE processed_rows 
+      SET status = ?, error_message = ?, sent_at = CURRENT_TIMESTAMP
+      WHERE file_id = ? AND row_index = ?
+    `);
+    const result = stmt.run(status, errorMessage || null, fileId, rowIndex);
+    
+    if (result.changes === 0) {
+      logger.warn('No row found to update processing status:', { fileId, rowIndex, status });
+    } else {
+      logger.debug('Updated row processing status:', { fileId, rowIndex, status, errorMessage });
+    }
+  } catch (error) {
+    logger.error('Error updating row processing status:', error);
+    throw error;
+  }
+}
+
+// Check if a row has been processed (legacy function - prefer atomic reservation)
+export function isRowProcessed(fileId: number, rowIndex: number): boolean {
+  try {
+    const stmt = db.prepare('SELECT id FROM processed_rows WHERE file_id = ? AND row_index = ?');
+    const result = stmt.get(fileId, rowIndex);
+    return result !== undefined;
+  } catch (error) {
+    logger.error('Error checking if row is processed:', error);
+    return false;
+  }
+}
+
+// Mark a row as processed with status and payload hash (legacy - use reserveRowForProcessing + updateRowProcessingStatus instead)
+export function markRowProcessed(fileId: number, rowIndex: number, payloadHash: string, status: string = 'sent', errorMessage?: string): void {
+  try {
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO processed_rows (file_id, row_index, payload_hash, status, error_message)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    stmt.run(fileId, rowIndex, payloadHash, status, errorMessage || null);
+  } catch (error) {
+    logger.error('Error marking row as processed:', error);
+    throw error;
+  }
+}
+
+// Record a successfully processed row (legacy function - use markRowProcessed instead)
+export function recordProcessedRow(fileId: number, rowIndex: number, timestamp: string, responseStatus: number): void {
+  try {
+    // Convert old format to new format with a simple hash
+    const payloadHash = `legacy_${rowIndex}_${timestamp}_${responseStatus}`;
+    markRowProcessed(fileId, rowIndex, payloadHash, responseStatus >= 200 && responseStatus < 300 ? 'sent' : 'failed');
+  } catch (error) {
+    logger.error('Error recording processed row:', error);
+    throw error;
+  }
+}
+
+// Add to dead letter queue
+export function addToDeadLetterQueue(fileId: number, rowIndex: number, idempotencyKey: string, payload: string, httpStatus?: number, errorMessage?: string): void {
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO dead_letter_queue (file_id, row_index, idempotency_key, payload, http_status, error_message)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    stmt.run(fileId, rowIndex, idempotencyKey, payload, httpStatus || null, errorMessage || 'Unknown error');
+    
+    logger.warn('Added to dead letter queue:', { fileId, rowIndex, idempotencyKey, httpStatus, errorMessage });
+  } catch (error) {
+    logger.error('Error adding to dead letter queue:', error);
+    throw error;
+  }
+}
+
+// Get processing statistics
+export async function getProcessingState(): Promise<ProcessingState> {
+  try {
+    const stats = db.prepare(`
+      SELECT 
+        COUNT(*) as files_processed,
+        SUM(total_rows) as rows_processed,
+        SUM(successful_rows) as rows_sent,
+        SUM(failed_rows) as rows_failed
+      FROM processed_files
+    `).get() as { files_processed: number; rows_processed: number; rows_sent: number; rows_failed: number };
+    
+    const dlqCount = db.prepare('SELECT COUNT(*) as count FROM dead_letter_queue').get() as { count: number };
+    
+    const lastFile = db.prepare(`
+      SELECT path, processed_at 
+      FROM processed_files 
+      ORDER BY processed_at DESC 
+      LIMIT 1
+    `).get() as { path: string; processed_at: string } | undefined;
+    
+    return {
+      filesProcessed: stats?.files_processed || 0,
+      rowsProcessed: stats?.rows_processed || 0,
+      rowsSent: stats?.rows_sent || 0,
+      rowsFailed: stats?.rows_failed || 0,
+      deadLetterCount: dlqCount?.count || 0,
+      lastPollAt: new Date().toISOString(), // Will be updated by poller
+      lastProcessedFile: lastFile?.path || null,
+    };
+  } catch (error) {
+    logger.error('Error getting processing state:', error);
+    return {
+      filesProcessed: 0,
+      rowsProcessed: 0,
+      rowsSent: 0,
+      rowsFailed: 0,
+      deadLetterCount: 0,
+      lastPollAt: null,
+      lastProcessedFile: null,
+    };
+  }
+}
+
+// Get dead letter queue entries for retry
+export function getDeadLetterEntries(limit: number = 100): DeadLetterEntry[] {
+  try {
+    const stmt = db.prepare(`
+      SELECT * FROM dead_letter_queue
+      WHERE attempt_count < ?
+      ORDER BY created_at
+      LIMIT ?
+    `);
+    return stmt.all(5, limit) as DeadLetterEntry[]; // Max 5 attempts
+  } catch (error) {
+    logger.error('Error getting dead letter entries:', error);
+    return [];
+  }
+}
+
+// Update dead letter entry attempt
+export function updateDeadLetterAttempt(id: number, errorMessage: string): void {
+  try {
+    const stmt = db.prepare(`
+      UPDATE dead_letter_queue 
+      SET attempt_count = attempt_count + 1, 
+          error_message = ?, 
+          last_attempt_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `);
+    stmt.run(errorMessage, id);
+  } catch (error) {
+    logger.error('Error updating dead letter attempt:', error);
+  }
+}
+
+// Remove from dead letter queue (successful retry)
+export function removeFromDeadLetterQueue(id: number): void {
+  try {
+    const stmt = db.prepare('DELETE FROM dead_letter_queue WHERE id = ?');
+    stmt.run(id);
+  } catch (error) {
+    logger.error('Error removing from dead letter queue:', error);
+  }
+}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Users, Lock } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,8 +11,6 @@ import { CreateGroupDialog } from '@/components/Groups/CreateGroupDialog';
 import { InviteUserDialog } from '@/components/Groups/InviteUserDialog';
 import { GroupCard } from '@/components/Groups/GroupCard';
 import { InvitationCard } from '@/components/Groups/InvitationCard';
-import { useUserRole } from '@/hooks/useUserRole';
-import { useNavigate } from 'react-router-dom';
 
 export default function Groups() {
   const { groups, loading: groupsLoading } = useGroups();
@@ -22,16 +20,13 @@ export default function Groups() {
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [showInvitations, setShowInvitations] = useState(false);
   const { t } = useTranslation();
-  const { isSuperAdmin, loading: roleLoading } = useUserRole();
-  const navigate = useNavigate();
 
   const handleInviteUser = (groupId: string) => {
     setSelectedGroupId(groupId);
     setInviteUserOpen(true);
   };
 
-  // Show loading while checking role
-  if (roleLoading || groupsLoading || invitationsLoading) {
+  if (groupsLoading || invitationsLoading) {
     return (
       <div className="min-h-screen bg-background p-6">
         <div className="max-w-6xl mx-auto">
@@ -44,27 +39,6 @@ export default function Groups() {
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  // Access control: Only super admin can access Groups
-  if (!isSuperAdmin) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <Card className="max-w-md w-full">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <Lock className="h-16 w-16 text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Access Restricted</h2>
-            <p className="text-muted-foreground mb-6">
-              Groups functionality is only available to super administrators. 
-              Contact your system administrator if you need access.
-            </p>
-            <Button onClick={() => navigate('/')} variant="outline">
-              Return to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     );
   }

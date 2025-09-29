@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateAutoContextRules, DEFAULT_AUTO_CONTEXT_RULES, AutoContextEvaluationData } from '../autoContextConfig';
+import { evaluateAutoContextRules, AutoContextConfig, AutoContextEvaluationData } from '../autoContextConfig';
 
 const baseData: AutoContextEvaluationData = {
   wifi: { home: false, work: false, known: false, currentSSID: null, previousSSID: null },
@@ -11,7 +11,7 @@ const baseData: AutoContextEvaluationData = {
   context: { latestContext: '' },
 };
 
-const rules = DEFAULT_AUTO_CONTEXT_RULES;
+const rules = AutoContextConfig.getAllRules();
 
 describe('AutoContext Rules — core scenarios', () => {
   it('Feu rouge: reste Driving sans marche', () => {

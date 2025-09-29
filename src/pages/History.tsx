@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Calendar, FileX } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Calendar } from 'lucide-react';
 import {
   startOfDay,
   endOfDay,
@@ -16,7 +15,6 @@ import { StatsCard } from '@/components/StatsCard';
 import { DateFilter } from '@/components/DateFilter';
 import { MissionCard } from '@/components/History/MissionCard';
 import { SyncButton } from '@/components/History/SyncButton';
-import { getUnsentCSVs } from '@/hooks/useCrashRecovery';
 import { useMissionManagement } from '@/hooks/useMissionManagement';
 import { useHistoryStats } from '@/hooks/useHistoryStats';
 import { useTranslation } from 'react-i18next';
@@ -105,15 +103,6 @@ export default function History() {
 
   const periodStats = useHistoryStats(filteredMissions);
   const unsyncedCount = missions.filter((m) => !m.synced).length;
-  const [unsentCSVs, setUnsentCSVs] = useState(getUnsentCSVs());
-
-  // Update unsent CSVs periodically
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setUnsentCSVs(getUnsentCSVs());
-    }, 10000); // Check every 10 seconds
-    return () => clearInterval(interval);
-  }, []);
 
   const getPeriodLabel = () => {
     switch (selectedPeriod) {
@@ -146,44 +135,6 @@ export default function History() {
           />
         </div>
       </div>
-
-      {/* Pending CSV Files Section */}
-      {unsentCSVs.length > 0 && (
-        <div className="mb-6 p-4 bg-card rounded-lg border border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <FileX className="h-5 w-5 text-warning" />
-            <h3 className="font-medium text-foreground">
-              {t('sync.pendingFiles', 'Pending Sync Files')}
-            </h3>
-            <Badge variant="secondary">{unsentCSVs.length}</Badge>
-          </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            {t('sync.pendingFilesDesc', 'These CSV files are waiting to be synced to the server. They will be automatically retried when connection improves.')}
-          </p>
-          <div className="grid gap-2 max-h-32 overflow-y-auto">
-            {unsentCSVs.slice(0, 5).map((csv) => (
-              <div key={csv.filename} className="flex items-center justify-between text-sm bg-muted/50 rounded px-3 py-2">
-                <div className="flex-1">
-                  <span className="font-medium">{csv.filename}</span>
-                  <span className="text-muted-foreground ml-2">
-                    {csv.timestamp.toLocaleString()}
-                  </span>
-                </div>
-                {(csv.retryCount || 0) > 0 && (
-                  <Badge variant="outline" className="text-xs">
-                    {csv.retryCount} retries
-                  </Badge>
-                )}
-              </div>
-            ))}
-            {unsentCSVs.length > 5 && (
-              <div className="text-center text-sm text-muted-foreground">
-                +{unsentCSVs.length - 5} more files...
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Date Filter */}
       <DateFilter

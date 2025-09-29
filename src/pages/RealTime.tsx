@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
 import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
-import { DevicePicker } from '@/components/DevicePicker';
 // RecordingDebugger now loaded in App.tsx to avoid duplication
 
 // Import critical hooks immediately for core functionality
@@ -43,13 +42,6 @@ const DataLogger = lazy(() =>
   }))
 );
 
-// Load debug tools in development
-if (import.meta.env.DEV) {
-  import('@/lib/blePickerDebug').catch(() => {
-    // Ignore errors in debug module loading
-  });
-}
-
 export default function RealTime() {
   // Fast LCP - defer heavy initialization
   const [initialized, setInitialized] = useState(false);
@@ -84,15 +76,6 @@ export default function RealTime() {
     updateMissionContext,
     latestLocation,
     locationEnabled,
-    // Device picker state
-    showDevicePicker,
-    filteredDevices,
-    rawDevices,
-    onDevicePickerSelect,
-    onDevicePickerCancel,
-    onForgetDevice,
-    onRescan,
-    isScanning,
   } = unifiedData;
 
   // Only initialize autocontext if the user has enabled it
@@ -129,7 +112,7 @@ export default function RealTime() {
 
   // Initial autocontext effect - runs only when autocontext is toggled
   useEffect(() => {
-    if (initialized && import.meta.env.DEV) {
+    if (initialized && process.env.NODE_ENV === 'development') {
       console.log('Autocontext effect triggered:', { 
         autoContextEnabled, 
         hasCurrentData: !!currentData, 
@@ -319,18 +302,6 @@ export default function RealTime() {
 
 
       {/* Recording Debugger now in App.tsx */}
-      
-      {/* Device Picker Dialog */}
-      <DevicePicker
-        open={showDevicePicker}
-        onOpenChange={() => {}} // Controlled by device selection logic
-        filteredDevices={filteredDevices}
-        rawDevices={rawDevices}
-        onDeviceSelected={onDevicePickerSelect}
-        onForgetDevice={onForgetDevice}
-        onRescan={onRescan}
-        isScanning={isScanning}
-      />
     </main>
   );
 }

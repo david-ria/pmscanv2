@@ -13,10 +13,7 @@ import {
 } from './constants';
 import { PMScanDeviceState } from './deviceState';
 import { PMScanDevice } from './types';
-import { BleOperationWrapper } from './bleOperationWrapper';
-import { MtuManager, FragmentManager } from './mtuManager';
 import * as logger from '@/utils/logger';
-import { safeBleDebugger } from '@/lib/bleSafeWrapper';
 
 /**
  * Handles PMScan device initialization and service discovery
@@ -35,132 +32,70 @@ export class PMScanDeviceInitializer {
     deviceInfo: PMScanDevice;
     service: BluetoothRemoteGATTService;
   }> {
-    safeBleDebugger.info('INIT', 'PMScan web device connected');
-    
-    const service = await safeBleDebugger.timeOperation('SERVICE', 'Service Discovery', async () => {
-      safeBleDebugger.info('SERVICE', 'Discovering PMScan service');
-      return await BleOperationWrapper.getService(server, PMScan_SERVICE_UUID);
-    });
-    
-    // Negotiate MTU for optimal performance
-    const mtuInfo = await safeBleDebugger.timeOperation('MTU', 'MTU Negotiation', async () => {
-      return await MtuManager.negotiateMtu(server);
-    });
-    safeBleDebugger.info('MTU', `MTU negotiated: ${mtuInfo.negotiated} bytes (${mtuInfo.effective} effective)`, undefined, mtuInfo);
+    logger.debug('✅ PMScan Device Connected');
+    logger.debug('🔍 Discovering services...');
+
+    const service = await server.getPrimaryService(PMScan_SERVICE_UUID);
 
     // Read battery level
-    const batteryChar = await BleOperationWrapper.getCharacteristic(service, PMScan_BATTERY_UUID);
-    const batteryValue = await BleOperationWrapper.read(batteryChar);
+    const batteryChar = await service.getCharacteristic(PMScan_BATTERY_UUID);
+    const batteryValue = await batteryChar.readValue();
     const battery = batteryValue.getUint8(0);
     logger.debug(`🔋 Battery: ${battery}%`);
     this.deviceState.updateBattery(battery);
 
-    // Get all characteristics first
-    const [rtDataChar, imDataChar, chargingChar] = await safeBleDebugger.timeOperation('CHARS', 'Characteristics Discovery', async () => {
-      safeBleDebugger.info('CHARS', 'Discovering BLE characteristics');
-      return await Promise.all([
-        BleOperationWrapper.getCharacteristic(service, PMScan_RT_DATA_UUID),
-        BleOperationWrapper.getCharacteristic(service, PMScan_IM_DATA_UUID),
-        BleOperationWrapper.getCharacteristic(service, PMScan_CHARGING_UUID)
-      ]);
-    });
+    // Start RT data notifications
+    const rtDataChar = await service.getCharacteristic(PMScan_RT_DATA_UUID);
+    await rtDataChar.startNotifications();
+    rtDataChar.addEventListener('characteristicvaluechanged', onRTData);
 
-    // Start all notifications in parallel with Promise.allSettled
-    const notificationResults = await safeBleDebugger.timeOperation('NOTIFY', 'Notification Setup', async () => {
-      safeBleDebugger.info('NOTIFY', 'Starting BLE notifications for all characteristics');
-      return await Promise.allSettled([
-        // Critical: RT data notifications with fragmentation handling
-        BleOperationWrapper.startNotifications(rtDataChar, (value) => {
-          FragmentManager.processNotification(PMScan_RT_DATA_UUID, value, (assembledData) => {
-            const event = { target: { value: new DataView(assembledData.buffer) } } as any;
-            onRTData(event);
-          });
-        }),
-        // Non-critical: IM data notifications with fragmentation handling
-        BleOperationWrapper.startNotifications(imDataChar, (value) => {
-          FragmentManager.processNotification(PMScan_IM_DATA_UUID, value, (assembledData) => {
-            const event = { target: { value: new DataView(assembledData.buffer) } } as any;
-            onIMData(event);
-          });
-        }),
-        // Non-critical: Battery notifications
-        BleOperationWrapper.startNotifications(batteryChar, (value) => {
-          const event = { target: { value } } as any;
-          onBatteryData(event);
-        }),
-        // Non-critical: Charging notifications
-        BleOperationWrapper.startNotifications(chargingChar, (value) => {
-          const event = { target: { value } } as any;
-          onChargingData(event);
-        })
-      ]);
-    });
+    // Start IM data notifications
+    const imDataChar = await service.getCharacteristic(PMScan_IM_DATA_UUID);
+    await imDataChar.startNotifications();
+    imDataChar.addEventListener('characteristicvaluechanged', onIMData);
 
-    // Check critical notifications (RT data)
-    if (notificationResults[0].status === 'rejected') {
-      safeBleDebugger.error('NOTIFY', 'Critical RT data notifications failed', undefined, { error: notificationResults[0].reason });
-      throw new Error('Failed to start critical RT data notifications');
-    }
+    // Start battery notifications
+    await batteryChar.startNotifications();
+    batteryChar.addEventListener('characteristicvaluechanged', onBatteryData);
 
-    // Log non-critical notification failures but continue
-    const failureMessages = [];
-    if (notificationResults[1].status === 'rejected') {
-      safeBleDebugger.warn('NOTIFY', 'IM data notifications failed', undefined, { error: notificationResults[1].reason });
-      failureMessages.push('IM data');
-    }
-    if (notificationResults[2].status === 'rejected') {
-      safeBleDebugger.warn('NOTIFY', 'Battery notifications failed', undefined, { error: notificationResults[2].reason });
-      failureMessages.push('Battery');
-    }
-    if (notificationResults[3].status === 'rejected') {
-      safeBleDebugger.warn('NOTIFY', 'Charging notifications failed', undefined, { error: notificationResults[3].reason });
-      failureMessages.push('Charging');
-    }
-
-    const successCount = notificationResults.filter(r => r.status === 'fulfilled').length;
-    if (failureMessages.length > 0) {
-      safeBleDebugger.warn('NOTIFY', `Some notifications failed: ${failureMessages.join(', ')}`, undefined, { 
-        successCount, 
-        totalCount: 4,
-        failures: failureMessages 
-      });
-    }
-
-    safeBleDebugger.info('NOTIFY', `Notifications active: ${successCount}/4`, undefined, { successCount });
+    // Start charging notifications
+    const chargingChar = await service.getCharacteristic(PMScan_CHARGING_UUID);
+    await chargingChar.startNotifications();
+    chargingChar.addEventListener('characteristicvaluechanged', onChargingData);
 
     // Read and sync time if needed
     await this.syncDeviceTime(service);
 
     // Read charging status
-    const chargingValue = await BleOperationWrapper.read(chargingChar);
+    const chargingValue = await chargingChar.readValue();
     const charging = chargingValue.getUint8(0);
     logger.debug(`⚡ Charging: ${charging}`);
     this.deviceState.updateCharging(charging);
 
     // Read version
-    const versionChar = await BleOperationWrapper.getCharacteristic(service, PMScan_OTH_UUID);
-    const versionValue = await BleOperationWrapper.read(versionChar);
+    const versionChar = await service.getCharacteristic(PMScan_OTH_UUID);
+    const versionValue = await versionChar.readValue();
     const version = versionValue.getUint8(0) >> 2;
     logger.debug(`📋 Version: ${version}`);
     this.deviceState.updateVersion(version);
 
     // Read interval
-    const intervalChar = await BleOperationWrapper.getCharacteristic(service, PMScan_INTERVAL_UUID);
-    const intervalValue = await BleOperationWrapper.read(intervalChar);
+    const intervalChar = await service.getCharacteristic(PMScan_INTERVAL_UUID);
+    const intervalValue = await intervalChar.readValue();
     const interval = intervalValue.getUint8(0);
     logger.debug(`⏱️ Interval: ${interval}`);
     this.deviceState.updateInterval(interval);
 
     // Read mode
-    const modeChar = await BleOperationWrapper.getCharacteristic(service, PMScan_MODE_UUID);
-    const modeValue = await BleOperationWrapper.read(modeChar);
+    const modeChar = await service.getCharacteristic(PMScan_MODE_UUID);
+    const modeValue = await modeChar.readValue();
     const mode = modeValue.getUint8(0);
     logger.debug(`⚙️ Mode: ${mode}`);
     this.deviceState.updateMode(mode);
 
     // Read display settings
-    const displayChar = await BleOperationWrapper.getCharacteristic(service, PMScan_DISPLAY_UUID);
-    const displayValue = await BleOperationWrapper.read(displayChar);
+    const displayChar = await service.getCharacteristic(PMScan_DISPLAY_UUID);
+    const displayValue = await displayChar.readValue();
     logger.debug(`🖥️ Display: ${displayValue.getUint8(0)}`);
     this.deviceState.updateDisplay(new Uint8Array(displayValue.buffer));
 
@@ -182,8 +117,8 @@ export class PMScanDeviceInitializer {
   private async syncDeviceTime(
     service: BluetoothRemoteGATTService
   ): Promise<void> {
-    const timeChar = await BleOperationWrapper.getCharacteristic(service, PMScan_TIME_UUID);
-    const timeValue = await BleOperationWrapper.read(timeChar);
+    const timeChar = await service.getCharacteristic(PMScan_TIME_UUID);
+    const timeValue = await timeChar.readValue();
     const deviceTime = timeValue.getUint32(0);
     logger.debug(`⏰ Time is ${deviceTime}`);
 
@@ -195,7 +130,7 @@ export class PMScanDeviceInitializer {
       time[1] = (timeDt2000 >> 8) & 0xff;
       time[2] = (timeDt2000 >> 16) & 0xff;
       time[3] = (timeDt2000 >> 24) & 0xff;
-      await BleOperationWrapper.write(timeChar, time);
+      await timeChar.writeValueWithResponse(time);
     } else {
       logger.debug('⏰ Time already sync');
     }

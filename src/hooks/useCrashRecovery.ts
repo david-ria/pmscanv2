@@ -9,29 +9,19 @@ const UNSENT_CSV_KEY = 'pmscan_unsent_csv';
 
 interface RecoveryData {
   recordingData: RecordingEntry[];
-  recordingStartTime: Date | null;
+  startTime: string;
   frequency: string;
   missionContext: {
     location: string;
     activity: string;
   };
-  timestamp: Date;
+  timestamp: number;
 }
 
 interface UnsentCSV {
   filename: string;
   content: string;
-  timestamp: Date;
-  retryCount?: number;
-}
-
-// Export function for external use (like RecordingService)
-export function saveRecordingProgressToStorage(data: RecoveryData): void {
-  try {
-    localStorage.setItem(CRASH_RECOVERY_KEY, JSON.stringify(data));
-  } catch (error) {
-    console.error('Failed to save recording progress:', error);
-  }
+  timestamp: number;
 }
 
 export function useCrashRecovery() {
@@ -45,9 +35,8 @@ export function useCrashRecovery() {
         const recoveryDataStr = localStorage.getItem(CRASH_RECOVERY_KEY);
         if (recoveryDataStr) {
           const recoveryData: RecoveryData = JSON.parse(recoveryDataStr);
-          const timestampDate = new Date(recoveryData.timestamp);
-          const isVeryOld = !timestampDate.getTime || 
-            Date.now() - timestampDate.getTime() > 24 * 60 * 60 * 1000;
+          const isVeryOld =
+            Date.now() - recoveryData.timestamp > 24 * 60 * 60 * 1000;
 
           if (isVeryOld) {
             logger.debug('🧹 Clearing old crash recovery data (>24h)');
@@ -67,23 +56,20 @@ export function useCrashRecovery() {
         if (recoveryDataStr) {
           const recoveryData: RecoveryData = JSON.parse(recoveryDataStr);
 
-          // Convert timestamps back to Date objects safely
+          // Convert timestamps back to Date objects
           const restoredRecordingData = recoveryData.recordingData.map(
             (entry) => ({
               ...entry,
               pmData: {
                 ...entry.pmData,
-                timestamp: entry.pmData.timestamp instanceof Date 
-                  ? entry.pmData.timestamp 
-                  : new Date(entry.pmData.timestamp),
+                timestamp: new Date(entry.pmData.timestamp),
               },
             })
           );
 
           // Only process if data is meaningful and recent (within 24 hours)
-          const recoveryTimestamp = new Date(recoveryData.timestamp);
-          const isRecent = recoveryTimestamp.getTime && 
-            Date.now() - recoveryTimestamp.getTime() < 24 * 60 * 60 * 1000;
+          const isRecent =
+            Date.now() - recoveryData.timestamp < 24 * 60 * 60 * 1000;
           const hasData = restoredRecordingData.length > 0;
 
           if (isRecent && hasData) {
@@ -91,36 +77,29 @@ export function useCrashRecovery() {
               '🔄 Found crash recovery data, auto-saving mission...'
             );
 
-        // Create and save the recovered mission with safe date handling
-        const startTime = recoveryData.recordingStartTime 
-          ? (recoveryData.recordingStartTime instanceof Date 
-             ? recoveryData.recordingStartTime 
-             : new Date(recoveryData.recordingStartTime))
-          : null;
-        
-        const mission = await saveMission(
-          restoredRecordingData,
-          startTime,
-          `Recovered-${new Date().toISOString().slice(0, 16)}`,
-          recoveryData.missionContext.location,
-          recoveryData.missionContext.activity,
-          recoveryData.frequency
-        );
+            try {
+              // Create unique mission name with timestamp to avoid duplicates
+              const startTime = new Date(recoveryData.startTime);
+              const crashMissionName = `Recovered Mission ${startTime.toISOString().replace(/[:.]/g, '-')}`;
 
-        // Store the CSV for sync (simplified version without createMissionCSV dependency)
-        const csvFilename = `recovered_${mission.id}_${Date.now()}.csv`;
-        await storeCSVForSync(csvFilename, `Mission ID: ${mission.id}, Data Points: ${recoveryData.recordingData.length}`);
+              // Create a temporary mission from recovery data
+              const mission = dataStorage.createMissionFromRecording(
+                restoredRecordingData,
+                crashMissionName,
+                new Date(recoveryData.startTime),
+                new Date(recoveryData.timestamp),
+                recoveryData.missionContext.location || 'Unknown Location',
+                recoveryData.missionContext.activity || 'Unknown Activity',
+                recoveryData.frequency,
+                false // Don't share auto-recovered missions
+              );
 
-        // Show user notification about recovery
-        import('sonner').then(({ toast }) => {
-          toast.success('Mission recovered successfully', {
-            description: `Recovered ${recoveryData.recordingData.length} data points from interrupted session`,
-            duration: 5000,
-          });
-        });
-
-        console.log('✅ Successfully recovered mission:', mission.id);
-        clearRecoveryData();
+              // Export to CSV only, don't try to sync to avoid duplicates
+              await dataStorage.exportMissionToCSV(mission);
+              logger.debug('✅ Crash recovery mission exported as CSV');
+            } catch (error) {
+              console.error('Failed to save crash recovery mission:', error);
+            }
           }
 
           // Always clear recovery data after processing
@@ -175,10 +154,10 @@ export function useCrashRecovery() {
 
       const recoveryData: RecoveryData = {
         recordingData,
-        recordingStartTime: startTime,
+        startTime: startTime.toISOString(),
         frequency,
         missionContext,
-        timestamp: new Date(),
+        timestamp: Date.now(),
       };
 
       try {
@@ -205,106 +184,48 @@ export function useCrashRecovery() {
 }
 
 // Helper functions for CSV management
-export function getUnsentCSVs(): UnsentCSV[] {
+function getUnsentCSVs(): UnsentCSV[] {
   try {
-    const keys = Object.keys(localStorage).filter(key => key.startsWith(`${UNSENT_CSV_KEY}_`));
-    return keys.map(key => {
-      const stored = localStorage.getItem(key);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return {
-          ...parsed,
-          timestamp: new Date(parsed.timestamp)
-        };
-      }
-      return null;
-    }).filter(Boolean) as UnsentCSV[];
+    const stored = localStorage.getItem(UNSENT_CSV_KEY);
+    return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
   }
 }
 
-function saveUnsentCSV(filename: string, content: string, retryCount: number = 0): void {
+function saveUnsentCSV(filename: string, content: string) {
+  const unsentCSVs = getUnsentCSVs();
+  const csvData: UnsentCSV = {
+    filename,
+    content,
+    timestamp: Date.now(),
+  };
+
+  unsentCSVs.push(csvData);
+
   try {
-    const unsentData: UnsentCSV = {
-      filename,
-      content,
-      timestamp: new Date(),
-      retryCount
-    };
-    localStorage.setItem(`${UNSENT_CSV_KEY}_${filename}`, JSON.stringify(unsentData));
+    localStorage.setItem(UNSENT_CSV_KEY, JSON.stringify(unsentCSVs));
   } catch (error) {
-    console.error('Failed to save unsent CSV:', error);
+    console.warn('Failed to store unsent CSV data:', error);
   }
 }
 
-function removeUnsentCSV(filename: string): void {
-  try {
-    localStorage.removeItem(`${UNSENT_CSV_KEY}_${filename}`);
-  } catch (error) {
-    console.error('Failed to remove unsent CSV:', error);
-  }
+function removeUnsentCSV(filename: string) {
+  const unsentCSVs = getUnsentCSVs().filter((csv) => csv.filename !== filename);
+  localStorage.setItem(UNSENT_CSV_KEY, JSON.stringify(unsentCSVs));
 }
 
-async function syncCSVToServer(csvData: UnsentCSV): Promise<boolean> {
-  try {
-    // This would ideally send to your server endpoint
-    // For now, we'll simulate the sync process
-    logger.debug(`📡 Attempting to sync CSV: ${csvData.filename}`);
-    
-    // Simulate network request
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Simulate 80% success rate for testing
-    const success = Math.random() > 0.2;
-    
-    if (success) {
-      logger.debug(`✅ Successfully synced CSV: ${csvData.filename}`);
-    } else {
-      logger.warn(`⚠️ Failed to sync CSV: ${csvData.filename}`);
-    }
-    
-    return success;
-  } catch (error) {
-    logger.error(`❌ Error syncing CSV ${csvData.filename}:`, error);
-    return false;
-  }
+async function syncCSVToServer(csvData: UnsentCSV): Promise<void> {
+  // This would ideally send to your server endpoint
+  // For now, we'll trigger the sync of pending missions instead
+  logger.debug(`📡 Attempting to sync CSV: ${csvData.filename}`);
+
+  // Skip sync here to reduce excessive calls - handled by main sync
+  logger.debug('CSV sync request handled by main sync system');
 }
 
-export const storeCSVForSync = (filename: string, content: string): Promise<void> => {
-  return new Promise((resolve) => {
-    saveUnsentCSV(filename, content);
-    resolve();
-  });
-};
-
-// Export additional functions for PendingSyncIndicator
-export function retryCSVSync(filename: string): Promise<boolean> {
-  return new Promise(async (resolve) => {
-    try {
-      const csvData = getUnsentCSVs().find(csv => csv.filename === filename);
-      if (!csvData) {
-        resolve(false);
-        return;
-      }
-
-      const success = await syncCSVToServer(csvData);
-      if (success) {
-        removeUnsentCSV(filename);
-        resolve(true);
-      } else {
-        // Increment retry count
-        saveUnsentCSV(filename, csvData.content, (csvData.retryCount || 0) + 1);
-        resolve(false);
-      }
-    } catch (error) {
-      console.error('Error retrying CSV sync:', error);
-      resolve(false);
-    }
-  });
-}
-
-export function clearAllUnsentCSVs(): void {
-  const csvs = getUnsentCSVs();
-  csvs.forEach(csv => removeUnsentCSV(csv.filename));
+// Export function to store CSV data for later sync
+export function storeCSVForSync(filename: string, content: string) {
+  saveUnsentCSV(filename, content);
+  logger.debug(`💾 Stored CSV for later sync: ${filename}`);
 }

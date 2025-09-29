@@ -3,13 +3,33 @@
  * Replaces scattered `any` types with proper interfaces
  */
 
-// Import unified types from their authoritative sources
-import { PMScanData } from '@/lib/pmscan/types';
-import { LocationData } from '@/types/PMScan';
-import { RecordingEntry } from '@/types/recording';
+// PM Scan Data Types
+export interface PMScanData {
+  pm1: number;
+  pm25: number;
+  pm10: number;
+  timestamp: Date;
+  temperature?: number;
+  humidity?: number;
+}
+
+// Location Data Types
+export interface LocationData {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+}
 
 export interface LocationWithTimestamp extends LocationData {
   timestamp: Date;
+}
+
+// Recording Entry Types
+export interface RecordingEntry {
+  timestamp: Date;
+  pmData: PMScanData;
+  location?: LocationData;
+  automaticContext?: string;
 }
 
 // Analysis Data Types
@@ -26,13 +46,13 @@ export interface AnalysisBreakdownData {
   data: BreakdownData[];
 }
 
-// Chart Data Types - Note: temperature uses 'temp' to match PMScanData
+// Chart Data Types
 export interface ChartDataPoint {
   time: number | string;
   pm1: number;
   pm25: number;
   pm10: number;
-  temp?: number; // Changed from 'temperature' to match PMScanData
+  temperature?: number;
   humidity?: number;
 }
 

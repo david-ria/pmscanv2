@@ -1,7 +1,7 @@
 {
   "name": "pull-robot",
   "version": "1.0.0",
-  "description": "Clean implementation of pull robot - polls Supabase for mission data and posts to ATM API",
+  "description": "Standalone service that polls Supabase Storage for CSV files and posts measurements to external dashboard API",
   "type": "module",
   "main": "dist/index.js",
   "engines": {
@@ -10,16 +10,30 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docker:build": "docker build -t pull-robot .",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
   },
-  "keywords": ["supabase", "api", "polling", "atm"],
+  "keywords": ["supabase", "csv", "api", "polling", "robot"],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.3"
+    "@supabase/supabase-js": "^2.50.3",
+    "better-sqlite3": "^11.3.0",
+    "bottleneck": "^2.19.5",
+    "csv-parse": "^5.5.6",
+    "fastify": "^5.1.0",
+    "node-cron": "^3.0.3",
+    "pino": "^9.4.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^22.7.4",
+    "@types/node-cron": "^3.0.11",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3"
   }

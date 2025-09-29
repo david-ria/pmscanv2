@@ -34,16 +34,6 @@ interface UnifiedDataState {
   gpsQuality: 'good' | 'poor';
   locationEnabled: boolean;
   
-  // Device picker state
-  showDevicePicker: boolean;
-  filteredDevices: any[];
-  rawDevices: any[];
-  onDevicePickerSelect: (device: any) => void;
-  onDevicePickerCancel: () => void;
-  onForgetDevice: () => void;
-  onRescan: () => void;
-  isScanning: boolean;
-  
   // Actions
   requestDevice: () => Promise<void>;
   disconnect: () => Promise<void>;
@@ -144,16 +134,6 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     speedKmh,
     gpsQuality,
     locationEnabled,
-    
-    // Device picker state
-    showDevicePicker: bluetooth.showDevicePicker,
-    filteredDevices: bluetooth.filteredDevices,
-    rawDevices: bluetooth.rawDevices,
-    onDevicePickerSelect: bluetooth.onDevicePickerSelect,
-    onDevicePickerCancel: bluetooth.onDevicePickerCancel,
-    onForgetDevice: bluetooth.onForgetDevice,
-    onRescan: bluetooth.onRescan,
-    isScanning: bluetooth.isScanning,
     
     // Actions
     requestDevice: bluetooth.requestDevice,

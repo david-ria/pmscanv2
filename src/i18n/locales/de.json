@@ -260,22 +260,7 @@
     "doseCalculation": {
       "title": "Berechnung der eingeatmeten Dosis",
       "formula": "Formel",
-      "explanation": "Diese Formel schätzt die Menge der eingeatmeten Partikel basierend auf Ihrer Aktivität und Expositionszeit.",
-      "formulaText": "Eingeatmete Dosis (μg) = Konzentration × Zeit × Atemrate",
-      "concentration": "Konzentration",
-      "concentrationDesc": "PM-Partikel in μg/m³",
-      "time": "Zeit",
-      "timeDesc": "Expositionsdauer in Stunden",
-      "respiratoryRate": "Atemrate",
-      "respiratoryRateDesc": "Variable je nach Aktivität (0,4-3,5 m³/h)"
-    },
-    "units": {
-      "ugm3": "μg/m³",
-      "m3h": "m³/h",
-      "ug": "μg",
-      "hours": "h",
-      "minutes": "min",  
-      "rate": "Rate"
+      "explanation": "Diese Formel schätzt die Menge der eingeatmeten Partikel basierend auf Ihrer Aktivität und Expositionszeit."
     },
     "whoComplianceTitle": "WHO-Schwellenwert-Compliance",
     "timeBelowWHO": "Zeit unter WHO-Schwellenwert (15 μg/m³)",

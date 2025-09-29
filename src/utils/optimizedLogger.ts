@@ -33,7 +33,7 @@ class OptimizedLogger {
       error: 3,
     };
 
-    const isDevelopment = import.meta.env.DEV;
+    const isDevelopment = process.env.NODE_ENV === 'development';
     
     if (!isDevelopment && !this.config.enableInProduction) {
       return level === 'error'; // Only errors in production
@@ -144,41 +144,30 @@ class OptimizedLogger {
 
 // Global logger instance
 export const logger = new OptimizedLogger({
-  level: import.meta.env.DEV ? 'debug' : 'warn',
+  level: process.env.NODE_ENV === 'development' ? 'debug' : 'warn',
   enableInProduction: false,
   prefix: '[AirSentinels]',
-  enablePerformanceTracking: import.meta.env.DEV,
+  enablePerformanceTracking: process.env.NODE_ENV === 'development',
 });
 
-// Convenience exports (bound wrappers to preserve context)
-export const debug = (message: string, ...args: any[]) => logger.debug(message, ...args);
-export const info = (message: string, ...args: any[]) => logger.info(message, ...args);
-export const warn = (message: string, ...args: any[]) => logger.warn(message, ...args);
-export const error = (message: string, ...args: any[]) => logger.error(message, ...args);
-export const time = (label: string) => logger.time(label);
-export const timeEnd = (label: string) => logger.timeEnd(label);
-
-export const rateLimitedDebug = (key: string, intervalMs: number, message: string, ...args: any[]) =>
-  logger.rateLimitedDebug(key, intervalMs, message, ...args);
-export const rateLimitedInfo = (key: string, intervalMs: number, message: string, ...args: any[]) =>
-  logger.rateLimitedInfo(key, intervalMs, message, ...args);
-export const rateLimitedWarn = (key: string, intervalMs: number, message: string, ...args: any[]) =>
-  logger.rateLimitedWarn(key, intervalMs, message, ...args);
+// Convenience exports
+export const { debug, info, warn, error, time, timeEnd } = logger;
+export const { rateLimitedDebug, rateLimitedInfo, rateLimitedWarn } = logger;
 
 // Development-only logger
 export const devLogger = {
   debug: (message: string, ...args: any[]) => {
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
       logger.debug(message, ...args);
     }
   },
   info: (message: string, ...args: any[]) => {
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
       logger.info(message, ...args);
     }
   },
   performance: (label: string, fn: () => void) => {
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
       logger.time(label);
       fn();
       logger.timeEnd(label);

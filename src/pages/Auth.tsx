@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, UserPlus, Mail, RefreshCw } from 'lucide-react';
+import { LogIn, UserPlus } from 'lucide-react';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -16,9 +16,7 @@ export default function Auth() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showResendButton, setShowResendButton] = useState(false);
-  const [lastAttemptedEmail, setLastAttemptedEmail] = useState('');
-  const { signIn, signUp, resendConfirmationEmail, signInWithMagicLink } = useAuth();
+  const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -26,29 +24,15 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setShowResendButton(false);
 
     try {
       const { error } = await signIn(email, password);
       if (error) {
-        setLastAttemptedEmail(email);
-        
-        // Check if the error is related to unconfirmed email
-        if (error.message?.toLowerCase().includes('email not confirmed') || 
-            error.message?.toLowerCase().includes('invalid credentials')) {
-          setShowResendButton(true);
-          toast({
-            title: t('auth.connectionError'),
-            description: 'Your email may not be confirmed yet. Please check your email or click "Resend confirmation email" below.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: t('auth.connectionError'),
-            description: error.message,
-            variant: 'destructive',
-          });
-        }
+        toast({
+          title: t('auth.connectionError'),
+          description: error.message,
+          variant: 'destructive',
+        });
       } else {
         toast({
           title: t('auth.connectionSuccess'),
@@ -84,8 +68,6 @@ export default function Auth() {
           variant: 'destructive',
         });
       } else {
-        setLastAttemptedEmail(email);
-        setShowResendButton(true);
         toast({
           title: t('auth.registrationSuccess'),
           description: t('auth.checkEmailConfirm'),
@@ -95,71 +77,6 @@ export default function Auth() {
       toast({
         title: t('common.error'),
         description: t('auth.unexpectedError'),
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResendConfirmation = async () => {
-    if (!lastAttemptedEmail) return;
-    
-    setLoading(true);
-    try {
-      const { error } = await resendConfirmationEmail(lastAttemptedEmail);
-      if (error) {
-        toast({
-          title: 'Error',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Confirmation email sent',
-          description: 'Please check your email for the confirmation link.',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to resend confirmation email',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMagicLink = async () => {
-    if (!email) {
-      toast({
-        title: 'Email required',
-        description: 'Please enter your email address first.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const { error } = await signInWithMagicLink(email);
-      if (error) {
-        toast({
-          title: 'Error',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Magic link sent',
-          description: 'Please check your email for the sign-in link.',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to send magic link',
         variant: 'destructive',
       });
     } finally {
@@ -210,32 +127,6 @@ export default function Auth() {
                 <Button type="submit" className="w-full" disabled={loading}>
                   <LogIn className="h-4 w-4 mr-2" />
                   {loading ? t('auth.connecting') : t('auth.signIn')}
-                </Button>
-                
-                {/* Resend confirmation button */}
-                {showResendButton && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full mt-2"
-                    onClick={handleResendConfirmation}
-                    disabled={loading}
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Resend confirmation email
-                  </Button>
-                )}
-                
-                {/* Magic link button */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full mt-2"
-                  onClick={handleMagicLink}
-                  disabled={loading}
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  Send me a sign-in link
                 </Button>
               </form>
             </TabsContent>

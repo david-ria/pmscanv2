@@ -12,15 +12,6 @@ export interface MeasurementRecord {
   latitude?: number;
   longitude?: number;
   activity?: string;
-  // New particle count fields
-  particles_02_05?: number;
-  particles_05_10?: number;
-  particles_10_25?: number;
-  particles_25_50?: number;
-  particles_50_100?: number;
-  // External sensor fields
-  external_temperature?: number;
-  external_humidity?: number;
 }
 
 /**
@@ -52,16 +43,12 @@ export function escapeCSVField(value: string | number | undefined | null): strin
 }
 
 /**
- * Generates CSV content from measurement records with extended particle data
- * Headers include new particle count and external sensor fields
+ * Generates CSV content from measurement records with exact header contract
+ * Headers (order matters): mission_id,timestamp_iso,pm1,pm2_5,pm10,lat,lon,activity
  */
 export function generateMeasurementCSV(measurements: MeasurementRecord[]): string {
-  // Extended header order including new particle count and external sensor data
-  const headers = [
-    'mission_id', 'timestamp_iso', 'pm1', 'pm2_5', 'pm10', 'lat', 'lon', 'activity',
-    'particles_02_05', 'particles_05_10', 'particles_10_25', 'particles_25_50', 'particles_50_100',
-    'external_temperature', 'external_humidity'
-  ];
+  // Exact header order as specified in contract
+  const headers = ['mission_id', 'timestamp_iso', 'pm1', 'pm2_5', 'pm10', 'lat', 'lon', 'activity'];
   
   // Generate header row
   const headerRow = headers.join(',');
@@ -76,16 +63,7 @@ export function generateMeasurementCSV(measurements: MeasurementRecord[]): strin
       escapeCSVField(measurement.pm10),
       escapeCSVField(measurement.latitude || ''),
       escapeCSVField(measurement.longitude || ''),
-      escapeCSVField(measurement.activity || ''),
-      // New particle count fields
-      escapeCSVField(measurement.particles_02_05 || ''),
-      escapeCSVField(measurement.particles_05_10 || ''),
-      escapeCSVField(measurement.particles_10_25 || ''),
-      escapeCSVField(measurement.particles_25_50 || ''),
-      escapeCSVField(measurement.particles_50_100 || ''),
-      // External sensor fields
-      escapeCSVField(measurement.external_temperature || ''),
-      escapeCSVField(measurement.external_humidity || '')
+      escapeCSVField(measurement.activity || '')
     ];
     return row.join(',');
   });
@@ -94,14 +72,14 @@ export function generateMeasurementCSV(measurements: MeasurementRecord[]): strin
 }
 
 /**
- * Validates CSV header order matches the extended contract
+ * Validates CSV header order matches the exact contract
  */
 export function validateCSVHeaders(csvContent: string): boolean {
   const lines = csvContent.split('\n');
   if (lines.length === 0) return false;
   
   const actualHeaders = lines[0];
-  const expectedHeaders = 'mission_id,timestamp_iso,pm1,pm2_5,pm10,lat,lon,activity,particles_02_05,particles_05_10,particles_10_25,particles_25_50,particles_50_100,external_temperature,external_humidity';
+  const expectedHeaders = 'mission_id,timestamp_iso,pm1,pm2_5,pm10,lat,lon,activity';
   
   return actualHeaders === expectedHeaders;
 }
