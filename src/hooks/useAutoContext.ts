@@ -20,7 +20,7 @@ import {
   AutoContextConfig,
 } from '@/lib/autoContextConfig';
 import { useSensorData } from '@/hooks/useSensorData';
-import { MotionWalkingSignature } from '@/services/motionWalkingSignature';
+import { autoContextSensorManager } from '@/services/autoContextSensorManager';
 import { calculateDataQuality } from '@/lib/autoContext.config';
 
 // Development telemetry logging
@@ -82,8 +82,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   const [latestContext, setLatestContext] = useState<string>('');
   const [model, setModel] = useState<any | null>(null);
   
-  // Initialize motion walking signature service
-  const [motionWalkingSignature] = useState(() => new MotionWalkingSignature());
+  // Use singleton motion walking signature service
   
   const homeCountsKey = 'homeWifiCounts';
   const workCountsKey = 'workWifiCounts';
@@ -159,15 +158,15 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   // Initialize and manage motion walking signature service
   useEffect(() => {
     if (settings.enabled) {
-      motionWalkingSignature.start().catch(console.error);
+      autoContextSensorManager.addReference().catch(console.error);
     } else {
-      motionWalkingSignature.stop();
+      autoContextSensorManager.removeReference();
     }
 
     return () => {
-      motionWalkingSignature.stop();
+      autoContextSensorManager.removeReference();
     };
-  }, [settings.enabled, motionWalkingSignature]);
+  }, [settings.enabled]);
 
   // Real WiFi detection function
   const getCurrentWifiSSID = useCallback((): string => {
@@ -567,8 +566,8 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
         movement: {
           speed: speedKmh,
           isMoving: speedKmh > 2,
-          walkingSignature: motionWalkingSignature.getSnapshot().walkingSignature,
-          dataQuality: calculateDataQuality(gpsQuality, motionWalkingSignature.getSnapshot().isActive),
+          walkingSignature: autoContextSensorManager.getWalkingSnapshot().walkingSignature,
+          dataQuality: calculateDataQuality(gpsQuality, autoContextSensorManager.getWalkingSnapshot().isActive),
         },
         time: {
           currentHour,
