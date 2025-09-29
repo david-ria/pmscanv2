@@ -73,12 +73,15 @@ export class MotionWalkingSignature {
     this.timeoutId = window.setInterval(() => {
       const now = performance.now();
       if (now - this.lastMotionEvent > AUTO_CTX_CFG.ACC_TIMEOUT_MS) {
-        console.warn('Accelerometer timeout - forcing walkingSignature to false');
-        this.snapshot.walkingSignature = false;
-        this.snapshot.isActive = false;
-        this.snapshot.lastUpdated = Date.now();
+        // Only warn once when timeout first occurs
+        if (this.snapshot.isActive) {
+          console.warn('Accelerometer timeout - forcing walkingSignature to false');
+          this.snapshot.walkingSignature = false;
+          this.snapshot.isActive = false;
+          this.snapshot.lastUpdated = Date.now();
+        }
       }
-    }, 1000); // Check every second
+    }, 5000); // Check every 5 seconds instead of every second
   }
 
   private stopTimeoutMonitoring(): void {
