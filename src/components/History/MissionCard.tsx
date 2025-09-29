@@ -29,6 +29,9 @@ export function MissionCard({
 }: MissionCardProps) {
   const { t } = useTranslation();
   const [detailsOpen, setDetailsOpen] = useState(false);
+  
+  // Debug: Log weather data info
+  console.log('🌤️ MissionCard - Mission:', mission.name, 'weatherDataId:', mission.weatherDataId);
   const getQualityColor = (pm25: number) => {
     if (pm25 <= 12) return 'text-air-good';
     if (pm25 <= 35) return 'text-air-moderate';

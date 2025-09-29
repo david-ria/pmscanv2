@@ -20,9 +20,12 @@ export function useWeatherDisplay(weatherDataId?: string) {
 
   useEffect(() => {
     if (!weatherDataId) {
+      console.log('🌤️ useWeatherDisplay - No weatherDataId, setting data to null');
       setWeatherData(null);
       return;
     }
+
+    console.log('🌤️ useWeatherDisplay - Fetching weather data for ID:', weatherDataId);
 
     const fetchWeatherData = async () => {
       setLoading(true);
@@ -34,13 +37,14 @@ export function useWeatherDisplay(weatherDataId?: string) {
           .maybeSingle();
 
         if (error) {
-          console.warn('Failed to fetch weather data:', error);
+          console.warn('🌤️ useWeatherDisplay - Failed to fetch weather data:', error);
           setWeatherData(null);
         } else {
+          console.log('🌤️ useWeatherDisplay - Successfully fetched weather data:', data);
           setWeatherData(data);
         }
       } catch (error) {
-        console.warn('Error fetching weather data:', error);
+        console.warn('🌤️ useWeatherDisplay - Error fetching weather data:', error);
         setWeatherData(null);
       } finally {
         setLoading(false);
