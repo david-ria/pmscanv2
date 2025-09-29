@@ -9,7 +9,7 @@ import {
   endOfYear,
   isSameDay,
 } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { fr, enUS, de, ca } from 'date-fns/locale';
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -49,7 +49,16 @@ export function DateFilter({
     year: t('history.periods.year'),
   };
 
-  const locale = i18n.language === 'fr' ? fr : enUS;
+  const getLocale = () => {
+    switch (i18n.language) {
+      case 'fr': return fr;
+      case 'de': return de;
+      case 'ca': return ca;
+      default: return enUS;
+    }
+  };
+  
+  const locale = getLocale();
 
   const getDateRangeText = () => {
     switch (selectedPeriod) {
