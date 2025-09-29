@@ -205,8 +205,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in enhance-location-context function:', error);
+    const err = error as { message?: string } | undefined;
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: err?.message || 'Unknown error',
       enhanced_context: null
     }), {
       status: 500,

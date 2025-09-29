@@ -31,18 +31,25 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const requestBody = await safeJson(req);
     
-    if (!requestBody) {
+    // Parse JSON body safely from the Request object
+    let requestBody: any = null;
+    try {
+      const ct = req.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) throw new Error('Invalid content-type');
+      requestBody = await req.json();
+    } catch {
       return new Response(
         JSON.stringify({ error: 'Invalid JSON in request body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { latitude, longitude, timestamp } = requestBody;
+    const { latitude, longitude, timestamp } = requestBody || {};
+    const lat = typeof latitude === 'string' ? parseFloat(latitude) : latitude;
+    const lon = typeof longitude === 'string' ? parseFloat(longitude) : longitude;
 
-    if (!latitude || !longitude || !timestamp) {
+    if (lat == null || Number.isNaN(lat) || lon == null || Number.isNaN(lon) || !timestamp) {
       return new Response(
         JSON.stringify({ error: 'Missing required parameters: latitude, longitude, timestamp' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -58,10 +65,10 @@ serve(async (req) => {
       .select('*')
       .gte('timestamp', oneHourAgo.toISOString())
       .lte('timestamp', requestTime.toISOString())
-      .gte('latitude', latitude - 0.01) // ~1km radius
-      .lte('latitude', latitude + 0.01)
-      .gte('longitude', longitude - 0.01)
-      .lte('longitude', longitude + 0.01)
+      .gte('latitude', lat - 0.01) // ~1km radius
+      .lte('latitude', lat + 0.01)
+      .gte('longitude', lon - 0.01)
+      .lte('longitude', lon + 0.01)
       .order('timestamp', { ascending: false })
       .limit(1);
 
@@ -74,13 +81,13 @@ serve(async (req) => {
     }
 
     // Fetch new weather data from OpenWeatherMap
-    console.log('Fetching new weather data for:', latitude, longitude);
+    console.log('Fetching new weather data for:', lat, lon);
     
     const weatherResponse = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${openWeatherApiKey}&units=metric`
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openWeatherApiKey}&units=metric`
     );
 
-    const weatherData = await safeJson(weatherResponse);
+    const weatherData = await safeJson<any>(weatherResponse);
     if (!weatherData) {
       console.error('OpenWeatherMap API error: Invalid JSON response');
       return new Response(
@@ -92,8 +99,8 @@ serve(async (req) => {
 
     // Store weather data in our database
     const weatherRecord = {
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
+      latitude: parseFloat(String(lat)),
+      longitude: parseFloat(String(lon)),
       timestamp: requestTime.toISOString(),
       temperature: weatherData.main.temp,
       humidity: weatherData.main.humidity,
@@ -129,8 +136,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in fetch-weather function:', error);
+    const err = error as { message?: string } | undefined;
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: err?.message || 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
