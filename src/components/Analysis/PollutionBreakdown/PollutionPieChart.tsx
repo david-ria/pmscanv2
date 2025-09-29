@@ -77,7 +77,7 @@ export const PollutionPieChart = ({
 
   return (
     <div className="w-full h-full min-h-[200px]">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minHeight={200}>
         <PieChart>
           <Pie
             data={breakdownData}
