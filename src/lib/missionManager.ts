@@ -151,7 +151,7 @@ export function saveMissionLocally(mission: MissionData): void {
     logger.debug('✅ Mission saved locally successfully. Total missions now:', missions.length);
 
     // Save any pending events for this mission
-    savePendingEventsForMission(mission.id);
+    savePendingEventsForMission(mission.id, mission.startTime, mission.endTime);
 
     // Add to pending sync if not already synced
     if (!mission.synced) {
@@ -165,33 +165,69 @@ export function saveMissionLocally(mission: MissionData): void {
   }
 }
 
-function savePendingEventsForMission(missionId: string): void {
+function savePendingEventsForMission(missionId: string, startTime: Date, endTime: Date): void {
   try {
     const pendingEvents = JSON.parse(localStorage.getItem('pending_events') || '[]');
-    // Get events for current recording session (both temporary ID and actual mission ID)
-    const eventsForMission = pendingEvents.filter((event: any) => 
-      event.mission_id === missionId || event.mission_id === 'current-recording'
+    
+    // Only process events marked as 'current-recording'
+    const currentRecordingEvents = pendingEvents.filter((event: any) => 
+      event.mission_id === 'current-recording'
     );
     
-    if (eventsForMission.length > 0) {
-      // Update mission_id for events that were using temporary ID
-      const updatedEvents = eventsForMission.map((event: any) => ({
-        ...event,
-        mission_id: missionId // Replace temporary ID with actual mission ID
-      }));
+    logger.debug('📋 Processing pending events for mission:', {
+      missionId,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      totalPending: pendingEvents.length,
+      currentRecordingEvents: currentRecordingEvents.length
+    });
+    
+    if (currentRecordingEvents.length > 0) {
+      // Add 5-minute buffer on each side to account for timing variations
+      const bufferMs = 5 * 60 * 1000;
+      const missionStart = startTime.getTime() - bufferMs;
+      const missionEnd = endTime.getTime() + bufferMs;
       
-      // Store events for this mission separately
-      const existingMissionEvents = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
-      const allEvents = [...existingMissionEvents, ...updatedEvents];
-      localStorage.setItem(`mission_events_${missionId}`, JSON.stringify(allEvents));
+      // Filter events to only those within the mission timeframe
+      const validEvents = currentRecordingEvents.filter((event: any) => {
+        const eventTime = new Date(event.timestamp).getTime();
+        const isValid = eventTime >= missionStart && eventTime <= missionEnd;
+        
+        if (!isValid) {
+          logger.debug('⚠️ Event outside mission timeframe:', {
+            eventTimestamp: event.timestamp,
+            missionStart: startTime.toISOString(),
+            missionEnd: endTime.toISOString()
+          });
+        }
+        
+        return isValid;
+      });
       
-      // Remove these events from pending (both temporary and actual mission IDs)
-      const remainingPending = pendingEvents.filter((event: any) => 
-        event.mission_id !== missionId && event.mission_id !== 'current-recording'
-      );
-      localStorage.setItem('pending_events', JSON.stringify(remainingPending));
+      logger.debug('📋 Valid events after timestamp filtering:', validEvents.length);
       
-      console.log(`Saved ${eventsForMission.length} events for mission ${missionId}`);
+      if (validEvents.length > 0) {
+        // Update mission_id for valid events
+        const updatedEvents = validEvents.map((event: any) => ({
+          ...event,
+          mission_id: missionId
+        }));
+        
+        // Store events for this mission separately
+        const existingMissionEvents = JSON.parse(localStorage.getItem(`mission_events_${missionId}`) || '[]');
+        const allEvents = [...existingMissionEvents, ...updatedEvents];
+        localStorage.setItem(`mission_events_${missionId}`, JSON.stringify(allEvents));
+        
+        // Remove processed events from pending
+        const remainingPending = pendingEvents.filter((event: any) => 
+          event.mission_id !== 'current-recording'
+        );
+        localStorage.setItem('pending_events', JSON.stringify(remainingPending));
+        
+        logger.debug(`✅ Saved ${validEvents.length} events for mission ${missionId}`);
+      } else {
+        logger.debug('⚠️ No valid events within mission timeframe');
+      }
     }
   } catch (error) {
     console.error('Failed to save pending events for mission:', error);
