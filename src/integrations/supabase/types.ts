@@ -930,6 +930,10 @@ export type Database = {
             }
         Returns: boolean
       }
+      get_user_email: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       get_user_group_ids: {
         Args: { _user_id: string }
         Returns: string[]
