@@ -1,0 +1,32 @@
+
+/* Layout optimization utilities */
+@layer utilities {
+  /* Stable layouts to prevent CLS */
+  .layout-stable {
+    @apply min-h-screen flex flex-col;
+  }
+  
+  /* Responsive grid systems */
+  .content-grid {
+    @apply grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+  
+  /* Component-specific stable layouts */
+  .recording-section {
+    @apply min-h-16 flex items-center justify-center;
+  }
+  
+  .context-selector {
+    @apply min-h-20 grid grid-cols-1 sm:grid-cols-2 gap-4;
+  }
+  
+  /* Safe area handling */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Backdrop blur utilities */
+  .backdrop-blur-app {
+    @apply backdrop-blur supports-[backdrop-filter]:bg-background/60;
+  }
+}

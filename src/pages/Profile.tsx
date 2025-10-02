@@ -9,12 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Calendar, Lock, Save, LogOut } from 'lucide-react';
+import { User, Calendar, Lock, Save } from 'lucide-react';
 import { MenuPageHeader } from '@/components/MenuPageHeader';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
-import { Badge } from '@/components/ui/badge';
-import { useGroupSettings } from '@/hooks/useGroupSettings';
 
 interface Profile {
   id: string;
@@ -26,11 +24,10 @@ interface Profile {
 }
 
 export default function Profile() {
-  const { user, updatePassword, signOut } = useAuth();
+  const { user, updatePassword } = useAuth();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { isGroupMode, activeGroup } = useGroupSettings();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -166,19 +163,6 @@ export default function Profile() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      navigate('/auth');
-    } catch (error) {
-      toast({
-        title: t('common.error'),
-        description: t('auth.unexpectedError'),
-        variant: 'destructive',
-      });
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -198,52 +182,6 @@ export default function Profile() {
           title={t('profile.title')}
           subtitle={t('profile.subtitle')}
         />
-
-        {/* Account Summary Card */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <User className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-foreground">
-                  {user?.email || t('account.user')}
-                </div>
-                <div className="text-sm text-muted-foreground truncate">
-                  {user?.email}
-                </div>
-                <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                  <Badge variant="secondary" className="text-xs">
-                    {t('account.connected')}
-                  </Badge>
-                  {isGroupMode && activeGroup && (
-                    <Badge variant="outline" className="text-xs">
-                      {activeGroup.name}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Account Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('account.title')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              {t('account.logout')}
-            </Button>
-          </CardContent>
-        </Card>
 
         {/* Profile Information */}
         <Card>
