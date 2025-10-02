@@ -1,6 +1,7 @@
-import { User, Users } from 'lucide-react';
+import { User, Users, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
@@ -14,7 +15,7 @@ import { useGroupSettings } from '@/hooks/useGroupSettings';
 export function UserInfoCard() {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const { isGroupMode, activeGroup } = useGroupSettings();
+  const { isGroupMode, activeGroup, clearGroupSettings } = useGroupSettings();
 
   return (
     <div className="p-4">
@@ -36,9 +37,21 @@ export function UserInfoCard() {
                 {user?.email}
               </div>
               <div className="flex gap-1 mt-1">
-                <Badge variant="secondary" className="text-xs">
-                  {t('account.connected')}
-                </Badge>
+                {isGroupMode && activeGroup ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-6 text-xs px-2"
+                    onClick={clearGroupSettings}
+                  >
+                    {t('account.connected')}
+                    <X className="h-3 w-3 ml-1" />
+                  </Button>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">
+                    {t('account.connected')}
+                  </Badge>
+                )}
                 {isGroupMode && activeGroup && (
                   <Badge variant="outline" className="text-xs">
                     {activeGroup.name}
