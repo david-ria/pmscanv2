@@ -28,12 +28,12 @@ export default function EnvironmentalDisplay({
       <div className="flex items-center gap-2">
         {data.temperature !== undefined && (
           <Badge variant="secondary">
-            🌡️ {Math.round(data.temperature)}°C
+            🌡️ {data.temperature.toFixed(1)}°C
           </Badge>
         )}
         {data.humidity !== undefined && (
           <Badge variant="secondary">
-            💧 {Math.round(data.humidity)}%
+            💧 {data.humidity.toFixed(1)}%
           </Badge>
         )}
       </div>

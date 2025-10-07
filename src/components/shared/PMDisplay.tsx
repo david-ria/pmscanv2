@@ -16,7 +16,7 @@ export default function PMDisplay({ data, showLabels = true, className, size = '
     lg: 'text-base'
   };
 
-  const formatValue = (value: number) => Math.round(value);
+  const formatValue = (value: number) => value.toFixed(1);
 
   return (
     <div className={cn("flex items-center gap-2", className)}>

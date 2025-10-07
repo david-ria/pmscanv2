@@ -34,6 +34,4 @@ export const frequencyOptionKeys = [
   { value: '10s', key: 'every10s' },
   { value: '30s', key: 'every30s' },
   { value: '1m', key: 'every1m' },
-  { value: '5m', key: 'every5m' },
-  { value: '10m', key: 'every10m' },
 ];
