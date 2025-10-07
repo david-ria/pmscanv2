@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from '@/services/storageService';
 import { useLocationEnrichmentIntegration } from '@/hooks/useLocationEnrichmentIntegration';
 import { useGeohashSettings } from '@/hooks/useStorage';
 import { encodeGeohash } from '@/utils/geohash';
+import { rollingBufferService } from '@/services/rollingBufferService';
 
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
@@ -141,7 +142,28 @@ export function GlobalDataCollector() {
           Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
 
         if (!isDuplicate) {
-          devLogger.info('🔍 Adding data point:', { pm25: currentData.pm25 });
+          // Parse frequency to get window size in seconds
+          const getFrequencySeconds = (freq: string): number => {
+            const num = parseInt(freq);
+            if (freq.includes('s')) return num;
+            if (freq.includes('m')) return num * 60;
+            return 10; // default 10s
+          };
+
+          const windowSeconds = getFrequencySeconds(recordingFrequency);
+          
+          // Get running average from buffer instead of instant currentData
+          const averagedData = rollingBufferService.getAverage(windowSeconds);
+          
+          if (!averagedData) {
+            logger.warn('⚠️ No averaged data available from buffer, skipping data point');
+            return;
+          }
+
+          devLogger.info('🔍 Adding averaged data point:', { 
+            pm25: averagedData.pm25.toFixed(1),
+            window: `${windowSeconds}s`
+          });
 
         // Handle context and data point recording
         const handleContextAndDataPoint = async () => {
@@ -163,7 +185,7 @@ export function GlobalDataCollector() {
               const enrichmentResult = await enrichLocation(
                 latestLocation.latitude,
                 latestLocation.longitude,
-                currentData.timestamp.toISOString()
+                averagedData.timestamp.toISOString()
               );
               
               if (enrichmentResult?.display_name) {
@@ -176,15 +198,15 @@ export function GlobalDataCollector() {
           }
 
           const automaticContext = autoContextSettings.enabled ? await updateContextIfNeeded(
-            currentData,
+            averagedData,
             latestLocation || undefined,
             speed,
             isMoving
             // DO NOT pass enrichedLocationName - keep autocontext separate from location enrichment
           ) : '';
 
-          // Use PMScan data timestamp (already standardized) - no need to overwrite
-          lastRecordedTimeRef.current = currentData.timestamp;
+          // Use averaged data timestamp
+          lastRecordedTimeRef.current = averagedData.timestamp;
 
           // Fetch weather data only if enabled and location is available
           let weatherDataId: string | null = null;
@@ -193,16 +215,16 @@ export function GlobalDataCollector() {
               weatherDataId = await getWeatherForMeasurement(
                 latestLocation.latitude,
                 latestLocation.longitude,
-                currentData.timestamp // Use PMScan timestamp consistently
+                averagedData.timestamp // Use averaged data timestamp
               );
             } catch (error) {
               logger.debug('⚠️ Failed to fetch weather data for measurement:', error);
             }
           }
 
-          // Use original PMScan data with its timestamp (no overwriting)
+          // Use averaged PMScan data
           addDataPoint(
-            currentData, // Use original PMScan data with consistent timestamp
+            averagedData, // Use averaged data from rolling buffer
             latestLocation || undefined,
             { location: selectedLocation, activity: selectedActivity },
             automaticContext,
@@ -216,12 +238,12 @@ export function GlobalDataCollector() {
         handleContextAndDataPoint();
         
         lastDataRef.current = {
-          pm25: currentData.pm25,
+          pm25: averagedData.pm25,
           timestamp: currentTimestamp,
         };
         
-        // Update last recorded time for frequency control
-        lastRecordedTimeRef.current = currentData.timestamp;
+        // Update last recorded time for frequency control (already set in handleContextAndDataPoint)
+        // lastRecordedTimeRef.current is already set to averagedData.timestamp
         }
       }
     }
@@ -242,13 +264,17 @@ export function GlobalDataCollector() {
     encodeGeohash,
   ]);
 
-  // Clear location history when recording starts for fresh speed calculations
+  // Clear location history and rolling buffer when recording starts
   useEffect(() => {
     if (isRecording) {
       import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
         clearLocationHistory();
         devLogger.debug('🏃 Cleared location history for new recording session');
       });
+      
+      // Clear rolling buffer for fresh averaging window
+      rollingBufferService.clear();
+      devLogger.debug('🧹 Cleared rolling buffer for new recording session');
     }
   }, [isRecording]);
 

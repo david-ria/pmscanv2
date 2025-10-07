@@ -3,6 +3,7 @@ import { PMScanData, PMScanDevice } from '@/lib/pmscan/types';
 import { parsePMScanDataPayload } from '@/lib/pmscan/dataParser';
 import { exponentialBackoff } from '@/lib/pmscan/utils';
 import { globalConnectionManager } from '@/lib/pmscan/globalConnectionManager';
+import { rollingBufferService } from '@/services/rollingBufferService';
 import * as logger from '@/utils/logger';
 
 export function usePMScanBluetooth() {
@@ -44,6 +45,10 @@ export function usePMScanBluetooth() {
               timestamp: prevData.timestamp.toISOString()
             } : null
           });
+          
+          // Feed every reading into rolling buffer for averaging
+          rollingBufferService.addReading(data);
+          
           return data;
         }
         // Skip logging and updating if data is too similar
@@ -176,6 +181,8 @@ export function usePMScanBluetooth() {
       setIsConnected(false);
       setDevice(null);
       setCurrentData(null);
+      // Clear rolling buffer on disconnect
+      rollingBufferService.clear();
     } else {
       // Show warning that disconnection was prevented due to active recording
       setError(
