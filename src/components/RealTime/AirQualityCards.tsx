@@ -33,9 +33,9 @@ const AirQualityCards = memo(function AirQualityCards({
       pm1: getAirQualityLevel(pm1, 'pm1'),
       pm10: getAirQualityLevel(pm10, 'pm10'),
       roundedValues: {
-        pm1: Math.round(pm1),
-        pm25: Math.round(pm25),
-        pm10: Math.round(pm10),
+        pm1: pm1.toFixed(1),
+        pm25: pm25.toFixed(1),
+        pm10: pm10.toFixed(1),
       },
       timestamp: currentData.timestamp instanceof Date 
         ? formatTime(currentData.timestamp)

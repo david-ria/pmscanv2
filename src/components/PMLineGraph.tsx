@@ -260,13 +260,16 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
 
   const formatTooltip = (value: number | string, name: string) => {
     if (name === 'PM1' || name === 'PM25' || name === 'PM10') {
-      return [`${value} µg/m³`, name];
+      const numValue = typeof value === 'number' ? value : parseFloat(value as string);
+      return [`${numValue.toFixed(1)} µg/m³`, name];
     }
     if (name === 'temp') {
-      return [`${value}°C`, 'Température'];
+      const numValue = typeof value === 'number' ? value : parseFloat(value as string);
+      return [`${numValue.toFixed(1)}°C`, 'Température'];
     }
     if (name === 'humidity') {
-      return [`${value}%`, 'Humidité'];
+      const numValue = typeof value === 'number' ? value : parseFloat(value as string);
+      return [`${numValue.toFixed(1)}%`, 'Humidité'];
     }
     return [value, name];
   };
