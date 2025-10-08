@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingService } from '@/hooks/useRecordingService';
 import { useMissionSaver } from '@/hooks/useMissionSaver';
+import { useCrashRecovery } from '@/hooks/useCrashRecovery';
 import { PMScanData, PMScanDevice } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
@@ -68,6 +69,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   const recording = useRecordingService(); // Single source of truth
   const { latestLocation, locationEnabled, requestLocationPermission, speedKmh, gpsQuality } = useGPS(true, true, recording.recordingFrequency);
   const { saveMission: missionSaverFunction } = useMissionSaver();
+  const { saveRecordingProgress, clearRecoveryData } = useCrashRecovery();
 
   // Enhanced state change tracking
   useEffect(() => {
@@ -146,7 +148,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     clearRecordingData: recording.clearRecordingData,
     saveMission: async (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: RecordingEntry[]) => {
       const dataToSave = explicitRecordingData || recording.recordingData;
-      return missionSaverFunction(
+      const mission = await missionSaverFunction(
         dataToSave,
         recording.recordingStartTime,
         missionName,
@@ -157,8 +159,58 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
         undefined, // missionId
         bluetooth.device?.name // deviceName
       );
+      
+      // Clear recovery data after successful save
+      clearRecoveryData();
+      logger.debug('🧹 Cleared crash recovery data after successful mission save');
+      
+      return mission;
     },
   };
+
+  // Persist recording progress for crash recovery
+  useEffect(() => {
+    if (recording.isRecording && recording.recordingData.length > 0) {
+      saveRecordingProgress(
+        recording.recordingData,
+        recording.recordingStartTime,
+        recording.recordingFrequency,
+        recording.missionContext || { location: '', activity: '' }
+      );
+    }
+  }, [
+    recording.isRecording,
+    recording.recordingData.length,
+    recording.recordingStartTime,
+    recording.recordingFrequency,
+    recording.missionContext,
+    saveRecordingProgress,
+  ]);
+
+  // Save on page unload/refresh
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (recording.isRecording && recording.recordingData.length > 0) {
+        saveRecordingProgress(
+          recording.recordingData,
+          recording.recordingStartTime,
+          recording.recordingFrequency,
+          recording.missionContext || { location: '', activity: '' }
+        );
+        logger.debug('💾 Saved recording progress on page unload');
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [
+    recording.isRecording,
+    recording.recordingData,
+    recording.recordingStartTime,
+    recording.recordingFrequency,
+    recording.missionContext,
+    saveRecordingProgress,
+  ]);
 
   return (
     <UnifiedDataContext.Provider value={unifiedState}>

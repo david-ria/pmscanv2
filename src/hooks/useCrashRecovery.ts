@@ -94,7 +94,11 @@ export function useCrashRecovery() {
                 false // Don't share auto-recovered missions
               );
 
-              // Export to CSV only, don't try to sync to avoid duplicates
+              // Save locally first so it appears in History
+              await dataStorage.saveMissionLocally(mission);
+              logger.debug(`✅ Crash recovery mission saved to History (${restoredRecordingData.length} points)`);
+              
+              // Export to CSV (auto-sync disabled to avoid duplicates)
               await dataStorage.exportMissionToCSV(mission);
               logger.debug('✅ Crash recovery mission exported as CSV');
             } catch (error) {
@@ -162,6 +166,7 @@ export function useCrashRecovery() {
 
       try {
         localStorage.setItem(CRASH_RECOVERY_KEY, JSON.stringify(recoveryData));
+        logger.debug(`💾 Saved recording progress snapshot (${recordingData.length} points)`);
       } catch (error) {
         console.warn(
           'Failed to save recording progress for crash recovery:',
