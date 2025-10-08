@@ -11,8 +11,10 @@ import {
   Bell,
   BatteryLow,
   Shield,
+  PlayCircle,
 } from 'lucide-react';
 import { useBackgroundRecording } from '@/hooks/useBackgroundRecording';
+import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import {
   setBackgroundRecording,
@@ -35,6 +37,8 @@ export function BackgroundRecordingControl() {
     disableBackgroundRecording,
     requestNotificationPermission,
   } = useBackgroundRecording();
+
+  const { isNative, platform, nativeStatus } = useBackgroundRecordingIntegration();
 
   const { isRecording } = useUnifiedData();
 
@@ -125,15 +129,41 @@ export function BackgroundRecordingControl() {
           />
         </div>
 
+        {/* Native Mode Indicator */}
+        {isNative && (
+          <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Smartphone className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                Native Mode ({platform})
+              </span>
+              <Badge variant={nativeStatus.isNativeSupported ? 'default' : 'secondary'}>
+                {nativeStatus.isNativeSupported ? 'Available' : 'Unavailable'}
+              </Badge>
+            </div>
+          </div>
+        )}
+
         {/* Status Indicators */}
         {isBackgroundMode && (
           <div className="grid grid-cols-2 gap-3 text-sm">
+            {isNative && nativeStatus.isNativeSupported && (
+              <div className="flex items-center gap-2 p-2 border rounded">
+                <PlayCircle
+                  className={`h-4 w-4 ${nativeStatus.isNativeActive ? 'text-green-500' : 'text-gray-500'}`}
+                />
+                <span className={getStatusColor(nativeStatus.isNativeActive)}>
+                  Native {getStatusIcon(nativeStatus.isNativeActive)}
+                </span>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 p-2 border rounded">
               <Wifi
                 className={`h-4 w-4 ${backgroundSyncSupported ? 'text-green-500' : 'text-red-500'}`}
               />
               <span className={getStatusColor(backgroundSyncSupported)}>
-                Background Sync {getStatusIcon(backgroundSyncSupported)}
+                PWA Sync {getStatusIcon(backgroundSyncSupported)}
               </span>
             </div>
 

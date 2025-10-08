@@ -8,6 +8,15 @@ const config: CapacitorConfig = {
     url: 'https://d8e7ca00-b377-4793-af43-f6fcf3d043bd.lovableproject.com?forceHideBadge=true',
     cleartext: true
   },
+  ios: {
+    // Enable background modes for Bluetooth and Location
+    // This allows the app to continue running in background during recording
+    backgroundModes: ['bluetooth-central', 'location'],
+  },
+  android: {
+    // Allow background location for continuous recording
+    allowMixedContent: true,
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 3000,
@@ -23,6 +32,15 @@ const config: CapacitorConfig = {
       splashImmersive: true,
       layoutName: "launch_screen",
       useDialog: true,
+    },
+    BackgroundTask: {
+      // Android foreground service notification
+      android: {
+        notificationTitle: 'PMScan Recording',
+        notificationText: 'Recording air quality data in background',
+        notificationIcon: 'ic_notification',
+        notificationColor: '#4F46E5',
+      },
     },
   },
 };
