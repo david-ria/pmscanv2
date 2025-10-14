@@ -165,6 +165,35 @@ export function saveMissionLocally(mission: MissionData): void {
   }
 }
 
+/**
+ * Strips detailed measurements from a mission in localStorage to save space
+ * Keeps aggregated data and mission metadata intact
+ */
+export function stripMeasurementsFromStorage(missionId: string): void {
+  try {
+    const missions = getLocalMissions();
+    const missionIndex = missions.findIndex(m => m.id === missionId);
+    
+    if (missionIndex >= 0) {
+      const mission = missions[missionIndex];
+      const originalSize = mission.measurements.length;
+      
+      // Keep only first and last measurement for timeline display
+      mission.measurements = [
+        mission.measurements[0],
+        mission.measurements[mission.measurements.length - 1]
+      ];
+      
+      logger.debug(`💾 Stripped measurements from mission ${mission.name}: ${originalSize} → ${mission.measurements.length}`);
+      
+      saveLocalMissions(missions);
+    }
+  } catch (error) {
+    logger.error('Failed to strip measurements:', error);
+    // Non-critical error, don't throw
+  }
+}
+
 function savePendingEventsForMission(missionId: string, startTime: Date, endTime: Date): void {
   try {
     const pendingEvents = JSON.parse(localStorage.getItem('pending_events') || '[]');

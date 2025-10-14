@@ -133,6 +133,11 @@ export function useMissionSaver() {
     try {
       await dataStorage.exportMissionToCSV(mission);
       console.log('🚨💾 === CSV EXPORT SUCCESS ===');
+      
+      // Strip measurements from localStorage to save space - full data is in CSV
+      logger.debug('💾 Stripping measurements from localStorage to free up space...');
+      dataStorage.stripMeasurementsFromStorage(mission.id);
+      
     } catch (csvError) {
       console.error('🚨💾 === CSV EXPORT FAILED ===', csvError);
       throw csvError;

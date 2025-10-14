@@ -152,16 +152,25 @@ export function clearLocalStorage(): void {
 }
 
 export function cleanupOldMissions(missions: MissionData[]): void {
-  // Keep only the most recent 10 missions to free up space
+  // Keep only the most recent 5 missions to free up space
   const sortedMissions = missions.sort(
     (a, b) => b.endTime.getTime() - a.endTime.getTime()
   );
-  const recentMissions = sortedMissions.slice(0, 10);
+  const recentMissions = sortedMissions.slice(0, 5);
 
   logger.debug(
     `Cleaning up old missions, keeping ${recentMissions.length} most recent ones`
   );
-  localStorage.setItem(MISSIONS_KEY, JSON.stringify(recentMissions));
+  
+  // Strip measurements from missions being kept to save even more space
+  const strippedMissions = recentMissions.map(mission => ({
+    ...mission,
+    measurements: mission.measurements.length > 2 
+      ? [mission.measurements[0], mission.measurements[mission.measurements.length - 1]]
+      : mission.measurements
+  }));
+  
+  localStorage.setItem(MISSIONS_KEY, JSON.stringify(strippedMissions));
 
   // Update pending sync list to only include kept missions
   const keptMissionIds = recentMissions.map((m) => m.id);

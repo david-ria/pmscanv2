@@ -127,6 +127,12 @@ class DataStorageService {
   createMissionFromRecording = createMissionFromRecording;
   saveMissionLocally = saveMissionLocally;
   deleteMission = deleteMission;
+  
+  // Storage optimization
+  stripMeasurementsFromStorage(missionId: string): void {
+    const { stripMeasurementsFromStorage } = require('./missionManager');
+    stripMeasurementsFromStorage(missionId);
+  }
 
   // Sync methods with proper debouncing
   async syncPendingMissions(): Promise<void> {
