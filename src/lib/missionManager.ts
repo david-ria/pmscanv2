@@ -178,13 +178,31 @@ export function stripMeasurementsFromStorage(missionId: string): void {
       const mission = missions[missionIndex];
       const originalSize = mission.measurements.length;
       
-      // Keep only first and last measurement for timeline display
-      mission.measurements = [
-        mission.measurements[0],
-        mission.measurements[mission.measurements.length - 1]
+      // If 10 or fewer measurements, keep all for accurate offline display
+      if (originalSize <= 10) {
+        logger.debug(`💾 Mission ${mission.name} has ${originalSize} measurements - keeping all`);
+        return;
+      }
+      
+      // Intelligent compression: keep ~10% of measurements
+      const compressed = [
+        mission.measurements[0],     // First
+        mission.measurements[1],     // Second
       ];
       
-      logger.debug(`💾 Stripped measurements from mission ${mission.name}: ${originalSize} → ${mission.measurements.length}`);
+      // Keep 1 point every 10 between extremes
+      for (let i = 2; i < originalSize - 2; i += 10) {
+        compressed.push(mission.measurements[i]);
+      }
+      
+      compressed.push(
+        mission.measurements[originalSize - 2], // Second to last
+        mission.measurements[originalSize - 1]  // Last
+      );
+      
+      mission.measurements = compressed;
+      
+      logger.debug(`💾 Compressed measurements for ${mission.name}: ${originalSize} → ${compressed.length} (${Math.round(compressed.length/originalSize*100)}%)`);
       
       saveLocalMissions(missions);
     }

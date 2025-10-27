@@ -111,7 +111,56 @@ class DataStorageService {
 
         // Merge with local unsynced missions
         const unsyncedLocal = localMissions.filter((m) => !m.synced);
-        return [...unsyncedLocal, ...validDbMissions];
+        const allMissions = [...unsyncedLocal, ...validDbMissions];
+        
+        // Silently reload full measurements for missions with incomplete data
+        const enrichedMissions = await Promise.all(
+          allMissions.map(async (mission) => {
+            // Check if measurements are incomplete (stripped for storage optimization)
+            const isIncomplete = mission.measurements.length < mission.measurementsCount;
+            
+            if (isIncomplete && navigator.onLine && mission.synced) {
+              logger.debug(`🔄 Reloading full measurements for mission ${mission.name} (${mission.measurements.length}/${mission.measurementsCount})`);
+              
+              try {
+                // Reload only measurements from database
+                const { data: fullMeasurements, error } = await supabase
+                  .from('measurements')
+                  .select('*')
+                  .eq('mission_id', mission.id)
+                  .order('timestamp', { ascending: true });
+                
+                if (!error && fullMeasurements && fullMeasurements.length > 0) {
+                  mission.measurements = fullMeasurements.map(m => ({
+                    id: m.id,
+                    timestamp: new Date(m.timestamp),
+                    pm1: m.pm1,
+                    pm25: m.pm25,
+                    pm10: m.pm10,
+                    temperature: m.temperature ?? undefined,
+                    humidity: m.humidity ?? undefined,
+                    latitude: m.latitude ?? undefined,
+                    longitude: m.longitude ?? undefined,
+                    accuracy: m.accuracy ?? undefined,
+                    locationContext: m.location_context ?? undefined,
+                    activityContext: m.activity_context ?? undefined,
+                    automaticContext: m.automatic_context ?? undefined,
+                    enrichedLocation: m.enriched_location ?? undefined,
+                    geohash: m.geohash ?? undefined,
+                  }));
+                  
+                  logger.debug(`✅ Reloaded ${fullMeasurements.length} measurements for ${mission.name}`);
+                }
+              } catch (error) {
+                logger.debug('Failed to reload measurements, using compressed data:', error);
+              }
+            }
+            
+            return mission;
+          })
+        );
+        
+        return enrichedMissions;
       }
     } catch (error) {
       logger.debug('Database not available, using local data only:', error);
