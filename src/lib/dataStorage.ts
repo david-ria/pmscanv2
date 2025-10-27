@@ -6,6 +6,7 @@ import {
   createMissionFromRecording,
   saveMissionLocally,
   deleteMission,
+  stripMeasurementsFromStorage,
 } from './missionManager';
 import {
   getLocalMissions,
@@ -128,11 +129,8 @@ class DataStorageService {
   saveMissionLocally = saveMissionLocally;
   deleteMission = deleteMission;
   
-  // Storage optimization
-  stripMeasurementsFromStorage(missionId: string): void {
-    const { stripMeasurementsFromStorage } = require('./missionManager');
-    stripMeasurementsFromStorage(missionId);
-  }
+  // Storage optimization - delegate to missionManager
+  stripMeasurementsFromStorage = stripMeasurementsFromStorage;
 
   // Sync methods with proper debouncing
   async syncPendingMissions(): Promise<void> {
