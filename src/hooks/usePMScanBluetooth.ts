@@ -102,6 +102,12 @@ export function usePMScanBluetooth() {
   const onDeviceConnected = useCallback(
     async (server: BluetoothRemoteGATTServer) => {
       try {
+        // Check if server is still connected before initializing
+        if (!server.connected) {
+          logger.debug('⚠️ GATT server disconnected before initialization, will retry...');
+          throw new Error('GATT server disconnected before initialization');
+        }
+
         const manager = connectionManager;
         const deviceInfo = await manager.initializeDevice(
           handleRTData,
@@ -115,9 +121,11 @@ export function usePMScanBluetooth() {
         setIsConnecting(false);
         setError(null);
       } catch (error) {
-        console.error('❌ Error initializing device:', error);
-        setError('Failed to initialize device');
+        logger.debug('❌ Error initializing device:', error);
+        setError('Device initialization failed, retrying...');
         setIsConnecting(false);
+        // Error will trigger exponentialBackoff retry mechanism
+        throw error;
       }
     },
     [handleRTData, handleIMData, handleBatteryData, handleChargingData]

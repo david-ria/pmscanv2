@@ -70,18 +70,23 @@ export class MotionWalkingSignature {
 
   private startTimeoutMonitoring(): void {
     this.stopTimeoutMonitoring();
+    let hasWarned = false; // Track if we've already warned
     this.timeoutId = window.setInterval(() => {
       const now = performance.now();
       if (now - this.lastMotionEvent > AUTO_CTX_CFG.ACC_TIMEOUT_MS) {
         // Only warn once when timeout first occurs
-        if (this.snapshot.isActive) {
+        if (this.snapshot.isActive && !hasWarned) {
           console.warn('Accelerometer timeout - forcing walkingSignature to false');
-          this.snapshot.walkingSignature = false;
-          this.snapshot.isActive = false;
-          this.snapshot.lastUpdated = Date.now();
+          hasWarned = true;
         }
+        this.snapshot.walkingSignature = false;
+        this.snapshot.isActive = false;
+        this.snapshot.lastUpdated = Date.now();
+      } else {
+        // Reset warning flag if we start receiving events again
+        hasWarned = false;
       }
-    }, 5000); // Check every 5 seconds instead of every second
+    }, 5000); // Check every 5 seconds
   }
 
   private stopTimeoutMonitoring(): void {
