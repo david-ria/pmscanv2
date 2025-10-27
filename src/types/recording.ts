@@ -4,7 +4,7 @@ import { LocationData } from '@/types/PMScan';
 export interface RecordingEntry {
   pmData: PMScanData;
   location?: LocationData;
-  context?: {
+  manualContext?: {
     location: string;
     activity: string;
   };

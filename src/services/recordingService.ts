@@ -19,7 +19,7 @@ export interface RecordingActions {
   addDataPoint: (
     pmData: PMScanData,
     location?: LocationData,
-    context?: MissionContext,
+    manualContext?: MissionContext,
     automaticContext?: string,
     enrichedLocation?: string, // NEW parameter
     geohash?: string // NEW: Geohash parameter
@@ -131,7 +131,7 @@ class RecordingService {
   addDataPoint(
     pmData: PMScanData,
     location?: LocationData,
-    context?: MissionContext,
+    manualContext?: MissionContext,
     automaticContext?: string,
     enrichedLocation?: string, // NEW parameter
     geohash?: string // NEW: Geohash parameter
@@ -144,7 +144,7 @@ class RecordingService {
     const entry: RecordingEntry = {
       pmData,
       location,
-      context: context || this.state.missionContext,
+      manualContext: manualContext || this.state.missionContext,
       automaticContext,
       enrichedLocation, // NEW: Store location enrichment separately
       geohash, // NEW: Store geohash when provided

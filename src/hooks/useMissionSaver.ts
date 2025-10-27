@@ -31,7 +31,7 @@ export function useMissionSaver() {
       sampleDataPoints: recordingData?.slice(0, 2).map(entry => ({
         pm25: entry.pmData.pm25,
         timestamp: entry.timestamp,
-        context: entry.context
+        manualContext: entry.manualContext
       }))
     });
     logger.debug('💾 useMissionSaver.saveMission called with:', {
@@ -87,12 +87,12 @@ export function useMissionSaver() {
       totalEntries: recordingData.length,
       missionContext: { locationContext, activityContext },
       contextDistribution: recordingData.reduce((acc, entry) => {
-        const key = `${entry.context?.location || 'unknown'}-${entry.context?.activity || 'unknown'}`;
+        const key = `${entry.manualContext?.location || 'unknown'}-${entry.manualContext?.activity || 'unknown'}`;
         acc[key] = (acc[key] || 0) + 1;
         return acc;
       }, {} as Record<string, number>),
       sampleEntries: recordingData.slice(0, 3).map(entry => ({
-        context: entry.context,
+        manualContext: entry.manualContext,
         automaticContext: entry.automaticContext
       }))
     });

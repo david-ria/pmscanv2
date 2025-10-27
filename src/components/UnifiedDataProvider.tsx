@@ -42,7 +42,7 @@ interface UnifiedDataState {
   startRecording: (frequency?: string) => void;
   stopRecording: () => void;
   updateMissionContext: (location: string, activity: string) => void;
-  addDataPoint: (pmData: PMScanData, location?: LocationData, context?: MissionContext, automaticContext?: string, enrichedLocation?: string, geohash?: string) => void;
+  addDataPoint: (pmData: PMScanData, location?: LocationData, manualContext?: MissionContext, automaticContext?: string, enrichedLocation?: string, geohash?: string) => void;
   clearRecordingData: () => void;
   saveMission: (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: RecordingEntry[]) => Promise<unknown>;
 }

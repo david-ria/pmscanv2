@@ -66,11 +66,11 @@ export function useBackgroundRecordingIntegration() {
   const storeBackgroundData = useCallback((
     pmData: PMScanData,
     location?: LocationData,
-    context?: { location: string; activity: string },
+    manualContext?: { location: string; activity: string },
     weatherDataId?: string
   ) => {
     if (isBackgroundEnabled) {
-      storeDataForBackground(pmData, location, { ...context, weatherDataId });
+      storeDataForBackground(pmData, location, { ...manualContext, weatherDataId });
     }
   }, [isBackgroundEnabled, storeDataForBackground]);
 

@@ -72,7 +72,7 @@ export function DataLogger({
           timestamp: entry.pmData.timestamp instanceof Date ? entry.pmData.timestamp : new Date(),
           pmData: entry.pmData,
           location: entry.location,
-          missionContext: entry.context,
+          missionContext: entry.manualContext,
           automaticContext: entry.automaticContext, // Autocontext (sensors + heuristics)
           enrichedLocation: entry.enrichedLocation, // NEW: Location enrichment from GPS
           geohash: entry.geohash, // NEW: Geohash for spatial indexing

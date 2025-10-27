@@ -15,7 +15,7 @@ export function createMissionFromRecording(
   measurements: Array<{
     pmData: PMScanData;
     location?: LocationData;
-    context?: {
+    manualContext?: {
       location: string;
       activity: string;
     };
@@ -50,8 +50,8 @@ export function createMissionFromRecording(
       longitude: m.location?.longitude,
       accuracy: m.location?.accuracy,
       // Individual measurement context takes precedence
-      locationContext: m.context?.location,
-      activityContext: m.context?.activity,
+      locationContext: m.manualContext?.location,
+      activityContext: m.manualContext?.activity,
       automaticContext: m.automaticContext,
       enrichedLocation: m.enrichedLocation,
       geohash: m.geohash, // NEW: Include geohash in measurement conversion

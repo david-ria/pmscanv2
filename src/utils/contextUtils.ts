@@ -23,17 +23,17 @@ export function normalizeContext(
     activityContext?: string; 
     automaticContext?: string; 
   },
-  recordingContext?: { location?: string; activity?: string },
+  recordingManualContext?: { location?: string; activity?: string },
   missionContext?: { location?: string; activity?: string; locationContext?: string; activityContext?: string },
   automaticContext?: string
 ): StandardContext {
   return {
     location: measurementContext?.locationContext || 
-             recordingContext?.location || 
+             recordingManualContext?.location || 
              missionContext?.locationContext || 
              missionContext?.location,
     activity: measurementContext?.activityContext || 
-             recordingContext?.activity || 
+             recordingManualContext?.activity || 
              missionContext?.activityContext || 
              missionContext?.activity,
     automatic: measurementContext?.automaticContext || automaticContext
