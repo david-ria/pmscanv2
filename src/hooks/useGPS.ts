@@ -95,35 +95,39 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
 
     const handleError = (error: GeolocationPositionError) => {
       const now = Date.now();
-      if (now - lastErrorTimeRef.current < 10000) {
+      
+      // For timeout errors, only log once every 60 seconds (they're expected)
+      const minInterval = error.code === error.TIMEOUT ? 60000 : 10000;
+      
+      if (now - lastErrorTimeRef.current < minInterval) {
         return;
       }
       lastErrorTimeRef.current = now;
 
-      logger.error('🧭 GPS: Error occurred:', new Error(error.message), {
-        code: (error as any).code,
-        message: error.message,
-        PERMISSION_DENIED: (error as any).PERMISSION_DENIED,
-        POSITION_UNAVAILABLE: (error as any).POSITION_UNAVAILABLE,
-        TIMEOUT: (error as any).TIMEOUT,
-      });
+      // Only log non-timeout errors to console
+      if (error.code !== error.TIMEOUT) {
+        logger.error('🧭 GPS: Error occurred:', new Error(error.message), {
+          code: (error as any).code,
+          message: error.message,
+        });
+      }
 
       switch (error.code) {
         case error.PERMISSION_DENIED:
-          console.error('🧭 GPS: Permission denied');
+          logger.debug('🧭 GPS: Permission denied');
           setError('Location access denied');
           setLocationEnabled(false);
           break;
         case error.POSITION_UNAVAILABLE:
-          console.error('🧭 GPS: Position unavailable');
+          logger.debug('🧭 GPS: Position unavailable');
           setError('Location information unavailable');
           break;
         case error.TIMEOUT:
-          console.warn('🧭 GPS: Timeout occurred');
-          // Don't set error for timeout - GPS might work later
+          // Timeout is normal - GPS might work later, don't log as error
+          logger.debug('🧭 GPS: Timeout occurred (normal, will retry)');
           break;
         default:
-          console.error('🧭 GPS: Unknown error');
+          logger.debug('🧭 GPS: Unknown error');
           setError('Unknown GPS error');
           break;
       }
