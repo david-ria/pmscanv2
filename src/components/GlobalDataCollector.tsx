@@ -70,6 +70,24 @@ export function GlobalDataCollector() {
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
   const lastRecordedTimeRef = useRef<Date | null>(null);
 
+  // Refs pour stabiliser les fonctions dans le useEffect
+  const enrichLocationRef = useRef(enrichLocation);
+  const updateContextRef = useRef(updateContextIfNeeded);
+  const getWeatherRef = useRef(getWeatherForMeasurement);
+
+  // Mettre à jour les refs quand les fonctions changent
+  useEffect(() => {
+    enrichLocationRef.current = enrichLocation;
+  }, [enrichLocation]);
+
+  useEffect(() => {
+    updateContextRef.current = updateContextIfNeeded;
+  }, [updateContextIfNeeded]);
+
+  useEffect(() => {
+    getWeatherRef.current = getWeatherForMeasurement;
+  }, [getWeatherForMeasurement]);
+
   // Get user's manual context selections with sync to recording context
   const selectedLocation = localStorage.getItem('recording-location') || missionContext.location || '';
   const selectedActivity = localStorage.getItem('recording-activity') || missionContext.activity || '';
@@ -176,11 +194,11 @@ export function GlobalDataCollector() {
         hasLocation: !!(location?.latitude && location?.longitude)
       });
       
-      if (enrichLocation && location?.latitude && location?.longitude) {
+      if (enrichLocationRef.current && location?.latitude && location?.longitude) {
         try {
           devLogger.debug('🌍 Enriching location during recording');
           
-          const enrichmentResult = await enrichLocation(
+          const enrichmentResult = await enrichLocationRef.current(
             location.latitude,
             location.longitude,
             averagedData.timestamp.toISOString()
@@ -195,7 +213,7 @@ export function GlobalDataCollector() {
         }
       }
 
-      const automaticContext = autoContextSettings.enabled ? await updateContextIfNeeded(
+      const automaticContext = autoContextSettings.enabled ? await updateContextRef.current(
         averagedData,
         location || undefined,
         speed,
@@ -209,7 +227,7 @@ export function GlobalDataCollector() {
       let weatherDataId: string | null = null;
       if (weatherLoggingEnabled && location?.latitude && location?.longitude) {
         try {
-          weatherDataId = await getWeatherForMeasurement(
+          weatherDataId = await getWeatherRef.current(
             location.latitude,
             location.longitude,
             averagedData.timestamp
@@ -254,10 +272,7 @@ export function GlobalDataCollector() {
     addDataPoint,
     selectedLocation,
     selectedActivity,
-    updateContextIfNeeded,
-    getWeatherForMeasurement,
     weatherLoggingEnabled,
-    enrichLocation,
     geohashSettings.enabled,
     geohashSettings.precision,
     autoContextSettings.enabled,
