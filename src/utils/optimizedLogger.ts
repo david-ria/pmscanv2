@@ -36,7 +36,7 @@ class OptimizedLogger {
     const isDevelopment = process.env.NODE_ENV === 'development';
     
     if (!isDevelopment && !this.config.enableInProduction) {
-      return level === 'error'; // Only errors in production
+      return level === 'error' || level === 'warn'; // Only errors and warnings in production
     }
 
     return levels[level] >= levels[this.config.level];

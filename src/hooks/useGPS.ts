@@ -79,14 +79,16 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
       setSpeedKmh(newSpeed);
       setGpsQuality(newQuality);
 
-      console.log('🧭 === GPS LOCATION UPDATED ===', {
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        accuracy: locationData.accuracy,
-        speedKmh: newSpeed,
-        gpsQuality: newQuality,
-        timestamp: locationData.timestamp.toISOString()
-      });
+      logger.rateLimitedDebug('gps-update', 10000,
+        '🧭 GPS location updated', {
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+          accuracy: locationData.accuracy,
+          speedKmh: newSpeed,
+          gpsQuality: newQuality,
+          timestamp: locationData.timestamp.toISOString()
+        }
+      );
 
       setLatestLocation(locationData);
       setError(null);

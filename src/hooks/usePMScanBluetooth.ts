@@ -36,16 +36,14 @@ export function usePMScanBluetooth() {
           data.timestamp.getTime() - prevData.timestamp.getTime() >= 1000; // 1 second minimum
 
         if (isDifferent) {
-          console.log('📡 NEW PMScan data received and set as currentData:', {
-            pm1: data.pm1,
-            pm25: data.pm25, 
-            pm10: data.pm10,
-            timestamp: data.timestamp.toISOString(),
-            previousData: prevData ? {
-              pm25: prevData.pm25,
-              timestamp: prevData.timestamp.toISOString()
-            } : null
-          });
+          logger.rateLimitedDebug('pmscan-data', 10000,
+            '📡 PMScan data received', {
+              pm1: data.pm1,
+              pm25: data.pm25, 
+              pm10: data.pm10,
+              timestamp: data.timestamp.toISOString()
+            }
+          );
           
           // Feed data to rolling buffer for averaging ONLY when recording
           if (recordingService.getState().isRecording) {

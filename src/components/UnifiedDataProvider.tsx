@@ -71,40 +71,6 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   const { saveMission: missionSaverFunction } = useMissionSaver();
   const { saveRecordingProgress, clearRecoveryData } = useCrashRecovery();
 
-  // Enhanced state change tracking
-  useEffect(() => {
-    console.log('🔄 UNIFIED DATA - RECORDING STATE CHANGED:', {
-      isRecording: recording.isRecording,
-      hasAddDataPoint: !!recording.addDataPoint,
-      timestamp: new Date().toISOString()
-    });
-  }, [recording.isRecording, recording.addDataPoint]);
-
-  useEffect(() => {
-    console.log('🔄 UNIFIED DATA - BLUETOOTH STATE CHANGED:', {
-      hasCurrentData: !!bluetooth.currentData,
-      isConnected: bluetooth.isConnected,
-      pm25: bluetooth.currentData?.pm25,
-      timestamp: new Date().toISOString()
-    });
-  }, [bluetooth.currentData, bluetooth.isConnected]);
-
-  // Enhanced unified state logging
-  useEffect(() => {
-    console.log('🔄 UNIFIED DATA COMPLETE STATE:', {
-      hasCurrentData: !!bluetooth.currentData,
-      currentDataPM25: bluetooth.currentData?.pm25,
-      isConnected: bluetooth.isConnected,
-      isRecording: recording.isRecording,
-      recordingDataLength: recording.recordingData.length,
-      hasLocation: !!latestLocation,
-      hasAddDataPoint: !!recording.addDataPoint,
-      timestamp: new Date().toISOString(),
-      // Test the exact conditions GlobalDataCollector checks
-      willProceedCheck: recording.isRecording && !!bluetooth.currentData && !!recording.addDataPoint
-    });
-  }, [bluetooth.currentData, bluetooth.isConnected, recording.isRecording, recording.recordingData.length, latestLocation, recording.addDataPoint]);
-
   // Stabilized action functions with useCallback
   const stableStartRecording = useCallback((frequency?: string) => {
     recording.startRecording(frequency);
@@ -130,16 +96,6 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   }, [recording.updateMissionContext]);
 
   // Unified state object
-  console.log('🔄 UNIFIED DATA - GPS STATE:', {
-    hasLocation: !!latestLocation,
-    latitude: latestLocation?.latitude,
-    longitude: latestLocation?.longitude,
-    accuracy: latestLocation?.accuracy,
-    speedKmh,
-    gpsQuality,
-    locationEnabled
-  });
-
   const unifiedState: UnifiedDataState = {
     // PMScan data
     currentData: bluetooth.currentData,
