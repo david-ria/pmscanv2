@@ -165,32 +165,45 @@ export const initMap = () => {
 };
 
 /**
- * Defer service worker registration
+ * Defer service worker registration using vite-plugin-pwa
  */
 export const initServiceWorker = () => {
   deferredInit.addTask({
     name: 'service-worker',
-    priority: 'high', // Changed to high priority for PWA tests
+    priority: 'high',
     task: async () => {
       if (isTestMode()) {
         logTestModeDisabled('Service Worker registration (deferred)');
         return;
       }
       
-      if ('serviceWorker' in navigator) {
-        try {
-          const registration = await navigator.serviceWorker.register('/sw.js');
-          console.debug('[PERF] Service Worker registered', registration);
-          
-          // Wait for service worker to be ready and active
-          await navigator.serviceWorker.ready;
-          console.debug('[PERF] Service Worker ready and caching assets');
-        } catch (error) {
-          console.error('[PERF] Service Worker registration failed:', error);
-        }
+      try {
+        // Use vite-plugin-pwa's registerSW for unified registration
+        const { registerSW } = await import('virtual:pwa-register/react');
+        
+        const updateSW = registerSW({
+          immediate: true,
+          onNeedRefresh() {
+            console.debug('[PWA] New content available, please refresh');
+            // Future: Show update notification to user
+          },
+          onOfflineReady() {
+            console.debug('[PWA] App ready to work offline');
+          },
+          onRegistered(registration) {
+            console.debug('[PWA] Service Worker registered', registration);
+          },
+          onRegisterError(error) {
+            console.error('[PWA] Service Worker registration failed:', error);
+          }
+        });
+        
+        console.debug('[PWA] Service Worker initialization complete');
+      } catch (error) {
+        console.error('[PWA] Failed to initialize Service Worker:', error);
       }
     },
-    timeout: 2000 // Reduced timeout for faster registration
+    timeout: 2000
   });
 };
 
