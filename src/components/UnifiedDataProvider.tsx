@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingService } from '@/hooks/useRecordingService';
 import { useMissionSaver } from '@/hooks/useMissionSaver';
@@ -105,6 +105,30 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     });
   }, [bluetooth.currentData, bluetooth.isConnected, recording.isRecording, recording.recordingData.length, latestLocation, recording.addDataPoint]);
 
+  // Stabilized action functions with useCallback
+  const stableStartRecording = useCallback((frequency?: string) => {
+    recording.startRecording(frequency);
+  }, [recording.startRecording]);
+
+  const stableStopRecording = useCallback(() => {
+    recording.stopRecording();
+  }, [recording.stopRecording]);
+
+  const stableAddDataPoint = useCallback((
+    pmData: PMScanData,
+    location?: LocationData,
+    manualContext?: MissionContext,
+    automaticContext?: string,
+    enrichedLocation?: string,
+    geohash?: string
+  ) => {
+    recording.addDataPoint(pmData, location, manualContext, automaticContext, enrichedLocation, geohash);
+  }, [recording.addDataPoint]);
+
+  const stableUpdateMissionContext = useCallback((location: string, activity: string) => {
+    recording.updateMissionContext(location, activity);
+  }, [recording.updateMissionContext]);
+
   // Unified state object
   console.log('🔄 UNIFIED DATA - GPS STATE:', {
     hasLocation: !!latestLocation,
@@ -137,14 +161,14 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     gpsQuality,
     locationEnabled,
     
-    // Actions
+    // Actions - using stabilized versions
     requestDevice: bluetooth.requestDevice,
     disconnect: bluetooth.disconnect,
     requestLocationPermission,
-    startRecording: recording.startRecording,
-    stopRecording: recording.stopRecording,
-    updateMissionContext: recording.updateMissionContext,
-    addDataPoint: recording.addDataPoint,
+    startRecording: stableStartRecording,
+    stopRecording: stableStopRecording,
+    updateMissionContext: stableUpdateMissionContext,
+    addDataPoint: stableAddDataPoint,
     clearRecordingData: recording.clearRecordingData,
     saveMission: async (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: RecordingEntry[]) => {
       const dataToSave = explicitRecordingData || recording.recordingData;

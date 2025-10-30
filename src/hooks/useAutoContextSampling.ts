@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { useAutoContext } from './useAutoContext';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
@@ -14,8 +14,14 @@ export function useAutoContextSampling({
   isRecording 
 }: AutoContextSamplingProps) {
   const lastContextUpdateTime = useRef<Date | null>(null);
+  const recordingFrequencyRef = useRef(recordingFrequency);
   const [currentAutoContext, setCurrentAutoContext] = useState<string>('');
   const { determineContext, updateLatestContext, isEnabled: autoContextEnabled } = useAutoContext();
+
+  // Update ref when recordingFrequency changes
+  useEffect(() => {
+    recordingFrequencyRef.current = recordingFrequency;
+  }, [recordingFrequency]);
 
   const updateContextIfNeeded = useCallback(async (
     pmData?: PMScanData,
@@ -60,7 +66,8 @@ export function useAutoContextSampling({
       console.log('🔄 No autocontext determined');
       return currentAutoContext;
     }
-  }, [autoContextEnabled, recordingFrequency, determineContext, updateLatestContext, currentAutoContext]);
+  }, [autoContextEnabled, determineContext, updateLatestContext, currentAutoContext]);
+  // Removed recordingFrequency from dependencies - using ref instead
 
   const forceContextUpdate = useCallback(async (
     pmData?: PMScanData,

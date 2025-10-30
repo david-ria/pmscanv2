@@ -35,6 +35,19 @@ export function useSmartLocationEnrichment() {
   const [patterns, setPatterns] = useState<MovementPattern[]>([]);
   const enrichmentQueue = useRef<LocationPoint[]>([]);
   const isProcessingQueue = useRef(false);
+  
+  // Use refs for values used in enrichLocation callback to prevent recreation
+  const recentLocationsRef = useRef<LocationPoint[]>([]);
+  const cacheRef = useRef<EnrichmentCache[]>([]);
+
+  // Update refs when state changes
+  useEffect(() => {
+    recentLocationsRef.current = recentLocations;
+  }, [recentLocations]);
+
+  useEffect(() => {
+    cacheRef.current = cache;
+  }, [cache]);
 
   // Load cache and patterns from localStorage
   useEffect(() => {
@@ -229,7 +242,7 @@ export function useSmartLocationEnrichment() {
       }
 
       // Check if we should enrich now or queue for later
-      const shouldEnrichNow = shouldEnrichLocation(location, recentLocations, cache);
+      const shouldEnrichNow = shouldEnrichLocation(location, recentLocationsRef.current, cacheRef.current);
       
       if (!shouldEnrichNow) {
         // Add to queue for background processing
@@ -237,7 +250,7 @@ export function useSmartLocationEnrichment() {
         devLogger.debug('📋 Added location to enrichment queue');
         
         // Return best guess from nearby cache
-        const nearbyCache = cache
+        const nearbyCache = cacheRef.current
           .filter(entry => {
             const distance = calculateDistance(
               latitude, longitude,
@@ -267,7 +280,8 @@ export function useSmartLocationEnrichment() {
     } finally {
       setLoading(false);
     }
-  }, [findInCache, recentLocations, cache, enrichLocationFromAPI]);
+  }, [findInCache, enrichLocationFromAPI]);
+  // Removed recentLocations and cache from dependencies - using refs instead
 
   const preEnrichFrequentLocations = useCallback(async () => {
     devLogger.debug('🔮 Starting predictive enrichment for frequent locations');
