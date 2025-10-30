@@ -25,9 +25,9 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
     description: 'At home location',
     activities: [
       { id: 'rest', name: 'Rest', icon: '😴', description: 'Resting or sleeping' },
-      { id: 'work', name: 'Work', icon: '💼', description: 'Working activities' },
       { id: 'indoor', name: 'Indoor', icon: '🏠', description: 'General indoor activities' },
       { id: 'cooking', name: 'Cooking', icon: '👨‍🍳', description: 'Cooking or food preparation' },
+      { id: 'meal', name: 'meal', icon: '👨‍🍳', description: 'Time to eat' },      
       { id: 'cleaning', name: 'Cleaning', icon: '🧹', description: 'Household cleaning' },
       { id: 'DIY', name: 'DIY', icon: '🔨', description: 'DIY and home improvement activities' },
       { id: 'studying', name: 'Studying', icon: '📚', description: 'Reading or studying' },
@@ -40,9 +40,8 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
     icon: '🏢',
     description: 'At work/office',
     activities: [
-      { id: 'work', name: 'Work', icon: '💼', description: 'Working activities' },
-      { id: 'indoor', name: 'Indoor', icon: '🏠', description: 'General indoor activities' },
       { id: 'meeting', name: 'Meeting', icon: '👥', description: 'Business meetings' },
+      { id: 'meal', name: 'Meal', icon: '👨‍🍳', description: 'Time to eat' },           
       { id: 'computer_work', name: 'Computer work', icon: '💻', description: 'Working on computer' },
     ]
   },
@@ -53,7 +52,7 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
     description: 'At school/university',
     activities: [
       { id: 'indoor', name: 'Indoor', icon: '🏠', description: 'General indoor activities' },
-      { id: 'studying', name: 'Studying', icon: '📚', description: 'Reading or studying' },
+      { id: 'meal', name: 'Meal', icon: '👨‍🍳', description: 'Time to eat' },            
       { id: 'classroom', name: 'Classroom', icon: '🎓', description: 'Attending classes' },
       { id: 'sport', name: 'Sport', icon: '⚽', description: 'Physical exercise or sports' },
     ]
@@ -97,20 +96,6 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
       { id: 'waiting', name: 'Waiting', icon: '⏳', description: 'Waiting or standing' },
     ]
   },
-  {
-    id: 'underground',
-    name: 'Underground',
-    icon: '🚇',
-    description: 'Underground transport (metro, subway)',
-    activities: [
-      { id: 'undergroundTransport', name: 'Underground transport', icon: '🚇', description: 'Metro or subway' },
-      { id: 'escalator', name: 'Escalator', icon: '⬆️', description: 'Using escalator in underground transport' },
-      { id: 'stairs', name: 'Stairs', icon: '🪜', description: 'Using stairs in underground transport' },
-      { id: 'stairsToOutside', name: 'Stairs to outside', icon: '🚪', description: 'Using stairs from underground to surface' },
-      { id: 'standPlatform', name: 'Stand platform', icon: '🚉', description: 'Standing on underground platform' },
-      { id: 'stand', name: 'Stand', icon: '🧍', description: 'Standing in underground transport' },
-    ]
-  }
 ];
 
 // Flattened list of all activities (for backward compatibility and lookups)
