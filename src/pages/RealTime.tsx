@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Suspense, lazy, startTransition } from 'react';
+import { useState, useEffect, useRef, Suspense, lazy, startTransition, useMemo } from 'react';
 import * as logger from '@/utils/logger';
 import { AirQualityCards } from '@/components/RealTime/AirQualityCards';
 // RecordingDebugger now loaded in App.tsx to avoid duplication
@@ -93,6 +93,10 @@ export default function RealTime() {
   });
   
   const { checkAlerts } = useAlerts();
+
+  // Stabilize recordingData to prevent unnecessary re-renders of graph/map
+  // Only update when new data points are added (at user's chosen frequency)
+  const stabilizedRecordingData = useMemo(() => recordingData, [recordingData.length]);
 
   // Restore last selected location/activity from localStorage for recording persistence
   const [selectedLocation, setSelectedLocation] = useState(() => {
@@ -219,7 +223,7 @@ export default function RealTime() {
               isOnline={isOnline}
               latestLocation={latestLocation}
               currentData={currentData}
-              recordingData={recordingData}
+              recordingData={stabilizedRecordingData}
               events={currentEvents}
               isRecording={isRecording}
               device={device}
