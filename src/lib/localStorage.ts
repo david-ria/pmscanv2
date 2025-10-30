@@ -58,8 +58,6 @@ export function formatDatabaseMission(dbMission: {
   avg_pm10: number;
   max_pm25: number;
   measurements_count: number;
-  location_context?: string;
-  activity_context?: string;
   recording_frequency?: string;
   shared?: boolean;
   device_name?: string;
@@ -94,8 +92,6 @@ export function formatDatabaseMission(dbMission: {
     avgPm10: dbMission.avg_pm10,
     maxPm25: dbMission.max_pm25,
     measurementsCount: dbMission.measurements_count,
-    locationContext: dbMission.location_context,
-    activityContext: dbMission.activity_context,
     recordingFrequency: dbMission.recording_frequency,
     shared: dbMission.shared,
     deviceName: dbMission.device_name,

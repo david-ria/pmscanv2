@@ -198,8 +198,6 @@ export async function syncPendingMissions(): Promise<void> {
             avg_pm10: mission.avgPm10,
             max_pm25: mission.maxPm25,
             measurements_count: mission.measurementsCount,
-            location_context: mission.locationContext,
-            activity_context: mission.activityContext,
             recording_frequency: mission.recordingFrequency,
             shared: mission.shared,
             device_name: mission.deviceName,

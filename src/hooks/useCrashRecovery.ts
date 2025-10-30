@@ -88,8 +88,6 @@ export function useCrashRecovery() {
                 crashMissionName,
                 new Date(recoveryData.startTime),
                 new Date(recoveryData.timestamp),
-                recoveryData.missionContext.location || 'Unknown Location',
-                recoveryData.missionContext.activity || 'Unknown Activity',
                 recoveryData.frequency,
                 false // Don't share auto-recovered missions
               );

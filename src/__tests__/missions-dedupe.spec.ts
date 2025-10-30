@@ -46,8 +46,6 @@ describe('Mission Deduplication', () => {
         avgPm10: 20,
         maxPm25: 25,
         measurementsCount: 3,
-        locationContext: 'Office',
-        activityContext: 'Working',
         recordingFrequency: '30s',
         shared: false,
         deviceName: 'PMScan-001',
@@ -138,8 +136,6 @@ describe('Mission Deduplication', () => {
         avgPm10: 19,
         maxPm25: 16,
         measurementsCount: 2,
-        locationContext: '',
-        activityContext: '',
         recordingFrequency: '30s',
         shared: false,
         deviceName: 'PMScan-001',
@@ -180,8 +176,6 @@ describe('Mission Deduplication', () => {
         avgPm10: 21,
         maxPm25: 24,
         measurementsCount: 4,
-        locationContext: 'Office Building',
-        activityContext: 'Air Quality Assessment',
         recordingFrequency: '30s',
         shared: true,
         deviceName: 'PMScan-001',
@@ -235,8 +229,6 @@ describe('Mission Deduplication', () => {
       expect(missions[0].name).toBe('Completed Office Air Quality Check');
       expect(missions[0].measurementsCount).toBe(4);
       expect(missions[0].durationMinutes).toBe(45);
-      expect(missions[0].locationContext).toBe('Office Building');
-      expect(missions[0].activityContext).toBe('Air Quality Assessment');
       expect(missions[0].shared).toBe(true);
       expect(missions[0].measurements).toHaveLength(4);
     });
@@ -259,8 +251,6 @@ describe('Mission Deduplication', () => {
         avgPm10: 22,
         maxPm25: 25,
         measurementsCount: 5,
-        locationContext: 'Laboratory',
-        activityContext: 'Testing',
         recordingFrequency: '30s',
         shared: false,
         deviceName: 'PMScan-001',
@@ -469,8 +459,6 @@ describe('Mission Deduplication', () => {
           measurementsCount: scenario.measurementsCount,
           recordingFrequency: '15s',
           shared: index === 2, // Only final version is shared
-          locationContext: index === 2 ? 'Office Complex' : '',
-          activityContext: index === 2 ? 'Environmental Monitoring' : '',
           measurements: scenario.measurements.map(m => ({
             ...m,
             pm1: m.pm25 - 3,
@@ -498,8 +486,6 @@ describe('Mission Deduplication', () => {
       expect(finalMissions[0].name).toBe('Complete Air Quality Assessment');
       expect(finalMissions[0].measurementsCount).toBe(4);
       expect(finalMissions[0].shared).toBe(true);
-      expect(finalMissions[0].locationContext).toBe('Office Complex');
-      expect(finalMissions[0].activityContext).toBe('Environmental Monitoring');
     });
   });
 });

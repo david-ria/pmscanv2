@@ -63,11 +63,9 @@ export function MissionDetailsDialog({
   const [selectedContextType, setSelectedContextType] = useState<'location' | 'activity' | 'autocontext'>(() => {
     if (!mission) return 'location';
     
-    // Check for available contexts and auto-select the first one
-    const hasLocationContext = !!(mission.locationContext || 
-      mission.measurements.some(m => m.locationContext));
-    const hasActivityContext = !!(mission.activityContext || 
-      mission.measurements.some(m => m.activityContext));
+    // Check for available contexts (only from measurements)
+    const hasLocationContext = mission.measurements.some(m => m.locationContext);
+    const hasActivityContext = mission.measurements.some(m => m.activityContext);
     const hasAutoContext = mission.measurements.some(m => 
       m.automaticContext && m.automaticContext !== 'unknown');
     
@@ -82,10 +80,8 @@ export function MissionDetailsDialog({
   // Auto-select context type when mission changes
   useEffect(() => {
     if (mission) {
-      const hasLocationContext = !!(mission.locationContext || 
-        mission.measurements.some(m => m.locationContext));
-      const hasActivityContext = !!(mission.activityContext || 
-        mission.measurements.some(m => m.activityContext));
+      const hasLocationContext = mission.measurements.some(m => m.locationContext);
+      const hasActivityContext = mission.measurements.some(m => m.activityContext);
       const hasAutoContext = mission.measurements.some(m => 
         m.automaticContext && m.automaticContext !== 'unknown');
       
@@ -117,17 +113,6 @@ export function MissionDetailsDialog({
 
   // Convert mission measurements to the format expected by PMLineGraph
   const graphData = mission.measurements.map((measurement, index) => {
-    // Debug logging for the first few measurements
-    if (index < 3) {
-      console.log(`Measurement ${index} context data:`, {
-        measurementLocationContext: measurement.locationContext,
-        measurementActivityContext: measurement.activityContext,
-        measurementAutomaticContext: measurement.automaticContext,
-        missionLocationContext: mission.locationContext,
-        missionActivityContext: mission.activityContext,
-      });
-    }
-    
     return {
       pmData: {
         pm1: measurement.pm1,
@@ -149,8 +134,8 @@ export function MissionDetailsDialog({
             }
           : undefined,
       context: {
-        locationContext: measurement.locationContext || mission.locationContext,
-        activityContext: measurement.activityContext || mission.activityContext,
+        locationContext: measurement.locationContext,
+        activityContext: measurement.activityContext,
         automaticContext: measurement.automaticContext,
       },
     };
@@ -205,10 +190,10 @@ export function MissionDetailsDialog({
       
       switch (contextType) {
         case 'location':
-          contextValue = measurement.locationContext || mission.locationContext;
+          contextValue = measurement.locationContext;
           break;
         case 'activity':
-          contextValue = measurement.activityContext || mission.activityContext;
+          contextValue = measurement.activityContext;
           break;
         case 'autocontext':
           contextValue = measurement.automaticContext;
@@ -337,11 +322,6 @@ export function MissionDetailsDialog({
       
       pdf.text(`Measurements: ${mission.measurementsCount}`, 20, yPosition);
       yPosition += 5;
-      
-      if (mission.locationContext && mission.activityContext) {
-        pdf.text(`Context: ${mission.locationContext} • ${mission.activityContext}`, 20, yPosition);
-        yPosition += 5;
-      }
       yPosition += 10;
 
       // Overall statistics
@@ -452,11 +432,6 @@ export function MissionDetailsDialog({
                   </Badge>
                 )}
               </div>
-              {mission.locationContext && mission.activityContext && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {mission.locationContext} • {mission.activityContext}
-                </p>
-              )}
             </div>
             
             {/* Mission Stats - Mobile Friendly Layout */}
@@ -577,10 +552,7 @@ export function MissionDetailsDialog({
                   className="h-full w-full"
                   hideTitle={true}
                   highlightContextType={selectedContextType}
-                  missionContext={{
-                    locationContext: mission.locationContext,
-                    activityContext: mission.activityContext,
-                  }}
+                  missionContext={{}}
                 />
               </div>
             </CardContent>

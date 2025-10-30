@@ -152,8 +152,6 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
         dataToSave,
         recording.recordingStartTime,
         missionName,
-        locationContext,
-        activityContext,
         recordingFrequency,
         shared,
         undefined, // missionId

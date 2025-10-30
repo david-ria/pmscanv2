@@ -19,12 +19,10 @@ export function GraphContextSelector({
 }: GraphContextSelectorProps) {
   const { t } = useTranslation();
 
-  // Check what context data is available
+  // Check what context data is available (only from measurements)
   const availableContexts = React.useMemo(() => {
-    const hasLocationContext = !!(mission.locationContext || 
-      mission.measurements.some(m => m.locationContext));
-    const hasActivityContext = !!(mission.activityContext || 
-      mission.measurements.some(m => m.activityContext));
+    const hasLocationContext = mission.measurements.some(m => m.locationContext);
+    const hasActivityContext = mission.measurements.some(m => m.activityContext);
     const hasAutoContext = mission.measurements.some(m => 
       m.automaticContext && m.automaticContext !== 'unknown');
     

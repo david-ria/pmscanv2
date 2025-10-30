@@ -140,12 +140,22 @@ export const useAnalysisLogic = (
       >();
 
       filteredMissions.forEach((mission) => {
-        const activity =
-          mission.activityContext || t('analysis.unknownActivity');
+        // Get most common activity from measurements
+        const activityCounts = new Map<string, number>();
+        mission.measurements.forEach(m => {
+          if (m.activityContext) {
+            activityCounts.set(m.activityContext, (activityCounts.get(m.activityContext) || 0) + 1);
+          }
+        });
+        const dominantActivity = activityCounts.size > 0 
+          ? Array.from(activityCounts.entries()).sort((a, b) => b[1] - a[1])[0][0]
+          : undefined;
+        
+        const activity = dominantActivity || t('analysis.unknownActivity');
         const respiratoryRate = getRespiratoryRate(
-          mission.activityContext,
-          mission.locationContext,
-          undefined // No automatic context at mission level
+          dominantActivity,
+          undefined, // No mission-level location context
+          undefined
         );
         
         const existing = activityMap.get(activity) || {
@@ -469,22 +479,34 @@ export const useAnalysisLogic = (
       const totalCumulativeDosePM25 = filteredMissions.reduce((total, mission) => {
         const recordingTime = mission.actualRecordingMinutes ?? mission.durationMinutes;
         const durationHours = recordingTime / 60;
-        const respiratoryRate = getRespiratoryRate(
-          mission.activityContext,
-          mission.locationContext,
-          undefined
-        );
+        // Get dominant activity from measurements
+        const activityCounts = new Map<string, number>();
+        mission.measurements.forEach(m => {
+          if (m.activityContext) {
+            activityCounts.set(m.activityContext, (activityCounts.get(m.activityContext) || 0) + 1);
+          }
+        });
+        const dominantActivity = activityCounts.size > 0 
+          ? Array.from(activityCounts.entries()).sort((a, b) => b[1] - a[1])[0][0]
+          : undefined;
+        const respiratoryRate = getRespiratoryRate(dominantActivity, undefined, undefined);
         return total + mission.avgPm25 * durationHours * respiratoryRate;
       }, 0);
 
       const totalCumulativeDosePM10 = filteredMissions.reduce((total, mission) => {
         const recordingTime = mission.actualRecordingMinutes ?? mission.durationMinutes;
         const durationHours = recordingTime / 60;
-        const respiratoryRate = getRespiratoryRate(
-          mission.activityContext,
-          mission.locationContext,
-          undefined
-        );
+        // Get dominant activity from measurements
+        const activityCounts = new Map<string, number>();
+        mission.measurements.forEach(m => {
+          if (m.activityContext) {
+            activityCounts.set(m.activityContext, (activityCounts.get(m.activityContext) || 0) + 1);
+          }
+        });
+        const dominantActivity = activityCounts.size > 0 
+          ? Array.from(activityCounts.entries()).sort((a, b) => b[1] - a[1])[0][0]
+          : undefined;
+        const respiratoryRate = getRespiratoryRate(dominantActivity, undefined, undefined);
         return total + mission.avgPm10 * durationHours * respiratoryRate;
       }, 0);
 

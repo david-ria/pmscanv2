@@ -138,9 +138,7 @@ export function useMissionManagement() {
       const shareText = `Mission PMScan: ${mission.name}
 Date: ${formatDate(new Date(mission.startTime))}
 Durée: ${formatDuration(mission.durationMinutes)}
-PM2.5 moyenne: ${Math.round(mission.avgPm25)} µg/m³
-${mission.locationContext ? `Lieu: ${mission.locationContext}` : ''}
-${mission.activityContext ? `Activité: ${mission.activityContext}` : ''}`;
+PM2.5 moyenne: ${Math.round(mission.avgPm25)} µg/m³`;
 
       try {
         if (shareType === 'native' && navigator.share) {

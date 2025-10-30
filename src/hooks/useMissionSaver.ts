@@ -10,8 +10,6 @@ export function useMissionSaver() {
     recordingData: RecordingEntry[],
     recordingStartTime: Date | null,
     missionName: string,
-    locationContext?: string,
-    activityContext?: string,
     recordingFrequency?: string,
     shared?: boolean,
     missionId?: string,
@@ -22,8 +20,6 @@ export function useMissionSaver() {
       recordingDataLength: recordingData?.length || 0,
       recordingStartTime,
       missionName,
-      locationContext,
-      activityContext,
       recordingFrequency,
       shared,
       deviceName: deviceName,
@@ -38,8 +34,6 @@ export function useMissionSaver() {
       recordingDataLength: recordingData?.length || 0,
       recordingStartTime,
       missionName,
-      locationContext,
-      activityContext,
       recordingFrequency,
       shared
     });
@@ -82,10 +76,9 @@ export function useMissionSaver() {
       });
     }
     
-    // Debug logging for context flow
+    // Debug logging for context flow (context is at measurement level)
     console.log('🔍 Mission saving - context analysis:', {
       totalEntries: recordingData.length,
-      missionContext: { locationContext, activityContext },
       contextDistribution: recordingData.reduce((acc, entry) => {
         const key = `${entry.manualContext?.location || 'unknown'}-${entry.manualContext?.activity || 'unknown'}`;
         acc[key] = (acc[key] || 0) + 1;
@@ -103,8 +96,6 @@ export function useMissionSaver() {
       missionName,
       actualStartTime,
       endTime,
-      locationContext,
-      activityContext,
       recordingFrequency,
       shared,
       missionId,

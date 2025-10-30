@@ -34,8 +34,6 @@ export interface MissionData {
   avgPm10: number;
   maxPm25: number;
   measurementsCount: number;
-  locationContext?: string;
-  activityContext?: string;
   recordingFrequency: string;
   shared: boolean;
   deviceName?: string;

@@ -118,8 +118,6 @@ export function RecordingControls({
         recordingData,
         recordingStartTime,
         finalMissionName,
-        selectedLocation || undefined,
-        selectedActivity || undefined,
         recordingFrequency,
         shareData
       );

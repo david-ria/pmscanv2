@@ -83,11 +83,6 @@ export function MissionCard({
                 {formatDate(new Date(mission.startTime))} •{' '}
                 {formatDuration(mission.durationMinutes)}
               </p>
-              {mission.locationContext && mission.activityContext && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {mission.locationContext} • {mission.activityContext}
-                </p>
-              )}
               {mission.weatherDataId && (
                 <div className="mt-1">
                   <WeatherInfo weatherDataId={mission.weatherDataId} compact />
