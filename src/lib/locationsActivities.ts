@@ -1,315 +1,143 @@
-// Combined locations and activities management with location-dependent activities
-
-export interface LocationType {
-  id: string;
-  name: string;
-  icon?: string;
-  description?: string;
-  allowedActivities: string[]; // Activity IDs that are allowed for this location
-}
+// Unified hierarchical structure for locations and activities
+// This makes it easy to edit and maintain manual context data
 
 export interface ActivityType {
   id: string;
   name: string;
   icon?: string;
   description?: string;
-  availableAt: string[]; // Location IDs where this activity is available
 }
 
-// Default location types
+export interface LocationType {
+  id: string;
+  name: string;
+  icon?: string;
+  description?: string;
+  activities: ActivityType[]; // Activities available at this location
+}
+
+// Default locations with their activities (hierarchical structure)
 export const DEFAULT_LOCATIONS: LocationType[] = [
   {
     id: 'home',
     name: 'Home',
     icon: '🏠',
     description: 'At home location',
-    allowedActivities: ['rest', 'work', 'indoor', 'cooking', 'cleaning', 'DIY']
+    activities: [
+      { id: 'rest', name: 'Rest', icon: '😴', description: 'Resting or sleeping' },
+      { id: 'work', name: 'Work', icon: '💼', description: 'Working activities' },
+      { id: 'indoor', name: 'Indoor', icon: '🏠', description: 'General indoor activities' },
+      { id: 'cooking', name: 'Cooking', icon: '👨‍🍳', description: 'Cooking or food preparation' },
+      { id: 'cleaning', name: 'Cleaning', icon: '🧹', description: 'Household cleaning' },
+      { id: 'DIY', name: 'DIY', icon: '🔨', description: 'DIY and home improvement activities' },
+      { id: 'studying', name: 'Studying', icon: '📚', description: 'Reading or studying' },
+      { id: 'computer_work', name: 'Computer work', icon: '💻', description: 'Working on computer' },
+    ]
   },
   {
     id: 'office',
     name: 'Office',
     icon: '🏢',
     description: 'At work/office',
-    allowedActivities: ['work', 'indoor', 'meeting', 'computer_work']
+    activities: [
+      { id: 'work', name: 'Work', icon: '💼', description: 'Working activities' },
+      { id: 'indoor', name: 'Indoor', icon: '🏠', description: 'General indoor activities' },
+      { id: 'meeting', name: 'Meeting', icon: '👥', description: 'Business meetings' },
+      { id: 'computer_work', name: 'Computer work', icon: '💻', description: 'Working on computer' },
+    ]
   },
   {
     id: 'school',
     name: 'School',
     icon: '🏫',
     description: 'At school/university',
-    allowedActivities: ['indoor', 'studying', 'classroom', 'sport']
+    activities: [
+      { id: 'indoor', name: 'Indoor', icon: '🏠', description: 'General indoor activities' },
+      { id: 'studying', name: 'Studying', icon: '📚', description: 'Reading or studying' },
+      { id: 'classroom', name: 'Classroom', icon: '🎓', description: 'Attending classes' },
+      { id: 'sport', name: 'Sport', icon: '⚽', description: 'Physical exercise or sports' },
+    ]
   },
   {
     id: 'indoor',
     name: 'Indoor',
-    icon: '🌳',
+    icon: '🏢',
     description: 'Indoor air different than work and home',
-    allowedActivities: ['shopping', 'Parking', 'walking']
+    activities: [
+      { id: 'shopping', name: 'Shopping', icon: '🛒', description: 'Shopping activities' },
+      { id: 'Parking', name: 'Parking', icon: '🚗', description: 'Underground parking' },
+      { id: 'walking', name: 'Walking', icon: '🚶', description: 'Walking indoors' },
+    ]
   },
   {
     id: 'Outdoor',
     name: 'Outdoor',
     icon: '🏙️',
     description: 'Outdoor activities in open air',
-    allowedActivities: ['walking', 'cycling', 'outdoor', 'jogging']
+    activities: [
+      { id: 'walking', name: 'Walking', icon: '🚶', description: 'Walking outdoors' },
+      { id: 'cycling', name: 'Cycling', icon: '🚴', description: 'Riding a bicycle' },
+      { id: 'outdoor', name: 'Outdoor', icon: '🌤️', description: 'General outdoor activities' },
+      { id: 'jogging', name: 'Jogging', icon: '🏃', description: 'Running or jogging' },
+      { id: 'sport', name: 'Sport', icon: '⚽', description: 'Physical exercise or sports' },
+      { id: 'relaxing', name: 'Relaxing', icon: '🧘', description: 'Relaxing outdoors' },
+    ]
   },
   {
     id: 'transport',
     name: 'Transport',
     icon: '🚗',
     description: 'In vehicle or public transport',
-    allowedActivities: ['transport', 'driving', 'bus', 'train', 'metro', 'undergroundTransport']
+    activities: [
+      { id: 'transport', name: 'Transport', icon: '🚗', description: 'Using transportation' },
+      { id: 'driving', name: 'Driving', icon: '🚗', description: 'Driving a car' },
+      { id: 'bus', name: 'Bus', icon: '🚌', description: 'Traveling by bus' },
+      { id: 'train', name: 'Train', icon: '🚊', description: 'Traveling by train' },
+      { id: 'metro', name: 'Metro', icon: '🚇', description: 'Traveling by metro/subway' },
+      { id: 'waiting', name: 'Waiting', icon: '⏳', description: 'Waiting or standing' },
+    ]
   },
   {
     id: 'underground',
     name: 'Underground',
     icon: '🚇',
     description: 'Underground transport (metro, subway)',
-    allowedActivities: ['undergroundTransport', 'escalator', 'stairs', 'stairsToOutside', 'standPlatform', 'stand']
+    activities: [
+      { id: 'undergroundTransport', name: 'Underground transport', icon: '🚇', description: 'Metro or subway' },
+      { id: 'escalator', name: 'Escalator', icon: '⬆️', description: 'Using escalator in underground transport' },
+      { id: 'stairs', name: 'Stairs', icon: '🪜', description: 'Using stairs in underground transport' },
+      { id: 'stairsToOutside', name: 'Stairs to outside', icon: '🚪', description: 'Using stairs from underground to surface' },
+      { id: 'standPlatform', name: 'Stand platform', icon: '🚉', description: 'Standing on underground platform' },
+      { id: 'stand', name: 'Stand', icon: '🧍', description: 'Standing in underground transport' },
+    ]
   }
 ];
 
-// Default activity types
-export const DEFAULT_ACTIVITIES: ActivityType[] = [
-  {
-    id: 'walking',
-    name: 'Walking',
-    icon: '🚶',
-    description: 'Walking outdoors',
-    availableAt: ['park', 'mainStreet', 'school']
-  },
-  {
-    id: 'cycling',
-    name: 'Cycling',
-    icon: '🚴',
-    description: 'Riding a bicycle',
-    availableAt: ['park', 'mainStreet']
-  },
-  {
-    id: 'transport',
-    name: 'Transport',
-    icon: '🚗',
-    description: 'Using transportation',
-    availableAt: ['transport']
-  },
-  {
-    id: 'driving',
-    name: 'Driving',
-    icon: '🚗',
-    description: 'Driving a car',
-    availableAt: ['transport']
-  },
-  {
-    id: 'sport',
-    name: 'Sport',
-    icon: '⚽',
-    description: 'Physical exercise or sports',
-    availableAt: ['park', 'school']
-  },
-  {
-    id: 'rest',
-    name: 'Rest',
-    icon: '😴',
-    description: 'Resting or sleeping',
-    availableAt: ['home']
-  },
-  {
-    id: 'work',
-    name: 'Work',
-    icon: '💼',
-    description: 'Working activities',
-    availableAt: ['home', 'office']
-  },
-  {
-    id: 'indoor',
-    name: 'Indoor',
-    icon: '🏠',
-    description: 'General indoor activities',
-    availableAt: ['home', 'office', 'school']
-  },
-  {
-    id: 'outdoor',
-    name: 'Outdoor',
-    icon: '🌤️',
-    description: 'General outdoor activities',
-    availableAt: ['park', 'mainStreet']
-  },
-  {
-    id: 'undergroundTransport',
-    name: 'Underground transport',
-    icon: '🚇',
-    description: 'Metro or subway',
-    availableAt: ['transport']
-  },
-  {
-    id: 'jogging',
-    name: 'Jogging',
-    icon: '🏃',
-    description: 'Running or jogging',
-    availableAt: ['park']
-  },
-  {
-    id: 'shopping',
-    name: 'Shopping',
-    icon: '🛒',
-    description: 'Shopping activities',
-    availableAt: ['mainStreet']
-  },
-  {
-    id: 'cooking',
-    name: 'Cooking',
-    icon: '👨‍🍳',
-    description: 'Cooking or food preparation',
-    availableAt: ['home']
-  },
-  {
-    id: 'cleaning',
-    name: 'Cleaning',
-    icon: '🧹',
-    description: 'Household cleaning',
-    availableAt: ['home']
-  },
-  {
-    id: 'studying',
-    name: 'Studying',
-    icon: '📚',
-    description: 'Reading or studying',
-    availableAt: ['home', 'school']
-  },
-  {
-    id: 'meeting',
-    name: 'Meeting',
-    icon: '👥',
-    description: 'Business meetings',
-    availableAt: ['office']
-  },
-  {
-    id: 'computer_work',
-    name: 'Computer work',
-    icon: '💻',
-    description: 'Working on computer',
-    availableAt: ['home', 'office']
-  },
-  {
-    id: 'classroom',
-    name: 'Classroom',
-    icon: '🎓',
-    description: 'Attending classes',
-    availableAt: ['school']
-  },
-  {
-    id: 'bus',
-    name: 'Bus',
-    icon: '🚌',
-    description: 'Traveling by bus',
-    availableAt: ['transport']
-  },
-  {
-    id: 'train',
-    name: 'Train',
-    icon: '🚊',
-    description: 'Traveling by train',
-    availableAt: ['transport']
-  },
-  {
-    id: 'metro',
-    name: 'Metro',
-    icon: '🚇',
-    description: 'Traveling by metro/subway',
-    availableAt: ['transport']
-  },
-  {
-    id: 'waiting',
-    name: 'Waiting',
-    icon: '⏳',
-    description: 'Waiting or standing',
-    availableAt: ['mainStreet', 'transport']
-  },
-  {
-    id: 'relaxing',
-    name: 'Relaxing',
-    icon: '🧘',
-    description: 'Relaxing outdoors',
-    availableAt: ['park']
-  },
-  {
-    id: 'DIY',
-    name: 'DIY',
-    icon: '🔨',
-    description: 'DIY and home improvement activities',
-    availableAt: ['home']
-  },
-  {
-    id: 'Parking',
-    name: 'Parking',
-    icon: '🚗',
-    description: 'Underground parking',
-    availableAt: ['indoor']
-  },
-  // Nouvelles activités détectées par le modèle de transport souterrain
-  {
-    id: 'escalator',
-    name: 'Escalator',
-    icon: '⬆️',
-    description: 'Using escalator in underground transport',
-    availableAt: ['underground']
-  },
-  {
-    id: 'stairs',
-    name: 'Stairs',
-    icon: '🪜',
-    description: 'Using stairs in underground transport',
-    availableAt: ['underground']
-  },
-  {
-    id: 'stairsToOutside',
-    name: 'Stairs to outside',
-    icon: '🚪',
-    description: 'Using stairs from underground to surface',
-    availableAt: ['underground']
-  },
-  {
-    id: 'stand',
-    name: 'Stand',
-    icon: '🧍',
-    description: 'Standing in underground transport',
-    availableAt: ['underground']
-  },
-  {
-    id: 'standPlatform',
-    name: 'Stand platform',
-    icon: '🚉',
-    description: 'Standing on underground platform',
-    availableAt: ['underground']
-  }
-];
+// Flattened list of all activities (for backward compatibility and lookups)
+export const DEFAULT_ACTIVITIES: ActivityType[] = DEFAULT_LOCATIONS.flatMap(
+  location => location.activities
+).filter((activity, index, self) => 
+  // Remove duplicates by id
+  index === self.findIndex(a => a.id === activity.id)
+);
 
 // Helper function to get activities available for a specific location
 export function getActivitiesForLocation(locationId: string): ActivityType[] {
-  // Find the location first
   const location = DEFAULT_LOCATIONS.find(loc => loc.id === locationId);
-  if (!location) return [];
-  
-  // Return activities that are in the location's allowedActivities list
-  return DEFAULT_ACTIVITIES.filter(activity => 
-    location.allowedActivities.includes(activity.id)
-  );
+  return location?.activities || [];
 }
 
 // Helper function to get locations where an activity is available
 export function getLocationsForActivity(activityId: string): LocationType[] {
-  const activity = DEFAULT_ACTIVITIES.find(a => a.id === activityId);
-  if (!activity) return [];
-  
-  return DEFAULT_LOCATIONS.filter(location => 
-    activity.availableAt.includes(location.id)
+  return DEFAULT_LOCATIONS.filter(location =>
+    location.activities.some(activity => activity.id === activityId)
   );
 }
 
 // Helper function to check if an activity is allowed at a location
 export function isActivityAllowedAtLocation(activityId: string, locationId: string): boolean {
-  const activity = DEFAULT_ACTIVITIES.find(a => a.id === activityId);
-  return activity ? activity.availableAt.includes(locationId) : false;
+  const location = DEFAULT_LOCATIONS.find(l => l.id === locationId);
+  return location ? location.activities.some(a => a.id === activityId) : false;
 }
 
 // Get translated names for locations and activities

@@ -10,13 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { useEffect } from 'react';
-import { 
-  DEFAULT_LOCATIONS, 
-  DEFAULT_ACTIVITIES, 
-  getActivitiesForLocation,
-  getLocationName,
-  getActivityName 
-} from '@/lib/locationsActivities';
+// No need to import helpers anymore - using hierarchical structure directly
 
 interface ContextSelectorsProps {
   selectedLocation: string;
@@ -37,61 +31,45 @@ export function ContextSelectors({
   const { getCurrentLocations, getCurrentActivities, isGroupMode } =
     useGroupSettings();
 
-  // Use group locations if in group mode, otherwise use static DEFAULT_LOCATIONS as fallback
-  const locations = isGroupMode
-    ? getCurrentLocations()
-    : DEFAULT_LOCATIONS.map((loc) => ({ 
-        name: loc.name, // Use direct name instead of translation
-        key: loc.id 
-      }));
+  // Get locations from group settings (already hierarchical)
+  const locations = getCurrentLocations();
 
-  // Get activities based on selected location
+  // Get activities based on selected location (from hierarchical structure)
   const getAvailableActivities = () => {
-    if (isGroupMode) {
+    if (!selectedLocation) {
+      // Show all activities from all locations if no location is selected
       return getCurrentActivities();
     }
-    
-    if (!selectedLocation) {
-      // Show all activities if no location is selected (for flexibility)
-      return DEFAULT_ACTIVITIES.map(activity => ({
-        key: activity.id,
-        name: activity.name,
-      }));
-    }
 
-    // Find location by ID first, then by name for backwards compatibility
-    const selectedLocationData = DEFAULT_LOCATIONS.find(loc => 
-      loc.id === selectedLocation || loc.name === selectedLocation
+    // Find location by ID or name (backwards compatibility)
+    const selectedLocationData = locations.find(loc => 
+      ('id' in loc && loc.id === selectedLocation) || 
+      loc.name === selectedLocation
     );
     
-    if (!selectedLocationData) {
+    if (!selectedLocationData || !('activities' in selectedLocationData)) {
       return [];
     }
 
-    // Get activities for this location from static data
-    const locationActivities = getActivitiesForLocation(selectedLocationData.id);
-    
-    return locationActivities.map(activity => ({
-      key: activity.id,
-      name: activity.name, // Use direct name instead of translation
-    }));
+    // Return activities directly from the location
+    return selectedLocationData.activities;
   };
 
   const activities = getAvailableActivities();
 
   // Clear activity selection when location changes and current activity is not available for that location
   useEffect(() => {
-    if (!isGroupMode && selectedLocation && selectedActivity) {
-      const availableActivityLabels = activities.map(a => a.name);
-      const availableActivityIds = activities.map(a => a.key || a.name);
+    if (selectedLocation && selectedActivity) {
+      const availableActivityIds = activities.map(a => a.id);
+      const availableActivityNames = activities.map(a => a.name);
       
       // Check if the selected activity is valid for the current location (by name or ID)
-      if (!availableActivityLabels.includes(selectedActivity) && !availableActivityIds.includes(selectedActivity)) {
-        console.log(`🔄 Activity "${selectedActivity}" not available for location "${selectedLocation}". Available activities:`, availableActivityLabels);
+      if (!availableActivityIds.includes(selectedActivity) && !availableActivityNames.includes(selectedActivity)) {
+        console.log(`🔄 Activity "${selectedActivity}" not available for location "${selectedLocation}". Available activities:`, availableActivityNames);
         onActivityChange('');
       }
     }
-  }, [selectedLocation, activities, selectedActivity, onActivityChange, isGroupMode]);
+  }, [selectedLocation, activities, selectedActivity, onActivityChange]);
 
   return (
     <div className="context-selector gap-4">
@@ -112,8 +90,8 @@ export function ContextSelectors({
           <SelectContent>
             {locations.map((location) => (
               <SelectItem
-                key={location.key || location.name}
-                value={location.key || location.name} // Use ID if available, fallback to name
+                key={'id' in location ? location.id : location.name}
+                value={'id' in location ? location.id : location.name}
               >
                 {location.name}
               </SelectItem>
@@ -143,8 +121,8 @@ export function ContextSelectors({
           <SelectContent>
             {activities.map((activity) => (
               <SelectItem
-                key={activity.key || activity.name}
-                value={activity.key || activity.name} // Use ID if available, fallback to name
+                key={activity.id}
+                value={activity.id}
               >
                 {activity.name}
               </SelectItem>

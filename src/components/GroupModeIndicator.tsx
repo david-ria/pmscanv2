@@ -104,7 +104,7 @@ export const GroupModeIndicator = () => {
           <span>•</span>
           <span>Locations: {activeGroup.locations.length}</span>
           <span>•</span>
-          <span>Activities: {activeGroup.activities.length}</span>
+          <span>Activities: {activeGroup.locations.reduce((total, loc) => total + loc.activities.length, 0)}</span>
           {activeGroup.events.length > 0 && (
             <>
               <span>•</span>

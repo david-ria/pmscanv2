@@ -19,17 +19,20 @@ export interface GroupAlarm {
   notification_frequency: 'immediate' | 'hourly' | 'daily';
 }
 
+export interface GroupActivity {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+}
+
 export interface GroupLocation {
+  id: string;
   name: string;
   description?: string;
   latitude?: number;
   longitude?: number;
-}
-
-export interface GroupActivity {
-  name: string;
-  description?: string;
-  icon?: string;
+  activities: GroupActivity[]; // Hierarchical structure
 }
 
 export interface GroupEvent {
@@ -48,8 +51,7 @@ export interface GroupConfig {
   description?: string;
   thresholds: GroupThreshold[];
   alarms: GroupAlarm[];
-  locations: GroupLocation[];
-  activities: GroupActivity[];
+  locations: GroupLocation[]; // Locations with embedded activities
   events: GroupEvent[];
   settings: {
     pm25_threshold: number;
@@ -126,51 +128,50 @@ export const groupConfigs: Record<string, GroupConfig> = {
     ],
     locations: [
       {
+        id: 'gare-tgv',
         name: 'Gare TGV',
-        description: 'Residential area monitoring',
+        description: 'Train station monitoring',
+        activities: [
+          { id: 'travaille', name: 'Travaille', description: 'Work activities', icon: '💼' },
+          { id: 'ventilation', name: 'Ventilation', description: 'Ventilation monitoring', icon: '🌬️' },
+        ]
       },
       {
+        id: 'trame',
         name: 'Trame',
         description: 'Workplace environment',
+        activities: [
+          { id: 'travaille', name: 'Travaille', description: 'Work activities', icon: '💼' },
+          { id: 'cuisine', name: 'Cuisine', description: 'Cooking activities', icon: '👨‍🍳' },
+        ]
       },
       {
+        id: 'rue',
         name: 'Rue',
-        description: 'External environment monitoring',
+        description: 'Street monitoring',
+        activities: [
+          { id: 'menage', name: 'Ménage', description: 'Cleaning activities', icon: '🧹' },
+          { id: 'bricolage', name: 'Bricolage', description: 'DIY activities', icon: '🔨' },
+        ]
       },
       {
+        id: 'musee',
         name: 'Musée',
-        description: 'Transportation monitoring',
+        description: 'Museum environment',
+        activities: [
+          { id: 'ventilation', name: 'Ventilation', description: 'Ventilation monitoring', icon: '🌬️' },
+        ]
       },
       {
+        id: 'maison',
         name: 'Maison',
-        description: 'Transportation monitoring',
-      },
-    ],
-    activities: [
-      {
-        name: 'Cuisine',
-        description: 'Sedentary activities',
-        icon: 'home',
-      },
-      {
-        name: 'Travaille',
-        description: 'Work-related activities',
-        icon: 'briefcase',
-      },
-      {
-        name: 'Ménage',
-        description: 'Physical activities',
-        icon: 'activity',
-      },
-      {
-        name: 'Bricolage',
-        description: 'Transportation activities',
-        icon: 'car',
-      },
-      {
-        name: 'Ventilation',
-        description: 'Food preparation',
-        icon: 'chef-hat',
+        description: 'Home monitoring',
+        activities: [
+          { id: 'cuisine', name: 'Cuisine', description: 'Cooking activities', icon: '👨‍🍳' },
+          { id: 'menage', name: 'Ménage', description: 'Cleaning activities', icon: '🧹' },
+          { id: 'bricolage', name: 'Bricolage', description: 'DIY activities', icon: '🔨' },
+          { id: 'ventilation', name: 'Ventilation', description: 'Ventilation monitoring', icon: '🌬️' },
+        ]
       },
     ],
     events: [
@@ -252,37 +253,39 @@ export const groupConfigs: Record<string, GroupConfig> = {
     ],
     locations: [
       {
+        id: 'floor-1',
         name: 'Floor 1',
         description: 'Ground floor workspace',
+        activities: [
+          { id: 'desk-work', name: 'Desk Work', description: 'Computer-based tasks', icon: '💻' },
+          { id: 'meeting', name: 'Meeting', description: 'Conference or discussion', icon: '👥' },
+          { id: 'break', name: 'Break', description: 'Rest period', icon: '☕' },
+        ]
       },
       {
+        id: 'floor-2',
         name: 'Floor 2',
         description: 'Second floor workspace',
+        activities: [
+          { id: 'desk-work', name: 'Desk Work', description: 'Computer-based tasks', icon: '💻' },
+          { id: 'meeting', name: 'Meeting', description: 'Conference or discussion', icon: '👥' },
+        ]
       },
       {
+        id: 'meeting-room-a',
         name: 'Meeting Room A',
         description: 'Conference room',
+        activities: [
+          { id: 'meeting', name: 'Meeting', description: 'Conference or discussion', icon: '👥' },
+        ]
       },
       {
+        id: 'break-room',
         name: 'Break Room',
         description: 'Kitchen and dining area',
-      },
-    ],
-    activities: [
-      {
-        name: 'Desk Work',
-        description: 'Computer-based tasks',
-        icon: 'monitor',
-      },
-      {
-        name: 'Meeting',
-        description: 'Conference or discussion',
-        icon: 'users',
-      },
-      {
-        name: 'Break',
-        description: 'Rest period',
-        icon: 'coffee',
+        activities: [
+          { id: 'break', name: 'Break', description: 'Rest period', icon: '☕' },
+        ]
       },
     ],
     events: [],

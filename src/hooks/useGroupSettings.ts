@@ -215,28 +215,21 @@ export const useGroupSettings = () => {
   };
 
   const getCurrentLocations = () => {
-    // Fallback to group config or default
+    // Return full hierarchical structure
     if (activeGroup) {
       return activeGroup.locations;
     }
-    // Return default locations when not in group mode
-    return DEFAULT_LOCATIONS.map((loc) => ({ 
-      name: loc.name, 
-      description: loc.description 
-    }));
+    // Return default locations with their activities
+    return DEFAULT_LOCATIONS;
   };
 
   const getCurrentActivities = () => {
-    // Fallback to group config or default
+    // Flatten all activities from all locations
     if (activeGroup) {
-      return activeGroup.activities;
+      return activeGroup.locations.flatMap(loc => loc.activities);
     }
-    // Return default activities when not in group mode
-    return DEFAULT_ACTIVITIES.map((activity) => ({ 
-      name: activity.name, 
-      description: activity.description,
-      icon: activity.icon 
-    }));
+    // Return flattened activities from defaults
+    return DEFAULT_ACTIVITIES;
   };
 
   return {

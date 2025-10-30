@@ -17,68 +17,44 @@ export function useCustomListsForSubscription() {
   useEffect(() => {
     const loadCustomLists = async () => {
       if (!features.hasCustomLists || !user?.id) {
-        // For free users, use default lists
-        setCustomLocations(DEFAULT_LOCATIONS.map(loc => ({ 
-          name: loc.name, 
-          description: loc.description 
-        })));
-        setCustomActivities(DEFAULT_ACTIVITIES.map(activity => ({ 
-          name: activity.name, 
-          description: activity.description,
-          icon: activity.icon 
-        })));
+        // For free users, use default hierarchical lists
+        setCustomLocations(DEFAULT_LOCATIONS);
+        setCustomActivities(DEFAULT_ACTIVITIES);
         setLoading(false);
         return;
       }
 
       try {
         if (isGroupMode && activeGroup?.id) {
-          // Get group custom lists
+          // Get group custom lists (expecting hierarchical structure)
           const { data: group } = await supabase
             .from('groups')
-            .select('custom_locations, custom_activities')
+            .select('custom_locations')
             .eq('id', activeGroup.id)
             .single();
           
-          setCustomLocations(Array.isArray(group?.custom_locations) ? group.custom_locations : DEFAULT_LOCATIONS.map(loc => ({ 
-            name: loc.name, 
-            description: loc.description 
-          })));
-          setCustomActivities(Array.isArray(group?.custom_activities) ? group.custom_activities : DEFAULT_ACTIVITIES.map(activity => ({ 
-            name: activity.name, 
-            description: activity.description,
-            icon: activity.icon 
-          })));
+          const locations = Array.isArray(group?.custom_locations) ? group.custom_locations : DEFAULT_LOCATIONS;
+          setCustomLocations(locations);
+          // Flatten activities from locations
+          setCustomActivities(locations.flatMap((loc: any) => loc.activities || []));
         } else {
-          // Get user custom lists
+          // Get user custom lists (expecting hierarchical structure)
           const { data: profile } = await supabase
             .from('profiles')
-            .select('custom_locations, custom_activities')
+            .select('custom_locations')
             .eq('id', user.id)
             .single();
           
-          setCustomLocations(Array.isArray(profile?.custom_locations) ? profile.custom_locations : DEFAULT_LOCATIONS.map(loc => ({ 
-            name: loc.name, 
-            description: loc.description 
-          })));
-          setCustomActivities(Array.isArray(profile?.custom_activities) ? profile.custom_activities : DEFAULT_ACTIVITIES.map(activity => ({ 
-            name: activity.name, 
-            description: activity.description,
-            icon: activity.icon 
-          })));
+          const locations = Array.isArray(profile?.custom_locations) ? profile.custom_locations : DEFAULT_LOCATIONS;
+          setCustomLocations(locations);
+          // Flatten activities from locations
+          setCustomActivities(locations.flatMap((loc: any) => loc.activities || []));
         }
       } catch (error) {
         console.error('Error fetching custom lists:', error);
         // Fallback to defaults on error
-        setCustomLocations(DEFAULT_LOCATIONS.map(loc => ({ 
-          name: loc.name, 
-          description: loc.description 
-        })));
-        setCustomActivities(DEFAULT_ACTIVITIES.map(activity => ({ 
-          name: activity.name, 
-          description: activity.description,
-          icon: activity.icon 
-        })));
+        setCustomLocations(DEFAULT_LOCATIONS);
+        setCustomActivities(DEFAULT_ACTIVITIES);
       } finally {
         setLoading(false);
       }
