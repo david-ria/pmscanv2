@@ -98,170 +98,169 @@ export function GlobalDataCollector() {
     devLogger.debug('🔧 Add data point availability:', { hasAddDataPoint: !!addDataPoint });
   }, [addDataPoint]);
 
-  // Global data collection effect with proper frequency control
+  // Global data collection effect with controlled frequency using setInterval
   useEffect(() => {
-    rateLimitedDebug('data-collection-trigger', 3000, '🔍 Data collection triggered:', {
-      isRecording,
-      hasCurrentData: !!currentData,
-      willProceed: isRecording && !!currentData && !!addDataPoint
-    });
-
-    if (!addDataPoint) {
-      rateLimitedDebug('recording-service-not-ready', 5000, '🔄 Recording service not ready');
+    if (!isRecording || !addDataPoint) {
+      rateLimitedDebug('recording-service-not-ready', 5000, '🔄 Recording not active or service not ready');
       return;
     }
 
-    if (isRecording && currentData) {
-      // Parse frequency to get interval in milliseconds
-      const getFrequencyMs = (freq: string): number => {
-        const num = parseInt(freq);
-        if (freq.includes('s')) return num * 1000;
-        if (freq.includes('m')) return num * 60 * 1000;
-        return 10000; // default 10s
-      };
+    // Parse frequency to get interval in milliseconds
+    const getFrequencyMs = (freq: string): number => {
+      const num = parseInt(freq);
+      if (freq.includes('s')) return num * 1000;
+      if (freq.includes('m')) return num * 60 * 1000;
+      return 10000; // default 10s
+    };
 
-      const frequencyMs = getFrequencyMs(recordingFrequency);
-      const now = currentData.timestamp.getTime();
-      
-      // Check if enough time has passed since last recording
-      const shouldRecord = !lastRecordedTimeRef.current || 
-        (now - lastRecordedTimeRef.current.getTime()) >= frequencyMs;
+    // Parse frequency to get window size in seconds
+    const getFrequencySeconds = (freq: string): number => {
+      const num = parseInt(freq);
+      if (freq.includes('s')) return num;
+      if (freq.includes('m')) return num * 60;
+      return 10; // default 10s
+    };
 
-      rateLimitedDebug('frequency-check', 2000, '🔍 Frequency check:', {
-        shouldRecord,
-        pm25: currentData.pm25
+    const frequencyMs = getFrequencyMs(recordingFrequency);
+    const windowSeconds = getFrequencySeconds(recordingFrequency);
+
+    // Collect data function that runs at controlled intervals
+    const collectData = async () => {
+      // Read current data from unifiedData directly (not from deps)
+      const data = unifiedData.currentData;
+      const location = unifiedData.latestLocation;
+      const speed = unifiedData.speedKmh;
+
+      rateLimitedDebug('data-collection-interval', 3000, '🔍 Interval data collection:', {
+        hasData: !!data,
+        hasLocation: !!location
       });
 
-        if (shouldRecord) {
-        // We have data, that's what matters - connection status can be unreliable
-        // Prevent duplicate data points by checking if this is actually new data
-        const currentTimestamp = currentData.timestamp.getTime();
-        const isDuplicate =
-          lastDataRef.current &&
-          lastDataRef.current.pm25 === currentData.pm25 &&
-          Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
+      if (!data) {
+        logger.debug('⏭️ No current data available, skipping');
+        return;
+      }
 
-        if (!isDuplicate) {
-          // Parse frequency to get window size in seconds
-          const getFrequencySeconds = (freq: string): number => {
-            const num = parseInt(freq);
-            if (freq.includes('s')) return num;
-            if (freq.includes('m')) return num * 60;
-            return 10; // default 10s
-          };
+      // Prevent duplicate data points
+      const currentTimestamp = data.timestamp.getTime();
+      const isDuplicate =
+        lastDataRef.current &&
+        lastDataRef.current.pm25 === data.pm25 &&
+        Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
 
-          const windowSeconds = getFrequencySeconds(recordingFrequency);
+      if (isDuplicate) {
+        logger.debug('⏭️ Duplicate data point, skipping');
+        return;
+      }
+
+      // Get running average from buffer instead of instant data
+      const averagedData = rollingBufferService.getAverage(windowSeconds);
+      
+      if (!averagedData) {
+        logger.warn('⚠️ No averaged data available from buffer, skipping data point');
+        return;
+      }
+
+      devLogger.info('🔍 Adding averaged data point:', { 
+        pm25: averagedData.pm25.toFixed(1),
+        window: `${windowSeconds}s`
+      });
+
+      // Handle context and data point recording
+      const isMoving = speed > 2; // Simple threshold for movement detection
+      
+      // Get enriched location if available
+      let enrichedLocationName = '';
+      rateLimitedDebug('enrichment-check', 5000, '🔍 Location enrichment check:', {
+        hasEnrichFunction: !!enrichLocation,
+        hasLocation: !!(location?.latitude && location?.longitude)
+      });
+      
+      if (enrichLocation && location?.latitude && location?.longitude) {
+        try {
+          devLogger.debug('🌍 Enriching location during recording');
           
-          // Get running average from buffer instead of instant currentData
-          const averagedData = rollingBufferService.getAverage(windowSeconds);
-          
-          if (!averagedData) {
-            logger.warn('⚠️ No averaged data available from buffer, skipping data point');
-            return;
-          }
-
-          devLogger.info('🔍 Adding averaged data point:', { 
-            pm25: averagedData.pm25.toFixed(1),
-            window: `${windowSeconds}s`
-          });
-
-        // Handle context and data point recording
-        const handleContextAndDataPoint = async () => {
-          // Use speed from GPS hook (already calculated with EMA smoothing)
-          const speed = speedKmh;
-          const isMoving = speed > 2; // Simple threshold for movement detection
-          
-          // Get enriched location if available
-          let enrichedLocationName = '';
-          rateLimitedDebug('enrichment-check', 5000, '🔍 Location enrichment check:', {
-            hasEnrichFunction: !!enrichLocation,
-            hasLocation: !!(latestLocation?.latitude && latestLocation?.longitude)
-          });
-          
-          if (shouldRecord && enrichLocation && latestLocation?.latitude && latestLocation?.longitude) {
-            try {
-              devLogger.debug('🌍 Enriching location during recording');
-              
-              const enrichmentResult = await enrichLocation(
-                latestLocation.latitude,
-                latestLocation.longitude,
-                averagedData.timestamp.toISOString()
-              );
-              
-              if (enrichmentResult?.display_name) {
-                enrichedLocationName = enrichmentResult.display_name;
-                devLogger.info('✅ Location enriched:', enrichedLocationName);
-              }
-            } catch (error) {
-              logger.warn('⚠️ Failed to enrich location during recording:', error);
-            }
-          }
-
-          const automaticContext = autoContextSettings.enabled ? await updateContextIfNeeded(
-            averagedData,
-            latestLocation || undefined,
-            speed,
-            isMoving
-            // DO NOT pass enrichedLocationName - keep autocontext separate from location enrichment
-          ) : '';
-
-          // Use averaged data timestamp
-          lastRecordedTimeRef.current = averagedData.timestamp;
-
-          // Fetch weather data only if enabled and location is available
-          let weatherDataId: string | null = null;
-          if (weatherLoggingEnabled && latestLocation?.latitude && latestLocation?.longitude) {
-            try {
-              weatherDataId = await getWeatherForMeasurement(
-                latestLocation.latitude,
-                latestLocation.longitude,
-                averagedData.timestamp // Use averaged data timestamp
-              );
-            } catch (error) {
-              logger.debug('⚠️ Failed to fetch weather data for measurement:', error);
-            }
-          }
-
-          // Use averaged PMScan data
-          addDataPoint(
-            averagedData, // Use averaged data from rolling buffer
-            latestLocation || undefined,
-            { location: selectedLocation, activity: selectedActivity },
-            automaticContext,
-            enrichedLocationName, // NEW: Pass enriched location separately
-            geohashSettings.enabled && latestLocation?.latitude && latestLocation?.longitude 
-              ? encodeGeohash(latestLocation.latitude, latestLocation.longitude, geohashSettings.precision)
-              : undefined // NEW: Pass geohash when enabled and location available
+          const enrichmentResult = await enrichLocation(
+            location.latitude,
+            location.longitude,
+            averagedData.timestamp.toISOString()
           );
-        };
-
-        handleContextAndDataPoint();
-        
-        lastDataRef.current = {
-          pm25: averagedData.pm25,
-          timestamp: currentTimestamp,
-        };
-        
-        // Update last recorded time for frequency control (already set in handleContextAndDataPoint)
-        // lastRecordedTimeRef.current is already set to averagedData.timestamp
+          
+          if (enrichmentResult?.display_name) {
+            enrichedLocationName = enrichmentResult.display_name;
+            devLogger.info('✅ Location enriched:', enrichedLocationName);
+          }
+        } catch (error) {
+          logger.warn('⚠️ Failed to enrich location during recording:', error);
         }
       }
-    }
+
+      const automaticContext = autoContextSettings.enabled ? await updateContextIfNeeded(
+        averagedData,
+        location || undefined,
+        speed,
+        isMoving
+      ) : '';
+
+      // Use averaged data timestamp
+      lastRecordedTimeRef.current = averagedData.timestamp;
+
+      // Fetch weather data only if enabled and location is available
+      let weatherDataId: string | null = null;
+      if (weatherLoggingEnabled && location?.latitude && location?.longitude) {
+        try {
+          weatherDataId = await getWeatherForMeasurement(
+            location.latitude,
+            location.longitude,
+            averagedData.timestamp
+          );
+        } catch (error) {
+          logger.debug('⚠️ Failed to fetch weather data for measurement:', error);
+        }
+      }
+
+      // Use averaged PMScan data
+      addDataPoint(
+        averagedData,
+        location || undefined,
+        { location: selectedLocation, activity: selectedActivity },
+        automaticContext,
+        enrichedLocationName,
+        geohashSettings.enabled && location?.latitude && location?.longitude 
+          ? encodeGeohash(location.latitude, location.longitude, geohashSettings.precision)
+          : undefined
+      );
+
+      lastDataRef.current = {
+        pm25: averagedData.pm25,
+        timestamp: currentTimestamp,
+      };
+    };
+
+    // Collect data immediately on recording start
+    collectData();
+    
+    // Then collect at regular intervals
+    logger.info(`⏰ Starting data collection interval: ${frequencyMs}ms (${recordingFrequency})`);
+    const intervalId = setInterval(collectData, frequencyMs);
+    
+    return () => {
+      logger.info('🛑 Stopping data collection interval');
+      clearInterval(intervalId);
+    };
   }, [
     isRecording,
-    currentData,
-    isConnected,
-    latestLocation,
+    recordingFrequency,
     addDataPoint,
     selectedLocation,
     selectedActivity,
     updateContextIfNeeded,
-    recordingFrequency,
     getWeatherForMeasurement,
     weatherLoggingEnabled,
     enrichLocation,
-    geohashSettings,
-    encodeGeohash,
+    geohashSettings.enabled,
+    geohashSettings.precision,
+    autoContextSettings.enabled,
   ]);
 
   // Clear location history and rolling buffer when recording starts

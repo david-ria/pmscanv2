@@ -4,6 +4,7 @@ import { parsePMScanDataPayload } from '@/lib/pmscan/dataParser';
 import { exponentialBackoff } from '@/lib/pmscan/utils';
 import { globalConnectionManager } from '@/lib/pmscan/globalConnectionManager';
 import { rollingBufferService } from '@/services/rollingBufferService';
+import { recordingService } from '@/services/recordingService';
 import * as logger from '@/utils/logger';
 
 export function usePMScanBluetooth() {
@@ -46,8 +47,10 @@ export function usePMScanBluetooth() {
             } : null
           });
           
-          // Feed every reading into rolling buffer for averaging
-          rollingBufferService.addReading(data);
+          // Feed data to rolling buffer for averaging ONLY when recording
+          if (recordingService.getState().isRecording) {
+            rollingBufferService.addReading(data);
+          }
           
           return data;
         }

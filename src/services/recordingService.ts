@@ -32,6 +32,8 @@ export interface RecordingActions {
 class RecordingService {
   private static instance: RecordingService;
   private listeners: Set<(state: RecordingState) => void> = new Set();
+  private lastAddTime: number = 0;
+  private readonly MIN_ADD_INTERVAL_MS = 900; // 900ms throttle for safety
   
   private state: RecordingState = {
     recordingData: [],
@@ -141,6 +143,17 @@ class RecordingService {
       return;
     }
 
+    // Internal throttle for safety - prevent too frequent additions
+    const now = Date.now();
+    if (now - this.lastAddTime < this.MIN_ADD_INTERVAL_MS) {
+      logger.debug('⚠️ addDataPoint throttled - too frequent', {
+        timeSinceLastAdd: now - this.lastAddTime,
+        minInterval: this.MIN_ADD_INTERVAL_MS
+      });
+      return;
+    }
+    this.lastAddTime = now;
+
     const entry: RecordingEntry = {
       pmData,
       location,
@@ -179,6 +192,9 @@ class RecordingService {
       recordingData: [],
       recordingStartTime: null, // Clear start time when data is cleared
     };
+
+    // Reset throttle timer when clearing data
+    this.lastAddTime = 0;
 
     this.notify();
     
