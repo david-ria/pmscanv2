@@ -165,7 +165,7 @@ export const initMap = () => {
 };
 
 /**
- * Defer service worker registration using vite-plugin-pwa
+ * Defer service worker registration - Manual registration approach
  */
 export const initServiceWorker = () => {
   deferredInit.addTask({
@@ -177,30 +177,41 @@ export const initServiceWorker = () => {
         return;
       }
       
+      if (!('serviceWorker' in navigator)) {
+        console.warn('[PWA] Service Workers not supported in this browser');
+        return;
+      }
+      
       try {
-        // Use vite-plugin-pwa's registerSW for unified registration
-        const { registerSW } = await import('virtual:pwa-register/react');
+        // Manual registration with module type for modern browsers
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+          type: 'module',
+          scope: '/'
+        });
         
-        const updateSW = registerSW({
-          immediate: true,
-          onNeedRefresh() {
-            console.debug('[PWA] New content available, please refresh');
-            // Future: Show update notification to user
-          },
-          onOfflineReady() {
-            console.debug('[PWA] App ready to work offline');
-          },
-          onRegistered(registration) {
-            console.debug('[PWA] Service Worker registered', registration);
-          },
-          onRegisterError(error) {
-            console.error('[PWA] Service Worker registration failed:', error);
+        console.debug('[PWA] Service Worker registered:', {
+          scope: registration.scope,
+          active: !!registration.active
+        });
+        
+        // Wait for service worker to be ready
+        await navigator.serviceWorker.ready;
+        console.debug('[PWA] Service Worker ready and active');
+        
+        // Listen for updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.debug('[PWA] New content available, please refresh');
+              }
+            });
           }
         });
         
-        console.debug('[PWA] Service Worker initialization complete');
       } catch (error) {
-        console.error('[PWA] Failed to initialize Service Worker:', error);
+        console.error('[PWA] Service Worker registration failed:', error);
       }
     },
     timeout: 2000
