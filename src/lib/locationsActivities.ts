@@ -27,7 +27,7 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
       { id: 'rest', name: 'Rest', icon: '😴', description: 'Resting or sleeping' },
       { id: 'indoor', name: 'Indoor', icon: '🏠', description: 'General indoor activities' },
       { id: 'cooking', name: 'Cooking', icon: '👨‍🍳', description: 'Cooking or food preparation' },
-      { id: 'meal', name: 'meal', icon: '👨‍🍳', description: 'Time to eat' },      
+      { id: 'meal', name: 'Meal', icon: '👨‍🍳', description: 'Time to eat' },      
       { id: 'cleaning', name: 'Cleaning', icon: '🧹', description: 'Household cleaning' },
       { id: 'DIY', name: 'DIY', icon: '🔨', description: 'DIY and home improvement activities' },
       { id: 'studying', name: 'Studying', icon: '📚', description: 'Reading or studying' },
@@ -64,12 +64,12 @@ export const DEFAULT_LOCATIONS: LocationType[] = [
     description: 'Indoor air different than work and home',
     activities: [
       { id: 'shopping', name: 'Shopping', icon: '🛒', description: 'Shopping activities' },
-      { id: 'Parking', name: 'Parking', icon: '🚗', description: 'Underground parking' },
+      { id: 'parking', name: 'Parking', icon: '🚗', description: 'Underground parking' },
       { id: 'walking', name: 'Walking', icon: '🚶', description: 'Walking indoors' },
     ]
   },
   {
-    id: 'Outdoor',
+    id: 'outdoor',
     name: 'Outdoor',
     icon: '🏙️',
     description: 'Outdoor activities in open air',
