@@ -183,33 +183,44 @@ export const initServiceWorker = () => {
       }
       
       try {
-        // Manual registration with module type for modern browsers
-        const registration = await navigator.serviceWorker.register('/sw.js', {
-          type: 'module',
-          scope: '/'
-        });
-        
-        console.debug('[PWA] Service Worker registered:', {
-          scope: registration.scope,
-          active: !!registration.active
-        });
-        
-        // Wait for service worker to be ready
-        await navigator.serviceWorker.ready;
-        console.debug('[PWA] Service Worker ready and active');
-        
-        // Listen for updates
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.debug('[PWA] New content available, please refresh');
-              }
-            });
-          }
-        });
-        
+        if (import.meta.env.DEV) {
+          // DEV: Use virtual module for dev-sw
+          const { registerSW } = await import('virtual:pwa-register');
+          registerSW({
+            immediate: true,
+            onRegistered(reg) {
+              console.debug('[PWA][DEV] SW registered:', { scope: reg?.scope, dev: true });
+            },
+            onRegisterError(error) {
+              console.error('[PWA][DEV] SW registration failed:', error);
+            }
+          });
+        } else {
+          // PROD: Manual registration with module type
+          const registration = await navigator.serviceWorker.register('/sw.js', {
+            type: 'module',
+            scope: '/'
+          });
+          
+          console.debug('[PWA][PROD] SW registered:', {
+            scope: registration.scope,
+            active: !!registration.active
+          });
+          
+          await navigator.serviceWorker.ready;
+          console.debug('[PWA][PROD] SW ready and active');
+          
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.debug('[PWA] New content available, please refresh');
+                }
+              });
+            }
+          });
+        }
       } catch (error) {
         console.error('[PWA] Service Worker registration failed:', error);
       }

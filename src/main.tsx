@@ -45,7 +45,15 @@ const scheduleNonEssentialWork = () => {
 // Service Worker registration handled by deferredInit
 
 // Start non-essential work scheduling
-scheduleNonEssentialWork();
+if (import.meta.env.DEV) {
+  // DEV: Initialize immediately to see SW in DevTools
+  import('./lib/deferredInit').then(({ initNonEssentialFeatures }) => {
+    initNonEssentialFeatures();
+  });
+} else {
+  // PROD: Defer initialization
+  scheduleNonEssentialWork();
+}
 
 createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
