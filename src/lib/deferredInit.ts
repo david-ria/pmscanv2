@@ -183,13 +183,22 @@ export const initServiceWorker = () => {
       }
       
       try {
-        if (import.meta.env.DEV) {
-          // DEV: Use virtual module for dev-sw
+        // Detect if we're on Lovable preview or local dev
+        const isLovablePreview = window.location.hostname.includes('lovable.app') || 
+                                 window.location.hostname.includes('lovableproject.com');
+        const isDev = import.meta.env.DEV || isLovablePreview;
+
+        if (isDev) {
+          // DEV or Lovable: Use virtual module for dev-sw
           const { registerSW } = await import('virtual:pwa-register');
           registerSW({
             immediate: true,
             onRegistered(reg) {
-              console.debug('[PWA][DEV] SW registered:', { scope: reg?.scope, dev: true });
+              console.debug('[PWA][DEV] SW registered:', { 
+                scope: reg?.scope, 
+                dev: true,
+                lovable: isLovablePreview 
+              });
             },
             onRegisterError(error) {
               console.error('[PWA][DEV] SW registration failed:', error);
