@@ -16,9 +16,9 @@ export function GroupSelector() {
     if (success) {
       console.log('✅ Group switched successfully, navigating to home...');
       
-      // Force a small delay to ensure state is updated before navigation
+      // Navigate to home while preserving the group parameter
       setTimeout(() => {
-        navigate('/');
+        navigate(`/?group=${groupId}`);
       }, 100);
     }
   };

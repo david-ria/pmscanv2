@@ -117,8 +117,16 @@ export const useGroupSettings = () => {
     logger.debug('Group ID from URL:', groupId);
 
     if (groupId) {
-      const groupConfig = getGroupConfig(groupId);
-      logger.debug('Group config found:', groupConfig);
+      // Try static config first
+      let groupConfig = getGroupConfig(groupId);
+      
+      // If not found, try DB groups
+      if (!groupConfig) {
+        const dbGroup = groups.find(g => g.id === groupId);
+        if (dbGroup) {
+          groupConfig = createGroupConfigFromDB(dbGroup);
+        }
+      }
 
       if (groupConfig) {
         setActiveGroup(groupConfig);
@@ -134,7 +142,7 @@ export const useGroupSettings = () => {
           duration: 3000,
         });
       } else {
-        console.error('Group not found:', groupId); // Debug log
+        console.error('Group not found:', groupId);
         toast({
           title: 'Group Not Found',
           description: `Group "${groupId}" does not exist`,
@@ -145,15 +153,31 @@ export const useGroupSettings = () => {
       // Check if we have a stored group
       const storedGroupId = localStorage.getItem('activeGroupId');
       logger.debug('Stored group ID:', storedGroupId);
+      
       if (storedGroupId) {
-        const groupConfig = getGroupConfig(storedGroupId);
+        // Try static config first
+        let groupConfig = getGroupConfig(storedGroupId);
+        
+        // If not found, try DB groups
+        if (!groupConfig) {
+          const dbGroup = groups.find(g => g.id === storedGroupId);
+          if (dbGroup) {
+            groupConfig = createGroupConfigFromDB(dbGroup);
+          }
+        }
+        
         if (groupConfig) {
           setActiveGroup(groupConfig);
           setIsGroupMode(true);
+          
+          // Re-add to URL for consistency
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.set('group', storedGroupId);
+          window.history.replaceState({}, '', newUrl.toString());
         }
       }
     }
-  }, [searchParams, toast]);
+  }, [searchParams, toast, groups]);
 
   const clearGroupSettings = () => {
     setActiveGroup(null);
