@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,11 +55,11 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
 
   if (!features.customEvents) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Premium Feature</DialogTitle>
-          </DialogHeader>
+      <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+        <ResponsiveDialogContent className="max-w-md">
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Premium Feature</ResponsiveDialogTitle>
+          </ResponsiveDialogHeader>
           <div className="text-center py-6">
             <p className="text-muted-foreground mb-4">
               Custom event types are available in Premium and Enterprise plans.
@@ -63,17 +68,17 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
               Close
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     );
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Group Event Types</DialogTitle>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-w-4xl">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Group Event Types</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
 
         <div className="space-y-6">
           {/* Existing Events */}
@@ -230,7 +235,7 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
             </Button>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

@@ -1,10 +1,10 @@
 import { Shield, Zap, Crown } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -110,16 +110,16 @@ export function GroupSubscriptionDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-center">
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-w-2xl">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="text-xl font-bold text-center">
             Group Access Levels
-          </DialogTitle>
+          </ResponsiveDialogTitle>
           <p className="text-center text-muted-foreground text-sm">
             Select an access level to change group functionalities
           </p>
-        </DialogHeader>
+        </ResponsiveDialogHeader>
 
         <div className="mt-4 grid grid-cols-1 gap-3">
           {accessLevels.map((level) => {
@@ -177,7 +177,7 @@ export function GroupSubscriptionDialog({
             );
           })}
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
