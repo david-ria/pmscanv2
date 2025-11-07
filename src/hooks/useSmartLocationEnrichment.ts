@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import Bottleneck from 'bottleneck';
 import { supabase } from '@/integrations/supabase/client';
 import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
 import { 
@@ -39,6 +40,23 @@ export function useSmartLocationEnrichment() {
   // Use refs for values used in enrichLocation callback to prevent recreation
   const recentLocationsRef = useRef<LocationPoint[]>([]);
   const cacheRef = useRef<EnrichmentCache[]>([]);
+
+  // Bottleneck limiter for Nominatim API (1 request per second)
+  const limiterRef = useRef<Bottleneck | null>(null);
+  
+  useEffect(() => {
+    limiterRef.current = new Bottleneck({
+      minTime: 1000, // Minimum 1 second between requests (Nominatim rate limit)
+      maxConcurrent: 1, // Only 1 concurrent request
+      reservoir: 5, // Allow burst of 5 requests
+      reservoirRefreshAmount: 5,
+      reservoirRefreshInterval: 60 * 1000, // Refresh every minute
+    });
+
+    return () => {
+      limiterRef.current?.stop();
+    };
+  }, []);
 
   // Update refs when state changes
   useEffect(() => {
@@ -82,10 +100,10 @@ export function useSmartLocationEnrichment() {
     localStorage.setItem(PATTERNS_STORAGE_KEY, JSON.stringify(patterns));
   }, [patterns]);
 
-  // Process enrichment queue
+  // Process enrichment queue with Bottleneck rate limiting
   useEffect(() => {
     const processQueue = async () => {
-      if (isProcessingQueue.current || enrichmentQueue.current.length === 0) return;
+      if (isProcessingQueue.current || enrichmentQueue.current.length === 0 || !limiterRef.current) return;
       
       isProcessingQueue.current = true;
       
@@ -97,24 +115,28 @@ export function useSmartLocationEnrichment() {
         }
         
         const networkQuality = getNetworkQuality();
-        const batchSize = networkQuality === 'fast' ? 3 : 1;
+        const batchSize = networkQuality === 'fast' ? 3 : networkQuality === 'slow' ? 1 : 2;
         
         const prioritized = prioritizeEnrichmentQueue(enrichmentQueue.current, patterns);
         const batch = prioritized.splice(0, batchSize);
         
-        for (const location of batch) {
-          await enrichLocationFromAPI(location);
-          // Delay between calls to respect Nominatim rate limits
-          await new Promise(resolve => setTimeout(resolve, networkQuality === 'fast' ? 500 : 1500));
-        }
+        // Use Bottleneck to schedule API calls with proper rate limiting
+        const promises = batch.map(location => 
+          limiterRef.current!.schedule(() => enrichLocationFromAPI(location))
+        );
         
+        await Promise.all(promises);
         enrichmentQueue.current = prioritized;
+        
+        rateLimitedDebug('queue-processing', 5000, `📋 Processed ${batch.length} locations, ${enrichmentQueue.current.length} remaining`);
+      } catch (error) {
+        console.error('Queue processing error:', error);
       } finally {
         isProcessingQueue.current = false;
       }
     };
     
-    const interval = setInterval(processQueue, 2000);
+    const interval = setInterval(processQueue, 3000);
     return () => clearInterval(interval);
   }, [patterns]);
 
