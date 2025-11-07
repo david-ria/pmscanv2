@@ -195,8 +195,8 @@ class RecordingService {
       navigator.serviceWorker.ready.then(registration => {
         if (registration.active) {
           registration.active.postMessage({
-            type: 'STORE_DATA',
-            data: entry,
+            type: 'STORE_BACKGROUND_DATA',
+            payload: entry,
           });
           logger.debug('📤 Data sent to Service Worker for background storage');
         }
