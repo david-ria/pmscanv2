@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { offlineAwareSupabase } from '@/lib/supabaseSafeWrapper';
 
 export interface Group {
   id: string;
@@ -82,17 +83,25 @@ export const useGroups = () => {
       setError(null);
       
       // First fetch groups
-      const { data: groupsData, error: groupsError } = await supabase
-        .from('groups')
-        .select('*');
+      const groupsQuery = supabase.from('groups').select('*');
+      const { data: groupsData, error: groupsError, isOffline: groupsOffline } = 
+        await offlineAwareSupabase.query(groupsQuery);
 
+      if (groupsOffline) {
+        setLoading(false);
+        return; // Silently fail when offline
+      }
       if (groupsError) throw groupsError;
 
       // Then fetch memberships separately to avoid aggregate issues
-      const { data: membershipsData, error: membershipsError } = await supabase
-        .from('group_memberships')
-        .select('group_id, role, user_id');
+      const membershipsQuery = supabase.from('group_memberships').select('group_id, role, user_id');
+      const { data: membershipsData, error: membershipsError, isOffline: membershipsOffline } = 
+        await offlineAwareSupabase.query(membershipsQuery);
 
+      if (membershipsOffline) {
+        setLoading(false);
+        return; // Silently fail when offline
+      }
       if (membershipsError) throw membershipsError;
 
       // Combine the data
