@@ -1,15 +1,10 @@
-import { ReactNode, Suspense, lazy } from 'react';
+import { ReactNode } from 'react';
 
-// Lazy load heavy context providers
-const AuthProvider = lazy(() => 
-  import('@/contexts/AuthContext').then(module => ({ default: module.AuthProvider }))
-);
-const ThresholdProvider = lazy(() => 
-  import('@/contexts/ThresholdContext').then(module => ({ default: module.ThresholdProvider }))
-);
-const AlertProvider = lazy(() => 
-  import('@/contexts/AlertContext').then(module => ({ default: module.AlertProvider }))
-);
+// ✅ Import synchronously - critical for recording stability during state changes
+// (login/logout, threshold modifications, alert settings, etc.)
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ThresholdProvider } from '@/contexts/ThresholdContext';
+import { AlertProvider } from '@/contexts/AlertContext';
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -17,18 +12,12 @@ interface AppProvidersProps {
 
 export function AppProviders({ children }: AppProvidersProps) {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background animate-pulse" />}>
-      <AuthProvider>
-        <Suspense fallback={<div className="min-h-screen bg-background animate-pulse" />}>
-          <ThresholdProvider>
-            <Suspense fallback={<div className="min-h-screen bg-background animate-pulse" />}>
-              <AlertProvider>
-                {children}
-              </AlertProvider>
-            </Suspense>
-          </ThresholdProvider>
-        </Suspense>
-      </AuthProvider>
-    </Suspense>
+    <AuthProvider>
+      <ThresholdProvider>
+        <AlertProvider>
+          {children}
+        </AlertProvider>
+      </ThresholdProvider>
+    </AuthProvider>
   );
 }
