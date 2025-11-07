@@ -89,12 +89,18 @@ class RecordingService {
     });
     
     // Enable background collection via service worker
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'START_BACKGROUND_RECORDING',
-        frequency,
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(registration => {
+        if (registration.active) {
+          registration.active.postMessage({
+            type: 'START_BACKGROUND_RECORDING',
+            frequency,
+          });
+          logger.debug('🎬 Service worker message sent');
+        }
+      }).catch(error => {
+        logger.warn('⚠️ Failed to send START message to Service Worker:', error);
       });
-      logger.debug('🎬 Service worker message sent');
     }
     
     logger.debug('🎬 About to notify listeners:', this.listeners.size, 'listeners');
@@ -127,9 +133,15 @@ class RecordingService {
     backgroundKeepAlive.stop();
     
     // Stop background collection via service worker
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'STOP_BACKGROUND_RECORDING',
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(registration => {
+        if (registration.active) {
+          registration.active.postMessage({
+            type: 'STOP_BACKGROUND_RECORDING',
+          });
+        }
+      }).catch(error => {
+        logger.warn('⚠️ Failed to send STOP message to Service Worker:', error);
       });
     }
     
@@ -177,6 +189,21 @@ class RecordingService {
       ...this.state,
       recordingData: [...this.state.recordingData, entry],
     };
+
+    // Send data to Service Worker for background storage
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(registration => {
+        if (registration.active) {
+          registration.active.postMessage({
+            type: 'STORE_DATA',
+            data: entry,
+          });
+          logger.debug('📤 Data sent to Service Worker for background storage');
+        }
+      }).catch(error => {
+        logger.warn('⚠️ Failed to send data to Service Worker:', error);
+      });
+    }
 
     this.notify();
     
