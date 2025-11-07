@@ -72,31 +72,51 @@ const MinimalSkeleton = () => (
 );
 
 const App = () => {
-  // Preload critical chunks on app startup
+  // Preload critical chunks and route pages on app startup when online
   useEffect(() => {
-    // Use requestIdleCallback to preload during idle time
+    const preload = () => {
+      preloadCriticalChunks();
+      if (navigator.onLine) {
+        Promise.all([
+          import('./pages/RealTime'),
+          import('./pages/History'),
+          import('./pages/Analysis'),
+          import('./pages/Groups'),
+          import('./pages/GroupDetails'),
+          import('./pages/Profile'),
+          import('./pages/CustomThresholds'),
+          import('./pages/CustomAlerts'),
+          import('./pages/NotFound'),
+        ]).catch(() => {
+          // Ignore preload failures (likely offline)
+        });
+      }
+    };
+
     if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => preloadCriticalChunks(), { timeout: 2000 });
+      requestIdleCallback(preload, { timeout: 2000 });
     } else {
-      setTimeout(preloadCriticalChunks, 100);
+      setTimeout(preload, 100);
     }
   }, []);
 
   return (
-    <ErrorBoundary>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <OfflineDetector />
-        <div className="relative min-h-screen">
-          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
-            <AppProviders>
-              <AppRoutes />
-            </AppProviders>
-          </Suspense>
-        </div>
-      </TooltipProvider>
-    </ErrorBoundary>
+    <>
+      <Toaster />
+      <Sonner />
+      <OfflineDetector />
+      <ErrorBoundary>
+        <TooltipProvider>
+          <div className="relative min-h-screen">
+            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
+              <AppProviders>
+                <AppRoutes />
+              </AppProviders>
+            </Suspense>
+          </div>
+        </TooltipProvider>
+      </ErrorBoundary>
+    </>
   );
 };
 
