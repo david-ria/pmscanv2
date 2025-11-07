@@ -40,6 +40,9 @@ const PMLineGraph = lazy(() =>
 const GlobalDataCollector = lazy(() => 
   import('@/components/GlobalDataCollector').then(module => ({ default: module.GlobalDataCollector }))
 );
+const OfflineDetector = lazy(() => 
+  import('@/components/OfflineDetector').then(module => ({ default: module.OfflineDetector }))
+);
 
 // Import skeleton screens
 const AppLayoutSkeleton = lazy(() => 
@@ -84,6 +87,9 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <Suspense fallback={null}>
+          <OfflineDetector />
+        </Suspense>
         <div className="relative min-h-screen">
           <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
             <AppProviders>

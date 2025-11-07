@@ -20,6 +20,15 @@ export async function safeSupabaseRpc<T = any>(
   functionName: string,
   params?: Record<string, any>
 ): Promise<SafeSupabaseResult<T>> {
+  // Preventive offline check
+  if (!navigator.onLine) {
+    return {
+      data: null,
+      error: 'Vous êtes hors ligne. Cette action nécessite une connexion internet.',
+      isOffline: true
+    };
+  }
+  
   try {
     const { data, error } = await (supabase as any).rpc(functionName, params);
     
@@ -53,6 +62,15 @@ export async function safeSupabaseRpc<T = any>(
 export async function safeSupabaseQuery<T = any>(
   queryBuilder: any
 ): Promise<SafeSupabaseResult<T>> {
+  // Preventive offline check
+  if (!navigator.onLine) {
+    return {
+      data: null,
+      error: 'Vous êtes hors ligne. Cette action nécessite une connexion internet.',
+      isOffline: true
+    };
+  }
+  
   try {
     const { data, error } = await queryBuilder;
     
@@ -87,6 +105,15 @@ export async function safeSupabaseFunction<T = any>(
   functionName: string,
   options?: { body?: any; headers?: Record<string, string> }
 ): Promise<SafeSupabaseResult<T>> {
+  // Preventive offline check
+  if (!navigator.onLine) {
+    return {
+      data: null,
+      error: 'Vous êtes hors ligne. Cette action nécessite une connexion internet.',
+      isOffline: true
+    };
+  }
+  
   try {
     const { data, error } = await supabase.functions.invoke(functionName, options);
     
