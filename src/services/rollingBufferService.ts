@@ -1,5 +1,6 @@
 import { PMScanData } from '@/lib/pmscan/types';
 import * as logger from '@/utils/logger';
+import { createEpochMs, type EpochMs } from '@/utils/timestamp';
 
 interface BufferedReading {
   data: PMScanData;
@@ -26,7 +27,7 @@ class RollingBufferService {
    * Automatically prunes readings older than 60 seconds
    */
   addReading(data: PMScanData): void {
-    const now = Date.now();
+    const now = createEpochMs(); // Standardized timestamp
     
     // Add new reading
     this.buffer.push({
@@ -57,7 +58,7 @@ class RollingBufferService {
       return null;
     }
 
-    const now = Date.now();
+    const now = createEpochMs(); // Standardized timestamp
     const windowMs = windowSeconds * 1000;
     const cutoffTime = now - windowMs;
 

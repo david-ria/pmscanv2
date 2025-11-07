@@ -10,6 +10,7 @@
 
 import { MissionData, MeasurementData } from '@/lib/dataStorage';
 import logger from '@/utils/logger';
+import { createEpochMs, type EpochMs } from '@/utils/timestamp';
 
 const DB_NAME = 'PMScan_HybridStorage';
 const DB_VERSION = 1;
@@ -122,7 +123,7 @@ class HybridStorageService {
       const data = {
         missionId,
         measurements,
-        timestamp: Date.now(),
+        timestamp: createEpochMs(), // Standardized timestamp
       };
 
       const request = store.put(data);

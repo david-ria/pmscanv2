@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { LocationData } from '@/types/PMScan';
 import { MissionData } from '@/lib/dataStorage';
 import * as logger from '@/utils/logger';
+import { createEpochMs, type EpochMs } from '@/utils/timestamp';
 
 export interface WeatherData {
   id: string;
@@ -27,7 +28,7 @@ interface WeatherRequest {
 
 class WeatherService {
   private static instance: WeatherService;
-  private cache: Map<string, { data: WeatherData; expires: number }> = new Map();
+  private cache: Map<string, { data: WeatherData; expires: EpochMs }> = new Map();
   private readonly CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
 
   static getInstance(): WeatherService {
@@ -42,8 +43,8 @@ class WeatherService {
     return `${lat.toFixed(4)}_${lng.toFixed(4)}_${time}`;
   }
 
-  private isCacheValid(cacheEntry: { data: WeatherData; expires: number }): boolean {
-    return Date.now() < cacheEntry.expires;
+  private isCacheValid(cacheEntry: { data: WeatherData; expires: EpochMs }): boolean {
+    return createEpochMs() < cacheEntry.expires; // Standardized timestamp comparison
   }
 
   async fetchWeatherData(request: WeatherRequest): Promise<WeatherData | null> {
@@ -84,7 +85,7 @@ class WeatherService {
         // Cache the result
         this.cache.set(cacheKey, {
           data: data.weatherData,
-          expires: Date.now() + this.CACHE_DURATION
+          expires: (createEpochMs() + this.CACHE_DURATION) as EpochMs // Standardized cache expiry
         });
 
         return data.weatherData;

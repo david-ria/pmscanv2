@@ -5,6 +5,7 @@ import { RecordingEntry, MissionContext } from '@/types/recording';
 import { setGlobalRecording, setBackgroundRecording } from '@/lib/pmscan/globalConnectionManager';
 import * as logger from '@/utils/logger';
 import { backgroundKeepAlive } from '@/lib/backgroundKeepAlive';
+import { createEpochMs, type EpochMs } from '@/utils/timestamp';
 
 export interface RecordingState {
   recordingData: RecordingEntry[];
@@ -179,7 +180,7 @@ class RecordingService {
     }
 
     // Internal throttle for safety - prevent too frequent additions
-    const now = Date.now();
+    const now = createEpochMs(); // Standardized timestamp
     if (now - this.lastAddTime < this.MIN_ADD_INTERVAL_MS) {
       logger.debug('⚠️ addDataPoint throttled - too frequent', {
         timeSinceLastAdd: now - this.lastAddTime,

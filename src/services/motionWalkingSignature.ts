@@ -1,4 +1,5 @@
 import { AUTO_CTX_CFG } from '@/lib/autoContext.config';
+import { createEpochMs } from '@/utils/timestamp';
 
 export interface WalkingSigSnapshot {
   walkingSignature: boolean;   // booléen lissé
@@ -11,7 +12,7 @@ export class MotionWalkingSignature {
   private snapshot: WalkingSigSnapshot = {
     walkingSignature: false,
     walkingConfidence: 0,
-    lastUpdated: Date.now(),
+    lastUpdated: createEpochMs(), // Standardized timestamp
     isActive: false,
   };
 
@@ -62,7 +63,7 @@ export class MotionWalkingSignature {
     this.snapshot = {
       walkingSignature: false,
       walkingConfidence: 0,
-      lastUpdated: Date.now(),
+      lastUpdated: createEpochMs(), // Standardized timestamp
       isActive: false,
     };
     console.log('MotionWalkingSignature stopped');
@@ -81,7 +82,7 @@ export class MotionWalkingSignature {
         }
         this.snapshot.walkingSignature = false;
         this.snapshot.isActive = false;
-        this.snapshot.lastUpdated = Date.now();
+        this.snapshot.lastUpdated = createEpochMs(); // Standardized timestamp
       } else {
         // Reset warning flag if we start receiving events again
         hasWarned = false;
@@ -206,7 +207,7 @@ export class MotionWalkingSignature {
     // Calcul de la confiance basée sur la cadence normalisée
     const cadence = this.peakHistory.length > 0 ? (this.peakHistory.length / AUTO_CTX_CFG.ACC_WIN_SEC) * 60 : 0;
     this.snapshot.walkingConfidence = Math.min(1, Math.max(0, cadence / AUTO_CTX_CFG.ACC_CADENCE_MAX));
-    this.snapshot.lastUpdated = Date.now();
+    this.snapshot.lastUpdated = createEpochMs(); // Standardized timestamp
   }
 
   getSnapshot(): WalkingSigSnapshot {
