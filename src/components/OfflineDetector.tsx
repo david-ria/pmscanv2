@@ -7,7 +7,10 @@ import { toast } from '@/hooks/use-toast';
  */
 export const OfflineDetector = () => {
   useEffect(() => {
+    console.log('[OfflineDetector] Component mounted, navigator.onLine:', navigator.onLine);
+    
     const handleOffline = () => {
+      console.log('[OfflineDetector] Offline event triggered');
       toast({
         title: "📵 Mode hors ligne",
         description: "Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées.",
@@ -17,6 +20,7 @@ export const OfflineDetector = () => {
     };
 
     const handleOnline = () => {
+      console.log('[OfflineDetector] Online event triggered');
       toast({
         title: "✅ Connexion rétablie",
         description: "Vous êtes de nouveau en ligne. Synchronisation en cours...",
@@ -26,7 +30,10 @@ export const OfflineDetector = () => {
 
     // Check initial state
     if (!navigator.onLine) {
+      console.log('[OfflineDetector] Initial state: offline, showing toast');
       handleOffline();
+    } else {
+      console.log('[OfflineDetector] Initial state: online');
     }
 
     // Listen for status changes
@@ -34,6 +41,7 @@ export const OfflineDetector = () => {
     window.addEventListener('online', handleOnline);
 
     return () => {
+      console.log('[OfflineDetector] Component unmounting');
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online', handleOnline);
     };
