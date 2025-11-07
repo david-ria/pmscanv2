@@ -532,9 +532,9 @@ export function MissionDetailsDialog({
           <Card>
             <CardHeader>
               <div>
-                <CardTitle className="text-lg">Évolution des particules fines (µg/m³)</CardTitle>
+                <CardTitle className="text-lg">{t('graph.title')}</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {mission.measurementsCount} points de données • Dernière mesure: {formatDateTime(mission.endTime)}
+                  {mission.measurementsCount} {t('graph.dataPoints')} • {t('graph.lastMeasurement')}: {formatDateTime(mission.endTime)}
                 </p>
               </div>
             </CardHeader>

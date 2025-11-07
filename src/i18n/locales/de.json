@@ -174,7 +174,26 @@
     "minimize": "Minimieren",
     "noData": "Keine Daten aufgezeichnet",
     "waitingData": "Warte auf Daten...",
-    "startRecording": "Aufzeichnung starten, um Daten zu sehen"
+    "startRecording": "Aufzeichnung starten, um Daten zu sehen",
+    "newReading": "Neue Messung",
+    "gps": "GPS",
+    "tags": "Tags",
+    "auto": "Auto",
+    "enrichedLocation": "Standort",
+    "geohash": "Geohash"
+  },
+  "offline": {
+    "title": "📵 Offline-Modus",
+    "description": "Sie sind offline. Einige Funktionen können eingeschränkt sein."
+  },
+  "online": {
+    "title": "✅ Verbindung wiederhergestellt",
+    "description": "Sie sind wieder online. Synchronisierung läuft..."
+  },
+  "graph": {
+    "title": "Entwicklung der Feinstaub (µg/m³)",
+    "dataPoints": "Datenpunkte",
+    "lastMeasurement": "Letzte Messung"
   },
   "locations": {
     "home": "Zuhause",

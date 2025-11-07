@@ -177,7 +177,26 @@
     "minimize": "Minimize",
     "noData": "No data recorded",
     "waitingData": "Waiting for data...",
-    "startRecording": "Start recording to see data"
+    "startRecording": "Start recording to see data",
+    "newReading": "New reading",
+    "gps": "GPS",
+    "tags": "Tags",
+    "auto": "Auto",
+    "enrichedLocation": "Location",
+    "geohash": "Geohash"
+  },
+  "offline": {
+    "title": "📵 Offline Mode",
+    "description": "You are offline. Some features may be limited."
+  },
+  "online": {
+    "title": "✅ Connection Restored",
+    "description": "You are back online. Syncing..."
+  },
+  "graph": {
+    "title": "Fine Particle Evolution (µg/m³)",
+    "dataPoints": "data points",
+    "lastMeasurement": "Last measurement"
   },
   "locations": {
     "home": "Home",

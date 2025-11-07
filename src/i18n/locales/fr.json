@@ -178,7 +178,26 @@
     "minimize": "Réduire",
     "noData": "Aucune donnée enregistrée",
     "waitingData": "En attente de données...",
-    "startRecording": "Démarrez un enregistrement pour voir les données"
+    "startRecording": "Démarrez un enregistrement pour voir les données",
+    "newReading": "Nouvelle lecture",
+    "gps": "GPS",
+    "tags": "Tags",
+    "auto": "Auto",
+    "enrichedLocation": "Location",
+    "geohash": "Geohash"
+  },
+  "offline": {
+    "title": "📵 Mode hors ligne",
+    "description": "Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées."
+  },
+  "online": {
+    "title": "✅ Connexion rétablie",
+    "description": "Vous êtes de nouveau en ligne. Synchronisation en cours..."
+  },
+  "graph": {
+    "title": "Évolution des particules fines (µg/m³)",
+    "dataPoints": "points de données",
+    "lastMeasurement": "Dernière mesure"
   },
   "locations": {
     "home": "Maison",

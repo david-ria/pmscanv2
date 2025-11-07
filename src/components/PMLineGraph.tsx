@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatTime } from '@/utils/timeFormat';
+import { useTranslation } from 'react-i18next';
 import {
   LineChart,
   Line,
@@ -295,15 +296,17 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
     );
   }
 
+  const { t } = useTranslation();
+
   return (
     <div className={`bg-card border border-border rounded-lg p-4 ${className}`}>
       {!hideTitle && (
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-foreground">
-            Évolution des particules fines (µg/m³)
+            {t('graph.title')}
           </h3>
           <p className="text-sm text-muted-foreground">
-            {chartData.length} points de données • Dernière mesure:{' '}
+            {chartData.length} {t('graph.dataPoints')} • {t('graph.lastMeasurement')}:{' '}
             {chartData[chartData.length - 1]?.timestamp}
           </p>
         </div>

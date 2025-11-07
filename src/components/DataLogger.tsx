@@ -229,7 +229,7 @@ export function DataLogger({
               {displayData.map((entry) => (
                 <div key={entry.id} className="text-muted-foreground break-all">
                   <div className="text-xs">
-                    [{entry.timestamp.toLocaleTimeString()}] New reading: PM1=
+                    [{entry.timestamp.toLocaleTimeString()}] {t('realTime.newReading')}: PM1=
                     {entry.pmData.pm1.toFixed(1)}ug/m³,
                   </div>
                   <div className="text-xs pl-2">
@@ -239,7 +239,7 @@ export function DataLogger({
                   </div>
                   {entry.location && (
                     <div className="text-xs pl-2">
-                      GPS: {entry.location.latitude.toFixed(6)},{' '}
+                      {t('realTime.gps')}: {entry.location.latitude.toFixed(6)},{' '}
                       {entry.location.longitude.toFixed(6)} (+
                       {Math.round(entry.location.accuracy || 0)}m)
                     </div>
@@ -248,7 +248,7 @@ export function DataLogger({
                     (entry.missionContext.location ||
                       entry.missionContext.activity) && (
                       <div className="text-xs pl-2">
-                        Tags:{' '}
+                        {t('realTime.tags')}:{' '}
                         {[
                           entry.missionContext.location,
                           entry.missionContext.activity,
@@ -259,17 +259,17 @@ export function DataLogger({
                     )}
                     {entry.automaticContext && (
                      <div className="text-xs pl-2 text-blue-400">
-                       Auto: {entry.automaticContext}
+                       {t('realTime.auto')}: {entry.automaticContext}
                      </div>
                    )}
                    {entry.enrichedLocation && (
                      <div className="text-xs pl-2 text-green-400">
-                       Location: {entry.enrichedLocation}
+                       {t('realTime.enrichedLocation')}: {entry.enrichedLocation}
                      </div>
                    )}
                    {entry.geohash && (
                      <div className="text-xs pl-2 text-purple-400">
-                       Geohash: {entry.geohash}
+                       {t('realTime.geohash')}: {entry.geohash}
                      </div>
                    )}
                 </div>

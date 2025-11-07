@@ -174,7 +174,26 @@
     "minimize": "Minimitzar",
     "noData": "No s'han enregistrat dades",
     "waitingData": "Esperant dades...",
-    "startRecording": "Inicieu l'enregistrament per veure les dades"
+    "startRecording": "Inicieu l'enregistrament per veure les dades",
+    "newReading": "Nova lectura",
+    "gps": "GPS",
+    "tags": "Etiquetes",
+    "auto": "Auto",
+    "enrichedLocation": "Ubicació",
+    "geohash": "Geohash"
+  },
+  "offline": {
+    "title": "📵 Mode sense connexió",
+    "description": "Estàs sense connexió. Algunes funcions poden estar limitades."
+  },
+  "online": {
+    "title": "✅ Connexió restablerta",
+    "description": "Estàs en línia de nou. Sincronitzant..."
+  },
+  "graph": {
+    "title": "Evolució de partícules fines (µg/m³)",
+    "dataPoints": "punts de dades",
+    "lastMeasurement": "Última mesura"
   },
   "locations": {
     "home": "Casa",

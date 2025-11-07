@@ -1,19 +1,22 @@
 import { useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Component that detects online/offline status and displays appropriate toasts
  * Works independently of PWA Service Worker hooks
  */
 export const OfflineDetector = () => {
+  const { t } = useTranslation();
+
   useEffect(() => {
     console.log('[OfflineDetector] Component mounted, navigator.onLine:', navigator.onLine);
     
     const handleOffline = () => {
       console.log('[OfflineDetector] Offline event triggered');
       toast({
-        title: "📵 Mode hors ligne",
-        description: "Vous êtes hors ligne. Certaines fonctionnalités peuvent être limitées.",
+        title: t('offline.title'),
+        description: t('offline.description'),
         variant: "destructive",
         duration: Infinity, // Stays visible until dismissed or back online
       });
@@ -22,8 +25,8 @@ export const OfflineDetector = () => {
     const handleOnline = () => {
       console.log('[OfflineDetector] Online event triggered');
       toast({
-        title: "✅ Connexion rétablie",
-        description: "Vous êtes de nouveau en ligne. Synchronisation en cours...",
+        title: t('online.title'),
+        description: t('online.description'),
         duration: 3000,
       });
     };
