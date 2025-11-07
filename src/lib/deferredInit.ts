@@ -4,6 +4,7 @@
  */
 
 import { isTestMode, logTestModeDisabled } from '@/utils/testMode';
+import { toast } from '@/hooks/use-toast';
 
 interface DeferredTask {
   name: string;
@@ -202,6 +203,22 @@ export const initServiceWorker = () => {
             },
             onRegisterError(error) {
               console.error('[PWA][DEV] SW registration failed:', error);
+            },
+            onNeedRefresh() {
+              console.debug('[PWA] New content available');
+              toast({
+                title: "✨ Mise à jour disponible",
+                description: "Une nouvelle version est prête. Rafraîchissez la page pour l'installer.",
+                duration: 30000
+              });
+            },
+            onOfflineReady() {
+              console.debug('[PWA] App ready for offline use');
+              toast({
+                title: "Mode hors ligne activé",
+                description: "L'application est maintenant disponible hors ligne.",
+                duration: 3000
+              });
             }
           });
         } else {
