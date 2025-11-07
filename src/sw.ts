@@ -327,10 +327,28 @@ self.addEventListener('message', (event) => {
       break;
       
     case 'EMERGENCY_SAVE':
-      console.log('[SW] Emergency save triggered');
+      console.log('[SW] 🚨 Emergency save triggered');
+      const emergencyData = event.data.payload;
+      
+      // Store each data point from emergency save
+      if (emergencyData.recordingData && Array.isArray(emergencyData.recordingData)) {
+        emergencyData.recordingData.forEach((dataPoint: any) => {
+          storeData({
+            type: 'recording_data',
+            ...dataPoint,
+            emergencySave: true,
+            interruptionType: emergencyData.interruptionType
+          });
+        });
+      }
+      
+      // Store emergency event marker
       storeData({
         type: 'emergency_save',
-        ...event.data.payload,
+        dataPointCount: emergencyData.recordingData?.length || 0,
+        interruptionType: emergencyData.interruptionType,
+        missionContext: emergencyData.missionContext,
+        timestamp: emergencyData.timestamp
       });
       break;
       

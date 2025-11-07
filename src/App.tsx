@@ -31,6 +31,7 @@ const BottomNavigation = lazy(() =>
 // ✅ Import synchronously - critical for recording stability during language changes
 import { UnifiedDataProvider } from '@/components/UnifiedDataProvider';
 import { GlobalDataCollector } from '@/components/GlobalDataCollector';
+import { InterruptionDetector } from '@/components/InterruptionDetector';
 const CrashRecoveryInitializer = lazy(() => 
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
@@ -242,6 +243,9 @@ const AppRoutes = () => {
                   
                   {/* Global data collection that persists across pages */}
                   <GlobalDataCollector />
+                  
+                  {/* Interruption detection for emergency saves */}
+                  <InterruptionDetector />
                   
                   
                   {/* Keep chart alive across pages - hidden but still mounted */}
