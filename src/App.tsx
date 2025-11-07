@@ -28,17 +28,14 @@ const Header = lazy(() =>
 const BottomNavigation = lazy(() => 
   import('@/components/BottomNavigation').then(module => ({ default: module.BottomNavigation }))
 );
-const UnifiedDataProvider = lazy(() => 
-  import('@/components/UnifiedDataProvider').then(module => ({ default: module.UnifiedDataProvider }))
-);
+// ✅ Import synchronously - critical for recording stability during language changes
+import { UnifiedDataProvider } from '@/components/UnifiedDataProvider';
+import { GlobalDataCollector } from '@/components/GlobalDataCollector';
 const CrashRecoveryInitializer = lazy(() => 
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
 const PMLineGraph = lazy(() => 
   import('@/components/PMLineGraph').then(module => ({ default: module.PMLineGraph }))
-);
-const GlobalDataCollector = lazy(() => 
-  import('@/components/GlobalDataCollector').then(module => ({ default: module.GlobalDataCollector }))
 );
 
 // Import OfflineDetector synchronously - critical component that must load immediately
@@ -90,10 +87,9 @@ const App = () => {
           // Preload heavy shared components used across routes
           import('@/components/Header'),
           import('@/components/BottomNavigation'),
-          import('@/components/UnifiedDataProvider'),
           import('@/components/CrashRecoveryInitializer'),
           import('@/components/PMLineGraph'),
-          import('@/components/GlobalDataCollector'),
+          // UnifiedDataProvider and GlobalDataCollector are now imported synchronously
         ]).catch((err) => {
           // Ignore preload failures (likely offline)
           console.debug('[Preload] Skipped (offline?):', err?.name || err);
@@ -159,8 +155,8 @@ const AppRoutes = () => {
         path="/*"
         element={
           user ? (
-            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
-              <UnifiedDataProvider>
+            <UnifiedDataProvider>
+              <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
                 <CrashRecoveryInitializer />
                 <div className="min-h-screen bg-background">
                   <Header />
@@ -245,9 +241,7 @@ const AppRoutes = () => {
                   <BottomNavigation />
                   
                   {/* Global data collection that persists across pages */}
-                  <Suspense fallback={null}>
-                    <GlobalDataCollector />
-                  </Suspense>
+                  <GlobalDataCollector />
                   
                   
                   {/* Keep chart alive across pages - hidden but still mounted */}
@@ -257,8 +251,8 @@ const AppRoutes = () => {
                     </Suspense>
                   </div>
                 </div>
-              </UnifiedDataProvider>
-            </Suspense>
+              </Suspense>
+            </UnifiedDataProvider>
           ) : (
             <Navigate to="/auth" replace />
           )
