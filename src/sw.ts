@@ -114,19 +114,21 @@ const STORE_NAME = 'recordings';
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 
 let heartbeatTimer: number | null = null;
-let db: IDBDatabase | null = null;
 
-// Initialize IndexedDB
+// Initialize IndexedDB - Always open fresh connection
 async function initDB(): Promise<IDBDatabase> {
-  if (db) return db;
-
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      console.error('[SW] IndexedDB error:', request.error);
+      reject(request.error);
+    };
+    
     request.onsuccess = () => {
-      db = request.result;
-      resolve(db);
+      const database = request.result;
+      console.log('[SW] IndexedDB opened successfully');
+      resolve(database);
     };
 
     request.onupgradeneeded = (event) => {
@@ -144,8 +146,10 @@ async function initDB(): Promise<IDBDatabase> {
 
 // Store data in IndexedDB
 async function storeData(data: any): Promise<void> {
+  let database: IDBDatabase | null = null;
+  
   try {
-    const database = await initDB();
+    database = await initDB();
     const transaction = database.transaction([STORE_NAME], 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
     
@@ -159,36 +163,60 @@ async function storeData(data: any): Promise<void> {
       const request = store.add(entry);
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
+      
+      transaction.oncomplete = () => {
+        console.log('[SW] ✅ Data stored successfully:', entry.type || 'unknown');
+        resolve(undefined);
+      };
+      
+      transaction.onerror = () => {
+        console.error('[SW] ❌ Transaction error:', transaction.error);
+        reject(transaction.error);
+      };
     });
-    
-    console.log('[SW] Data stored in IndexedDB:', entry.type || 'unknown');
   } catch (error) {
-    console.error('[SW] Failed to store data:', error);
+    console.error('[SW] ❌ Failed to store data:', error);
+  } finally {
+    // Close connection after operation
+    if (database) {
+      database.close();
+    }
   }
 }
 
 // Get all stored data
 async function getAllData(): Promise<any[]> {
+  let database: IDBDatabase | null = null;
+  
   try {
-    const database = await initDB();
+    database = await initDB();
     const transaction = database.transaction([STORE_NAME], 'readonly');
     const store = transaction.objectStore(STORE_NAME);
     
     return new Promise((resolve, reject) => {
       const request = store.getAll();
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        database?.close();
+        resolve(request.result);
+      };
+      request.onerror = () => {
+        database?.close();
+        reject(request.error);
+      };
     });
   } catch (error) {
     console.error('[SW] Failed to get data:', error);
+    if (database) database.close();
     return [];
   }
 }
 
 // Clear old data (keep last 1000 entries)
 async function cleanupOldData(): Promise<void> {
+  let database: IDBDatabase | null = null;
+  
   try {
-    const database = await initDB();
+    database = await initDB();
     const transaction = database.transaction([STORE_NAME], 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
     const index = store.index('timestamp');
@@ -208,6 +236,8 @@ async function cleanupOldData(): Promise<void> {
     }
   } catch (error) {
     console.error('[SW] Failed to cleanup data:', error);
+  } finally {
+    if (database) database.close();
   }
 }
 
