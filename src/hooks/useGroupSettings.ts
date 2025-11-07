@@ -8,6 +8,90 @@ import { DEFAULT_LOCATIONS, DEFAULT_ACTIVITIES } from '@/lib/locationsActivities
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGroups, type Group } from '@/hooks/useGroups';
+
+// Helper function to create GroupConfig from DB Group
+const createGroupConfigFromDB = (group: Group): GroupConfig => {
+  return {
+    id: group.id,
+    name: group.name,
+    description: group.description || undefined,
+    thresholds: [
+      {
+        name: 'Good',
+        pm25_min: 0,
+        pm25_max: DEFAULT_THRESHOLDS.pm25.good,
+        pm10_min: 0,
+        pm10_max: DEFAULT_THRESHOLDS.pm10.good,
+        pm1_min: 0,
+        pm1_max: DEFAULT_THRESHOLDS.pm1.good,
+        color: '#22c55e',
+        enabled: true,
+      },
+      {
+        name: 'Moderate',
+        pm25_min: DEFAULT_THRESHOLDS.pm25.good,
+        pm25_max: DEFAULT_THRESHOLDS.pm25.moderate,
+        pm10_min: DEFAULT_THRESHOLDS.pm10.good,
+        pm10_max: DEFAULT_THRESHOLDS.pm10.moderate,
+        pm1_min: DEFAULT_THRESHOLDS.pm1.good,
+        pm1_max: DEFAULT_THRESHOLDS.pm1.moderate,
+        color: '#eab308',
+        enabled: true,
+      },
+      {
+        name: 'Poor',
+        pm25_min: DEFAULT_THRESHOLDS.pm25.moderate,
+        pm25_max: DEFAULT_THRESHOLDS.pm25.poor,
+        pm10_min: DEFAULT_THRESHOLDS.pm10.moderate,
+        pm10_max: DEFAULT_THRESHOLDS.pm10.poor,
+        pm1_min: DEFAULT_THRESHOLDS.pm1.moderate,
+        pm1_max: DEFAULT_THRESHOLDS.pm1.poor,
+        color: '#f97316',
+        enabled: true,
+      },
+      {
+        name: 'Very Poor',
+        pm25_min: DEFAULT_THRESHOLDS.pm25.poor,
+        pm10_min: DEFAULT_THRESHOLDS.pm10.poor,
+        pm1_min: DEFAULT_THRESHOLDS.pm1.poor,
+        color: '#ef4444',
+        enabled: true,
+      },
+    ],
+    alarms: [
+      {
+        name: 'Air Quality Alert',
+        pm25_threshold: DEFAULT_THRESHOLDS.pm25.moderate,
+        pm10_threshold: DEFAULT_THRESHOLDS.pm10.moderate,
+        pm1_threshold: DEFAULT_THRESHOLDS.pm1.moderate,
+        enabled: true,
+        notification_frequency: 'immediate',
+      },
+    ],
+    locations: group.custom_locations ? Object.entries(group.custom_locations).map(([key, value]) => ({
+      id: key,
+      name: key,
+      activities: Array.isArray(value) ? value.map((activity: string) => ({
+        id: activity.toLowerCase().replace(/\s+/g, '-'),
+        name: activity,
+      })) : [],
+    })) : DEFAULT_LOCATIONS,
+    events: [],
+    settings: {
+      pm25_threshold: DEFAULT_THRESHOLDS.pm25.moderate,
+      pm10_threshold: DEFAULT_THRESHOLDS.pm10.moderate,
+      pm1_threshold: DEFAULT_THRESHOLDS.pm1.moderate,
+      alarm_enabled: true,
+      auto_share_stats: true,
+      notification_frequency: 'immediate' as const,
+      location_auto_detect: false,
+      activity_auto_suggest: false,
+      event_notifications: true,
+      weekly_reports: false,
+    },
+  };
+};
 
 export const useGroupSettings = () => {
   const [searchParams] = useSearchParams();
@@ -16,6 +100,7 @@ export const useGroupSettings = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { features } = useSubscription();
+  const { groups } = useGroups();
 
   useEffect(() => {
     // Check for both 'group' parameter and direct group ID as parameter
@@ -88,7 +173,16 @@ export const useGroupSettings = () => {
   };
 
   const applyGroupById = (groupId: string) => {
-    const groupConfig = getGroupConfig(groupId);
+    // First try to get from static config
+    let groupConfig = getGroupConfig(groupId);
+    
+    // If not found in static config, try to find in DB groups
+    if (!groupConfig) {
+      const dbGroup = groups.find(g => g.id === groupId);
+      if (dbGroup) {
+        groupConfig = createGroupConfigFromDB(dbGroup);
+      }
+    }
 
     if (groupConfig) {
       setActiveGroup(groupConfig);
