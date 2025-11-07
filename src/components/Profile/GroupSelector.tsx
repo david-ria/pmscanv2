@@ -14,8 +14,12 @@ export function GroupSelector() {
   const handleSwitchGroup = (groupId: string) => {
     const success = applyGroupById(groupId);
     if (success) {
-      // Rediriger vers l'accueil pour voir les settings appliqués
-      navigate('/');
+      console.log('✅ Group switched successfully, navigating to home...');
+      
+      // Force a small delay to ensure state is updated before navigation
+      setTimeout(() => {
+        navigate('/');
+      }, 100);
     }
   };
 

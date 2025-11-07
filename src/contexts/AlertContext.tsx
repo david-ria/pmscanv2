@@ -4,6 +4,7 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useMemo,
 } from 'react';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import * as logger from '@/utils/logger';
@@ -89,11 +90,11 @@ export function AlertProvider({ children }: AlertProviderProps) {
     pm10: { isAboveThreshold: false, startTime: null, currentDuration: 0 },
   });
 
-  const { getCurrentAlarms, getCurrentSettings, isGroupMode } =
+  const { getCurrentAlarms, getCurrentSettings, isGroupMode, activeGroup } =
     useGroupSettings();
 
-  // Get effective alert settings (group or user)
-  const getEffectiveAlertSettings = (): AlertSettings => {
+  // Get effective alert settings (group or user) - re-calculate when activeGroup changes
+  const getEffectiveAlertSettings = useMemo((): AlertSettings => {
     if (isGroupMode) {
       const groupAlarms = getCurrentAlarms();
       const groupSettings = getCurrentSettings();
@@ -144,7 +145,17 @@ export function AlertProvider({ children }: AlertProviderProps) {
 
     // Return user settings if not in group mode or no group alarms
     return alertSettings;
-  };
+  }, [isGroupMode, activeGroup, alertSettings, getCurrentAlarms, getCurrentSettings]);
+
+  // Debug log to verify alarm settings inheritance
+  useEffect(() => {
+    console.log('🔄 AlertContext updated:', {
+      activeGroupId: activeGroup?.id,
+      activeGroupName: activeGroup?.name,
+      isGroupMode,
+      effectiveSettings: getEffectiveAlertSettings,
+    });
+  }, [activeGroup, getEffectiveAlertSettings, isGroupMode]);
 
   // Load alert settings from localStorage on mount and request notification permissions
   useEffect(() => {
@@ -214,7 +225,7 @@ export function AlertProvider({ children }: AlertProviderProps) {
   const checkAlerts = (pm1: number, pm25: number, pm10: number) => {
     if (!globalAlertsEnabled) return;
 
-    const effectiveSettings = getEffectiveAlertSettings();
+    const effectiveSettings = getEffectiveAlertSettings;
     const now = new Date();
     const pollutants = [
       { key: 'pm1' as const, value: pm1 },
@@ -288,7 +299,7 @@ export function AlertProvider({ children }: AlertProviderProps) {
   return (
     <AlertContext.Provider
       value={{
-        alertSettings: getEffectiveAlertSettings(),
+        alertSettings: getEffectiveAlertSettings,
         updateAlertSettings,
         resetToDefaults,
         globalAlertsEnabled,

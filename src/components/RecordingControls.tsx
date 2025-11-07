@@ -203,6 +203,7 @@ export function RecordingControls({
       />
 
       <ContextSelectors
+        key={activeGroup?.id || 'default'}
         selectedLocation={selectedLocation}
         onLocationChange={(location) => {
           setSelectedLocation(location);

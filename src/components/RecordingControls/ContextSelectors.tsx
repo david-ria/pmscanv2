@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 // No need to import helpers anymore - using hierarchical structure directly
 
 interface ContextSelectorsProps {
@@ -28,14 +28,16 @@ export function ContextSelectors({
   isRecording,
 }: ContextSelectorsProps) {
   const { t } = useTranslation();
-  const { getCurrentLocations, getCurrentActivities, isGroupMode } =
+  const { getCurrentLocations, getCurrentActivities, isGroupMode, activeGroup } =
     useGroupSettings();
 
-  // Get locations from group settings (already hierarchical)
-  const locations = getCurrentLocations();
+  // Get locations from group settings (already hierarchical) - re-calculate when activeGroup changes
+  const locations = useMemo(() => {
+    return getCurrentLocations();
+  }, [activeGroup]);
 
   // Get activities based on selected location (from hierarchical structure)
-  const getAvailableActivities = () => {
+  const activities = useMemo(() => {
     if (!selectedLocation) {
       // Show all activities from all locations if no location is selected
       return getCurrentActivities();
@@ -53,9 +55,20 @@ export function ContextSelectors({
 
     // Return activities directly from the location
     return selectedLocationData.activities;
-  };
+  }, [selectedLocation, activeGroup, locations, getCurrentActivities]);
 
-  const activities = getAvailableActivities();
+  // Debug log to verify group settings inheritance
+  useEffect(() => {
+    console.log('🔄 ContextSelectors updated:', {
+      activeGroupId: activeGroup?.id,
+      activeGroupName: activeGroup?.name,
+      isGroupMode,
+      locationsCount: locations.length,
+      locationNames: locations.map(l => l.name),
+      selectedLocation,
+      activitiesCount: activities.length,
+    });
+  }, [activeGroup, locations, activities, selectedLocation, isGroupMode]);
 
   // Clear activity selection when location changes and current activity is not available for that location
   useEffect(() => {
@@ -65,11 +78,11 @@ export function ContextSelectors({
       
       // Check if the selected activity is valid for the current location (by name or ID)
       if (!availableActivityIds.includes(selectedActivity) && !availableActivityNames.includes(selectedActivity)) {
-        console.log(`🔄 Activity "${selectedActivity}" not available for location "${selectedLocation}". Available activities:`, availableActivityNames);
+        console.log(`🔄 Activity "${selectedActivity}" not available for location "${selectedLocation}". Resetting...`);
         onActivityChange('');
       }
     }
-  }, [selectedLocation, activities, selectedActivity, onActivityChange]);
+  }, [selectedLocation, activities, selectedActivity, onActivityChange, activeGroup]);
 
   return (
     <div className="context-selector gap-4">
