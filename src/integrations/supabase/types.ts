@@ -917,27 +917,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      elevate_user_role: {
-        Args:
-          | {
+      elevate_user_role:
+        | {
+            Args: {
               change_reason?: string
               new_role: Database["public"]["Enums"]["app_role"]
               target_user_id: string
             }
-          | {
+            Returns: boolean
+          }
+        | {
+            Args: {
               new_role: Database["public"]["Enums"]["app_role"]
               target_user_id: string
             }
-        Returns: boolean
-      }
-      get_user_email: {
-        Args: { _user_id: string }
-        Returns: string
-      }
-      get_user_group_ids: {
-        Args: { _user_id: string }
-        Returns: string[]
-      }
+            Returns: boolean
+          }
+      get_user_email: { Args: { _user_id: string }; Returns: string }
+      get_user_group_ids: { Args: { _user_id: string }; Returns: string[] }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
