@@ -4,6 +4,7 @@ import { LocationData } from '@/types/PMScan';
 import { RecordingEntry, MissionContext } from '@/types/recording';
 import { setGlobalRecording, setBackgroundRecording } from '@/lib/pmscan/globalConnectionManager';
 import * as logger from '@/utils/logger';
+import { backgroundKeepAlive } from '@/lib/backgroundKeepAlive';
 
 export interface RecordingState {
   recordingData: RecordingEntry[];
@@ -82,6 +83,11 @@ class RecordingService {
     setGlobalRecording(true);
     setBackgroundRecording(true);
     
+    // 🔊 Start silent audio to keep app alive in background (iOS/Android)
+    backgroundKeepAlive.start().catch((error) => {
+      logger.warn('⚠️ Silent audio keep-alive failed to start:', error);
+    });
+    
     // Enable background collection via service worker
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
@@ -116,6 +122,9 @@ class RecordingService {
     // Disable both global and background recording
     setGlobalRecording(false);
     setBackgroundRecording(false);
+    
+    // 🔇 Stop silent audio keep-alive
+    backgroundKeepAlive.stop();
     
     // Stop background collection via service worker
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {

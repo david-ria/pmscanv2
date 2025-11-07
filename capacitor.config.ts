@@ -9,9 +9,9 @@ const config: CapacitorConfig = {
     cleartext: true
   },
   ios: {
-    // Enable background modes for Bluetooth and Location
-    // This allows the app to continue running in background during recording
-    backgroundModes: ['bluetooth-central', 'location'],
+    // Enable background modes for Bluetooth, Location, and Audio
+    // Audio mode keeps the app alive during background recording
+    backgroundModes: ['bluetooth-central', 'location', 'audio'],
   },
   android: {
     // Allow background location for continuous recording
