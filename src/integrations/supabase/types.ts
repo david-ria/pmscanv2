@@ -917,6 +917,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_location_enrichment_aggressive: {
+        Args: never
+        Returns: {
+          deleted_count: number
+        }[]
+      }
+      cleanup_old_location_enrichment: {
+        Args: never
+        Returns: {
+          deleted_count: number
+        }[]
+      }
       elevate_user_role:
         | {
             Args: {
@@ -933,6 +945,17 @@ export type Database = {
             }
             Returns: boolean
           }
+      get_location_enrichment_stats: {
+        Args: never
+        Returns: {
+          estimated_size_mb: number
+          newest_record: string
+          oldest_record: string
+          records_over_30_days: number
+          records_over_90_days: number
+          total_records: number
+        }[]
+      }
       get_user_email: { Args: { _user_id: string }; Returns: string }
       get_user_group_ids: { Args: { _user_id: string }; Returns: string[] }
       get_user_role: {

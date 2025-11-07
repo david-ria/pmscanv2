@@ -9,7 +9,7 @@
  */
 
 import { MissionData, MeasurementData } from '@/lib/dataStorage';
-import { logger } from '@/utils/logger';
+import logger from '@/utils/logger';
 
 const DB_NAME = 'PMScan_HybridStorage';
 const DB_VERSION = 1;
@@ -79,14 +79,15 @@ class HybridStorageService {
         startTime: mission.startTime,
         endTime: mission.endTime,
         duration: mission.durationMinutes,
-        avgPM25: mission.avgPM25,
-        avgPM10: mission.avgPM10,
-        avgPM1: mission.avgPM1,
-        maxPM25: mission.maxPM25,
+        avgPm25: mission.avgPm25,
+        avgPm10: mission.avgPm10,
+        avgPm1: mission.avgPm1,
+        maxPm25: mission.maxPm25,
         measurementsCount: mission.measurementsCount,
-        activityContext: mission.activityContext,
-        locationContext: mission.locationContext,
+        recordingFrequency: mission.recordingFrequency,
         deviceName: mission.deviceName,
+        shared: mission.shared,
+        synced: mission.synced,
       };
 
       // Save metadata to localStorage

@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { hybridStorage } from '@/services/hybridStorageService';
-import { logger } from '@/utils/logger';
+import logger from '@/utils/logger';
 
 const STORAGE_WARNING_THRESHOLD = 80; // Alert at 80%
 const STORAGE_CRITICAL_THRESHOLD = 90; // Critical alert at 90%

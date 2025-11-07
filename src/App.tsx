@@ -32,6 +32,7 @@ const BottomNavigation = lazy(() =>
 import { UnifiedDataProvider } from '@/components/UnifiedDataProvider';
 import { GlobalDataCollector } from '@/components/GlobalDataCollector';
 import { InterruptionDetector } from '@/components/InterruptionDetector';
+import { StorageMonitor } from '@/components/StorageMonitor';
 const CrashRecoveryInitializer = lazy(() => 
   import('@/components/CrashRecoveryInitializer').then(module => ({ default: module.CrashRecoveryInitializer }))
 );
@@ -247,6 +248,8 @@ const AppRoutes = () => {
                   {/* Interruption detection for emergency saves */}
                   <InterruptionDetector />
                   
+                  {/* Storage monitoring for capacity alerts */}
+                  <StorageMonitor />
                   
                   {/* Keep chart alive across pages - hidden but still mounted */}
                   <div className={location.pathname === '/' ? 'hidden' : 'hidden absolute -top-[9999px]'}>
