@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { recordingService, RecordingState, RecordingActions } from '@/services/recordingService';
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
@@ -49,7 +49,8 @@ export function useRecordingService(): RecordingState & RecordingActions {
     recordingService.clearRecordingData();
   }, []);
 
-  return {
+  // ✅ Mémoriser l'objet retourné pour stabiliser les références
+  return useMemo(() => ({
     ...state,
     startRecording,
     stopRecording,
@@ -57,5 +58,12 @@ export function useRecordingService(): RecordingState & RecordingActions {
     updateMissionContext,
     clearRecordingData,
     // No saveMission - will be handled at UnifiedDataProvider level using existing useMissionSaver
-  };
+  }), [
+    state,
+    startRecording,
+    stopRecording,
+    addDataPoint,
+    updateMissionContext,
+    clearRecordingData,
+  ]);
 }
