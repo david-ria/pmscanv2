@@ -104,13 +104,13 @@ export function useNativeBackgroundMode() {
     }
 
     try {
-      logger.debug('🚀 Starting native background mode...');
+      logger.info('🚀 Starting native background mode...');
 
       // Request permissions first
       if (platform === 'ios') {
         const hasLocationPermission = await requestLocationPermission();
         if (!hasLocationPermission) {
-          logger.debug('⚠️ Location permission denied, background mode may be limited');
+          logger.warn('⚠️ Location permission denied, background mode may be limited');
         }
       } else if (platform === 'android') {
         await requestBatteryOptimizationExemption();
@@ -123,11 +123,34 @@ export function useNativeBackgroundMode() {
       setCurrentTaskId(taskId);
       
       await BackgroundTask.beforeExit(async () => {
-        logger.debug('🔄 App entering background, maintaining connection...');
+        logger.info('🔄 App entering background - starting background task...');
         
-        // This callback runs when app goes to background
-        // The task will keep running until we call finish()
-        // We'll keep it running indefinitely for recording sessions
+        // Keep a heartbeat to prevent suspension
+        let heartbeatCount = 0;
+        const heartbeatInterval = setInterval(() => {
+          heartbeatCount++;
+          logger.info(`💓 Background heartbeat #${heartbeatCount}`, {
+            taskId,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Send heartbeat to Service Worker to keep it alive
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: 'HEARTBEAT',
+              payload: {
+                taskId,
+                count: heartbeatCount,
+                timestamp: Date.now()
+              }
+            });
+          }
+        }, 10000); // Every 10 seconds
+
+        // Store interval ID for cleanup
+        (window as any).__backgroundHeartbeat = heartbeatInterval;
+        
+        logger.info('✅ Background task active with heartbeat');
       });
 
       setStatus(prev => ({
@@ -136,10 +159,10 @@ export function useNativeBackgroundMode() {
         isForegroundServiceRunning: true,
       }));
 
-      logger.debug('✅ Native background mode started successfully');
+      logger.info('✅ Native background mode started successfully');
       return true;
     } catch (error) {
-      logger.debug('❌ Failed to start native background mode:', error);
+      logger.error('❌ Failed to start native background mode:', error);
       return false;
     }
   }, [isNative, status.isNativeSupported, platform, requestLocationPermission, requestBatteryOptimizationExemption]);
@@ -150,7 +173,14 @@ export function useNativeBackgroundMode() {
     }
 
     try {
-      logger.debug('🛑 Stopping native background mode...');
+      logger.info('🛑 Stopping native background mode...');
+
+      // Clear heartbeat interval
+      if ((window as any).__backgroundHeartbeat) {
+        clearInterval((window as any).__backgroundHeartbeat);
+        delete (window as any).__backgroundHeartbeat;
+        logger.info('💓 Background heartbeat stopped');
+      }
 
       const { BackgroundTask } = await import('@capawesome/capacitor-background-task');
       await BackgroundTask.finish({ taskId: currentTaskId });
@@ -162,9 +192,9 @@ export function useNativeBackgroundMode() {
         isForegroundServiceRunning: false,
       }));
 
-      logger.debug('✅ Native background mode stopped');
+      logger.info('✅ Native background mode stopped');
     } catch (error) {
-      logger.debug('❌ Error stopping native background mode:', error);
+      logger.error('❌ Error stopping native background mode:', error);
     }
   }, [isNative, status.isNativeActive, currentTaskId]);
 

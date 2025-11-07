@@ -88,9 +88,16 @@ class RecordingService {
     setGlobalRecording(true);
     setBackgroundRecording(true);
     
-    // 🔊 Start silent audio to keep app alive in background (iOS/Android)
+    // 🔊 Start silent audio to keep app alive in background (iOS/Android web)
     backgroundKeepAlive.start().catch((error) => {
       logger.warn('⚠️ Silent audio keep-alive failed to start:', error);
+    });
+    
+    // 📱 Start native background task (Capacitor Android/iOS)
+    import('@/lib/nativeBackgroundTask').then(({ nativeBackgroundTask }) => {
+      nativeBackgroundTask.start().catch((error) => {
+        logger.warn('⚠️ Native background task failed to start:', error);
+      });
     });
     
     // Enable background collection via service worker
@@ -138,6 +145,13 @@ class RecordingService {
     
     // 🔇 Stop silent audio keep-alive
     backgroundKeepAlive.stop();
+    
+    // 📱 Stop native background task
+    import('@/lib/nativeBackgroundTask').then(({ nativeBackgroundTask }) => {
+      nativeBackgroundTask.stop().catch((error) => {
+        logger.warn('⚠️ Failed to stop native background task:', error);
+      });
+    });
     
     // Stop background collection via service worker
     if ('serviceWorker' in navigator) {
