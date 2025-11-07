@@ -166,10 +166,17 @@ export function useSmartLocationEnrichment() {
   const enrichLocationFromAPI = useCallback(async (
     location: LocationPoint
   ): Promise<SmartEnrichmentResult | null> => {
+    // Check if online before attempting API call
+    if (!navigator.onLine) {
+      devLogger.debug('⚠️ Offline - skipping API enrichment');
+      return null;
+    }
+
     try {
       devLogger.debug(`🗺️ API enriching location: ${location.latitude}, ${location.longitude}`);
       
-      const { data, error: enrichError } = await supabase.functions.invoke('enhance-location-context', {
+      // Add 5 second timeout to prevent blocking
+      const enrichPromise = supabase.functions.invoke('enhance-location-context', {
         body: {
           latitude: location.latitude,
           longitude: location.longitude,
@@ -177,6 +184,12 @@ export function useSmartLocationEnrichment() {
           useSmartCaching: true
         }
       });
+      
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Location enrichment timeout')), 5000)
+      );
+      
+      const { data, error: enrichError } = await Promise.race([enrichPromise, timeoutPromise]);
 
       if (enrichError) {
         throw new Error(enrichError.message);

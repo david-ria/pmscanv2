@@ -187,30 +187,34 @@ export function GlobalDataCollector() {
       // Handle context and data point recording
       const isMoving = speed > 2; // Simple threshold for movement detection
       
-      // Get enriched location if available
+      // Check if we're online for external services
+      const isOnline = navigator.onLine;
+      
+      // Get enriched location if available - non-blocking when offline
       let enrichedLocationName = '';
       rateLimitedDebug('enrichment-check', 5000, '🔍 Location enrichment check:', {
         hasEnrichFunction: !!enrichLocation,
-        hasLocation: !!(location?.latitude && location?.longitude)
+        hasLocation: !!(location?.latitude && location?.longitude),
+        isOnline
       });
       
-      if (enrichLocationRef.current && location?.latitude && location?.longitude) {
-        try {
-          devLogger.debug('🌍 Enriching location during recording');
-          
-          const enrichmentResult = await enrichLocationRef.current(
-            location.latitude,
-            location.longitude,
-            averagedData.timestamp.toISOString()
-          );
-          
-          if (enrichmentResult?.display_name) {
-            enrichedLocationName = enrichmentResult.display_name;
-            devLogger.info('✅ Location enriched:', enrichedLocationName);
-          }
-        } catch (error) {
-          logger.warn('⚠️ Failed to enrich location during recording:', error);
-        }
+      if (isOnline && enrichLocationRef.current && location?.latitude && location?.longitude) {
+        // Launch enrichment in background - don't block data collection
+        enrichLocationRef.current(
+          location.latitude,
+          location.longitude,
+          averagedData.timestamp.toISOString()
+        )
+          .then(enrichmentResult => {
+            if (enrichmentResult?.display_name) {
+              devLogger.info('✅ Location enriched:', enrichmentResult.display_name);
+            }
+          })
+          .catch(error => {
+            logger.warn('⚠️ Background location enrichment failed:', error);
+          });
+      } else if (!isOnline) {
+        logger.debug('⚠️ Offline - skipping location enrichment');
       }
 
       const automaticContext = autoContextSettings.enabled ? await updateContextRef.current(
@@ -223,18 +227,31 @@ export function GlobalDataCollector() {
       // Use averaged data timestamp
       lastRecordedTimeRef.current = averagedData.timestamp;
 
-      // Fetch weather data only if enabled and location is available
+      // Fetch weather data only if online, enabled and location is available
+      // Launch in background with timeout - don't block data collection
       let weatherDataId: string | null = null;
-      if (weatherLoggingEnabled && location?.latitude && location?.longitude) {
-        try {
-          weatherDataId = await getWeatherRef.current(
+      if (isOnline && weatherLoggingEnabled && location?.latitude && location?.longitude) {
+        const weatherPromise = Promise.race([
+          getWeatherRef.current(
             location.latitude,
             location.longitude,
             averagedData.timestamp
-          );
-        } catch (error) {
-          logger.debug('⚠️ Failed to fetch weather data for measurement:', error);
-        }
+          ),
+          new Promise<null>((_, reject) => setTimeout(() => reject('timeout'), 5000))
+        ]);
+        
+        // Don't await - let it run in background
+        weatherPromise
+          .then(id => {
+            if (id) {
+              devLogger.debug('✅ Weather data fetched:', id);
+            }
+          })
+          .catch(error => {
+            logger.debug('⚠️ Background weather fetch failed:', error);
+          });
+      } else if (!isOnline) {
+        logger.debug('⚠️ Offline - skipping weather fetch');
       }
 
       // Use averaged PMScan data

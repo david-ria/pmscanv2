@@ -35,18 +35,31 @@ export function useWeatherData() {
       return null;
     }
 
+    // Check if online before attempting fetch
+    if (!navigator.onLine) {
+      logger.debug('⚠️ Offline - skipping weather fetch');
+      return null;
+    }
+
     setIsLoading(true);
     
     try {
       logger.debug('🌤️ Fetching weather data for location:', location);
       
-      const { data, error } = await supabase.functions.invoke('fetch-weather', {
+      // Add 5 second timeout to prevent blocking
+      const weatherPromise = supabase.functions.invoke('fetch-weather', {
         body: {
           latitude: location.latitude,
           longitude: location.longitude,
           timestamp: timestamp ? timestamp.toISOString() : new Date().toISOString(),
         },
       });
+      
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Weather fetch timeout')), 5000)
+      );
+      
+      const { data, error } = await Promise.race([weatherPromise, timeoutPromise]);
 
       if (error) {
         logger.error('❌ Error fetching weather data:', error);

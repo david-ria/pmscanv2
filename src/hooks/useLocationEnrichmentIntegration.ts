@@ -19,9 +19,9 @@ export function useLocationEnrichmentIntegration() {
     hasLocation: !!latestLocation
   });
 
-  // Auto-enrich current location when enabled
+  // Auto-enrich current location when enabled and online
   useEffect(() => {
-    if (isEnabled && latestLocation) {
+    if (isEnabled && latestLocation && navigator.onLine) {
       const enrichWithDelay = setTimeout(() => {
         enrichLocation(
           latestLocation.latitude,
@@ -34,12 +34,14 @@ export function useLocationEnrichmentIntegration() {
     }
   }, [isEnabled, latestLocation?.latitude, latestLocation?.longitude, enrichLocation]);
 
-  // Periodic predictive enrichment
+  // Periodic predictive enrichment (only when online)
   useEffect(() => {
     if (!isEnabled) return;
 
     const interval = setInterval(() => {
-      preEnrichFrequentLocations().catch(console.error);
+      if (navigator.onLine) {
+        preEnrichFrequentLocations().catch(console.error);
+      }
     }, 10 * 60 * 1000); // Every 10 minutes
 
     return () => clearInterval(interval);
