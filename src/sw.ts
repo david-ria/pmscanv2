@@ -103,3 +103,254 @@ registerRoute(
     ],
   })
 );
+
+// ============================================================================
+// BACKGROUND RECORDING SYSTEM
+// ============================================================================
+
+const DB_NAME = 'pmscan-background';
+const DB_VERSION = 1;
+const STORE_NAME = 'recordings';
+const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+
+let heartbeatTimer: number | null = null;
+let db: IDBDatabase | null = null;
+
+// Initialize IndexedDB
+async function initDB(): Promise<IDBDatabase> {
+  if (db) return db;
+
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      db = request.result;
+      resolve(db);
+    };
+
+    request.onupgradeneeded = (event) => {
+      const database = (event.target as IDBOpenDBRequest).result;
+      
+      if (!database.objectStoreNames.contains(STORE_NAME)) {
+        const store = database.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        store.createIndex('timestamp', 'timestamp', { unique: false });
+        store.createIndex('type', 'type', { unique: false });
+        console.log('[SW] IndexedDB store created:', STORE_NAME);
+      }
+    };
+  });
+}
+
+// Store data in IndexedDB
+async function storeData(data: any): Promise<void> {
+  try {
+    const database = await initDB();
+    const transaction = database.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    
+    const entry = {
+      ...data,
+      timestamp: Date.now(),
+      stored: new Date().toISOString(),
+    };
+    
+    await new Promise((resolve, reject) => {
+      const request = store.add(entry);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    
+    console.log('[SW] Data stored in IndexedDB:', entry.type || 'unknown');
+  } catch (error) {
+    console.error('[SW] Failed to store data:', error);
+  }
+}
+
+// Get all stored data
+async function getAllData(): Promise<any[]> {
+  try {
+    const database = await initDB();
+    const transaction = database.transaction([STORE_NAME], 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    
+    return new Promise((resolve, reject) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[SW] Failed to get data:', error);
+    return [];
+  }
+}
+
+// Clear old data (keep last 1000 entries)
+async function cleanupOldData(): Promise<void> {
+  try {
+    const database = await initDB();
+    const transaction = database.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const index = store.index('timestamp');
+    
+    const allKeys = await new Promise<IDBValidKey[]>((resolve, reject) => {
+      const request = index.getAllKeys();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    
+    if (allKeys.length > 1000) {
+      const keysToDelete = allKeys.slice(0, allKeys.length - 1000);
+      for (const key of keysToDelete) {
+        store.delete(key);
+      }
+      console.log('[SW] Cleaned up', keysToDelete.length, 'old entries');
+    }
+  } catch (error) {
+    console.error('[SW] Failed to cleanup data:', error);
+  }
+}
+
+// Heartbeat function
+async function sendHeartbeat(): Promise<void> {
+  try {
+    const clients = await self.clients.matchAll({ type: 'window' });
+    
+    if (clients.length === 0) {
+      console.log('[SW] No clients connected, stopping heartbeat');
+      stopHeartbeat();
+      return;
+    }
+    
+    // Send heartbeat to all clients
+    for (const client of clients) {
+      client.postMessage({
+        type: 'HEARTBEAT',
+        timestamp: Date.now(),
+      });
+    }
+    
+    // Store heartbeat record
+    await storeData({
+      type: 'heartbeat',
+      clientCount: clients.length,
+    });
+    
+    // Cleanup old data periodically
+    if (Math.random() < 0.1) { // 10% chance each heartbeat
+      await cleanupOldData();
+    }
+    
+    console.log('[SW] Heartbeat sent to', clients.length, 'client(s)');
+  } catch (error) {
+    console.error('[SW] Heartbeat error:', error);
+  }
+}
+
+// Start heartbeat
+function startHeartbeat(): void {
+  if (heartbeatTimer) return;
+  
+  console.log('[SW] Starting heartbeat (interval:', HEARTBEAT_INTERVAL, 'ms)');
+  heartbeatTimer = self.setInterval(() => {
+    sendHeartbeat();
+  }, HEARTBEAT_INTERVAL) as unknown as number;
+  
+  // Send first heartbeat immediately
+  sendHeartbeat();
+}
+
+// Stop heartbeat
+function stopHeartbeat(): void {
+  if (heartbeatTimer) {
+    console.log('[SW] Stopping heartbeat');
+    self.clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+}
+
+// Message handler
+self.addEventListener('message', (event) => {
+  console.log('[SW] Received message:', event.data.type);
+  
+  switch (event.data.type) {
+    case 'START_BACKGROUND_RECORDING':
+      startHeartbeat();
+      storeData({
+        type: 'recording_started',
+        frequency: event.data.payload?.frequency,
+      });
+      break;
+      
+    case 'STOP_BACKGROUND_RECORDING':
+      stopHeartbeat();
+      storeData({
+        type: 'recording_stopped',
+      });
+      break;
+      
+    case 'STORE_BACKGROUND_DATA':
+      storeData({
+        type: 'recording_data',
+        ...event.data.payload,
+      });
+      break;
+      
+    case 'EMERGENCY_SAVE':
+      console.log('[SW] Emergency save triggered');
+      storeData({
+        type: 'emergency_save',
+        ...event.data.payload,
+      });
+      break;
+      
+    case 'SCHEDULE_BACKGROUND_SYNC':
+      if ('sync' in self.registration) {
+        self.registration.sync.register('background-sync')
+          .then(() => {
+            console.log('[SW] Background sync scheduled');
+            storeData({
+              type: 'sync_scheduled',
+            });
+          })
+          .catch((error) => {
+            console.error('[SW] Background sync registration failed:', error);
+          });
+      }
+      break;
+      
+    case 'GET_STORED_DATA':
+      getAllData().then((data) => {
+        event.ports[0]?.postMessage({ data });
+      });
+      break;
+      
+    default:
+      console.warn('[SW] Unknown message type:', event.data.type);
+  }
+});
+
+// Background sync event handler
+self.addEventListener('sync', (event: any) => {
+  console.log('[SW] Background sync event:', event.tag);
+  
+  if (event.tag === 'background-sync') {
+    event.waitUntil(
+      getAllData().then((data) => {
+        console.log('[SW] Background sync - found', data.length, 'entries');
+        storeData({
+          type: 'sync_completed',
+          entryCount: data.length,
+        });
+      })
+    );
+  }
+});
+
+// Initialize DB when SW activates
+self.addEventListener('activate', (event) => {
+  console.log('[SW] Service Worker activated, initializing IndexedDB');
+  event.waitUntil(initDB());
+});
+
+console.log('[SW] Background recording system initialized');
