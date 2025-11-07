@@ -124,6 +124,12 @@ export const useGroups = () => {
       hasInitialized.current = true;
       retryCount.current = 0; // Reset retry count on success
     } catch (error: unknown) {
+      // Don't show error toast when offline
+      if (!navigator.onLine) {
+        setLoading(false);
+        return;
+      }
+
       if (isRetry) {
         retryCount.current++;
         // Exponential backoff for retries
