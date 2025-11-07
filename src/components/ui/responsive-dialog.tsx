@@ -56,9 +56,11 @@ export function ResponsiveDialogContent({
   const isMobile = useIsMobile();
 
   if (isMobile) {
+    // Remove any max-w classes for mobile drawer
+    const mobileClassName = className?.replace(/max-w-\S+/g, '').trim();
     return (
-      <DrawerContent className={cn('max-h-[85vh]', className)} {...props}>
-        <div className="overflow-y-auto px-4 pb-4">
+      <DrawerContent className={cn('max-h-[90vh]', mobileClassName)} {...props}>
+        <div className="overflow-y-auto px-4 pb-6 pt-2">
           {children}
         </div>
       </DrawerContent>

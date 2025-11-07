@@ -139,48 +139,50 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="max-w-4xl">
-        <ResponsiveDialogHeader>
+      <ResponsiveDialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+        <ResponsiveDialogHeader className="flex-shrink-0">
           <ResponsiveDialogTitle>Group Locations & Activities</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 overflow-y-auto flex-1 pr-2">
           {/* Existing Locations */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             {locations.map((location) => (
-              <Card key={location.id}>
+              <Card key={location.id} className="w-full">
                 <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <MapPin className="h-5 w-5 text-primary" />
-                      {location.name}
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2 min-w-0 flex-1">
+                      <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                      <span className="truncate">{location.name}</span>
                     </CardTitle>
                     <Button
                       size="sm"
                       variant="ghost"
+                      className="flex-shrink-0"
                       onClick={() => handleDeleteLocation(location.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3">
                   <div>
-                    <Label>Location Name</Label>
+                    <Label className="text-xs sm:text-sm">Location Name</Label>
                     <Input
                       value={location.name}
                       onChange={(e) => handleUpdateLocation(location.id, { name: e.target.value })}
+                      className="w-full"
                     />
                   </div>
                   
                   <div>
-                    <Label className="flex items-center gap-1 mb-2">
-                      <Activity className="h-4 w-4" />
+                    <Label className="flex items-center gap-1 mb-2 text-xs sm:text-sm">
+                      <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
                       Activities
                     </Label>
                     <div className="space-y-2">
                       {location.activities.map((activity, index) => (
-                        <div key={index} className="flex gap-2">
+                        <div key={index} className="flex gap-2 w-full">
                           <Input
                             value={activity}
                             onChange={(e) => {
@@ -189,17 +191,19 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                               handleUpdateLocation(location.id, { activities: newActivities });
                             }}
                             placeholder="Activity name"
+                            className="flex-1 min-w-0"
                           />
                           {location.activities.length > 1 && (
                             <Button
                               size="sm"
                               variant="outline"
+                              className="flex-shrink-0"
                               onClick={() => {
                                 const newActivities = location.activities.filter((_, i) => i !== index);
                                 handleUpdateLocation(location.id, { activities: newActivities });
                               }}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           )}
                         </div>
@@ -207,18 +211,19 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                       <Button
                         size="sm"
                         variant="outline"
+                        className="w-full sm:w-auto"
                         onClick={() => {
                           const newActivities = [...location.activities, ''];
                           handleUpdateLocation(location.id, { activities: newActivities });
                         }}
                       >
-                        <Plus className="h-4 w-4 mr-1" />
+                        <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                         Add Activity
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {location.activities.filter(a => a.trim()).map((activity, index) => (
-                        <Badge key={index} variant="secondary">
+                        <Badge key={index} variant="secondary" className="text-xs">
                           {activity}
                         </Badge>
                       ))}
@@ -237,44 +242,47 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
 
           {/* Create New Location */}
           {isCreating ? (
-            <Card>
+            <Card className="w-full">
               <CardHeader>
-                <CardTitle>Create New Location</CardTitle>
+                <CardTitle className="text-base sm:text-lg">Create New Location</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 <div>
-                  <Label>Location Name</Label>
+                  <Label className="text-xs sm:text-sm">Location Name</Label>
                   <Input
                     value={newLocation.name}
                     onChange={(e) => setNewLocation(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Office, Lab, Home, etc."
+                    className="w-full"
                   />
                 </div>
                 
                 <div>
-                  <Label className="flex items-center gap-1 mb-2">
-                    <Activity className="h-4 w-4" />
+                  <Label className="flex items-center gap-1 mb-2 text-xs sm:text-sm">
+                    <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
                     Activities
                   </Label>
                   <div className="space-y-2">
                     {newLocation.activities.map((activity, index) => (
-                      <div key={index} className="flex gap-2">
+                      <div key={index} className="flex gap-2 w-full">
                         <Input
                           value={activity}
                           onChange={(e) => updateActivity(index, e.target.value, newLocation.activities, (activities) => 
                             setNewLocation(prev => ({ ...prev, activities }))
                           )}
                           placeholder="Activity name"
+                          className="flex-1 min-w-0"
                         />
                         {newLocation.activities.length > 1 && (
                           <Button
                             size="sm"
                             variant="outline"
+                            className="flex-shrink-0"
                             onClick={() => removeActivity(index, newLocation.activities, (activities) => 
                               setNewLocation(prev => ({ ...prev, activities }))
                             )}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
                         )}
                       </div>
@@ -282,24 +290,26 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                     <Button
                       size="sm"
                       variant="outline"
+                      className="w-full sm:w-auto"
                       onClick={() => addActivity(newLocation.activities, (activities) => 
                         setNewLocation(prev => ({ ...prev, activities }))
                       )}
                     >
-                      <Plus className="h-4 w-4 mr-1" />
+                      <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       Add Activity
                     </Button>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button 
                     onClick={handleCreateLocation} 
                     disabled={!newLocation.name.trim() || !newLocation.activities.some(a => a.trim())}
+                    className="w-full sm:w-auto"
                   >
                     Create Location
                   </Button>
-                  <Button variant="outline" onClick={() => setIsCreating(false)}>
+                  <Button variant="outline" onClick={() => setIsCreating(false)} className="w-full sm:w-auto">
                     Cancel
                   </Button>
                 </div>
@@ -307,7 +317,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
             </Card>
           ) : (
             <Button onClick={() => setIsCreating(true)} variant="outline" className="w-full">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
               Add New Location
             </Button>
           )}
