@@ -87,8 +87,16 @@ const App = () => {
           import('./pages/CustomThresholds'),
           import('./pages/CustomAlerts'),
           import('./pages/NotFound'),
-        ]).catch(() => {
+          // Preload heavy shared components used across routes
+          import('@/components/Header'),
+          import('@/components/BottomNavigation'),
+          import('@/components/UnifiedDataProvider'),
+          import('@/components/CrashRecoveryInitializer'),
+          import('@/components/PMLineGraph'),
+          import('@/components/GlobalDataCollector'),
+        ]).catch((err) => {
           // Ignore preload failures (likely offline)
+          console.debug('[Preload] Skipped (offline?):', err?.name || err);
         });
       }
     };
@@ -156,82 +164,84 @@ const AppRoutes = () => {
                 <CrashRecoveryInitializer />
                 <div className="min-h-screen bg-background">
                   <Header />
-                  <main className="pt-14 pb-16">
-                    <Routes>
-                      <Route 
-                        path="/" 
-                        element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><RealTimePageSkeleton /></Suspense>}>
-                            <RealTime />
-                          </Suspense>
-                        } 
-                      />
-                      <Route 
-                        path="/main" 
-                        element={<Navigate to="/" replace />}
-                      />
-                      <Route 
-                        path="/history" 
-                        element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><HistoryPageSkeleton /></Suspense>}>
-                            <History />
-                          </Suspense>
-                        } 
-                      />
-                      <Route 
-                        path="/analysis" 
-                        element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AnalysisPageSkeleton /></Suspense>}>
-                            <Analysis />
-                          </Suspense>
-                        } 
-                      />
-                      <Route 
-                        path="/groups" 
-                        element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><GroupsPageSkeleton /></Suspense>}>
-                            <Groups />
-                          </Suspense>
-                        } 
-                      />
-                      <Route 
-                        path="/groups/:groupId" 
-                        element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><GroupsPageSkeleton /></Suspense>}>
-                            <GroupDetails />
-                          </Suspense>
-                        } 
-                      />
-                      <Route 
-                        path="/profile" 
-                        element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
-                            <Profile />
-                          </Suspense>
-                        } 
-                      />
-                      <Route
-                        path="/custom-thresholds"
-                        element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
-                            <CustomThresholds />
-                          </Suspense>
-                        }
-                      />
-                      <Route
-                        path="/custom-alerts"
-                        element={
-                          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
-                            <CustomAlerts />
-                          </Suspense>
-                        }
-                      />
-                      <Route 
-                        path="*" 
-                        element={<Navigate to="/" replace />}
-                      />
-                    </Routes>
-                  </main>
+                  <ErrorBoundary showReload={false}>
+                    <main className="pt-14 pb-16">
+                      <Routes>
+                        <Route 
+                          path="/" 
+                          element={
+                            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><RealTimePageSkeleton /></Suspense>}>
+                              <RealTime />
+                            </Suspense>
+                          } 
+                        />
+                        <Route 
+                          path="/main" 
+                          element={<Navigate to="/" replace />}
+                        />
+                        <Route 
+                          path="/history" 
+                          element={
+                            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><HistoryPageSkeleton /></Suspense>}>
+                              <History />
+                            </Suspense>
+                          } 
+                        />
+                        <Route 
+                          path="/analysis" 
+                          element={
+                            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AnalysisPageSkeleton /></Suspense>}>
+                              <Analysis />
+                            </Suspense>
+                          } 
+                        />
+                        <Route 
+                          path="/groups" 
+                          element={
+                            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><GroupsPageSkeleton /></Suspense>}>
+                              <Groups />
+                            </Suspense>
+                          } 
+                        />
+                        <Route 
+                          path="/groups/:groupId" 
+                          element={
+                            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><GroupsPageSkeleton /></Suspense>}>
+                              <GroupDetails />
+                            </Suspense>
+                          } 
+                        />
+                        <Route 
+                          path="/profile" 
+                          element={
+                            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
+                              <Profile />
+                            </Suspense>
+                          } 
+                        />
+                        <Route
+                          path="/custom-thresholds"
+                          element={
+                            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
+                              <CustomThresholds />
+                            </Suspense>
+                          }
+                        />
+                        <Route
+                          path="/custom-alerts"
+                          element={
+                            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><ProfilePageSkeleton /></Suspense>}>
+                              <CustomAlerts />
+                            </Suspense>
+                          }
+                        />
+                        <Route 
+                          path="*" 
+                          element={<Navigate to="/" replace />}
+                        />
+                      </Routes>
+                    </main>
+                  </ErrorBoundary>
                   <BottomNavigation />
                   
                   {/* Global data collection that persists across pages */}
