@@ -13,6 +13,8 @@ import { User, Calendar, Lock, Save } from 'lucide-react';
 import { MenuPageHeader } from '@/components/MenuPageHeader';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
+import { GroupSelector } from '@/components/Profile/GroupSelector';
+import { GroupStats } from '@/components/Profile/GroupStats';
 
 interface Profile {
   id: string;
@@ -182,6 +184,12 @@ export default function Profile() {
           title={t('profile.title')}
           subtitle={t('profile.subtitle')}
         />
+
+        {/* Group Management Section */}
+        <GroupSelector />
+
+        {/* Group Statistics (only shown when in group mode) */}
+        <GroupStats />
 
         {/* Profile Information */}
         <Card>

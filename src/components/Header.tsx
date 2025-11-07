@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, User, LogOut } from 'lucide-react';
+import { Menu, User, LogOut, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,12 +15,14 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { MobileNavigation } from './MobileNavigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useGroupSettings } from '@/hooks/useGroupSettings';
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { activeGroup, isGroupMode } = useGroupSettings();
 
   const handleSignOut = async () => {
     await signOut();
@@ -58,6 +60,12 @@ export function Header() {
             <h1 className="text-lg font-bold text-foreground">
               {t('header.title')}
             </h1>
+            {isGroupMode && activeGroup && (
+              <Badge variant="secondary" className="hidden sm:flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                {activeGroup.name}
+              </Badge>
+            )}
           </div>
         </div>
 

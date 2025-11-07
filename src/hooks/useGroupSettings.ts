@@ -102,6 +102,16 @@ export const useGroupSettings = () => {
       newUrl.searchParams.set('group', groupId);
       window.history.replaceState({}, '', newUrl.toString());
 
+      // Debug logs pour vérifier l'héritage
+      logger.debug('🔄 Group switched:', {
+        groupId,
+        groupName: groupConfig.name,
+        thresholds: groupConfig.thresholds.length,
+        locations: groupConfig.locations.length,
+        alarms: groupConfig.alarms.length,
+        settings: groupConfig.settings,
+      });
+
       toast({
         title: `Group Settings Applied`,
         description: `Now using settings for: ${groupConfig.name}`,
