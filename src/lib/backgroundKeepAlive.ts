@@ -2,27 +2,74 @@
  * Background Keep-Alive System
  * 
  * Prevents iOS/Android from suspending the app during background recording
- * by playing silent audio continuously. This is a widely-used technique
- * to maintain background execution on mobile browsers.
+ * using two complementary techniques:
+ * - Silent Audio (iOS): Plays inaudible audio to keep app alive
+ * - Wake Lock API (Android): Prevents screen/CPU from sleeping
  */
 
 import * as logger from '@/utils/logger';
 
+// Platform detection
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isAndroid = /Android/.test(navigator.userAgent);
+
 class BackgroundKeepAlive {
+  // Silent Audio (iOS)
   private audioContext: AudioContext | null = null;
   private oscillator: OscillatorNode | null = null;
   private gainNode: GainNode | null = null;
+  
+  // Wake Lock API (Android)
+  private wakeLock: WakeLockSentinel | null = null;
+  
   private isActive: boolean = false;
 
   /**
-   * Start silent audio playback to keep the app alive in background
+   * Start keep-alive mechanisms (platform-specific)
    */
   async start(): Promise<void> {
     if (this.isActive) {
-      logger.debug('🔊 Silent audio keep-alive already active');
+      logger.debug('🔒 Keep-alive already active');
       return;
     }
 
+    try {
+      // iOS: Silent Audio
+      if (isIOS) {
+        await this.startSilentAudio();
+      }
+      
+      // Android: Wake Lock API
+      if (isAndroid && 'wakeLock' in navigator) {
+        await this.requestWakeLock();
+      }
+      
+      // Fallback: Silent Audio for non-iOS devices without Wake Lock
+      if (!isIOS && (!('wakeLock' in navigator) || !isAndroid)) {
+        await this.startSilentAudio();
+      }
+      
+      this.isActive = true;
+      
+      // Setup auto-resume handlers
+      this.setupAutoResume();
+      this.setupVisibilityHandler();
+      
+      logger.info('🔒 Keep-alive started:', {
+        platform: isIOS ? 'iOS' : isAndroid ? 'Android' : 'Other',
+        audio: !!this.audioContext,
+        wakeLock: !!this.wakeLock
+      });
+    } catch (error) {
+      logger.error('❌ Failed to start keep-alive:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Start silent audio playback (iOS & fallback)
+   */
+  private async startSilentAudio(): Promise<void> {
     try {
       // Create AudioContext (iOS requires user interaction to initialize)
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -42,19 +89,38 @@ class BackgroundKeepAlive {
       // Start playback
       this.oscillator.start();
       
-      this.isActive = true;
-      logger.info('🔊 Silent audio keep-alive started (20Hz @ 0.1% volume)');
-      
-      // Resume audio context if it gets suspended (iOS behavior)
-      this.setupAutoResume();
+      logger.info('🔊 Silent audio started (20Hz @ 0.1% volume)');
     } catch (error) {
-      logger.error('❌ Failed to start silent audio keep-alive:', error);
+      logger.error('❌ Failed to start silent audio:', error);
       throw error;
     }
   }
 
   /**
-   * Stop silent audio playback
+   * Request Wake Lock (Android)
+   */
+  private async requestWakeLock(): Promise<void> {
+    try {
+      if (!('wakeLock' in navigator)) {
+        logger.warn('⚠️ Wake Lock API not supported');
+        return;
+      }
+
+      this.wakeLock = await (navigator as any).wakeLock.request('screen');
+      
+      this.wakeLock.addEventListener('release', () => {
+        logger.debug('🔓 Wake lock released');
+      });
+      
+      logger.info('🔒 Wake Lock acquired');
+    } catch (error) {
+      logger.error('❌ Failed to acquire Wake Lock:', error);
+      // Don't throw - silent audio will be fallback
+    }
+  }
+
+  /**
+   * Stop all keep-alive mechanisms
    */
   stop(): void {
     if (!this.isActive) {
@@ -62,6 +128,7 @@ class BackgroundKeepAlive {
     }
 
     try {
+      // Stop silent audio
       if (this.oscillator) {
         this.oscillator.stop();
         this.oscillator.disconnect();
@@ -78,15 +145,25 @@ class BackgroundKeepAlive {
         this.audioContext = null;
       }
 
+      // Release wake lock
+      if (this.wakeLock) {
+        this.wakeLock.release().then(() => {
+          logger.debug('🔓 Wake Lock released');
+        }).catch(error => {
+          logger.warn('⚠️ Failed to release Wake Lock:', error);
+        });
+        this.wakeLock = null;
+      }
+
       this.isActive = false;
-      logger.info('🔇 Silent audio keep-alive stopped');
+      logger.info('🔓 Keep-alive stopped');
     } catch (error) {
-      logger.error('❌ Failed to stop silent audio keep-alive:', error);
+      logger.error('❌ Failed to stop keep-alive:', error);
     }
   }
 
   /**
-   * Setup auto-resume for iOS (audio context gets suspended when app backgrounds)
+   * Setup auto-resume for audio context (iOS)
    */
   private setupAutoResume(): void {
     if (!this.audioContext) return;
@@ -101,27 +178,55 @@ class BackgroundKeepAlive {
       }
     };
 
-    // Resume on visibility change (app returns to foreground)
-    document.addEventListener('visibilitychange', resumeAudio);
-    
     // Resume on user interaction (iOS requirement)
     document.addEventListener('touchstart', resumeAudio, { once: true });
     document.addEventListener('click', resumeAudio, { once: true });
   }
 
   /**
-   * Check if keep-alive is currently active
+   * Setup visibility change handler to re-acquire wake lock
    */
-  isRunning(): boolean {
-    return this.isActive && this.audioContext?.state === 'running';
+  private setupVisibilityHandler(): void {
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible' && this.isActive) {
+        // Re-acquire wake lock when app returns to foreground (Android)
+        if (isAndroid && 'wakeLock' in navigator && !this.wakeLock) {
+          await this.requestWakeLock();
+        }
+        
+        // Resume audio context if suspended (iOS)
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+          await this.audioContext.resume();
+          logger.debug('🔊 Audio context resumed on visibility change');
+        }
+      }
+    });
   }
 
   /**
-   * Get current audio context state
+   * Check if keep-alive is currently active
    */
-  getState(): string {
-    if (!this.audioContext) return 'not-initialized';
-    return this.audioContext.state;
+  isRunning(): boolean {
+    const audioRunning = this.audioContext?.state === 'running';
+    const wakeLockActive = this.wakeLock !== null;
+    return this.isActive && (audioRunning || wakeLockActive);
+  }
+
+  /**
+   * Get current state details
+   */
+  getState(): {
+    active: boolean;
+    platform: string;
+    audio: string | null;
+    wakeLock: boolean;
+  } {
+    return {
+      active: this.isActive,
+      platform: isIOS ? 'iOS' : isAndroid ? 'Android' : 'Other',
+      audio: this.audioContext?.state || null,
+      wakeLock: this.wakeLock !== null
+    };
   }
 }
 
