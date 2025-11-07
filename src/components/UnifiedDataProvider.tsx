@@ -6,13 +6,8 @@ import { useCrashRecovery } from '@/hooks/useCrashRecovery';
 import { PMScanData, PMScanDevice } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
-import { RecordingEntry } from '@/types/recording';
+import { RecordingEntry, MissionContext } from '@/types/recording';
 import * as logger from '@/utils/logger';
-
-interface MissionContext {
-  location: string;
-  activity: string;
-}
 
 interface UnifiedDataState {
   // PMScan data - single source of truth

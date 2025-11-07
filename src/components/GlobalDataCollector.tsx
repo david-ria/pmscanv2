@@ -190,32 +190,33 @@ export function GlobalDataCollector() {
       // Check if we're online for external services
       const isOnline = navigator.onLine;
       
+      // TODO: Location enrichment temporarily disabled - needs proper integration with addDataPoint callback
       // Get enriched location if available - non-blocking when offline
       let enrichedLocationName = '';
-      rateLimitedDebug('enrichment-check', 5000, '🔍 Location enrichment check:', {
-        hasEnrichFunction: !!enrichLocation,
-        hasLocation: !!(location?.latitude && location?.longitude),
-        isOnline
-      });
       
-      if (isOnline && enrichLocationRef.current && location?.latitude && location?.longitude) {
-        // Launch enrichment in background - don't block data collection
-        enrichLocationRef.current(
-          location.latitude,
-          location.longitude,
-          averagedData.timestamp.toISOString()
-        )
-          .then(enrichmentResult => {
-            if (enrichmentResult?.display_name) {
-              devLogger.info('✅ Location enriched:', enrichmentResult.display_name);
-            }
-          })
-          .catch(error => {
-            logger.warn('⚠️ Background location enrichment failed:', error);
-          });
-      } else if (!isOnline) {
-        logger.debug('⚠️ Offline - skipping location enrichment');
-      }
+      // DISABLED: Location enrichment runs in background but result is not persisted in data point
+      // Need to implement callback mechanism to update data point after async enrichment completes
+      // rateLimitedDebug('enrichment-check', 5000, '🔍 Location enrichment check:', {
+      //   hasEnrichFunction: !!enrichLocation,
+      //   hasLocation: !!(location?.latitude && location?.longitude),
+      //   isOnline
+      // });
+      // 
+      // if (isOnline && enrichLocationRef.current && location?.latitude && location?.longitude) {
+      //   enrichLocationRef.current(
+      //     location.latitude,
+      //     location.longitude,
+      //     averagedData.timestamp.toISOString()
+      //   )
+      //     .then(enrichmentResult => {
+      //       if (enrichmentResult?.display_name) {
+      //         devLogger.info('✅ Location enriched:', enrichmentResult.display_name);
+      //       }
+      //     })
+      //     .catch(error => {
+      //       logger.warn('⚠️ Background location enrichment failed:', error);
+      //     });
+      // }
 
       const automaticContext = autoContextSettings.enabled ? await updateContextRef.current(
         averagedData,

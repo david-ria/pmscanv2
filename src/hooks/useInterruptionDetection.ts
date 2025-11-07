@@ -27,6 +27,12 @@ export function useInterruptionDetection(options: UseInterruptionDetectionOption
       // Get current recording state
       const state = recordingService.getState();
       
+      // Validate we have data to save
+      if (state.recordingData.length === 0) {
+        logger.warn('⚠️ Emergency save skipped - no data to save');
+        return;
+      }
+      
       if (state.isRecording && state.recordingData.length > 0) {
         logger.warn('💾 Emergency save triggered:', {
           dataPoints: state.recordingData.length,

@@ -64,10 +64,14 @@ class RecordingService {
     return { ...this.state };
   }
 
+  /**
+   * Start recording session with specified frequency
+   * @param frequency - Recording frequency (e.g. "10s", "1m")
+   */
   startRecording(frequency: string = '10s'): void {
-    logger.debug('🎬 === RECORDING SERVICE startRecording() CALLED ===');
-    logger.debug('🎬 Input frequency:', frequency);
-    logger.debug('🎬 Current state before update:', JSON.stringify(this.state, null, 2));
+    logger.debug('🎯 === RECORDING SERVICE startRecording() CALLED ===');
+    logger.debug('🎯 Input frequency:', frequency);
+    logger.debug('🎯 Current state before update:', JSON.stringify(this.state, null, 2));
     
     this.state = {
       ...this.state,
@@ -77,7 +81,7 @@ class RecordingService {
       recordingData: [], // Clear previous data
     };
 
-    logger.debug('🎬 New state after update:', JSON.stringify(this.state, null, 2));
+    logger.debug('🎯 New state after update:', JSON.stringify(this.state, null, 2));
 
     // Enable both global and background recording for continuity
     setGlobalRecording(true);
@@ -96,28 +100,30 @@ class RecordingService {
             type: 'START_BACKGROUND_RECORDING',
             frequency,
           });
-          logger.debug('🎬 Service worker message sent');
+          logger.debug('🎯 Service worker message sent');
         }
       }).catch(error => {
         logger.warn('⚠️ Failed to send START message to Service Worker:', error);
       });
     }
     
-    logger.debug('🎬 About to notify listeners:', this.listeners.size, 'listeners');
+    logger.debug('🎯 About to notify listeners:', this.listeners.size, 'listeners');
     this.notify();
     
-    logger.debug('✅ Recording started! Final isRecording state:', this.state.isRecording);
+    logger.info('✅ Recording started! Final isRecording state:', this.state.isRecording);
   }
 
+  /**
+   * Stop current recording session
+   */
   stopRecording(): void {
-    console.log('🚨🛑 === RECORDING SERVICE STOP CALLED ===');
-    console.log('🛑 Recording service stop - current state:', {
+    logger.info('🛑 === RECORDING SERVICE STOP CALLED ===');
+    logger.debug('🛑 Recording service stop - current state:', {
       isRecording: this.state.isRecording,
       recordingDataLength: this.state.recordingData.length,
       hasRecordingStartTime: !!this.state.recordingStartTime,
       recordingStartTime: this.state.recordingStartTime
     });
-    logger.debug('🛑 Stopping recording...');
     
     this.state = {
       ...this.state,
@@ -147,17 +153,25 @@ class RecordingService {
     
     this.notify();
     
-    console.log('🚨🛑 === RECORDING SERVICE STOP COMPLETE ===');
-    logger.debug('✅ Recording stopped successfully');
+    logger.info('✅ Recording stopped successfully');
   }
 
+  /**
+   * Add a new data point to the recording
+   * @param pmData - PM scan data from device
+   * @param location - GPS location data (optional)
+   * @param manualContext - User-provided context (location/activity)
+   * @param automaticContext - Auto-detected context from sensors
+   * @param enrichedLocation - Enriched location name from reverse geocoding
+   * @param geohash - Spatial hash for privacy and indexing
+   */
   addDataPoint(
     pmData: PMScanData,
     location?: LocationData,
     manualContext?: MissionContext,
     automaticContext?: string,
-    enrichedLocation?: string, // NEW parameter
-    geohash?: string // NEW: Geohash parameter
+    enrichedLocation?: string,
+    geohash?: string
   ): void {
     if (!this.state.isRecording) {
       logger.debug('⚠️ Attempted to add data point while not recording');
@@ -207,8 +221,7 @@ class RecordingService {
 
     this.notify();
     
-    console.log('🚨✅ === UNIFIED RECORDING SYSTEM ===');
-    logger.debug('📊 Data point added to UNIFIED RecordingService. Total entries:', this.state.recordingData.length);
+    logger.debug('📊 Data point added. Total entries:', this.state.recordingData.length);
   }
 
   updateMissionContext(location: string, activity: string): void {

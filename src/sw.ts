@@ -115,8 +115,27 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 
 let heartbeatTimer: number | null = null;
 
-// Initialize IndexedDB - Always open fresh connection
+// Cached DB connection for performance
+let cachedDB: IDBDatabase | null = null;
+
+/**
+ * Initialize IndexedDB with connection reuse for better performance
+ * @returns Promise<IDBDatabase> - Database connection
+ */
 async function initDB(): Promise<IDBDatabase> {
+  // Return cached connection if available and not closed
+  if (cachedDB && cachedDB.objectStoreNames.length > 0) {
+    try {
+      // Test if connection is still valid
+      const testTx = cachedDB.transaction([STORE_NAME], 'readonly');
+      testTx.abort();
+      return cachedDB;
+    } catch (error) {
+      console.log('[SW] Cached DB connection invalid, reopening');
+      cachedDB = null;
+    }
+  }
+  
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -127,6 +146,7 @@ async function initDB(): Promise<IDBDatabase> {
     
     request.onsuccess = () => {
       const database = request.result;
+      cachedDB = database; // Cache the connection
       console.log('[SW] IndexedDB opened successfully');
       resolve(database);
     };
@@ -144,8 +164,16 @@ async function initDB(): Promise<IDBDatabase> {
   });
 }
 
-// Store data in IndexedDB
+/**
+ * Store data in IndexedDB with validation
+ * @param data - Data to store (must have valid structure)
+ */
 async function storeData(data: any): Promise<void> {
+  // Validate data before storage
+  if (!data || typeof data !== 'object') {
+    console.error('[SW] ❌ Invalid data provided to storeData');
+    return;
+  }
   let database: IDBDatabase | null = null;
   
   try {
@@ -155,7 +183,7 @@ async function storeData(data: any): Promise<void> {
     
     const entry = {
       ...data,
-      timestamp: Date.now(),
+      storedAt: Date.now(), // When SW stored it (different from original timestamp)
       stored: new Date().toISOString(),
     };
     
@@ -176,12 +204,8 @@ async function storeData(data: any): Promise<void> {
     });
   } catch (error) {
     console.error('[SW] ❌ Failed to store data:', error);
-  } finally {
-    // Close connection after operation
-    if (database) {
-      database.close();
-    }
   }
+  // Don't close connection - keep it cached for reuse
 }
 
 // Get all stored data
@@ -195,18 +219,11 @@ async function getAllData(): Promise<any[]> {
     
     return new Promise((resolve, reject) => {
       const request = store.getAll();
-      request.onsuccess = () => {
-        database?.close();
-        resolve(request.result);
-      };
-      request.onerror = () => {
-        database?.close();
-        reject(request.error);
-      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
     });
   } catch (error) {
     console.error('[SW] Failed to get data:', error);
-    if (database) database.close();
     return [];
   }
 }
@@ -236,8 +253,6 @@ async function cleanupOldData(): Promise<void> {
     }
   } catch (error) {
     console.error('[SW] Failed to cleanup data:', error);
-  } finally {
-    if (database) database.close();
   }
 }
 
@@ -266,8 +281,8 @@ async function sendHeartbeat(): Promise<void> {
       clientCount: clients.length,
     });
     
-    // Cleanup old data periodically
-    if (Math.random() < 0.1) { // 10% chance each heartbeat
+    // Cleanup old data periodically (reduced frequency)
+    if (Math.random() < 0.01) { // 1% chance each heartbeat (~every 50 minutes)
       await cleanupOldData();
     }
     

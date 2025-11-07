@@ -22,7 +22,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAutoContext } from '@/hooks/useAutoContext';
-import { useBackgroundRecordingIntegration } from '@/hooks/useBackgroundRecordingIntegration';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useGPS } from '@/hooks/useGPS';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
@@ -63,11 +62,6 @@ export function useMenuSections({
   const { theme = 'light', setTheme } = useTheme();
   const { isEnabled: autoContextEnabled, toggleEnabled: toggleAutoContext } =
     useAutoContext();
-  const {
-    isBackgroundEnabled,
-    enableRecordingBackground,
-    disableRecordingBackground,
-  } = useBackgroundRecordingIntegration();
 
   // Get weather logging state
   const { isEnabled: weatherLoggingEnabled, setEnabled: setWeatherLoggingEnabled } = useWeatherLogging();
@@ -121,14 +115,6 @@ export function useMenuSections({
     return lang ? lang.name : currentLanguage.toUpperCase();
   };
 
-  const handleBackgroundRecordingToggle = async (enabled: boolean) => {
-    if (enabled) {
-      await enableRecordingBackground('30s'); // Default 30 second frequency
-    } else {
-      await disableRecordingBackground();
-    }
-  };
-
   return [
     {
       title: t('account.title'),
@@ -164,16 +150,6 @@ export function useMenuSections({
             onCheckedChange: (checked: boolean) =>
               setTheme(checked ? 'dark' : 'light'),
           },
-        },
-        {
-          icon: Moon,
-          label: 'Background Recording',
-          badge: null,
-          toggle: {
-            checked: isBackgroundEnabled,
-            onCheckedChange: handleBackgroundRecordingToggle,
-          },
-          info: 'Continue recording PMScan data even when the app is minimized or in the background. Note: This will use more battery.',
         },
         {
           icon: Settings,
