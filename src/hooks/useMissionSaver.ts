@@ -13,7 +13,8 @@ export function useMissionSaver() {
     recordingFrequency?: string,
     shared?: boolean,
     missionId?: string,
-    deviceName?: string
+    deviceName?: string,
+    groupId?: string
   ) => {
     console.log('🚨💾 === MISSION SAVER CALLED ===');
     console.log('💾 useMissionSaver.saveMission called with:', {
@@ -23,6 +24,7 @@ export function useMissionSaver() {
       recordingFrequency,
       shared,
       deviceName: deviceName,
+      groupId: groupId,
       hasRecordingData: !!recordingData,
       sampleDataPoints: recordingData?.slice(0, 2).map(entry => ({
         pm25: entry.pmData.pm25,
@@ -91,16 +93,17 @@ export function useMissionSaver() {
     });
     
     logger.debug('💾 About to create mission from recording data');
-    const mission = dataStorage.createMissionFromRecording(
-      recordingData,
-      missionName,
-      actualStartTime,
-      endTime,
-      recordingFrequency,
-      shared,
-      missionId,
-      deviceName
-    );
+      const mission = dataStorage.createMissionFromRecording(
+        recordingData,
+        missionName,
+        actualStartTime,
+        endTime,
+        recordingFrequency,
+        shared,
+        missionId,
+        deviceName,
+        groupId
+      );
 
     logger.debug('💾 Mission created:', {
       id: mission.id,

@@ -659,6 +659,7 @@ export type Database = {
           end_epoch_ms: number | null
           end_time: string
           gap_detected: boolean | null
+          group_id: string | null
           id: string
           location_context: string | null
           max_pm25: number
@@ -689,6 +690,7 @@ export type Database = {
           end_epoch_ms?: number | null
           end_time: string
           gap_detected?: boolean | null
+          group_id?: string | null
           id?: string
           location_context?: string | null
           max_pm25: number
@@ -719,6 +721,7 @@ export type Database = {
           end_epoch_ms?: number | null
           end_time?: string
           gap_detected?: boolean | null
+          group_id?: string | null
           id?: string
           location_context?: string | null
           max_pm25?: number
@@ -742,6 +745,13 @@ export type Database = {
             columns: ["air_quality_data_id"]
             isOneToOne: false
             referencedRelation: "air_quality_data"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "missions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
             referencedColumns: ["id"]
           },
           {

@@ -183,29 +183,30 @@ export async function syncPendingMissions(): Promise<void> {
           }
         }
 
-        // Save mission to database using upsert to handle edge cases
-        const { data: savedMission, error: missionError } = await supabase
-          .from('missions')
-          .upsert({
-            id: mission.id,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            name: mission.name,
-            start_time: toISOString(mission.startTime),
-            end_time: toISOString(mission.endTime),
-            duration_minutes: mission.durationMinutes,
-            avg_pm1: mission.avgPm1,
-            avg_pm25: mission.avgPm25,
-            avg_pm10: mission.avgPm10,
-            max_pm25: mission.maxPm25,
-            measurements_count: mission.measurementsCount,
-            recording_frequency: mission.recordingFrequency,
-            shared: mission.shared,
-            device_name: mission.deviceName,
-            weather_data_id: weatherDataId,
-            air_quality_data_id: airQualityDataId,
-          })
-          .select()
-          .single();
+    // Save mission to database using upsert to handle edge cases
+    const { data: savedMission, error: missionError } = await supabase
+      .from('missions')
+      .upsert({
+        id: mission.id,
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        name: mission.name,
+        start_time: toISOString(mission.startTime),
+        end_time: toISOString(mission.endTime),
+        duration_minutes: mission.durationMinutes,
+        avg_pm1: mission.avgPm1,
+        avg_pm25: mission.avgPm25,
+        avg_pm10: mission.avgPm10,
+        max_pm25: mission.maxPm25,
+        measurements_count: mission.measurementsCount,
+        recording_frequency: mission.recordingFrequency,
+        shared: mission.shared,
+        group_id: mission.groupId,
+        device_name: mission.deviceName,
+        weather_data_id: weatherDataId,
+        air_quality_data_id: airQualityDataId,
+      })
+      .select()
+      .single();
 
         if (missionError) throw missionError;
 

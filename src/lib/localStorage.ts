@@ -60,6 +60,7 @@ export function formatDatabaseMission(dbMission: {
   measurements_count: number;
   recording_frequency?: string;
   shared?: boolean;
+  group_id?: string;
   device_name?: string;
   weather_data_id?: string;
   air_quality_data_id?: string;
@@ -94,6 +95,7 @@ export function formatDatabaseMission(dbMission: {
     measurementsCount: dbMission.measurements_count,
     recordingFrequency: dbMission.recording_frequency,
     shared: dbMission.shared,
+    groupId: dbMission.group_id,
     deviceName: dbMission.device_name,
     weatherDataId: dbMission.weather_data_id,
     airQualityDataId: dbMission.air_quality_data_id,

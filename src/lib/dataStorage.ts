@@ -36,6 +36,7 @@ export interface MissionData {
   measurementsCount: number;
   recordingFrequency: string;
   shared: boolean;
+  groupId?: string;
   deviceName?: string;
   measurements: MeasurementData[];
   synced: boolean; // For local storage tracking

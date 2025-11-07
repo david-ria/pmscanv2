@@ -30,7 +30,8 @@ export function createMissionFromRecording(
   recordingFrequency?: string,
   shared?: boolean,
   missionId?: string,
-  deviceName?: string
+  deviceName?: string,
+  groupId?: string
 ): MissionData {
   const measurementData: MeasurementData[] = measurements.map((m, index) => {
     return {
@@ -112,6 +113,7 @@ export function createMissionFromRecording(
     measurementsCount: measurementData.length,
     recordingFrequency: recordingFrequency || '30s',
     shared: shared || false,
+    groupId: groupId,
     deviceName,
     measurements: measurementData,
     synced: false,

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useMissionSaver } from '@/hooks/useMissionSaver';
+import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { cn } from '@/lib/utils';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +49,7 @@ export function RecordingControls({
     recordingStartTime,
   } = useUnifiedData();
   const { saveMission } = useMissionSaver();
+  const { activeGroup, isGroupMode } = useGroupSettings();
 
   const getFrequencyLabel = (frequency: string) => {
     const option = frequencyOptionKeys.find((f) => f.value === frequency);
@@ -119,7 +121,10 @@ export function RecordingControls({
         recordingStartTime,
         finalMissionName,
         recordingFrequency,
-        shareData
+        shareData,
+        undefined,
+        device?.name,
+        isGroupMode && shareData ? activeGroup?.id : undefined
       );
 
       // Stop recording and clear data
