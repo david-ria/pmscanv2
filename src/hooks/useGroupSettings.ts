@@ -412,11 +412,16 @@ export const useGroupSettings = () => {
 
   const getCurrentActivities = () => {
     // Flatten all activities from all locations
-    if (activeGroup) {
-      return activeGroup.locations.flatMap(loc => loc.activities);
-    }
-    // Return flattened activities from defaults
-    return DEFAULT_ACTIVITIES;
+    const allActivities = activeGroup 
+      ? activeGroup.locations.flatMap(loc => loc.activities)
+      : DEFAULT_ACTIVITIES;
+    
+    // Deduplicate by id to prevent React key warnings
+    const uniqueActivities = Array.from(
+      new Map(allActivities.map(activity => [activity.id, activity])).values()
+    );
+    
+    return uniqueActivities;
   };
 
   return {
