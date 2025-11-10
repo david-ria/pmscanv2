@@ -135,7 +135,7 @@ export function ScopedRecordingProvider({ children }: ScopedRecordingProviderPro
     }, 100);
 
     return () => clearTimeout(timeoutId);
-  }, [selectedLocation, isGroupMode, activeGroup?.id, getCurrentLocations]);
+  }, [selectedLocation, isGroupMode, activeGroup?.id]);
 
   // Persist to scoped localStorage
   useEffect(() => {
