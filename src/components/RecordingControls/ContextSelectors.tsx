@@ -59,6 +59,25 @@ export function ContextSelectors({
     return selectedLocationData.activities;
   }, [selectedLocation, activeGroup, locations, getCurrentActivities]);
 
+  // Get display names for badges
+  const selectedLocationName = useMemo(() => {
+    if (!selectedLocation) return '';
+    const location = locations.find(loc => 
+      ('id' in loc && loc.id === selectedLocation) || 
+      loc.name === selectedLocation
+    );
+    return location?.name || selectedLocation;
+  }, [selectedLocation, locations]);
+
+  const selectedActivityName = useMemo(() => {
+    if (!selectedActivity) return '';
+    const activity = activities.find(act => 
+      act.id === selectedActivity || 
+      act.name === selectedActivity
+    );
+    return activity?.name || selectedActivity;
+  }, [selectedActivity, activities]);
+
   // Debug log to verify group settings inheritance (conditional & rate-limited)
   const prevContextRef = useRef<string>('');
   useEffect(() => {
@@ -100,7 +119,7 @@ export function ContextSelectors({
           <span>{t('realTime.location')}</span>
           {isRecording && selectedLocation && (
             <Badge variant="outline" className="text-xs">
-              {selectedLocation}
+              {selectedLocationName}
             </Badge>
           )}
         </div>
@@ -127,7 +146,7 @@ export function ContextSelectors({
           <span>{t('realTime.activity')}</span>
           {isRecording && selectedActivity && (
             <Badge variant="outline" className="text-xs">
-              {selectedActivity}
+              {selectedActivityName}
             </Badge>
           )}
         </div>
