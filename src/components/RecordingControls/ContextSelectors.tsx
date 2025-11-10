@@ -195,14 +195,16 @@ export function ContextSelectors({
             )}
           </SelectTrigger>
           <SelectContent>
-            {activities.map((activity) => (
-              <SelectItem
-                key={activity.id}
-                value={activity.id}
-              >
-                {activity.name}
-              </SelectItem>
-            ))}
+            {activities
+              .filter(activity => activity.id && activity.id.trim().length > 0)
+              .map((activity) => (
+                <SelectItem
+                  key={activity.id}
+                  value={activity.id}
+                >
+                  {activity.name}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>

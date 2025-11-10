@@ -109,10 +109,12 @@ const createGroupConfigFromDB = (group: Group): GroupConfig => {
         id: key, // Keep original key as ID for tracking
         name: locationName, // ✅ Use extracted name
         description: locationDescription,
-        activities: activitiesList.map((activity: string) => ({
-          id: activity.toLowerCase().replace(/\s+/g, '-'),
-          name: activity,
-        }))
+        activities: activitiesList
+          .filter((activity: string) => activity && activity.trim().length > 0)
+          .map((activity: string) => ({
+            id: activity.toLowerCase().replace(/\s+/g, '-'),
+            name: activity,
+          }))
       };
     }) : DEFAULT_LOCATIONS,
     events: [],
