@@ -14,6 +14,7 @@ import {
   ReferenceArea,
 } from 'recharts';
 import { PMScanData } from '@/lib/pmscan/types';
+import { useGroupSettings } from '@/hooks/useGroupSettings';
 
 interface EventData {
   id: string;
@@ -47,6 +48,20 @@ interface PMLineGraphProps {
 }
 
 export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext }: PMLineGraphProps) {
+  const { getCurrentThresholds, isGroupMode, activeGroup } = useGroupSettings();
+  
+  // Debug log to verify thresholds inheritance
+  React.useEffect(() => {
+    const thresholds = getCurrentThresholds();
+    console.log('📊 PMLineGraph thresholds:', {
+      activeGroupId: activeGroup?.id,
+      activeGroupName: activeGroup?.name,
+      isGroupMode,
+      thresholds,
+      shouldDisplayGroupThresholds: isGroupMode && activeGroup
+    });
+  }, [activeGroup, isGroupMode, getCurrentThresholds]);
+
   // Transform data for the chart - ensure proper chronological ordering
   const chartData = React.useMemo(() => {
     if (!data || !Array.isArray(data) || data.length === 0) return [];

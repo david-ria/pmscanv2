@@ -14,6 +14,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { EVENT_TYPES } from '@/utils/eventTypes';
 import { createTimestamp, formatTime } from '@/utils/timeFormat';
+import { useGroupSettings } from '@/hooks/useGroupSettings';
+import React from 'react';
 
 interface EventButtonProps {}
 
@@ -23,9 +25,36 @@ export function EventButton({}: EventButtonProps) {
   const { createEvent, isLoading } = useEvents();
   const { isRecording } = useUnifiedData();
   const { user } = useAuth();
+  const { getCurrentEvents, isGroupMode, activeGroup } = useGroupSettings();
   const [open, setOpen] = useState(false);
   const [eventType, setEventType] = useState<string>('');
   const [comment, setComment] = useState('');
+
+  // Get effective event types (group or default)
+  const groupEvents = getCurrentEvents();
+  const availableEventTypes = React.useMemo(() => {
+    if (isGroupMode && groupEvents.length > 0) {
+      // Convert group events to EVENT_TYPES format
+      return groupEvents.map((event, index) => ({
+        value: event.name.toLowerCase().replace(/\s+/g, '_'),
+        label: event.name,
+        icon: '📍', // Default icon since GroupEvent doesn't have icon property
+      }));
+    }
+    return EVENT_TYPES;
+  }, [isGroupMode, groupEvents]);
+
+  // Debug log to verify events inheritance
+  React.useEffect(() => {
+    console.log('📍 EventButton available events:', {
+      activeGroupId: activeGroup?.id,
+      activeGroupName: activeGroup?.name,
+      isGroupMode,
+      groupEventsCount: groupEvents.length,
+      availableEventsCount: availableEventTypes.length,
+      eventsList: availableEventTypes.map(e => e.label)
+    });
+  }, [activeGroup, isGroupMode, groupEvents, availableEventTypes]);
 
 
   const handleSaveEvent = async () => {
@@ -82,7 +111,7 @@ export function EventButton({}: EventButtonProps) {
 
       await createEvent(eventData);
 
-      const selectedEventType = EVENT_TYPES.find(et => et.value === eventType);
+      const selectedEventType = availableEventTypes.find(et => et.value === eventType);
       
       toast({
         title: 'Event Recorded',
@@ -142,7 +171,7 @@ export function EventButton({}: EventButtonProps) {
                 <SelectValue placeholder="Select event type..." />
               </SelectTrigger>
               <SelectContent>
-                {EVENT_TYPES.map((type) => (
+                {availableEventTypes.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     <span className="flex items-center gap-2">
                       <span>{type.icon}</span>
