@@ -17,6 +17,39 @@ export interface Group {
   custom_activities?: Record<string, any> | null;
   role?: string;
   member_count?: number;
+  group_settings?: Array<{
+    custom_alarms: any[];
+    pm25_threshold?: number;
+    pm10_threshold?: number;
+    pm1_threshold?: number;
+    alarm_enabled?: boolean;
+    auto_share_stats?: boolean;
+    notification_frequency?: string;
+    location_auto_detect?: boolean;
+    activity_auto_suggest?: boolean;
+    event_notifications?: boolean;
+    weekly_reports?: boolean;
+  }>;
+  group_events?: Array<{
+    id: string;
+    name: string;
+    description?: string;
+    icon?: string;
+    color?: string;
+    enabled: boolean;
+  }>;
+  group_custom_thresholds?: Array<{
+    id: string;
+    name: string;
+    pm1_min?: number;
+    pm1_max?: number;
+    pm25_min?: number;
+    pm25_max?: number;
+    pm10_min?: number;
+    pm10_max?: number;
+    color?: string;
+    enabled: boolean;
+  }>;
 }
 
 export interface GroupMembership {
@@ -82,8 +115,45 @@ export const useGroups = () => {
     try {
       setError(null);
       
-      // First fetch groups
-      const groupsQuery = supabase.from('groups').select('*');
+      // First fetch groups with related data
+      const groupsQuery = supabase
+        .from('groups')
+        .select(`
+          *,
+          group_settings(
+            custom_alarms,
+            pm25_threshold,
+            pm10_threshold,
+            pm1_threshold,
+            alarm_enabled,
+            auto_share_stats,
+            notification_frequency,
+            location_auto_detect,
+            activity_auto_suggest,
+            event_notifications,
+            weekly_reports
+          ),
+          group_events(
+            id,
+            name,
+            description,
+            icon,
+            color,
+            enabled
+          ),
+          group_custom_thresholds(
+            id,
+            name,
+            pm1_min,
+            pm1_max,
+            pm25_min,
+            pm25_max,
+            pm10_min,
+            pm10_max,
+            color,
+            enabled
+          )
+        `);
       const { data: groupsData, error: groupsError, isOffline: groupsOffline } = 
         await offlineAwareSupabase.query(groupsQuery);
 
