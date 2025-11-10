@@ -50,6 +50,7 @@ interface PMLineGraphProps {
 }
 
 export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext }: PMLineGraphProps) {
+  const { t } = useTranslation();
   const { getCurrentThresholds, isGroupMode, activeGroup } = useGroupSettings();
   
   // Debug log to verify thresholds inheritance (conditional & rate-limited)
@@ -319,8 +320,6 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
       </div>
     );
   }
-
-  const { t } = useTranslation();
 
   return (
     <div className={`bg-card border border-border rounded-lg p-4 ${className}`}>
