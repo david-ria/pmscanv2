@@ -111,40 +111,45 @@ export function useScopedRecordingContext() {
   }, []); // Run once only
 
   // Validate and cleanup invalid selections (runs on mount AND when mode/group changes)
+  // Use debouncing to prevent race conditions when group changes
   useEffect(() => {
-    const availableLocations = getCurrentLocations();
+    const timeoutId = setTimeout(() => {
+      const availableLocations = getCurrentLocations();
+      
+      if (selectedLocation) {
+        // Find the location by name (since we now store names, not IDs)
+        const location = availableLocations.find(loc => 
+          loc.name === selectedLocation || 
+          ('id' in loc && loc.id === selectedLocation) // Backwards compatibility
+        );
+        
+        // Check if location exists
+        if (!location) {
+          console.log(`⚠️ Location "${selectedLocation}" not available in current mode. Clearing...`);
+          setSelectedLocationState('');
+          const storageKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
+          localStorage.removeItem(storageKey);
+          return;
+        }
+        
+        // Additional validation: ensure the location has a valid name
+        const hasInvalidName = 
+          !location.name || 
+          isUUID(location.name) || // Name is a UUID
+          location.name === "0" || // Name is numeric string "0"
+          /^\d+$/.test(location.name) || // Name is only digits
+          location.name.length < 2; // Name too short
+        
+        if (hasInvalidName) {
+          console.warn(`⚠️ Location "${selectedLocation}" has invalid name "${location.name}". Clearing...`);
+          setSelectedLocationState('');
+          const storageKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
+          localStorage.removeItem(storageKey);
+        }
+      }
+    }, 100); // 100ms debounce to allow group data to load
     
-    if (selectedLocation) {
-      // Find the location by name (since we now store names, not IDs)
-      const location = availableLocations.find(loc => 
-        loc.name === selectedLocation || 
-        ('id' in loc && loc.id === selectedLocation) // Backwards compatibility
-      );
-      
-      // Check if location exists
-      if (!location) {
-        console.log(`⚠️ Location "${selectedLocation}" not available in current mode. Clearing...`);
-        setSelectedLocationState('');
-        const storageKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
-        localStorage.removeItem(storageKey);
-        return;
-      }
-      
-      // Additional validation: ensure the location has a valid name
-      const hasInvalidName = 
-        !location.name || 
-        isUUID(location.name) || // Name is a UUID
-        location.name === "0" || // Name is numeric string "0"
-        /^\d+$/.test(location.name) || // Name is only digits
-        location.name.length < 2; // Name too short
-      
-      if (hasInvalidName) {
-        console.warn(`⚠️ Location "${selectedLocation}" has invalid name "${location.name}". Clearing...`);
-        setSelectedLocationState('');
-        const storageKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
-        localStorage.removeItem(storageKey);
-      }
-    }
+    return () => clearTimeout(timeoutId);
   }, [selectedLocation, isGroupMode, activeGroup?.id, getCurrentLocations]);
 
   // Persist location to scoped localStorage

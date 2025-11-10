@@ -29,8 +29,8 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
 
   const events = getEventsForMission(mission.id);
   
-  // Migrate context from IDs to names before export
-  const migratedMeasurements = migrateMeasurementsContext(mission.measurements);
+  // No need for migration - we now store human-readable names directly
+  const measurements = mission.measurements;
   
   const headers = [
     'Timestamp',
@@ -59,7 +59,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
     let closestMeasurement = null;
     let closestTimeDiff = Infinity;
     
-    migratedMeasurements.forEach((measurement, index) => {
+    measurements.forEach((measurement, index) => {
       const measurementTime = measurement.timestamp instanceof Date ? measurement.timestamp : new Date(measurement.timestamp);
       const timeDiff = Math.abs(eventTime.getTime() - measurementTime.getTime());
       
@@ -74,7 +74,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
     }
   });
 
-  const rows = migratedMeasurements.map((m, index) => {
+  const rows = measurements.map((m, index) => {
     const measurementTime = m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp);
     
     // Get the event assigned to this specific measurement
