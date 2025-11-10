@@ -21,7 +21,6 @@ import { useTranslation } from 'react-i18next';
 import { useAutoContext } from '@/hooks/useAutoContext';
 import { WeatherInfo } from '@/components/WeatherInfo';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
-import { useScopedRecordingContext } from '@/hooks/useScopedRecordingContext';
 
 // Data logger component for real-time PM measurement tracking
 interface DataLogEntry {
@@ -59,9 +58,6 @@ export function DataLogger({
   const { recordingData, clearRecordingData } = useUnifiedData();
   const { latestContext, isEnabled: autoContextEnabled } = useAutoContext(false, null); // Don't start active scanning for logging only
   const [isMinimized, setIsMinimized] = useState(false);
-  
-  // Get current selected context for immediate visual feedback
-  const { selectedLocation, selectedActivity } = useScopedRecordingContext();
   
 
   // Use actual recording data instead of managing separate log with defensive checks
@@ -171,12 +167,6 @@ export function DataLogger({
                 {currentAutoContext || 'Detecting...'}
               </Badge>
             </>
-          )}
-          {/* Current Selection Indicator */}
-          {isRecording && (selectedLocation || selectedActivity) && (
-            <Badge variant="secondary" className="text-xs">
-              📍 {[selectedLocation, selectedActivity].filter(Boolean).join(' - ')}
-            </Badge>
           )}
         </div>
 

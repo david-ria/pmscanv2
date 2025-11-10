@@ -93,22 +93,6 @@ export function GlobalDataCollector() {
   // This ensures consistency with RealTime page and proper mode isolation
   const { selectedLocation, selectedActivity } = useScopedRecordingContext();
 
-  // Use refs to prevent stale closure issues
-  const selectedLocationRef = useRef(selectedLocation);
-  const selectedActivityRef = useRef(selectedActivity);
-
-  // Update refs when context changes
-  useEffect(() => {
-    selectedLocationRef.current = selectedLocation;
-    selectedActivityRef.current = selectedActivity;
-    if (isRecording) {
-      console.log('🏷️ Context changed during recording:', {
-        location: selectedLocation || 'none',
-        activity: selectedActivity || 'none'
-      });
-    }
-  }, [selectedLocation, selectedActivity, isRecording]);
-
   // Track recording state changes (development only)
   useEffect(() => {
     devLogger.info('🚨 Recording state changed:', { isRecording });
@@ -243,16 +227,6 @@ export function GlobalDataCollector() {
       // Use averaged data timestamp
       lastRecordedTimeRef.current = averagedData.timestamp;
 
-      // Read latest context from refs to avoid stale closures
-      const currentLocation = selectedLocationRef.current;
-      const currentActivity = selectedActivityRef.current;
-
-      console.log('📊 Adding data point with context:', {
-        location: currentLocation || 'none',
-        activity: currentActivity || 'none',
-        pm25: averagedData.pm25.toFixed(1)
-      });
-
       // Fetch weather data only if online, enabled and location is available
       // Launch in background with timeout - don't block data collection
       let weatherDataId: string | null = null;
@@ -280,11 +254,11 @@ export function GlobalDataCollector() {
         logger.debug('⚠️ Offline - skipping weather fetch');
       }
 
-      // Use averaged PMScan data with latest context from refs
+      // Use averaged PMScan data with current context from hook
       addDataPoint(
         averagedData,
         location || undefined,
-        { location: currentLocation, activity: currentActivity },
+        { location: selectedLocation, activity: selectedActivity },
         automaticContext,
         enrichedLocationName,
         geohashSettings.enabled && location?.latitude && location?.longitude 
