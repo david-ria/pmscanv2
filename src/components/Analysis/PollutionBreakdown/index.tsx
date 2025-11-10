@@ -78,8 +78,8 @@ export const PollutionBreakdownChart = ({
         {/* Mobile-first layout */}
         <div className="space-y-6 lg:hidden">
           {/* Pie Chart - Full width on mobile */}
-          <div className="w-full">
-            <div className="h-64 sm:h-80 w-full flex items-center justify-center">
+          <div className="w-full min-h-[300px]">
+            <div className="h-[300px] sm:h-[320px] w-full flex items-center justify-center">
               <PollutionPieChart breakdownData={breakdownData} pmType={pmType} />
             </div>
           </div>
@@ -106,7 +106,7 @@ export const PollutionBreakdownChart = ({
         <div className="hidden lg:block">
           <div className="grid grid-cols-2 gap-6">
             {/* Pie Chart */}
-            <div className="h-80">
+            <div className="h-[320px] min-h-[320px]">
               <PollutionPieChart breakdownData={breakdownData} pmType={pmType} />
             </div>
 

@@ -101,13 +101,39 @@ class DataStorageService {
         const formattedDbMissions = dbMissions.map(formatDatabaseMission);
 
         // Filter out database missions that have no measurements (orphaned missions)
-        const validDbMissions = formattedDbMissions.filter(mission => {
+        // Also delete them from the database to clean up
+        const validDbMissions: MissionData[] = [];
+        const orphanedMissionIds: string[] = [];
+        
+        for (const mission of formattedDbMissions) {
           const hasValidMeasurements = mission.measurements && mission.measurements.length > 0;
           if (!hasValidMeasurements && mission.measurementsCount > 0) {
-            logger.warn(`⚠️ Mission ${mission.name} has ${mission.measurementsCount} measurements in metadata but 0 actual measurements - likely orphaned`);
+            logger.warn(`🗑️ Removing orphaned mission: ${mission.name} (has ${mission.measurementsCount} in metadata but 0 actual measurements)`);
+            orphanedMissionIds.push(mission.id);
+          } else if (hasValidMeasurements) {
+            validDbMissions.push(mission);
           }
-          return hasValidMeasurements;
-        });
+        }
+        
+        // Clean up orphaned missions in the background
+        if (orphanedMissionIds.length > 0) {
+          (async () => {
+            try {
+              const { error } = await supabase
+                .from('missions')
+                .delete()
+                .in('id', orphanedMissionIds);
+              
+              if (error) {
+                logger.error('Failed to delete orphaned missions:', error);
+              } else {
+                logger.debug(`✅ Cleaned up ${orphanedMissionIds.length} orphaned mission(s)`);
+              }
+            } catch (error) {
+              logger.error('Error cleaning up orphaned missions:', error);
+            }
+          })();
+        }
 
         // Merge with local unsynced missions
         const unsyncedLocal = localMissions.filter((m) => !m.synced);

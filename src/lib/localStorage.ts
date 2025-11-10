@@ -10,15 +10,43 @@ export function getLocalMissions(): MissionData[] {
     if (!stored) return [];
 
     const missions = JSON.parse(stored);
-    return missions.map((m: Partial<MissionData> & { startTime: string; endTime: string; measurements: Array<{ timestamp: string }> }) => ({
-      ...m,
-      startTime: new Date(m.startTime),
-      endTime: new Date(m.endTime),
-      measurements: m.measurements.map((measurement: { timestamp: string; [key: string]: unknown }) => ({
-        ...measurement,
-        timestamp: new Date(measurement.timestamp),
-      })),
-    }));
+    const validMissions: MissionData[] = [];
+    const orphanedCount = missions.filter((m: Partial<MissionData> & { measurements: unknown[] }) => {
+      const hasOrphanedData = m.measurementsCount && m.measurementsCount > 0 && (!m.measurements || m.measurements.length === 0);
+      return hasOrphanedData;
+    }).length;
+    
+    if (orphanedCount > 0) {
+      logger.warn(`🗑️ Found ${orphanedCount} orphaned mission(s) in localStorage, removing...`);
+    }
+    
+    for (const m of missions) {
+      const mission = m as Partial<MissionData> & { startTime: string; endTime: string; measurements: Array<{ timestamp: string }> };
+      // Skip orphaned missions (have metadata but no measurements)
+      const hasOrphanedData = mission.measurementsCount && mission.measurementsCount > 0 && (!mission.measurements || mission.measurements.length === 0);
+      if (hasOrphanedData) {
+        logger.debug(`🗑️ Removing orphaned mission: ${mission.name}`);
+        continue;
+      }
+      
+      validMissions.push({
+        ...mission,
+        startTime: new Date(mission.startTime),
+        endTime: new Date(mission.endTime),
+        measurements: (mission.measurements || []).map((measurement: any) => ({
+          ...measurement,
+          timestamp: new Date(measurement.timestamp),
+        })),
+      } as MissionData);
+    }
+    
+    // Save cleaned missions back to localStorage if any were removed
+    if (orphanedCount > 0) {
+      localStorage.setItem(MISSIONS_KEY, JSON.stringify(validMissions));
+      logger.debug(`✅ Cleaned up ${orphanedCount} orphaned mission(s) from localStorage`);
+    }
+    
+    return validMissions;
   } catch (error) {
     console.error('Error reading local missions:', error);
     return [];
