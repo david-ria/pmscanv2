@@ -72,17 +72,45 @@ class RecordingService {
   startRecording(frequency: string = '10s'): void {
     logger.debug('🎯 === RECORDING SERVICE startRecording() CALLED ===');
     logger.debug('🎯 Input frequency:', frequency);
-    logger.debug('🎯 Current state before update:', JSON.stringify(this.state, null, 2));
+    logger.debug('🎯 Current state before update:', {
+      isRecording: this.state.isRecording,
+      dataPoints: this.state.recordingData.length,
+      frequency: this.state.recordingFrequency
+    });
     
+    // 🛡️ GUARD: If already recording, don't clear data!
+    if (this.state.isRecording) {
+      logger.warn('⚠️ startRecording() called while already recording!');
+      logger.warn(`⚠️ Preserving ${this.state.recordingData.length} existing data points`);
+      
+      // Update frequency if changed, but preserve data
+      if (frequency !== this.state.recordingFrequency) {
+        logger.info(`📝 Updating recording frequency: ${this.state.recordingFrequency} → ${frequency}`);
+        this.state = {
+          ...this.state,
+          recordingFrequency: frequency,
+        };
+        this.notify();
+      }
+      
+      return; // Exit early - don't reinitialize recording
+    }
+    
+    // Start fresh recording (only when not already recording)
+    logger.info('✅ Starting NEW recording session');
     this.state = {
       ...this.state,
       isRecording: true,
       recordingFrequency: frequency,
       recordingStartTime: new Date(),
-      recordingData: [], // Clear previous data
+      recordingData: [], // Only clear when starting a NEW session
     };
 
-    logger.debug('🎯 New state after update:', JSON.stringify(this.state, null, 2));
+    logger.debug('🎯 New state after update:', {
+      isRecording: this.state.isRecording,
+      dataPoints: this.state.recordingData.length,
+      frequency: this.state.recordingFrequency
+    });
 
     // Enable both global and background recording for continuity
     setGlobalRecording(true);
