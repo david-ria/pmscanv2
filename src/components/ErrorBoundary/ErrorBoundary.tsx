@@ -2,7 +2,6 @@
  * Enhanced error boundary component for production-ready error handling
  */
 import React, { Component, ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import * as logger from '@/utils/logger';
 
@@ -62,45 +61,97 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         return this.props.fallback;
       }
 
-      // Default error UI
+      // Default error UI with production-safe styling
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
-          <div className="max-w-md w-full text-center space-y-6">
-            <div className="flex justify-center">
-              <AlertTriangle className="h-16 w-16 text-destructive" />
+        <div style={{ 
+          minHeight: '100vh', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          padding: '1rem',
+          backgroundColor: '#0a0a0a'
+        }}>
+          <div style={{ 
+            maxWidth: '28rem', 
+            width: '100%', 
+            textAlign: 'center'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+              <AlertTriangle style={{ height: '4rem', width: '4rem', color: '#ef4444' }} />
             </div>
             
-            <div>
-              <h1 className="text-2xl font-bold text-foreground mb-2">
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h1 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: 'bold', 
+                color: '#fafafa',
+                marginBottom: '0.5rem'
+              }}>
                 Something went wrong
               </h1>
-              <p className="text-muted-foreground">
+              <p style={{ color: '#a1a1aa' }}>
                 We're sorry, but something unexpected happened. Please try refreshing the page.
               </p>
             </div>
 
-            {import.meta.env.DEV && this.state.error && (
-              <details className="text-left bg-muted p-4 rounded-lg">
-                <summary className="cursor-pointer font-medium mb-2">
-                  Error Details (Development)
+            {this.state.error && (
+              <details style={{ 
+                textAlign: 'left', 
+                backgroundColor: '#27272a', 
+                padding: '1rem', 
+                borderRadius: '0.5rem',
+                marginBottom: '1.5rem'
+              }}>
+                <summary style={{ cursor: 'pointer', fontWeight: '500', marginBottom: '0.5rem', color: '#fafafa' }}>
+                  Error Details
                 </summary>
-                <pre className="text-xs overflow-auto whitespace-pre-wrap">
+                <pre style={{ 
+                  fontSize: '0.75rem', 
+                  overflow: 'auto', 
+                  whiteSpace: 'pre-wrap',
+                  color: '#a1a1aa'
+                }}>
                   {this.state.error.toString()}
                   {this.state.errorInfo?.componentStack}
                 </pre>
               </details>
             )}
 
-            <div className="flex gap-2 justify-center">
-              <Button onClick={this.handleReset} variant="outline">
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+              <button 
+                onClick={this.handleReset}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.375rem',
+                  border: '1px solid #3f3f46',
+                  backgroundColor: 'transparent',
+                  color: '#fafafa',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem'
+                }}
+              >
                 Try Again
-              </Button>
+              </button>
               
               {this.props.showReload !== false && (
-                <Button onClick={this.handleReload}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                <button 
+                  onClick={this.handleReload}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.375rem',
+                    border: 'none',
+                    backgroundColor: '#3b82f6',
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <RefreshCw style={{ height: '1rem', width: '1rem' }} />
                   Reload Page
-                </Button>
+                </button>
               )}
             </div>
           </div>
