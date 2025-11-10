@@ -415,5 +415,3 @@ self.addEventListener('activate', (event) => {
   console.log('[SW] Service Worker activated, initializing IndexedDB');
   event.waitUntil(initDB());
 });
-
-console.log('[SW] Background recording system initialized');
