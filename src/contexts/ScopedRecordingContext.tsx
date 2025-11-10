@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { migrateContext } from '@/utils/contextMigration';
+import { recordingService } from '@/services/recordingService';
 
 // Helper to get mode-specific localStorage keys
 const getStorageKey = (baseKey: string, groupId?: string | null) => {
@@ -118,6 +119,39 @@ export function ScopedRecordingProvider({ children }: ScopedRecordingProviderPro
     
     setSelectedLocationState(savedLocation);
     setSelectedActivityState(savedActivity);
+  }, [isGroupMode, activeGroup?.id]);
+
+  // 🧹 Clear selections when recording stops (so fresh recordings start clean)
+  useEffect(() => {
+    // Subscribe to recording service to detect when recording stops
+    const unsubscribe = recordingService.subscribe((state) => {
+      // When recording stops, clear the scoped localStorage FOR THIS SESSION
+      if (!state.isRecording) {
+        const locationKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
+        const activityKey = getStorageKey('recording-activity', isGroupMode ? activeGroup?.id : null);
+        
+        // Only clear if we actually have values
+        const hadLocation = localStorage.getItem(locationKey);
+        const hadActivity = localStorage.getItem(activityKey);
+        
+        if (hadLocation || hadActivity) {
+          console.log('🧹 [ScopedRecordingContext] Recording stopped, clearing context for next session:', {
+            groupId: activeGroup?.id || 'personal',
+            clearedLocation: hadLocation || 'none',
+            clearedActivity: hadActivity || 'none'
+          });
+          
+          localStorage.removeItem(locationKey);
+          localStorage.removeItem(activityKey);
+          
+          // Also clear in-memory state
+          setSelectedLocationState('');
+          setSelectedActivityState('');
+        }
+      }
+    });
+    
+    return () => unsubscribe();
   }, [isGroupMode, activeGroup?.id]);
 
   // Debounced validation when mode/group changes
