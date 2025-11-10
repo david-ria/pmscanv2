@@ -107,6 +107,12 @@ export function ScopedRecordingProvider({ children }: ScopedRecordingProviderPro
     const timeoutId = setTimeout(() => {
       const availableLocations = getCurrentLocations();
 
+      // 🛡️ Skip validation if locations aren't loaded yet - prevents transient loss
+      if (!availableLocations || availableLocations.length === 0) {
+        console.log('⏸️ [ScopedRecordingContext] Locations not ready yet, skipping validation');
+        return;
+      }
+
       if (selectedLocation) {
         const location = availableLocations.find((loc: any) =>
           loc.name === selectedLocation || ('id' in loc && loc.id === selectedLocation)
@@ -132,7 +138,7 @@ export function ScopedRecordingProvider({ children }: ScopedRecordingProviderPro
           }
         }
       }
-    }, 100);
+    }, 350); // Increased from 100ms to 350ms to ride over re-mounts
 
     return () => clearTimeout(timeoutId);
   }, [selectedLocation, isGroupMode, activeGroup?.id]);

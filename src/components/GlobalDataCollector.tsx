@@ -93,21 +93,50 @@ export function GlobalDataCollector() {
   // This ensures consistency with RealTime page and proper mode isolation
   const { selectedLocation, selectedActivity } = useScopedRecordingContext();
 
+  // 🛡️ Track last non-empty manual selections to survive transient empties during navigation
+  const lastNonEmptyManualRef = useRef({ location: '', activity: '' });
+  
+  useEffect(() => {
+    if (selectedLocation) {
+      lastNonEmptyManualRef.current.location = selectedLocation;
+      console.log('💾 [GlobalDataCollector] Saved sticky location:', selectedLocation);
+    }
+  }, [selectedLocation]);
+  
+  useEffect(() => {
+    if (selectedActivity) {
+      lastNonEmptyManualRef.current.activity = selectedActivity;
+      console.log('💾 [GlobalDataCollector] Saved sticky activity:', selectedActivity);
+    }
+  }, [selectedActivity]);
+
   // 🔍 DEBUG: Log context changes
   useEffect(() => {
     if (isRecording) {
       console.log('🏷️ [GlobalDataCollector] Context changed:', {
         selectedLocation: selectedLocation || 'EMPTY',
         selectedActivity: selectedActivity || 'EMPTY',
+        stickyLocation: lastNonEmptyManualRef.current.location || 'EMPTY',
+        stickyActivity: lastNonEmptyManualRef.current.activity || 'EMPTY',
         timestamp: new Date().toISOString()
       });
     }
   }, [selectedLocation, selectedActivity, isRecording]);
 
   // 🔁 Keep recordingService.missionContext in sync with current selection while recording
+  // Use sticky values to survive transient empties during navigation
   useEffect(() => {
     if (isRecording && unifiedData.updateMissionContext) {
-      unifiedData.updateMissionContext(selectedLocation || '', selectedActivity || '');
+      const effectiveLocation = selectedLocation || lastNonEmptyManualRef.current.location;
+      const effectiveActivity = selectedActivity || lastNonEmptyManualRef.current.activity;
+      
+      if (effectiveLocation || effectiveActivity) {
+        console.log('🔁 [GlobalDataCollector] Syncing mission context:', {
+          raw: { location: selectedLocation || 'EMPTY', activity: selectedActivity || 'EMPTY' },
+          effective: { location: effectiveLocation || 'EMPTY', activity: effectiveActivity || 'EMPTY' }
+        });
+        unifiedData.updateMissionContext(effectiveLocation, effectiveActivity);
+      }
     }
   }, [isRecording, selectedLocation, selectedActivity, unifiedData.updateMissionContext]);
 
@@ -272,19 +301,24 @@ export function GlobalDataCollector() {
         logger.debug('⚠️ Offline - skipping weather fetch');
       }
 
+      // 🛡️ Use sticky context values to survive transient empties during navigation
+      const effectiveLocation = selectedLocation || lastNonEmptyManualRef.current.location;
+      const effectiveActivity = selectedActivity || lastNonEmptyManualRef.current.activity;
+
       // 🔍 DEBUG: Log context being passed to addDataPoint
       console.log('📊 [GlobalDataCollector] Calling addDataPoint with context:', {
-        location: selectedLocation || 'EMPTY',
-        activity: selectedActivity || 'EMPTY',
+        raw: { location: selectedLocation || 'EMPTY', activity: selectedActivity || 'EMPTY' },
+        sticky: { location: lastNonEmptyManualRef.current.location || 'EMPTY', activity: lastNonEmptyManualRef.current.activity || 'EMPTY' },
+        effective: { location: effectiveLocation || 'EMPTY', activity: effectiveActivity || 'EMPTY' },
         pm25: averagedData.pm25.toFixed(1),
         timestamp: new Date().toISOString()
       });
 
-      // Use averaged PMScan data with current context from hook
+      // Use averaged PMScan data with effective context (with sticky fallback)
       addDataPoint(
         averagedData,
         location || undefined,
-        { location: selectedLocation, activity: selectedActivity },
+        { location: effectiveLocation, activity: effectiveActivity },
         automaticContext,
         enrichedLocationName,
         geohashSettings.enabled && location?.latitude && location?.longitude

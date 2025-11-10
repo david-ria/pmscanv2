@@ -115,17 +115,28 @@ export function ContextSelectors({
 
   // Guard: Reset location if it doesn't exist in current locations list
   useEffect(() => {
-    if (selectedLocation) {
-      // Check by name first (since we now store names), then by ID (backwards compatibility)
-      const isValid = locations.some(loc =>
-        loc.name === selectedLocation ||
-        ('id' in loc && loc.id === selectedLocation)
-      );
-      
-      if (!isValid) {
+    // 🛡️ Skip validation if locations aren't loaded yet - prevents transient loss
+    if (locations.length === 0) {
+      console.log('⏸️ [ContextSelectors] Locations not ready yet, skipping validation');
+      return;
+    }
+
+    if (!selectedLocation) return;
+
+    // Check by name first (since we now store names), then by ID (backwards compatibility)
+    const isValid = locations.some(loc =>
+      loc.name === selectedLocation ||
+      ('id' in loc && loc.id === selectedLocation)
+    );
+    
+    if (!isValid) {
+      // Debounce clearing to handle list reshaping during transitions
+      const timeoutId = setTimeout(() => {
         console.log(`⚠️ ContextSelectors: Location "${selectedLocation}" not found. Clearing...`);
         onLocationChange('');
-      }
+      }, 250);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [locations, selectedLocation, onLocationChange]);
 
