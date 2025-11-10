@@ -13,6 +13,13 @@ import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import * as logger from '@/utils/logger';
 import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
 import { createTimestamp } from '@/utils/timeFormat';
+import { useGroupSettings } from '@/hooks/useGroupSettings';
+
+// Helper to get mode-specific localStorage keys
+const getStorageKey = (baseKey: string, groupId?: string | null) => {
+  if (groupId) return `group-${groupId}-${baseKey}`;
+  return `personal-${baseKey}`;
+};
 
 /**
  * Global data collector that runs independently of page navigation
@@ -88,9 +95,14 @@ export function GlobalDataCollector() {
     getWeatherRef.current = getWeatherForMeasurement;
   }, [getWeatherForMeasurement]);
 
-  // Get user's manual context selections with sync to recording context
-  const selectedLocation = localStorage.getItem('recording-location') || missionContext.location || '';
-  const selectedActivity = localStorage.getItem('recording-activity') || missionContext.activity || '';
+// Get user's manual context selections with sync to recording context
+const { isGroupMode, activeGroup } = useGroupSettings();
+const selectedLocation = localStorage.getItem(
+  getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null)
+) || missionContext.location || '';
+const selectedActivity = localStorage.getItem(
+  getStorageKey('recording-activity', isGroupMode ? activeGroup?.id : null)
+) || missionContext.activity || '';
 
   // Sync localStorage context with recording context when they differ
   useEffect(() => {
