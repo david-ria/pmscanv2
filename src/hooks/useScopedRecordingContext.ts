@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useGroupSettings } from './useGroupSettings';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
+import { migrateContext } from '@/utils/contextMigration';
 
 /**
  * Helper to get mode-specific localStorage keys
@@ -59,17 +60,49 @@ export function useScopedRecordingContext() {
   const { isGroupMode, activeGroup, getCurrentLocations } = useGroupSettings();
   const { missionContext } = useUnifiedData();
   
-  // Initialize state from scoped localStorage
+  // Initialize state from scoped localStorage with migration support
   const [selectedLocation, setSelectedLocationState] = useState<string>(() => {
     const storageKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
     const saved = localStorage.getItem(storageKey);
-    return saved || missionContext.location || '';
+    const initial = saved || missionContext.location || '';
+    
+    // Migrate if it looks like an ID (pass locations from GroupConfig)
+    const migrationResult = migrateContext(
+      initial, 
+      undefined, 
+      isGroupMode && activeGroup ? activeGroup.locations : undefined
+    );
+    
+    if (migrationResult.migrated && migrationResult.location) {
+      console.log('🔄 Migrated location on init:', initial, '→', migrationResult.location);
+      // Update localStorage with migrated value
+      localStorage.setItem(storageKey, migrationResult.location);
+      return migrationResult.location;
+    }
+    
+    return initial;
   });
 
   const [selectedActivity, setSelectedActivityState] = useState<string>(() => {
     const storageKey = getStorageKey('recording-activity', isGroupMode ? activeGroup?.id : null);
     const saved = localStorage.getItem(storageKey);
-    return saved || missionContext.activity || '';
+    const initial = saved || missionContext.activity || '';
+    
+    // Migrate if it looks like an ID (pass locations from GroupConfig)
+    const migrationResult = migrateContext(
+      undefined,
+      initial, 
+      isGroupMode && activeGroup ? activeGroup.locations : undefined
+    );
+    
+    if (migrationResult.migrated && migrationResult.activity) {
+      console.log('🔄 Migrated activity on init:', initial, '→', migrationResult.activity);
+      // Update localStorage with migrated value
+      localStorage.setItem(storageKey, migrationResult.activity);
+      return migrationResult.activity;
+    }
+    
+    return initial;
   });
 
   // One-time migration on mount
@@ -82,9 +115,10 @@ export function useScopedRecordingContext() {
     const availableLocations = getCurrentLocations();
     
     if (selectedLocation) {
-      // Find the location by ID
+      // Find the location by name (since we now store names, not IDs)
       const location = availableLocations.find(loc => 
-        ('id' in loc && loc.id === selectedLocation)
+        loc.name === selectedLocation || 
+        ('id' in loc && loc.id === selectedLocation) // Backwards compatibility
       );
       
       // Check if location exists
@@ -99,7 +133,6 @@ export function useScopedRecordingContext() {
       // Additional validation: ensure the location has a valid name
       const hasInvalidName = 
         !location.name || 
-        location.name === selectedLocation || // Name same as ID (likely UUID)
         isUUID(location.name) || // Name is a UUID
         location.name === "0" || // Name is numeric string "0"
         /^\d+$/.test(location.name) || // Name is only digits

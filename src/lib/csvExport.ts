@@ -1,6 +1,7 @@
 import { MissionData } from './dataStorage';
 import { storeCSVForSync } from '@/hooks/useCrashRecovery';
 import { EventData } from '@/hooks/useEvents';
+import { migrateMeasurementsContext } from '@/utils/contextMigration';
 import * as logger from '@/utils/logger';
 import { toISOString } from '@/utils/timeFormat';
 
@@ -27,6 +28,10 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
   };
 
   const events = getEventsForMission(mission.id);
+  
+  // Migrate context from IDs to names before export
+  const migratedMeasurements = migrateMeasurementsContext(mission.measurements);
+  
   const headers = [
     'Timestamp',
     'PM1 (µg/m³)',
@@ -54,7 +59,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
     let closestMeasurement = null;
     let closestTimeDiff = Infinity;
     
-    mission.measurements.forEach((measurement, index) => {
+    migratedMeasurements.forEach((measurement, index) => {
       const measurementTime = measurement.timestamp instanceof Date ? measurement.timestamp : new Date(measurement.timestamp);
       const timeDiff = Math.abs(eventTime.getTime() - measurementTime.getTime());
       
@@ -69,7 +74,7 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
     }
   });
 
-  const rows = mission.measurements.map((m, index) => {
+  const rows = migratedMeasurements.map((m, index) => {
     const measurementTime = m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp);
     
     // Get the event assigned to this specific measurement

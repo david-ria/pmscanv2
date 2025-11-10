@@ -72,9 +72,10 @@ export function ContextSelectors({
       }))
     });
     
+    // Search by name first (since we now store names), then by ID (backwards compatibility)
     const location = locations.find(loc => 
-      ('id' in loc && loc.id === selectedLocation) || 
-      loc.name === selectedLocation
+      loc.name === selectedLocation ||
+      ('id' in loc && loc.id === selectedLocation)
     );
     
     console.log('🔍 Found location:', location);
@@ -84,9 +85,11 @@ export function ContextSelectors({
 
   const selectedActivityName = useMemo(() => {
     if (!selectedActivity) return '';
+    
+    // Search by name first (since we now store names), then by ID (backwards compatibility)
     const activity = activities.find(act => 
-      act.id === selectedActivity || 
-      act.name === selectedActivity
+      act.name === selectedActivity ||
+      act.id === selectedActivity
     );
     return activity?.name || selectedActivity;
   }, [selectedActivity, activities]);
@@ -113,9 +116,10 @@ export function ContextSelectors({
   // Guard: Reset location if it doesn't exist in current locations list
   useEffect(() => {
     if (selectedLocation) {
+      // Check by name first (since we now store names), then by ID (backwards compatibility)
       const isValid = locations.some(loc =>
-        ('id' in loc && loc.id === selectedLocation) ||
-        loc.name === selectedLocation
+        loc.name === selectedLocation ||
+        ('id' in loc && loc.id === selectedLocation)
       );
       
       if (!isValid) {
@@ -131,8 +135,8 @@ export function ContextSelectors({
       const availableActivityIds = activities.map(a => a.id);
       const availableActivityNames = activities.map(a => a.name);
       
-      // Check if the selected activity is valid for the current location (by name or ID)
-      if (!availableActivityIds.includes(selectedActivity) && !availableActivityNames.includes(selectedActivity)) {
+      // Check if the selected activity is valid for the current location (by name first, then ID)
+      if (!availableActivityNames.includes(selectedActivity) && !availableActivityIds.includes(selectedActivity)) {
         console.log(`🔄 Activity "${selectedActivity}" not available for location "${selectedLocation}". Resetting...`);
         onActivityChange('');
       }
@@ -151,7 +155,16 @@ export function ContextSelectors({
             </Badge>
           )}
         </div>
-        <Select value={selectedLocation} onValueChange={onLocationChange}>
+        <Select 
+          value={selectedLocation} 
+          onValueChange={(locationId) => {
+            // Store the human-readable name, not the ID
+            const location = locations.find(loc => 
+              ('id' in loc && loc.id === locationId) || loc.name === locationId
+            );
+            onLocationChange(location?.name || locationId);
+          }}
+        >
           <SelectTrigger className="h-11 bg-background">
             {selectedLocation ? (
               <span>{selectedLocationName}</span>
@@ -184,7 +197,13 @@ export function ContextSelectors({
         </div>
         <Select 
           value={selectedActivity} 
-          onValueChange={onActivityChange}
+          onValueChange={(activityId) => {
+            // Store the human-readable name, not the ID
+            const activity = activities.find(act => 
+              act.id === activityId || act.name === activityId
+            );
+            onActivityChange(activity?.name || activityId);
+          }}
           disabled={false}
         >
           <SelectTrigger className="h-11 bg-background">

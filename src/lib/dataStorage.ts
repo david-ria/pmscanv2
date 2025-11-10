@@ -14,6 +14,7 @@ import {
   clearLocalStorage,
 } from './localStorage';
 import { syncPendingMissions } from './dataSync';
+import { migrateMeasurementsContext } from '@/utils/contextMigration';
 import * as logger from '@/utils/logger';
 
 // Debounced sync to prevent excessive syncing
@@ -154,6 +155,12 @@ class DataStorageService {
                 logger.debug('Failed to reload measurements, using compressed data:', error);
               }
             }
+            
+            // Migrate context from IDs to names for historical missions
+            mission.measurements = migrateMeasurementsContext(
+              mission.measurements, 
+              mission.groupId ? undefined : undefined // Could fetch group config here if needed
+            );
             
             return mission;
           })
