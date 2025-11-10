@@ -135,8 +135,24 @@ const createGroupConfigFromDB = (group: Group): GroupConfig => {
 
 export const useGroupSettings = () => {
   const [searchParams] = useSearchParams();
-  const [activeGroup, setActiveGroup] = useState<GroupConfig | null>(null);
-  const [isGroupMode, setIsGroupMode] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<GroupConfig | null>(() => {
+    // 🔄 Hydrate from cache on init (offline-resilient)
+    const cachedSettings = localStorage.getItem('groupSettings');
+    if (cachedSettings) {
+      try {
+        const parsed = JSON.parse(cachedSettings);
+        console.log('💾 [useGroupSettings] Hydrated from cache:', parsed.id);
+        return parsed;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  const [isGroupMode, setIsGroupMode] = useState(() => {
+    const storedGroupId = localStorage.getItem('activeGroupId');
+    return !!storedGroupId;
+  });
   const { toast } = useToast();
   const { user } = useAuth();
   const { features } = useSubscription();
@@ -160,11 +176,25 @@ export const useGroupSettings = () => {
       // Try static config first
       let groupConfig = getGroupConfig(groupId);
       
-      // If not found, try DB groups
-      if (!groupConfig) {
+      // If not found, try DB groups (only if we have data)
+      if (!groupConfig && !loading) {
         const dbGroup = groups.find(g => g.id === groupId);
         if (dbGroup) {
           groupConfig = createGroupConfigFromDB(dbGroup);
+        }
+      }
+
+      // 🌐 If offline or still loading, use cached config
+      if (!groupConfig && !navigator.onLine) {
+        const cachedSettings = localStorage.getItem('groupSettings');
+        const cachedId = localStorage.getItem('activeGroupId');
+        if (cachedSettings && cachedId === groupId) {
+          try {
+            groupConfig = JSON.parse(cachedSettings);
+            console.log('🌐 [useGroupSettings] Using cached config (offline):', groupConfig?.name);
+          } catch {
+            // Cache corrupted, ignore
+          }
         }
       }
 
@@ -220,10 +250,23 @@ export const useGroupSettings = () => {
         let groupConfig = getGroupConfig(storedGroupId);
         
         // If not found, try DB groups
-        if (!groupConfig) {
+        if (!groupConfig && !loading) {
           const dbGroup = groups.find(g => g.id === storedGroupId);
           if (dbGroup) {
             groupConfig = createGroupConfigFromDB(dbGroup);
+          }
+        }
+
+        // 🌐 If offline or still loading, use cached config
+        if (!groupConfig) {
+          const cachedSettings = localStorage.getItem('groupSettings');
+          if (cachedSettings) {
+            try {
+              groupConfig = JSON.parse(cachedSettings);
+              console.log('🌐 [useGroupSettings] Using cached config (no URL):', groupConfig?.name);
+            } catch {
+              // Cache corrupted, ignore
+            }
           }
         }
         

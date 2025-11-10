@@ -282,6 +282,19 @@ export const useGroups = () => {
     }
   }, [user?.id, fetchGroups]);
 
+  // Auto-refetch when coming back online
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log('🌐 [useGroups] Network back online, refetching groups...');
+      if (user?.id) {
+        fetchGroups();
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [user?.id, fetchGroups]);
+
   return {
     groups,
     loading,
