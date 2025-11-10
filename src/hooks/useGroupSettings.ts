@@ -9,9 +9,19 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGroups, type Group } from '@/hooks/useGroups';
+import { DEBUG_GROUP_SHAPE } from '@/config/debug';
 
 // Set to track group IDs that have been warned about (to prevent spam)
 const warnedGroupIds = new Set<string>();
+
+// Type definitions for custom locations database formats
+type CustomLocationsOldFormat = Record<string, string[]>;
+type CustomLocationsNewFormat = Record<string, {
+  name: string;
+  description?: string;
+  activities: string[];
+}>;
+type CustomLocationsDB = CustomLocationsOldFormat | CustomLocationsNewFormat;
 
 // Helper function to create GroupConfig from DB Group
 const createGroupConfigFromDB = (group: Group): GroupConfig => {
@@ -72,14 +82,39 @@ const createGroupConfigFromDB = (group: Group): GroupConfig => {
         notification_frequency: 'immediate',
       },
     ],
-    locations: group.custom_locations ? Object.entries(group.custom_locations).map(([key, value]) => ({
-      id: key,
-      name: key,
-      activities: Array.isArray(value) ? value.map((activity: string) => ({
-        id: activity.toLowerCase().replace(/\s+/g, '-'),
-        name: activity,
-      })) : [],
-    })) : DEFAULT_LOCATIONS,
+    locations: group.custom_locations ? Object.entries(group.custom_locations).map(([key, value]) => {
+      // Handle both old and new database formats
+      let locationName: string;
+      let locationDescription: string | undefined;
+      let activitiesList: string[];
+
+      if (Array.isArray(value)) {
+        // Old format: Record<string, string[]>
+        locationName = key; // Use key as name (fallback)
+        locationDescription = undefined;
+        activitiesList = value;
+      } else if (typeof value === 'object' && value !== null) {
+        // New format: Record<string, { name, description?, activities }>
+        locationName = value.name || key; // ✅ Use value.name, fallback to key
+        locationDescription = value.description;
+        activitiesList = Array.isArray(value.activities) ? value.activities : [];
+      } else {
+        // Fallback for unexpected format
+        locationName = key;
+        locationDescription = undefined;
+        activitiesList = [];
+      }
+
+      return {
+        id: key, // Keep original key as ID for tracking
+        name: locationName, // ✅ Use extracted name
+        description: locationDescription,
+        activities: activitiesList.map((activity: string) => ({
+          id: activity.toLowerCase().replace(/\s+/g, '-'),
+          name: activity,
+        }))
+      };
+    }) : DEFAULT_LOCATIONS,
     events: [],
     settings: {
       pm25_threshold: DEFAULT_THRESHOLDS.pm25.moderate,
@@ -138,6 +173,23 @@ export const useGroupSettings = () => {
         // Store group settings in localStorage for persistence
         localStorage.setItem('activeGroupId', groupId);
         localStorage.setItem('groupSettings', JSON.stringify(groupConfig));
+
+        // Debug logging for group shape validation
+        if (DEBUG_GROUP_SHAPE && process.env.NODE_ENV === 'development') {
+          const dbGroup = groups.find(g => g.id === groupId);
+          if (dbGroup) {
+            console.log('🔍 Group locations processed:', {
+              groupId: dbGroup.id,
+              rawType: Array.isArray(dbGroup.custom_locations) ? 'Array' : 'Record',
+              normalizedLocations: groupConfig.locations.length,
+              example: groupConfig.locations[0] ? {
+                id: groupConfig.locations[0].id,
+                name: groupConfig.locations[0].name,
+                activitiesCount: groupConfig.locations[0].activities?.length || 0
+              } : null
+            });
+          }
+        }
 
         toast({
           title: `Group Settings Applied`,

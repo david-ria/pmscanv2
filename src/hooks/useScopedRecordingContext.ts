@@ -82,20 +82,32 @@ export function useScopedRecordingContext() {
     const availableLocations = getCurrentLocations();
     
     if (selectedLocation) {
-      // Check if selected location exists in current mode's locations
-      const isValid = availableLocations.some(loc => 
-        ('id' in loc && loc.id === selectedLocation) || 
-        loc.name === selectedLocation
+      // Find the location by ID
+      const location = availableLocations.find(loc => 
+        ('id' in loc && loc.id === selectedLocation)
       );
       
-      // Also check if it's a raw UUID (common invalid leftover)
-      const isInvalidUUID = isUUID(selectedLocation);
-      
-      if (!isValid || isInvalidUUID) {
+      // Check if location exists
+      if (!location) {
         console.log(`⚠️ Location "${selectedLocation}" not available in current mode. Clearing...`);
         setSelectedLocationState('');
-        
-        // Remove from localStorage
+        const storageKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
+        localStorage.removeItem(storageKey);
+        return;
+      }
+      
+      // Additional validation: ensure the location has a valid name
+      const hasInvalidName = 
+        !location.name || 
+        location.name === selectedLocation || // Name same as ID (likely UUID)
+        isUUID(location.name) || // Name is a UUID
+        location.name === "0" || // Name is numeric string "0"
+        /^\d+$/.test(location.name) || // Name is only digits
+        location.name.length < 2; // Name too short
+      
+      if (hasInvalidName) {
+        console.warn(`⚠️ Location "${selectedLocation}" has invalid name "${location.name}". Clearing...`);
+        setSelectedLocationState('');
         const storageKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
         localStorage.removeItem(storageKey);
       }
