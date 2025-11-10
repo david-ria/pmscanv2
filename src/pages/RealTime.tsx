@@ -16,7 +16,7 @@ import { useGPS } from '@/hooks/useGPS';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { useEvents } from '@/hooks/useEvents';
-import { useGroupSettings } from '@/hooks/useGroupSettings';
+import { useScopedRecordingContext } from '@/hooks/useScopedRecordingContext';
 
 // Import lightweight placeholder for fast LCP
 import { MapPlaceholder } from '@/components/RealTime/MapPlaceholder';
@@ -42,37 +42,6 @@ const DataLogger = lazy(() =>
     default: module.DataLogger 
   }))
 );
-
-// Helper to get mode-specific localStorage keys
-const getStorageKey = (baseKey: string, groupId?: string | null) => {
-  if (groupId) {
-    return `group-${groupId}-${baseKey}`;
-  }
-  return `personal-${baseKey}`;
-};
-
-// Helper to migrate old localStorage to scoped keys (one-time)
-const migrateOldStorage = (isGroupMode: boolean, activeGroupId: string | null) => {
-  const oldLocation = localStorage.getItem('recording-location');
-  const oldActivity = localStorage.getItem('recording-activity');
-  
-  if (oldLocation || oldActivity) {
-    console.log('🔄 Migrating old localStorage to scoped keys...');
-    
-    if (oldLocation) {
-      localStorage.setItem(getStorageKey('recording-location', isGroupMode ? activeGroupId : null), oldLocation);
-    }
-    if (oldActivity) {
-      localStorage.setItem(getStorageKey('recording-activity', isGroupMode ? activeGroupId : null), oldActivity);
-    }
-    
-    // Remove old keys
-    localStorage.removeItem('recording-location');
-    localStorage.removeItem('recording-activity');
-    
-    console.log('✅ Migration complete');
-  }
-};
 
 export default function RealTime() {
   // Fast LCP - defer heavy initialization
@@ -125,45 +94,15 @@ export default function RealTime() {
   });
   
   const { checkAlerts } = useAlerts();
-  const { isGroupMode, activeGroup, getCurrentLocations } = useGroupSettings();
-
-  // Restore last selected location/activity from localStorage for recording persistence
-  // Use mode-scoped keys to prevent cross-contamination
-  const [selectedLocation, setSelectedLocation] = useState(() => {
-    const storageKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
-    const saved = localStorage.getItem(storageKey);
-    return saved || missionContext.location || '';
-  });
-  const [selectedActivity, setSelectedActivity] = useState(() => {
-    const storageKey = getStorageKey('recording-activity', isGroupMode ? activeGroup?.id : null);
-    const saved = localStorage.getItem(storageKey);
-    return saved || missionContext.activity || '';
-  });
-
-  // One-time migration of old localStorage format
-  useEffect(() => {
-    migrateOldStorage(isGroupMode, activeGroup?.id || null);
-  }, []); // Run once on mount
-
-  // Validate and clear invalid selections when mode or group changes
-  useEffect(() => {
-    const availableLocations = getCurrentLocations();
-    
-    // Validate location
-    if (selectedLocation) {
-      const isValid = availableLocations.some(loc => 
-        ('id' in loc && loc.id === selectedLocation) || 
-        loc.name === selectedLocation
-      );
-      
-      if (!isValid) {
-        console.log(`⚠️ Location "${selectedLocation}" not available in current mode. Clearing...`);
-        setSelectedLocation('');
-        const storageKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
-        localStorage.removeItem(storageKey);
-      }
-    }
-  }, [isGroupMode, activeGroup?.id]); // Run when mode changes
+  
+  // Use shared scoped recording context hook
+  // Handles mode-scoped localStorage, validation, and cleanup automatically
+  const {
+    selectedLocation,
+    selectedActivity,
+    setSelectedLocation,
+    setSelectedActivity,
+  } = useScopedRecordingContext();
 
   // Data collection is now handled ENTIRELY by GlobalDataCollector component
   // This ensures recording continues even when navigating away from this page
@@ -206,21 +145,7 @@ export default function RealTime() {
     }
   }, [latestLocation, fetchWeatherData, initialized]);
 
-  // Persist location/activity selections to localStorage for recording persistence
-  // Use mode-scoped keys
-  useEffect(() => {
-    if (selectedLocation) {
-      const storageKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
-      localStorage.setItem(storageKey, selectedLocation);
-    }
-  }, [selectedLocation, isGroupMode, activeGroup?.id]);
-
-  useEffect(() => {
-    if (selectedActivity) {
-      const storageKey = getStorageKey('recording-activity', isGroupMode ? activeGroup?.id : null);
-      localStorage.setItem(storageKey, selectedActivity);
-    }
-  }, [selectedActivity, isGroupMode, activeGroup?.id]);
+  // Note: localStorage persistence is now handled by useScopedRecordingContext hook
 
   // Request GPS permission when app loads
   useEffect(() => {
