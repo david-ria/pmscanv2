@@ -102,6 +102,24 @@ export function ScopedRecordingProvider({ children }: ScopedRecordingProviderPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 🔄 Reload context from localStorage when group/mode changes
+  useEffect(() => {
+    const locationKey = getStorageKey('recording-location', isGroupMode ? activeGroup?.id : null);
+    const activityKey = getStorageKey('recording-activity', isGroupMode ? activeGroup?.id : null);
+    
+    const savedLocation = localStorage.getItem(locationKey) || '';
+    const savedActivity = localStorage.getItem(activityKey) || '';
+    
+    console.log('🔄 [ScopedRecordingContext] Reloading from localStorage:', {
+      groupId: activeGroup?.id || 'personal',
+      savedLocation: savedLocation || 'EMPTY',
+      savedActivity: savedActivity || 'EMPTY'
+    });
+    
+    setSelectedLocationState(savedLocation);
+    setSelectedActivityState(savedActivity);
+  }, [isGroupMode, activeGroup?.id]);
+
   // Debounced validation when mode/group changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
