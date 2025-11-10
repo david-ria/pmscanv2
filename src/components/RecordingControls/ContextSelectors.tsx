@@ -62,10 +62,23 @@ export function ContextSelectors({
   // Get display names for badges
   const selectedLocationName = useMemo(() => {
     if (!selectedLocation) return '';
+    
+    console.log('🔍 Looking up location:', {
+      selectedLocation,
+      locationsCount: locations.length,
+      locations: locations.map(loc => ({
+        id: 'id' in loc ? loc.id : 'NO_ID',
+        name: loc.name
+      }))
+    });
+    
     const location = locations.find(loc => 
       ('id' in loc && loc.id === selectedLocation) || 
       loc.name === selectedLocation
     );
+    
+    console.log('🔍 Found location:', location);
+    
     return location?.name || selectedLocation;
   }, [selectedLocation, locations]);
 
