@@ -188,6 +188,14 @@ class RecordingService {
     enrichedLocation?: string,
     geohash?: string
   ): void {
+    // 🔍 DEBUG: Log what context was received
+    console.log('📥 [RecordingService] addDataPoint received manualContext:', {
+      location: manualContext?.location || 'EMPTY',
+      activity: manualContext?.activity || 'EMPTY',
+      pm25: pmData.pm25.toFixed(1),
+      timestamp: new Date().toISOString()
+    });
+
     if (!this.state.isRecording) {
       logger.debug('⚠️ Attempted to add data point while not recording');
       return;
@@ -213,6 +221,14 @@ class RecordingService {
       geohash, // NEW: Store geohash when provided
       timestamp: pmData.timestamp, // Use PMScan timestamp (already standardized via createTimestamp)
     };
+
+    // 🔍 DEBUG: Log what context is being stored
+    console.log('💾 [RecordingService] Storing entry with context:', {
+      location: entry.manualContext?.location || 'EMPTY',
+      activity: entry.manualContext?.activity || 'EMPTY',
+      pm25: pmData.pm25.toFixed(1),
+      timestamp: new Date().toISOString()
+    });
 
     this.state = {
       ...this.state,

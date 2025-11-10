@@ -93,6 +93,17 @@ export function GlobalDataCollector() {
   // This ensures consistency with RealTime page and proper mode isolation
   const { selectedLocation, selectedActivity } = useScopedRecordingContext();
 
+  // 🔍 DEBUG: Log context changes
+  useEffect(() => {
+    if (isRecording) {
+      console.log('🏷️ [GlobalDataCollector] Context changed:', {
+        selectedLocation: selectedLocation || 'EMPTY',
+        selectedActivity: selectedActivity || 'EMPTY',
+        timestamp: new Date().toISOString()
+      });
+    }
+  }, [selectedLocation, selectedActivity, isRecording]);
+
   // Track recording state changes (development only)
   useEffect(() => {
     devLogger.info('🚨 Recording state changed:', { isRecording });
@@ -254,6 +265,14 @@ export function GlobalDataCollector() {
         logger.debug('⚠️ Offline - skipping weather fetch');
       }
 
+      // 🔍 DEBUG: Log context being passed to addDataPoint
+      console.log('📊 [GlobalDataCollector] Calling addDataPoint with context:', {
+        location: selectedLocation || 'EMPTY',
+        activity: selectedActivity || 'EMPTY',
+        pm25: averagedData.pm25.toFixed(1),
+        timestamp: new Date().toISOString()
+      });
+
       // Use averaged PMScan data with current context from hook
       addDataPoint(
         averagedData,
@@ -261,7 +280,7 @@ export function GlobalDataCollector() {
         { location: selectedLocation, activity: selectedActivity },
         automaticContext,
         enrichedLocationName,
-        geohashSettings.enabled && location?.latitude && location?.longitude 
+        geohashSettings.enabled && location?.latitude && location?.longitude
           ? encodeGeohash(location.latitude, location.longitude, geohashSettings.precision)
           : undefined
       );

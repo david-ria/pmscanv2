@@ -170,12 +170,24 @@ export function useScopedRecordingContext() {
 
   // Wrapped setters for external use
   const setSelectedLocation = useCallback((location: string) => {
+    console.log('🔍 [useScopedRecordingContext] setSelectedLocation called:', {
+      newValue: location || 'EMPTY',
+      oldValue: selectedLocation || 'EMPTY',
+      groupId: activeGroup?.id || 'personal',
+      timestamp: new Date().toISOString()
+    });
     setSelectedLocationState(location);
-  }, []);
+  }, [selectedLocation, activeGroup]);
 
   const setSelectedActivity = useCallback((activity: string) => {
+    console.log('🔍 [useScopedRecordingContext] setSelectedActivity called:', {
+      newValue: activity || 'EMPTY',
+      oldValue: selectedActivity || 'EMPTY',
+      groupId: activeGroup?.id || 'personal',
+      timestamp: new Date().toISOString()
+    });
     setSelectedActivityState(activity);
-  }, []);
+  }, [selectedActivity, activeGroup]);
 
   return {
     selectedLocation,
