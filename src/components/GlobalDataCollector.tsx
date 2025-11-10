@@ -104,6 +104,13 @@ export function GlobalDataCollector() {
     }
   }, [selectedLocation, selectedActivity, isRecording]);
 
+  // 🔁 Keep recordingService.missionContext in sync with current selection while recording
+  useEffect(() => {
+    if (isRecording && unifiedData.updateMissionContext) {
+      unifiedData.updateMissionContext(selectedLocation || '', selectedActivity || '');
+    }
+  }, [isRecording, selectedLocation, selectedActivity, unifiedData.updateMissionContext]);
+
   // Track recording state changes (development only)
   useEffect(() => {
     devLogger.info('🚨 Recording state changed:', { isRecording });

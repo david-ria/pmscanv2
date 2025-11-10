@@ -5,6 +5,7 @@ import { ReactNode } from 'react';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThresholdProvider } from '@/contexts/ThresholdContext';
 import { AlertProvider } from '@/contexts/AlertContext';
+import { ScopedRecordingProvider } from '@/contexts/ScopedRecordingContext';
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -13,11 +14,13 @@ interface AppProvidersProps {
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <AuthProvider>
-      <ThresholdProvider>
-        <AlertProvider>
-          {children}
-        </AlertProvider>
-      </ThresholdProvider>
+      <ScopedRecordingProvider>
+        <ThresholdProvider>
+          <AlertProvider>
+            {children}
+          </AlertProvider>
+        </ThresholdProvider>
+      </ScopedRecordingProvider>
     </AuthProvider>
   );
 }
