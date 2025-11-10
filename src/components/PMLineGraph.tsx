@@ -15,6 +15,8 @@ import {
 } from 'recharts';
 import { PMScanData } from '@/lib/pmscan/types';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
+import { DEBUG_GROUP_INHERITANCE, DEBUG_RATE_MS } from '@/config/debug';
+import { rateLimitedDebug } from '@/utils/optimizedLogger';
 
 interface EventData {
   id: string;
@@ -50,16 +52,23 @@ interface PMLineGraphProps {
 export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext }: PMLineGraphProps) {
   const { getCurrentThresholds, isGroupMode, activeGroup } = useGroupSettings();
   
-  // Debug log to verify thresholds inheritance
+  // Debug log to verify thresholds inheritance (conditional & rate-limited)
+  const prevThresholdsRef = React.useRef<string>('');
   React.useEffect(() => {
+    if (!DEBUG_GROUP_INHERITANCE) return;
+    
     const thresholds = getCurrentThresholds();
-    console.log('📊 PMLineGraph thresholds:', {
-      activeGroupId: activeGroup?.id,
-      activeGroupName: activeGroup?.name,
+    const snapshot = JSON.stringify({
+      groupId: activeGroup?.id,
+      groupName: activeGroup?.name,
       isGroupMode,
-      thresholds,
-      shouldDisplayGroupThresholds: isGroupMode && activeGroup
+      thresholds
     });
+    
+    if (snapshot !== prevThresholdsRef.current) {
+      prevThresholdsRef.current = snapshot;
+      rateLimitedDebug('pm_thresholds', DEBUG_RATE_MS, '📊 PMLineGraph thresholds', JSON.parse(snapshot));
+    }
   }, [activeGroup, isGroupMode, getCurrentThresholds]);
 
   // Transform data for the chart - ensure proper chronological ordering

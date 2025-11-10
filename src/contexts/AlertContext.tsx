@@ -5,9 +5,12 @@ import React, {
   useEffect,
   ReactNode,
   useMemo,
+  useRef,
 } from 'react';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import * as logger from '@/utils/logger';
+import { DEBUG_GROUP_INHERITANCE, DEBUG_RATE_MS } from '@/config/debug';
+import { rateLimitedDebug } from '@/utils/optimizedLogger';
 
 export interface AlertSettings {
   pm1: {
@@ -147,15 +150,23 @@ export function AlertProvider({ children }: AlertProviderProps) {
     return alertSettings;
   }, [isGroupMode, activeGroup, alertSettings, getCurrentAlarms, getCurrentSettings]);
 
-  // Debug log to verify alarm settings inheritance
+  // Debug: Log when AlertContext updates (rate-limited and deduplicated)
+  const prevSnapshotRef = useRef<string>('');
   useEffect(() => {
-    console.log('🔄 AlertContext updated:', {
-      activeGroupId: activeGroup?.id,
-      activeGroupName: activeGroup?.name,
+    if (!DEBUG_GROUP_INHERITANCE) return;
+    
+    const snapshot = JSON.stringify({
+      groupId: activeGroup?.id,
+      groupName: activeGroup?.name,
       isGroupMode,
-      effectiveSettings: getEffectiveAlertSettings,
+      effective: getEffectiveAlertSettings,
     });
-  }, [activeGroup, getEffectiveAlertSettings, isGroupMode]);
+    
+    if (snapshot !== prevSnapshotRef.current) {
+      prevSnapshotRef.current = snapshot;
+      rateLimitedDebug('alert_ctx', DEBUG_RATE_MS, '🔄 AlertContext updated', JSON.parse(snapshot));
+    }
+  }, [activeGroup, isGroupMode, getEffectiveAlertSettings]);
 
   // Load alert settings from localStorage on mount and request notification permissions
   useEffect(() => {

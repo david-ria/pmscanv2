@@ -10,6 +10,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGroups, type Group } from '@/hooks/useGroups';
 
+// Set to track group IDs that have been warned about (to prevent spam)
+const warnedGroupIds = new Set<string>();
+
 // Helper function to create GroupConfig from DB Group
 const createGroupConfigFromDB = (group: Group): GroupConfig => {
   return {
@@ -100,7 +103,7 @@ export const useGroupSettings = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { features } = useSubscription();
-  const { groups } = useGroups();
+  const { groups, loading } = useGroups();
 
   useEffect(() => {
     // Check for both 'group' parameter and direct group ID as parameter
@@ -142,12 +145,16 @@ export const useGroupSettings = () => {
           duration: 3000,
         });
       } else {
-        console.error('Group not found:', groupId);
-        toast({
-          title: 'Group Not Found',
-          description: `Group "${groupId}" does not exist`,
-          variant: 'destructive',
-        });
+        // Only warn about missing group after groups are loaded and if not already warned
+        if (!loading && !warnedGroupIds.has(groupId)) {
+          console.warn('Group not found:', groupId);
+          warnedGroupIds.add(groupId);
+          toast({
+            title: 'Group Not Found',
+            description: `Group "${groupId}" does not exist`,
+            variant: 'destructive',
+          });
+        }
       }
     } else {
       // Check if we have a stored group
@@ -177,7 +184,7 @@ export const useGroupSettings = () => {
         }
       }
     }
-  }, [searchParams, toast, groups]);
+  }, [searchParams, toast, groups, loading]);
 
   const clearGroupSettings = () => {
     setActiveGroup(null);

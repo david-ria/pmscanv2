@@ -9,7 +9,9 @@ import {
 } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { DEBUG_GROUP_INHERITANCE, DEBUG_RATE_MS } from '@/config/debug';
+import { rateLimitedDebug } from '@/utils/optimizedLogger';
 // No need to import helpers anymore - using hierarchical structure directly
 
 interface ContextSelectorsProps {
@@ -57,18 +59,24 @@ export function ContextSelectors({
     return selectedLocationData.activities;
   }, [selectedLocation, activeGroup, locations, getCurrentActivities]);
 
-  // Debug log to verify group settings inheritance
+  // Debug log to verify group settings inheritance (conditional & rate-limited)
+  const prevContextRef = useRef<string>('');
   useEffect(() => {
-    console.log('🔄 ContextSelectors updated:', {
-      activeGroupId: activeGroup?.id,
-      activeGroupName: activeGroup?.name,
+    if (!DEBUG_GROUP_INHERITANCE) return;
+    
+    const snapshot = JSON.stringify({
+      groupId: activeGroup?.id,
+      groupName: activeGroup?.name,
       isGroupMode,
       locationsCount: locations.length,
-      locationNames: locations.map(l => l.name),
-      selectedLocation,
       activitiesCount: activities.length,
     });
-  }, [activeGroup, locations, activities, selectedLocation, isGroupMode]);
+    
+    if (snapshot !== prevContextRef.current) {
+      prevContextRef.current = snapshot;
+      rateLimitedDebug('context_selectors', DEBUG_RATE_MS, '🔄 ContextSelectors updated', JSON.parse(snapshot));
+    }
+  }, [activeGroup, locations, activities, isGroupMode]);
 
   // Clear activity selection when location changes and current activity is not available for that location
   useEffect(() => {

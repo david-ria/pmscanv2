@@ -16,6 +16,8 @@ import { EVENT_TYPES } from '@/utils/eventTypes';
 import { createTimestamp, formatTime } from '@/utils/timeFormat';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import React from 'react';
+import { DEBUG_GROUP_INHERITANCE, DEBUG_RATE_MS } from '@/config/debug';
+import { rateLimitedDebug } from '@/utils/optimizedLogger';
 
 interface EventButtonProps {}
 
@@ -44,17 +46,24 @@ export function EventButton({}: EventButtonProps) {
     return EVENT_TYPES;
   }, [isGroupMode, groupEvents]);
 
-  // Debug log to verify events inheritance
+  // Debug log to verify events inheritance (conditional & rate-limited)
+  const prevEventsRef = React.useRef<string>('');
   React.useEffect(() => {
-    console.log('📍 EventButton available events:', {
-      activeGroupId: activeGroup?.id,
-      activeGroupName: activeGroup?.name,
+    if (!DEBUG_GROUP_INHERITANCE) return;
+    
+    const snapshot = JSON.stringify({
+      groupId: activeGroup?.id,
+      groupName: activeGroup?.name,
       isGroupMode,
-      groupEventsCount: groupEvents.length,
-      availableEventsCount: availableEventTypes.length,
+      eventsCount: availableEventTypes.length,
       eventsList: availableEventTypes.map(e => e.label)
     });
-  }, [activeGroup, isGroupMode, groupEvents, availableEventTypes]);
+    
+    if (snapshot !== prevEventsRef.current) {
+      prevEventsRef.current = snapshot;
+      rateLimitedDebug('event_button', DEBUG_RATE_MS, '📍 EventButton available events', JSON.parse(snapshot));
+    }
+  }, [activeGroup, isGroupMode, availableEventTypes]);
 
 
   const handleSaveEvent = async () => {
