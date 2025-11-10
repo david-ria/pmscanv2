@@ -34,6 +34,11 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
     name: '',
     activities: [''],
   });
+  const [editingLocation, setEditingLocation] = useState<{
+    id: string;
+    name: string;
+    activities: string[];
+  } | null>(null);
 
   const group = groups.find(g => g.id === groupId);
   const locations: GroupLocation[] = group?.custom_locations 
@@ -169,8 +174,14 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                   <div>
                     <Label className="text-xs sm:text-sm">Location Name</Label>
                     <Input
-                      value={location.name}
-                      onChange={(e) => handleUpdateLocation(location.id, { name: e.target.value })}
+                      value={editingLocation?.id === location.id ? editingLocation.name : location.name}
+                      onChange={(e) => setEditingLocation({ ...location, name: e.target.value })}
+                      onBlur={() => {
+                        if (editingLocation?.id === location.id && editingLocation.name !== location.name) {
+                          handleUpdateLocation(location.id, { name: editingLocation.name });
+                          setEditingLocation(null);
+                        }
+                      }}
                       className="w-full"
                     />
                   </div>
@@ -181,14 +192,26 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                       Activities
                     </Label>
                     <div className="space-y-2">
-                      {location.activities.map((activity, index) => (
+                      {(editingLocation?.id === location.id ? editingLocation.activities : location.activities).map((activity, index) => (
                         <div key={index} className="flex gap-2 w-full">
                           <Input
                             value={activity}
                             onChange={(e) => {
-                              const newActivities = [...location.activities];
+                              const currentActivities = editingLocation?.id === location.id 
+                                ? editingLocation.activities 
+                                : location.activities;
+                              const newActivities = [...currentActivities];
                               newActivities[index] = e.target.value;
-                              handleUpdateLocation(location.id, { activities: newActivities });
+                              setEditingLocation({ ...location, activities: newActivities });
+                            }}
+                            onBlur={() => {
+                              if (editingLocation?.id === location.id) {
+                                const hasChanged = JSON.stringify(editingLocation.activities) !== JSON.stringify(location.activities);
+                                if (hasChanged) {
+                                  handleUpdateLocation(location.id, { activities: editingLocation.activities });
+                                }
+                                setEditingLocation(null);
+                              }
                             }}
                             placeholder="Activity name"
                             className="flex-1 min-w-0"
