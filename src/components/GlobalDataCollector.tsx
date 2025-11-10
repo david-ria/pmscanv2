@@ -307,12 +307,9 @@ export function GlobalDataCollector() {
     isRecording,
     recordingFrequency,
     addDataPoint,
-    selectedLocation,
-    selectedActivity,
-    weatherLoggingEnabled,
-    geohashSettings.enabled,
-    geohashSettings.precision,
-    autoContextSettings.enabled,
+    // Note: selectedLocation/selectedActivity, weatherLoggingEnabled, geohashSettings, and autoContextSettings
+    // are intentionally NOT in deps - they're read directly inside collectData
+    // Adding them would recreate the interval on every change, causing recording pauses
   ]);
 
   // Clear location history and rolling buffer when recording starts
