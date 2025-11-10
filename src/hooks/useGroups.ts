@@ -115,46 +115,9 @@ export const useGroups = () => {
     try {
       setError(null);
       
-      // First fetch groups with related data
-      const groupsQuery = supabase
-        .from('groups')
-        .select(`
-          *,
-          group_settings(
-            custom_alarms,
-            pm25_threshold,
-            pm10_threshold,
-            pm1_threshold,
-            alarm_enabled,
-            auto_share_stats,
-            notification_frequency,
-            location_auto_detect,
-            activity_auto_suggest,
-            event_notifications,
-            weekly_reports
-          ),
-          group_events(
-            id,
-            name,
-            description,
-            icon,
-            color,
-            enabled
-          ),
-          group_custom_thresholds(
-            id,
-            name,
-            pm1_min,
-            pm1_max,
-            pm25_min,
-            pm25_max,
-            pm10_min,
-            pm10_max,
-            color,
-            enabled
-          )
-        `);
-      const { data: groupsData, error: groupsError, isOffline: groupsOffline } = 
+      // Fetch groups first (no embedded relations; we'll merge manually)
+      const groupsQuery = supabase.from('groups').select('*');
+      const { data: groupsData, error: groupsError, isOffline: groupsOffline } =
         await offlineAwareSupabase.query(groupsQuery);
 
       if (groupsOffline) {
@@ -163,30 +126,91 @@ export const useGroups = () => {
       }
       if (groupsError) throw groupsError;
 
-      // Then fetch memberships separately to avoid aggregate issues
-      const membershipsQuery = supabase.from('group_memberships').select('group_id, role, user_id');
-      const { data: membershipsData, error: membershipsError, isOffline: membershipsOffline } = 
-        await offlineAwareSupabase.query(membershipsQuery);
+      const groupIds = (groupsData || []).map((g: any) => g.id);
 
-      if (membershipsOffline) {
+      // Fetch related tables in parallel and merge by group_id
+      const [
+        { data: eventsData, error: eventsError, isOffline: eventsOffline },
+        { data: thresholdsData, error: thresholdsError, isOffline: thresholdsOffline },
+        { data: settingsData, error: settingsError, isOffline: settingsOffline },
+        { data: membershipsData, error: membershipsError, isOffline: membershipsOffline },
+      ] = await Promise.all([
+        offlineAwareSupabase.query(
+          groupIds.length
+            ? supabase
+                .from('group_events')
+                .select('id, group_id, name, description, icon, color, enabled')
+                .in('group_id', groupIds)
+            : supabase.from('group_events').select('id').limit(0)
+        ),
+        offlineAwareSupabase.query(
+          groupIds.length
+            ? supabase
+                .from('group_custom_thresholds')
+                .select('id, group_id, name, pm1_min, pm1_max, pm25_min, pm25_max, pm10_min, pm10_max, color, enabled')
+                .in('group_id', groupIds)
+            : supabase.from('group_custom_thresholds').select('id').limit(0)
+        ),
+        offlineAwareSupabase.query(
+          groupIds.length
+            ? supabase
+                .from('group_settings')
+                .select('group_id, custom_alarms, pm25_threshold, pm10_threshold, pm1_threshold, alarm_enabled, auto_share_stats, notification_frequency, location_auto_detect, activity_auto_suggest, event_notifications, weekly_reports')
+                .in('group_id', groupIds)
+            : supabase.from('group_settings').select('group_id').limit(0)
+        ),
+        offlineAwareSupabase.query(
+          supabase.from('group_memberships').select('group_id, role, user_id')
+        ),
+      ]);
+
+      if (eventsOffline || thresholdsOffline || settingsOffline || membershipsOffline) {
         setLoading(false);
         return; // Silently fail when offline
       }
+      if (eventsError) throw eventsError;
+      if (thresholdsError) throw thresholdsError;
+      if (settingsError) throw settingsError;
       if (membershipsError) throw membershipsError;
+
+      // Index related data by group_id
+      const eventsByGroup = new Map<string, any[]>();
+      eventsData?.forEach((e: any) => {
+        const arr = eventsByGroup.get(e.group_id) || [];
+        arr.push(e);
+        eventsByGroup.set(e.group_id, arr);
+      });
+
+      const thresholdsByGroup = new Map<string, any[]>();
+      thresholdsData?.forEach((t: any) => {
+        const arr = thresholdsByGroup.get(t.group_id) || [];
+        arr.push(t);
+        thresholdsByGroup.set(t.group_id, arr);
+      });
+
+      const settingsByGroup = new Map<string, any>();
+      settingsData?.forEach((s: any) => {
+        settingsByGroup.set(s.group_id, s);
+      });
 
       // Combine the data
       const groupsWithRole =
-        groupsData?.map((group) => {
+        groupsData?.map((group: any) => {
           const userMembership = membershipsData?.find(
-            (m) => m.group_id === group.id && m.user_id === user.id
+            (m: any) => m.group_id === group.id && m.user_id === user.id
           );
           const memberCount =
-            membershipsData?.filter((m) => m.group_id === group.id).length || 0;
+            membershipsData?.filter((m: any) => m.group_id === group.id).length || 0;
 
           return {
             ...group,
             role: userMembership?.role,
             member_count: memberCount,
+            group_events: eventsByGroup.get(group.id) || [],
+            group_custom_thresholds: thresholdsByGroup.get(group.id) || [],
+            group_settings: settingsByGroup.get(group.id)
+              ? [settingsByGroup.get(group.id)]
+              : [],
           };
         }) || [];
 
