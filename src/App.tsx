@@ -3,7 +3,6 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Suspense, lazy, useEffect } from 'react';
-import { AppProviders } from '@/components/AppProviders';
 import { ErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
 import { preloadCriticalChunks, preloadRouteChunks } from '@/utils/dynamicImports';
 import { useAuth } from '@/contexts/AuthContext';
@@ -115,9 +114,7 @@ const App = () => {
         <TooltipProvider>
           <div className="relative min-h-screen">
             <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><AppLayoutSkeleton /></Suspense>}>
-              <AppProviders>
-                <AppRoutes />
-              </AppProviders>
+              <AppRoutes />
             </Suspense>
           </div>
         </TooltipProvider>

@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/contexts/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
+import { AppProviders } from '@/components/AppProviders';
 
 // Import and initialize Sentry observability
 import { initSentry } from '@/observability/sentry';
@@ -59,7 +60,9 @@ createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <ThemeProvider>
-        <App />
+        <AppProviders>
+          <App />
+        </AppProviders>
         <Toaster />
       </ThemeProvider>
     </BrowserRouter>

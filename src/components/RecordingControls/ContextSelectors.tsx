@@ -110,6 +110,21 @@ export function ContextSelectors({
     }
   }, [activeGroup, locations, activities, isGroupMode]);
 
+  // Guard: Reset location if it doesn't exist in current locations list
+  useEffect(() => {
+    if (selectedLocation) {
+      const isValid = locations.some(loc =>
+        ('id' in loc && loc.id === selectedLocation) ||
+        loc.name === selectedLocation
+      );
+      
+      if (!isValid) {
+        console.log(`⚠️ ContextSelectors: Location "${selectedLocation}" not found. Clearing...`);
+        onLocationChange('');
+      }
+    }
+  }, [locations, selectedLocation, onLocationChange]);
+
   // Clear activity selection when location changes and current activity is not available for that location
   useEffect(() => {
     if (selectedLocation && selectedActivity) {
