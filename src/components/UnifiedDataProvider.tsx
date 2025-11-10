@@ -37,7 +37,7 @@ interface UnifiedDataState {
   startRecording: (frequency?: string) => void;
   stopRecording: () => void;
   updateMissionContext: (location: string, activity: string) => void;
-  addDataPoint: (pmData: PMScanData, location?: LocationData, manualContext?: MissionContext, automaticContext?: string, enrichedLocation?: string, geohash?: string) => void;
+  addDataPoint: (pmData: PMScanData, location?: LocationData, manualContext?: MissionContext, automaticContext?: string, enrichedLocation?: string, geohash?: string, weatherDataId?: string) => void;
   clearRecordingData: () => void;
   saveMission: (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: RecordingEntry[]) => Promise<unknown>;
 }
@@ -81,9 +81,10 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     manualContext?: MissionContext,
     automaticContext?: string,
     enrichedLocation?: string,
-    geohash?: string
+    geohash?: string,
+    weatherDataId?: string
   ) => {
-    recording.addDataPoint(pmData, location, manualContext, automaticContext, enrichedLocation, geohash);
+    recording.addDataPoint(pmData, location, manualContext, automaticContext, enrichedLocation, geohash, weatherDataId);
   }, [recording.addDataPoint]);
 
   const stableUpdateMissionContext = useCallback((location: string, activity: string) => {

@@ -9,10 +9,10 @@ export interface RecordingEntry {
     activity: string;
   };
   automaticContext?: string; // Autocontext from sensors + heuristics
-  enrichedLocation?: string; // NEW: Location enrichment from GPS coordinates
-  geohash?: string; // NEW: Geohash for spatial indexing and privacy
+  enrichedLocation?: string; // Location enrichment from GPS coordinates
+  geohash?: string; // Geohash for spatial indexing and privacy
+  weatherDataId?: string; // Weather data ID for this recording entry
   timestamp: Date;
-  weatherDataId?: string; // Still needed for recording, will be moved to mission level
 }
 
 export interface MissionContext {

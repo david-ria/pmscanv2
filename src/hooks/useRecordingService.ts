@@ -35,10 +35,11 @@ export function useRecordingService(): RecordingState & RecordingActions {
     location?: LocationData,
     manualContext?: MissionContext,
     automaticContext?: string,
-    enrichedLocation?: string, // NEW parameter
-    geohash?: string // NEW: Geohash parameter
+    enrichedLocation?: string,
+    geohash?: string,
+    weatherDataId?: string
   ) => {
-    recordingService.addDataPoint(pmData, location, manualContext, automaticContext, enrichedLocation, geohash);
+    recordingService.addDataPoint(pmData, location, manualContext, automaticContext, enrichedLocation, geohash, weatherDataId);
   }, []);
 
   const updateMissionContext = useCallback((location: string, activity: string) => {

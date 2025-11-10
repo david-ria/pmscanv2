@@ -23,8 +23,9 @@ export interface RecordingActions {
     location?: LocationData,
     manualContext?: MissionContext,
     automaticContext?: string,
-    enrichedLocation?: string, // NEW parameter
-    geohash?: string // NEW: Geohash parameter
+    enrichedLocation?: string,
+    geohash?: string,
+    weatherDataId?: string
   ) => void;
   updateMissionContext: (location: string, activity: string) => void;
   clearRecordingData: () => void;
@@ -207,6 +208,7 @@ class RecordingService {
    * @param automaticContext - Auto-detected context from sensors
    * @param enrichedLocation - Enriched location name from reverse geocoding
    * @param geohash - Spatial hash for privacy and indexing
+   * @param weatherDataId - Weather data ID for this measurement
    */
   addDataPoint(
     pmData: PMScanData,
@@ -214,7 +216,8 @@ class RecordingService {
     manualContext?: MissionContext,
     automaticContext?: string,
     enrichedLocation?: string,
-    geohash?: string
+    geohash?: string,
+    weatherDataId?: string
   ): void {
     // 🔍 DEBUG: Log what context was received
     console.log('📥 [RecordingService] addDataPoint received manualContext:', {
@@ -245,8 +248,9 @@ class RecordingService {
       location,
       manualContext: manualContext || this.state.missionContext,
       automaticContext,
-      enrichedLocation, // NEW: Store location enrichment separately
-      geohash, // NEW: Store geohash when provided
+      enrichedLocation,
+      geohash,
+      weatherDataId,
       timestamp: pmData.timestamp, // Use PMScan timestamp (already standardized via createTimestamp)
     };
 

@@ -198,7 +198,7 @@ export function GlobalDataCollector() {
       const isOnline = navigator.onLine;
       
       // Location enrichment with smart caching and rate limiting
-      // Runs in background via Bottleneck queue - non-blocking
+      // Await enrichment to get the result before recording
       let enrichedLocationName = '';
       
       rateLimitedDebug('enrichment-check', 8000, '🔍 Location enrichment check:', {
@@ -208,26 +208,27 @@ export function GlobalDataCollector() {
       });
       
       if (isOnline && enrichLocationRef.current && location?.latitude && location?.longitude) {
-        // Launch enrichment in background - don't await
-        enrichLocationRef.current(
-          location.latitude,
-          location.longitude,
-          averagedData.timestamp.toISOString()
-        )
-          .then(enrichmentResult => {
-            if (enrichmentResult?.display_name) {
-              devLogger.info('✅ Location enriched:', {
-                name: enrichmentResult.display_name,
-                source: enrichmentResult.source,
-                confidence: enrichmentResult.confidence
-              });
-              // Note: enrichedLocationName is already saved in data point
-              // Future improvement: implement callback to update existing data point
-            }
-          })
-          .catch(error => {
-            logger.debug('⚠️ Background location enrichment skipped:', error.message);
-          });
+        try {
+          const enrichmentResult = await Promise.race([
+            enrichLocationRef.current(
+              location.latitude,
+              location.longitude,
+              averagedData.timestamp.toISOString()
+            ),
+            new Promise<null>((_, reject) => setTimeout(() => reject(new Error('Enrichment timeout')), 3000))
+          ]);
+          
+          if (enrichmentResult?.display_name) {
+            enrichedLocationName = enrichmentResult.display_name;
+            devLogger.info('✅ Location enriched:', {
+              name: enrichmentResult.display_name,
+              source: enrichmentResult.source,
+              confidence: enrichmentResult.confidence
+            });
+          }
+        } catch (error) {
+          logger.debug('⚠️ Location enrichment skipped:', error instanceof Error ? error.message : 'Unknown error');
+        }
       }
 
       const automaticContext = autoContextSettings.enabled ? await updateContextRef.current(
@@ -241,28 +242,25 @@ export function GlobalDataCollector() {
       lastRecordedTimeRef.current = averagedData.timestamp;
 
       // Fetch weather data only if online, enabled and location is available
-      // Launch in background with timeout - don't block data collection
+      // Await weather fetch to ensure we have the ID before recording
       let weatherDataId: string | null = null;
       if (isOnline && weatherLoggingEnabled && location?.latitude && location?.longitude) {
-        const weatherPromise = Promise.race([
-          getWeatherRef.current(
-            location.latitude,
-            location.longitude,
-            averagedData.timestamp
-          ),
-          new Promise<null>((_, reject) => setTimeout(() => reject('timeout'), 5000))
-        ]);
-        
-        // Don't await - let it run in background
-        weatherPromise
-          .then(id => {
-            if (id) {
-              devLogger.debug('✅ Weather data fetched:', id);
-            }
-          })
-          .catch(error => {
-            logger.debug('⚠️ Background weather fetch failed:', error);
-          });
+        try {
+          weatherDataId = await Promise.race([
+            getWeatherRef.current(
+              location.latitude,
+              location.longitude,
+              averagedData.timestamp
+            ),
+            new Promise<null>((_, reject) => setTimeout(() => reject(new Error('Weather fetch timeout')), 5000))
+          ]);
+          
+          if (weatherDataId) {
+            devLogger.debug('✅ Weather data fetched:', weatherDataId);
+          }
+        } catch (error) {
+          logger.debug('⚠️ Weather fetch failed:', error instanceof Error ? error.message : 'Unknown error');
+        }
       } else if (!isOnline) {
         logger.debug('⚠️ Offline - skipping weather fetch');
       }
@@ -284,7 +282,8 @@ export function GlobalDataCollector() {
         enrichedLocationName,
         geohashSettings.enabled && location?.latitude && location?.longitude
           ? encodeGeohash(location.latitude, location.longitude, geohashSettings.precision)
-          : undefined
+          : undefined,
+        weatherDataId || undefined
       );
 
       lastDataRef.current = {
