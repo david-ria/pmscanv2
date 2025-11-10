@@ -146,7 +146,19 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
         <ResponsiveDialogHeader className="flex-shrink-0">
-          <ResponsiveDialogTitle>Group Locations & Activities</ResponsiveDialogTitle>
+          <div className="flex items-center justify-between gap-4">
+            <ResponsiveDialogTitle>Group Locations & Activities</ResponsiveDialogTitle>
+            {!isCreating && (
+              <Button 
+                onClick={() => setIsCreating(true)} 
+                size="sm"
+                className="flex-shrink-0"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Location
+              </Button>
+            )}
+          </div>
         </ResponsiveDialogHeader>
 
         <div className="space-y-4 overflow-y-auto flex-1 pr-2">
