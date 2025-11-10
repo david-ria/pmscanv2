@@ -125,7 +125,11 @@ export function ContextSelectors({
         </div>
         <Select value={selectedLocation} onValueChange={onLocationChange}>
           <SelectTrigger className="h-11 bg-background">
-            <SelectValue placeholder={t('realTime.noLocation')} />
+            {selectedLocation ? (
+              <span>{selectedLocationName}</span>
+            ) : (
+              <span className="text-muted-foreground">{t('realTime.noLocation')}</span>
+            )}
           </SelectTrigger>
           <SelectContent>
             {locations.map((location) => (
@@ -156,7 +160,11 @@ export function ContextSelectors({
           disabled={false}
         >
           <SelectTrigger className="h-11 bg-background">
-            <SelectValue placeholder={t('realTime.noActivity')} />
+            {selectedActivity ? (
+              <span>{selectedActivityName}</span>
+            ) : (
+              <span className="text-muted-foreground">{t('realTime.noActivity')}</span>
+            )}
           </SelectTrigger>
           <SelectContent>
             {activities.map((activity) => (
