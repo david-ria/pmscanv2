@@ -16,12 +16,18 @@ import {
 import { Label } from '@/components/ui/label';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
+import { ContextSelectors } from './ContextSelectors';
+import { Separator } from '@/components/ui/separator';
 
 interface RecordingFrequencyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   recordingFrequency: string;
   onFrequencyChange: (frequency: string) => void;
+  selectedLocation: string;
+  onLocationChange: (location: string) => void;
+  selectedActivity: string;
+  onActivityChange: (activity: string) => void;
   onConfirm: () => void;
 }
 
@@ -30,6 +36,10 @@ export function RecordingFrequencyDialog({
   onOpenChange,
   recordingFrequency,
   onFrequencyChange,
+  selectedLocation,
+  onLocationChange,
+  selectedActivity,
+  onActivityChange,
   onConfirm,
 }: RecordingFrequencyDialogProps) {
   const { t } = useTranslation();
@@ -43,19 +53,32 @@ export function RecordingFrequencyDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <Label>{t('modals.recordingFrequency.chooseMeasureFrequency')}</Label>
-          <Select value={recordingFrequency} onValueChange={onFrequencyChange}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {frequencyOptionKeys.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {t(`modals.frequency.${option.key}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-2">
+            <Label>{t('modals.recordingFrequency.chooseMeasureFrequency')}</Label>
+            <Select value={recordingFrequency} onValueChange={onFrequencyChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {frequencyOptionKeys.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {t(`modals.frequency.${option.key}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Separator />
+
+          <ContextSelectors
+            selectedLocation={selectedLocation}
+            onLocationChange={onLocationChange}
+            selectedActivity={selectedActivity}
+            onActivityChange={onActivityChange}
+            isRecording={false}
+          />
+
           <div className="flex gap-2 pt-4">
             <Button
               variant="outline"

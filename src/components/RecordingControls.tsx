@@ -228,6 +228,10 @@ export function RecordingControls({
         onOpenChange={setShowFrequencyDialog}
         recordingFrequency={recordingFrequency}
         onFrequencyChange={setRecordingFrequency}
+        selectedLocation={selectedLocation}
+        onLocationChange={setSelectedLocation}
+        selectedActivity={selectedActivity}
+        onActivityChange={setSelectedActivity}
         onConfirm={confirmStartRecording}
       />
 

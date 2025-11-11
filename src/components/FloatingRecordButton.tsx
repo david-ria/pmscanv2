@@ -12,6 +12,7 @@ import { EventButton } from './RecordingControls/EventButton';
 import { useDialogs } from '@/hooks/useDialog';
 import { ConnectionStatus, PMScanDevice, LocationData } from '@/types/PMScan';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
+import { useScopedRecordingContext } from '@/hooks/useScopedRecordingContext';
 
 interface FloatingRecordButtonProps {
   device?: PMScanDevice;
@@ -39,6 +40,7 @@ export function FloatingRecordButton({
   const { t } = useTranslation();
   const { toast } = useToast();
   const unifiedData = useUnifiedData();
+  const { selectedLocation, setSelectedLocation, selectedActivity, setSelectedActivity } = useScopedRecordingContext();
   const { dialogs, openDialog, closeDialog, getOnOpenChange } = useDialogs({
     frequency: false,
     mission: false,
@@ -251,6 +253,10 @@ export function FloatingRecordButton({
         onOpenChange={getOnOpenChange('frequency')}
         recordingFrequency={recordingFrequency}
         onFrequencyChange={setRecordingFrequency}
+        selectedLocation={selectedLocation}
+        onLocationChange={setSelectedLocation}
+        selectedActivity={selectedActivity}
+        onActivityChange={setSelectedActivity}
         onConfirm={confirmStartRecording}
       />
 
