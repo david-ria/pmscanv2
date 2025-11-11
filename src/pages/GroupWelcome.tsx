@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { useGroups } from '@/hooks/useGroups';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, MapPin, Activity, Play, AlertCircle } from 'lucide-react';
+import { Users, MapPin, Activity, Play, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { joinGroupByToken } from '@/utils/invitations';
 
 export default function GroupWelcome() {
   const { groupId } = useParams<{ groupId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { groups, loading: groupsLoading } = useGroups();
   const { applyGroupById, isGroupMode, activeGroup } = useGroupSettings();
   const [isApplying, setIsApplying] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+  
+  const joinToken = searchParams.get('join');
 
   // Find the group by resolving the groupId parameter
   const group = groups.find(g => {
@@ -34,14 +39,51 @@ export default function GroupWelcome() {
   });
 
   // Check if user is already a member
-  const isMember = group && activeGroup?.id === group.id;
+  const isMember = group && groups.some(g => g.id === group.id);
+
+  // Handle join token flow
+  useEffect(() => {
+    const handleJoinFlow = async () => {
+      // If no user and we have a join token, redirect to auth with return path
+      if (!user && joinToken) {
+        const returnPath = `/groups/${groupId}/welcome?join=${joinToken}`;
+        navigate(`/auth?redirect=${encodeURIComponent(returnPath)}`);
+        return;
+      }
+
+      // If user is authenticated and we have a join token, process it
+      if (user && joinToken && !isJoining && !groupsLoading) {
+        setIsJoining(true);
+        try {
+          const result = await joinGroupByToken(joinToken);
+          
+          if (result.alreadyMember) {
+            toast.success(`Already a member of ${result.groupName || 'the group'}`);
+          } else {
+            toast.success(`Successfully joined ${result.groupName || 'the group'}!`);
+          }
+          
+          // Apply group settings and navigate
+          await applyGroupById(result.groupId);
+          navigate('/');
+        } catch (error) {
+          console.error('Failed to join group:', error);
+          toast.error('Failed to join group. The link may be invalid or expired.');
+        } finally {
+          setIsJoining(false);
+        }
+      }
+    };
+
+    handleJoinFlow();
+  }, [user, joinToken, groupId, navigate, isJoining, groupsLoading, applyGroupById]);
 
   useEffect(() => {
     // If group is not found and groups have loaded, show error
-    if (!groupsLoading && !group && groupId) {
+    if (!groupsLoading && !group && groupId && !joinToken) {
       toast.error('Group not found or you do not have access');
     }
-  }, [group, groupsLoading, groupId]);
+  }, [group, groupsLoading, groupId, joinToken]);
 
   const handleStartRecording = async () => {
     if (!group) return;
@@ -94,13 +136,16 @@ export default function GroupWelcome() {
     );
   }
 
-  if (groupsLoading) {
+  if (groupsLoading || isJoining) {
     return (
       <div className="container max-w-2xl mx-auto px-4 py-8">
         <Card>
           <CardContent className="py-8">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="flex flex-col items-center justify-center gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">
+                {isJoining ? 'Joining group...' : 'Loading...'}
+              </p>
             </div>
           </CardContent>
         </Card>

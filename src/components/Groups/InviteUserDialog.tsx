@@ -26,8 +26,8 @@ import * as z from 'zod';
 import { useGroupInvitations, useGroups } from '@/hooks/useGroups';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { BaseDialogProps } from '@/types/shared';
-import { generateGroupQRCodeDataURL, copyGroupUrlToClipboard, downloadGroupQRCode } from '@/utils/qrCode';
-import { generateGroupUrl } from '@/lib/groupConfigs';
+import { generateQRCodeDataURL } from '@/utils/qrCode';
+import { createGroupJoinLink } from '@/utils/invitations';
 import { useToast } from '@/hooks/use-toast';
 import { Copy, Download, Mail, Link2, QrCode, Loader2 } from 'lucide-react';
 
@@ -54,7 +54,8 @@ export function InviteUserDialog({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
-  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
+  const [joinUrl, setJoinUrl] = useState<string>('');
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 
   // Resolve group name from multiple sources
   const resolvedGroupName = useMemo(() => {
@@ -73,29 +74,27 @@ export function InviteUserDialog({
     return null;
   }, [groupNameProp, groups, groupId, activeGroup]);
 
-  // Generate URLs only when we have a resolved name
-  const groupUrl = useMemo(() => {
-    if (!resolvedGroupName) return '';
-    return generateGroupUrl(groupId, resolvedGroupName);
-  }, [groupId, resolvedGroupName]);
-
-  // Generate QR code data URL when dialog opens and we have a URL
+  // Generate join link and QR code when dialog opens
   useEffect(() => {
-    if (open && groupUrl && !qrCodeDataUrl) {
-      setIsGeneratingQR(true);
-      generateGroupQRCodeDataURL(groupId, { size: 256 }, resolvedGroupName || undefined)
-        .then(setQrCodeDataUrl)
+    if (open && !joinUrl && !isGeneratingLink) {
+      setIsGeneratingLink(true);
+      createGroupJoinLink(groupId, resolvedGroupName || undefined)
+        .then(async ({ url }) => {
+          setJoinUrl(url);
+          const dataUrl = await generateQRCodeDataURL(url, { size: 256 });
+          setQrCodeDataUrl(dataUrl);
+        })
         .catch((error) => {
-          console.error('Failed to generate QR code:', error);
+          console.error('Failed to generate join link:', error);
           toast({
             title: 'Error',
-            description: 'Failed to generate QR code',
+            description: 'Failed to generate invitation link',
             variant: 'destructive',
           });
         })
-        .finally(() => setIsGeneratingQR(false));
+        .finally(() => setIsGeneratingLink(false));
     }
-  }, [open, groupUrl, groupId, resolvedGroupName, qrCodeDataUrl, toast]);
+  }, [open, joinUrl, isGeneratingLink, groupId, resolvedGroupName, toast]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -118,13 +117,14 @@ export function InviteUserDialog({
   };
 
   const handleCopyUrl = async () => {
-    const success = await copyGroupUrlToClipboard(groupId, resolvedGroupName || undefined);
-    if (success) {
+    if (!joinUrl) return;
+    try {
+      await navigator.clipboard.writeText(joinUrl);
       toast({
         title: 'Success',
         description: 'Group URL copied to clipboard',
       });
-    } else {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to copy URL to clipboard',
@@ -133,27 +133,20 @@ export function InviteUserDialog({
     }
   };
 
-  const handleDownloadQR = async () => {
-    try {
-      const filename = resolvedGroupName 
-        ? `${resolvedGroupName.toLowerCase().replace(/\s+/g, '-')}-invite.png`
-        : `group-${groupId}-invite.png`;
-      await downloadGroupQRCode(groupId, filename, { size: 512 }, resolvedGroupName || undefined);
-      toast({
-        title: 'Success',
-        description: 'QR code downloaded successfully',
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to download QR code',
-        variant: 'destructive',
-      });
-    }
+  const handleDownloadQR = () => {
+    if (!qrCodeDataUrl) return;
+    const link = document.createElement('a');
+    const filename = resolvedGroupName 
+      ? `${resolvedGroupName.toLowerCase().replace(/\s+/g, '-')}-invite.png`
+      : `group-${groupId}-invite.png`;
+    link.href = qrCodeDataUrl;
+    link.download = filename;
+    link.click();
+    toast({
+      title: 'Success',
+      description: 'QR code downloaded successfully',
+    });
   };
-
-  // Show loading state while resolving group name
-  const isResolvingName = !resolvedGroupName;
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
@@ -228,7 +221,7 @@ export function InviteUserDialog({
             <div className="text-sm text-muted-foreground">
               Share this link to let people join your group and start recording data with group settings.
             </div>
-            {isResolvingName ? (
+            {isGeneratingLink || !joinUrl ? (
               <div className="space-y-3">
                 <Skeleton className="h-10 w-full" />
                 <div className="text-sm text-muted-foreground flex items-center gap-2">
@@ -240,7 +233,7 @@ export function InviteUserDialog({
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Input
-                    value={groupUrl}
+                    value={joinUrl}
                     readOnly
                     className="flex-1 font-mono text-sm"
                   />
@@ -272,7 +265,7 @@ export function InviteUserDialog({
             <div className="text-sm text-muted-foreground">
               Let people scan this QR code to join your group and start recording.
             </div>
-            {isResolvingName || isGeneratingQR ? (
+            {isGeneratingLink || !qrCodeDataUrl ? (
               <div className="flex flex-col items-center space-y-4">
                 <Skeleton className="w-48 h-48 rounded-lg" />
                 <div className="text-sm text-muted-foreground flex items-center gap-2">

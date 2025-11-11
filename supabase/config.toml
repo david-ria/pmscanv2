@@ -15,3 +15,9 @@ verify_jwt = true
 [functions.decline-group-invitation]
 verify_jwt = true
 
+[functions.create-group-join-link]
+verify_jwt = true
+
+[functions.join-group-by-token]
+verify_jwt = true
+

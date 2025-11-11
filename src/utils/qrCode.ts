@@ -7,6 +7,28 @@ export interface QRCodeOptions {
 }
 
 /**
+ * Generate a QR code for any URL and return as data URL
+ */
+export async function generateQRCodeDataURL(
+  url: string,
+  options: QRCodeOptions = {}
+): Promise<string> {
+  const { size = 300, errorCorrectionLevel = 'M' } = options;
+  
+  try {
+    const dataUrl = await QRCode.toDataURL(url, {
+      width: size,
+      errorCorrectionLevel,
+      margin: 1,
+    });
+    return dataUrl;
+  } catch (error) {
+    console.error('Failed to generate QR code:', error);
+    throw new Error('Failed to generate QR code');
+  }
+}
+
+/**
  * Generates a QR code as a data URL (client-side, no external API)
  */
 export async function generateGroupQRCodeDataURL(
@@ -14,20 +36,8 @@ export async function generateGroupQRCodeDataURL(
   options: QRCodeOptions = {},
   groupName?: string
 ): Promise<string> {
-  const { size = 300, errorCorrectionLevel = 'M' } = options;
   const groupUrl = generateGroupUrl(groupId, groupName);
-
-  try {
-    const dataUrl = await QRCode.toDataURL(groupUrl, {
-      width: size,
-      errorCorrectionLevel: errorCorrectionLevel,
-      margin: 2,
-    });
-    return dataUrl;
-  } catch (error) {
-    console.error('Failed to generate QR code:', error);
-    throw new Error('Failed to generate QR code');
-  }
+  return generateQRCodeDataURL(groupUrl, options);
 }
 
 /**

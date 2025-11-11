@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +19,10 @@ export default function Auth() {
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation();
+  
+  const redirectPath = searchParams.get('redirect');
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +41,7 @@ export default function Auth() {
           title: t('auth.connectionSuccess'),
           description: t('auth.youAreConnected'),
         });
-        navigate('/');
+        navigate(redirectPath || '/');
       }
     } catch (error) {
       toast({
@@ -72,6 +75,9 @@ export default function Auth() {
           title: t('auth.registrationSuccess'),
           description: t('auth.checkEmailConfirm'),
         });
+        if (redirectPath) {
+          navigate(redirectPath);
+        }
       }
     } catch (error) {
       toast({
