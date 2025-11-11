@@ -22,8 +22,8 @@ serve(async (req) => {
       throw new Error('Missing authorization header');
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const tokenHeader = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(tokenHeader);
     
     if (authError || !user) {
       throw new Error('Unauthorized');
@@ -37,21 +37,36 @@ serve(async (req) => {
 
     console.log('Processing join request with token:', joinToken, 'for user:', user.id);
 
-    // Find the invitation by token
+    // Find the invitation by token (no relations to avoid missing FKs)
     const { data: invitation, error: inviteError } = await supabase
       .from('group_invitations')
-      .select('*, groups(id, name)')
+      .select('id, group_id, status, expires_at')
       .eq('token', joinToken)
-      .eq('status', 'pending')
-      .gt('expires_at', new Date().toISOString())
       .single();
 
     if (inviteError || !invitation) {
-      console.error('Invalid or expired token:', inviteError);
-      throw new Error('Invalid or expired invitation token');
+      console.error('Invitation lookup failed:', inviteError);
+      throw new Error('Invalid invitation token');
+    }
+
+    // Validate status and expiration
+    if (invitation.status !== 'pending') {
+      throw new Error('Invitation is not pending');
+    }
+    if (new Date(invitation.expires_at) <= new Date()) {
+      throw new Error('Invitation has expired');
     }
 
     const groupId = invitation.group_id;
+
+    // Optional: fetch group name for response convenience
+    let groupName: string | undefined;
+    const { data: groupMeta } = await supabase
+      .from('groups')
+      .select('name')
+      .eq('id', groupId)
+      .single();
+    groupName = groupMeta?.name;
 
     // Check if user is already a member (idempotency)
     const { data: existingMembership } = await supabase
@@ -59,7 +74,7 @@ serve(async (req) => {
       .select('id')
       .eq('group_id', groupId)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (existingMembership) {
       console.log('User already a member, returning success');
@@ -68,7 +83,7 @@ serve(async (req) => {
           success: true, 
           groupId, 
           alreadyMember: true,
-          groupName: invitation.groups?.name 
+          groupName
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -103,14 +118,14 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         groupId,
-        groupName: invitation.groups?.name 
+        groupName 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error in join-group-by-token:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error as Error).message }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
