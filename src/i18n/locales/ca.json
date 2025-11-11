@@ -360,7 +360,7 @@
   },
   "modals": {
     "recordingFrequency": {
-      "title": "Freqüència d'enregistrament",
+      "title": "Configuració d'enregistrament",
       "chooseMeasureFrequency": "Trieu la freqüència de mesura:",
       "cancel": "Cancel·lar",
       "start": "Iniciar"

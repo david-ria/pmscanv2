@@ -500,7 +500,7 @@
   },
   "modals": {
     "recordingFrequency": {
-      "title": "Fréquence d'enregistrement",
+      "title": "Paramètres d'enregistrement",
       "chooseMeasureFrequency": "Choisissez la fréquence de mesure :",
       "cancel": "Annuler",
       "start": "Démarrer"

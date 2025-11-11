@@ -360,7 +360,7 @@
   },
   "modals": {
     "recordingFrequency": {
-      "title": "Aufzeichnungsfrequenz",
+      "title": "Aufzeichnungseinstellungen",
       "chooseMeasureFrequency": "Wählen Sie die Messfrequenz:",
       "cancel": "Abbrechen",
       "start": "Starten"
