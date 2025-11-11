@@ -356,14 +356,14 @@ export function generateGroupUrl(
   groupName?: string,
   baseUrl: string = window.location.origin
 ): string {
-  // If it's a UUID (database group), create name-based URL
+  // If it's a UUID (database group), create name-based URL with /welcome path
   if (isUUID(groupId)) {
     if (groupName) {
       const slug = createGroupSlug(groupName, groupId);
-      return `${baseUrl}/groups/${slug}`;
+      return `${baseUrl}/groups/${slug}/welcome`;
     }
     // Fallback to UUID if no name provided
-    return `${baseUrl}/groups/${groupId}`;
+    return `${baseUrl}/groups/${groupId}/welcome`;
   }
   // If it's a static config ID, use query parameter for backward compatibility
   return `${baseUrl}?group=${groupId}`;

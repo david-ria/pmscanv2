@@ -181,7 +181,7 @@ export function InviteUserDialog({
 
           <TabsContent value="link" className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Share this link to let people join your group directly.
+              Share this link to let people join your group and start recording data with group settings.
             </div>
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
@@ -215,7 +215,7 @@ export function InviteUserDialog({
 
           <TabsContent value="qr" className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Let people scan this QR code to join your group.
+              Let people scan this QR code to join your group and start recording.
             </div>
             <div className="flex flex-col items-center space-y-4">
               <div className="p-4 bg-white rounded-lg border">

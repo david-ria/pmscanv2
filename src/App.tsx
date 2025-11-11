@@ -13,6 +13,7 @@ const History = lazy(() => import('./pages/History'));
 const Analysis = lazy(() => import('./pages/Analysis'));
 const Groups = lazy(() => import('./pages/Groups'));
 const GroupDetails = lazy(() => import('./pages/GroupDetails'));
+const GroupWelcome = lazy(() => import('./pages/GroupWelcome'));
 const Profile = lazy(() => import('./pages/Profile'));
 const CustomThresholds = lazy(() => import('./pages/CustomThresholds'));
 const CustomAlerts = lazy(() => import('./pages/CustomAlerts'));
@@ -195,6 +196,14 @@ const AppRoutes = () => {
                           element={
                             <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><GroupsPageSkeleton /></Suspense>}>
                               <Groups />
+                            </Suspense>
+                          } 
+                        />
+                        <Route 
+                          path="/groups/:groupId/welcome" 
+                          element={
+                            <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><GroupsPageSkeleton /></Suspense>}>
+                              <GroupWelcome />
                             </Suspense>
                           } 
                         />

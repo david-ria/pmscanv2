@@ -49,6 +49,9 @@ export async function downloadGroupQRCode(
     }
     
     const blob = await response.blob();
+    if (!blob || blob.size === 0) {
+      throw new Error('QR code blob is empty');
+    }
 
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -63,7 +66,12 @@ export async function downloadGroupQRCode(
     window.URL.revokeObjectURL(url);
   } catch (error) {
     console.error('Failed to download QR code:', error);
-    throw new Error('Failed to download QR code');
+    
+    // Fallback: open QR code in new tab so user can save manually
+    console.log('Opening QR code in new tab as fallback...');
+    window.open(qrUrl, '_blank');
+    
+    throw new Error('Failed to download QR code automatically. Opening in new tab instead.');
   }
 }
 
