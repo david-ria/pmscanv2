@@ -354,17 +354,36 @@ export function extractGroupIdFromSlug(slug: string): string | null {
 export function generateGroupUrl(
   groupId: string,
   groupName?: string,
-  baseUrl: string = window.location.origin
+  baseUrl?: string
 ): string {
+  // Determine a shareable base URL
+  let shareBase = (baseUrl || window.location.origin).replace(/\/$/, '');
+  const envBase = (import.meta as any)?.env?.VITE_PUBLIC_BASE_URL as string | undefined;
+  if (envBase) {
+    shareBase = envBase.replace(/\/$/, '');
+  } else {
+    try {
+      const url = new URL(shareBase);
+      const host = url.hostname;
+      // If running inside Lovable preview (id-preview--*.lovable.app), convert to public project domain
+      if (host.startsWith('id-preview--') && host.endsWith('.lovable.app')) {
+        const projectId = host.replace('id-preview--', '').split('.lovable.app')[0];
+        shareBase = `${url.protocol}//${projectId}.lovableproject.com`;
+      }
+    } catch {
+      // keep original shareBase
+    }
+  }
+
   // If it's a UUID (database group), create name-based URL with /welcome path
   if (isUUID(groupId)) {
     if (groupName) {
       const slug = createGroupSlug(groupName, groupId);
-      return `${baseUrl}/groups/${slug}/welcome`;
+      return `${shareBase}/groups/${slug}/welcome`;
     }
     // Fallback to UUID if no name provided
-    return `${baseUrl}/groups/${groupId}/welcome`;
+    return `${shareBase}/groups/${groupId}/welcome`;
   }
   // If it's a static config ID, use query parameter for backward compatibility
-  return `${baseUrl}?group=${groupId}`;
+  return `${shareBase}?group=${groupId}`;
 }

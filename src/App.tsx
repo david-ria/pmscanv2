@@ -151,6 +151,15 @@ const AppRoutes = () => {
           </Suspense>
         }
       />
+      {/* Public Welcome route (accessible without auth) */}
+      <Route
+        path="/groups/:groupId/welcome"
+        element={
+          <Suspense fallback={<Suspense fallback={<MinimalSkeleton />}><GroupsPageSkeleton /></Suspense>}>
+            <GroupWelcome />
+          </Suspense>
+        }
+      />
       <Route
         path="/*"
         element={
