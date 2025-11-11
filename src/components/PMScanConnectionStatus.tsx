@@ -26,26 +26,19 @@ export const PMScanConnectionStatus = ({
   if (!connectionStatus.connected) {
     return (
       <div className={className}>
-        <div className="space-y-3">
-          <ConnectionCard
-            connectionStatus={connectionStatus}
-            deviceInfo={deviceInfo}
-            onConnect={onConnect}
-            onDisconnect={onDisconnect}
-          />
-          <GPSStatusCard
-            locationEnabled={locationEnabled}
-            latestLocation={latestLocation}
-            onRequestPermission={onRequestLocationPermission}
-          />
-        </div>
+        <ConnectionCard
+          connectionStatus={connectionStatus}
+          deviceInfo={deviceInfo}
+          onConnect={onConnect}
+          onDisconnect={onDisconnect}
+        />
       </div>
     );
   }
 
   return (
     <div className={className}>
-      <div className="flex gap-2 justify-center">
+      <div className="flex justify-center">
         <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-lg border shadow-sm">
           <div className="w-2 h-2 bg-success rounded-full"></div>
           <span className="text-sm font-medium">Connected</span>
@@ -55,26 +48,6 @@ export const PMScanConnectionStatus = ({
           >
             Disconnect
           </button>
-        </div>
-
-        <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-lg border shadow-sm">
-          {locationEnabled && latestLocation ? (
-            <>
-              <div className="w-2 h-2 bg-success rounded-full"></div>
-              <span className="text-sm font-medium">GPS Active</span>
-            </>
-          ) : (
-            <>
-              <div className="w-2 h-2 bg-muted rounded-full"></div>
-              <span className="text-sm text-muted-foreground">No GPS</span>
-              <button
-                onClick={onRequestLocationPermission}
-                className="ml-2 text-xs text-primary hover:underline"
-              >
-                Enable
-              </button>
-            </>
-          )}
         </div>
       </div>
     </div>
