@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Users, X, Settings, QrCode } from 'lucide-react';
+import { Users, X, Settings, QrCode, Loader2 } from 'lucide-react';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import {
   Dialog,
@@ -18,20 +18,33 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { generateGroupUrl } from '@/lib/groupConfigs';
+import { generateGroupQRCodeDataURL } from '@/utils/qrCode';
+import { useState, useEffect } from 'react';
 
 export const GroupModeIndicator = () => {
   const { activeGroup, isGroupMode, clearGroupSettings } = useGroupSettings();
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
   if (!isGroupMode || !activeGroup) {
     return null;
   }
 
-  const groupUrl = generateGroupUrl(activeGroup.id);
+  const groupUrl = generateGroupUrl(activeGroup.id, activeGroup.name);
 
-  const generateQRCode = () => {
-    // Simple QR code generation using qr-server.com API
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(groupUrl)}`;
-    return qrUrl;
+  // Generate QR code when dialog opens
+  const handleQRDialogOpen = async () => {
+    if (qrCodeDataUrl) return; // Already generated
+    
+    setIsGeneratingQR(true);
+    try {
+      const dataUrl = await generateGroupQRCodeDataURL(activeGroup.id, { size: 300 }, activeGroup.name);
+      setQrCodeDataUrl(dataUrl);
+    } catch (error) {
+      console.error('Failed to generate QR code:', error);
+    } finally {
+      setIsGeneratingQR(false);
+    }
   };
 
   return (
@@ -56,7 +69,12 @@ export const GroupModeIndicator = () => {
             </Badge>
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-1"
+                  onClick={handleQRDialogOpen}
+                >
                   <QrCode className="h-3 w-3" />
                   QR
                 </Button>
@@ -69,11 +87,21 @@ export const GroupModeIndicator = () => {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col items-center space-y-4">
-                  <img
-                    src={generateQRCode()}
-                    alt="Group Settings QR Code"
-                    className="w-64 h-64 border rounded-lg"
-                  />
+                  {isGeneratingQR ? (
+                    <div className="w-64 h-64 border rounded-lg flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : qrCodeDataUrl ? (
+                    <img
+                      src={qrCodeDataUrl}
+                      alt="Group Settings QR Code"
+                      className="w-64 h-64 border rounded-lg"
+                    />
+                  ) : (
+                    <div className="w-64 h-64 border rounded-lg flex items-center justify-center text-muted-foreground">
+                      Click to generate QR code
+                    </div>
+                  )}
                   <div className="text-center">
                     <p className="text-sm font-medium">{activeGroup.name}</p>
                     <p className="text-xs text-muted-foreground break-all">

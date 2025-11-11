@@ -127,6 +127,7 @@ export default function Groups() {
         open={inviteUserOpen}
         onOpenChange={setInviteUserOpen}
         groupId={selectedGroupId}
+        groupName={groups.find(g => g.id === selectedGroupId)?.name}
       />
     </div>
   );

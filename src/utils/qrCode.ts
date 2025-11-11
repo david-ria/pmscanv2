@@ -1,38 +1,38 @@
 import { generateGroupUrl } from '@/lib/groupConfigs';
+import QRCode from 'qrcode';
 
 export interface QRCodeOptions {
   size?: number;
-  format?: 'png' | 'svg';
   errorCorrectionLevel?: 'L' | 'M' | 'Q' | 'H';
 }
 
 /**
- * Generates a QR code URL for a group configuration
+ * Generates a QR code as a data URL (client-side, no external API)
  */
-export function generateGroupQRCode(
+export async function generateGroupQRCodeDataURL(
   groupId: string,
   options: QRCodeOptions = {},
   groupName?: string
-): string {
-  const { size = 300, format = 'png', errorCorrectionLevel = 'M' } = options;
-
+): Promise<string> {
+  const { size = 300, errorCorrectionLevel = 'M' } = options;
   const groupUrl = generateGroupUrl(groupId, groupName);
 
-  // Using qr-server.com free API for QR code generation
-  const params = new URLSearchParams({
-    data: groupUrl,
-    size: `${size}x${size}`,
-    format: format,
-    ecc: errorCorrectionLevel,
-  });
-
-  return `https://api.qrserver.com/v1/create-qr-code/?${params.toString()}`;
+  try {
+    const dataUrl = await QRCode.toDataURL(groupUrl, {
+      width: size,
+      errorCorrectionLevel: errorCorrectionLevel,
+      margin: 2,
+    });
+    return dataUrl;
+  } catch (error) {
+    console.error('Failed to generate QR code:', error);
+    throw new Error('Failed to generate QR code');
+  }
 }
 
 /**
- * Downloads a QR code as an image file
+ * Downloads a QR code as an image file using client-side generation
  */
-import { safeJson } from '@/utils/safeJson';
 
 export async function downloadGroupQRCode(
   groupId: string,
@@ -40,24 +40,19 @@ export async function downloadGroupQRCode(
   options: QRCodeOptions = {},
   groupName?: string
 ): Promise<void> {
-  const qrUrl = generateGroupQRCode(groupId, options, groupName);
-
   try {
-    const response = await fetch(qrUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch QR code: ${response.status}`);
-    }
+    // Generate QR code as data URL
+    const dataUrl = await generateGroupQRCodeDataURL(groupId, options, groupName);
     
+    // Convert data URL to blob
+    const response = await fetch(dataUrl);
     const blob = await response.blob();
-    if (!blob || blob.size === 0) {
-      throw new Error('QR code blob is empty');
-    }
 
+    // Create download link
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download =
-      filename || `group-${groupId}-qr.${options.format || 'png'}`;
+    link.download = filename || `group-${groupId}-qr.png`;
 
     document.body.appendChild(link);
     link.click();
@@ -66,12 +61,7 @@ export async function downloadGroupQRCode(
     window.URL.revokeObjectURL(url);
   } catch (error) {
     console.error('Failed to download QR code:', error);
-    
-    // Fallback: open QR code in new tab so user can save manually
-    console.log('Opening QR code in new tab as fallback...');
-    window.open(qrUrl, '_blank');
-    
-    throw new Error('Failed to download QR code automatically. Opening in new tab instead.');
+    throw error;
   }
 }
 

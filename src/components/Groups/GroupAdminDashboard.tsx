@@ -273,6 +273,7 @@ export function GroupAdminDashboard({ group }: GroupAdminDashboardProps) {
 
       <InviteUserDialog
         groupId={group.id}
+        groupName={group.name}
         open={inviteDialog.open}
         onOpenChange={inviteDialog.setOpen}
       />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   ResponsiveDialog,
@@ -19,15 +19,17 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useGroupInvitations, useGroups } from '@/hooks/useGroups';
+import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { BaseDialogProps } from '@/types/shared';
-import { generateGroupQRCode, copyGroupUrlToClipboard, downloadGroupQRCode } from '@/utils/qrCode';
+import { generateGroupQRCodeDataURL, copyGroupUrlToClipboard, downloadGroupQRCode } from '@/utils/qrCode';
 import { generateGroupUrl } from '@/lib/groupConfigs';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Download, Mail, Link2, QrCode } from 'lucide-react';
+import { Copy, Download, Mail, Link2, QrCode, Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -37,23 +39,63 @@ type FormData = z.infer<typeof formSchema>;
 
 interface InviteUserDialogProps extends BaseDialogProps {
   groupId: string;
+  groupName?: string;
 }
 
 export function InviteUserDialog({
   groupId,
+  groupName: groupNameProp,
   open,
   onOpenChange,
 }: InviteUserDialogProps) {
   const { sendInvitation } = useGroupInvitations();
   const { groups } = useGroups();
+  const { activeGroup } = useGroupSettings();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
-  // Find the current group to get its name for URL generation
-  const currentGroup = groups.find(g => g.id === groupId);
-  
-  const groupUrl = generateGroupUrl(groupId, currentGroup?.name);
-  const qrCodeUrl = generateGroupQRCode(groupId, { size: 256 }, currentGroup?.name);
+  // Resolve group name from multiple sources
+  const resolvedGroupName = useMemo(() => {
+    // 1. Use prop if provided
+    if (groupNameProp) return groupNameProp;
+    
+    // 2. Try to find in groups list
+    const group = groups.find(g => g.id === groupId);
+    if (group?.name) return group.name;
+    
+    // 3. Check if it's the active group
+    if (activeGroup?.id === groupId && activeGroup?.name) {
+      return activeGroup.name;
+    }
+    
+    return null;
+  }, [groupNameProp, groups, groupId, activeGroup]);
+
+  // Generate URLs only when we have a resolved name
+  const groupUrl = useMemo(() => {
+    if (!resolvedGroupName) return '';
+    return generateGroupUrl(groupId, resolvedGroupName);
+  }, [groupId, resolvedGroupName]);
+
+  // Generate QR code data URL when dialog opens and we have a URL
+  useEffect(() => {
+    if (open && groupUrl && !qrCodeDataUrl) {
+      setIsGeneratingQR(true);
+      generateGroupQRCodeDataURL(groupId, { size: 256 }, resolvedGroupName || undefined)
+        .then(setQrCodeDataUrl)
+        .catch((error) => {
+          console.error('Failed to generate QR code:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to generate QR code',
+            variant: 'destructive',
+          });
+        })
+        .finally(() => setIsGeneratingQR(false));
+    }
+  }, [open, groupUrl, groupId, resolvedGroupName, qrCodeDataUrl, toast]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -76,7 +118,7 @@ export function InviteUserDialog({
   };
 
   const handleCopyUrl = async () => {
-    const success = await copyGroupUrlToClipboard(groupId, currentGroup?.name);
+    const success = await copyGroupUrlToClipboard(groupId, resolvedGroupName || undefined);
     if (success) {
       toast({
         title: 'Success',
@@ -93,10 +135,10 @@ export function InviteUserDialog({
 
   const handleDownloadQR = async () => {
     try {
-      const filename = currentGroup?.name 
-        ? `${currentGroup.name.toLowerCase().replace(/\s+/g, '-')}-invite.png`
+      const filename = resolvedGroupName 
+        ? `${resolvedGroupName.toLowerCase().replace(/\s+/g, '-')}-invite.png`
         : `group-${groupId}-invite.png`;
-      await downloadGroupQRCode(groupId, filename, { size: 512 }, currentGroup?.name);
+      await downloadGroupQRCode(groupId, filename, { size: 512 }, resolvedGroupName || undefined);
       toast({
         title: 'Success',
         description: 'QR code downloaded successfully',
@@ -109,6 +151,9 @@ export function InviteUserDialog({
       });
     }
   };
+
+  // Show loading state while resolving group name
+  const isResolvingName = !resolvedGroupName;
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
@@ -183,25 +228,35 @@ export function InviteUserDialog({
             <div className="text-sm text-muted-foreground">
               Share this link to let people join your group and start recording data with group settings.
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Input
-                  value={groupUrl}
-                  readOnly
-                  className="flex-1 font-mono text-sm"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyUrl}
-                  className="flex items-center gap-2"
-                >
-                  <Copy className="w-4 h-4" />
-                  Copy
-                </Button>
+            {isResolvingName ? (
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating link...
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={groupUrl}
+                    readOnly
+                    className="flex-1 font-mono text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyUrl}
+                    className="flex items-center gap-2"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copy
+                  </Button>
+                </div>
+              </div>
+            )}
             <DialogFooter>
               <Button
                 type="button"
@@ -217,24 +272,35 @@ export function InviteUserDialog({
             <div className="text-sm text-muted-foreground">
               Let people scan this QR code to join your group and start recording.
             </div>
-            <div className="flex flex-col items-center space-y-4">
-              <div className="p-4 bg-white rounded-lg border">
-                <img
-                  src={qrCodeUrl}
-                  alt="Group invitation QR code"
-                  className="w-48 h-48"
-                />
+            {isResolvingName || isGeneratingQR ? (
+              <div className="flex flex-col items-center space-y-4">
+                <Skeleton className="w-48 h-48 rounded-lg" />
+                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating QR code...
+                </div>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleDownloadQR}
-                className="flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Download QR Code
-              </Button>
-            </div>
+            ) : (
+              <div className="flex flex-col items-center space-y-4">
+                <div className="p-4 bg-white rounded-lg border">
+                  <img
+                    src={qrCodeDataUrl}
+                    alt="Group invitation QR code"
+                    className="w-48 h-48"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleDownloadQR}
+                  className="flex items-center gap-2"
+                  disabled={!qrCodeDataUrl}
+                >
+                  <Download className="w-4 h-4" />
+                  Download QR Code
+                </Button>
+              </div>
+            )}
             <DialogFooter>
               <Button
                 type="button"
