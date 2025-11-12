@@ -99,6 +99,9 @@ export default function GroupWelcome() {
           // Refetch groups to ensure the new group is in the list
           await refetch();
           
+          // Wait a moment for the refetch to propagate
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           // Apply group settings and navigate
           await applyGroupById(result.groupId);
           
