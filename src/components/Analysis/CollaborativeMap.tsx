@@ -306,7 +306,7 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
         </div>
 
         {/* Map */}
-        <div className="h-[400px] w-full rounded-lg overflow-hidden border border-border">
+        <div className="h-[800px] w-full rounded-lg overflow-hidden border border-border">
           {loading ? (
             <div className="h-full flex items-center justify-center bg-muted">
               <div className="text-center">

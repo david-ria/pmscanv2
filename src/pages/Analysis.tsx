@@ -100,15 +100,15 @@ export default function Analysis() {
           </TabsContent>
 
           <TabsContent value="group" className="space-y-4 sm:space-y-6">
-            {/* Group Comparison */}
-            <GroupComparison
-              userStats={userStats}
+            {/* Collaborative Map */}
+            <CollaborativeMap
               selectedPeriod={selectedPeriod}
               selectedDate={selectedDate}
             />
             
-            {/* Collaborative Map */}
-            <CollaborativeMap
+            {/* Group Comparison */}
+            <GroupComparison
+              userStats={userStats}
               selectedPeriod={selectedPeriod}
               selectedDate={selectedDate}
             />
