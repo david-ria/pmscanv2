@@ -468,6 +468,7 @@ export type Database = {
           custom_locations: Json | null
           description: string | null
           id: string
+          logo_url: string | null
           member_quota: number | null
           name: string
           subscription_tier:
@@ -482,6 +483,7 @@ export type Database = {
           custom_locations?: Json | null
           description?: string | null
           id?: string
+          logo_url?: string | null
           member_quota?: number | null
           name: string
           subscription_tier?:
@@ -496,6 +498,7 @@ export type Database = {
           custom_locations?: Json | null
           description?: string | null
           id?: string
+          logo_url?: string | null
           member_quota?: number | null
           name?: string
           subscription_tier?:

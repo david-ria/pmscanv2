@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Users, 
-  Settings, 
   Bell, 
   MapPin, 
   Calendar,
@@ -29,6 +28,7 @@ import { GroupLocationsDialog } from '@/components/Groups/GroupLocationsDialog';
 import { EditGroupDialog } from '@/components/Groups/EditGroupDialog';
 import { InviteUserDialog } from '@/components/Groups/InviteUserDialog';
 import { GroupSubscriptionDialog } from '@/components/Groups/GroupSubscriptionDialog';
+import { GroupLogoUpload } from '@/components/Groups/GroupLogoUpload';
 
 export default function GroupDetails() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -149,12 +149,8 @@ export default function GroupDetails() {
     ? Math.round((members.length / group.member_quota) * 100)
     : 0;
 
-  const getPlanColor = (tier: string) => {
-    switch (tier) {
-      case 'enterprise': return 'bg-primary text-primary-foreground';
-      case 'premium': return 'bg-accent text-accent-foreground';
-      default: return 'bg-muted text-muted-foreground';
-    }
+  const handleLogoUpdate = (logoUrl: string) => {
+    setGroup({ ...group, logo_url: logoUrl });
   };
 
   const ManagementOption = ({ 
@@ -243,13 +239,11 @@ export default function GroupDetails() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge 
-                className={`cursor-pointer transition-colors hover:opacity-80 ${getPlanColor(group.subscription_tier || 'free')}`}
-                onClick={subscriptionDialog.openDialog}
-              >
-                <Crown className="h-3 w-3 mr-1" />
-                {(group.subscription_tier || 'free').toUpperCase()} Plan
-              </Badge>
+              <GroupLogoUpload
+                groupId={group.id}
+                currentLogoUrl={group.logo_url}
+                onLogoUpdate={handleLogoUpdate}
+              />
               <Button onClick={inviteDialog.openDialog}>
                 <UserPlus className="h-4 w-4 mr-2" />
                 Invite Member
