@@ -930,6 +930,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      are_users_in_same_group: {
+        Args: { _user1_id: string; _user2_id: string }
+        Returns: boolean
+      }
       cleanup_location_enrichment_aggressive: {
         Args: never
         Returns: {
