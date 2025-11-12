@@ -771,6 +771,7 @@ export type Database = {
           created_at: string
           custom_activities: Json | null
           custom_locations: Json | null
+          email: string | null
           first_name: string | null
           home_wifi_ssid: string | null
           id: string
@@ -786,6 +787,7 @@ export type Database = {
           created_at?: string
           custom_activities?: Json | null
           custom_locations?: Json | null
+          email?: string | null
           first_name?: string | null
           home_wifi_ssid?: string | null
           id: string
@@ -801,6 +803,7 @@ export type Database = {
           created_at?: string
           custom_activities?: Json | null
           custom_locations?: Json | null
+          email?: string | null
           first_name?: string | null
           home_wifi_ssid?: string | null
           id?: string
