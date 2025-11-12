@@ -413,6 +413,8 @@
     "pm10": "PM10",
     "statisticalAnalysis": "Statistische Analyse",
     "refresh": "Aktualisieren",
+    "myData": "Meine Daten",
+    "groupData": "Gruppendaten",
     "analyzing": "Analysiere...",
     "analysisInProgress": "Analyse läuft...",
     "regenerateAnalysis": "Analyse regenerieren",

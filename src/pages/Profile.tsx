@@ -14,7 +14,6 @@ import { MenuPageHeader } from '@/components/MenuPageHeader';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { GroupSelector } from '@/components/Profile/GroupSelector';
-import { GroupStats } from '@/components/Profile/GroupStats';
 
 interface Profile {
   id: string;
@@ -187,9 +186,6 @@ export default function Profile() {
 
         {/* Group Management Section */}
         <GroupSelector />
-
-        {/* Group Statistics (only shown when in group mode) */}
-        <GroupStats />
 
         {/* Profile Information */}
         <Card>

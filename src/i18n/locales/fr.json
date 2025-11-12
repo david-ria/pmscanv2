@@ -417,6 +417,8 @@
     "pm10": "PM10",
     "statisticalAnalysis": "Analyse Statistique",
     "refresh": "Actualiser",
+    "myData": "Mes Données",
+    "groupData": "Données du Groupe",
     "analyzing": "Analyse...",
     "analysisInProgress": "Analyse en cours...",
     "askQuestion": "Poser une question",
