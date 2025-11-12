@@ -67,7 +67,11 @@
     "emailPlaceholder": "your@email.com",
     "passwordPlaceholder": "••••••••",
     "firstNamePlaceholder": "First name",
-    "lastNamePlaceholder": "Last name"
+    "lastNamePlaceholder": "Last name",
+    "welcome": "Welcome",
+    "welcomeTo": "Welcome to",
+    "continueToApp": "Sign in or create an account to continue",
+    "joinGroupDescription": "Sign in or create an account to join this group and start recording"
   },
   "language": {
     "french": "Français",

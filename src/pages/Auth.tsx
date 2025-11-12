@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Wind } from 'lucide-react';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -23,6 +23,7 @@ export default function Auth() {
   const { t } = useTranslation();
   
   const redirectPath = searchParams.get('redirect');
+  const groupName = searchParams.get('groupName');
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,13 +94,43 @@ export default function Auth() {
   return (
     <main role="main" className="py-12">
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-        <CardHeader>
-          <h1 className="text-center text-2xl font-bold">
-            {t('auth.authentication')}
-          </h1>
-        </CardHeader>
-        <CardContent>
+        <div className="w-full max-w-md space-y-8">
+          {/* Welcome Header with Logo */}
+          <div className="text-center space-y-4">
+            {/* App Logo Placeholder */}
+            <div className="flex justify-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                <Wind className="w-8 h-8 text-primary" />
+              </div>
+            </div>
+            
+            {/* Welcome Message */}
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                {groupName ? (
+                  <>
+                    {t('auth.welcomeTo')} <span className="text-primary">{groupName}</span>
+                  </>
+                ) : (
+                  t('auth.welcome')
+                )}
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                {groupName 
+                  ? t('auth.joinGroupDescription')
+                  : t('auth.continueToApp')
+                }
+              </p>
+            </div>
+          </div>
+
+          <Card className="w-full">
+            <CardHeader>
+              <h2 className="text-center text-xl font-semibold">
+                {t('auth.authentication')}
+              </h2>
+            </CardHeader>
+            <CardContent>
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">{t('auth.signIn')}</TabsTrigger>
@@ -188,8 +219,9 @@ export default function Auth() {
               </form>
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        </div>
       </div>
     </main>
   );

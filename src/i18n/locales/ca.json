@@ -67,7 +67,11 @@
     "emailPlaceholder": "el-vostre@email.cat",
     "passwordPlaceholder": "••••••••",
     "firstNamePlaceholder": "Nom",
-    "lastNamePlaceholder": "Cognoms"
+    "lastNamePlaceholder": "Cognoms",
+    "welcome": "Benvingut",
+    "welcomeTo": "Benvingut a",
+    "continueToApp": "Inicieu sessió o creeu un compte per continuar",
+    "joinGroupDescription": "Inicieu sessió o creeu un compte per unir-vos a aquest grup i començar a gravar"
   },
   "language": {
     "french": "Français",

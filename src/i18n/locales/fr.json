@@ -67,7 +67,11 @@
     "emailPlaceholder": "votre@email.com",
     "passwordPlaceholder": "••••••••",
     "firstNamePlaceholder": "Prénom",
-    "lastNamePlaceholder": "Nom"
+    "lastNamePlaceholder": "Nom",
+    "welcome": "Bienvenue",
+    "welcomeTo": "Bienvenue dans",
+    "continueToApp": "Connectez-vous ou créez un compte pour continuer",
+    "joinGroupDescription": "Connectez-vous ou créez un compte pour rejoindre ce groupe et commencer à enregistrer"
   },
   "language": {
     "french": "Français",

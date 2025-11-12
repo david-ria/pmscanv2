@@ -47,8 +47,13 @@ export default function GroupWelcome() {
     const handleJoinFlow = async () => {
       // If no user and we have a join token, redirect to auth with return path
       if (!user && joinToken) {
+        // Extract group name from URL if available, or use fallbackGroupName
+        const groupNameForAuth = fallbackGroupName || group?.name;
         const returnPath = `/groups/${groupId}/welcome?join=${joinToken}`;
-        navigate(`/auth?redirect=${encodeURIComponent(returnPath)}`);
+        const authUrl = groupNameForAuth 
+          ? `/auth?redirect=${encodeURIComponent(returnPath)}&groupName=${encodeURIComponent(groupNameForAuth)}`
+          : `/auth?redirect=${encodeURIComponent(returnPath)}`;
+        navigate(authUrl);
         return;
       }
 
