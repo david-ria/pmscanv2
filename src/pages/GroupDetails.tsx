@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
+import { useTranslation } from 'react-i18next';
+import {
   ArrowLeft, 
   Users, 
   Bell, 
@@ -46,6 +47,7 @@ import { GroupLogoUpload } from '@/components/Groups/GroupLogoUpload';
 export default function GroupDetails() {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { groups, loading } = useGroups();
   const { isSuperAdmin } = useUserRole();
   const { features } = useSubscription();
@@ -103,7 +105,7 @@ export default function GroupDetails() {
           <div className="flex items-center gap-4 mb-8">
             <Button variant="ghost" onClick={() => navigate('/groups')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Groups
+              {t('groups.backToGroups')}
             </Button>
           </div>
           <div className="flex items-center justify-center py-16">
@@ -122,13 +124,13 @@ export default function GroupDetails() {
           <div className="flex items-center gap-4 mb-8">
             <Button variant="ghost" onClick={() => navigate('/groups')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Groups
+              {t('groups.backToGroups')}
             </Button>
           </div>
           <div className="text-center py-16">
-            <h2 className="text-2xl font-bold mb-2">Group Not Found</h2>
+            <h2 className="text-2xl font-bold mb-2">{t('groups.groupNotFound')}</h2>
             <p className="text-muted-foreground">
-              The group you're looking for doesn't exist or you don't have access to it.
+              {t('groups.groupNotFoundDescription')}
             </p>
           </div>
         </div>
@@ -147,13 +149,13 @@ export default function GroupDetails() {
           <div className="flex items-center gap-4 mb-8">
             <Button variant="ghost" onClick={() => navigate('/groups')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Groups
+              {t('groups.backToGroups')}
             </Button>
           </div>
           <div className="text-center py-16">
-            <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+            <h2 className="text-2xl font-bold mb-2">{t('groups.accessDenied')}</h2>
             <p className="text-muted-foreground">
-              You don't have permission to manage this group.
+              {t('groups.accessDeniedDescription')}
             </p>
           </div>
         </div>
@@ -174,11 +176,11 @@ export default function GroupDetails() {
     
     try {
       await removeMember(memberToRemove);
-      notifySuccess('Member removed successfully');
+      notifySuccess(t('groups.memberRemoved'));
       setMemberToRemove(null);
     } catch (error) {
       console.error('Error removing member:', error);
-      notifyError('Failed to remove member', error instanceof Error ? error.message : 'Please try again');
+      notifyError(t('groups.memberRemoveFailed'), error instanceof Error ? error.message : t('common.error'));
     }
   };
 
@@ -230,7 +232,7 @@ export default function GroupDetails() {
         <div className="flex items-center gap-4">
           <Button variant="ghost" onClick={() => navigate('/groups')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Groups
+            {t('groups.backToGroups')}
           </Button>
         </div>
 
@@ -249,20 +251,20 @@ export default function GroupDetails() {
                   <Edit3 className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-muted-foreground">{group.description || 'No description'}</p>
+              <p className="text-muted-foreground">{group.description || t('groups.noDescription')}</p>
               <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  <span>{membersLoading ? '...' : members.length} member{members.length !== 1 ? 's' : ''}</span>
+                  <span>{membersLoading ? '...' : members.length} {members.length !== 1 ? t('groups.membersPlural') : t('groups.member')}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  <span>Created {new Date(group.created_at).toLocaleDateString()}</span>
+                  <span>{t('groups.created')} {new Date(group.created_at).toLocaleDateString()}</span>
                 </div>
                 {group.custom_locations && Object.keys(group.custom_locations).length > 0 && (
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
-                    <span>{Object.keys(group.custom_locations).length} location{Object.keys(group.custom_locations).length !== 1 ? 's' : ''}</span>
+                    <span>{Object.keys(group.custom_locations).length} {Object.keys(group.custom_locations).length !== 1 ? t('groups.locationsPlural') : t('groups.location')}</span>
                   </div>
                 )}
               </div>
@@ -275,7 +277,7 @@ export default function GroupDetails() {
               />
               <Button onClick={inviteDialog.openDialog}>
                 <UserPlus className="h-4 w-4 mr-2" />
-                Invite Member
+                {t('groups.inviteMember')}
               </Button>
             </div>
           </div>
@@ -285,27 +287,27 @@ export default function GroupDetails() {
 
         {/* Management Section */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold">Group Management</h2>
+          <h2 className="text-2xl font-bold">{t('groups.groupManagement')}</h2>
           
           <div className="grid gap-4">            
             <ManagementOption
               icon={Bell}
-              title="Monitoring Settings"
-              description="Manage pollution thresholds and automated alerts"
+              title={t('groups.details.monitoringSettings')}
+              description={t('groups.details.monitoringDescription')}
               onClick={monitoringDialog.openDialog}
             />
             
             <ManagementOption
               icon={MapPin}
-              title="Locations & Activities"
-              description="Configure custom locations and activity types for your group"
+              title={t('groups.details.locationsActivities')}
+              description={t('groups.details.locationsDescription')}
               onClick={locationsDialog.openDialog}
             />
             
             <ManagementOption
               icon={Calendar}
-              title="Event Types"
-              description="Create custom event types for enhanced data collection"
+              title={t('groups.details.eventTypes')}
+              description={t('groups.details.eventDescription')}
               onClick={eventsDialog.openDialog}
               isPremium={true}
               disabled={!features.customAlarms}
@@ -315,13 +317,13 @@ export default function GroupDetails() {
 
         {/* Members List */}
         <div className="space-y-4">
-          <h2 className="text-xl font-bold">Members</h2>
+          <h2 className="text-xl font-bold">{t('groups.members')}</h2>
           
           <div className="grid gap-3">
             {membersLoading ? (
-              <p className="text-muted-foreground">Loading members...</p>
+              <p className="text-muted-foreground">{t('groups.loadingMembers')}</p>
             ) : members.length === 0 ? (
-              <p className="text-muted-foreground">No members yet</p>
+              <p className="text-muted-foreground">{t('groups.noMembersYet')}</p>
             ) : (
               members.map((member) => {
                 // Email will be NULL for other members (RLS protection)
@@ -329,7 +331,7 @@ export default function GroupDetails() {
                 const displayName = member.profiles?.pseudo || 
                   `${member.profiles?.first_name || ''} ${member.profiles?.last_name || ''}`.trim() ||
                   member.profiles?.email || // Will be NULL unless it's own profile
-                  'Unknown User';
+                  t('groups.unknownUser');
                 
                 const canRemove = hasAccess && member.user_id !== user?.id && member.user_id !== group.created_by;
                 
@@ -340,18 +342,18 @@ export default function GroupDetails() {
                         <div className="flex-1">
                           <p className="font-medium">{displayName}</p>
                           <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                            <span>Joined {new Date(member.joined_at).toLocaleDateString()}</span>
+                            <span>{t('groups.joined')} {new Date(member.joined_at).toLocaleDateString()}</span>
                             {member.last_active && (
                               <>
                                 <span>•</span>
-                                <span>Last active {new Date(member.last_active).toLocaleDateString()}</span>
+                                <span>{t('groups.lastActive')} {new Date(member.last_active).toLocaleDateString()}</span>
                               </>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
-                            {member.role}
+                            {t(`common.${member.role}`)}
                           </Badge>
                           {canRemove && (
                             <Button
@@ -413,15 +415,15 @@ export default function GroupDetails() {
         <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Remove Member</AlertDialogTitle>
+              <AlertDialogTitle>{t('groups.removeMember')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to remove this member from the group? This action cannot be undone.
+                {t('groups.removeMemberConfirm')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive hover:bg-destructive/90">
-                Remove
+                {t('common.delete')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
