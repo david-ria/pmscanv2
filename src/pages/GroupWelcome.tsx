@@ -8,6 +8,14 @@ import { Users, MapPin, Activity, Play, AlertCircle, Loader2 } from 'lucide-reac
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { joinGroupByToken } from '@/utils/invitations';
+import { supabase } from '@/integrations/supabase/client';
+
+interface PublicGroupInfo {
+  id: string;
+  name: string;
+  description: string | null;
+  logo_url: string | null;
+}
 
 export default function GroupWelcome() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -19,6 +27,8 @@ export default function GroupWelcome() {
   const [isApplying, setIsApplying] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [fallbackGroupName, setFallbackGroupName] = useState<string | null>(null);
+  const [publicGroupInfo, setPublicGroupInfo] = useState<PublicGroupInfo | null>(null);
+  const [loadingPublicInfo, setLoadingPublicInfo] = useState(false);
   
   const joinToken = searchParams.get('join');
 
@@ -41,6 +51,31 @@ export default function GroupWelcome() {
 
   // Check if user is already a member
   const isMember = group && groups.some(g => g.id === group.id);
+
+  // Fetch public group info when user is not authenticated
+  useEffect(() => {
+    const fetchPublicGroupInfo = async () => {
+      if (user || !groupId) return; // Only fetch if not authenticated
+      
+      setLoadingPublicInfo(true);
+      try {
+        const { data, error } = await supabase
+          .from('groups')
+          .select('id, name, description, logo_url')
+          .eq('id', groupId)
+          .single();
+
+        if (error) throw error;
+        setPublicGroupInfo(data);
+      } catch (error) {
+        console.error('Failed to fetch public group info:', error);
+      } finally {
+        setLoadingPublicInfo(false);
+      }
+    };
+
+    fetchPublicGroupInfo();
+  }, [user, groupId]);
 
   // Helper function to extract group name from URL slug
   const extractGroupNameFromSlug = (slug: string): string => {
@@ -191,23 +226,60 @@ export default function GroupWelcome() {
   };
 
   if (!user) {
+    if (loadingPublicInfo) {
+      return (
+        <div className="container max-w-2xl mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="py-8">
+              <div className="flex flex-col items-center justify-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
     return (
       <div className="container max-w-2xl mx-auto px-4 py-8">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              Authentication Required
-            </CardTitle>
-            <CardDescription>
-              You need to be logged in to join this group
-            </CardDescription>
+            <div className="flex flex-col items-center gap-4 mb-2">
+              {publicGroupInfo?.logo_url ? (
+                <img 
+                  src={publicGroupInfo.logo_url} 
+                  alt={`${publicGroupInfo.name} logo`} 
+                  className="w-20 h-20 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Users className="w-10 h-10 text-primary" />
+                </div>
+              )}
+              <div className="text-center">
+                <CardTitle className="text-2xl">
+                  Welcome to {publicGroupInfo?.name || 'Group'}
+                </CardTitle>
+                <CardDescription className="mt-2">
+                  Sign in or create an account to join this group and start recording
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Please log in or create an account to access this group and start recording data.
-            </p>
-            <Button onClick={() => navigate('/auth')} className="w-full">
+            {publicGroupInfo?.description && (
+              <p className="text-sm text-center text-muted-foreground">
+                {publicGroupInfo.description}
+              </p>
+            )}
+            <Button 
+              onClick={() => {
+                const returnPath = `/groups/${groupId}/welcome${joinToken ? `?join=${joinToken}` : ''}`;
+                navigate(`/auth?redirect=${encodeURIComponent(returnPath)}${publicGroupInfo?.name ? `&groupName=${encodeURIComponent(publicGroupInfo.name)}` : ''}`);
+              }} 
+              className="w-full"
+            >
               Log In / Sign Up
             </Button>
           </CardContent>
