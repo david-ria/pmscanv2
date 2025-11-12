@@ -93,6 +93,16 @@ export function GlobalDataCollector() {
   // This ensures consistency with RealTime page and proper mode isolation
   const { selectedLocation, selectedActivity } = useScopedRecordingContext();
 
+  // Refs to track latest context values (prevents stale closure in collectData)
+  const selectedLocationRef = useRef(selectedLocation);
+  const selectedActivityRef = useRef(selectedActivity);
+
+  // Keep refs in sync with latest context values
+  useEffect(() => {
+    selectedLocationRef.current = selectedLocation;
+    selectedActivityRef.current = selectedActivity;
+  }, [selectedLocation, selectedActivity]);
+
   // 🔁 Keep recordingService.missionContext in sync with current selection while recording
   useEffect(() => {
     if (isRecording && unifiedData.updateMissionContext) {
@@ -267,8 +277,8 @@ export function GlobalDataCollector() {
 
       // 🔍 DEBUG: Log context being passed to addDataPoint
       console.log('📊 [GlobalDataCollector] Adding data point with context:', {
-        location: selectedLocation || 'EMPTY',
-        activity: selectedActivity || 'EMPTY',
+        location: selectedLocationRef.current || 'EMPTY',
+        activity: selectedActivityRef.current || 'EMPTY',
         pm25: averagedData.pm25.toFixed(1),
         timestamp: new Date().toISOString()
       });
@@ -277,7 +287,7 @@ export function GlobalDataCollector() {
       addDataPoint(
         averagedData,
         location || undefined,
-        { location: selectedLocation, activity: selectedActivity },
+        { location: selectedLocationRef.current, activity: selectedActivityRef.current },
         automaticContext,
         enrichedLocationName,
         geohashSettings.enabled && location?.latitude && location?.longitude
