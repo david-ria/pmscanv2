@@ -69,6 +69,7 @@ export default function GroupWelcome() {
     const handleJoinFlow = async () => {
       // If no user and we have a join token, redirect to auth with return path
       if (!user && joinToken) {
+        console.debug('🔐 [GroupWelcome] Redirecting to auth with join token');
         // Extract group name from URL if available, or use fallbackGroupName
         const groupNameForAuth = fallbackGroupName || group?.name || (groupId ? extractGroupNameFromSlug(groupId) : undefined);
         const returnPath = `/groups/${groupId}/welcome?join=${joinToken}`;
@@ -83,7 +84,9 @@ export default function GroupWelcome() {
       if (user && joinToken && !isJoining && !groupsLoading) {
         setIsJoining(true);
         try {
+          console.debug('🚀 [GroupWelcome] Invoking joinGroupByToken with token:', joinToken);
           const result = await joinGroupByToken(joinToken);
+          console.debug('✅ [GroupWelcome] Join successful:', result);
           
           // Store group name as fallback in case group isn't in list yet
           if (result.groupName) {
@@ -96,19 +99,45 @@ export default function GroupWelcome() {
             toast.success(`Successfully joined ${result.groupName || 'the group'}!`);
           }
           
-          // Refetch groups to ensure the new group is in the list
+          console.debug('🔄 [GroupWelcome] Refetching groups...');
           await refetch();
+          console.debug('✅ [GroupWelcome] Groups refetched');
           
-          // Wait a moment for the refetch to propagate
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Poll for the group to appear in the list (up to 10 attempts, ~300ms each)
+          console.debug('🔍 [GroupWelcome] Polling for group in list...');
+          let foundInList = false;
+          for (let attempt = 0; attempt < 10; attempt++) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            await refetch(); // Refetch on each attempt
+            const currentGroups = groups; // This will be stale, but applyGroupById will check fresh
+            if (currentGroups.some(g => g.id === result.groupId)) {
+              console.debug(`✅ [GroupWelcome] Group found in list after ${attempt + 1} attempts`);
+              foundInList = true;
+              break;
+            }
+            console.debug(`⏳ [GroupWelcome] Attempt ${attempt + 1}/10: Group not in list yet`);
+          }
           
-          // Apply group settings and navigate
-          await applyGroupById(result.groupId);
+          if (!foundInList) {
+            console.debug('⚠️ [GroupWelcome] Group not found after polling, will use fallback');
+          }
           
+          // Apply group settings (with fallback if needed)
+          console.debug('🎯 [GroupWelcome] Applying group settings for:', result.groupId);
+          const applySuccess = await applyGroupById(result.groupId);
+          
+          if (!applySuccess) {
+            console.error('❌ [GroupWelcome] Failed to apply group settings');
+            toast.error('Failed to activate group settings. Please try refreshing the page.');
+            setIsJoining(false);
+            return;
+          }
+          
+          console.debug('✅ [GroupWelcome] Group settings applied, navigating to home');
           // Clear the join token from URL and navigate
           navigate('/', { replace: true });
         } catch (error) {
-          console.error('Failed to join group:', error);
+          console.error('❌ [GroupWelcome] Failed to join group:', error);
           const errorMessage = (error as Error).message;
           
           // Provide user-friendly error messages
@@ -126,7 +155,7 @@ export default function GroupWelcome() {
     };
 
     handleJoinFlow();
-  }, [user, joinToken, groupId, navigate, isJoining, groupsLoading, applyGroupById, refetch]);
+  }, [user, joinToken, groupId, navigate, isJoining, groupsLoading, applyGroupById, refetch, groups]);
 
   useEffect(() => {
     // If group is not found and groups have loaded, show error

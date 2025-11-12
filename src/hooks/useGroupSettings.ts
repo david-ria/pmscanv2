@@ -252,6 +252,27 @@ export const useGroupSettings = () => {
           duration: 3000,
         });
       } else {
+        // 🆕 Cache fallback: Use localStorage if it matches the target group
+        const cachedSettings = localStorage.getItem('groupSettings');
+        const cachedId = localStorage.getItem('activeGroupId');
+        if (cachedSettings && cachedId === groupId && navigator.onLine) {
+          try {
+            const cachedConfig = JSON.parse(cachedSettings);
+            console.log('💾 [useGroupSettings] Using cache fallback for URL group:', cachedConfig.name);
+            setActiveGroup(cachedConfig);
+            setIsGroupMode(true);
+            return; // Skip error toast
+          } catch {
+            // Cache corrupted, continue to error
+          }
+        }
+
+        // 🆕 Suppress toast if activeGroup already matches this groupId (prevents flicker)
+        if (activeGroup?.id === groupId) {
+          console.log('🔇 [useGroupSettings] Suppressing duplicate "Group Not Found" toast for active group');
+          return;
+        }
+
         // Only warn about missing group after groups are loaded and if not already warned
         if (!loading && !warnedGroupIds.has(groupId)) {
           console.warn('Group not found:', groupId);
@@ -323,7 +344,7 @@ export const useGroupSettings = () => {
     });
   };
 
-  const applyGroupById = (groupId: string) => {
+  const applyGroupById = async (groupId: string) => {
     // First try to get from static config
     let groupConfig = getGroupConfig(groupId);
     
@@ -332,6 +353,46 @@ export const useGroupSettings = () => {
       const dbGroup = groups.find(g => g.id === groupId);
       if (dbGroup) {
         groupConfig = createGroupConfigFromDB(dbGroup);
+      }
+    }
+
+    // 🆕 Fallback: If still not found, try direct fetch from database
+    if (!groupConfig && user) {
+      console.log('🔍 [useGroupSettings] Group not in cache, fetching directly from DB...');
+      try {
+        const { data: groupData, error: groupError } = await supabase
+          .from('groups')
+          .select('*')
+          .eq('id', groupId)
+          .single();
+
+        if (groupError) throw groupError;
+
+        // Fetch related data in parallel
+        const [eventsRes, thresholdsRes, settingsRes] = await Promise.all([
+          supabase.from('group_events').select('*').eq('group_id', groupId),
+          supabase.from('group_custom_thresholds').select('*').eq('group_id', groupId),
+          supabase.from('group_settings').select('*').eq('group_id', groupId),
+        ]);
+
+        // Construct full group object (cast to Group type for compatibility)
+        const fullGroup = {
+          ...groupData,
+          group_events: eventsRes.data || [],
+          group_custom_thresholds: thresholdsRes.data || [],
+          group_settings: settingsRes.data || [],
+        } as Group;
+
+        groupConfig = createGroupConfigFromDB(fullGroup);
+        console.log('✅ [useGroupSettings] Group fetched and normalized:', groupConfig.name);
+      } catch (error) {
+        console.error('❌ [useGroupSettings] Failed to fetch group from DB:', error);
+        toast({
+          title: 'Group Not Found',
+          description: `Unable to load group "${groupId}"`,
+          variant: 'destructive',
+        });
+        return false;
       }
     }
 
