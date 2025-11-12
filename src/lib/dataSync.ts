@@ -4,7 +4,7 @@ import {
   getPendingSyncIds,
   removeFromPendingSync,
 } from './localStorage';
-import { saveMissionLocally } from './missionManager';
+import { saveMissionLocally, stripMeasurementsFromStorage } from './missionManager';
 import { MissionData } from './dataStorage';
 import * as logger from '@/utils/logger';
 import { toISOString } from '@/utils/timeFormat';
@@ -243,6 +243,11 @@ export async function syncPendingMissions(): Promise<void> {
         // Validate that all data was synced correctly
         const isValidSync = await validateMissionSync(mission.id, mission.measurementsCount);
         if (!isValidSync) throw new Error('Sync validation failed');
+
+        // Strip measurements from localStorage AFTER successful sync to save space
+        // Full data is now safely in database and CSV
+        logger.debug('💾 Stripping measurements from localStorage after successful sync...');
+        stripMeasurementsFromStorage(mission.id);
 
         // Mark as synced locally only after successful validation
         mission.synced = true;
