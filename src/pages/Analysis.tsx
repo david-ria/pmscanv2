@@ -4,6 +4,7 @@ import { DateFilter } from '@/components/DateFilter';
 import { StatisticalAnalysis } from '@/components/Analysis/StatisticalAnalysis';
 import { DataSummary } from '@/components/Analysis/DataSummary';
 import { GroupComparison } from '@/components/Analysis/GroupComparison';
+import { CollaborativeMap } from '@/components/Analysis/CollaborativeMap';
 import { PollutionBreakdownChart } from '@/components/Analysis/PollutionBreakdown';
 import { useAnalysisLogic } from '@/components/Analysis/AnalysisLogic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -107,7 +108,11 @@ export default function Analysis() {
               selectedDate={selectedDate}
             />
             
-            {/* TODO: Add CollaborativeMap component in Phase 2 */}
+            {/* Collaborative Map */}
+            <CollaborativeMap
+              selectedPeriod={selectedPeriod}
+              selectedDate={selectedDate}
+            />
           </TabsContent>
         </Tabs>
       ) : (

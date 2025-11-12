@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -1010,6 +1010,22 @@ export type Database = {
             }
             Returns: boolean
           }
+      get_group_geohash_aggregates: {
+        Args: {
+          p_end_date: string
+          p_geohash_precision?: number
+          p_group_id: string
+          p_start_date: string
+        }
+        Returns: {
+          avg_pm1: number
+          avg_pm10: number
+          avg_pm25: number
+          contributor_count: number
+          geohash_cell: string
+          measurement_count: number
+        }[]
+      }
       get_location_enrichment_stats: {
         Args: never
         Returns: {
