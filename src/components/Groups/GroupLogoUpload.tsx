@@ -33,10 +33,10 @@ export function GroupLogoUpload({ groupId, currentLogoUrl, onLogoUpdate }: Group
     setUploading(true);
 
     try {
-      // Create unique filename
+      // Create unique filename with proper folder structure
       const fileExt = file.name.split('.').pop();
-      const fileName = `${groupId}-${Date.now()}.${fileExt}`;
-      const filePath = `group-logos/${fileName}`;
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `group-logos/${groupId}/${fileName}`;
 
       // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage
