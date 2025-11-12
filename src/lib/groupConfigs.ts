@@ -49,6 +49,7 @@ export interface GroupConfig {
   id: string;
   name: string;
   description?: string;
+  logo_url?: string | null;
   thresholds: GroupThreshold[];
   alarms: GroupAlarm[];
   locations: GroupLocation[]; // Locations with embedded activities

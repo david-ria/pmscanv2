@@ -15,6 +15,7 @@ export interface Group {
   member_quota?: number | null;
   custom_locations?: Record<string, any> | null;
   custom_activities?: Record<string, any> | null;
+  logo_url?: string | null;
   role?: string;
   member_count?: number;
   group_settings?: Array<{

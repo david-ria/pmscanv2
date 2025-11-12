@@ -289,10 +289,21 @@ export default function GroupWelcome() {
     <div className="container max-w-2xl mx-auto px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-6 h-6" />
-            Welcome to {group.name}
-          </CardTitle>
+          <div className="flex items-center gap-4 mb-2">
+            {group.logo_url && (
+              <img 
+                src={group.logo_url} 
+                alt={`${group.name} logo`} 
+                className="w-16 h-16 rounded-lg object-cover"
+              />
+            )}
+            <div className="flex-1">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-6 h-6" />
+                Welcome to {group.name}
+              </CardTitle>
+            </div>
+          </div>
           {group.description && (
             <CardDescription className="text-base">
               {group.description}

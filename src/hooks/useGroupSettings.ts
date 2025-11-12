@@ -29,6 +29,7 @@ const createGroupConfigFromDB = (group: Group): GroupConfig => {
     id: group.id,
     name: group.name,
     description: group.description || undefined,
+    logo_url: group.logo_url || undefined,
     thresholds: group.group_custom_thresholds && group.group_custom_thresholds.length > 0
       ? group.group_custom_thresholds.map(t => ({
           id: t.id,

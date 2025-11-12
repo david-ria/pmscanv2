@@ -61,10 +61,19 @@ export function Header() {
               {t('header.title')}
             </h1>
             {isGroupMode && activeGroup && (
-              <Badge variant="secondary" className="hidden sm:flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {activeGroup.name}
-              </Badge>
+              <div className="hidden sm:flex items-center gap-2">
+                {activeGroup.logo_url && (
+                  <img 
+                    src={activeGroup.logo_url} 
+                    alt={`${activeGroup.name} logo`} 
+                    className="w-6 h-6 rounded object-cover"
+                  />
+                )}
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {activeGroup.name}
+                </Badge>
+              </div>
             )}
           </div>
         </div>
