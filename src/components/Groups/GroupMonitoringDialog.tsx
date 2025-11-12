@@ -10,6 +10,7 @@ import {
 import { Group } from '@/hooks/useGroups';
 import { GroupCustomThresholdsDialog } from './GroupCustomThresholdsDialog';
 import { GroupAlarmsDialog } from './GroupAlarmsDialog';
+import { useTranslation } from 'react-i18next';
 
 interface GroupMonitoringDialogProps {
   group: Group;
@@ -22,6 +23,7 @@ export function GroupMonitoringDialog({
   open,
   onOpenChange,
 }: GroupMonitoringDialogProps) {
+  const { t } = useTranslation();
   const [thresholdsOpen, setThresholdsOpen] = useState(false);
   const [alarmsOpen, setAlarmsOpen] = useState(false);
 
@@ -48,10 +50,10 @@ export function GroupMonitoringDialog({
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Monitoring Settings - {group.name}
+              {t('groupManagement.monitoring.title')} - {group.name}
             </ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
-              Configure pollution thresholds and automated alerts for your group
+              {t('groupManagement.monitoring.description')}
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
 
@@ -65,9 +67,9 @@ export function GroupMonitoringDialog({
                   <BarChart3 className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Custom Thresholds</h3>
+                  <h3 className="font-semibold">{t('groupManagement.monitoring.customThresholds')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Set pollution level ranges specific to your group's needs
+                    {t('groupManagement.monitoring.customThresholdsDescription')}
                   </p>
                 </div>
               </div>
@@ -82,9 +84,9 @@ export function GroupMonitoringDialog({
                   <Bell className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Automated Alarms</h3>
+                  <h3 className="font-semibold">{t('groupManagement.monitoring.automatedAlarms')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Set up alerts when pollution levels exceed your limits
+                    {t('groupManagement.monitoring.automatedAlarmsDescription')}
                   </p>
                 </div>
               </div>

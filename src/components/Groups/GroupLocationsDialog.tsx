@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, MapPin, Activity } from 'lucide-react';
 import { useGroups } from '@/hooks/useGroups';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface GroupLocation {
   id: string;
@@ -27,6 +28,7 @@ interface GroupLocationsDialogProps {
 }
 
 export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocationsDialogProps) {
+  const { t } = useTranslation();
   const { groups, updateGroup } = useGroups();
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
@@ -71,13 +73,13 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
       setNewLocation({ name: '', activities: [''] });
       setIsCreating(false);
       toast({
-        title: "Success",
-        description: "Location created successfully",
+        title: t('groupManagement.locations.success'),
+        description: t('groupManagement.locations.locationCreated'),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to create location",
+        title: t('groupManagement.locations.error'),
+        description: t('groupManagement.locations.failedToCreate'),
         variant: "destructive",
       });
     }
@@ -90,13 +92,13 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
     try {
       await updateGroup(groupId, { custom_locations: updatedLocations });
       toast({
-        title: "Success",
-        description: "Location deleted successfully",
+        title: t('groupManagement.locations.success'),
+        description: t('groupManagement.locations.locationDeleted'),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete location",
+        title: t('groupManagement.locations.error'),
+        description: t('groupManagement.locations.failedToDelete'),
         variant: "destructive",
       });
     }
@@ -115,13 +117,13 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
     try {
       await updateGroup(groupId, { custom_locations: updatedLocations });
       toast({
-        title: "Success",
-        description: "Location updated successfully",
+        title: t('groupManagement.locations.success'),
+        description: t('groupManagement.locations.locationUpdated'),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to update location",
+        title: t('groupManagement.locations.error'),
+        description: t('groupManagement.locations.failedToUpdate'),
         variant: "destructive",
       });
     }
@@ -147,7 +149,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
       <ResponsiveDialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
         <ResponsiveDialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
-            <ResponsiveDialogTitle>Group Locations & Activities</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>{t('groupManagement.locations.title')}</ResponsiveDialogTitle>
             {!isCreating && (
               <Button 
                 onClick={() => setIsCreating(true)} 
@@ -155,7 +157,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                 className="flex-shrink-0"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Location
+                {t('groupManagement.locations.addLocation')}
               </Button>
             )}
           </div>
@@ -184,7 +186,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
-                    <Label className="text-xs sm:text-sm">Location Name</Label>
+                    <Label className="text-xs sm:text-sm">{t('groupManagement.locations.locationName')}</Label>
                     <Input
                       value={editingLocation?.id === location.id ? editingLocation.name : location.name}
                       onChange={(e) => setEditingLocation({ ...location, name: e.target.value })}
@@ -201,7 +203,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                   <div>
                     <Label className="flex items-center gap-1 mb-2 text-xs sm:text-sm">
                       <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
-                      Activities
+                      {t('groupManagement.locations.activities')}
                     </Label>
                     <div className="space-y-2">
                       {(editingLocation?.id === location.id ? editingLocation.activities : location.activities).map((activity, index) => (
@@ -225,7 +227,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                                 setEditingLocation(null);
                               }
                             }}
-                            placeholder="Activity name"
+                            placeholder={t('groupManagement.locations.activityPlaceholder')}
                             className="flex-1 min-w-0"
                           />
                           {location.activities.length > 1 && (
@@ -253,7 +255,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                         }}
                       >
                         <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        Add Activity
+                        {t('groupManagement.locations.addActivity')}
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-1 mt-2">
@@ -270,7 +272,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
 
             {locations.length === 0 && !isCreating && (
               <div className="text-center py-8 text-muted-foreground">
-                No locations configured. Create your first location to get started.
+                {t('groupManagement.locations.noLocations')}
               </div>
             )}
           </div>
@@ -279,15 +281,15 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
           {isCreating ? (
             <Card className="w-full">
               <CardHeader>
-                <CardTitle className="text-base sm:text-lg">Create New Location</CardTitle>
+                <CardTitle className="text-base sm:text-lg">{t('groupManagement.locations.createNew')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <Label className="text-xs sm:text-sm">Location Name</Label>
+                  <Label className="text-xs sm:text-sm">{t('groupManagement.locations.locationName')}</Label>
                   <Input
                     value={newLocation.name}
                     onChange={(e) => setNewLocation(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Office, Lab, Home, etc."
+                    placeholder={t('groupManagement.locations.locationPlaceholder')}
                     className="w-full"
                   />
                 </div>
@@ -295,7 +297,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                 <div>
                   <Label className="flex items-center gap-1 mb-2 text-xs sm:text-sm">
                     <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
-                    Activities
+                    {t('groupManagement.locations.activities')}
                   </Label>
                   <div className="space-y-2">
                     {newLocation.activities.map((activity, index) => (
@@ -305,7 +307,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                           onChange={(e) => updateActivity(index, e.target.value, newLocation.activities, (activities) => 
                             setNewLocation(prev => ({ ...prev, activities }))
                           )}
-                          placeholder="Activity name"
+                          placeholder={t('groupManagement.locations.activityPlaceholder')}
                           className="flex-1 min-w-0"
                         />
                         {newLocation.activities.length > 1 && (
@@ -331,7 +333,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                       )}
                     >
                       <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                      Add Activity
+                      {t('groupManagement.locations.addActivity')}
                     </Button>
                   </div>
                 </div>
@@ -342,10 +344,10 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
                     disabled={!newLocation.name.trim() || !newLocation.activities.some(a => a.trim())}
                     className="w-full sm:w-auto"
                   >
-                    Create Location
+                    {t('groupManagement.locations.createLocation')}
                   </Button>
                   <Button variant="outline" onClick={() => setIsCreating(false)} className="w-full sm:w-auto">
-                    Cancel
+                    {t('groupManagement.locations.cancel')}
                   </Button>
                 </div>
               </CardContent>
@@ -353,7 +355,7 @@ export function GroupLocationsDialog({ groupId, open, onOpenChange }: GroupLocat
           ) : (
             <Button onClick={() => setIsCreating(true)} variant="outline" className="w-full">
               <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-              Add New Location
+              {t('groupManagement.locations.addNewLocation')}
             </Button>
           )}
         </div>
