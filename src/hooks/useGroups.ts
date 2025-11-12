@@ -435,7 +435,7 @@ export const useGroupMembers = (groupId: string) => {
             user_id: member.user_id,
             role: member.role as 'admin' | 'member',
             joined_at: member.joined_at,
-            user_profile: profile || null,
+            profiles: profile || null,
           };
         });
 
