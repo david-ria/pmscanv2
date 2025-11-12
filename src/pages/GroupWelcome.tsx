@@ -42,13 +42,35 @@ export default function GroupWelcome() {
   // Check if user is already a member
   const isMember = group && groups.some(g => g.id === group.id);
 
+  // Helper function to extract group name from URL slug
+  const extractGroupNameFromSlug = (slug: string): string => {
+    // Slug format: "citiobs-e1057479" or just "e1057479-4f30-4d27-8686-9704c2558a70"
+    // Extract the part before the last dash-8chars pattern
+    const parts = slug.split('-');
+    
+    // If it's just a UUID, return a generic name
+    if (parts.length <= 5 && slug.match(/^[a-f0-9-]+$/i)) {
+      return 'Group';
+    }
+    
+    // Otherwise, take all parts except the last UUID part (8 chars)
+    const nameParts = parts.slice(0, -1);
+    const nameSlug = nameParts.join('-');
+    
+    // Convert slug to readable name (capitalize each word)
+    return nameSlug
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   // Handle join token flow
   useEffect(() => {
     const handleJoinFlow = async () => {
       // If no user and we have a join token, redirect to auth with return path
       if (!user && joinToken) {
         // Extract group name from URL if available, or use fallbackGroupName
-        const groupNameForAuth = fallbackGroupName || group?.name;
+        const groupNameForAuth = fallbackGroupName || group?.name || (groupId ? extractGroupNameFromSlug(groupId) : undefined);
         const returnPath = `/groups/${groupId}/welcome?join=${joinToken}`;
         const authUrl = groupNameForAuth 
           ? `/auth?redirect=${encodeURIComponent(returnPath)}&groupName=${encodeURIComponent(groupNameForAuth)}`
