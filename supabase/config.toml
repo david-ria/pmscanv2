@@ -24,3 +24,6 @@ verify_jwt = true
 [functions.join-group-by-token]
 verify_jwt = true
 
+[functions.fetch-weather]
+verify_jwt = true
+
