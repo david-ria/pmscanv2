@@ -17,6 +17,7 @@ export default function Auth() {
   const [lastName, setLastName] = useState('');
   const [pseudo, setPseudo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [groupLogo, setGroupLogo] = useState<string | null>(null);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -25,6 +26,36 @@ export default function Auth() {
   
   const redirectPath = searchParams.get('redirect');
   const groupName = searchParams.get('groupName');
+
+  // Fetch group logo if we have a group context
+  useEffect(() => {
+    const fetchGroupLogo = async () => {
+      if (!groupName || !redirectPath) return;
+      
+      // Extract groupId from redirect path (e.g., /groups/:groupId/welcome)
+      const match = redirectPath.match(/\/groups\/([^/]+)/);
+      if (!match) return;
+      
+      const groupId = match[1];
+      
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data } = await supabase
+          .from('groups')
+          .select('logo_url')
+          .eq('id', groupId)
+          .single();
+        
+        if (data?.logo_url) {
+          setGroupLogo(data.logo_url);
+        }
+      } catch (error) {
+        console.error('Failed to fetch group logo:', error);
+      }
+    };
+
+    fetchGroupLogo();
+  }, [groupName, redirectPath]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,11 +130,19 @@ export default function Auth() {
         <div className="w-full max-w-md space-y-8">
           {/* Welcome Header with Logo */}
           <div className="text-center space-y-4">
-            {/* App Logo Placeholder */}
+            {/* Group or App Logo */}
             <div className="flex justify-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                <Wind className="w-8 h-8 text-primary" />
-              </div>
+              {groupLogo ? (
+                <img 
+                  src={groupLogo} 
+                  alt={`${groupName} logo`} 
+                  className="w-20 h-20 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Wind className="w-8 h-8 text-primary" />
+                </div>
+              )}
             </div>
             
             {/* Welcome Message */}
