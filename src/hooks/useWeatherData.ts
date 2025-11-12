@@ -46,7 +46,7 @@ export function useWeatherData() {
     try {
       logger.debug('🌤️ Fetching weather data for location:', location);
       
-      // Add 5 second timeout to prevent blocking
+      // Add 15 second timeout to prevent blocking
       const weatherPromise = supabase.functions.invoke('fetch-weather', {
         body: {
           latitude: location.latitude,
@@ -56,7 +56,7 @@ export function useWeatherData() {
       });
       
       const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Weather fetch timeout')), 5000)
+        setTimeout(() => reject(new Error('Weather fetch timeout')), 15000)
       );
       
       const { data, error } = await Promise.race([weatherPromise, timeoutPromise]);
