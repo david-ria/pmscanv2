@@ -428,7 +428,7 @@ export const useGroupMembers = (groupId: string) => {
           { data: lastActivities, error: activitiesError }
         ] = await Promise.all([
           supabase
-            .from('profiles')
+            .from('group_member_profiles')
             .select('id, first_name, last_name, pseudo, email')
             .in('id', userIds),
           supabase

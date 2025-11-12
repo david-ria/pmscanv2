@@ -324,9 +324,11 @@ export default function GroupDetails() {
               <p className="text-muted-foreground">No members yet</p>
             ) : (
               members.map((member) => {
+                // Email will be NULL for other members (RLS protection)
+                // Only the user's own profile email is visible
                 const displayName = member.profiles?.pseudo || 
                   `${member.profiles?.first_name || ''} ${member.profiles?.last_name || ''}`.trim() ||
-                  member.profiles?.email ||
+                  member.profiles?.email || // Will be NULL unless it's own profile
                   'Unknown User';
                 
                 const canRemove = hasAccess && member.user_id !== user?.id && member.user_id !== group.created_by;

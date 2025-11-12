@@ -305,6 +305,13 @@ export type Database = {
             foreignKeyName: "group_invitations_inviter_id_fkey"
             columns: ["inviter_id"]
             isOneToOne: false
+            referencedRelation: "group_member_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_invitations_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -930,7 +937,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      group_member_profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          pseudo: string | null
+          subscription_tier:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: never
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          pseudo?: string | null
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: never
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          pseudo?: string | null
+          subscription_tier?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       are_users_in_same_group: {
