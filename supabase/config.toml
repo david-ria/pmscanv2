@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.enhance-location-context]
 verify_jwt = false
 
+[functions.get-public-group-info]
+verify_jwt = false
+
 [functions.send-group-invitation]
 verify_jwt = true
 
