@@ -148,6 +148,11 @@
     "removeMemberConfirm": "Are you sure you want to remove this member from the group? This action cannot be undone.",
     "memberRemoved": "Member removed successfully",
     "memberRemoveFailed": "Failed to remove member",
+    "memberPromotedToAdmin": "Member promoted to group admin",
+    "memberDemotedToMember": "Admin demoted to member",
+    "roleUpdateFailed": "Failed to update member role",
+    "promoteToAdmin": "Promote to Admin",
+    "demoteToMember": "Demote to Member",
     "details": {
       "monitoringSettings": "Monitoring Settings",
       "monitoringDescription": "Manage pollution thresholds and automated alerts",

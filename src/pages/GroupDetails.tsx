@@ -95,7 +95,7 @@ export default function GroupDetails() {
     }
   }, [groups, loading, groupId]);
 
-  const { members, loading: membersLoading, removeMember } = useGroupMembers(group?.id);
+  const { members, loading: membersLoading, removeMember, updateMemberRole } = useGroupMembers(group?.id);
 
   // Show loading state
   if (loading || (!group && !loading)) {
@@ -181,6 +181,25 @@ export default function GroupDetails() {
     } catch (error) {
       console.error('Error removing member:', error);
       notifyError(t('groups.memberRemoveFailed'), error instanceof Error ? error.message : t('common.error'));
+    }
+  };
+
+  const handleToggleMemberRole = async (membershipId: string, currentRole: 'admin' | 'member') => {
+    const newRole = currentRole === 'admin' ? 'member' : 'admin';
+    
+    try {
+      await updateMemberRole(membershipId, newRole);
+      notifySuccess(
+        newRole === 'admin' 
+          ? t('groups.memberPromotedToAdmin') 
+          : t('groups.memberDemotedToMember')
+      );
+    } catch (error) {
+      console.error('Error updating member role:', error);
+      notifyError(
+        t('groups.roleUpdateFailed'), 
+        error instanceof Error ? error.message : t('common.error')
+      );
     }
   };
 
@@ -355,6 +374,19 @@ export default function GroupDetails() {
                           <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
                             {t(`common.${member.role}`)}
                           </Badge>
+                          
+                          {isSuperAdmin && member.user_id !== user?.id && member.user_id !== group.created_by && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleToggleMemberRole(member.id, member.role)}
+                              className="h-8 w-8 p-0"
+                              title={member.role === 'admin' ? t('groups.demoteToMember') : t('groups.promoteToAdmin')}
+                            >
+                              <Crown className={`h-4 w-4 ${member.role === 'admin' ? 'text-accent' : 'text-muted-foreground'}`} />
+                            </Button>
+                          )}
+                          
                           {canRemove && (
                             <Button
                               variant="ghost"

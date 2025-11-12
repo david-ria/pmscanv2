@@ -148,6 +148,11 @@
     "removeMemberConfirm": "Sind Sie sicher, dass Sie dieses Mitglied aus der Gruppe entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "memberRemoved": "Mitglied erfolgreich entfernt",
     "memberRemoveFailed": "Fehler beim Entfernen des Mitglieds",
+    "memberPromotedToAdmin": "Mitglied zum Gruppenadministrator befördert",
+    "memberDemotedToMember": "Administrator zum Mitglied zurückgestuft",
+    "roleUpdateFailed": "Fehler beim Aktualisieren der Mitgliedsrolle",
+    "promoteToAdmin": "Zum Administrator befördern",
+    "demoteToMember": "Zum Mitglied zurückstufen",
     "details": {
       "monitoringSettings": "Überwachungseinstellungen",
       "monitoringDescription": "Verschmutzungsschwellenwerte und automatisierte Warnungen verwalten",

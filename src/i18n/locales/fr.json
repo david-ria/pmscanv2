@@ -148,6 +148,11 @@
     "removeMemberConfirm": "Êtes-vous sûr de vouloir retirer ce membre du groupe ? Cette action ne peut pas être annulée.",
     "memberRemoved": "Membre retiré avec succès",
     "memberRemoveFailed": "Échec du retrait du membre",
+    "memberPromotedToAdmin": "Membre promu administrateur du groupe",
+    "memberDemotedToMember": "Administrateur rétrogradé en membre",
+    "roleUpdateFailed": "Échec de la mise à jour du rôle du membre",
+    "promoteToAdmin": "Promouvoir en Administrateur",
+    "demoteToMember": "Rétrograder en Membre",
     "details": {
       "monitoringSettings": "Paramètres de surveillance",
       "monitoringDescription": "Gérer les seuils de pollution et les alertes automatisées",

@@ -148,6 +148,11 @@
     "removeMemberConfirm": "Esteu segur que voleu eliminar aquest membre del grup? Aquesta acció no es pot desfer.",
     "memberRemoved": "Membre eliminat correctament",
     "memberRemoveFailed": "Error en eliminar el membre",
+    "memberPromotedToAdmin": "Membre promogut a administrador del grup",
+    "memberDemotedToMember": "Administrador degradat a membre",
+    "roleUpdateFailed": "Error en actualitzar el rol del membre",
+    "promoteToAdmin": "Promoure a Administrador",
+    "demoteToMember": "Degradar a Membre",
     "details": {
       "monitoringSettings": "Configuració de monitorització",
       "monitoringDescription": "Gestionar llindars de contaminació i alertes automatitzades",
