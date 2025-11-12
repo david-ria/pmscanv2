@@ -284,36 +284,45 @@ export default function GroupDetails() {
           </div>
         </div>
 
-        {/* Members Preview */}
+        {/* Members List */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">Recent Members</h2>
-            <Button variant="outline" size="sm">View All</Button>
-          </div>
+          <h2 className="text-xl font-bold">Members</h2>
           
           <div className="grid gap-3">
             {membersLoading ? (
               <p className="text-muted-foreground">Loading members...</p>
+            ) : members.length === 0 ? (
+              <p className="text-muted-foreground">No members yet</p>
             ) : (
-              members.slice(0, 3).map((member) => (
-                <Card key={member.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">
-                          {member.profiles?.first_name} {member.profiles?.last_name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Joined {new Date(member.joined_at).toLocaleDateString()}
-                        </p>
+              members.map((member) => {
+                const displayName = member.profiles?.pseudo || 
+                  `${member.profiles?.first_name || ''} ${member.profiles?.last_name || ''}`.trim() ||
+                  'Unknown User';
+                
+                return (
+                  <Card key={member.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium">{displayName}</p>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                            <span>Joined {new Date(member.joined_at).toLocaleDateString()}</span>
+                            {member.last_active && (
+                              <>
+                                <span>•</span>
+                                <span>Last active {new Date(member.last_active).toLocaleDateString()}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
+                          {member.role}
+                        </Badge>
                       </div>
-                      <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
-                        {member.role}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
         </div>

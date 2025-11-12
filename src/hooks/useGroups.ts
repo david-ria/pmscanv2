@@ -59,6 +59,7 @@ export interface GroupMembership {
   user_id: string;
   role: 'admin' | 'member';
   joined_at: string;
+  last_active?: string | null;
   profiles?: {
     first_name: string | null;
     last_name: string | null;
@@ -420,14 +421,34 @@ export const useGroupMembers = (groupId: string) => {
       // Then fetch profiles for each user
       if (memberships && memberships.length > 0) {
         const userIds = memberships.map(m => m.user_id);
-        const { data: profiles, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, pseudo')
-          .in('id', userIds);
+        
+        const [
+          { data: profiles, error: profileError },
+          { data: lastActivities, error: activitiesError }
+        ] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('id, first_name, last_name, pseudo')
+            .in('id', userIds),
+          supabase
+            .from('missions')
+            .select('user_id, created_at')
+            .in('user_id', userIds)
+            .eq('group_id', groupId)
+            .order('created_at', { ascending: false })
+        ]);
 
         if (profileError) throw profileError;
 
-        // Combine memberships with profiles
+        // Get last activity per user
+        const lastActivityMap = new Map<string, string>();
+        lastActivities?.forEach(activity => {
+          if (!lastActivityMap.has(activity.user_id)) {
+            lastActivityMap.set(activity.user_id, activity.created_at);
+          }
+        });
+
+        // Combine memberships with profiles and last activity
         const membersWithProfiles = memberships.map((member) => {
           const profile = profiles?.find(p => p.id === member.user_id);
           return {
@@ -436,6 +457,7 @@ export const useGroupMembers = (groupId: string) => {
             user_id: member.user_id,
             role: member.role as 'admin' | 'member',
             joined_at: member.joined_at,
+            last_active: lastActivityMap.get(member.user_id) || null,
             profiles: profile || null,
           };
         });
