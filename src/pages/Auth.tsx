@@ -15,6 +15,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [pseudo, setPseudo] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
@@ -63,6 +64,7 @@ export default function Auth() {
       const { error } = await signUp(email, password, {
         first_name: firstName,
         last_name: lastName,
+        pseudo: pseudo,
       });
 
       if (error) {
@@ -170,6 +172,15 @@ export default function Auth() {
 
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="pseudo">{t('auth.pseudo')}</Label>
+                  <Input
+                    id="pseudo"
+                    placeholder={t('auth.pseudoPlaceholder')}
+                    value={pseudo}
+                    onChange={(e) => setPseudo(e.target.value)}
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">{t('auth.firstName')}</Label>
