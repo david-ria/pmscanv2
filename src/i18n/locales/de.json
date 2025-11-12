@@ -11,7 +11,7 @@
   "settings": {
     "title": "Einstellungen",
     "subtitle": "Konfiguration und Konto",
-    "appVersion": "PMSCAN 2.0",
+    "appVersion": "V3.0",
     "dataSync": "Datensync. 2 min"
   },
   "account": {
