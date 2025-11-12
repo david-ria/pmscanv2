@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import * as logger from '@/utils/logger';
 import { useEvents } from '@/hooks/useEvents';
 import { getRespiratoryRate } from '@/lib/respiratoryRates';
+import { calculateMissionStatistics } from '@/utils/missionStatistics';
 
 interface AnalysisData {
   totalMissions: number;
@@ -393,8 +394,24 @@ export const useAnalysisLogic = (
               ? t('history.periods.month')
               : t('history.periods.year');
 
-      // Generate local statistical analysis with PM1, PM2.5, and PM10
-      const validMissions = filteredMissions.filter(
+      // Calculate unified statistics using shared utility
+      const stats = calculateMissionStatistics(filteredMissions);
+      
+      const {
+        validMissions,
+        totalExposureMinutes,
+        avgPm1: avgPM1,
+        avgPm25: avgPM25,
+        avgPm10: avgPM10,
+        maxPm1: maxPM1,
+        maxPm25: maxPM25,
+        maxPm10: maxPM10,
+        timeAboveWHO_PM25,
+        timeAboveWHO_PM10,
+      } = stats;
+
+      // Calculate total cumulative inhaled dose using valid missions only
+      const validMissionsArray = filteredMissions.filter(
         (m) =>
           m.avgPm25 != null &&
           !isNaN(m.avgPm25) &&
@@ -403,80 +420,8 @@ export const useAnalysisLogic = (
           m.avgPm10 != null &&
           !isNaN(m.avgPm10)
       );
-
-      // Use actual recording time where available
-      const totalExposureMinutes = filteredMissions.reduce(
-        (sum, m) => sum + (m.actualRecordingMinutes ?? (m.durationMinutes || 0)),
-        0
-      );
-
-      // Calculate weighted averages for all PM types using actual recording time
-      const totalRecordingTime = validMissions.reduce((sum, m) => {
-        return sum + (m.actualRecordingMinutes ?? m.durationMinutes);
-      }, 0);
       
-      const avgPM1 = totalRecordingTime > 0
-        ? validMissions.reduce((sum, m) => {
-            const recordingTime = m.actualRecordingMinutes ?? m.durationMinutes;
-            return sum + (m.avgPm1 * recordingTime);
-          }, 0) / totalRecordingTime
-        : 0;
-      
-      const avgPM25 = totalRecordingTime > 0
-        ? validMissions.reduce((sum, m) => {
-            const recordingTime = m.actualRecordingMinutes ?? m.durationMinutes;
-            return sum + (m.avgPm25 * recordingTime);
-          }, 0) / totalRecordingTime
-        : 0;
-      
-      const avgPM10 = totalRecordingTime > 0
-        ? validMissions.reduce((sum, m) => {
-            const recordingTime = m.actualRecordingMinutes ?? m.durationMinutes;
-            return sum + (m.avgPm10 * recordingTime);
-          }, 0) / totalRecordingTime
-        : 0;
-
-      // Calculate maximums for all PM types
-      const maxPM1 =
-        validMissions.length > 0
-          ? Math.max(...validMissions.map((m) => m.avgPm1 || 0))
-          : 0;
-      const maxPM25 =
-        validMissions.length > 0
-          ? Math.max(...validMissions.map((m) => m.maxPm25 || 0))
-          : 0;
-      const maxPM10 =
-        validMissions.length > 0
-          ? Math.max(...validMissions.map((m) => m.avgPm10 || 0))
-          : 0;
-
-      // Calculate WHO threshold exceedances using actual recording time
-      const timeAboveWHO_PM25 = filteredMissions.reduce((total, mission) => {
-        if (
-          mission.avgPm25 != null &&
-          !isNaN(mission.avgPm25) &&
-          mission.avgPm25 > 15
-        ) {
-          const recordingTime = mission.actualRecordingMinutes ?? (mission.durationMinutes || 0);
-          return total + recordingTime;
-        }
-        return total;
-      }, 0);
-
-      const timeAboveWHO_PM10 = filteredMissions.reduce((total, mission) => {
-        if (
-          mission.avgPm10 != null &&
-          !isNaN(mission.avgPm10) &&
-          mission.avgPm10 > 45
-        ) {
-          const recordingTime = mission.actualRecordingMinutes ?? (mission.durationMinutes || 0);
-          return total + recordingTime;
-        }
-        return total;
-      }, 0);
-
-      // Calculate total cumulative inhaled dose using actual recording time
-      const totalCumulativeDosePM25 = filteredMissions.reduce((total, mission) => {
+      const totalCumulativeDosePM25 = validMissionsArray.reduce((total, mission) => {
         const recordingTime = mission.actualRecordingMinutes ?? mission.durationMinutes;
         const durationHours = recordingTime / 60;
         // Get dominant activity from measurements

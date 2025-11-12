@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { MissionData } from '@/lib/dataStorage';
 import { useTranslation } from 'react-i18next';
+import { calculateMissionStatistics } from '@/utils/missionStatistics';
 
 export function useHistoryStats(filteredMissions: MissionData[]) {
   const { t } = useTranslation();
@@ -14,7 +15,9 @@ export function useHistoryStats(filteredMissions: MissionData[]) {
   };
 
   const periodStats = useMemo(() => {
-    if (filteredMissions.length === 0) {
+    const stats = calculateMissionStatistics(filteredMissions);
+
+    if (stats.validMissions === 0) {
       return [
         {
           label: t('history.stats.totalExposure'),
@@ -40,30 +43,6 @@ export function useHistoryStats(filteredMissions: MissionData[]) {
       ];
     }
 
-    // Use actual recording time where available, fall back to duration
-    const totalDuration = filteredMissions.reduce(
-      (sum, m) => sum + (m.actualRecordingMinutes ?? m.durationMinutes),
-      0
-    );
-    
-    // Calculate weighted average PM2.5 using actual recording time
-    const weightedPm25Sum = filteredMissions.reduce((sum, m) => {
-      const recordingTime = m.actualRecordingMinutes ?? m.durationMinutes;
-      return sum + (m.avgPm25 * recordingTime);
-    }, 0);
-    const avgPm25 = totalDuration > 0 ? weightedPm25Sum / totalDuration : 0;
-
-    // Calculate time above WHO thresholds using actual recording time
-    const timeAboveWHO_PM25 = filteredMissions.reduce((sum, m) => {
-      const recordingTime = m.actualRecordingMinutes ?? m.durationMinutes;
-      return m.avgPm25 > 15 ? sum + recordingTime : sum;
-    }, 0);
-
-    const timeAboveWHO_PM10 = filteredMissions.reduce((sum, m) => {
-      const recordingTime = m.actualRecordingMinutes ?? m.durationMinutes;
-      return m.avgPm10 > 45 ? sum + recordingTime : sum;
-    }, 0);
-
     const getColorFromPm25 = (pm25: number) => {
       if (pm25 <= 12) return 'good' as const;
       if (pm25 <= 35) return 'moderate' as const;
@@ -81,24 +60,24 @@ export function useHistoryStats(filteredMissions: MissionData[]) {
     return [
       {
         label: t('history.stats.totalExposure'),
-        value: formatDuration(totalDuration),
+        value: formatDuration(stats.totalExposureMinutes),
         color: 'default' as const,
       },
       {
         label: t('history.stats.averagePM25'),
-        value: Math.round(avgPm25),
+        value: Math.round(stats.avgPm25),
         unit: 'µg/m³',
-        color: getColorFromPm25(avgPm25),
+        color: getColorFromPm25(stats.avgPm25),
       },
       {
         label: t('history.stats.pm25AboveWHO'),
-        value: formatDuration(timeAboveWHO_PM25),
-        color: getColorFromTime(timeAboveWHO_PM25, totalDuration),
+        value: formatDuration(stats.timeAboveWHO_PM25),
+        color: getColorFromTime(stats.timeAboveWHO_PM25, stats.totalExposureMinutes),
       },
       {
         label: t('history.stats.pm10AboveWHO'),
-        value: formatDuration(timeAboveWHO_PM10),
-        color: getColorFromTime(timeAboveWHO_PM10, totalDuration),
+        value: formatDuration(stats.timeAboveWHO_PM10),
+        color: getColorFromTime(stats.timeAboveWHO_PM10, stats.totalExposureMinutes),
       },
     ];
   }, [filteredMissions, t]);
