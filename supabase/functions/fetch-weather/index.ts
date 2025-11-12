@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
+import { z } from 'https://esm.sh/zod@3.22.4';
 
 // Safe JSON parsing utility for edge functions
 async function safeJson<T = unknown>(res: Response): Promise<T | null> {
@@ -32,29 +33,31 @@ serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Parse JSON body safely from the Request object
-    let requestBody: any = null;
-    try {
-      const ct = req.headers.get('content-type') || '';
-      if (!ct.includes('application/json')) throw new Error('Invalid content-type');
-      requestBody = await req.json();
-    } catch {
+    // Validate input with Zod
+    const RequestSchema = z.object({
+      latitude: z.union([z.number(), z.string().transform(parseFloat)])
+        .refine(n => !isNaN(n) && n >= -90 && n <= 90, { message: 'Latitude must be between -90 and 90' }),
+      longitude: z.union([z.number(), z.string().transform(parseFloat)])
+        .refine(n => !isNaN(n) && n >= -180 && n <= 180, { message: 'Longitude must be between -180 and 180' }),
+      timestamp: z.string().datetime()
+    });
+
+    const body = await req.json();
+    const validation = RequestSchema.safeParse(body);
+    
+    if (!validation.success) {
       return new Response(
-        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        JSON.stringify({ 
+          error: 'Invalid input',
+          details: validation.error.format()
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { latitude, longitude, timestamp } = requestBody || {};
-    const lat = typeof latitude === 'string' ? parseFloat(latitude) : latitude;
-    const lon = typeof longitude === 'string' ? parseFloat(longitude) : longitude;
-
-    if (lat == null || Number.isNaN(lat) || lon == null || Number.isNaN(lon) || !timestamp) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required parameters: latitude, longitude, timestamp' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { latitude, longitude, timestamp } = validation.data;
+    const lat = typeof latitude === 'number' ? latitude : parseFloat(latitude);
+    const lon = typeof longitude === 'number' ? longitude : parseFloat(longitude);
 
     const requestTime = new Date(timestamp);
     const oneHourAgo = new Date(requestTime.getTime() - 60 * 60 * 1000);

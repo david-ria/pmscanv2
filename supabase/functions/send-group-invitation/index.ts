@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { z } from 'https://esm.sh/zod@3.22.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,7 +25,26 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
-    const { groupId, email }: InvitationRequest = await req.json();
+    // Validate input with Zod
+    const RequestSchema = z.object({
+      groupId: z.string().uuid({ message: 'Invalid groupId format' }),
+      email: z.string().email({ message: 'Invalid email address' }).max(255, { message: 'Email too long' })
+    });
+
+    const body = await req.json();
+    const validation = RequestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      return new Response(JSON.stringify({ 
+        error: 'Invalid input',
+        details: validation.error.format()
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { groupId, email } = validation.data;
 
     // Get the current user
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();

@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
+import { z } from 'https://esm.sh/zod@3.22.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,11 +30,26 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { groupId, expirationHours = 168 } = await req.json();
+    // Validate input with Zod
+    const RequestSchema = z.object({
+      groupId: z.string().uuid({ message: 'Invalid groupId format' }),
+      expirationHours: z.number().int().min(1).max(720).default(168) // Max 30 days
+    });
 
-    if (!groupId) {
-      throw new Error('groupId is required');
+    const body = await req.json();
+    const validation = RequestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      return new Response(JSON.stringify({ 
+        error: 'Invalid input',
+        details: validation.error.format()
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+
+    const { groupId, expirationHours } = validation.data;
 
     console.log('Creating join link for group:', groupId, 'by user:', user.id);
 
