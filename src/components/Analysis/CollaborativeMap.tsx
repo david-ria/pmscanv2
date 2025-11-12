@@ -222,7 +222,7 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
     };
   }, [geohashData, loading]);
 
-  // Update map data when geojson changes
+  // Update map data and auto-zoom when geojson, pmType, or precision changes
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
@@ -230,7 +230,7 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
     if (source) {
       source.setData(geojsonData);
       
-      // Auto-zoom to fit data bounds
+      // Auto-zoom to fit data bounds whenever data changes
       if (geojsonData.features.length > 0 && mapboxgl.current) {
         const bounds = new mapboxgl.current.LngLatBounds();
         
@@ -249,7 +249,7 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
         });
       }
     }
-  }, [geojsonData, mapLoaded]);
+  }, [geojsonData, mapLoaded, pmType, precision]);
 
   const precisionLabels = {
     5: t('analysis.collaborativeMap.precisionLow'),
