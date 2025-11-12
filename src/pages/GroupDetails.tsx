@@ -33,6 +33,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useDialog } from '@/hooks/useDialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/hooks/useNotifications';
 
 import { GroupMonitoringDialog } from '@/components/Groups/GroupMonitoringDialog';
 import { GroupEventsDialog } from '@/components/Groups/GroupEventsDialog';
@@ -49,6 +50,7 @@ export default function GroupDetails() {
   const { isSuperAdmin } = useUserRole();
   const { features } = useSubscription();
   const { user } = useAuth();
+  const { notifySuccess, notifyError } = useNotifications();
   const [group, setGroup] = useState(null);
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
 
@@ -172,9 +174,11 @@ export default function GroupDetails() {
     
     try {
       await removeMember(memberToRemove);
+      notifySuccess('Member removed successfully');
       setMemberToRemove(null);
     } catch (error) {
       console.error('Error removing member:', error);
+      notifyError('Failed to remove member', error instanceof Error ? error.message : 'Please try again');
     }
   };
 
@@ -322,6 +326,7 @@ export default function GroupDetails() {
               members.map((member) => {
                 const displayName = member.profiles?.pseudo || 
                   `${member.profiles?.first_name || ''} ${member.profiles?.last_name || ''}`.trim() ||
+                  member.profiles?.email ||
                   'Unknown User';
                 
                 const canRemove = hasAccess && member.user_id !== user?.id && member.user_id !== group.created_by;

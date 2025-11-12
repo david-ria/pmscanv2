@@ -64,6 +64,7 @@ export interface GroupMembership {
     first_name: string | null;
     last_name: string | null;
     pseudo: string | null;
+    email: string | null;
   };
 }
 
@@ -428,7 +429,7 @@ export const useGroupMembers = (groupId: string) => {
         ] = await Promise.all([
           supabase
             .from('profiles')
-            .select('id, first_name, last_name, pseudo')
+            .select('id, first_name, last_name, pseudo, email')
             .in('id', userIds),
           supabase
             .from('missions')
