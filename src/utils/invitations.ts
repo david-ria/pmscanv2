@@ -51,3 +51,32 @@ export async function joinGroupByToken(token: string): Promise<{
 
   return data;
 }
+
+/**
+ * Fetch public group info using the secure edge function
+ * This validates the invitation token and returns minimal group data
+ */
+export async function getPublicGroupInfo(
+  groupId: string,
+  token?: string
+): Promise<{
+  id: string;
+  name: string;
+  description: string | null;
+  logo_url: string | null;
+}> {
+  const { data, error } = await supabase.functions.invoke('get-public-group-info', {
+    body: { groupId, token },
+  });
+
+  if (error) {
+    console.error('Error fetching public group info:', error);
+    throw new Error(error.message || 'Failed to fetch group information');
+  }
+
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+
+  return data;
+}

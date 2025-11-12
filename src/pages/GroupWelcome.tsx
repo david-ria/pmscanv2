@@ -7,8 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Users, MapPin, Activity, Play, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { joinGroupByToken } from '@/utils/invitations';
-import { supabase } from '@/integrations/supabase/client';
+import { joinGroupByToken, getPublicGroupInfo } from '@/utils/invitations';
 
 interface PublicGroupInfo {
   id: string;
@@ -52,30 +51,29 @@ export default function GroupWelcome() {
   // Check if user is already a member
   const isMember = group && groups.some(g => g.id === group.id);
 
-  // Fetch public group info when user is not authenticated
+  // Fetch public group info when user is not authenticated using secure edge function
   useEffect(() => {
     const fetchPublicGroupInfo = async () => {
       if (user || !groupId) return; // Only fetch if not authenticated
       
       setLoadingPublicInfo(true);
       try {
-        const { data, error } = await supabase
-          .from('groups')
-          .select('id, name, description, logo_url')
-          .eq('id', groupId)
-          .single();
-
-        if (error) throw error;
+        // Use the secure edge function with optional token validation
+        const data = await getPublicGroupInfo(groupId, joinToken || undefined);
         setPublicGroupInfo(data);
       } catch (error) {
         console.error('Failed to fetch public group info:', error);
+        // Only show error if not in join flow (where token will handle auth)
+        if (!joinToken) {
+          toast.error('Unable to load group information');
+        }
       } finally {
         setLoadingPublicInfo(false);
       }
     };
 
     fetchPublicGroupInfo();
-  }, [user, groupId]);
+  }, [user, groupId, joinToken]);
 
   // Helper function to extract group name from URL slug
   const extractGroupNameFromSlug = (slug: string): string => {
