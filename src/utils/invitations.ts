@@ -6,10 +6,11 @@ import { generateGroupUrl } from '@/lib/groupConfigs';
  */
 export async function createGroupJoinLink(
   groupId: string,
-  groupName?: string
+  groupName?: string,
+  expirationHours?: number
 ): Promise<{ url: string; token: string; expiresAt: string }> {
   const { data, error } = await supabase.functions.invoke('create-group-join-link', {
-    body: { groupId },
+    body: { groupId, expirationHours },
   });
 
   if (error) {

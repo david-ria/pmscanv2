@@ -103,14 +103,27 @@ serve(async (req) => {
       throw new Error('Failed to join group');
     }
 
-    // Update invitation status
-    await supabase
+    // Update invitation status only if it's a personal (email-based) invitation
+    // For generic invitations (empty email), keep status as 'pending' for reuse
+    const { data: invitationDetails } = await supabase
       .from('group_invitations')
-      .update({ 
-        status: 'accepted',
-        invitee_id: user.id 
-      })
-      .eq('id', invitation.id);
+      .select('invitee_email')
+      .eq('id', invitation.id)
+      .single();
+
+    if (invitationDetails?.invitee_email && invitationDetails.invitee_email.trim() !== '') {
+      // Personal invitation - mark as accepted
+      await supabase
+        .from('group_invitations')
+        .update({ 
+          status: 'accepted',
+          invitee_id: user.id 
+        })
+        .eq('id', invitation.id);
+    } else {
+      // Generic invitation - keep as pending but record the user joined
+      console.log('Generic invitation used - keeping status as pending for reuse');
+    }
 
     console.log('Successfully added user to group:', groupId);
 

@@ -29,7 +29,7 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { groupId } = await req.json();
+    const { groupId, expirationHours = 168 } = await req.json();
 
     if (!groupId) {
       throw new Error('groupId is required');
@@ -64,7 +64,7 @@ serve(async (req) => {
     // Generate a unique token
     const token_value = crypto.randomUUID();
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // Token valid for 7 days
+    expiresAt.setHours(expiresAt.getHours() + expirationHours);
 
     // Insert invitation record
     const { data: invitation, error: insertError } = await supabase

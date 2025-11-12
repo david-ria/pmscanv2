@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -56,6 +58,7 @@ export function InviteUserDialog({
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [joinUrl, setJoinUrl] = useState<string>('');
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [expirationHours, setExpirationHours] = useState<string>('168'); // Default 7 days
 
   // Resolve group name from multiple sources
   const resolvedGroupName = useMemo(() => {
@@ -74,11 +77,13 @@ export function InviteUserDialog({
     return null;
   }, [groupNameProp, groups, groupId, activeGroup]);
 
-  // Generate join link and QR code when dialog opens
+  // Generate join link and QR code when dialog opens or expiration changes
   useEffect(() => {
-    if (open && !joinUrl && !isGeneratingLink) {
+    if (open && !isGeneratingLink) {
       setIsGeneratingLink(true);
-      createGroupJoinLink(groupId, resolvedGroupName || undefined)
+      setJoinUrl(''); // Clear previous URL
+      setQrCodeDataUrl('');
+      createGroupJoinLink(groupId, resolvedGroupName || undefined, parseInt(expirationHours))
         .then(async ({ url }) => {
           setJoinUrl(url);
           const dataUrl = await generateQRCodeDataURL(url, { size: 256 });
@@ -94,7 +99,7 @@ export function InviteUserDialog({
         })
         .finally(() => setIsGeneratingLink(false));
     }
-  }, [open, joinUrl, isGeneratingLink, groupId, resolvedGroupName, toast]);
+  }, [open, expirationHours, groupId, resolvedGroupName, toast]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -221,6 +226,29 @@ export function InviteUserDialog({
             <div className="text-sm text-muted-foreground">
               Share this link to let people join your group and start recording data with group settings.
             </div>
+            
+            <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+              <Label className="text-sm font-medium">Link Expiration</Label>
+              <RadioGroup value={expirationHours} onValueChange={setExpirationHours}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="1" id="exp-1h" />
+                  <Label htmlFor="exp-1h" className="font-normal cursor-pointer">1 hour</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="24" id="exp-24h" />
+                  <Label htmlFor="exp-24h" className="font-normal cursor-pointer">24 hours (Conference/Event)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="168" id="exp-7d" />
+                  <Label htmlFor="exp-7d" className="font-normal cursor-pointer">7 days</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="720" id="exp-30d" />
+                  <Label htmlFor="exp-30d" className="font-normal cursor-pointer">30 days</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             {isGeneratingLink || !joinUrl ? (
               <div className="space-y-3">
                 <Skeleton className="h-10 w-full" />
@@ -265,6 +293,29 @@ export function InviteUserDialog({
             <div className="text-sm text-muted-foreground">
               Let people scan this QR code to join your group and start recording.
             </div>
+            
+            <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+              <Label className="text-sm font-medium">QR Code Expiration</Label>
+              <RadioGroup value={expirationHours} onValueChange={setExpirationHours}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="1" id="qr-exp-1h" />
+                  <Label htmlFor="qr-exp-1h" className="font-normal cursor-pointer">1 hour</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="24" id="qr-exp-24h" />
+                  <Label htmlFor="qr-exp-24h" className="font-normal cursor-pointer">24 hours (Conference/Event)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="168" id="qr-exp-7d" />
+                  <Label htmlFor="qr-exp-7d" className="font-normal cursor-pointer">7 days</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="720" id="qr-exp-30d" />
+                  <Label htmlFor="qr-exp-30d" className="font-normal cursor-pointer">30 days</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             {isGeneratingLink || !qrCodeDataUrl ? (
               <div className="flex flex-col items-center space-y-4">
                 <Skeleton className="w-48 h-48 rounded-lg" />
