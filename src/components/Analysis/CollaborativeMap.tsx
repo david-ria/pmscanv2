@@ -227,6 +227,25 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
     const source = map.current.getSource('geohash-data');
     if (source) {
       source.setData(geojsonData);
+      
+      // Auto-zoom to fit data bounds
+      if (geojsonData.features.length > 0) {
+        const bounds = new (window as any).mapboxgl.LngLatBounds();
+        
+        geojsonData.features.forEach(feature => {
+          if (feature.geometry.type === 'Polygon') {
+            feature.geometry.coordinates[0].forEach((coord: [number, number]) => {
+              bounds.extend(coord);
+            });
+          }
+        });
+        
+        map.current.fitBounds(bounds, {
+          padding: 50,
+          maxZoom: 15,
+          duration: 1000
+        });
+      }
     }
   }, [geojsonData, mapLoaded]);
 
