@@ -37,6 +37,7 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
   const [mapLoaded, setMapLoaded] = useState(false);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
+  const mapboxgl = useRef<any>(null);
 
   // Calculate date range based on period
   const { startDate, endDate } = useMemo(() => {
@@ -136,7 +137,8 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
     if (!mapContainer.current || map.current || loading || geohashData.length === 0) return;
 
     const initMap = async () => {
-      const mapboxgl = await import('mapbox-gl');
+      const mapboxglModule = await import('mapbox-gl');
+      mapboxgl.current = mapboxglModule.default;
       const token = await supabase.functions.invoke('get-mapbox-token');
       
       if (!token.data?.token) {
@@ -144,9 +146,9 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
         return;
       }
 
-      mapboxgl.default.accessToken = token.data.token;
+      mapboxgl.current.accessToken = token.data.token;
       
-      const mapInstance = new mapboxgl.default.Map({
+      const mapInstance = new mapboxgl.current.Map({
         container: mapContainer.current!,
         style: 'mapbox://styles/mapbox/light-v11',
         center: [0, 20],
@@ -229,8 +231,8 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
       source.setData(geojsonData);
       
       // Auto-zoom to fit data bounds
-      if (geojsonData.features.length > 0) {
-        const bounds = new (window as any).mapboxgl.LngLatBounds();
+      if (geojsonData.features.length > 0 && mapboxgl.current) {
+        const bounds = new mapboxgl.current.LngLatBounds();
         
         geojsonData.features.forEach(feature => {
           if (feature.geometry.type === 'Polygon') {
