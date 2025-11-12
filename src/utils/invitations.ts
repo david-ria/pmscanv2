@@ -44,7 +44,9 @@ export async function joinGroupByToken(token: string): Promise<{
 
   if (error) {
     console.error('Error joining group:', error);
-    throw new Error('Failed to join group');
+    // Try to extract error message from response
+    const errorMessage = data?.error || error.message || 'Failed to join group';
+    throw new Error(errorMessage);
   }
 
   return data;

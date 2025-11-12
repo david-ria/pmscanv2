@@ -14,10 +14,11 @@ export default function GroupWelcome() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { groups, loading: groupsLoading } = useGroups();
+  const { groups, loading: groupsLoading, refetch } = useGroups();
   const { applyGroupById, isGroupMode, activeGroup } = useGroupSettings();
   const [isApplying, setIsApplying] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  const [fallbackGroupName, setFallbackGroupName] = useState<string | null>(null);
   
   const joinToken = searchParams.get('join');
 
@@ -57,18 +58,37 @@ export default function GroupWelcome() {
         try {
           const result = await joinGroupByToken(joinToken);
           
+          // Store group name as fallback in case group isn't in list yet
+          if (result.groupName) {
+            setFallbackGroupName(result.groupName);
+          }
+          
           if (result.alreadyMember) {
             toast.success(`Already a member of ${result.groupName || 'the group'}`);
           } else {
             toast.success(`Successfully joined ${result.groupName || 'the group'}!`);
           }
           
+          // Refetch groups to ensure the new group is in the list
+          await refetch();
+          
           // Apply group settings and navigate
           await applyGroupById(result.groupId);
-          navigate('/');
+          
+          // Clear the join token from URL and navigate
+          navigate('/', { replace: true });
         } catch (error) {
           console.error('Failed to join group:', error);
-          toast.error('Failed to join group. The link may be invalid or expired.');
+          const errorMessage = (error as Error).message;
+          
+          // Provide user-friendly error messages
+          if (errorMessage.includes('expired')) {
+            toast.error('This invite link has expired. Ask an admin for a new one.');
+          } else if (errorMessage.includes('Invalid')) {
+            toast.error('This invite link is invalid or has been revoked.');
+          } else {
+            toast.error('Failed to join group. Please try again or contact the group admin.');
+          }
         } finally {
           setIsJoining(false);
         }
@@ -76,14 +96,15 @@ export default function GroupWelcome() {
     };
 
     handleJoinFlow();
-  }, [user, joinToken, groupId, navigate, isJoining, groupsLoading, applyGroupById]);
+  }, [user, joinToken, groupId, navigate, isJoining, groupsLoading, applyGroupById, refetch]);
 
   useEffect(() => {
     // If group is not found and groups have loaded, show error
-    if (!groupsLoading && !group && groupId && !joinToken) {
+    // But only if we don't have a join token or fallback name (which means we're in the process of joining)
+    if (!groupsLoading && !group && groupId && !joinToken && !fallbackGroupName) {
       toast.error('Group not found or you do not have access');
     }
-  }, [group, groupsLoading, groupId, joinToken]);
+  }, [group, groupsLoading, groupId, joinToken, fallbackGroupName]);
 
   const handleStartRecording = async () => {
     if (!group) return;
@@ -154,6 +175,32 @@ export default function GroupWelcome() {
   }
 
   if (!group) {
+    // If we have a fallback name (from a successful join), show that while waiting for refetch
+    if (fallbackGroupName) {
+      return (
+        <div className="container max-w-2xl mx-auto px-4 py-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-6 h-6" />
+                Welcome to {fallbackGroupName}
+              </CardTitle>
+              <CardDescription>
+                Setting up your group...
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="py-8">
+              <div className="flex flex-col items-center justify-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Loading group details...</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
+    // Otherwise, show error
     return (
       <div className="container max-w-2xl mx-auto px-4 py-8">
         <Card>
