@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   ResponsiveDialog,
@@ -19,52 +20,18 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useAdvancedGroupCreation } from '@/hooks/useAdvancedGroupCreation';
+import { useGroups } from '@/hooks/useGroups';
 import { BaseDialogProps } from '@/types/shared';
-import { Plus, Trash2, MapPin, Activity, Target, Bell, Settings } from 'lucide-react';
 import { useUserRole } from '@/hooks/useUserRole';
-import { LocationWithActivities } from './LocationWithActivities';
-
-const thresholdSchema = z.object({
-  name: z.string().min(1, 'Threshold name is required'),
-  pm1_min: z.number().min(0).max(500).optional(),
-  pm1_max: z.number().min(0).max(500).optional(),
-  pm25_min: z.number().min(0).max(500).optional(),
-  pm25_max: z.number().min(0).max(500).optional(),
-  pm10_min: z.number().min(0).max(500).optional(),
-  pm10_max: z.number().min(0).max(500).optional(),
-  color: z.string(),
-  enabled: z.boolean(),
-});
-
-const activitySchema = z.object({
-  name: z.string().min(1, 'Activity name is required'),
-  description: z.string().optional(),
-  icon: z.string().optional(),
-});
-
-const locationSchema = z.object({
-  name: z.string().min(1, 'Location name is required'),
-  description: z.string().optional(),
-  activities: z.array(activitySchema).default([]),
-});
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Upload } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const formSchema = z.object({
-  // Basic info
   name: z
     .string()
     .min(1, 'Group name is required')
@@ -73,27 +40,6 @@ const formSchema = z.object({
     .string()
     .max(500, 'Description must be less than 500 characters')
     .optional(),
-  
-  // Subscription
-  subscription_tier: z.enum(['free', 'premium']).default('free'),
-  
-  // Settings
-  pm1_threshold: z.number().min(0).max(500).default(15),
-  pm25_threshold: z.number().min(0).max(500).default(25),
-  pm10_threshold: z.number().min(0).max(500).default(50),
-  alarm_enabled: z.boolean().default(true),
-  auto_share_stats: z.boolean().default(true),
-  notification_frequency: z.enum(['immediate', 'hourly', 'daily']).default('immediate'),
-  location_auto_detect: z.boolean().default(false),
-  activity_auto_suggest: z.boolean().default(false),
-  event_notifications: z.boolean().default(true),
-  weekly_reports: z.boolean().default(false),
-  default_location: z.string().optional(),
-  default_activity: z.string().optional(),
-  
-  // Arrays
-  thresholds: z.array(thresholdSchema).default([]),
-  custom_locations: z.array(locationSchema).default([]),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -104,677 +50,183 @@ export function CreateGroupDialog({
   open,
   onOpenChange,
 }: CreateGroupDialogProps) {
-  const { createAdvancedGroup, isSubmitting } = useAdvancedGroupCreation();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { createGroup } = useGroups();
   const { isSuperAdmin } = useUserRole();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       description: '',
-      subscription_tier: 'free',
-      pm1_threshold: 15,
-      pm25_threshold: 25,
-      pm10_threshold: 50,
-      alarm_enabled: true,
-      auto_share_stats: true,
-      notification_frequency: 'immediate',
-      location_auto_detect: false,
-      activity_auto_suggest: false,
-      event_notifications: true,
-      weekly_reports: false,
-      thresholds: [],
-      custom_locations: [],
     },
   });
 
-  const {
-    fields: thresholdFields,
-    append: appendThreshold,
-    remove: removeThreshold,
-  } = useFieldArray({
-    control: form.control,
-    name: 'thresholds',
-  });
-
-  const {
-    fields: locationFields,
-    append: appendLocation,
-    remove: removeLocation,
-  } = useFieldArray({
-    control: form.control,
-    name: 'custom_locations',
-  });
-
-  const addDefaultThreshold = () => {
-    appendThreshold({
-      name: 'Good',
-      pm25_max: 25,
-      pm10_max: 50,
-      pm1_max: 15,
-      color: '#22c55e',
-      enabled: true,
-    });
-  };
-
-  const addDefaultLocation = () => {
-    appendLocation({
-      name: 'Office',
-      description: 'Workplace environment',
-      activities: [
-        {
-          name: 'Work',
-          description: 'Work-related activities',
-          icon: 'briefcase',
-        }
-      ],
-    });
-  };
-
-  const onSubmit = async (values: FormData) => {
-    try {
-      const groupData = {
-        name: values.name,
-        description: values.description,
-        subscription_tier: values.subscription_tier,
-        settings: {
-          pm1_threshold: values.pm1_threshold,
-          pm25_threshold: values.pm25_threshold,
-          pm10_threshold: values.pm10_threshold,
-          alarm_enabled: values.alarm_enabled,
-          auto_share_stats: values.auto_share_stats,
-          notification_frequency: values.notification_frequency,
-          location_auto_detect: values.location_auto_detect,
-          activity_auto_suggest: values.activity_auto_suggest,
-          event_notifications: values.event_notifications,
-          weekly_reports: values.weekly_reports,
-          default_location: values.default_location,
-          default_activity: values.default_activity,
-        },
-        thresholds: values.thresholds.map(t => ({
-          name: t.name,
-          pm1_min: t.pm1_min,
-          pm1_max: t.pm1_max,
-          pm25_min: t.pm25_min,
-          pm25_max: t.pm25_max,
-          pm10_min: t.pm10_min,
-          pm10_max: t.pm10_max,
-          color: t.color,
-          enabled: t.enabled,
-        })),
-        custom_locations: values.custom_locations.map(l => ({
-          name: l.name,
-          description: l.description,
-          activities: l.activities.map(a => ({
-            name: a.name,
-            description: a.description,
-            icon: a.icon,
-          })),
-        })),
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'Error',
+          description: 'Logo file must be less than 5MB',
+          variant: 'destructive',
+        });
+        return;
+      }
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
       };
-
-      await createAdvancedGroup(groupData);
-      form.reset();
-      onOpenChange(false);
-    } catch (error) {
-      // Error handling is done in the hook
+      reader.readAsDataURL(file);
     }
   };
 
-  // Only show advanced form for super admins
+  const uploadLogo = async (groupId: string, file: File) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${groupId}.${fileExt}`;
+    const filePath = `${groupId}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('group_logos')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('group_logos')
+      .getPublicUrl(filePath);
+
+    const { error: updateError } = await supabase
+      .from('groups')
+      .update({ logo_url: publicUrl })
+      .eq('id', groupId);
+
+    if (updateError) throw updateError;
+  };
+
+  const onSubmit = async (values: FormData) => {
+    setIsSubmitting(true);
+    try {
+      const newGroup = await createGroup(values.name, values.description);
+      
+      if (!newGroup) {
+        throw new Error('Failed to create group');
+      }
+
+      if (logoFile) {
+        await uploadLogo(newGroup.id, logoFile);
+      }
+
+      toast({
+        title: t('groups.groupCreatedSuccess'),
+        description: t('groups.configureSettingsNext'),
+      });
+
+      form.reset();
+      setLogoFile(null);
+      setLogoPreview(null);
+      onOpenChange(false);
+      
+      navigate(`/groups/${newGroup.id}`);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to create group',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Only show form for super admins
   if (!isSuperAdmin) {
     return null;
   }
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="max-w-4xl">
+      <ResponsiveDialogContent className="max-w-lg">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Create Advanced Group Configuration
+          <ResponsiveDialogTitle>
+            {t('groups.createNewGroup')}
           </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            Configure a comprehensive group with custom thresholds, locations, activities, and settings.
+            {t('groups.createGroupSimpleDescription')}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
-                <TabsTrigger value="thresholds">Thresholds</TabsTrigger>
-                <TabsTrigger value="locations">Locations & Activities</TabsTrigger>
-              </TabsList>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('groups.groupName')}</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t('groups.enterGroupName')} {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    {t('groups.chooseDescriptiveName')}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('groups.description')}</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder={t('groups.describePurpose')}
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {t('groups.helpMembersUnderstand')}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              {/* Basic Info Tab */}
-              <TabsContent value="basic" className="space-y-4">
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Group Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter group name" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Choose a descriptive name for your group
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+            <div className="space-y-2">
+              <FormLabel>{t('groups.uploadGroupLogo')}</FormLabel>
+              <div className="flex items-center gap-4">
+                {logoPreview ? (
+                  <img
+                    src={logoPreview}
+                    alt="Logo preview"
+                    className="h-16 w-16 rounded-lg object-cover border"
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Describe the purpose of this group"
-                            className="resize-none"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Help members understand the group's purpose
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="subscription_tier"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Subscription Tier</FormLabel>
-                        <FormControl>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="free">Free</SelectItem>
-                              <SelectItem value="premium">Premium</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormDescription>
-                          Choose the subscription tier for this group
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </TabsContent>
-
-              {/* Settings Tab */}
-              <TabsContent value="settings" className="space-y-4">
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Bell className="h-4 w-4 text-primary" />
-                      <h3 className="text-lg font-semibold">Alarm Settings</h3>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="pm1_threshold"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>PM1 Threshold (μg/m³)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="pm25_threshold"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>PM2.5 Threshold (μg/m³)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="pm10_threshold"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>PM10 Threshold (μg/m³)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="alarm_enabled"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                            <div className="space-y-0.5">
-                              <FormLabel>Enable Alarms</FormLabel>
-                              <div className="text-sm text-muted-foreground">
-                                Send notifications when thresholds are exceeded
-                              </div>
-                            </div>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="notification_frequency"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Notification Frequency</FormLabel>
-                            <FormControl>
-                              <Select value={field.value} onValueChange={field.onChange}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="immediate">Immediate</SelectItem>
-                                  <SelectItem value="hourly">Hourly</SelectItem>
-                                  <SelectItem value="daily">Daily</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                ) : (
+                  <div className="h-16 w-16 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted">
+                    <Upload className="h-6 w-6 text-muted-foreground" />
                   </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Additional Settings</h3>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="auto_share_stats"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                            <div className="space-y-0.5">
-                              <FormLabel>Auto-share Statistics</FormLabel>
-                              <div className="text-sm text-muted-foreground">
-                                Automatically share daily statistics
-                              </div>
-                            </div>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="location_auto_detect"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                            <div className="space-y-0.5">
-                              <FormLabel>Auto-detect Location</FormLabel>
-                              <div className="text-sm text-muted-foreground">
-                                Automatically suggest location based on GPS
-                              </div>
-                            </div>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="activity_auto_suggest"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                            <div className="space-y-0.5">
-                              <FormLabel>Auto-suggest Activity</FormLabel>
-                              <div className="text-sm text-muted-foreground">
-                                Suggest activity based on movement patterns
-                              </div>
-                            </div>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="event_notifications"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                            <div className="space-y-0.5">
-                              <FormLabel>Event Notifications</FormLabel>
-                              <div className="text-sm text-muted-foreground">
-                                Send notifications for group events
-                              </div>
-                            </div>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="weekly_reports"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                            <div className="space-y-0.5">
-                              <FormLabel>Weekly Reports</FormLabel>
-                              <div className="text-sm text-muted-foreground">
-                                Generate weekly air quality reports
-                              </div>
-                            </div>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              {/* Thresholds Tab */}
-              <TabsContent value="thresholds" className="space-y-4">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Target className="h-4 w-4 text-primary" />
-                      <h3 className="text-lg font-semibold">Custom Thresholds</h3>
-                    </div>
-                    <Button type="button" variant="outline" onClick={addDefaultThreshold}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Threshold
-                    </Button>
-                  </div>
-
-                  {thresholdFields.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No custom thresholds defined. Add thresholds to override default WHO standards.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {thresholdFields.map((field, index) => (
-                        <div key={field.id} className="border rounded-lg p-4 space-y-4">
-                          <div className="flex justify-between items-center">
-                            <h4 className="font-medium">Threshold {index + 1}</h4>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeThreshold(index)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name={`thresholds.${index}.name`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Name</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Good, Moderate, Poor..." {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name={`thresholds.${index}.color`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Color</FormLabel>
-                                  <FormControl>
-                                    <Input type="color" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                              <FormLabel>PM1 Range (μg/m³)</FormLabel>
-                              <div className="grid grid-cols-2 gap-2">
-                                <FormField
-                                  control={form.control}
-                                  name={`thresholds.${index}.pm1_min`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          placeholder="Min"
-                                          {...field}
-                                          onChange={(e) =>
-                                            field.onChange(e.target.value ? Number(e.target.value) : undefined)
-                                          }
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={form.control}
-                                  name={`thresholds.${index}.pm1_max`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          placeholder="Max"
-                                          {...field}
-                                          onChange={(e) =>
-                                            field.onChange(e.target.value ? Number(e.target.value) : undefined)
-                                          }
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              <FormLabel>PM2.5 Range (μg/m³)</FormLabel>
-                              <div className="grid grid-cols-2 gap-2">
-                                <FormField
-                                  control={form.control}
-                                  name={`thresholds.${index}.pm25_min`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          placeholder="Min"
-                                          {...field}
-                                          onChange={(e) =>
-                                            field.onChange(e.target.value ? Number(e.target.value) : undefined)
-                                          }
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={form.control}
-                                  name={`thresholds.${index}.pm25_max`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          placeholder="Max"
-                                          {...field}
-                                          onChange={(e) =>
-                                            field.onChange(e.target.value ? Number(e.target.value) : undefined)
-                                          }
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              <FormLabel>PM10 Range (μg/m³)</FormLabel>
-                              <div className="grid grid-cols-2 gap-2">
-                                <FormField
-                                  control={form.control}
-                                  name={`thresholds.${index}.pm10_min`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          placeholder="Min"
-                                          {...field}
-                                          onChange={(e) =>
-                                            field.onChange(e.target.value ? Number(e.target.value) : undefined)
-                                          }
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={form.control}
-                                  name={`thresholds.${index}.pm10_max`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          placeholder="Max"
-                                          {...field}
-                                          onChange={(e) =>
-                                            field.onChange(e.target.value ? Number(e.target.value) : undefined)
-                                          }
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          <FormField
-                            control={form.control}
-                            name={`thresholds.${index}.enabled`}
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                                <div className="space-y-0.5">
-                                  <FormLabel>Enable Threshold</FormLabel>
-                                  <div className="text-sm text-muted-foreground">
-                                    Use this threshold for display and notifications
-                                  </div>
-                                </div>
-                                <FormControl>
-                                  <Switch checked={field.value} onCheckedChange={field.onChange} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              {/* Locations & Activities Tab */}
-              <TabsContent value="locations" className="space-y-4">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <h3 className="text-lg font-semibold">Locations & Activities</h3>
-                    </div>
-                    <Button type="button" variant="outline" onClick={addDefaultLocation}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Location
-                    </Button>
-                  </div>
-
-                  {locationFields.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No locations defined. Each location can have multiple activities associated with it.
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {locationFields.map((locationField, locationIndex) => (
-                        <LocationWithActivities
-                          key={locationField.id}
-                          locationIndex={locationIndex}
-                          onRemoveLocation={() => removeLocation(locationIndex)}
-                          form={form}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
+                )}
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {t('groups.logoOptional')}
+              </p>
+            </div>
 
             <DialogFooter>
               <Button
@@ -783,10 +235,10 @@ export function CreateGroupDialog({
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating Advanced Group...' : 'Create Advanced Group'}
+                {isSubmitting ? t('common.creating') : t('groups.createGroup')}
               </Button>
             </DialogFooter>
           </form>
