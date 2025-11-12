@@ -9,6 +9,7 @@ import { PollutionBreakdownChart } from '@/components/Analysis/PollutionBreakdow
 import { useAnalysisLogic } from '@/components/Analysis/AnalysisLogic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
+import { calculateMissionStatistics } from '@/utils/missionStatistics';
 
 export default function Analysis() {
   const { t } = useTranslation();
@@ -32,16 +33,14 @@ export default function Analysis() {
     regenerateAnalysis,
   } = useAnalysisLogic(selectedDate, selectedPeriod);
 
-  // Calculate user stats for GroupComparison
+  // Calculate user stats using unified statistics utility
+  const stats = calculateMissionStatistics(missions);
+  
   const userStats = {
-    totalExposureMinutes: missions.reduce((sum, m) => sum + (m.durationMinutes || 0), 0),
-    averagePM25: missions.length > 0 
-      ? missions.reduce((sum, m) => sum + m.avgPm25, 0) / missions.length 
-      : 0,
-    maxPM25: missions.length > 0 
-      ? Math.max(...missions.map(m => m.maxPm25)) 
-      : 0,
-    timeAboveWHO: 0, // TODO: Calculate from measurements if needed
+    totalExposureMinutes: stats.totalExposureMinutes,
+    averagePM25: stats.avgPm25,
+    maxPM25: stats.maxPm25,
+    timeAboveWHO: stats.timeAboveWHO_PM25,
   };
 
   const handleBreakdownDataChange = (data: {
