@@ -11,16 +11,28 @@ import {
   ChevronRight,
   Edit3,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useGroups, useGroupMembers } from '@/hooks/useGroups';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useDialog } from '@/hooks/useDialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { GroupMonitoringDialog } from '@/components/Groups/GroupMonitoringDialog';
 import { GroupEventsDialog } from '@/components/Groups/GroupEventsDialog';
@@ -36,7 +48,9 @@ export default function GroupDetails() {
   const { groups, loading } = useGroups();
   const { isSuperAdmin } = useUserRole();
   const { features } = useSubscription();
+  const { user } = useAuth();
   const [group, setGroup] = useState(null);
+  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
 
   // Dialog states
   const monitoringDialog = useDialog();
@@ -77,7 +91,7 @@ export default function GroupDetails() {
     }
   }, [groups, loading, groupId]);
 
-  const { members, loading: membersLoading } = useGroupMembers(group?.id);
+  const { members, loading: membersLoading, removeMember } = useGroupMembers(group?.id);
 
   // Show loading state
   if (loading || (!group && !loading)) {
@@ -151,6 +165,17 @@ export default function GroupDetails() {
 
   const handleLogoUpdate = (logoUrl: string) => {
     setGroup({ ...group, logo_url: logoUrl });
+  };
+
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
+    
+    try {
+      await removeMember(memberToRemove);
+      setMemberToRemove(null);
+    } catch (error) {
+      console.error('Error removing member:', error);
+    }
   };
 
   const ManagementOption = ({ 
@@ -299,6 +324,8 @@ export default function GroupDetails() {
                   `${member.profiles?.first_name || ''} ${member.profiles?.last_name || ''}`.trim() ||
                   'Unknown User';
                 
+                const canRemove = hasAccess && member.user_id !== user?.id && member.user_id !== group.created_by;
+                
                 return (
                   <Card key={member.id}>
                     <CardContent className="p-4">
@@ -315,9 +342,21 @@ export default function GroupDetails() {
                             )}
                           </div>
                         </div>
-                        <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
-                          {member.role}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
+                            {member.role}
+                          </Badge>
+                          {canRemove && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setMemberToRemove(member.id)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -363,6 +402,23 @@ export default function GroupDetails() {
           open={subscriptionDialog.open}
           onOpenChange={subscriptionDialog.setOpen}
         />
+
+        <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove Member</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to remove this member from the group? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive hover:bg-destructive/90">
+                Remove
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
