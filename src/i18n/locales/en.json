@@ -185,7 +185,13 @@
       "pm10Threshold": "PM10 Threshold",
       "alarmEnabled": "Alarm Enabled",
       "customAlarms": "Custom Alarms",
-      "premiumFeature": "Custom alarms and thresholds are available in Premium and Enterprise plans."
+      "premiumFeature": "Custom alarms and thresholds are available in Premium and Enterprise plans.",
+      "autoShareWithGroup": "Auto-share recordings",
+      "autoShareDescription": "Automatically share all new recordings with this group",
+      "autoShareUpdated": "Auto-share setting updated",
+      "autoShareEnabled": "New recordings will be shared automatically",
+      "autoShareDisabled": "New recordings will not be shared by default",
+      "autoShareError": "Failed to update auto-share setting"
     },
     "locations": {
       "title": "Group Locations & Activities",

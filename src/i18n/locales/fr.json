@@ -185,7 +185,13 @@
       "pm10Threshold": "Seuil PM10",
       "alarmEnabled": "Alarme activée",
       "customAlarms": "Alarmes personnalisées",
-      "premiumFeature": "Les alarmes et seuils personnalisés sont disponibles dans les formules Premium et Entreprise."
+      "premiumFeature": "Les alarmes et seuils personnalisés sont disponibles dans les formules Premium et Entreprise.",
+      "autoShareWithGroup": "Partage automatique des enregistrements",
+      "autoShareDescription": "Partager automatiquement tous les nouveaux enregistrements avec ce groupe",
+      "autoShareUpdated": "Paramètre de partage automatique mis à jour",
+      "autoShareEnabled": "Les nouveaux enregistrements seront partagés automatiquement",
+      "autoShareDisabled": "Les nouveaux enregistrements ne seront pas partagés par défaut",
+      "autoShareError": "Échec de la mise à jour du paramètre de partage automatique"
     },
     "locations": {
       "title": "Lieux et Activités du Groupe",

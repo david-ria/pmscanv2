@@ -185,7 +185,13 @@
       "pm10Threshold": "Llindar PM10",
       "alarmEnabled": "Alarma activada",
       "customAlarms": "Alarmes personalitzades",
-      "premiumFeature": "Les alarmes i llindars personalitzats estan disponibles en els plans Premium i Empresa."
+      "premiumFeature": "Les alarmes i llindars personalitzats estan disponibles en els plans Premium i Empresa.",
+      "autoShareWithGroup": "Compartició automàtica d'enregistraments",
+      "autoShareDescription": "Compartir automàticament tots els nous enregistraments amb aquest grup",
+      "autoShareUpdated": "Configuració de compartició automàtica actualitzada",
+      "autoShareEnabled": "Els nous enregistraments es compartiran automàticament",
+      "autoShareDisabled": "Els nous enregistraments no es compartiran per defecte",
+      "autoShareError": "Error en actualitzar la configuració de compartició automàtica"
     },
     "locations": {
       "title": "Ubicacions i Activitats del Grup",

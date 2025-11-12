@@ -185,7 +185,13 @@
       "pm10Threshold": "PM10-Schwellenwert",
       "alarmEnabled": "Alarm aktiviert",
       "customAlarms": "Benutzerdefinierte Alarme",
-      "premiumFeature": "Benutzerdefinierte Alarme und Schwellenwerte sind in den Premium- und Enterprise-Plänen verfügbar."
+      "premiumFeature": "Benutzerdefinierte Alarme und Schwellenwerte sind in den Premium- und Enterprise-Plänen verfügbar.",
+      "autoShareWithGroup": "Automatisches Teilen von Aufnahmen",
+      "autoShareDescription": "Alle neuen Aufnahmen automatisch mit dieser Gruppe teilen",
+      "autoShareUpdated": "Automatische Freigabeeinstellung aktualisiert",
+      "autoShareEnabled": "Neue Aufnahmen werden automatisch geteilt",
+      "autoShareDisabled": "Neue Aufnahmen werden standardmäßig nicht geteilt",
+      "autoShareError": "Fehler beim Aktualisieren der automatischen Freigabeeinstellung"
     },
     "locations": {
       "title": "Gruppenstandorte & Aktivitäten",

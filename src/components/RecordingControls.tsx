@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useMissionSaver } from '@/hooks/useMissionSaver';
@@ -36,7 +36,10 @@ export function RecordingControls({
   const [showMissionDialog, setShowMissionDialog] = useState(false);
   const [recordingFrequency, setRecordingFrequency] = useState<string>('10s');
   const [missionName, setMissionName] = useState<string>('');
-  const [shareData, setShareData] = useState<boolean>(false);
+  const [shareData, setShareData] = useState<boolean>(() => {
+    // Initialize from group settings if in group mode
+    return isGroupMode && activeGroup?.settings?.auto_share_stats ? true : false;
+  });
   const { toast } = useToast();
   const {
     startRecording,
@@ -50,6 +53,15 @@ export function RecordingControls({
   } = useUnifiedData();
   const { saveMission } = useMissionSaver();
   const { activeGroup, isGroupMode } = useGroupSettings();
+
+  // Update shareData default when group mode changes
+  useEffect(() => {
+    if (isGroupMode && activeGroup?.settings?.auto_share_stats) {
+      setShareData(true);
+    } else if (!isGroupMode) {
+      setShareData(false);
+    }
+  }, [isGroupMode, activeGroup?.settings?.auto_share_stats]);
 
   const getFrequencyLabel = (frequency: string) => {
     const option = frequencyOptionKeys.find((f) => f.value === frequency);
