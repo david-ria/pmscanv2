@@ -117,22 +117,22 @@ const AirQualityCards = memo(function AirQualityCards({
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
         {/* PM1 */}
         <Card className={`text-center relative overflow-hidden`}>
           <div
             className="absolute inset-0 opacity-10"
             style={{ backgroundColor: `hsl(var(--${pm1Quality.color}))` }}
           />
-          <CardContent className="p-4 relative">
+          <CardContent className="p-2 sm:p-4 relative">
             <div
-              className="text-3xl font-bold mb-1"
+              className="text-xl sm:text-3xl font-bold mb-1"
               style={{ color: `hsl(var(--${pm1Quality.color}))` }}
             >
               {roundedValues.pm1}
             </div>
-            <div className="text-sm font-medium text-muted-foreground">PM1</div>
-            <div className="text-xs text-muted-foreground">μg/m³</div>
+            <div className="text-xs sm:text-sm font-medium text-muted-foreground">PM1</div>
+            <div className="text-[10px] sm:text-xs text-muted-foreground">μg/m³</div>
           </CardContent>
         </Card>
 
@@ -142,19 +142,19 @@ const AirQualityCards = memo(function AirQualityCards({
             className="absolute inset-0 opacity-20"
             style={{ backgroundColor: `hsl(var(--${pm25Quality.color}))` }}
           />
-          <CardContent className="p-4 relative">
+          <CardContent className="p-2 sm:p-4 relative">
             <div
-              className="text-3xl font-bold mb-1"
+              className="text-xl sm:text-3xl font-bold mb-1"
               style={{ color: `hsl(var(--${pm25Quality.color}))` }}
             >
               {roundedValues.pm25}
             </div>
-            <div className="text-sm font-medium text-muted-foreground">
+            <div className="text-xs sm:text-sm font-medium text-muted-foreground">
               PM2.5
             </div>
-            <div className="text-xs text-muted-foreground mb-2">μg/m³</div>
+            <div className="text-[10px] sm:text-xs text-muted-foreground mb-2">μg/m³</div>
             <div
-              className="text-xs font-medium px-2 py-1 rounded-full"
+              className="text-[10px] sm:text-xs font-medium px-1 sm:px-2 py-0.5 sm:py-1 rounded-full"
               style={{
                 backgroundColor: `hsl(var(--${pm25Quality.color}) / 0.2)`,
                 color: `hsl(var(--${pm25Quality.color}))`,
@@ -171,17 +171,17 @@ const AirQualityCards = memo(function AirQualityCards({
             className="absolute inset-0 opacity-10"
             style={{ backgroundColor: `hsl(var(--${pm10Quality.color}))` }}
           />
-          <CardContent className="p-4 relative">
+          <CardContent className="p-2 sm:p-4 relative">
             <div
-              className="text-3xl font-bold mb-1"
+              className="text-xl sm:text-3xl font-bold mb-1"
               style={{ color: `hsl(var(--${pm10Quality.color}))` }}
             >
               {roundedValues.pm10}
             </div>
-            <div className="text-sm font-medium text-muted-foreground">
+            <div className="text-xs sm:text-sm font-medium text-muted-foreground">
               PM10
             </div>
-            <div className="text-xs text-muted-foreground">μg/m³</div>
+            <div className="text-[10px] sm:text-xs text-muted-foreground">μg/m³</div>
           </CardContent>
         </Card>
       </div>

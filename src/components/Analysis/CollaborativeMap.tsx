@@ -274,7 +274,7 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Controls */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="pm-type-select">{t('analysis.pollutionBreakdown.pmType')}</Label>
             <Select value={pmType} onValueChange={(v) => setPmType(v as typeof pmType)}>
@@ -306,7 +306,7 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
         </div>
 
         {/* Map */}
-        <div className="h-[800px] w-full rounded-lg overflow-hidden border border-border">
+        <div className="h-[50vh] sm:h-[60vh] lg:h-[800px] w-full rounded-lg overflow-hidden border border-border">
           {loading ? (
             <div className="h-full flex items-center justify-center bg-muted">
               <div className="text-center">

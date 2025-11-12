@@ -253,7 +253,9 @@ export default function RealTime() {
       </div>
 
       {/* Air Quality Cards - Critical for LCP */}
-      <AirQualityCards currentData={currentData} isConnected={isConnected} />
+      <div className="mb-4">
+        <AirQualityCards currentData={currentData} isConnected={isConnected} />
+      </div>
 
       {/* Context Selectors - Lazy loaded */}
       <div className="mb-4 context-selector">

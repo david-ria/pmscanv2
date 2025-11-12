@@ -180,24 +180,24 @@ export const GroupComparison = ({
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Comparison Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-muted/50 rounded-lg">
-            <div className="text-2xl font-bold text-foreground">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="text-center p-3 sm:p-4 bg-muted/50 rounded-lg">
+            <div className="text-xl sm:text-2xl font-bold text-foreground">
               {Math.round(userStats.averagePM25)} μg/m³
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               {t('analysis.groupComparison.yourAverage')}
             </div>
           </div>
-          <div className="text-center p-4 bg-primary/10 rounded-lg">
-            <div className="text-2xl font-bold text-primary">
+          <div className="text-center p-3 sm:p-4 bg-primary/10 rounded-lg">
+            <div className="text-xl sm:text-2xl font-bold text-primary">
               {Math.round(groupAverage)} μg/m³
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               {t('analysis.groupComparison.groupAverage')}
             </div>
           </div>
-          <div className="text-center p-4 bg-accent rounded-lg">
+          <div className="text-center p-3 sm:p-4 bg-accent rounded-lg">
             <div
               className={`text-2xl font-bold ${isAboveAverage ? 'text-red-600' : 'text-green-600'}`}
             >
@@ -211,7 +211,8 @@ export const GroupComparison = ({
         </div>
 
         {/* Group Members Comparison */}
-        <div className="space-y-3">
+        <div className="overflow-x-auto -mx-4 px-4">
+          <div className="space-y-3 min-w-[280px]">
           <h4 className="font-medium text-foreground">
             {t('analysis.groupComparison.memberComparison')}
           </h4>
@@ -243,6 +244,7 @@ export const GroupComparison = ({
               </div>
             );
           })}
+          </div>
         </div>
 
         {/* Insights */}

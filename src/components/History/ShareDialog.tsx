@@ -1,12 +1,12 @@
+import React from 'react';
 import { Mail, MessageSquare, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog';
 import { MissionData } from '@/lib/dataStorage';
 
 interface ShareDialogProps {
@@ -19,13 +19,17 @@ interface ShareDialogProps {
 }
 
 export function ShareDialog({ mission, onShare, children }: ShareDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  
   return (
-    <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Partager la mission</DialogTitle>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={setOpen}>
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+        {children}
+      </Button>
+      <ResponsiveDialogContent className="sm:max-w-md">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Partager la mission</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
         <div className="flex flex-col gap-3 pt-4">
           <Button
             variant="outline"
@@ -54,7 +58,7 @@ export function ShareDialog({ mission, onShare, children }: ShareDialogProps) {
             </Button>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
