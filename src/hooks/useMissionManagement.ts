@@ -1,14 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { dataStorage, MissionData } from '@/lib/dataStorage';
-import { useMissionEnrichment } from './useMissionEnrichment';
 
 export function useMissionManagement() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [missions, setMissions] = useState<MissionData[]>([]);
   const { toast } = useToast();
-  const { enrichAllMissionsWithMissingData } = useMissionEnrichment();
 
   const loadMissions = useCallback(async () => {
     try {
@@ -186,29 +184,6 @@ PM2.5 moyenne: ${Math.round(mission.avgPm25)} µg/m³`;
     [toast]
   );
 
-  const handleEnrichMissions = useCallback(async () => {
-    if (!navigator.onLine) {
-      toast({
-        title: 'Hors ligne',
-        description: 'Connexion internet requise pour enrichir les missions',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      await enrichAllMissionsWithMissingData();
-      await loadMissions();
-    } catch (error) {
-      console.error('Enrichment error:', error);
-      toast({
-        title: 'Erreur d\'enrichissement',
-        description: 'Impossible d\'enrichir les missions',
-        variant: 'destructive',
-      });
-    }
-  }, [enrichAllMissionsWithMissingData, loadMissions, toast]);
-
   return {
     missions,
     loading,
@@ -218,6 +193,5 @@ PM2.5 moyenne: ${Math.round(mission.avgPm25)} µg/m³`;
     handleDelete,
     handleExport,
     handleShare,
-    handleEnrichMissions,
   };
 }

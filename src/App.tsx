@@ -42,7 +42,6 @@ const PMLineGraph = lazy(() =>
 
 // Import OfflineDetector synchronously - critical component that must load immediately
 import { OfflineDetector } from '@/components/OfflineDetector';
-import { useBackgroundEnrichment } from '@/hooks/useBackgroundEnrichment';
 
 // Import skeleton screens
 const AppLayoutSkeleton = lazy(() => 
@@ -72,9 +71,6 @@ const MinimalSkeleton = () => (
 );
 
 const App = () => {
-  // Run background enrichment globally (non-blocking)
-  useBackgroundEnrichment();
-  
   // Preload critical chunks and route pages on app startup when online
   useEffect(() => {
     const preload = () => {

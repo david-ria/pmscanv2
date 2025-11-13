@@ -128,7 +128,7 @@ export function MissionDetailsDialog({
   if (!mission) return null;
 
   // Convert mission measurements to the format expected by PMLineGraph
-  const graphData = mission.measurements.map((measurement, index) => {
+  const graphData = measurements.map((measurement, index) => {
     return {
       pmData: {
         pm1: measurement.pm1,
@@ -158,7 +158,7 @@ export function MissionDetailsDialog({
   });
 
   // Get track points for the map (only measurements with location data)
-  const trackPoints = mission.measurements
+  const trackPoints = measurements
     .filter(
       (m) => m.latitude && m.longitude && m.latitude !== 0 && m.longitude !== 0
     )
@@ -170,9 +170,9 @@ export function MissionDetailsDialog({
     }));
 
   // Calculate statistics
-  const pm1Values = mission.measurements.map((m) => m.pm1);
-  const pm25Values = mission.measurements.map((m) => m.pm25);
-  const pm10Values = mission.measurements.map((m) => m.pm10);
+    const pm1Values = measurements.map((m) => m.pm1);
+    const pm25Values = measurements.map((m) => m.pm25);
+    const pm10Values = measurements.map((m) => m.pm10);
 
   const stats = {
     pm1: {
@@ -201,7 +201,7 @@ export function MissionDetailsDialog({
       measurementCount: number 
     }>();
     
-    mission.measurements.forEach((measurement) => {
+    measurements.forEach((measurement) => {
       let contextValue: string | undefined;
       
       switch (contextType) {
@@ -236,7 +236,7 @@ export function MissionDetailsDialog({
     }> = {};
     
     // Calculate total measurements to determine time per measurement
-    const totalMeasurements = mission.measurements.length;
+    const totalMeasurements = measurements.length;
     const timePerMeasurement = totalMeasurements > 0 ? mission.durationMinutes / totalMeasurements : 0;
     
     contextMap.forEach((values, context) => {
@@ -426,7 +426,7 @@ export function MissionDetailsDialog({
   };
 
   // Get the first location for map centering (if available)
-  const firstLocation = mission.measurements.find(
+  const firstLocation = measurements.find(
     (m) => m.latitude && m.longitude && m.latitude !== 0 && m.longitude !== 0
   );
 
