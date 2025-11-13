@@ -35,7 +35,6 @@ export default function History() {
     handleDelete,
     handleExport,
     handleShare,
-    handleEnrichMissions,
   } = useMissionManagement();
 
   // Load missions on component mount

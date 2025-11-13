@@ -3,6 +3,7 @@ import { dataStorage } from '@/lib/dataStorage';
 import { RecordingEntry } from '@/types/recording';
 import { createTimestamp } from '@/utils/timeFormat';
 import * as logger from '@/utils/logger';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useMissionSaver() {
   
@@ -104,6 +105,35 @@ export function useMissionSaver() {
         deviceName,
         groupId
       );
+    
+    // Enrich with weather data immediately if online
+    if (navigator.onLine) {
+      const measurementWithLocation = recordingData.find(
+        m => m.location?.latitude && m.location?.longitude
+      );
+      
+      if (measurementWithLocation?.location) {
+        try {
+          logger.debug('🌤️ Fetching weather data for mission...');
+          const { data, error } = await supabase.functions.invoke('fetch-weather', {
+            body: {
+              latitude: measurementWithLocation.location.latitude,
+              longitude: measurementWithLocation.location.longitude,
+              timestamp: actualStartTime.toISOString(),
+            },
+          });
+          
+          if (!error && data?.weatherData?.id) {
+            mission.weatherDataId = data.weatherData.id;
+            logger.debug('✅ Weather data fetched:', data.weatherData.id);
+          } else {
+            logger.warn('⚠️ Weather fetch failed, will retry during sync');
+          }
+        } catch (error) {
+          logger.warn('⚠️ Weather API error:', error);
+        }
+      }
+    }
 
     logger.debug('💾 Mission created:', {
       id: mission.id,
