@@ -372,7 +372,13 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
               color: 'hsl(var(--foreground))',
             }}
           />
-          <Legend />
+          <Legend 
+            wrapperStyle={{ 
+              zIndex: 20,
+              position: 'relative',
+              paddingTop: '10px'
+            }}
+          />
           <Line
             type="monotone"
             dataKey="PM1"
