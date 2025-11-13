@@ -69,15 +69,17 @@ export function useMissionEnrichment() {
   }, []);
 
   const enrichAllMissionsWithMissingData = useCallback(async () => {
+    const BATCH_SIZE = 5;  // Process 5 missions at a time
+    const DELAY_MS = 1000; // Wait 1s between batches to avoid rate limits
+    
     try {
-      // Get all missions without weather data that have location measurements
+      // Get missions without weather data (limit to recent 20)
       const { data: missionsToEnrich, error } = await supabase
         .from('missions')
-        .select(`
-          id, name, start_time, weather_data_id
-        `)
+        .select('id, name, start_time, weather_data_id')
         .is('weather_data_id', null)
-        .limit(20); // Process in batches to avoid overwhelming the API
+        .order('start_time', { ascending: false })
+        .limit(20);
 
       if (error) {
         logger.error('❌ Error fetching missions to enrich:', error);
@@ -89,54 +91,79 @@ export function useMissionEnrichment() {
         return;
       }
 
-      // Filter missions that have location data by checking measurements
-      const missionsWithLocation = [];
-      
-      for (const mission of missionsToEnrich) {
-        const { data: measurements } = await supabase
-          .from('measurements')
-          .select('latitude, longitude')
-          .eq('mission_id', mission.id)
-          .not('latitude', 'is', null)
-          .not('longitude', 'is', null)
-          .limit(1);
+      logger.debug(`📊 Found ${missionsToEnrich.length} missions to enrich`);
 
-        if (measurements?.length > 0) {
-          missionsWithLocation.push({
-            ...mission,
-            measurements: measurements
-          });
-        }
-      }
+      // Check which missions have location data (in batch)
+      const missionIds = missionsToEnrich.map(m => m.id);
+      const { data: measurementsWithLocation } = await supabase
+        .from('measurements')
+        .select('mission_id, latitude, longitude')
+        .in('mission_id', missionIds)
+        .not('latitude', 'is', null)
+        .not('longitude', 'is', null)
+        .limit(1); // Just need to know if they have location data
 
-      if (missionsWithLocation.length === 0) {
-        logger.debug('ℹ️ No missions found with location data that need enrichment');
+      if (!measurementsWithLocation?.length) {
+        logger.debug('ℹ️ No missions with location data found');
         return;
       }
 
-      logger.debug(`🔄 Enriching ${missionsWithLocation.length} missions...`);
+      // Build set of missions that have location data
+      const missionsWithLocationIds = new Set(
+        measurementsWithLocation.map(m => m.mission_id)
+      );
 
-      for (const mission of missionsWithLocation) {
-        if (mission.measurements?.[0]) {
-          const missionData: Partial<MissionData> = {
-            id: mission.id,
-            startTime: new Date(mission.start_time),
-            weatherDataId: mission.weather_data_id,
-            measurements: [{
-              id: 'temp',
-              timestamp: new Date(mission.start_time),
-              pm1: 0,
-              pm25: 0,
-              pm10: 0,
-              latitude: mission.measurements[0].latitude,
-              longitude: mission.measurements[0].longitude,
-            }]
-          };
+      const missionsWithLocation = missionsToEnrich
+        .filter(m => missionsWithLocationIds.has(m.id))
+        .map(m => ({
+          ...m,
+          measurements: measurementsWithLocation.filter(ml => ml.mission_id === m.id)
+        }));
 
-          await enrichMissionWithWeatherAndAirQuality(missionData as MissionData);
-          
-          // Add a small delay to avoid overwhelming the APIs
-          await new Promise(resolve => setTimeout(resolve, 1000));
+      if (missionsWithLocation.length === 0) {
+        logger.debug('ℹ️ No missions with location data found');
+        return;
+      }
+
+      logger.debug(`🔄 Enriching ${missionsWithLocation.length} missions in batches of ${BATCH_SIZE}`);
+
+      // Process in batches with throttling
+      for (let i = 0; i < missionsWithLocation.length; i += BATCH_SIZE) {
+        const batch = missionsWithLocation.slice(i, i + BATCH_SIZE);
+        
+        logger.debug(`📦 Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(missionsWithLocation.length / BATCH_SIZE)}`);
+        
+        // Process batch in parallel
+        await Promise.all(
+          batch.map(mission => {
+            if (mission.measurements?.[0]) {
+              const missionData: Partial<MissionData> = {
+                id: mission.id,
+                startTime: new Date(mission.start_time),
+                weatherDataId: mission.weather_data_id,
+                measurements: [{
+                  id: 'temp',
+                  timestamp: new Date(mission.start_time),
+                  pm1: 0,
+                  pm25: 0,
+                  pm10: 0,
+                  latitude: mission.measurements[0].latitude,
+                  longitude: mission.measurements[0].longitude,
+                }]
+              };
+              
+              return enrichMissionWithWeatherAndAirQuality(missionData as MissionData)
+                .catch(error => {
+                  logger.error(`❌ Error enriching mission ${mission.id}:`, error);
+                });
+            }
+            return Promise.resolve();
+          })
+        );
+        
+        // Delay between batches (except for last batch)
+        if (i + BATCH_SIZE < missionsWithLocation.length) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
         }
       }
 

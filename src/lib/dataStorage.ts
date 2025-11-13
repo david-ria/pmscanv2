@@ -66,133 +66,35 @@ export interface MeasurementData {
 
 class DataStorageService {
   // Get all missions (local + synced from database)
-  async getAllMissions(): Promise<MissionData[]> {
+  async getAllMissions(limit = 50, offset = 0): Promise<MissionData[]> {
     const localMissions = getLocalMissions();
 
     try {
       // Try to fetch from database if online
+      // ✅ Fetch missions WITHOUT measurements to reduce data transfer
       const { data: dbMissions, error } = await supabase
         .from('missions')
-        .select(
-          `
-          *,
-          measurements (
-            id,
-            timestamp,
-            pm1,
-            pm25,
-            pm10,
-            temperature,
-            humidity,
-            latitude,
-            longitude,
-            accuracy,
-            location_context,
-            activity_context,
-            automatic_context,
-            enriched_location,
-            geohash
-          )
-        `
-        )
-        .order('created_at', { ascending: false });
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
       if (!error && dbMissions) {
-        const formattedDbMissions = dbMissions.map(formatDatabaseMission);
+        // ✅ Format missions with empty measurements array for now (lazy loading)
+        const formattedDbMissions = dbMissions.map(dbMission => ({
+          ...formatDatabaseMission({ ...dbMission, measurements: [] }),
+          measurements: [], // Start with empty measurements - will be loaded on demand
+        }));
 
-        // Filter out database missions that have no measurements (orphaned missions)
-        // Also delete them from the database to clean up
-        const validDbMissions: MissionData[] = [];
-        const orphanedMissionIds: string[] = [];
-        
-        for (const mission of formattedDbMissions) {
-          const hasValidMeasurements = mission.measurements && mission.measurements.length > 0;
-          if (!hasValidMeasurements && mission.measurementsCount > 0) {
-            logger.warn(`🗑️ Removing orphaned mission: ${mission.name} (has ${mission.measurementsCount} in metadata but 0 actual measurements)`);
-            orphanedMissionIds.push(mission.id);
-          } else if (hasValidMeasurements) {
-            validDbMissions.push(mission);
-          }
-        }
-        
-        // Clean up orphaned missions in the background
-        if (orphanedMissionIds.length > 0) {
-          (async () => {
-            try {
-              const { error } = await supabase
-                .from('missions')
-                .delete()
-                .in('id', orphanedMissionIds);
-              
-              if (error) {
-                logger.error('Failed to delete orphaned missions:', error);
-              } else {
-                logger.debug(`✅ Cleaned up ${orphanedMissionIds.length} orphaned mission(s)`);
-              }
-            } catch (error) {
-              logger.error('Error cleaning up orphaned missions:', error);
-            }
-          })();
-        }
+        const validDbMissions: MissionData[] = formattedDbMissions;
 
         // Merge with local unsynced missions
         const unsyncedLocal = localMissions.filter((m) => !m.synced);
         const allMissions = [...unsyncedLocal, ...validDbMissions];
         
-        // Silently reload full measurements for missions with incomplete data
-        const enrichedMissions = await Promise.all(
-          allMissions.map(async (mission) => {
-            // Check if measurements are incomplete (stripped for storage optimization)
-            const isIncomplete = mission.measurements.length < mission.measurementsCount;
-            
-            if (isIncomplete && navigator.onLine && mission.synced) {
-              logger.debug(`🔄 Reloading full measurements for mission ${mission.name} (${mission.measurements.length}/${mission.measurementsCount})`);
-              
-              try {
-                // Reload only measurements from database
-                const { data: fullMeasurements, error } = await supabase
-                  .from('measurements')
-                  .select('*')
-                  .eq('mission_id', mission.id)
-                  .order('timestamp', { ascending: true });
-                
-                if (!error && fullMeasurements && fullMeasurements.length > 0) {
-                  mission.measurements = fullMeasurements.map(m => ({
-                    id: m.id,
-                    timestamp: new Date(m.timestamp),
-                    pm1: m.pm1,
-                    pm25: m.pm25,
-                    pm10: m.pm10,
-                    temperature: m.temperature ?? undefined,
-                    humidity: m.humidity ?? undefined,
-                    latitude: m.latitude ?? undefined,
-                    longitude: m.longitude ?? undefined,
-                    accuracy: m.accuracy ?? undefined,
-                    locationContext: m.location_context ?? undefined,
-                    activityContext: m.activity_context ?? undefined,
-                    automaticContext: m.automatic_context ?? undefined,
-                    enrichedLocation: m.enriched_location ?? undefined,
-                    geohash: m.geohash ?? undefined,
-                  }));
-                  
-                  logger.debug(`✅ Reloaded ${fullMeasurements.length} measurements for ${mission.name}`);
-                }
-              } catch (error) {
-                logger.debug('Failed to reload measurements, using compressed data:', error);
-              }
-            }
-            
-            // Migrate context from IDs to names for historical missions
-            mission.measurements = migrateMeasurementsContext(
-              mission.measurements, 
-              mission.groupId ? undefined : undefined // Could fetch group config here if needed
-            );
-            
-            return mission;
-          })
-        );
+        // ✅ REMOVED: Measurements are now lazy-loaded on demand, not pre-fetched
+        // This dramatically improves initial load performance
         
-        return enrichedMissions;
+        return allMissions;
       }
     } catch (error) {
       logger.debug('Database not available, using local data only:', error);
