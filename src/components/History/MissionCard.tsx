@@ -30,6 +30,14 @@ export function MissionCard({
   const { t } = useTranslation();
   const [detailsOpen, setDetailsOpen] = useState(false);
   
+  // Preload measurements on hover for faster dialog opening
+  const handleMouseEnter = async () => {
+    if (mission.measurements.length === 0) {
+      const { dataStorage } = await import('@/lib/dataStorage');
+      await dataStorage.getMissionMeasurements(mission.id);
+    }
+  };
+  
   // Debug: Log weather data info
   console.log('🌤️ MissionCard - Mission:', mission.name, 'weatherDataId:', mission.weatherDataId);
   const getQualityColor = (pm25: number) => {
@@ -67,6 +75,7 @@ export function MissionCard({
       <Card
         className="relative cursor-pointer hover:shadow-md transition-shadow"
         onClick={() => setDetailsOpen(true)}
+        onMouseEnter={handleMouseEnter}
       >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">

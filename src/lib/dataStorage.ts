@@ -115,6 +115,49 @@ class DataStorageService {
   // Storage optimization - delegate to missionManager
   stripMeasurementsFromStorage = stripMeasurementsFromStorage;
 
+  // Get measurements for a specific mission (lazy loading)
+  async getMissionMeasurements(missionId: string): Promise<MeasurementData[]> {
+    // 1. Check local storage first
+    const localMissions = getLocalMissions();
+    const localMission = localMissions.find(m => m.id === missionId);
+    
+    if (localMission && localMission.measurements.length > 0) {
+      return localMission.measurements;
+    }
+    
+    // 2. Fetch from database if not in local storage
+    try {
+      const { data, error } = await supabase
+        .from('measurements')
+        .select('*')
+        .eq('mission_id', missionId)
+        .order('timestamp', { ascending: true });
+      
+      if (error) throw error;
+      
+      return (data || []).map(m => ({
+        id: m.id,
+        timestamp: new Date(m.timestamp),
+        pm1: m.pm1,
+        pm25: m.pm25,
+        pm10: m.pm10,
+        temperature: m.temperature,
+        humidity: m.humidity,
+        latitude: m.latitude,
+        longitude: m.longitude,
+        accuracy: m.accuracy,
+        locationContext: m.location_context,
+        activityContext: m.activity_context,
+        automaticContext: m.automatic_context,
+        enrichedLocation: m.enriched_location,
+        geohash: m.geohash,
+      }));
+    } catch (error) {
+      logger.error('Failed to load mission measurements:', error);
+      return [];
+    }
+  }
+
   // Sync methods with proper debouncing
   async syncPendingMissions(): Promise<void> {
     // Clear existing timeout
