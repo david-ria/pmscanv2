@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useLocationEnrichmentSettings } from './useLocationEnrichmentSettings';
 import { useSmartLocationEnrichment } from './useSmartLocationEnrichment';
-import { useGPS } from './useGPS';
+import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
 
 /**
@@ -10,7 +10,7 @@ import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
 export function useLocationEnrichmentIntegration() {
   const { isEnabled } = useLocationEnrichmentSettings();
   const { enrichLocation, preEnrichFrequentLocations } = useSmartLocationEnrichment();
-  const { latestLocation } = useGPS(true, true);
+  const { latestLocation } = useUnifiedData();
 
   // Rate limited state logging
   rateLimitedDebug('enrichment-integration-state', 15000, '🔧 Enrichment integration state:', {
