@@ -13,6 +13,7 @@ import { useDialogs } from '@/hooks/useDialog';
 import { ConnectionStatus, PMScanDevice, LocationData } from '@/types/PMScan';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useScopedRecordingContext } from '@/hooks/useScopedRecordingContext';
+import { useGroupSettings } from '@/hooks/useGroupSettings';
 
 interface FloatingRecordButtonProps {
   device?: PMScanDevice;
@@ -41,6 +42,7 @@ export function FloatingRecordButton({
   const { toast } = useToast();
   const unifiedData = useUnifiedData();
   const { selectedLocation, setSelectedLocation, selectedActivity, setSelectedActivity } = useScopedRecordingContext();
+  const { isGroupMode, activeGroup } = useGroupSettings();
   const { dialogs, openDialog, closeDialog, getOnOpenChange } = useDialogs({
     frequency: false,
     mission: false,
@@ -156,7 +158,8 @@ export function FloatingRecordButton({
         undefined, // activityContext
         recordingFrequency,
         shareData,
-        recordingData // explicitRecordingData
+        recordingData, // explicitRecordingData
+        isGroupMode && shareData ? activeGroup?.id : undefined // groupId
       );
       
       console.log('✅ Mission saved successfully');
