@@ -45,18 +45,10 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
       return;
     }
 
-    // Calculate appropriate cache time based on recording frequency
-    let cacheTime = 60000; // Default 60 seconds
-    if (recordingFrequency) {
-      const frequencyMs = parseFrequencyToMs(recordingFrequency);
-      // Cache location data for at least the recording frequency duration
-      cacheTime = Math.max(frequencyMs, 30000); // Minimum 30 seconds
-    }
-
     const options: PositionOptions = {
       enableHighAccuracy: highAccuracy,
       timeout: 60000, // 60 seconds - very long timeout
-      maximumAge: cacheTime, // Cache based on recording frequency
+      maximumAge: 0, // Always get fresh GPS position - no caching
     };
 
     const handleSuccess = (position: GeolocationPosition) => {
@@ -65,8 +57,16 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
         longitude: position.coords.longitude,
         accuracy: position.coords.accuracy,
         altitude: position.coords.altitude || undefined,
-        timestamp: new Date(),
+        timestamp: new Date(position.timestamp), // Use GPS fix timestamp
       };
+
+      // Temporary diagnostic logging
+      console.log('🧭 GPS STATE UPDATE:', {
+        lat: locationData.latitude.toFixed(6),
+        lng: locationData.longitude.toFixed(6),
+        timestamp: locationData.timestamp.toISOString(),
+        positionTimestamp: position.timestamp
+      });
 
       // Calculate speed and GPS quality using GeoSpeedEstimator
       const { speedKmh: newSpeed, gpsQuality: newQuality } = speedEstimatorRef.current.update({

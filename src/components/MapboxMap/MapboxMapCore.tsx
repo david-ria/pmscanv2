@@ -174,7 +174,8 @@ export const MapboxMapCore = ({
       currentLocation: currentLocation ? {
         lat: currentLocation.latitude,
         lng: currentLocation.longitude,
-        accuracy: currentLocation.accuracy
+        accuracy: currentLocation.accuracy,
+        timestamp: currentLocation.timestamp
       } : null
     });
 
@@ -187,7 +188,8 @@ export const MapboxMapCore = ({
       console.log('🗺️ Creating location marker for:', {
         lat: currentLocation.latitude,
         lng: currentLocation.longitude,
-        pm25: pmData?.pm25
+        pm25: pmData?.pm25,
+        timestamp: currentLocation.timestamp
       });
       const { createLocationMarker } = await import('@/lib/mapbox/mapMarker');
       marker.current = createLocationMarker(
@@ -199,7 +201,7 @@ export const MapboxMapCore = ({
       );
       console.log('🗺️ Location marker created successfully');
     })();
-  }, [currentLocation, pmData, getAirQualityLevel, mapboxLoaded]);
+  }, [currentLocation?.latitude, currentLocation?.longitude, currentLocation?.timestamp, pmData, getAirQualityLevel, mapboxLoaded]);
 
   // Update track visualization when trackPoints change (only if map is loaded)
   useEffect(() => {
