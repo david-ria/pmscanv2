@@ -358,6 +358,14 @@
     "title": "✅ Connection Restored",
     "description": "You are back online. Syncing..."
   },
+  "sync": {
+    "success": "Synchronization successful",
+    "missionSynced": "Mission synchronized successfully",
+    "error": "Synchronization failed",
+    "missionFailed": "Unable to synchronize mission",
+    "offline": "Offline",
+    "offlineDescription": "Internet connection required"
+  },
   "graph": {
     "title": "Fine Particle Evolution (µg/m³)",
     "dataPoints": "data points",
@@ -396,6 +404,8 @@
     "export": "Export",
     "sync": "Sync",
     "local": "Local",
+    "delete": "Delete",
+    "confirmDelete": "Confirm?",
     "statistics": "Statistics",
     "noLocationData": "No location data available",
     "average": "Average",

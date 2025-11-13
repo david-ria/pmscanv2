@@ -355,6 +355,14 @@
     "title": "✅ Verbindung wiederhergestellt",
     "description": "Sie sind wieder online. Synchronisierung läuft..."
   },
+  "sync": {
+    "success": "Synchronisierung erfolgreich",
+    "missionSynced": "Mission erfolgreich synchronisiert",
+    "error": "Synchronisierung fehlgeschlagen",
+    "missionFailed": "Mission konnte nicht synchronisiert werden",
+    "offline": "Offline",
+    "offlineDescription": "Internetverbindung erforderlich"
+  },
   "graph": {
     "title": "Entwicklung der Feinstaub (µg/m³)",
     "dataPoints": "Datenpunkte",
@@ -393,6 +401,8 @@
     "export": "Exportieren",
     "sync": "Synchronisieren",
     "local": "Lokal",
+    "delete": "Löschen",
+    "confirmDelete": "Bestätigen?",
     "statistics": "Statistiken",
     "noLocationData": "Keine Standortdaten verfügbar",
     "average": "Durchschnitt",

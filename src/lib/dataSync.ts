@@ -140,24 +140,26 @@ export async function syncSingleMission(missionId: string): Promise<boolean> {
       weatherDataId = await fetchWeatherForMission(mission);
     }
 
+    const currentUser = await supabase.auth.getUser();
+    if (!currentUser.data.user) return false;
+
     const { error: missionError } = await supabase.from('missions').upsert({
       id: mission.id,
-      user_id: mission.userId,
+      user_id: currentUser.data.user.id,
       name: mission.name,
-      start_time: mission.startTime,
-      end_time: mission.endTime,
-      start_location: mission.startLocation || null,
-      end_location: mission.endLocation || null,
+      start_time: toISOString(mission.startTime),
+      end_time: toISOString(mission.endTime),
+      duration_minutes: mission.durationMinutes,
       measurements_count: mission.measurementsCount,
       weather_data_id: weatherDataId || null,
-      avg_pm25: mission.avgPM25 || null,
-      avg_pm10: mission.avgPM10 || null,
-      avg_pm1: mission.avgPM1 || null,
-      max_pm25: mission.maxPM25 || null,
-      max_pm10: mission.maxPM10 || null,
-      max_pm1: mission.maxPM1 || null,
+      avg_pm25: mission.avgPm25,
+      avg_pm10: mission.avgPm10,
+      avg_pm1: mission.avgPm1,
+      max_pm25: mission.maxPm25,
       group_id: mission.groupId || null,
       shared: mission.shared || false,
+      recording_frequency: mission.recordingFrequency,
+      device_name: mission.deviceName,
     }, { onConflict: 'id' });
 
     if (missionError) throw missionError;
@@ -166,7 +168,7 @@ export async function syncSingleMission(missionId: string): Promise<boolean> {
       const measurementsToSync = mission.measurements.map(m => ({
         id: m.id,
         mission_id: mission.id,
-        timestamp: m.timestamp,
+        timestamp: toISOString(m.timestamp),
         pm1: m.pm1,
         pm25: m.pm25,
         pm10: m.pm10,
