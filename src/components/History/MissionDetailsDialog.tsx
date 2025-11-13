@@ -54,35 +54,22 @@ export function MissionDetailsDialog({
   const { toast } = useToast();
   const { getEventsByMission } = useEvents();
   const [events, setEvents] = useState<any[]>([]);
+  const [loadingMeasurements, setLoadingMeasurements] = useState(false);
+  const [measurements, setMeasurements] = useState<any[]>([]);
   
   // Refs for capturing content
   const graphRef = useRef<HTMLDivElement>(null);
   const missionContentRef = useRef<HTMLDivElement>(null);
   
   // Context highlighting state - automatically select first available context
-  const [selectedContextType, setSelectedContextType] = useState<'location' | 'activity' | 'autocontext'>(() => {
-    if (!mission) return 'location';
-    
-    // Check for available contexts (only from measurements)
-    const hasLocationContext = mission.measurements.some(m => m.locationContext);
-    const hasActivityContext = mission.measurements.some(m => m.activityContext);
-    const hasAutoContext = mission.measurements.some(m => 
-      m.automaticContext && m.automaticContext !== 'unknown');
-    
-    // Auto-select first available context type
-    if (hasLocationContext) return 'location';
-    if (hasActivityContext) return 'activity'; 
-    if (hasAutoContext) return 'autocontext';
-    
-    return 'location';
-  });
+  const [selectedContextType, setSelectedContextType] = useState<'location' | 'activity' | 'autocontext'>('location');
 
-  // Auto-select context type when mission changes
+  // Auto-select context type when measurements change
   useEffect(() => {
-    if (mission) {
-      const hasLocationContext = mission.measurements.some(m => m.locationContext);
-      const hasActivityContext = mission.measurements.some(m => m.activityContext);
-      const hasAutoContext = mission.measurements.some(m => 
+    if (measurements.length > 0) {
+      const hasLocationContext = measurements.some(m => m.locationContext);
+      const hasActivityContext = measurements.some(m => m.activityContext);
+      const hasAutoContext = measurements.some(m => 
         m.automaticContext && m.automaticContext !== 'unknown');
       
       // Auto-select first available context type
@@ -96,7 +83,36 @@ export function MissionDetailsDialog({
         setSelectedContextType('location');
       }
     }
-  }, [mission]);
+  }, [measurements]);
+
+  // Load measurements for this mission (lazy loading)
+  useEffect(() => {
+    if (mission && open) {
+      const loadMeasurements = async () => {
+        setLoadingMeasurements(true);
+        try {
+          const { dataStorage } = await import('@/lib/dataStorage');
+          const data = await dataStorage.getMissionMeasurements(mission.id);
+          setMeasurements(data);
+        } catch (error) {
+          console.error('Failed to load measurements:', error);
+          toast({
+            title: t('errors.loadMeasurementsFailed'),
+            variant: 'destructive',
+          });
+        } finally {
+          setLoadingMeasurements(false);
+        }
+      };
+      
+      // Only load if measurements are empty
+      if (mission.measurements.length === 0) {
+        loadMeasurements();
+      } else {
+        setMeasurements(mission.measurements);
+      }
+    }
+  }, [mission, open, toast, t]);
 
   // Load events for this mission
   useEffect(() => {
@@ -493,7 +509,13 @@ export function MissionDetailsDialog({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        {loadingMeasurements ? (
+          <div className="flex items-center justify-center h-[400px]">
+            <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
+            <p className="ml-3">{t('history.loadingDetails')}</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
           {/* Map Section */}
           <Card>
             <CardHeader>
@@ -780,7 +802,8 @@ export function MissionDetailsDialog({
             </Card>
           )}
           
-        </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
