@@ -1,4 +1,4 @@
-import { Download, Share, Trash2 } from 'lucide-react';
+import { Download, Share, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,8 @@ interface MissionCardProps {
     mission: MissionData,
     shareType: 'email' | 'sms' | 'native'
   ) => void;
+  onSync: (missionId: string) => void;
+  syncing: boolean;
 }
 
 export function MissionCard({
@@ -26,8 +28,11 @@ export function MissionCard({
   onExport,
   onDelete,
   onShare,
+  onSync,
+  syncing,
 }: MissionCardProps) {
   const { t } = useTranslation();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   
   // Preload measurements on hover for faster dialog opening

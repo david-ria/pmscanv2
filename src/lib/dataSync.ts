@@ -124,6 +124,84 @@ async function fetchAirQualityForMission(mission: MissionData): Promise<string |
   return null;
 }
 
+/**
+ * Sync a single mission to Supabase
+ */
+export async function syncSingleMission(missionId: string): Promise<boolean> {
+  if (!navigator.onLine) return false;
+  
+  const localMissions = getLocalMissions();
+  const mission = localMissions.find(m => m.id === missionId);
+  if (!mission) return false;
+
+  try {
+    let weatherDataId = mission.weatherDataId;
+    if (!weatherDataId) {
+      weatherDataId = await fetchWeatherForMission(mission);
+    }
+
+    const { error: missionError } = await supabase.from('missions').upsert({
+      id: mission.id,
+      user_id: mission.userId,
+      name: mission.name,
+      start_time: mission.startTime,
+      end_time: mission.endTime,
+      start_location: mission.startLocation || null,
+      end_location: mission.endLocation || null,
+      measurements_count: mission.measurementsCount,
+      weather_data_id: weatherDataId || null,
+      avg_pm25: mission.avgPM25 || null,
+      avg_pm10: mission.avgPM10 || null,
+      avg_pm1: mission.avgPM1 || null,
+      max_pm25: mission.maxPM25 || null,
+      max_pm10: mission.maxPM10 || null,
+      max_pm1: mission.maxPM1 || null,
+      group_id: mission.groupId || null,
+      shared: mission.shared || false,
+    }, { onConflict: 'id' });
+
+    if (missionError) throw missionError;
+
+    if (mission.measurements?.length > 0) {
+      const measurementsToSync = mission.measurements.map(m => ({
+        id: m.id,
+        mission_id: mission.id,
+        timestamp: m.timestamp,
+        pm1: m.pm1,
+        pm25: m.pm25,
+        pm10: m.pm10,
+        temperature: m.temperature,
+        humidity: m.humidity,
+        latitude: m.latitude,
+        longitude: m.longitude,
+        accuracy: m.accuracy,
+        automatic_context: m.automaticContext || null,
+        location_context: m.locationContext || null,
+        activity_context: m.activityContext || null,
+        enriched_location: m.enrichedLocation || null,
+        geohash: m.geohash || null,
+      }));
+
+      const { error: measurementsError } = await supabase.from('measurements').upsert(measurementsToSync, { onConflict: 'id' });
+      if (measurementsError) throw measurementsError;
+    }
+
+    await syncEventsForMission(mission.id);
+    const isValid = await validateMissionSync(mission.id, mission.measurementsCount);
+    if (!isValid) throw new Error('Sync validation failed');
+
+    stripMeasurementsFromStorage(mission.id);
+    mission.synced = true;
+    saveMissionLocally(mission);
+    removeFromPendingSync(mission.id);
+    
+    return true;
+  } catch (error) {
+    logger.error(`Failed to sync mission ${mission.name}:`, error);
+    return false;
+  }
+}
+
 export async function syncPendingMissions(): Promise<void> {
   if (!navigator.onLine) return;
 
