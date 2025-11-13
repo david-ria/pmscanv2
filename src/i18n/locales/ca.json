@@ -66,6 +66,8 @@
     "checkEmailConfirm": "Reviseu el vostre correu per confirmar el compte",
     "emailPlaceholder": "el-vostre@email.cat",
     "passwordPlaceholder": "••••••••",
+    "pseudo": "Nom d'usuari",
+    "pseudoPlaceholder": "El vostre nom d'usuari",
     "firstNamePlaceholder": "Nom",
     "lastNamePlaceholder": "Cognoms",
     "welcome": "Benvingut",

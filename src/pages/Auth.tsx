@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, UserPlus, Wind } from 'lucide-react';
+import { LogIn, UserPlus } from 'lucide-react';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -139,9 +139,11 @@ export default function Auth() {
                   className="w-20 h-20 rounded-lg object-cover"
                 />
               ) : (
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Wind className="w-8 h-8 text-primary" />
-                </div>
+                <img 
+                  src="/lovable-uploads/83ccf48a-d0be-4ac1-9039-4c4a8295958c.png" 
+                  alt="AirSentinels logo" 
+                  className="w-20 h-20 object-contain"
+                />
               )}
             </div>
             
