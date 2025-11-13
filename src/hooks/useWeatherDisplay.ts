@@ -14,18 +14,26 @@ export interface WeatherData {
   timestamp: string;
 }
 
+// Cache global en dehors du hook
+const weatherCache = new Map<string, { data: WeatherData | null; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export function useWeatherDisplay(weatherDataId?: string) {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!weatherDataId) {
-      console.log('🌤️ useWeatherDisplay - No weatherDataId, setting data to null');
       setWeatherData(null);
       return;
     }
 
-    console.log('🌤️ useWeatherDisplay - Fetching weather data for ID:', weatherDataId);
+    // Vérifier le cache en premier
+    const cached = weatherCache.get(weatherDataId);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      setWeatherData(cached.data);
+      return;
+    }
 
     const fetchWeatherData = async () => {
       setLoading(true);
@@ -36,15 +44,15 @@ export function useWeatherDisplay(weatherDataId?: string) {
           .eq('id', weatherDataId)
           .maybeSingle();
 
-        if (error) {
-          console.warn('🌤️ useWeatherDisplay - Failed to fetch weather data:', error);
-          setWeatherData(null);
-        } else {
-          console.log('🌤️ useWeatherDisplay - Successfully fetched weather data:', data);
-          setWeatherData(data);
-        }
+        const result = error ? null : data;
+        setWeatherData(result);
+        
+        // Stocker dans le cache
+        weatherCache.set(weatherDataId, {
+          data: result,
+          timestamp: Date.now()
+        });
       } catch (error) {
-        console.warn('🌤️ useWeatherDisplay - Error fetching weather data:', error);
         setWeatherData(null);
       } finally {
         setLoading(false);

@@ -26,11 +26,7 @@ const getWeatherIcon = (weatherMain: string) => {
 export function WeatherInfo({ weatherDataId, className, compact = false }: WeatherInfoProps) {
   const { weatherData, weatherSummary, loading } = useWeatherDisplay(weatherDataId);
 
-  // Debug logging
-  console.log('🌤️ WeatherInfo - weatherDataId:', weatherDataId, 'loading:', loading, 'weatherData:', weatherData);
-
   if (!weatherDataId) {
-    console.log('🌤️ WeatherInfo - No weatherDataId provided, returning null');
     return null;
   }
 
