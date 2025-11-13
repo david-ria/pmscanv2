@@ -39,7 +39,7 @@ interface UnifiedDataState {
   updateMissionContext: (location: string, activity: string) => void;
   addDataPoint: (pmData: PMScanData, location?: LocationData, manualContext?: MissionContext, automaticContext?: string, enrichedLocation?: string, geohash?: string, weatherDataId?: string) => void;
   clearRecordingData: () => void;
-  saveMission: (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: RecordingEntry[]) => Promise<unknown>;
+  saveMission: (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: RecordingEntry[], groupId?: string) => Promise<unknown>;
 }
 
 const UnifiedDataContext = createContext<UnifiedDataState | undefined>(undefined);
@@ -122,7 +122,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     updateMissionContext: stableUpdateMissionContext,
     addDataPoint: stableAddDataPoint,
     clearRecordingData: recording.clearRecordingData,
-    saveMission: async (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: RecordingEntry[]) => {
+    saveMission: async (missionName: string, locationContext?: string, activityContext?: string, recordingFrequency?: string, shared?: boolean, explicitRecordingData?: RecordingEntry[], groupId?: string) => {
       const dataToSave = explicitRecordingData || recording.recordingData;
       const mission = await missionSaverFunction(
         dataToSave,
@@ -131,7 +131,8 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
         recordingFrequency,
         shared,
         undefined, // missionId
-        bluetooth.device?.name // deviceName
+        bluetooth.device?.name, // deviceName
+        groupId // groupId
       );
       
       // Clear recovery data after successful save
