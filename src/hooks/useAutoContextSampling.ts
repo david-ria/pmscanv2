@@ -16,7 +16,7 @@ export function useAutoContextSampling({
   const lastContextUpdateTime = useRef<Date | null>(null);
   const recordingFrequencyRef = useRef(recordingFrequency);
   const [currentAutoContext, setCurrentAutoContext] = useState<string>('');
-  const { determineContext, updateLatestContext, isEnabled: autoContextEnabled } = useAutoContext();
+  const { determineContext, updateLatestContext, isEnabled: autoContextEnabled } = useAutoContext(false);
 
   // Update ref when recordingFrequency changes
   useEffect(() => {
