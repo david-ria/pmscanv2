@@ -14,7 +14,6 @@ import {
 import { StatsCard } from '@/components/StatsCard';
 import { DateFilter } from '@/components/DateFilter';
 import { MissionCard } from '@/components/History/MissionCard';
-import { SyncButton } from '@/components/History/SyncButton';
 import { useMissionManagement } from '@/hooks/useMissionManagement';
 import { useHistoryStats } from '@/hooks/useHistoryStats';
 import { useTranslation } from 'react-i18next';
@@ -32,10 +31,16 @@ export default function History() {
     syncing,
     loadMissions,
     handleSync,
+    handleSingleSync,
     handleDelete,
     handleExport,
     handleShare,
   } = useMissionManagement();
+
+  // Load missions on component mount
+  useEffect(() => {
+    loadMissions();
+  }, [loadMissions]);
 
   // Load missions on component mount
   useEffect(() => {
@@ -97,17 +102,6 @@ export default function History() {
       <h1 className="text-3xl font-bold text-foreground mb-6">
         {t('history.title', 'Mission History')}
       </h1>
-      
-      {/* Sync Status */}
-      <div className="flex items-center justify-end mb-6">
-        <div className="flex items-center gap-2">
-          <SyncButton
-            unsyncedCount={unsyncedCount}
-            syncing={syncing}
-            onSync={handleSync}
-          />
-        </div>
-      </div>
 
       {/* Date Filter */}
       <DateFilter
@@ -151,9 +145,11 @@ export default function History() {
             <MissionCard
               key={mission.id}
               mission={mission}
-              onExport={handleExport}
-              onDelete={handleDelete}
-              onShare={handleShare}
+                  onExport={handleExport}
+                  onDelete={handleDelete}
+                  onShare={handleShare}
+                  onSync={handleSingleSync}
+                  syncing={syncing}
             />
           ))
         )}

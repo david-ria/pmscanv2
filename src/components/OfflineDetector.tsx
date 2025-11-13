@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { dataStorage } from '@/lib/dataStorage';
 
 /**
  * Component that detects online/offline status and displays appropriate toasts
@@ -29,6 +30,18 @@ export const OfflineDetector = () => {
         description: t('online.description'),
         duration: 3000,
       });
+
+      // Auto-sync pending missions after 2 seconds (silent)
+      setTimeout(async () => {
+        if (navigator.onLine) {
+          try {
+            await dataStorage.syncPendingMissions();
+            console.log('✅ Auto-sync completed successfully');
+          } catch (error) {
+            console.error('❌ Auto-sync failed:', error);
+          }
+        }
+      }, 2000);
     };
 
     // Check initial state

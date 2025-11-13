@@ -55,6 +55,42 @@ export function useMissionManagement() {
     }
   }, [loadMissions, toast]);
 
+  const handleSingleSync = useCallback(async (missionId: string) => {
+    if (!navigator.onLine) {
+      toast({
+        title: 'Hors ligne',
+        description: 'Connexion Internet requise',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const { syncSingleMission } = await import('@/lib/dataSync');
+      const success = await syncSingleMission(missionId);
+      
+      if (success) {
+        await loadMissions();
+        toast({
+          title: 'Synchronisation réussie',
+          description: 'Mission synchronisée',
+        });
+      } else {
+        throw new Error('Sync failed');
+      }
+    } catch (error) {
+      console.error('Single mission sync error:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de synchroniser',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncing(false);
+    }
+  }, [loadMissions, toast]);
+
   const handleDelete = useCallback(
     async (missionId: string) => {
       try {
@@ -190,6 +226,7 @@ PM2.5 moyenne: ${Math.round(mission.avgPm25)} µg/m³`;
     syncing,
     loadMissions,
     handleSync,
+    handleSingleSync,
     handleDelete,
     handleExport,
     handleShare,
