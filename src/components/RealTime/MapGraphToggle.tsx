@@ -91,7 +91,7 @@ export function MapGraphToggle({
       </div>
 
       {/* Content Area */}
-      <div className="h-[45vh] relative">
+      <div className="h-[45vh] relative pb-20">
         {showGraph ? (
           <PMLineGraph 
             data={recordingData} 
