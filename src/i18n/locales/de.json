@@ -66,6 +66,8 @@
     "checkEmailConfirm": "Überprüfen Sie Ihre E-Mail, um Ihr Konto zu bestätigen",
     "emailPlaceholder": "ihre@email.de",
     "passwordPlaceholder": "••••••••",
+    "pseudo": "Benutzername",
+    "pseudoPlaceholder": "Ihr Benutzername",
     "firstNamePlaceholder": "Vorname",
     "lastNamePlaceholder": "Nachname",
     "welcome": "Willkommen",
