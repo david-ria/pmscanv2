@@ -43,8 +43,6 @@ export function MissionCard({
     }
   };
   
-  // Debug: Log weather data info
-  console.log('🌤️ MissionCard - Mission:', mission.name, 'weatherDataId:', mission.weatherDataId);
   const getQualityColor = (pm25: number) => {
     if (pm25 <= 12) return 'text-air-good';
     if (pm25 <= 35) return 'text-air-moderate';
@@ -125,30 +123,55 @@ export function MissionCard({
         </CardHeader>
         <CardContent className="pt-0">
           <div
-            className="flex items-center gap-2"
+            className="grid grid-cols-4 gap-2"
             onClick={(e) => e.stopPropagation()}
           >
             <ShareDialog mission={mission} onShare={onShare}>
-              <Button variant="outline" size="sm" className="flex-1">
-                <Share className="h-3 w-3 mr-2" />
-                {t('history.share')}
+              <Button variant="outline" size="sm" className="w-full">
+                <Share className="h-3 w-3 sm:mr-2" />
+                <span className="hidden sm:inline">{t('history.share')}</span>
               </Button>
             </ShareDialog>
+            
             <Button
               variant="outline"
               size="sm"
-              className="flex-1"
+              className="w-full"
+              onClick={() => onSync(mission.id)}
+              disabled={mission.synced || !navigator.onLine || syncing}
+            >
+              <RotateCcw className={`h-3 w-3 sm:mr-2 ${syncing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{t('history.sync')}</span>
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
               onClick={() => onExport(mission)}
             >
-              <Download className="h-3 w-3 mr-2" />
-              {t('history.export')}
+              <Download className="h-3 w-3 sm:mr-2" />
+              <span className="hidden sm:inline">{t('history.export')}</span>
             </Button>
+            
             <Button
-              variant="outline"
+              variant={confirmDelete ? "destructive" : "outline"}
               size="sm"
-              onClick={() => onDelete(mission.id)}
+              className="w-full"
+              onClick={() => {
+                if (confirmDelete) {
+                  onDelete(mission.id);
+                  setConfirmDelete(false);
+                } else {
+                  setConfirmDelete(true);
+                  setTimeout(() => setConfirmDelete(false), 3000);
+                }
+              }}
             >
-              <Trash2 className="h-3 w-3" />
+              <Trash2 className="h-3 w-3 sm:mr-2" />
+              <span className="hidden sm:inline">
+                {confirmDelete ? t('history.confirmDelete') : ''}
+              </span>
             </Button>
           </div>
         </CardContent>

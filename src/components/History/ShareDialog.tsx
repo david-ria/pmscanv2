@@ -23,9 +23,9 @@ export function ShareDialog({ mission, onShare, children }: ShareDialogProps) {
   
   return (
     <ResponsiveDialog open={open} onOpenChange={setOpen}>
-      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
-        {children}
-      </Button>
+      {React.cloneElement(children as React.ReactElement, {
+        onClick: () => setOpen(true)
+      })}
       <ResponsiveDialogContent className="sm:max-w-md">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>Partager la mission</ResponsiveDialogTitle>
