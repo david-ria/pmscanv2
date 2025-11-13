@@ -355,6 +355,14 @@
     "title": "✅ Connexió restablerta",
     "description": "Estàs en línia de nou. Sincronitzant..."
   },
+  "sync": {
+    "success": "Sincronització correcta",
+    "missionSynced": "Missió sincronitzada amb èxit",
+    "error": "Error de sincronització",
+    "missionFailed": "No s'ha pogut sincronitzar la missió",
+    "offline": "Fora de línia",
+    "offlineDescription": "Es requereix connexió a Internet"
+  },
   "graph": {
     "title": "Evolució de partícules fines (µg/m³)",
     "dataPoints": "punts de dades",
@@ -393,6 +401,8 @@
     "export": "Exportar",
     "sync": "Sincronitzar",
     "local": "Local",
+    "delete": "Eliminar",
+    "confirmDelete": "Confirmar?",
     "statistics": "Estadístiques",
     "noLocationData": "No hi ha dades d'ubicació disponibles",
     "average": "Mitjana",

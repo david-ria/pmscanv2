@@ -359,6 +359,14 @@
     "title": "✅ Connexion rétablie",
     "description": "Vous êtes de nouveau en ligne. Synchronisation en cours..."
   },
+  "sync": {
+    "success": "Synchronisation réussie",
+    "missionSynced": "Mission synchronisée avec succès",
+    "error": "Échec de la synchronisation",
+    "missionFailed": "Impossible de synchroniser la mission",
+    "offline": "Hors ligne",
+    "offlineDescription": "Connexion Internet requise"
+  },
   "graph": {
     "title": "Évolution des particules fines (µg/m³)",
     "dataPoints": "points de données",
@@ -397,6 +405,8 @@
     "export": "Export",
     "sync": "Sync",
     "local": "Local",
+    "delete": "Supprimer",
+    "confirmDelete": "Confirmer?",
     "statistics": "Statistiques",
     "noLocationData": "Aucune donnée de localisation disponible",
     "average": "Moyenne",
