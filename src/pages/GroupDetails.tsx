@@ -50,7 +50,7 @@ export default function GroupDetails() {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { groups, loading } = useGroups();
+  const { groups, loading, refetch } = useGroups();
   const { isSuperAdmin } = useUserRole();
   const { features } = useSubscription();
   const { user } = useAuth();
@@ -461,7 +461,8 @@ export default function GroupDetails() {
           open={privacyDialog.open}
           onOpenChange={privacyDialog.setOpen}
           onSaved={() => {
-            window.location.reload();
+            // Refetch groups to get updated settings
+            refetch();
           }}
         />
 
