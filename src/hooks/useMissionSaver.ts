@@ -115,7 +115,7 @@ export function useMissionSaver() {
       if (measurementWithLocation?.location) {
         try {
           logger.debug('🌤️ Fetching weather data for mission...');
-          const { data, error } = await supabase.functions.invoke('fetch-weather', {
+          const { data, error } = await invokeEdgeFunction('fetch-weather', {
             body: {
               latitude: measurementWithLocation.location.latitude,
               longitude: measurementWithLocation.location.longitude,

@@ -5,6 +5,7 @@ import { addTrackPointEventListeners } from './mapEventHandlers';
 import { MAP_STYLES } from './mapStyles';
 import { loadMapState, setupMapStatePersistence } from './mapPersistence';
 import * as logger from '@/utils/logger';
+import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 
 export const initializeMap = async (
   container: HTMLDivElement,
@@ -28,7 +29,7 @@ export const initializeMap = async (
 
     logger.debug('🗺️ Step 2: Requesting Mapbox token from edge function...');
     const { data, error: tokenError } =
-      await supabase.functions.invoke('get-mapbox-token');
+      await invokeEdgeFunction('get-mapbox-token');
 
     logger.debug('🗺️ Step 3: Edge function response received:', {
       data,

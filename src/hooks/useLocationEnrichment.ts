@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 
 export interface LocationEnrichmentResult {
   enhanced_context: string | null;
@@ -28,7 +29,7 @@ export function useLocationEnrichment() {
     try {
       console.log(`🗺️ Enriching location: ${latitude}, ${longitude}`);
       
-      const { data, error: enrichError } = await supabase.functions.invoke('enhance-location-context', {
+      const { data, error: enrichError } = await invokeEdgeFunction('enhance-location-context', {
         body: {
           latitude,
           longitude,
