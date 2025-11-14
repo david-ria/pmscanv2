@@ -442,6 +442,7 @@
     "collaborativeMap": {
       "title": "Carte Collaborative du Groupe",
       "description": "Visualisation respectueuse de la vie privée des tendances de qualité de l'air du groupe",
+      "pmType": "Type de Particules",
       "loading": "Chargement des données cartographiques...",
       "noData": "Aucune donnée géohash disponible pour cette période",
       "precision": "Résolution de la Carte",

@@ -30,7 +30,8 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
   const { activeGroup } = useGroupSettings();
   
   const [pmType, setPmType] = useState<'pm1' | 'pm25' | 'pm10'>('pm25');
-  const [precision, setPrecision] = useState(6);
+  // Use group's geohash precision setting, defaulting to 6
+  const precision = activeGroup?.settings?.geohash_precision || 6;
   const [loading, setLoading] = useState(true);
   const [geohashData, setGeohashData] = useState<GeohashCell[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -251,12 +252,6 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
     }
   }, [geojsonData, mapLoaded, pmType, precision]);
 
-  const precisionLabels = {
-    5: t('analysis.collaborativeMap.precisionLow'),
-    6: t('analysis.collaborativeMap.precisionMedium'),
-    7: t('analysis.collaborativeMap.precisionHigh')
-  };
-
   if (!activeGroup) {
     return null;
   }
@@ -274,35 +269,18 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Controls */}
-        <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="pm-type-select">{t('analysis.pollutionBreakdown.pmType')}</Label>
-            <Select value={pmType} onValueChange={(v) => setPmType(v as typeof pmType)}>
-              <SelectTrigger id="pm-type-select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pm1">PM1.0</SelectItem>
-                <SelectItem value="pm25">PM2.5</SelectItem>
-                <SelectItem value="pm10">PM10</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="precision-slider">
-              {t('analysis.collaborativeMap.precision')}: {precisionLabels[precision as keyof typeof precisionLabels]}
-            </Label>
-            <Slider
-              id="precision-slider"
-              value={[precision]}
-              onValueChange={([v]) => setPrecision(v)}
-              min={5}
-              max={7}
-              step={1}
-              className="mt-2"
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="pm-type-select">{t('analysis.collaborativeMap.pmType')}</Label>
+          <Select value={pmType} onValueChange={(v) => setPmType(v as typeof pmType)}>
+            <SelectTrigger id="pm-type-select">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pm1">PM1.0</SelectItem>
+              <SelectItem value="pm25">PM2.5</SelectItem>
+              <SelectItem value="pm10">PM10</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Map */}

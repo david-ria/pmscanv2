@@ -441,6 +441,7 @@
     "collaborativeMap": {
       "title": "Collaborative Group Map",
       "description": "Privacy-preserving visualization of group air quality patterns",
+      "pmType": "Particulate Type",
       "loading": "Loading map data...",
       "noData": "No geohash data available for this period",
       "precision": "Map Resolution",
