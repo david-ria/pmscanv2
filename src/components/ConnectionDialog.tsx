@@ -17,6 +17,7 @@ interface ConnectionDialogProps {
   onConnect: () => void;
   onDisconnect: () => void;
   onRequestLocationPermission: () => Promise<boolean>;
+  onContinue?: () => void;
 }
 
 export const ConnectionDialog = ({
@@ -29,6 +30,7 @@ export const ConnectionDialog = ({
   onConnect,
   onDisconnect,
   onRequestLocationPermission,
+  onContinue,
 }: ConnectionDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -45,6 +47,7 @@ export const ConnectionDialog = ({
             onConnect={onConnect}
             onDisconnect={onDisconnect}
             onRequestLocationPermission={onRequestLocationPermission}
+            onContinue={onContinue}
           />
         </div>
       </DialogContent>

@@ -8,12 +8,14 @@ interface GPSStatusCardProps {
   locationEnabled: boolean;
   latestLocation: LocationData | null;
   onRequestPermission: () => Promise<boolean>;
+  onContinue?: () => void;
 }
 
 export const GPSStatusCard = ({
   locationEnabled,
   latestLocation,
   onRequestPermission,
+  onContinue,
 }: GPSStatusCardProps) => {
   const getAccuracyColor = (accuracy: number) => {
     if (accuracy <= 5) return 'text-success';
@@ -121,6 +123,14 @@ export const GPSStatusCard = ({
               </p>
             </div>
           </div>
+          
+          {/* Continue button */}
+          {onContinue && (
+            <Button onClick={onContinue} className="w-full gap-2">
+              <MapPin className="h-4 w-4" />
+              Continue to Recording Setup
+            </Button>
+          )}
         </div>
       )}
     </Card>
