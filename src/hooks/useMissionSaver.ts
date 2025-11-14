@@ -168,9 +168,20 @@ export function useMissionSaver() {
     }
 
     logger.debug(
-      '📁 Mission saved locally and exported to CSV. Will sync to database later.'
+      '📁 Mission saved locally and exported to CSV.'
     );
     console.log('🚨💾 === MISSION SAVE COMPLETE ===');
+
+    // Trigger silent auto-sync if online
+    if (navigator.onLine) {
+      console.log('🔄 Triggering auto-sync for newly saved mission...');
+      // Don't await - let it happen in background
+      dataStorage.syncPendingMissions().then(() => {
+        console.log('✅ Auto-sync completed for new mission');
+      }).catch((error) => {
+        console.error('⚠️ Auto-sync failed (will retry on reconnect):', error);
+      });
+    }
 
     return mission;
   }, []);
