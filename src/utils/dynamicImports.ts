@@ -67,7 +67,8 @@ export const loadTensorFlowComponents = () => import('@tensorflow/tfjs');
  * Preload critical chunks based on user interaction
  */
 export const preloadCriticalChunks = () => {
-  try { import('react-router-dom'); } catch {}
+  // Preload router chunk since navigation is likely; ignore failures (offline/dev)
+  import('react-router-dom').catch(() => {});
   // Preload UI core since it's used everywhere; ignore failures (offline/dev)
   import('@radix-ui/react-dialog').catch(() => {});
   import('@radix-ui/react-select').catch(() => {});

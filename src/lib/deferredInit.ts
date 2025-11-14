@@ -187,10 +187,16 @@ export const initServiceWorker = () => {
         // Detect if we're on Lovable preview or local dev
         const isLovablePreview = window.location.hostname.includes('lovable.app') || 
                                  window.location.hostname.includes('lovableproject.com');
-        const isDev = import.meta.env.DEV || isLovablePreview;
+        // Treat Lovable preview as non-SW environment to avoid dev-sw/runtime chunk fetches
+        if (isLovablePreview) {
+          console.debug('[PWA] Skipping Service Worker registration in Lovable preview environment');
+          return;
+        }
+        // Local dev only
+        const isDev = import.meta.env.DEV;
 
         if (isDev) {
-          // DEV or Lovable: Use virtual module for dev-sw
+          // DEV: Use virtual module for dev-sw
           const { registerSW } = await import('virtual:pwa-register');
           registerSW({
             immediate: true,
