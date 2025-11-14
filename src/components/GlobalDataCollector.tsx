@@ -7,6 +7,7 @@ import { useLocationEnrichmentIntegration } from '@/hooks/useLocationEnrichmentI
 import { useGeohashSettings } from '@/hooks/useStorage';
 import { encodeGeohash } from '@/utils/geohash';
 import { rollingBufferService } from '@/services/rollingBufferService';
+import { useGroupSettings } from '@/hooks/useGroupSettings';
 
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
@@ -60,6 +61,9 @@ export function GlobalDataCollector() {
 
   // Get geohash settings
   const { settings: geohashSettings } = useGeohashSettings();
+  
+  // Get group settings for geohash privacy
+  const { activeGroup, isGroupMode } = useGroupSettings();
 
   // Development-only debugging (rate limited)
   devLogger.debug('🔧 Location enrichment state:', {
@@ -283,23 +287,33 @@ export function GlobalDataCollector() {
         timestamp: new Date().toISOString()
       });
 
+      // Generate geohash based on group settings or personal settings
+      // When in group mode with geohash privacy enabled, use group's precision
+      const shouldGenerateGeohash = location?.latitude && location?.longitude && (
+        geohashSettings.enabled || // Personal preference
+        (isGroupMode && activeGroup?.settings?.geohash_privacy_enabled) // Group requirement
+      );
+
+      const effectiveGeohashPrecision = isGroupMode && activeGroup?.settings?.geohash_privacy_enabled
+        ? activeGroup.settings.geohash_precision || 6
+        : geohashSettings.precision;
+
+      const geohash = shouldGenerateGeohash
+        ? encodeGeohash(location.latitude, location.longitude, effectiveGeohashPrecision)
+        : undefined;
+
       // Use averaged PMScan data with current context
+      // Note: Exact GPS is ALWAYS stored for user's own data
+      // The geohash is for group privacy when data is shared with other members
       addDataPoint(
         averagedData,
         location || undefined,
         { location: selectedLocationRef.current, activity: selectedActivityRef.current },
         automaticContext,
         enrichedLocationName,
-        geohashSettings.enabled && location?.latitude && location?.longitude
-          ? encodeGeohash(location.latitude, location.longitude, geohashSettings.precision)
-          : undefined,
+        geohash,
         weatherDataId || undefined
       );
-
-      lastDataRef.current = {
-        pm25: averagedData.pm25,
-        timestamp: currentTimestamp,
-      };
     };
 
     // Collect data immediately on recording start

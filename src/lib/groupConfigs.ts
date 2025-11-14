@@ -65,6 +65,8 @@ export interface GroupConfig {
     activity_auto_suggest: boolean;
     event_notifications: boolean;
     weekly_reports: boolean;
+    geohash_privacy_enabled?: boolean;
+    geohash_precision?: number;
   };
 }
 

@@ -79,6 +79,10 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
     
     // Get the event assigned to this specific measurement
     const assignedEvent = eventAssignments.get(index.toString());
+    
+    // Check if data is privacy-protected (NULL coordinates but has geohash)
+    // This happens when viewing other users' data in privacy-enabled groups
+    const isPrivacyProtected = !m.latitude && !m.longitude && m.geohash;
 
     return [
       toISOString(measurementTime),
@@ -87,9 +91,9 @@ export async function exportMissionToCSV(mission: MissionData): Promise<void> {
       m.pm10.toFixed(1),
       m.temperature?.toFixed(1) || '',
       m.humidity?.toFixed(1) || '',
-      m.latitude?.toFixed(6) || '',
-      m.longitude?.toFixed(6) || '',
-      m.accuracy?.toFixed(0) || '',
+      isPrivacyProtected ? 'Privacy Protected' : (m.latitude?.toFixed(6) || ''),
+      isPrivacyProtected ? 'Privacy Protected' : (m.longitude?.toFixed(6) || ''),
+      isPrivacyProtected ? 'Privacy Protected' : (m.accuracy?.toFixed(0) || ''),
       m.locationContext || '',
       m.activityContext || '',
       m.automaticContext || '',
