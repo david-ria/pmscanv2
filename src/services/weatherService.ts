@@ -66,7 +66,7 @@ class WeatherService {
     try {
       logger.debug('🌤️ Fetching weather data for location:', { latitude, longitude });
       
-      const { data, error } = await supabase.functions.invoke('fetch-weather', {
+      const { data, error } = await invokeEdgeFunction('fetch-weather', {
         body: {
           latitude,
           longitude,

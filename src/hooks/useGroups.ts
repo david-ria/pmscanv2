@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { offlineAwareSupabase } from '@/lib/supabaseSafeWrapper';
+import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 
 export interface Group {
   id: string;
@@ -619,12 +620,9 @@ export const useGroupInvitations = () => {
 
   const sendInvitation = async (groupId: string, email: string) => {
     try {
-      const { error } = await supabase.functions.invoke(
-        'send-group-invitation',
-        {
-          body: { groupId, email },
-        }
-      );
+      const { error } = await invokeEdgeFunction('send-group-invitation', {
+        body: { groupId, email },
+      });
 
       if (error) throw error;
 
@@ -641,12 +639,14 @@ export const useGroupInvitations = () => {
       throw error;
     }
   };
-
   const acceptInvitation = async (token: string) => {
     try {
-      const { error } = await supabase.functions.invoke(
+      const { error } = await invokeEdgeFunction(
         'accept-group-invitation',
         {
+          body: { token },
+        }
+      );
           body: { token },
         }
       );
@@ -671,9 +671,12 @@ export const useGroupInvitations = () => {
 
   const declineInvitation = async (token: string) => {
     try {
-      const { error } = await supabase.functions.invoke(
+      const { error } = await invokeEdgeFunction(
         'decline-group-invitation',
         {
+          body: { token },
+        }
+      );
           body: { token },
         }
       );
