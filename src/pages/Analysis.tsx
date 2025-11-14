@@ -7,7 +7,9 @@ import { GroupComparison } from '@/components/Analysis/GroupComparison';
 import { CollaborativeMap } from '@/components/Analysis/CollaborativeMap';
 import { PollutionBreakdownChart } from '@/components/Analysis/PollutionBreakdown';
 import { useAnalysisLogic } from '@/components/Analysis/AnalysisLogic';
+import { usePollutionBreakdownData } from '@/components/Analysis/PollutionBreakdown/usePollutionBreakdownData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { calculateMissionStatistics } from '@/utils/missionStatistics';
 
@@ -20,21 +22,30 @@ export default function Analysis() {
   >('day');
   const [activeTab, setActiveTab] = useState<'personal' | 'group'>('personal');
   
-  // State for breakdown data from PollutionBreakdownChart
-  const [breakdownData, setBreakdownData] = useState<any[]>([]);
+  // State for breakdown controls
   const [pmType, setPmType] = useState<'pm1' | 'pm25' | 'pm10'>('pm25');
-  const [breakdownType, setBreakdownType] = useState<string>('activity');
+  const [breakdownType, setBreakdownType] = useState<'location' | 'activity' | 'autocontext'>('activity');
 
   const {
-    missions,
+    filteredMissions,
     statisticalAnalysis,
     dataPoints,
     loading,
+    loadingMeasurements,
     regenerateAnalysis,
   } = useAnalysisLogic(selectedDate, selectedPeriod, activeTab === 'personal');
 
+  // Compute breakdown data in parent
+  const breakdownData = usePollutionBreakdownData(
+    filteredMissions,
+    selectedPeriod,
+    selectedDate,
+    breakdownType,
+    pmType
+  );
+
   // Calculate user stats using unified statistics utility
-  const stats = calculateMissionStatistics(missions);
+  const stats = calculateMissionStatistics(filteredMissions);
   
   const userStats = {
     totalExposureMinutes: stats.totalExposureMinutes,
@@ -42,16 +53,6 @@ export default function Analysis() {
     maxPM25: stats.maxPm25,
     timeAboveWHO: stats.timeAboveWHO_PM25,
   };
-
-  const handleBreakdownDataChange = useCallback((data: {
-    breakdownData: any[];
-    pmType: 'pm1' | 'pm25' | 'pm10';
-    breakdownType: string;
-  }) => {
-    setBreakdownData(data.breakdownData);
-    setPmType(data.pmType);
-    setBreakdownType(data.breakdownType);
-  }, []);
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
@@ -79,24 +80,36 @@ export default function Analysis() {
 
           <TabsContent value="personal" className="space-y-4 sm:space-y-6">
             {/* Pollution Breakdown Chart */}
-            <PollutionBreakdownChart
-              missions={missions}
-              selectedPeriod={selectedPeriod}
-              selectedDate={selectedDate}
-              onBreakdownDataChange={handleBreakdownDataChange}
-            />
+            {loadingMeasurements ? (
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-[400px] w-full" />
+              </div>
+            ) : (
+              <>
+                <PollutionBreakdownChart
+                  missions={filteredMissions}
+                  selectedPeriod={selectedPeriod}
+                  selectedDate={selectedDate}
+                  pmType={pmType}
+                  breakdownType={breakdownType}
+                  onPmTypeChange={setPmType}
+                  onBreakdownTypeChange={setBreakdownType}
+                />
 
-            {/* Statistical Analysis Report */}
-            <StatisticalAnalysis
-              statisticalAnalysis={statisticalAnalysis}
-              loading={loading}
-              onRegenerate={regenerateAnalysis}
-              selectedPeriod={selectedPeriod}
-              selectedDate={selectedDate}
-              breakdownData={breakdownData}
-              pmType={pmType}
-              breakdownType={breakdownType}
-            />
+                {/* Statistical Analysis Report */}
+                <StatisticalAnalysis
+                  statisticalAnalysis={statisticalAnalysis}
+                  loading={loading}
+                  onRegenerate={regenerateAnalysis}
+                  selectedPeriod={selectedPeriod}
+                  selectedDate={selectedDate}
+                  breakdownData={breakdownData}
+                  pmType={pmType}
+                  breakdownType={breakdownType}
+                />
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="group" className="space-y-4 sm:space-y-6">
@@ -117,24 +130,36 @@ export default function Analysis() {
       ) : (
         <>
           {/* Pollution Breakdown Chart */}
-          <PollutionBreakdownChart
-            missions={missions}
-            selectedPeriod={selectedPeriod}
-            selectedDate={selectedDate}
-            onBreakdownDataChange={handleBreakdownDataChange}
-          />
+          {loadingMeasurements ? (
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-[400px] w-full" />
+            </div>
+          ) : (
+            <>
+              <PollutionBreakdownChart
+                missions={filteredMissions}
+                selectedPeriod={selectedPeriod}
+                selectedDate={selectedDate}
+                pmType={pmType}
+                breakdownType={breakdownType}
+                onPmTypeChange={setPmType}
+                onBreakdownTypeChange={setBreakdownType}
+              />
 
-          {/* Statistical Analysis Report */}
-          <StatisticalAnalysis
-            statisticalAnalysis={statisticalAnalysis}
-            loading={loading}
-            onRegenerate={regenerateAnalysis}
-            selectedPeriod={selectedPeriod}
-            selectedDate={selectedDate}
-            breakdownData={breakdownData}
-            pmType={pmType}
-            breakdownType={breakdownType}
-          />
+              {/* Statistical Analysis Report */}
+              <StatisticalAnalysis
+                statisticalAnalysis={statisticalAnalysis}
+                loading={loading}
+                onRegenerate={regenerateAnalysis}
+                selectedPeriod={selectedPeriod}
+                selectedDate={selectedDate}
+                breakdownData={breakdownData}
+                pmType={pmType}
+                breakdownType={breakdownType}
+              />
+            </>
+          )}
         </>
       )}
     </div>

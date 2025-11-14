@@ -104,6 +104,60 @@ class DataStorageService {
     return localMissions;
   }
 
+  // Bulk load measurements for multiple missions (for analysis)
+  async getMeasurementsForMissions(missionIds: string[]): Promise<Record<string, MeasurementData[]>> {
+    if (missionIds.length === 0) return {};
+
+    try {
+      const { data, error } = await supabase
+        .from('measurements')
+        .select('id, mission_id, timestamp, pm1, pm25, pm10, location_context, activity_context, automatic_context, latitude, longitude, accuracy, temperature, humidity, enriched_location, geohash')
+        .in('mission_id', missionIds)
+        .order('timestamp', { ascending: true });
+
+      if (error) {
+        logger.error('Error fetching measurements for missions:', error);
+        return {};
+      }
+
+      if (!data) return {};
+
+      // Group measurements by mission_id
+      const measurementsByMission: Record<string, MeasurementData[]> = {};
+      
+      for (const row of data) {
+        const measurement: MeasurementData = {
+          id: row.id,
+          timestamp: new Date(row.timestamp),
+          pm1: row.pm1 ?? 0,
+          pm25: row.pm25 ?? 0,
+          pm10: row.pm10 ?? 0,
+          temperature: row.temperature ?? undefined,
+          humidity: row.humidity ?? undefined,
+          latitude: row.latitude ?? undefined,
+          longitude: row.longitude ?? undefined,
+          accuracy: row.accuracy ?? undefined,
+          locationContext: row.location_context ?? undefined,
+          activityContext: row.activity_context ?? undefined,
+          automaticContext: row.automatic_context ?? undefined,
+          enrichedLocation: row.enriched_location ?? undefined,
+          geohash: row.geohash ?? undefined,
+        };
+
+        if (!measurementsByMission[row.mission_id]) {
+          measurementsByMission[row.mission_id] = [];
+        }
+        measurementsByMission[row.mission_id].push(measurement);
+      }
+
+      logger.debug(`Bulk loaded measurements for ${Object.keys(measurementsByMission).length} missions`);
+      return measurementsByMission;
+    } catch (error) {
+      logger.error('Exception fetching measurements:', error);
+      return {};
+    }
+  }
+
   // Export methods
   exportMissionToCSV = exportMissionToCSV;
   clearLocalStorage = clearLocalStorage;

@@ -14,6 +14,10 @@ interface PollutionBreakdownChartProps {
   missions: MissionData[];
   selectedPeriod: 'day' | 'week' | 'month' | 'year';
   selectedDate: Date;
+  pmType?: PMType;
+  breakdownType?: BreakdownType;
+  onPmTypeChange?: (type: PMType) => void;
+  onBreakdownTypeChange?: (type: BreakdownType) => void;
   onBreakdownDataChange?: (data: {
     breakdownData: BreakdownData[];
     pmType: PMType;
@@ -28,11 +32,35 @@ export const PollutionBreakdownChart = ({
   missions,
   selectedPeriod,
   selectedDate,
+  pmType: controlledPmType,
+  breakdownType: controlledBreakdownType,
+  onPmTypeChange,
+  onBreakdownTypeChange,
   onBreakdownDataChange,
 }: PollutionBreakdownChartProps) => {
   const { t } = useTranslation();
-  const [breakdownType, setBreakdownType] = useState<BreakdownType>('activity');
-  const [pmType, setPmType] = useState<PMType>('pm25');
+  const [internalBreakdownType, setInternalBreakdownType] = useState<BreakdownType>('activity');
+  const [internalPmType, setInternalPmType] = useState<PMType>('pm25');
+
+  // Use controlled values if provided, otherwise use internal state
+  const breakdownType = controlledBreakdownType ?? internalBreakdownType;
+  const pmType = controlledPmType ?? internalPmType;
+
+  const handleBreakdownTypeChange = (type: BreakdownType) => {
+    if (onBreakdownTypeChange) {
+      onBreakdownTypeChange(type);
+    } else {
+      setInternalBreakdownType(type);
+    }
+  };
+
+  const handlePmTypeChange = (type: PMType) => {
+    if (onPmTypeChange) {
+      onPmTypeChange(type);
+    } else {
+      setInternalPmType(type);
+    }
+  };
 
   const breakdownData = usePollutionBreakdownData(
     missions,
@@ -83,10 +111,10 @@ export const PollutionBreakdownChart = ({
         </p>
 
         <div className="space-y-4">
-          <PMTypeSelector pmType={pmType} onPMTypeChange={setPmType} />
+          <PMTypeSelector pmType={pmType} onPMTypeChange={handlePmTypeChange} />
           <BreakdownTypeSelector
             breakdownType={breakdownType}
-            onBreakdownTypeChange={setBreakdownType}
+            onBreakdownTypeChange={handleBreakdownTypeChange}
           />
         </div>
       </CardHeader>
