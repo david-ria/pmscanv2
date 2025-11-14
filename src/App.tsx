@@ -22,9 +22,7 @@ const Auth = lazy(() => import('./pages/Auth'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Lazy load heavy components
-const Header = lazy(() => 
-  import('@/components/Header').then(module => ({ default: module.Header }))
-);
+const Header = lazy(() => import('@/components/Header'));
 const BottomNavigation = lazy(() => 
   import('@/components/BottomNavigation').then(module => ({ default: module.BottomNavigation }))
 );

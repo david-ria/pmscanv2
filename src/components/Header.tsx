@@ -17,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 
-export function Header() {
+export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
