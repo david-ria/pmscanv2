@@ -523,7 +523,7 @@ export function MissionDetailsDialog({
             </CardHeader>
             <CardContent className="space-y-4">
               <GraphContextSelector
-                mission={mission}
+                measurements={measurements}
                 selectedContextType={selectedContextType}
                 onContextTypeChange={setSelectedContextType}
               />
