@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DateFilter } from '@/components/DateFilter';
 import { StatisticalAnalysis } from '@/components/Analysis/StatisticalAnalysis';
@@ -43,7 +43,7 @@ export default function Analysis() {
     timeAboveWHO: stats.timeAboveWHO_PM25,
   };
 
-  const handleBreakdownDataChange = (data: {
+  const handleBreakdownDataChange = useCallback((data: {
     breakdownData: any[];
     pmType: 'pm1' | 'pm25' | 'pm10';
     breakdownType: string;
@@ -51,7 +51,7 @@ export default function Analysis() {
     setBreakdownData(data.breakdownData);
     setPmType(data.pmType);
     setBreakdownType(data.breakdownType);
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
