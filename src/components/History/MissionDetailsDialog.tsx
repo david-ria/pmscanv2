@@ -536,6 +536,7 @@ export function MissionDetailsDialog({
                   hideTitle={true}
                   highlightContextType={selectedContextType}
                   missionContext={{}}
+                  variant="history"
                 />
               </div>
             </CardContent>
