@@ -199,42 +199,42 @@ export default function RealTime() {
       <h1 className="sr-only">AirSentinels - Real-time Air Quality Monitoring</h1>
       
       {/* Map/Graph Section */}
-      <div className="relative">
-        {isRecording || localStorage.getItem('recording-confirmed') === 'true' ? (
-          <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
-            <MapGraphToggle
-              showGraph={showGraph}
-              onToggleView={setShowGraph}
-              isOnline={isOnline}
-              latestLocation={latestLocation}
-              currentData={currentData}
-              recordingData={recordingData}
-              events={currentEvents}
-              isRecording={isRecording}
-              device={device}
-              isConnected={isConnected}
-              onConnect={requestDevice}
-              onDisconnect={disconnect}
-              onRequestLocationPermission={unifiedData.requestLocationPermission}
-              locationEnabled={locationEnabled}
-            />
-          </Suspense>
-        ) : (
-          <MapPlaceholder
+      {isRecording || localStorage.getItem('recording-confirmed') === 'true' ? (
+        <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
+          <MapGraphToggle
             showGraph={showGraph}
             onToggleView={setShowGraph}
             isOnline={isOnline}
+            latestLocation={latestLocation}
+            currentData={currentData}
+            recordingData={recordingData}
+            events={currentEvents}
+            isRecording={isRecording}
             device={device}
             isConnected={isConnected}
             onConnect={requestDevice}
             onDisconnect={disconnect}
-            
+            onRequestLocationPermission={unifiedData.requestLocationPermission}
             locationEnabled={locationEnabled}
-            latestLocation={latestLocation}
           />
-        )}
+        </Suspense>
+      ) : (
+        <MapPlaceholder
+          showGraph={showGraph}
+          onToggleView={setShowGraph}
+          isOnline={isOnline}
+          device={device}
+          isConnected={isConnected}
+          onConnect={requestDevice}
+          onDisconnect={disconnect}
+          
+          locationEnabled={locationEnabled}
+          latestLocation={latestLocation}
+        />
+      )}
 
-        {/* FloatingRecordButton - Always visible */}
+      {/* FloatingRecordButton - Always visible, positioned over map */}
+      <div className="fixed bottom-4 right-4 z-50">
         <FloatingRecordButton
           device={device}
           isConnected={isConnected}
@@ -248,7 +248,6 @@ export default function RealTime() {
           onConnect={requestDevice}
           onDisconnect={disconnect}
           onRequestLocationPermission={unifiedData.requestLocationPermission}
-          className="absolute bottom-4 right-4 z-50"
         />
       </div>
 
