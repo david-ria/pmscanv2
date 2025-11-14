@@ -47,9 +47,10 @@ interface PMLineGraphProps {
     locationContext?: string;
     activityContext?: string;
   };
+  variant?: 'realtime' | 'history';
 }
 
-export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext }: PMLineGraphProps) {
+export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext, variant = 'realtime' }: PMLineGraphProps) {
   const { t } = useTranslation();
   const { getCurrentThresholds, isGroupMode, activeGroup } = useGroupSettings();
   
@@ -333,7 +334,10 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
       <ResponsiveContainer width="100%" height="100%" minHeight={200}>
         <LineChart
           data={chartData}
-          margin={{ top: 5, right: 30, left: 0, bottom: 60 }}
+          margin={variant === 'history' 
+            ? { top: 40, right: 30, left: 10, bottom: 80 }
+            : { top: 5, right: 30, left: 0, bottom: 60 }
+          }
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
@@ -368,12 +372,13 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
             }}
           />
           <Legend 
-            verticalAlign="top"
-            align="right"
-            wrapperStyle={{ 
-              paddingTop: '0px',
-              paddingRight: '20px'
-            }}
+            verticalAlign={variant === 'history' ? "bottom" : "top"}
+            align={variant === 'history' ? "center" : "right"}
+            wrapperStyle={variant === 'history' 
+              ? { paddingBottom: '10px' }
+              : { paddingTop: '0px', paddingRight: '20px' }
+            }
+            height={variant === 'history' ? 36 : undefined}
           />
           <Line
             type="monotone"
@@ -406,8 +411,8 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
             const isShortPeriod = periodWidth < 20; // Consider periods less than 20 data points as short
             
             // Use fixed offsets so labels align horizontally across periods
-            const PM_AVG_OFFSET = 12; // PM2.5 average label offset from top
-            const CONTEXT_LABEL_OFFSET = 28; // Context label offset from top
+            const PM_AVG_OFFSET = variant === 'history' ? 8 : 12; // PM2.5 average label offset from top
+            const CONTEXT_LABEL_OFFSET = variant === 'history' ? 22 : 28; // Context label offset from top
             
             return (
               <React.Fragment key={`period-${index}`}>
