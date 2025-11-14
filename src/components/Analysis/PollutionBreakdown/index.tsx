@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 import { MissionData } from '@/lib/dataStorage';
@@ -44,14 +44,31 @@ export const PollutionBreakdownChart = ({
 
   const whoThreshold = getWHOThreshold(pmType, selectedPeriod, t);
 
+  const prevDataRef = useRef<string>('');
+
   // Notify parent component of breakdown data changes
   useEffect(() => {
     if (onBreakdownDataChange) {
-      onBreakdownDataChange({
-        breakdownData,
+      // Serialize data for comparison
+      const currentData = JSON.stringify({
+        breakdownData: breakdownData.map(d => ({
+          name: d.name,
+          avgPM: d.avgPM,
+          exposure: d.exposure
+        })),
         pmType,
-        breakdownType,
+        breakdownType
       });
+      
+      // Only notify if data actually changed
+      if (currentData !== prevDataRef.current) {
+        prevDataRef.current = currentData;
+        onBreakdownDataChange({
+          breakdownData,
+          pmType,
+          breakdownType,
+        });
+      }
     }
   }, [breakdownData, pmType, breakdownType, onBreakdownDataChange]);
 
