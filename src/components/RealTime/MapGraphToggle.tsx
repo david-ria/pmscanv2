@@ -1,3 +1,4 @@
+import React, { ReactNode } from 'react';
 import { WifiOff, Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MapboxMap } from '@/components/MapboxMap';
@@ -34,6 +35,7 @@ interface MapGraphToggleProps {
   onDisconnect: () => void;
   onRequestLocationPermission: () => Promise<boolean>;
   locationEnabled: boolean;
+  overlay?: ReactNode;
 }
 
 export function MapGraphToggle({
@@ -51,6 +53,7 @@ export function MapGraphToggle({
   onDisconnect,
   onRequestLocationPermission,
   locationEnabled,
+  overlay,
 }: MapGraphToggleProps) {
   const { t } = useTranslation();
 
@@ -91,7 +94,7 @@ export function MapGraphToggle({
       </div>
 
       {/* Content Area */}
-      <div className="h-[45vh] relative pb-20">
+      <div className="h-[45vh] relative">
         {showGraph ? (
           <PMLineGraph 
             data={recordingData} 
@@ -129,6 +132,9 @@ export function MapGraphToggle({
             )}
           </>
         )}
+        {overlay ? (
+          <div className="absolute bottom-4 right-4 z-50">{overlay}</div>
+        ) : null}
       </div>
     </div>
   );

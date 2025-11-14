@@ -1,3 +1,4 @@
+import React, { ReactNode } from 'react';
 import { Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -16,6 +17,7 @@ interface MapPlaceholderProps {
   
   locationEnabled: boolean;
   latestLocation: LocationData | null;
+  overlay?: ReactNode;
 }
 
 export function MapPlaceholder({ 
@@ -28,7 +30,8 @@ export function MapPlaceholder({
   onDisconnect,
   
   locationEnabled,
-  latestLocation
+  latestLocation,
+  overlay
 }: MapPlaceholderProps) {
   const { t } = useTranslation();
 
@@ -68,7 +71,9 @@ export function MapPlaceholder({
             </p>
           </div>
         </div>
-
+        {overlay ? (
+          <div className="absolute bottom-4 right-4 z-50">{overlay}</div>
+        ) : null}
       </div>
     </div>
   );
