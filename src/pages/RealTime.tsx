@@ -248,7 +248,7 @@ export default function RealTime() {
           onConnect={requestDevice}
           onDisconnect={disconnect}
           onRequestLocationPermission={unifiedData.requestLocationPermission}
-          className="absolute bottom-4 right-4 z-10"
+          className="absolute bottom-4 right-4 z-50"
         />
       </div>
 
