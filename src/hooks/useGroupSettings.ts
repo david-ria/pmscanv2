@@ -153,6 +153,8 @@ const createGroupConfigFromDB = (group: Group): GroupConfig => {
       activity_auto_suggest: group.group_settings?.[0]?.activity_auto_suggest ?? false,
       event_notifications: group.group_settings?.[0]?.event_notifications ?? true,
       weekly_reports: group.group_settings?.[0]?.weekly_reports ?? false,
+      geohash_privacy_enabled: (group.group_settings?.[0] as any)?.geohash_privacy_enabled ?? false,
+      geohash_precision: (group.group_settings?.[0] as any)?.geohash_precision ?? 6,
     },
   };
 };

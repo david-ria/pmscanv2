@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Settings, 
   Users, 
@@ -13,7 +14,10 @@ import {
   Bell,
   Crown,
   QrCode,
-  UserPlus
+  UserPlus,
+  Shield,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { useGroups, type Group } from '@/hooks/useGroups';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -24,6 +28,7 @@ import { GroupAlarmsDialog } from './GroupAlarmsDialog';
 import { GroupEventsDialog } from './GroupEventsDialog';
 import { GroupLocationsDialog } from './GroupLocationsDialog';
 import { InviteUserDialog } from './InviteUserDialog';
+import { GroupPrivacyDialog } from './GroupPrivacyDialog';
 import { useDialog } from '@/hooks/useDialog';
 
 interface GroupAdminDashboardProps {
@@ -40,6 +45,7 @@ export function GroupAdminDashboard({ group }: GroupAdminDashboardProps) {
   const eventsDialog = useDialog();
   const locationsDialog = useDialog();
   const inviteDialog = useDialog();
+  const privacyDialog = useDialog();
 
   const memberUsage = group.member_quota 
     ? Math.round((members.length / group.member_quota) * 100)
@@ -160,9 +166,10 @@ export function GroupAdminDashboard({ group }: GroupAdminDashboardProps) {
 
       {/* Management Tabs */}
       <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
           <TabsTrigger value="settings">Settings</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="privacy">Privacy</TabsTrigger>
           <TabsTrigger value="thresholds">Thresholds</TabsTrigger>
           <TabsTrigger value="alarms">Alarms</TabsTrigger>
           <TabsTrigger value="locations">Locations</TabsTrigger>
@@ -244,6 +251,62 @@ export function GroupAdminDashboard({ group }: GroupAdminDashboardProps) {
             isPremium={true}
           />
         </TabsContent>
+
+        <TabsContent value="privacy" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                <CardTitle>Data Privacy</CardTitle>
+              </div>
+              <CardDescription>
+                Control location data privacy for group members
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Privacy status badge */}
+              <div className="mb-4">
+                {(group.group_settings?.[0] as any)?.geohash_privacy_enabled ? (
+                  <Badge variant="default" className="bg-green-600">
+                    <Lock className="h-3 w-3 mr-1" />
+                    Privacy Protected (Level {(group.group_settings[0] as any).geohash_precision || 6})
+                  </Badge>
+                ) : (
+                  <Badge variant="outline">
+                    <Unlock className="h-3 w-3 mr-1" />
+                    Exact GPS Shared
+                  </Badge>
+                )}
+              </div>
+
+              {/* Privacy explanation */}
+              <div className="text-sm text-muted-foreground space-y-2">
+                <p className="font-medium">When geohash privacy is enabled:</p>
+                <ul className="list-disc ml-5 space-y-1">
+                  <li>Members see their own exact GPS coordinates</li>
+                  <li>Other members see aggregated location data (geohash cells)</li>
+                  <li>Minimum 3 measurements per cell for group statistics</li>
+                  <li>Applied to group analysis and collaborative maps</li>
+                </ul>
+              </div>
+
+              {!(group.group_settings?.[0] as any)?.geohash_privacy_enabled && (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Exact GPS coordinates are currently shared with all group members. 
+                    Enable geohash privacy for better location protection.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <Button onClick={privacyDialog.openDialog} className="w-full">
+                <Settings className="h-4 w-4 mr-2" />
+                Configure Privacy Settings
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Dialogs */}
@@ -276,6 +339,18 @@ export function GroupAdminDashboard({ group }: GroupAdminDashboardProps) {
         groupName={group.name}
         open={inviteDialog.open}
         onOpenChange={inviteDialog.setOpen}
+      />
+
+      <GroupPrivacyDialog
+        groupId={group.id}
+        currentEnabled={(group.group_settings?.[0] as any)?.geohash_privacy_enabled || false}
+        currentPrecision={(group.group_settings?.[0] as any)?.geohash_precision || 6}
+        open={privacyDialog.open}
+        onOpenChange={privacyDialog.setOpen}
+        onSaved={() => {
+          // Refresh group data after saving
+          window.location.reload();
+        }}
       />
     </div>
   );

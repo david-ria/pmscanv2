@@ -359,6 +359,8 @@ export type Database = {
           default_activity: string | null
           default_location: string | null
           event_notifications: boolean | null
+          geohash_precision: number | null
+          geohash_privacy_enabled: boolean | null
           group_id: string
           id: string
           location_auto_detect: boolean | null
@@ -378,6 +380,8 @@ export type Database = {
           default_activity?: string | null
           default_location?: string | null
           event_notifications?: boolean | null
+          geohash_precision?: number | null
+          geohash_privacy_enabled?: boolean | null
           group_id: string
           id?: string
           location_auto_detect?: boolean | null
@@ -397,6 +401,8 @@ export type Database = {
           default_activity?: string | null
           default_location?: string | null
           event_notifications?: boolean | null
+          geohash_precision?: number | null
+          geohash_privacy_enabled?: boolean | null
           group_id?: string
           id?: string
           location_auto_detect?: boolean | null
@@ -975,6 +981,48 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      measurements_group_view: {
+        Row: {
+          accuracy: number | null
+          activity_context: string | null
+          automatic_context: string | null
+          created_at: string | null
+          date_utc: string | null
+          enriched_location: string | null
+          external_humidity: number | null
+          external_temperature: number | null
+          geohash: string | null
+          group_geohash_precision: number | null
+          group_privacy_active: boolean | null
+          humidity: number | null
+          id: string | null
+          is_own_data: boolean | null
+          latitude: number | null
+          location_context: string | null
+          longitude: number | null
+          mission_id: string | null
+          particles_02_05: number | null
+          particles_05_10: number | null
+          particles_10_25: number | null
+          particles_25_50: number | null
+          particles_50_100: number | null
+          pm1: number | null
+          pm10: number | null
+          pm25: number | null
+          temperature: number | null
+          timestamp: string | null
+          timestamp_epoch_ms: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "measurements_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
