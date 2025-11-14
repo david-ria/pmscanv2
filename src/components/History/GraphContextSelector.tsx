@@ -2,28 +2,27 @@ import React from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from 'react-i18next';
-import { MissionData } from '@/lib/dataStorage';
 
 type ContextType = 'location' | 'activity' | 'autocontext';
 
 interface GraphContextSelectorProps {
-  mission: MissionData;
+  measurements: any[];
   selectedContextType: ContextType;
   onContextTypeChange: (type: ContextType) => void;
 }
 
 export function GraphContextSelector({
-  mission,
+  measurements,
   selectedContextType,
   onContextTypeChange,
 }: GraphContextSelectorProps) {
   const { t } = useTranslation();
 
-  // Check what context data is available (only from measurements)
+  // Check what context data is available from measurements
   const availableContexts = React.useMemo(() => {
-    const hasLocationContext = mission.measurements.some(m => m.locationContext);
-    const hasActivityContext = mission.measurements.some(m => m.activityContext);
-    const hasAutoContext = mission.measurements.some(m => 
+    const hasLocationContext = measurements.some(m => m.locationContext);
+    const hasActivityContext = measurements.some(m => m.activityContext);
+    const hasAutoContext = measurements.some(m => 
       m.automaticContext && m.automaticContext !== 'unknown');
     
     return {
@@ -31,7 +30,7 @@ export function GraphContextSelector({
       activity: hasActivityContext,
       autocontext: hasAutoContext
     };
-  }, [mission]);
+  }, [measurements]);
 
   return (
     <div className="mb-4">
