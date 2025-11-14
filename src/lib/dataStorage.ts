@@ -23,6 +23,7 @@ const SYNC_DEBOUNCE_MS = 5000; // 5 seconds
 
 export interface MissionData {
   id: string;
+  userId?: string; // User who created this mission
   name: string;
   startTime: Date;
   endTime: Date;

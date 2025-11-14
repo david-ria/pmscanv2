@@ -77,6 +77,7 @@ export function saveLocalMissions(missions: MissionData[]): void {
 
 export function formatDatabaseMission(dbMission: {
   id: string;
+  user_id?: string; // Include user_id from database
   name: string;
   start_time: string;
   end_time: string;
@@ -112,6 +113,7 @@ export function formatDatabaseMission(dbMission: {
 }): MissionData {
   return {
     id: dbMission.id,
+    userId: dbMission.user_id, // Map user_id to userId
     name: dbMission.name,
     startTime: new Date(dbMission.start_time),
     endTime: new Date(dbMission.end_time),

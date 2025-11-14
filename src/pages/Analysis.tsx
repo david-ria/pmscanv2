@@ -31,7 +31,7 @@ export default function Analysis() {
     dataPoints,
     loading,
     regenerateAnalysis,
-  } = useAnalysisLogic(selectedDate, selectedPeriod);
+  } = useAnalysisLogic(selectedDate, selectedPeriod, activeTab === 'personal');
 
   // Calculate user stats using unified statistics utility
   const stats = calculateMissionStatistics(missions);
