@@ -61,14 +61,6 @@ export function FloatingRecordButton({
   // Extract recording start time from recording data
   const recordingStartTime = recordingData.length > 0 ? recordingData[0]?.timestamp : null;
 
-  // Auto-proceed to frequency selection when device becomes connected
-  useEffect(() => {
-    if (isConnected && dialogs.connection) {
-      closeDialog('connection');
-      openDialog('frequency');
-    }
-  }, [isConnected, dialogs.connection, closeDialog, openDialog]);
-
   // Timer effect for recording duration
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -294,6 +286,10 @@ export function FloatingRecordButton({
         onConnect={onConnect}
         onDisconnect={onDisconnect}
         onRequestLocationPermission={onRequestLocationPermission}
+        onContinue={() => {
+          closeDialog('connection');
+          openDialog('frequency');
+        }}
       />
     </div>
   );

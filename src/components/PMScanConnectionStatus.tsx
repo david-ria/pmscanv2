@@ -10,6 +10,7 @@ interface PMScanConnectionStatusProps {
   onConnect: () => void;
   onDisconnect: () => void;
   onRequestLocationPermission: () => Promise<boolean>;
+  onContinue?: () => void;
   className?: string;
 }
 
@@ -21,6 +22,7 @@ export const PMScanConnectionStatus = ({
   onConnect,
   onDisconnect,
   onRequestLocationPermission,
+  onContinue,
   className,
 }: PMScanConnectionStatusProps) => {
   if (!connectionStatus.connected) {
@@ -56,6 +58,7 @@ export const PMScanConnectionStatus = ({
           locationEnabled={locationEnabled}
           latestLocation={latestLocation}
           onRequestPermission={onRequestLocationPermission}
+          onContinue={onContinue}
         />
       </div>
     </div>
