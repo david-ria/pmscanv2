@@ -6,30 +6,22 @@ import { Toaster } from '@/components/ui/toaster';
 import { AppProviders } from '@/components/AppProviders';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-// Import and initialize Sentry observability
+// Import utilities
+import { shouldInitExternalServices } from '@/utils/environmentDetection';
+import { initGlobalErrorHandler } from '@/utils/globalErrorHandler';
 import { initSentry } from '@/observability/sentry';
 
 import App from './App.tsx';
 import './index.css';
+import { PreviewModeIndicator } from '@/components/PreviewModeIndicator';
 
-// Initialize Sentry (only in production with explicit opt-in)
-initSentry();
+// Initialize global error handler first to catch and filter preview errors
+initGlobalErrorHandler();
 
-// Global error handlers for production debugging
-window.addEventListener('error', (event) => {
-  console.error('🔴 Global error:', event.error || event.message);
-  console.error('🔴 Error details:', {
-    message: event.message,
-    filename: event.filename,
-    lineno: event.lineno,
-    colno: event.colno
-  });
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-  console.error('🔴 Unhandled promise rejection:', event.reason);
-  console.error('🔴 Promise:', event.promise);
-});
+// Initialize Sentry only in production (skip in Lovable preview to avoid CSP errors)
+if (shouldInitExternalServices()) {
+  initSentry();
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,6 +77,7 @@ createRoot(document.getElementById('root')!).render(
         <ThemeProvider>
           <AppProviders>
             <App />
+            <PreviewModeIndicator />
           </AppProviders>
           <Toaster />
         </ThemeProvider>
