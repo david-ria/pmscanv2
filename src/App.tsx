@@ -263,13 +263,6 @@ const AppRoutes = () => {
                   
                   {/* Storage monitoring for capacity alerts */}
                   <StorageMonitor />
-                  
-                  {/* Keep chart alive across pages - hidden but still mounted */}
-                  <div className={location.pathname === '/' ? 'hidden' : 'hidden absolute -top-[9999px]'}>
-                    <Suspense fallback={null}>
-                      <PMLineGraph data={[]} events={[]} className="h-64" />
-                    </Suspense>
-                  </div>
                 </div>
               </Suspense>
             </UnifiedDataProvider>
