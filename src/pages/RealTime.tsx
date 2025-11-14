@@ -198,72 +198,59 @@ export default function RealTime() {
     <main role="main" className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
       <h1 className="sr-only">AirSentinels - Real-time Air Quality Monitoring</h1>
       
-      {/* Map/Graph Section */}
-      {isRecording || localStorage.getItem('recording-confirmed') === 'true' ? (
-        <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse mb-4" />}>
-          <MapGraphToggle
+      {/* Map/Graph Section with Floating Record Button */}
+      <div className="relative mb-4">
+        {isRecording || localStorage.getItem('recording-confirmed') === 'true' ? (
+          <Suspense fallback={<div className="h-64 bg-muted/20 rounded-lg animate-pulse" />}>
+            <MapGraphToggle
+              showGraph={showGraph}
+              onToggleView={setShowGraph}
+              isOnline={isOnline}
+              latestLocation={latestLocation}
+              currentData={currentData}
+              recordingData={recordingData}
+              events={currentEvents}
+              isRecording={isRecording}
+              device={device}
+              isConnected={isConnected}
+              onConnect={requestDevice}
+              onDisconnect={disconnect}
+              onRequestLocationPermission={unifiedData.requestLocationPermission}
+              locationEnabled={locationEnabled}
+            />
+          </Suspense>
+        ) : (
+          <MapPlaceholder
             showGraph={showGraph}
             onToggleView={setShowGraph}
             isOnline={isOnline}
-            latestLocation={latestLocation}
-            currentData={currentData}
-            recordingData={recordingData}
-            events={currentEvents}
-            isRecording={isRecording}
             device={device}
             isConnected={isConnected}
             onConnect={requestDevice}
             onDisconnect={disconnect}
-            onRequestLocationPermission={unifiedData.requestLocationPermission}
             locationEnabled={locationEnabled}
-            overlay={(
-              <FloatingRecordButton
-                device={device}
-                isConnected={isConnected}
-                connectionStatus={{
-                  connected: isConnected,
-                  connecting: false,
-                  error: null,
-                }}
-                locationEnabled={locationEnabled}
-                latestLocation={latestLocation}
-                onConnect={requestDevice}
-                onDisconnect={disconnect}
-                onRequestLocationPermission={unifiedData.requestLocationPermission}
-              />
-            )}
+            latestLocation={latestLocation}
           />
-        </Suspense>
-      ) : (
-        <MapPlaceholder
-          showGraph={showGraph}
-          onToggleView={setShowGraph}
-          isOnline={isOnline}
-          device={device}
-          isConnected={isConnected}
-          onConnect={requestDevice}
-          onDisconnect={disconnect}
-          
-          locationEnabled={locationEnabled}
-          latestLocation={latestLocation}
-          overlay={(
-            <FloatingRecordButton
-              device={device}
-              isConnected={isConnected}
-              connectionStatus={{
-                connected: isConnected,
-                connecting: false,
-                error: null,
-              }}
-              locationEnabled={locationEnabled}
-              latestLocation={latestLocation}
-              onConnect={requestDevice}
-              onDisconnect={disconnect}
-              onRequestLocationPermission={unifiedData.requestLocationPermission}
-            />
-          )}
-        />
-      )}
+        )}
+        
+        {/* Floating Record Button - positioned over map/graph but not nested inside */}
+        <div className="absolute bottom-4 right-4 z-50">
+          <FloatingRecordButton
+            device={device}
+            isConnected={isConnected}
+            connectionStatus={{
+              connected: isConnected,
+              connecting: false,
+              error: null,
+            }}
+            locationEnabled={locationEnabled}
+            latestLocation={latestLocation}
+            onConnect={requestDevice}
+            onDisconnect={disconnect}
+            onRequestLocationPermission={unifiedData.requestLocationPermission}
+          />
+        </div>
+      </div>
 
       {/* Air Quality Cards - Critical for LCP */}
       <div className="mb-4">
