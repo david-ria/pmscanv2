@@ -80,6 +80,11 @@ export function GlobalDataCollector() {
   const updateContextRef = useRef(updateContextIfNeeded);
   const getWeatherRef = useRef(getWeatherForMeasurement);
 
+  // Refs to avoid stale closure in setInterval (fix for GPS not updating)
+  const currentDataRef = useRef(currentData);
+  const latestLocationRef = useRef(latestLocation);
+  const speedRef = useRef(speedKmh);
+
   // Mettre à jour les refs quand les fonctions changent
   useEffect(() => {
     enrichLocationRef.current = enrichLocation;
@@ -92,6 +97,19 @@ export function GlobalDataCollector() {
   useEffect(() => {
     getWeatherRef.current = getWeatherForMeasurement;
   }, [getWeatherForMeasurement]);
+
+  // Keep GPS refs in sync with latest values (prevents stale closure)
+  useEffect(() => {
+    currentDataRef.current = currentData;
+  }, [currentData]);
+
+  useEffect(() => {
+    latestLocationRef.current = latestLocation;
+  }, [latestLocation]);
+
+  useEffect(() => {
+    speedRef.current = speedKmh;
+  }, [speedKmh]);
 
   // Get user's manual context selections from shared scoped hook
   // This ensures consistency with RealTime page and proper mode isolation
@@ -165,14 +183,16 @@ export function GlobalDataCollector() {
 
     // Collect data function that runs at controlled intervals
     const collectData = async () => {
-      // Read current data from unifiedData directly (not from deps)
-      const data = unifiedData.currentData;
-      const location = unifiedData.latestLocation;
-      const speed = unifiedData.speedKmh;
+      // Read from refs to avoid stale closure
+      const data = currentDataRef.current;
+      const location = latestLocationRef.current;
+      const speed = speedRef.current;
 
       rateLimitedDebug('data-collection-interval', 3000, '🔍 Interval data collection:', {
         hasData: !!data,
-        hasLocation: !!location
+        hasLocation: !!location,
+        lat: location?.latitude.toFixed(6),
+        lng: location?.longitude.toFixed(6)
       });
 
       if (!data) {
