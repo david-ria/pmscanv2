@@ -335,7 +335,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
         <LineChart
           data={chartData}
           margin={variant === 'history' 
-            ? { top: 40, right: 30, left: 10, bottom: 80 }
+            ? { top: 40, right: 30, left: 10, bottom: 45 }
             : { top: 5, right: 30, left: 0, bottom: 60 }
           }
         >
