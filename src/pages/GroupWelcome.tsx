@@ -274,7 +274,7 @@ export default function GroupWelcome() {
             <Button 
               onClick={() => {
                 const returnPath = `/groups/${groupId}/welcome${joinToken ? `?join=${joinToken}` : ''}`;
-                navigate(`/auth?redirect=${encodeURIComponent(returnPath)}${publicGroupInfo?.name ? `&groupName=${encodeURIComponent(publicGroupInfo.name)}` : ''}`);
+                navigate(`/auth?redirect=${encodeURIComponent(returnPath)}${publicGroupInfo?.name ? `&groupName=${encodeURIComponent(publicGroupInfo.name)}` : ''}${publicGroupInfo?.logo_url ? `&groupLogo=${encodeURIComponent(publicGroupInfo.logo_url)}` : ''}`);
               }} 
               className="w-full"
             >
