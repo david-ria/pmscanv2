@@ -13,6 +13,7 @@ import {
   Edit3,
   Loader2,
   Trash2,
+  Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +44,7 @@ import { EditGroupDialog } from '@/components/Groups/EditGroupDialog';
 import { InviteUserDialog } from '@/components/Groups/InviteUserDialog';
 import { GroupSubscriptionDialog } from '@/components/Groups/GroupSubscriptionDialog';
 import { GroupLogoUpload } from '@/components/Groups/GroupLogoUpload';
+import { GroupPrivacyDialog } from '@/components/Groups/GroupPrivacyDialog';
 
 export default function GroupDetails() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -63,6 +65,7 @@ export default function GroupDetails() {
   const editDialog = useDialog();
   const inviteDialog = useDialog();
   const subscriptionDialog = useDialog();
+  const privacyDialog = useDialog();
 
   useEffect(() => {
     if (!loading && groups.length > 0 && groupId) {
@@ -331,6 +334,13 @@ export default function GroupDetails() {
               isPremium={true}
               disabled={!features.customAlarms}
             />
+            
+            <ManagementOption
+              icon={Shield}
+              title={t('groups.details.privacySettings')}
+              description={t('groups.details.privacyDescription')}
+              onClick={privacyDialog.openDialog}
+            />
           </div>
         </div>
 
@@ -442,6 +452,17 @@ export default function GroupDetails() {
           group={group}
           open={subscriptionDialog.open}
           onOpenChange={subscriptionDialog.setOpen}
+        />
+
+        <GroupPrivacyDialog
+          groupId={group.id}
+          currentEnabled={group.group_settings?.[0]?.geohash_privacy_enabled || false}
+          currentPrecision={group.group_settings?.[0]?.geohash_precision || 6}
+          open={privacyDialog.open}
+          onOpenChange={privacyDialog.setOpen}
+          onSaved={() => {
+            window.location.reload();
+          }}
         />
 
         <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>

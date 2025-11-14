@@ -173,7 +173,9 @@
       "locationsActivities": "Standorte & Aktivitäten",
       "locationsDescription": "Benutzerdefinierte Standorte und Aktivitätstypen für Ihre Gruppe konfigurieren",
       "eventTypes": "Ereignistypen",
-      "eventDescription": "Benutzerdefinierte Ereignistypen für verbesserte Datenerfassung erstellen"
+      "eventDescription": "Benutzerdefinierte Ereignistypen für verbesserte Datenerfassung erstellen",
+      "privacySettings": "Datenschutz",
+      "privacyDescription": "Standort-Datenschutz für geteilte Missionen konfigurieren"
     },
     "monitoring": {
       "title": "Überwachungseinstellungen",
