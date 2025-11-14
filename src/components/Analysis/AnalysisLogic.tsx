@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { dataStorage, MissionData } from '@/lib/dataStorage';
 import {
@@ -56,12 +56,14 @@ export const useAnalysisLogic = (
   const [statisticalAnalysis, setStatisticalAnalysis] = useState<string>('');
   const [dataPoints, setDataPoints] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingMeasurements, setLoadingMeasurements] = useState(false);
   const [analysisGenerated, setAnalysisGenerated] = useState(false);
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const [eventAnalysisData, setEventAnalysisData] = useState<EventAnalysisData[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
   const { getEventsByMission } = useEvents();
+  const loadedMissionIds = useRef<Set<string>>(new Set());
 
   // Filter missions based on selected date and period
   const filteredMissions = useMemo(() => {
@@ -91,29 +93,21 @@ export const useAnalysisLogic = (
 
     let filtered = missions.filter((mission) => {
       const missionDate = new Date(mission.startTime);
-      const isInRange = isWithinInterval(missionDate, {
+      return isWithinInterval(missionDate, {
         start: startDate,
         end: endDate,
       });
-
-      // Debug each mission filtering
-      logger.debug(
-        `Mission "${mission.name}": start=${mission.startTime}, parsed=${missionDate.toISOString()}, inRange=${isInRange}, duration=${mission.durationMinutes}`
-      );
-
-      return isInRange;
     });
 
     // NEW: Filter by current user if requested (Personal tab)
     if (filterByCurrentUser && currentUserId) {
       filtered = filtered.filter(m => m.userId === currentUserId);
-      logger.debug(
-        `Filtered to current user only: ${filtered.length} missions (user: ${currentUserId})`
-      );
     }
 
-    logger.debug(
-      `Filtered ${filtered.length} out of ${missions.length} missions for period ${selectedPeriod}`
+    logger.rateLimitedDebug(
+      'analysis-filter-summary',
+      5000,
+      `Analysis filter: ${filtered.length} of ${missions.length} missions for ${selectedPeriod}, user filter: ${filterByCurrentUser}`
     );
     return filtered;
   }, [missions, selectedDate, selectedPeriod, filterByCurrentUser, currentUserId]);
@@ -146,6 +140,38 @@ export const useAnalysisLogic = (
     };
     loadUserId();
   }, []);
+
+  // Bulk load measurements for filtered missions
+  useEffect(() => {
+    const loadMeasurements = async () => {
+      const missingMissions = filteredMissions.filter(
+        m => m.measurements.length === 0 && !loadedMissionIds.current.has(m.id)
+      );
+
+      if (missingMissions.length === 0) return;
+
+      setLoadingMeasurements(true);
+      try {
+        const missionIds = missingMissions.map(m => m.id);
+        const measurementsByMission = await dataStorage.getMeasurementsForMissions(missionIds);
+
+        // Merge measurements into missions
+        setMissions(prev => prev.map(m => {
+          if (measurementsByMission[m.id]) {
+            loadedMissionIds.current.add(m.id);
+            return { ...m, measurements: measurementsByMission[m.id] };
+          }
+          return m;
+        }));
+      } catch (error) {
+        logger.error('Error loading measurements:', error);
+      } finally {
+        setLoadingMeasurements(false);
+      }
+    };
+
+    loadMeasurements();
+  }, [filteredMissions]);
 
   const loadActivityData = useCallback(() => {
     try {
@@ -719,9 +745,11 @@ ${eventAnalysisData.some(e => e.eventImpact > 50)
 
   return {
     missions,
+    filteredMissions,
     statisticalAnalysis,
     dataPoints,
     loading,
+    loadingMeasurements,
     analysisGenerated,
     activityData,
     eventAnalysisData,
