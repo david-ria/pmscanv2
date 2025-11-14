@@ -324,21 +324,16 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
   return (
     <div className={`bg-card border border-border rounded-lg p-4 ${className}`}>
       {!hideTitle && (
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-foreground">
-            {t('graph.title')}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {chartData.length} {t('graph.dataPoints')} • {t('graph.lastMeasurement')}:{' '}
-            {chartData[chartData.length - 1]?.timestamp}
-          </p>
+        <div className="mb-2 text-xs text-muted-foreground space-y-0.5">
+          <div>{chartData.length} {t('graph.dataPoints')}</div>
+          <div>{t('graph.lastMeasurement')}: {chartData[chartData.length - 1]?.timestamp}</div>
         </div>
       )}
 
       <ResponsiveContainer width="100%" height="100%" minHeight={200}>
         <LineChart
           data={chartData}
-          margin={{ top: 100, right: 5, left: 0, bottom: 80 }}
+          margin={{ top: 5, right: 30, left: 0, bottom: 60 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
@@ -373,10 +368,11 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
             }}
           />
           <Legend 
+            verticalAlign="top"
+            align="right"
             wrapperStyle={{ 
-              zIndex: 20,
-              position: 'relative',
-              paddingTop: '10px'
+              paddingTop: '0px',
+              paddingRight: '20px'
             }}
           />
           <Line
@@ -410,8 +406,8 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
             const isShortPeriod = periodWidth < 20; // Consider periods less than 20 data points as short
             
             // Use fixed offsets so labels align horizontally across periods
-            const PM_AVG_OFFSET = 28; // PM2.5 average label offset from top
-            const CONTEXT_LABEL_OFFSET = 48; // Context label offset from top
+            const PM_AVG_OFFSET = 12; // PM2.5 average label offset from top
+            const CONTEXT_LABEL_OFFSET = 28; // Context label offset from top
             
             return (
               <React.Fragment key={`period-${index}`}>
@@ -492,7 +488,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                     fill: '#f97316',
                     textAnchor: 'start',
                     fontWeight: 'bold',
-                    offset: 100 + (eventIndex * 20),
+                    offset: 15 + (eventIndex * 20),
                     style: {
                       textShadow: '1px 1px 2px rgba(255,255,255,0.9)',
                       fontWeight: 'bold',
