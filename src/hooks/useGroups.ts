@@ -641,15 +641,9 @@ export const useGroupInvitations = () => {
   };
   const acceptInvitation = async (token: string) => {
     try {
-      const { error } = await invokeEdgeFunction(
-        'accept-group-invitation',
-        {
-          body: { token },
-        }
-      );
-          body: { token },
-        }
-      );
+      const { error } = await invokeEdgeFunction('accept-group-invitation', {
+        body: { token },
+      });
 
       if (error) throw error;
 
@@ -671,15 +665,9 @@ export const useGroupInvitations = () => {
 
   const declineInvitation = async (token: string) => {
     try {
-      const { error } = await invokeEdgeFunction(
-        'decline-group-invitation',
-        {
-          body: { token },
-        }
-      );
-          body: { token },
-        }
-      );
+      const { error } = await invokeEdgeFunction('decline-group-invitation', {
+        body: { token },
+      });
 
       if (error) throw error;
 
