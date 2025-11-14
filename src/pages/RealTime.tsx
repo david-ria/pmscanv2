@@ -216,6 +216,22 @@ export default function RealTime() {
             onDisconnect={disconnect}
             onRequestLocationPermission={unifiedData.requestLocationPermission}
             locationEnabled={locationEnabled}
+            overlay={(
+              <FloatingRecordButton
+                device={device}
+                isConnected={isConnected}
+                connectionStatus={{
+                  connected: isConnected,
+                  connecting: false,
+                  error: null,
+                }}
+                locationEnabled={locationEnabled}
+                latestLocation={latestLocation}
+                onConnect={requestDevice}
+                onDisconnect={disconnect}
+                onRequestLocationPermission={unifiedData.requestLocationPermission}
+              />
+            )}
           />
         </Suspense>
       ) : (
@@ -230,26 +246,24 @@ export default function RealTime() {
           
           locationEnabled={locationEnabled}
           latestLocation={latestLocation}
+          overlay={(
+            <FloatingRecordButton
+              device={device}
+              isConnected={isConnected}
+              connectionStatus={{
+                connected: isConnected,
+                connecting: false,
+                error: null,
+              }}
+              locationEnabled={locationEnabled}
+              latestLocation={latestLocation}
+              onConnect={requestDevice}
+              onDisconnect={disconnect}
+              onRequestLocationPermission={unifiedData.requestLocationPermission}
+            />
+          )}
         />
       )}
-
-      {/* FloatingRecordButton - Always visible, positioned over map */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <FloatingRecordButton
-          device={device}
-          isConnected={isConnected}
-          connectionStatus={{
-            connected: isConnected,
-            connecting: false,
-            error: null,
-          }}
-          locationEnabled={locationEnabled}
-          latestLocation={latestLocation}
-          onConnect={requestDevice}
-          onDisconnect={disconnect}
-          onRequestLocationPermission={unifiedData.requestLocationPermission}
-        />
-      </div>
 
       {/* Air Quality Cards - Critical for LCP */}
       <div className="mb-4">
