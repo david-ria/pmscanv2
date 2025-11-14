@@ -39,11 +39,7 @@ export function WeatherInfo({ weatherDataId, className, compact = false }: Weath
   }
 
   if (!weatherData) {
-    return (
-      <div className={`text-xs text-muted-foreground ${className}`}>
-        Weather: {weatherDataId.slice(0, 8)}...
-      </div>
-    );
+    return null;
   }
 
   if (compact) {
