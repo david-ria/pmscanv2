@@ -184,8 +184,21 @@ export async function syncSingleMission(missionId: string): Promise<boolean> {
         geohash: m.geohash || null,
       }));
 
-      const { error: measurementsError } = await supabase.from('measurements').upsert(measurementsToSync, { onConflict: 'id' });
-      if (measurementsError) throw measurementsError;
+      // Batch measurements into chunks of 500 to avoid payload size limits
+      const BATCH_SIZE = 500;
+      for (let i = 0; i < measurementsToSync.length; i += BATCH_SIZE) {
+        const batch = measurementsToSync.slice(i, i + BATCH_SIZE);
+        const { error: measurementsError } = await supabase
+          .from('measurements')
+          .upsert(batch, { onConflict: 'id' });
+        
+        if (measurementsError) {
+          logger.error(`❌ Error syncing batch ${i}-${i + batch.length} for mission ${mission.id}:`, measurementsError);
+          throw measurementsError;
+        }
+        
+        logger.debug(`✅ Synced batch ${i / BATCH_SIZE + 1} of ${Math.ceil(measurementsToSync.length / BATCH_SIZE)} (${batch.length} measurements)`);
+      }
     }
 
     await syncEventsForMission(mission.id);
@@ -310,11 +323,21 @@ export async function syncPendingMissions(): Promise<void> {
           geohash: m.geohash, // NEW: Include geohash in sync
         }));
 
-        const { error: measurementsError } = await supabase
-          .from('measurements')
-          .upsert(measurementsToInsert);
+        // Batch measurements into chunks of 500 to avoid payload size limits
+        const BATCH_SIZE = 500;
+        for (let i = 0; i < measurementsToInsert.length; i += BATCH_SIZE) {
+          const batch = measurementsToInsert.slice(i, i + BATCH_SIZE);
+          const { error: measurementsError } = await supabase
+            .from('measurements')
+            .upsert(batch);
 
-        if (measurementsError) throw measurementsError;
+          if (measurementsError) {
+            logger.error(`❌ Error syncing batch ${i}-${i + batch.length} for mission ${mission.id}:`, measurementsError);
+            throw measurementsError;
+          }
+          
+          logger.debug(`✅ Synced batch ${i / BATCH_SIZE + 1} of ${Math.ceil(measurementsToInsert.length / BATCH_SIZE)} (${batch.length} measurements)`);
+        }
 
         // Sync events for this mission
         const eventsSuccess = await syncEventsForMission(mission.id);
