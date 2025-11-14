@@ -30,6 +30,8 @@ export interface Group {
     activity_auto_suggest?: boolean;
     event_notifications?: boolean;
     weekly_reports?: boolean;
+    geohash_privacy_enabled?: boolean;
+    geohash_precision?: number;
   }>;
   group_events?: Array<{
     id: string;
@@ -158,7 +160,7 @@ export const useGroups = () => {
           groupIds.length
             ? supabase
                 .from('group_settings')
-                .select('group_id, custom_alarms, pm25_threshold, pm10_threshold, pm1_threshold, alarm_enabled, auto_share_stats, notification_frequency, location_auto_detect, activity_auto_suggest, event_notifications, weekly_reports')
+                .select('group_id, custom_alarms, pm25_threshold, pm10_threshold, pm1_threshold, alarm_enabled, auto_share_stats, notification_frequency, location_auto_detect, activity_auto_suggest, event_notifications, weekly_reports, geohash_privacy_enabled, geohash_precision')
                 .in('group_id', groupIds)
             : supabase.from('group_settings').select('group_id').limit(0)
         ),

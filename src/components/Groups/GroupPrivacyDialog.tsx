@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ResponsiveDialog, ResponsiveDialogContent, ResponsiveDialogHeader, ResponsiveDialogTitle, ResponsiveDialogDescription } from '@/components/ui/responsive-dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -33,17 +33,27 @@ export function GroupPrivacyDialog({
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
+  // Sync local state with props when dialog opens
+  useEffect(() => {
+    if (open) {
+      setEnabled(currentEnabled);
+      setPrecision(currentPrecision);
+    }
+  }, [open, currentEnabled, currentPrecision]);
+
   const handleSave = async () => {
     try {
       setSaving(true);
       
       const { error } = await supabase
         .from('group_settings')
-        .update({
+        .upsert({
+          group_id: groupId,
           geohash_privacy_enabled: enabled,
           geohash_precision: precision,
-        })
-        .eq('group_id', groupId);
+        }, { 
+          onConflict: 'group_id' 
+        });
 
       if (error) throw error;
 
