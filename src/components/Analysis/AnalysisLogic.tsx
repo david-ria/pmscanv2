@@ -17,6 +17,7 @@ import * as logger from '@/utils/logger';
 import { useEvents } from '@/hooks/useEvents';
 import { getRespiratoryRate } from '@/lib/respiratoryRates';
 import { calculateMissionStatistics } from '@/utils/missionStatistics';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AnalysisData {
   totalMissions: number;
@@ -47,7 +48,8 @@ interface EventAnalysisData {
 
 export const useAnalysisLogic = (
   selectedDate: Date,
-  selectedPeriod: 'day' | 'week' | 'month' | 'year'
+  selectedPeriod: 'day' | 'week' | 'month' | 'year',
+  filterByCurrentUser: boolean = false // NEW: Filter by current user (for Personal tab)
 ) => {
   const { t } = useTranslation();
   const [missions, setMissions] = useState<MissionData[]>([]);
@@ -57,6 +59,7 @@ export const useAnalysisLogic = (
   const [analysisGenerated, setAnalysisGenerated] = useState(false);
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const [eventAnalysisData, setEventAnalysisData] = useState<EventAnalysisData[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
   const { getEventsByMission } = useEvents();
 
@@ -86,7 +89,7 @@ export const useAnalysisLogic = (
         return missions;
     }
 
-    const filtered = missions.filter((mission) => {
+    let filtered = missions.filter((mission) => {
       const missionDate = new Date(mission.startTime);
       const isInRange = isWithinInterval(missionDate, {
         start: startDate,
@@ -101,11 +104,19 @@ export const useAnalysisLogic = (
       return isInRange;
     });
 
+    // NEW: Filter by current user if requested (Personal tab)
+    if (filterByCurrentUser && currentUserId) {
+      filtered = filtered.filter(m => m.userId === currentUserId);
+      logger.debug(
+        `Filtered to current user only: ${filtered.length} missions (user: ${currentUserId})`
+      );
+    }
+
     logger.debug(
       `Filtered ${filtered.length} out of ${missions.length} missions for period ${selectedPeriod}`
     );
     return filtered;
-  }, [missions, selectedDate, selectedPeriod]);
+  }, [missions, selectedDate, selectedPeriod, filterByCurrentUser, currentUserId]);
 
   const loadMissions = useCallback(async () => {
     try {
@@ -120,6 +131,21 @@ export const useAnalysisLogic = (
       });
     }
   }, [toast, t]);
+
+  // Load current user ID
+  useEffect(() => {
+    const loadUserId = async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (data.user) {
+          setCurrentUserId(data.user.id);
+        }
+      } catch (error) {
+        logger.error('Error loading user ID:', error);
+      }
+    };
+    loadUserId();
+  }, []);
 
   const loadActivityData = useCallback(() => {
     try {
