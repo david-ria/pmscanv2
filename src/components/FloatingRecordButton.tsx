@@ -51,7 +51,7 @@ export function FloatingRecordButton({
   
   const [recordingFrequency, setRecordingFrequency] = useState<string>('10s');
   const [missionName, setMissionName] = useState<string>('');
-  const [shareData, setShareData] = useState<boolean>(false);
+  const [shareData, setShareData] = useState<boolean>(isGroupMode);
   const [recordingTime, setRecordingTime] = useState<number>(0);
   
 
@@ -164,7 +164,7 @@ export function FloatingRecordButton({
       });
 
       setMissionName('');
-      setShareData(false);
+      setShareData(isGroupMode);
     } catch (error) {
       console.error('❌ Error saving mission:', error);
       const errorMessage =
@@ -182,7 +182,7 @@ export function FloatingRecordButton({
     closeDialog('mission');
 
     setMissionName('');
-    setShareData(false);
+    setShareData(isGroupMode);
 
     toast({
       title: t('modals.missionDetails.delete'),
