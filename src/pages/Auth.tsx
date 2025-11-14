@@ -26,9 +26,17 @@ export default function Auth() {
   
   const redirectPath = searchParams.get('redirect');
   const groupName = searchParams.get('groupName');
+  const groupLogoParam = searchParams.get('groupLogo');
 
   // Fetch group logo if we have a group context
   useEffect(() => {
+    // If logo URL is provided in params, use it directly
+    if (groupLogoParam) {
+      setGroupLogo(groupLogoParam);
+      return;
+    }
+
+    // Otherwise, fetch from database as fallback
     const fetchGroupLogo = async () => {
       if (!groupName || !redirectPath) return;
       
@@ -55,7 +63,7 @@ export default function Auth() {
     };
 
     fetchGroupLogo();
-  }, [groupName, redirectPath]);
+  }, [groupName, redirectPath, groupLogoParam]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
