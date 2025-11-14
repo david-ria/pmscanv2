@@ -3,6 +3,7 @@ import { LocationData } from '@/types/PMScan';
 import { MissionData } from '@/lib/dataStorage';
 import * as logger from '@/utils/logger';
 import { createEpochMs, type EpochMs } from '@/utils/timestamp';
+import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 
 export interface WeatherData {
   id: string;

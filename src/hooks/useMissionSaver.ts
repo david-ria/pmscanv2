@@ -4,6 +4,7 @@ import { RecordingEntry } from '@/types/recording';
 import { createTimestamp } from '@/utils/timeFormat';
 import * as logger from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 
 export function useMissionSaver() {
   
