@@ -1,8 +1,13 @@
-# PMScan V2 - Architecture Documentation
+# PMScan V3.1 - Architecture Documentation
 
 ## Project Overview
 
-PMScan V2 is a progressive web application for air quality monitoring using Bluetooth-connected PM sensors. Built with React, TypeScript, and Tailwind CSS, the app provides real-time monitoring, data logging, and analysis capabilities.
+PMScan V3.1 is a progressive web application for air quality monitoring using Bluetooth-connected PM sensors. Built with React, TypeScript, and Tailwind CSS, the app provides real-time monitoring, data logging, and analysis capabilities.
+
+### Version 3.1 Release Notes
+- **Fixed**: GPS position now updates continuously during recording (resolved stale closure bug in GlobalDataCollector)
+- **Fixed**: Geohash privacy settings now properly sync and persist in group settings
+- **Improved**: Enhanced GPS tracking reliability with ref-based state management
 
 ## Technology Stack
 
