@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import Bottleneck from 'bottleneck';
 import { supabase } from '@/integrations/supabase/client';
 import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
-import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 import { 
   LocationPoint, 
   EnrichmentCache, 
@@ -199,7 +198,7 @@ export function useSmartLocationEnrichment() {
       devLogger.debug(`🗺️ API enriching location: ${location.latitude}, ${location.longitude}`);
       
       // Add 5 second timeout to prevent blocking
-      const enrichPromise = invokeEdgeFunction('enhance-location-context', {
+      const enrichPromise = supabase.functions.invoke('enhance-location-context', {
         body: {
           latitude: location.latitude,
           longitude: location.longitude,

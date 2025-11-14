@@ -8,7 +8,6 @@ import { saveMissionLocally, stripMeasurementsFromStorage } from './missionManag
 import { MissionData } from './dataStorage';
 import * as logger from '@/utils/logger';
 import { toISOString } from '@/utils/timeFormat';
-import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 
 // Function to fetch weather data for a mission
 async function fetchWeatherForMission(mission: MissionData): Promise<string | null> {
@@ -24,7 +23,7 @@ async function fetchWeatherForMission(mission: MissionData): Promise<string | nu
     }
 
     // Fetch weather data
-    const { data, error } = await invokeEdgeFunction('fetch-weather', {
+    const { data, error } = await supabase.functions.invoke('fetch-weather', {
       body: {
         latitude: measurementWithLocation.latitude,
         longitude: measurementWithLocation.longitude,

@@ -3,7 +3,6 @@ import { LocationData } from '@/types/PMScan';
 import { MissionData } from '@/lib/dataStorage';
 import * as logger from '@/utils/logger';
 import { createEpochMs, type EpochMs } from '@/utils/timestamp';
-import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 
 export interface WeatherData {
   id: string;
@@ -67,7 +66,7 @@ class WeatherService {
     try {
       logger.debug('🌤️ Fetching weather data for location:', { latitude, longitude });
       
-      const { data, error } = await invokeEdgeFunction('fetch-weather', {
+      const { data, error } = await supabase.functions.invoke('fetch-weather', {
         body: {
           latitude,
           longitude,

@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import * as logger from '@/utils/logger';
-import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 
 interface WeatherData {
   id: string;
@@ -48,7 +47,7 @@ export function useWeatherData() {
       logger.debug('🌤️ Fetching weather data for location:', location);
       
       // Add 15 second timeout to prevent blocking
-      const weatherPromise = invokeEdgeFunction('fetch-weather', {
+      const weatherPromise = supabase.functions.invoke('fetch-weather', {
         body: {
           latitude: location.latitude,
           longitude: location.longitude,

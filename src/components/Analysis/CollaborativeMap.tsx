@@ -10,7 +10,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { decodeGeohash } from '@/utils/geohash';
-import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 
 interface GeohashCell {
   geohash_cell: string;
@@ -140,7 +139,7 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
     const initMap = async () => {
       const mapboxglModule = await import('mapbox-gl');
       mapboxgl.current = mapboxglModule.default;
-      const token = await invokeEdgeFunction('get-mapbox-token');
+      const token = await supabase.functions.invoke('get-mapbox-token');
       
       if (!token.data?.token) {
         setError('Failed to load map token');

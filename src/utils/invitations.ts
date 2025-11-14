@@ -1,6 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
 import { generateGroupUrl } from '@/lib/groupConfigs';
-import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 
 /**
  * Create a shareable join link with token for a group
@@ -10,7 +9,7 @@ export async function createGroupJoinLink(
   groupName?: string,
   expirationHours?: number
 ): Promise<{ url: string; token: string; expiresAt: string }> {
-  const { data, error } = await invokeEdgeFunction('create-group-join-link', {
+  const { data, error } = await supabase.functions.invoke('create-group-join-link', {
     body: { groupId, expirationHours },
   });
 
@@ -39,7 +38,7 @@ export async function joinGroupByToken(token: string): Promise<{
   groupName?: string;
   alreadyMember?: boolean;
 }> {
-  const { data, error } = await invokeEdgeFunction('join-group-by-token', {
+  const { data, error } = await supabase.functions.invoke('join-group-by-token', {
     body: { token },
   });
 
@@ -66,7 +65,7 @@ export async function getPublicGroupInfo(
   description: string | null;
   logo_url: string | null;
 }> {
-  const { data, error } = await invokeEdgeFunction('get-public-group-info', {
+  const { data, error } = await supabase.functions.invoke('get-public-group-info', {
     body: { groupId, token },
   });
 

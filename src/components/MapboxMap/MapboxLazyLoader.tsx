@@ -7,7 +7,6 @@ import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { LazyMapboxWrapper } from './LazyMapboxWrapper';
 import { Skeleton } from '@/components/ui/skeleton';
-import { shouldInitExternalServices } from '@/utils/environmentDetection';
 
 interface MapboxLazyLoaderProps {
   onMapReady?: (map: any) => void;
@@ -23,10 +22,6 @@ export function MapboxLazyLoader({ onMapReady, className }: MapboxLazyLoaderProp
     // Example: Fetch Mapbox token from Supabase edge function
     const fetchMapToken = async () => {
       try {
-        if (!shouldInitExternalServices()) {
-          setMapToken('');
-          return;
-        }
         const { data } = await supabase.functions.invoke('get-mapbox-token');
         setMapToken(data?.token || '');
       } catch (error) {

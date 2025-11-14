@@ -67,12 +67,13 @@ export const loadTensorFlowComponents = () => import('@tensorflow/tfjs');
  * Preload critical chunks based on user interaction
  */
 export const preloadCriticalChunks = () => {
-  // Preload router chunk since navigation is likely; ignore failures (offline/dev)
-  import('react-router-dom').catch(() => {});
-  // Preload UI core since it's used everywhere; ignore failures (offline/dev)
-  import('@radix-ui/react-dialog').catch(() => {});
-  import('@radix-ui/react-select').catch(() => {});
-  import('@radix-ui/react-tabs').catch(() => {});
+  // Preload router chunk since navigation is likely
+  import('react-router-dom');
+  
+  // Preload UI core since it's used everywhere
+  import('@radix-ui/react-dialog');
+  import('@radix-ui/react-select');
+  import('@radix-ui/react-tabs');
 };
 
 /**
@@ -81,18 +82,22 @@ export const preloadCriticalChunks = () => {
 export const preloadRouteChunks = (route: string) => {
   switch (route) {
     case '/analysis':
-      // Preload analysis-specific chunks (best-effort)
-      import('recharts').catch(() => {});
+      // Preload analysis-specific chunks
+      loadAnalysisComponents();
+      import('recharts');
       break;
     case '/history':
-      // Preload history-specific chunks (best-effort)
-      import('date-fns').catch(() => {});
+      // Preload history-specific chunks
+      loadMapboxComponents();
+      import('date-fns');
       break;
     case '/groups':
-      // Preload group management chunks (best-effort)
+      // Preload group management chunks
+      loadGroupComponents();
       break;
     default:
-      // For real-time page, preload sensor-related chunks (best-effort)
+      // For real-time page, preload sensor-related chunks
+      loadBluetoothComponents();
       break;
   }
 };

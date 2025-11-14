@@ -96,24 +96,12 @@ export function GlobalDataCollector() {
   // Refs to track latest context values (prevents stale closure in collectData)
   const selectedLocationRef = useRef(selectedLocation);
   const selectedActivityRef = useRef(selectedActivity);
-  
-  // Refs to track latest GPS values (prevents stale closure in collectData)
-  const latestLocationRef = useRef(latestLocation);
-  const speedKmhRef = useRef(speedKmh);
-  const gpsQualityRef = useRef(gpsQuality);
 
   // Keep refs in sync with latest context values
   useEffect(() => {
     selectedLocationRef.current = selectedLocation;
     selectedActivityRef.current = selectedActivity;
   }, [selectedLocation, selectedActivity]);
-  
-  // Keep GPS refs in sync with latest values
-  useEffect(() => {
-    latestLocationRef.current = latestLocation;
-    speedKmhRef.current = speedKmh;
-    gpsQualityRef.current = gpsQuality;
-  }, [latestLocation, speedKmh, gpsQuality]);
 
   // 🔁 Keep recordingService.missionContext in sync with current selection while recording
   useEffect(() => {
@@ -175,8 +163,8 @@ export function GlobalDataCollector() {
     const collectData = async () => {
       // Read current data from unifiedData directly (not from deps)
       const data = unifiedData.currentData;
-      const location = latestLocationRef.current;
-      const speed = speedKmhRef.current;
+      const location = unifiedData.latestLocation;
+      const speed = unifiedData.speedKmh;
 
       rateLimitedDebug('data-collection-interval', 3000, '🔍 Interval data collection:', {
         hasData: !!data,

@@ -17,27 +17,6 @@ const trackImport = (moduleName: string) => {
 };
 
 /**
- * Resilient dynamic import wrapper with error handling
- * Prevents console spam in Lovable preview environment
- */
-const resilientImport = async <T>(
-  importFn: () => Promise<T>,
-  moduleName: string
-): Promise<T | null> => {
-  try {
-    const module = await importFn();
-    trackImport(moduleName);
-    return module;
-  } catch (error: any) {
-    // Gracefully handle module loading errors (e.g., 404s in preview)
-    if (import.meta.env.DEV) {
-      console.debug(`[Dynamic Import] Failed to load ${moduleName}:`, error.message);
-    }
-    return null;
-  }
-};
-
-/**
  * Mapbox GL dynamic import with CSS
  */
 export const loadMapboxGL = async () => {
@@ -46,22 +25,17 @@ export const loadMapboxGL = async () => {
   }
 
   console.debug('[PERF] Loading Mapbox GL dynamically...');
+  trackImport('mapbox-gl');
   
-  const result = await resilientImport(
-    async () => {
-      await import('mapbox-gl/dist/mapbox-gl.css');
-      const mapboxModule = await import('mapbox-gl');
-      return mapboxModule.default;
-    },
-    'mapbox-gl'
-  );
+  // Load CSS first, then JS
+  await import('mapbox-gl/dist/mapbox-gl.css');
+  const mapboxModule = await import('mapbox-gl');
   
-  if (result) {
-    moduleCache.set('mapbox-gl', result);
-    console.debug('[PERF] Mapbox GL and CSS loaded');
-  }
+  const mapbox = mapboxModule.default;
+  moduleCache.set('mapbox-gl', mapbox);
+  console.debug('[PERF] Mapbox GL and CSS loaded');
   
-  return result;
+  return mapbox;
 };
 
 /**
@@ -73,21 +47,16 @@ export const loadSupabaseClient = async () => {
   }
 
   console.debug('[PERF] Loading Supabase client dynamically...');
+  trackImport('supabase');
   
-  const result = await resilientImport(
-    async () => {
-      const { supabase } = await import('@/integrations/supabase/client');
-      return { supabase };
-    },
-    'supabase'
-  );
+  // Use the existing shared client instead of creating a new one
+  const { supabase } = await import('@/integrations/supabase/client');
+
+  const client = { supabase };
+  moduleCache.set('supabase-client', client);
+  console.debug('[PERF] Supabase client loaded');
   
-  if (result) {
-    moduleCache.set('supabase-client', result);
-    console.debug('[PERF] Supabase client loaded');
-  }
-  
-  return result;
+  return client;
 };
 
 /**
@@ -113,40 +82,35 @@ export const loadChartLibrary = async () => {
   }
 
   console.debug('[PERF] Loading charts library (optimized components)...');
+  trackImport('recharts');
   
-  const result = await resilientImport(
-    async () => {
-      const [
-        { LineChart, BarChart, PieChart, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer },
-        { Cell }
-      ] = await Promise.all([
-        import('recharts'),
-        import('recharts')
-      ]);
-      
-      return {
-        LineChart,
-        BarChart, 
-        PieChart,
-        AreaChart,
-        XAxis,
-        YAxis,
-        CartesianGrid,
-        Tooltip,
-        Legend,
-        ResponsiveContainer,
-        Cell
-      };
-    },
-    'recharts'
-  );
+  // Import only the specific components we need instead of the entire library
+  const [
+    { LineChart, BarChart, PieChart, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer },
+    { Cell }
+  ] = await Promise.all([
+    import('recharts'),
+    import('recharts')
+  ]);
   
-  if (result) {
-    moduleCache.set('recharts', result);
-    console.debug('[PERF] Charts library loaded (optimized)');
-  }
+  const recharts = {
+    LineChart,
+    BarChart, 
+    PieChart,
+    AreaChart,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+    Cell
+  };
   
-  return result;
+  moduleCache.set('recharts', recharts);
+  console.debug('[PERF] Charts library loaded (optimized)');
+  
+  return recharts;
 };
 
 /**
@@ -158,24 +122,17 @@ export const loadPDFLibrary = async () => {
   }
 
   console.debug('[PERF] Loading PDF libraries...');
+  trackImport('pdf');
+  const [jsPDF, html2canvas] = await Promise.all([
+    import('jspdf'),
+    import('html2canvas')
+  ]);
   
-  const result = await resilientImport(
-    async () => {
-      const [jsPDF, html2canvas] = await Promise.all([
-        import('jspdf'),
-        import('html2canvas')
-      ]);
-      return { jsPDF: jsPDF.default, html2canvas: html2canvas.default };
-    },
-    'pdf'
-  );
+  const pdfLibs = { jsPDF: jsPDF.default, html2canvas: html2canvas.default };
+  moduleCache.set('pdf-libs', pdfLibs);
+  console.debug('[PERF] PDF libraries loaded');
   
-  if (result) {
-    moduleCache.set('pdf-libs', result);
-    console.debug('[PERF] PDF libraries loaded');
-  }
-  
-  return result;
+  return pdfLibs;
 };
 
 /**
@@ -187,18 +144,12 @@ export const loadTensorFlow = async () => {
   }
 
   console.debug('[PERF] Loading TensorFlow...');
+  trackImport('tensorflow');
+  const tf = await import('@tensorflow/tfjs');
+  moduleCache.set('tensorflow', tf);
+  console.debug('[PERF] TensorFlow loaded');
   
-  const result = await resilientImport(
-    () => import('@tensorflow/tfjs'),
-    'tensorflow'
-  );
-  
-  if (result) {
-    moduleCache.set('tensorflow', result);
-    console.debug('[PERF] TensorFlow loaded');
-  }
-  
-  return result;
+  return tf;
 };
 
 /**
@@ -210,52 +161,47 @@ export const loadDateUtils = async () => {
   }
 
   console.debug('[PERF] Loading date utilities (individual functions)...');
+  trackImport('date-fns');
   
-  const result = await resilientImport(
-    async () => {
-      const [
-        { format },
-        { parseISO },
-        { subDays },
-        { startOfDay },
-        { endOfDay },
-        { isAfter },
-        { isBefore },
-        { differenceInHours },
-        { differenceInMinutes }
-      ] = await Promise.all([
-        import('date-fns/format'),
-        import('date-fns/parseISO'),
-        import('date-fns/subDays'),
-        import('date-fns/startOfDay'),
-        import('date-fns/endOfDay'),
-        import('date-fns/isAfter'),
-        import('date-fns/isBefore'),
-        import('date-fns/differenceInHours'),
-        import('date-fns/differenceInMinutes')
-      ]);
-      
-      return {
-        format,
-        parseISO,
-        subDays,
-        startOfDay,
-        endOfDay,
-        isAfter,
-        isBefore,
-        differenceInHours,
-        differenceInMinutes
-      };
-    },
-    'date-fns'
-  );
+  // Import only the specific date-fns functions we need
+  const [
+    { format },
+    { parseISO },
+    { subDays },
+    { startOfDay },
+    { endOfDay },
+    { isAfter },
+    { isBefore },
+    { differenceInHours },
+    { differenceInMinutes }
+  ] = await Promise.all([
+    import('date-fns/format'),
+    import('date-fns/parseISO'),
+    import('date-fns/subDays'),
+    import('date-fns/startOfDay'),
+    import('date-fns/endOfDay'),
+    import('date-fns/isAfter'),
+    import('date-fns/isBefore'),
+    import('date-fns/differenceInHours'),
+    import('date-fns/differenceInMinutes')
+  ]);
   
-  if (result) {
-    moduleCache.set('date-fns', result);
-    console.debug('[PERF] Date utilities loaded (optimized)');
-  }
+  const dateFns = {
+    format,
+    parseISO,
+    subDays,
+    startOfDay,
+    endOfDay,
+    isAfter,
+    isBefore,
+    differenceInHours,
+    differenceInMinutes
+  };
   
-  return result;
+  moduleCache.set('date-fns', dateFns);
+  console.debug('[PERF] Date utilities loaded (optimized)');
+  
+  return dateFns;
 };
 
 /**
@@ -267,18 +213,12 @@ export const loadBluetoothLE = async () => {
   }
 
   console.debug('[PERF] Loading Bluetooth LE...');
+  trackImport('bluetooth-le');
+  const bluetoothLE = await import('@capacitor-community/bluetooth-le');
+  moduleCache.set('bluetooth-le', bluetoothLE);
+  console.debug('[PERF] Bluetooth LE loaded');
   
-  const result = await resilientImport(
-    () => import('@capacitor-community/bluetooth-le'),
-    'bluetooth-le'
-  );
-  
-  if (result) {
-    moduleCache.set('bluetooth-le', result);
-    console.debug('[PERF] Bluetooth LE loaded');
-  }
-  
-  return result;
+  return bluetoothLE;
 };
 
 /**
@@ -299,24 +239,17 @@ export const loadFormValidation = async () => {
   }
 
   console.debug('[PERF] Loading form validation...');
+  trackImport('forms');
+  const [hookForm, zod] = await Promise.all([
+    import('react-hook-form'),
+    import('zod')
+  ]);
   
-  const result = await resilientImport(
-    async () => {
-      const [hookForm, zod] = await Promise.all([
-        import('react-hook-form'),
-        import('zod')
-      ]);
-      return { hookForm, zod };
-    },
-    'forms'
-  );
+  const validation = { hookForm, zod };
+  moduleCache.set('form-validation', validation);
+  console.debug('[PERF] Form validation loaded');
   
-  if (result) {
-    moduleCache.set('form-validation', result);
-    console.debug('[PERF] Form validation loaded');
-  }
-  
-  return result;
+  return validation;
 };
 
 /**

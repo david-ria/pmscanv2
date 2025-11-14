@@ -4,7 +4,6 @@ import { RecordingEntry } from '@/types/recording';
 import { createTimestamp } from '@/utils/timeFormat';
 import * as logger from '@/utils/logger';
 import { supabase } from '@/integrations/supabase/client';
-import { invokeEdgeFunction } from '@/lib/supabaseEdge';
 
 export function useMissionSaver() {
   
@@ -116,7 +115,7 @@ export function useMissionSaver() {
       if (measurementWithLocation?.location) {
         try {
           logger.debug('🌤️ Fetching weather data for mission...');
-          const { data, error } = await invokeEdgeFunction('fetch-weather', {
+          const { data, error } = await supabase.functions.invoke('fetch-weather', {
             body: {
               latitude: measurementWithLocation.location.latitude,
               longitude: measurementWithLocation.location.longitude,

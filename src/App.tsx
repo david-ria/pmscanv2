@@ -22,9 +22,12 @@ const Auth = lazy(() => import('./pages/Auth'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Lazy load heavy components
-// Synchronously import critical layout components to avoid dynamic import fetch issues
-import { Header } from '@/components/Header';
-import { BottomNavigation } from '@/components/BottomNavigation';
+const Header = lazy(() => 
+  import('@/components/Header').then(module => ({ default: module.Header }))
+);
+const BottomNavigation = lazy(() => 
+  import('@/components/BottomNavigation').then(module => ({ default: module.BottomNavigation }))
+);
 // ✅ Import synchronously - critical for recording stability during language changes
 import { UnifiedDataProvider } from '@/components/UnifiedDataProvider';
 import { GlobalDataCollector } from '@/components/GlobalDataCollector';
@@ -84,7 +87,8 @@ const App = () => {
           import('./pages/CustomAlerts'),
           import('./pages/NotFound'),
           // Preload heavy shared components used across routes
-          // (Header and BottomNavigation are now static imports)
+          import('@/components/Header'),
+          import('@/components/BottomNavigation'),
           import('@/components/CrashRecoveryInitializer'),
           import('@/components/PMLineGraph'),
           // UnifiedDataProvider and GlobalDataCollector are now imported synchronously
