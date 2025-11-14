@@ -72,7 +72,6 @@ export const usePollutionBreakdownData = (
     // Calculate breakdown data based on type and PM selection
     const getBreakdownData = () => {
       const filtered = filteredMissions();
-      console.log('Pollution breakdown - Total missions:', missions.length, 'Filtered missions:', filtered.length, 'Breakdown type:', breakdownType);
       if (filtered.length === 0) return [];
 
       const dataMap = new Map<
