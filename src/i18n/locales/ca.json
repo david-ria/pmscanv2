@@ -438,6 +438,7 @@
     "collaborativeMap": {
       "title": "Mapa Col·laboratiu del Grup",
       "description": "Visualització respectuosa amb la privadesa dels patrons de qualitat de l'aire del grup",
+      "pmType": "Tipus de Partícules",
       "loading": "Carregant dades del mapa...",
       "noData": "No hi ha dades de geohash disponibles per a aquest període",
       "precision": "Resolució del Mapa",

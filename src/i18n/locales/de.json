@@ -438,6 +438,7 @@
     "collaborativeMap": {
       "title": "Kollaborative Gruppenkarte",
       "description": "Datenschutzfreundliche Visualisierung von Gruppenluftqualitätsmustern",
+      "pmType": "Partikeltyp",
       "loading": "Kartendaten werden geladen...",
       "noData": "Keine Geohash-Daten für diesen Zeitraum verfügbar",
       "precision": "Kartenauflösung",
