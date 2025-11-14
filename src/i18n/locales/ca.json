@@ -173,7 +173,9 @@
       "locationsActivities": "Ubicacions i activitats",
       "locationsDescription": "Configurar ubicacions i tipus d'activitats personalitzades per al vostre grup",
       "eventTypes": "Tipus d'esdeveniments",
-      "eventDescription": "Crear tipus d'esdeveniments personalitzats per a una recollida de dades millorada"
+      "eventDescription": "Crear tipus d'esdeveniments personalitzats per a una recollida de dades millorada",
+      "privacySettings": "Privacitat de Dades",
+      "privacyDescription": "Configurar la privacitat d'ubicació per a missions compartides"
     },
     "monitoring": {
       "title": "Configuració de Monitorització",

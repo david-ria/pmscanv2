@@ -173,7 +173,9 @@
       "locationsActivities": "Lieux et activités",
       "locationsDescription": "Configurer les lieux et types d'activités personnalisés pour votre groupe",
       "eventTypes": "Types d'événements",
-      "eventDescription": "Créer des types d'événements personnalisés pour une collecte de données améliorée"
+      "eventDescription": "Créer des types d'événements personnalisés pour une collecte de données améliorée",
+      "privacySettings": "Confidentialité des Données",
+      "privacyDescription": "Configurer la confidentialité des positions pour les missions partagées"
     },
     "monitoring": {
       "title": "Paramètres de Surveillance",

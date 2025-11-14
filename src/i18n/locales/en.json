@@ -173,7 +173,9 @@
       "locationsActivities": "Locations & Activities",
       "locationsDescription": "Configure custom locations and activity types for your group",
       "eventTypes": "Event Types",
-      "eventDescription": "Create custom event types for enhanced data collection"
+      "eventDescription": "Create custom event types for enhanced data collection",
+      "privacySettings": "Data Privacy",
+      "privacyDescription": "Configure location privacy for shared missions"
     },
     "monitoring": {
       "title": "Monitoring Settings",
