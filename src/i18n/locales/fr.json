@@ -439,6 +439,14 @@
     "refresh": "Actualiser",
     "myData": "Mes Données",
     "groupData": "Données du Groupe",
+    "groupExposure": {
+      "title": "Expositions Moyennes",
+      "byLocation": "Par Lieu",
+      "byActivity": "Par Activité",
+      "noData": "Aucune donnée disponible pour cette période",
+      "loading": "Chargement des statistiques du groupe...",
+      "measurements": "mesures"
+    },
     "collaborativeMap": {
       "title": "Carte Collaborative du Groupe",
       "description": "Visualisation respectueuse de la vie privée des tendances de qualité de l'air du groupe",
