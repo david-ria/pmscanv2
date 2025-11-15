@@ -197,7 +197,8 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
         const bValue = pmType === 'pm1' ? b.avgPM1 : pmType === 'pm25' ? b.avgPM25 : b.avgPM10;
         return bValue - aValue; // Descending
       })
-      .slice(0, 10);
+      .slice(0, 10)
+      .map(item => ({ ...item, isLocation: true })); // Mark as location data
   }, [locationData, pmType]);
 
   const sortedActivityData = useMemo(() => {
@@ -207,11 +208,43 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
         const bValue = pmType === 'pm1' ? b.avgPM1 : pmType === 'pm25' ? b.avgPM25 : b.avgPM10;
         return bValue - aValue; // Descending
       })
-      .slice(0, 10);
+      .slice(0, 10)
+      .map(item => ({ ...item, isLocation: false })); // Mark as activity data
   }, [activityData, pmType]);
 
   const getCurrentPMKey = () => {
     return pmType === 'pm1' ? 'avgPM1' : pmType === 'pm25' ? 'avgPM25' : 'avgPM10';
+  };
+
+  // Custom tooltip component
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      const pmKey = getCurrentPMKey();
+      const value = data[pmKey];
+      
+      // Calculate percentage of total
+      const isLocationData = data.isLocation;
+      const allData = isLocationData ? sortedLocationData : sortedActivityData;
+      const total = allData.reduce((sum: number, item: any) => {
+        const itemValue = pmKey === 'avgPM1' ? item.avgPM1 : pmKey === 'avgPM25' ? item.avgPM25 : item.avgPM10;
+        return sum + itemValue;
+      }, 0);
+      const percentage = ((value / total) * 100).toFixed(1);
+      
+      return (
+        <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+          <p className="font-semibold text-foreground mb-1">{data.context}</p>
+          <p className="text-sm text-muted-foreground">
+            {value.toFixed(1)} µg/m³
+          </p>
+          <p className="text-sm font-medium text-primary">
+            {percentage}% of total
+          </p>
+        </div>
+      );
+    }
+    return null;
   };
 
   if (loading) {
@@ -266,14 +299,7 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
                     }}
                     tick={{ fill: 'hsl(var(--foreground))' }}
                   />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--popover))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value: number) => [`${value.toFixed(1)} µg/m³`, pmType.toUpperCase()]}
-                  />
+                  <Tooltip content={<CustomTooltip />} />
                   <Bar 
                     dataKey={getCurrentPMKey()}
                     radius={[4, 4, 0, 0]}
@@ -316,14 +342,7 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
                     }}
                     tick={{ fill: 'hsl(var(--foreground))' }}
                   />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--popover))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value: number) => [`${value.toFixed(1)} µg/m³`, pmType.toUpperCase()]}
-                  />
+                  <Tooltip content={<CustomTooltip />} />
                   <Bar 
                     dataKey={getCurrentPMKey()}
                     radius={[4, 4, 0, 0]}
