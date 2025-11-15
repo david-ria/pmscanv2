@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 
 interface ContextExposure {
@@ -281,8 +281,7 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={sortedLocationData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <BarChart data={sortedLocationData} margin={{ top: 5, right: 20, left: 0, bottom: 80 }}>
                   <XAxis 
                     dataKey="context" 
                     angle={-45}
@@ -291,6 +290,7 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
                     tick={{ fill: 'hsl(var(--foreground))' }}
                   />
                   <YAxis 
+                    domain={[0, 'dataMax']}
                     label={{ 
                       value: 'PM (µg/m³)', 
                       angle: -90, 
@@ -324,8 +324,7 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={sortedActivityData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <BarChart data={sortedActivityData} margin={{ top: 5, right: 20, left: 0, bottom: 80 }}>
                   <XAxis 
                     dataKey="context" 
                     angle={-45}
@@ -334,6 +333,7 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
                     tick={{ fill: 'hsl(var(--foreground))' }}
                   />
                   <YAxis 
+                    domain={[0, 'dataMax']}
                     label={{ 
                       value: 'PM (µg/m³)', 
                       angle: -90, 
