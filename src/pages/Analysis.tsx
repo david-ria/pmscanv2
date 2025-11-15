@@ -97,8 +97,8 @@ export default function Analysis() {
                   onBreakdownTypeChange={setBreakdownType}
                 />
 
-                {/* Statistical Analysis Report */}
-                <StatisticalAnalysis
+                {/* Statistical Analysis Report - Temporarily hidden */}
+                {/* <StatisticalAnalysis
                   statisticalAnalysis={statisticalAnalysis}
                   loading={loading}
                   onRegenerate={regenerateAnalysis}
@@ -107,7 +107,7 @@ export default function Analysis() {
                   breakdownData={breakdownData}
                   pmType={pmType}
                   breakdownType={breakdownType}
-                />
+                /> */}
               </>
             )}
           </TabsContent>
@@ -147,8 +147,8 @@ export default function Analysis() {
                 onBreakdownTypeChange={setBreakdownType}
               />
 
-              {/* Statistical Analysis Report */}
-              <StatisticalAnalysis
+              {/* Statistical Analysis Report - Temporarily hidden */}
+              {/* <StatisticalAnalysis
                 statisticalAnalysis={statisticalAnalysis}
                 loading={loading}
                 onRegenerate={regenerateAnalysis}
@@ -157,7 +157,7 @@ export default function Analysis() {
                 breakdownData={breakdownData}
                 pmType={pmType}
                 breakdownType={breakdownType}
-              />
+              /> */}
             </>
           )}
         </>
