@@ -268,7 +268,7 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
           <PMTypeSelector value={pmType} onChange={setPmType} />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-4">
         <div className="grid md:grid-cols-2 gap-6">
           {/* Location Chart */}
           <div className="space-y-2">
@@ -276,11 +276,11 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
               {t('analysis.groupExposure.byLocation')}
             </h3>
             {sortedLocationData.length === 0 ? (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              <div className="flex items-center justify-center h-[250px] text-muted-foreground">
                 {t('analysis.groupExposure.noData')}
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={sortedLocationData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
@@ -319,11 +319,11 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
               {t('analysis.groupExposure.byActivity')}
             </h3>
             {sortedActivityData.length === 0 ? (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              <div className="flex items-center justify-center h-[250px] text-muted-foreground">
                 {t('analysis.groupExposure.noData')}
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={sortedActivityData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
