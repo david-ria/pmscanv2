@@ -67,15 +67,22 @@ export interface MeasurementData {
 
 class DataStorageService {
   // Get all missions (local + synced from database)
-  async getAllMissions(limit = 50, offset = 0): Promise<MissionData[]> {
+  async getAllMissions(limit = 50, offset = 0, userId?: string): Promise<MissionData[]> {
     const localMissions = getLocalMissions();
 
     try {
       // Try to fetch from database if online
       // ✅ Fetch missions WITHOUT measurements to reduce data transfer
-      const { data: dbMissions, error } = await supabase
+      let query = supabase
         .from('missions')
-        .select('*')
+        .select('*');
+      
+      // Filter by user if specified (for personal History view)
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+      
+      const { data: dbMissions, error } = await query
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
