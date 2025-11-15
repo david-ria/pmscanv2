@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 
 interface ContextExposure {
@@ -65,19 +65,20 @@ const PMTypeSelector = ({
   );
 };
 
-const getBarColor = (pmValue: number, pmType: 'pm1' | 'pm25' | 'pm10'): string => {
-  const thresholds = {
-    pm25: [15, 35, 55],
-    pm10: [45, 80, 150],
-    pm1: [10, 25, 40]
-  };
-  
-  const limits = thresholds[pmType];
-  
-  if (pmValue < limits[0]) return 'hsl(var(--chart-1))'; // green
-  if (pmValue < limits[1]) return 'hsl(var(--chart-2))'; // yellow
-  if (pmValue < limits[2]) return 'hsl(var(--chart-3))'; // orange
-  return 'hsl(var(--chart-4))'; // red
+const getBarColor = (index: number): string => {
+  const colors = [
+    '#14B8A6', // Teal/Cyan
+    '#F59E0B', // Orange
+    '#A855F7', // Purple
+    '#EC4899', // Pink
+    '#3B82F6', // Blue
+    '#10B981', // Green
+    '#F97316', // Deep Orange
+    '#8B5CF6', // Violet
+    '#06B6D4', // Cyan
+    '#EAB308', // Yellow
+  ];
+  return colors[index % colors.length];
 };
 
 export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExposureChartsProps) {
@@ -275,9 +276,12 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
                   />
                   <Bar 
                     dataKey={getCurrentPMKey()}
-                    fill="hsl(var(--primary))"
                     radius={[4, 4, 0, 0]}
-                  />
+                  >
+                    {sortedLocationData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={getBarColor(index)} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -322,9 +326,12 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
                   />
                   <Bar 
                     dataKey={getCurrentPMKey()}
-                    fill="hsl(var(--primary))"
                     radius={[4, 4, 0, 0]}
-                  />
+                  >
+                    {sortedActivityData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={getBarColor(index)} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             )}
