@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { dataStorage, MissionData } from '@/lib/dataStorage';
 
-export function useMissionManagement() {
+export function useMissionManagement(userId?: string) {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [missions, setMissions] = useState<MissionData[]>([]);
@@ -11,7 +11,7 @@ export function useMissionManagement() {
   const loadMissions = useCallback(async () => {
     try {
       setLoading(true);
-      const missionData = await dataStorage.getAllMissions();
+      const missionData = await dataStorage.getAllMissions(50, 0, userId);
       setMissions(missionData);
     } catch (error) {
       console.error('Error loading missions:', error);
@@ -23,7 +23,7 @@ export function useMissionManagement() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, userId]);
 
   const handleSync = useCallback(async () => {
     if (!navigator.onLine) {

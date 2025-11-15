@@ -17,9 +17,11 @@ import { MissionCard } from '@/components/History/MissionCard';
 import { useMissionManagement } from '@/hooks/useMissionManagement';
 import { useHistoryStats } from '@/hooks/useHistoryStats';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function History() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<
     'day' | 'week' | 'month' | 'year'
@@ -35,7 +37,7 @@ export default function History() {
     handleDelete,
     handleExport,
     handleShare,
-  } = useMissionManagement();
+  } = useMissionManagement(user?.id);
 
   // Load missions on component mount
   useEffect(() => {
