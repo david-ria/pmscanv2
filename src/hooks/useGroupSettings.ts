@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getGroupConfig, type GroupConfig, type GroupThreshold, type GroupAlarm } from '@/lib/groupConfigs';
 import { useToast } from '@/hooks/use-toast';
@@ -179,6 +179,10 @@ export const useGroupSettings = () => {
     const storedGroupId = localStorage.getItem('activeGroupId');
     return !!storedGroupId;
   });
+  
+  // Track the last group ID that showed a toast to prevent duplicates
+  const lastToastGroupIdRef = useRef<string | null>(null);
+  
   const { toast } = useToast();
   const { user } = useAuth();
   const { features } = useSubscription();
@@ -249,11 +253,15 @@ export const useGroupSettings = () => {
           }
         }
 
-        toast({
-          title: `Group Settings Applied`,
-          description: `Now using settings for: ${groupConfig.name}`,
-          duration: 3000,
-        });
+        // Only show toast if group actually changed
+        if (lastToastGroupIdRef.current !== groupId) {
+          lastToastGroupIdRef.current = groupId;
+          toast({
+            title: `Group Settings Applied`,
+            description: `Now using settings for: ${groupConfig.name}`,
+            duration: 3000,
+          });
+        }
       } else {
         // 🆕 Cache fallback: Use localStorage if it matches the target group
         const cachedSettings = localStorage.getItem('groupSettings');
@@ -335,6 +343,9 @@ export const useGroupSettings = () => {
     setIsGroupMode(false);
     localStorage.removeItem('activeGroupId');
     localStorage.removeItem('groupSettings');
+    
+    // Reset toast tracking so re-joining shows toast again
+    lastToastGroupIdRef.current = null;
 
     // Remove group parameter from URL without page reload
     const newUrl = new URL(window.location.href);
@@ -421,10 +432,14 @@ export const useGroupSettings = () => {
         settings: groupConfig.settings,
       });
 
-      toast({
-        title: `Group Settings Applied`,
-        description: `Now using settings for: ${groupConfig.name}`,
-      });
+      // Only show toast if group actually changed
+      if (lastToastGroupIdRef.current !== groupId) {
+        lastToastGroupIdRef.current = groupId;
+        toast({
+          title: `Group Settings Applied`,
+          description: `Now using settings for: ${groupConfig.name}`,
+        });
+      }
 
       return true;
     } else {
