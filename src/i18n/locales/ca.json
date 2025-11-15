@@ -435,6 +435,14 @@
     "refresh": "Actualitzar",
     "myData": "Les Meves Dades",
     "groupData": "Dades del Grup",
+    "groupExposure": {
+      "title": "Exposicions Mitjanes",
+      "byLocation": "Per Ubicació",
+      "byActivity": "Per Activitat",
+      "noData": "No hi ha dades disponibles per aquest període",
+      "loading": "Carregant estadístiques del grup...",
+      "measurements": "mesures"
+    },
     "collaborativeMap": {
       "title": "Mapa Col·laboratiu del Grup",
       "description": "Visualització respectuosa amb la privadesa dels patrons de qualitat de l'aire del grup",

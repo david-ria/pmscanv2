@@ -435,6 +435,14 @@
     "refresh": "Aktualisieren",
     "myData": "Meine Daten",
     "groupData": "Gruppendaten",
+    "groupExposure": {
+      "title": "Durchschnittliche Expositionen",
+      "byLocation": "Nach Standort",
+      "byActivity": "Nach Aktivität",
+      "noData": "Keine Daten für diesen Zeitraum verfügbar",
+      "loading": "Gruppenstatistiken werden geladen...",
+      "measurements": "Messungen"
+    },
     "collaborativeMap": {
       "title": "Kollaborative Gruppenkarte",
       "description": "Datenschutzfreundliche Visualisierung von Gruppenluftqualitätsmustern",

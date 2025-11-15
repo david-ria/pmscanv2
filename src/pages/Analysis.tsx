@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { calculateMissionStatistics } from '@/utils/missionStatistics';
+import { GroupExposureCharts } from '@/components/Analysis/GroupExposureCharts';
 
 export default function Analysis() {
   const { t } = useTranslation();
@@ -113,6 +114,12 @@ export default function Analysis() {
           </TabsContent>
 
           <TabsContent value="group" className="space-y-4 sm:space-y-6">
+            {/* Group Exposure Statistics */}
+            <GroupExposureCharts
+              selectedPeriod={selectedPeriod}
+              selectedDate={selectedDate}
+            />
+            
             {/* Collaborative Map */}
             <CollaborativeMap
               selectedPeriod={selectedPeriod}

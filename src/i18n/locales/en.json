@@ -438,6 +438,14 @@
     "refresh": "Refresh",
     "myData": "My Data",
     "groupData": "Group Data",
+    "groupExposure": {
+      "title": "Average Exposures",
+      "byLocation": "By Location",
+      "byActivity": "By Activity",
+      "noData": "No data available for this period",
+      "loading": "Loading group statistics...",
+      "measurements": "measurements"
+    },
     "collaborativeMap": {
       "title": "Collaborative Group Map",
       "description": "Privacy-preserving visualization of group air quality patterns",
