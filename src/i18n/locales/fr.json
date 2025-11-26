@@ -797,5 +797,18 @@
     },
     "startDate": "Début",
     "endDate": "Fin"
+  },
+  "pwa": {
+    "install": {
+      "title": "Installer l'Application",
+      "description": "Installez PMSCAN sur votre appareil pour un accès rapide et une utilisation hors ligne",
+      "installButton": "Installer",
+      "installing": "Installation...",
+      "iosDescription": "Installez PMSCAN sur votre iPhone pour une meilleure expérience",
+      "iosInstructions": "Pour installer sur iOS :",
+      "iosStep1": "Appuyez sur le bouton Partager ci-dessous",
+      "iosStep2": "Sélectionnez 'Sur l'écran d'accueil'",
+      "iosShareIcon": "Recherchez cette icône dans votre navigateur"
+    }
   }
 }

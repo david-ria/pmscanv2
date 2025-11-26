@@ -657,5 +657,18 @@
     },
     "startDate": "Inici",
     "endDate": "Final"
+  },
+  "pwa": {
+    "install": {
+      "title": "Instal·lar l'Aplicació",
+      "description": "Instal·leu PMSCAN al vostre dispositiu per a un accés ràpid i ús fora de línia",
+      "installButton": "Instal·lar",
+      "installing": "Instal·lant...",
+      "iosDescription": "Instal·leu PMSCAN al vostre iPhone per a la millor experiència",
+      "iosInstructions": "Per instal·lar a iOS:",
+      "iosStep1": "Toqueu el botó Compartir a baix",
+      "iosStep2": "Seleccioneu 'A la pantalla d'inici'",
+      "iosShareIcon": "Busqueu aquesta icona al vostre navegador"
+    }
   }
 }
