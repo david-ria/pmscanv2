@@ -40,6 +40,7 @@ const PMLineGraph = lazy(() =>
 
 // Import OfflineDetector synchronously - critical component that must load immediately
 import { OfflineDetector } from '@/components/OfflineDetector';
+import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 
 // Import skeleton screens
 const AppLayoutSkeleton = lazy(() => 
@@ -109,6 +110,7 @@ const App = () => {
       <Toaster />
       <Sonner />
       <OfflineDetector />
+      <PWAInstallPrompt />
       <ErrorBoundary>
         <TooltipProvider>
           <div className="relative min-h-screen">
