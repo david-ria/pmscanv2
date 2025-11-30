@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -23,6 +24,7 @@ interface GroupEventsDialogProps {
 }
 
 export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDialogProps) {
+  const { t } = useTranslation();
   const { events, loading, createEvent, updateEvent, deleteEvent } = useGroupEvents(groupId);
   const { features } = useSubscription();
   const [isCreating, setIsCreating] = useState(false);
@@ -58,14 +60,14 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
       <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
         <ResponsiveDialogContent className="max-w-md">
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>Premium Feature</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>{t('groups.events.premiumFeature')}</ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
           <div className="text-center py-6">
             <p className="text-muted-foreground mb-4">
-              Custom event types are available in Premium and Enterprise plans.
+              {t('groups.events.premiumDescription')}
             </p>
             <Button onClick={() => onOpenChange(false)}>
-              Close
+              {t('common.close')}
             </Button>
           </div>
         </ResponsiveDialogContent>
@@ -77,7 +79,7 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="max-w-4xl">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>Group Event Types</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{t('groups.events.title')}</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
 
         <div className="space-y-6">
@@ -93,7 +95,7 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <Badge variant={event.enabled ? 'default' : 'secondary'}>
-                        {event.enabled ? 'Active' : 'Disabled'}
+                        {event.enabled ? t('groups.events.active') : t('groups.events.disabled')}
                       </Badge>
                       <Button
                         size="sm"
@@ -111,14 +113,14 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <Label>Event Name</Label>
+                      <Label>{t('groups.events.eventName')}</Label>
                       <Input
                         value={event.name}
                         onChange={(e) => updateEvent(event.id, { name: e.target.value })}
                       />
                     </div>
                     <div>
-                      <Label>Icon</Label>
+                      <Label>{t('groups.events.icon')}</Label>
                       <Input
                         value={event.icon}
                         onChange={(e) => updateEvent(event.id, { icon: e.target.value })}
@@ -126,7 +128,7 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
                       />
                     </div>
                     <div>
-                      <Label>Color</Label>
+                      <Label>{t('common.color')}</Label>
                       <Input
                         type="color"
                         value={event.color}
@@ -135,11 +137,11 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
                     </div>
                   </div>
                   <div>
-                    <Label>Description</Label>
+                    <Label>{t('groups.events.description')}</Label>
                     <Textarea
                       value={event.description || ''}
                       onChange={(e) => updateEvent(event.id, { description: e.target.value })}
-                      placeholder="Optional description of this event type"
+                      placeholder={t('groups.events.descriptionPlaceholder')}
                       rows={2}
                     />
                   </div>
@@ -148,7 +150,7 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
                       checked={event.enabled}
                       onCheckedChange={(checked) => updateEvent(event.id, { enabled: checked })}
                     />
-                    <Label>Enabled</Label>
+                    <Label>{t('groups.events.enabled')}</Label>
                   </div>
                 </CardContent>
               </Card>
@@ -156,7 +158,7 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
 
             {events.length === 0 && !isCreating && (
               <div className="text-center py-8 text-muted-foreground">
-                No custom event types configured. Create your first event type to get started.
+                {t('groups.events.noEvents')}
               </div>
             )}
           </div>
@@ -165,20 +167,20 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
           {isCreating ? (
             <Card>
               <CardHeader>
-                <CardTitle>Create New Event Type</CardTitle>
+                <CardTitle>{t('groups.events.createNew')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label>Event Name</Label>
+                    <Label>{t('groups.events.eventName')}</Label>
                     <Input
                       value={newEvent.name}
                       onChange={(e) => setNewEvent(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Traffic Incident"
+                      placeholder={t('groups.events.trafficIncident')}
                     />
                   </div>
                   <div>
-                    <Label>Icon</Label>
+                    <Label>{t('groups.events.icon')}</Label>
                     <Input
                       value={newEvent.icon}
                       onChange={(e) => setNewEvent(prev => ({ ...prev, icon: e.target.value }))}
@@ -199,7 +201,7 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
                     </div>
                   </div>
                   <div>
-                    <Label>Color</Label>
+                    <Label>{t('common.color')}</Label>
                     <Input
                       type="color"
                       value={newEvent.color}
@@ -209,21 +211,21 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
                 </div>
 
                 <div>
-                  <Label>Description</Label>
+                  <Label>{t('groups.events.description')}</Label>
                   <Textarea
                     value={newEvent.description}
                     onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Optional description of this event type"
+                    placeholder={t('groups.events.descriptionPlaceholder')}
                     rows={2}
                   />
                 </div>
 
                 <div className="flex gap-2">
                   <Button onClick={handleCreateEvent} disabled={!newEvent.name.trim()}>
-                    Create Event Type
+                    {t('groups.events.createEvent')}
                   </Button>
                   <Button variant="outline" onClick={() => setIsCreating(false)}>
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                 </div>
               </CardContent>
@@ -231,7 +233,7 @@ export function GroupEventsDialog({ groupId, open, onOpenChange }: GroupEventsDi
           ) : (
             <Button onClick={() => setIsCreating(true)} variant="outline" className="w-full">
               <Plus className="h-4 w-4 mr-2" />
-              Add New Event Type
+              {t('groups.events.addNewEvent')}
             </Button>
           )}
         </div>

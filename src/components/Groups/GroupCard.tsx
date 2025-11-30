@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Users,
   UserPlus,
@@ -42,6 +43,7 @@ interface GroupCardProps {
 }
 
 export function GroupCard({ group, onInviteUser }: GroupCardProps) {
+  const { t } = useTranslation();
   const { deleteGroup, leaveGroup } = useGroups();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
@@ -74,7 +76,7 @@ export function GroupCard({ group, onInviteUser }: GroupCardProps) {
             <div className="flex-1 min-w-0">
               <CardTitle className="text-xl mb-2 truncate">{group.name}</CardTitle>
               <p className="text-sm text-muted-foreground line-clamp-2">
-                {group.description || 'No description provided'}
+                {group.description || t('groups.card.noDescription')}
               </p>
             </div>
             
@@ -96,7 +98,7 @@ export function GroupCard({ group, onInviteUser }: GroupCardProps) {
                     className="text-destructive focus:text-destructive"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Group
+                    {t('groups.card.deleteGroup')}
                   </DropdownMenuItem>
                 ) : (
                   <DropdownMenuItem
@@ -104,7 +106,7 @@ export function GroupCard({ group, onInviteUser }: GroupCardProps) {
                     className="text-destructive focus:text-destructive"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
-                    Leave Group
+                    {t('groups.card.leaveGroup')}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -118,15 +120,20 @@ export function GroupCard({ group, onInviteUser }: GroupCardProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="h-4 w-4" />
-                <span>{group.member_count} member{group.member_count !== 1 ? 's' : ''}</span>
+                <span>
+                  {group.member_count === 1 
+                    ? t('groups.card.members', { count: group.member_count })
+                    : t('groups.card.membersPlural', { count: group.member_count })
+                  }
+                </span>
               </div>
               <Badge variant={isAdmin ? 'default' : 'secondary'} className="font-medium">
-                {isAdmin ? 'Admin' : 'Member'}
+                {isAdmin ? t('common.admin') : t('common.member')}
               </Badge>
             </div>
 
             <div className="text-xs text-muted-foreground">
-              Created {formatDistanceToNow(new Date(group.created_at), { addSuffix: true })}
+              {t('groups.card.createdAgo', { time: formatDistanceToNow(new Date(group.created_at), { addSuffix: true }) })}
             </div>
 
             {/* Primary Actions */}
@@ -134,7 +141,7 @@ export function GroupCard({ group, onInviteUser }: GroupCardProps) {
               <Button asChild variant="default" size="sm" className="w-full">
                 <Link to={`/groups/${group.id}`} className="flex items-center justify-center gap-2">
                   <ExternalLink className="h-4 w-4" />
-                  {isAdmin ? 'Manage' : 'View Details'}
+                  {isAdmin ? t('groups.card.manage') : t('groups.card.viewDetails')}
                 </Link>
               </Button>
             </div>
@@ -145,20 +152,18 @@ export function GroupCard({ group, onInviteUser }: GroupCardProps) {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Group</AlertDialogTitle>
+            <AlertDialogTitle>{t('groups.card.deleteConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{group.name}"? This action cannot
-              be undone. All group data, settings, and shared statistics will be
-              permanently deleted.
+              {t('groups.card.deleteConfirmDescription', { name: group.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Group
+              {t('groups.card.deleteGroup')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -167,20 +172,18 @@ export function GroupCard({ group, onInviteUser }: GroupCardProps) {
       <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Leave Group</AlertDialogTitle>
+            <AlertDialogTitle>{t('groups.card.leaveConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to leave "{group.name}"? You'll lose access
-              to group settings and shared statistics. You can only rejoin if
-              invited again.
+              {t('groups.card.leaveConfirmDescription', { name: group.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLeave}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Leave Group
+              {t('groups.card.leaveGroup')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

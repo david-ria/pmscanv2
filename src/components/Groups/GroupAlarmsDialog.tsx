@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -23,6 +24,7 @@ interface GroupAlarmsDialogProps {
 }
 
 export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDialogProps) {
+  const { t } = useTranslation();
   const { alarms, loading, createAlarm, updateAlarm, deleteAlarm } = useGroupAlarms(groupId);
   const { features } = useSubscription();
   const [isCreating, setIsCreating] = useState(false);
@@ -71,14 +73,14 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
       <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
         <ResponsiveDialogContent className="max-w-md">
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>Premium Feature</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>{t('groups.alarms.premiumFeature')}</ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
           <div className="text-center py-6">
             <p className="text-muted-foreground mb-4">
-              Custom alarms are available in Premium and Enterprise plans.
+              {t('groups.alarms.premiumDescription')}
             </p>
             <Button onClick={() => onOpenChange(false)}>
-              Close
+              {t('common.close')}
             </Button>
           </div>
         </ResponsiveDialogContent>
@@ -90,7 +92,7 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="max-w-4xl">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>Group Alarms</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{t('groups.alarms.title')}</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
 
         <div className="space-y-6">
@@ -121,7 +123,7 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <Label>Threshold</Label>
+                      <Label>{t('groups.alarms.threshold')}</Label>
                       <Input
                         type="number"
                         value={alarm.threshold}
@@ -129,7 +131,7 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
                       />
                     </div>
                     <div>
-                      <Label>Color</Label>
+                      <Label>{t('groups.alarms.color')}</Label>
                       <Input
                         type="color"
                         value={alarm.color}
@@ -143,7 +145,7 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
                       />
                       <Label className="flex items-center gap-1">
                         <Volume2 className="h-4 w-4" />
-                        Sound
+                        {t('groups.alarms.sound')}
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -153,7 +155,7 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
                       />
                       <Label className="flex items-center gap-1">
                         <Vibrate className="h-4 w-4" />
-                        Vibration
+                        {t('groups.alarms.vibration')}
                       </Label>
                     </div>
                   </div>
@@ -162,7 +164,7 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
                       checked={alarm.enabled}
                       onCheckedChange={(checked) => updateAlarm(alarm.id, { enabled: checked })}
                     />
-                    <Label>Enabled</Label>
+                    <Label>{t('groups.alarms.enabled')}</Label>
                   </div>
                 </CardContent>
               </Card>
@@ -170,7 +172,7 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
 
             {alarms.length === 0 && !isCreating && (
               <div className="text-center py-8 text-muted-foreground">
-                No custom alarms configured. Create your first alarm to get started.
+                {t('groups.alarms.noAlarms')}
               </div>
             )}
           </div>
@@ -179,20 +181,20 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
           {isCreating ? (
             <Card>
               <CardHeader>
-                <CardTitle>Create New Alarm</CardTitle>
+                <CardTitle>{t('groups.alarms.createNewAlarm')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label>Alarm Name</Label>
+                    <Label>{t('groups.alarms.alarmName')}</Label>
                     <Input
                       value={newAlarm.name}
                       onChange={(e) => setNewAlarm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="High PM2.5 Alert"
+                      placeholder={t('groups.alarms.highPMAlert')}
                     />
                   </div>
                   <div>
-                    <Label>Pollutant</Label>
+                    <Label>{t('groups.alarms.pollutant')}</Label>
                     <Select
                       value={newAlarm.pollutant}
                       onValueChange={(value: 'pm1' | 'pm25' | 'pm10') => 
@@ -210,7 +212,7 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
                     </Select>
                   </div>
                   <div>
-                    <Label>Threshold (μg/m³)</Label>
+                    <Label>{t('groups.alarms.thresholdUnit')}</Label>
                     <Input
                       type="number"
                       value={newAlarm.threshold}
@@ -218,7 +220,7 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
                     />
                   </div>
                   <div>
-                    <Label>Color</Label>
+                    <Label>{t('groups.alarms.color')}</Label>
                     <Input
                       type="color"
                       value={newAlarm.color}
@@ -235,7 +237,7 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
                     />
                     <Label className="flex items-center gap-1">
                       <Volume2 className="h-4 w-4" />
-                      Sound
+                      {t('groups.alarms.sound')}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -245,17 +247,17 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
                     />
                     <Label className="flex items-center gap-1">
                       <Vibrate className="h-4 w-4" />
-                      Vibration
+                      {t('groups.alarms.vibration')}
                     </Label>
                   </div>
                 </div>
 
                 <div className="flex gap-2">
                   <Button onClick={handleCreateAlarm} disabled={!newAlarm.name.trim()}>
-                    Create Alarm
+                    {t('groups.alarms.createAlarm')}
                   </Button>
                   <Button variant="outline" onClick={() => setIsCreating(false)}>
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                 </div>
               </CardContent>
@@ -263,7 +265,7 @@ export function GroupAlarmsDialog({ groupId, open, onOpenChange }: GroupAlarmsDi
           ) : (
             <Button onClick={() => setIsCreating(true)} variant="outline" className="w-full">
               <Plus className="h-4 w-4 mr-2" />
-              Add New Alarm
+              {t('groups.alarms.addNewAlarm')}
             </Button>
           )}
         </div>
