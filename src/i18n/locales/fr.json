@@ -8,6 +8,27 @@
   "header": {
     "title": "AirSentinels"
   },
+  "footer": {
+    "info": "Info Application",
+    "infoDialog": {
+      "title": "À Propos de Cette Application",
+      "developer": "Cette application a été développée par David Riallant – AirSentinels. Si vous souhaitez en savoir plus ou avoir votre version personnalisée, contactez-moi à david.riallant@airsentinels.com",
+      "disclaimer": {
+        "title": "Outil de Démonstration",
+        "content": "Cette application web est un outil de démonstration fourni à des fins informatives et de test uniquement. Elle n'est pas destinée à être utilisée pour la prise de décision dans des contextes critiques."
+      },
+      "privacy": {
+        "title": "Données Personnelles et Confidentialité",
+        "content": "Cette démo peut traiter les informations que vous saisissez (telles que les mesures, notes, localisations ou autres entrées) uniquement dans le but d'afficher des résultats et d'améliorer l'expérience utilisateur. Aucune donnée personnelle n'est intentionnellement utilisée à des fins de profilage ou commerciales. Sauf indication contraire explicite, les données ne sont pas destinées à être stockées de manière à me permettre de vous identifier personnellement, en dehors de toute information que vous fournissez volontairement (par exemple si vous me contactez par e-mail).",
+        "logs": "Comme pour tout service en ligne, des journaux techniques (tels que l'adresse IP, le type de navigateur, la date et l'heure d'accès) peuvent être collectés par le fournisseur d'hébergement à des fins de sécurité et de maintenance."
+      },
+      "useAtRisk": {
+        "title": "Utilisation à Vos Propres Risques",
+        "content": "Bien que je vise à ce que les informations et calculs fournis par cette démo soient aussi fiables que possible, ils sont fournis \"tels quels\", sans aucune garantie d'exactitude, d'exhaustivité ou d'adéquation à un usage particulier. Je ne peux être tenu responsable de toute conséquence directe ou indirecte résultant de l'utilisation de cette application web ou de décisions prises sur la base de ses résultats."
+      },
+      "contact": "Si vous avez des questions sur le fonctionnement de cette démo ou sur la gestion des données personnelles dans un déploiement spécifique, ou si vous souhaitez une version personnalisée adaptée à vos propres politiques de confidentialité et de données, vous pouvez me contacter à l'adresse e-mail ci-dessus."
+    }
+  },
   "settings": {
     "title": "Paramètres",
     "subtitle": "Configuration et compte",
