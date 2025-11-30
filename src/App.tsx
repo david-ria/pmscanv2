@@ -21,8 +21,8 @@ const CustomAlerts = lazy(() => import('./pages/CustomAlerts'));
 const Auth = lazy(() => import('./pages/Auth'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-// Lazy load heavy components
-const Header = lazy(() => import('@/components/Header'));
+// Lazy load heavy components (except Header, which is critical and imported synchronously)
+import Header from '@/components/Header';
 const BottomNavigation = lazy(() => 
   import('@/components/BottomNavigation').then(module => ({ default: module.BottomNavigation }))
 );
