@@ -657,7 +657,12 @@
       "contributors": "contributors",
       "togglePersonal": "Show My Data",
       "privacyNote": "Locations are aggregated for privacy. Minimum 3 measurements per area.",
-      "legend": "Air Quality Legend (µg/m³)"
+      "legend": "Air Quality Legend (µg/m³)",
+      "tooltip": {
+        "title": "Cell Statistics",
+        "measurements": "Measurements",
+        "lastUpdate": "Last update"
+      }
     },
     "analyzing": "Analyzing...",
     "analysisInProgress": "Analysis in progress...",

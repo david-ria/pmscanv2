@@ -481,7 +481,12 @@
       "contributors": "Mitwirkende",
       "togglePersonal": "Meine Daten Anzeigen",
       "privacyNote": "Standorte werden zum Schutz der Privatsphäre aggregiert. Mindestens 3 Messungen pro Gebiet.",
-      "legend": "Luftqualitätslegende (µg/m³)"
+      "legend": "Luftqualitätslegende (µg/m³)",
+      "tooltip": {
+        "title": "Zellenstatistiken",
+        "measurements": "Messungen",
+        "lastUpdate": "Letzte Aktualisierung"
+      }
     },
     "analyzing": "Analysiere...",
     "analysisInProgress": "Analyse läuft...",

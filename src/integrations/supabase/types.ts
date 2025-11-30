@@ -1071,6 +1071,7 @@ export type Database = {
           avg_pm25: number
           contributor_count: number
           geohash_cell: string
+          last_measurement_time: string
           measurement_count: number
         }[]
       }
