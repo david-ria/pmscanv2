@@ -7,7 +7,7 @@ export function useWeatherLogging() {
   const { features } = useSubscription();
   const [isEnabled, setIsEnabled] = useState(() => {
     const stored = localStorage.getItem(WEATHER_LOGGING_KEY);
-    return stored ? JSON.parse(stored) : false;
+    return stored ? JSON.parse(stored) : true;
   });
 
   const setEnabled = useCallback((enabled: boolean) => {
