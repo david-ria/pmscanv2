@@ -8,6 +8,27 @@
   "header": {
     "title": "AirSentinels"
   },
+  "footer": {
+    "info": "App Info",
+    "infoDialog": {
+      "title": "About This Application",
+      "developer": "This app was developed by David Riallant – AirSentinels. If you want to know more or have your personalized version, contact me at david.riallant@airsentinels.com",
+      "disclaimer": {
+        "title": "Demonstration Tool",
+        "content": "This web application is a demonstration tool provided for informational and testing purposes only. It is not intended to be used for decision-making in critical contexts."
+      },
+      "privacy": {
+        "title": "Personal Data and Privacy",
+        "content": "This demo may process the information you enter (such as measurements, notes, locations or other inputs) solely for the purpose of displaying results and improving the user experience. No personal data is intentionally used for profiling or commercial purposes. Unless explicitly stated otherwise, data is not meant to be stored in a way that allows me to personally identify you, apart from any information you voluntarily provide (for example if you contact me by email).",
+        "logs": "As with any online service, technical logs (such as IP address, browser type, date and time of access) may be collected by the hosting provider for security and maintenance purposes."
+      },
+      "useAtRisk": {
+        "title": "Use at Your Own Risk",
+        "content": "While I aim for the information and calculations provided by this demo to be as reliable as possible, they are provided \"as is\", without any guarantee of accuracy, completeness or suitability for a particular purpose. I cannot be held liable for any direct or indirect consequences resulting from the use of this web application or from decisions taken on the basis of its outputs."
+      },
+      "contact": "If you have any questions about how this demo works or how personal data is handled in a specific deployment, or if you would like a customized version adapted to your own privacy and data policies, you can contact me at the email address above."
+    }
+  },
   "settings": {
     "title": "Settings",
     "subtitle": "Configuration and account",

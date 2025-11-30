@@ -8,6 +8,27 @@
   "header": {
     "title": "AirSentinels"
   },
+  "footer": {
+    "info": "App-Info",
+    "infoDialog": {
+      "title": "Über Diese Anwendung",
+      "developer": "Diese App wurde von David Riallant – AirSentinels entwickelt. Wenn Sie mehr erfahren oder Ihre personalisierte Version haben möchten, kontaktieren Sie mich unter david.riallant@airsentinels.com",
+      "disclaimer": {
+        "title": "Demonstrations-Tool",
+        "content": "Diese Webanwendung ist ein Demonstrations-Tool, das nur zu Informations- und Testzwecken bereitgestellt wird. Sie ist nicht für die Entscheidungsfindung in kritischen Kontexten vorgesehen."
+      },
+      "privacy": {
+        "title": "Persönliche Daten und Datenschutz",
+        "content": "Diese Demo kann die von Ihnen eingegebenen Informationen (wie Messungen, Notizen, Standorte oder andere Eingaben) ausschließlich zum Zweck der Anzeige von Ergebnissen und zur Verbesserung der Benutzererfahrung verarbeiten. Keine persönlichen Daten werden absichtlich für Profiling- oder kommerzielle Zwecke verwendet. Sofern nicht ausdrücklich anders angegeben, werden Daten nicht so gespeichert, dass ich Sie persönlich identifizieren kann, abgesehen von Informationen, die Sie freiwillig bereitstellen (z. B. wenn Sie mich per E-Mail kontaktieren).",
+        "logs": "Wie bei jedem Online-Dienst können technische Protokolle (wie IP-Adresse, Browsertyp, Datum und Uhrzeit des Zugriffs) vom Hosting-Anbieter zu Sicherheits- und Wartungszwecken gesammelt werden."
+      },
+      "useAtRisk": {
+        "title": "Nutzung auf Eigenes Risiko",
+        "content": "Obwohl ich anstrebe, dass die von dieser Demo bereitgestellten Informationen und Berechnungen so zuverlässig wie möglich sind, werden sie \"wie besehen\" bereitgestellt, ohne jegliche Garantie für Genauigkeit, Vollständigkeit oder Eignung für einen bestimmten Zweck. Ich kann nicht für direkte oder indirekte Folgen haftbar gemacht werden, die sich aus der Nutzung dieser Webanwendung oder aus auf der Grundlage ihrer Ausgaben getroffenen Entscheidungen ergeben."
+      },
+      "contact": "Wenn Sie Fragen zur Funktionsweise dieser Demo oder zur Handhabung personenbezogener Daten in einer bestimmten Bereitstellung haben oder wenn Sie eine angepasste Version wünschen, die an Ihre eigenen Datenschutz- und Datenrichtlinien angepasst ist, können Sie mich unter der oben genannten E-Mail-Adresse kontaktieren."
+    }
+  },
   "settings": {
     "title": "Einstellungen",
     "subtitle": "Konfiguration und Konto",

@@ -8,6 +8,27 @@
   "header": {
     "title": "AirSentinels"
   },
+  "footer": {
+    "info": "Info Aplicació",
+    "infoDialog": {
+      "title": "Sobre Aquesta Aplicació",
+      "developer": "Aquesta aplicació ha estat desenvolupada per David Riallant – AirSentinels. Si voleu saber-ne més o tenir la vostra versió personalitzada, contacteu-me a david.riallant@airsentinels.com",
+      "disclaimer": {
+        "title": "Eina de Demostració",
+        "content": "Aquesta aplicació web és una eina de demostració proporcionada només amb finalitats informatives i de prova. No està destinada a ser utilitzada per a la presa de decisions en contextos crítics."
+      },
+      "privacy": {
+        "title": "Dades Personals i Privadesa",
+        "content": "Aquesta demostració pot processar la informació que introduïu (com ara mesuraments, notes, ubicacions o altres entrades) únicament amb la finalitat de mostrar resultats i millorar l'experiència de l'usuari. Cap dada personal s'utilitza intencionadament amb finalitats de perfilatge o comercials. Llevat que s'indiqui explícitament el contrari, les dades no estan destinades a ser emmagatzemades de manera que em permeti identificar-vos personalment, a part de qualsevol informació que proporcioneu voluntàriament (per exemple, si em contacteu per correu electrònic).",
+        "logs": "Com amb qualsevol servei en línia, els registres tècnics (com ara l'adreça IP, el tipus de navegador, la data i l'hora d'accés) poden ser recollits pel proveïdor d'allotjament amb finalitats de seguretat i manteniment."
+      },
+      "useAtRisk": {
+        "title": "Ús Sota la Vostra Responsabilitat",
+        "content": "Tot i que pretenc que la informació i els càlculs proporcionats per aquesta demostració siguin el més fiables possible, es proporcionen \"tal qual\", sense cap garantia d'exactitud, exhaustivitat o idoneïtat per a un propòsit particular. No puc ser responsabilitzat per cap conseqüència directa o indirecta resultant de l'ús d'aquesta aplicació web o de decisions preses sobre la base dels seus resultats."
+      },
+      "contact": "Si teniu preguntes sobre com funciona aquesta demostració o sobre com es gestionen les dades personals en un desplegament específic, o si voleu una versió personalitzada adaptada a les vostres pròpies polítiques de privadesa i dades, podeu contactar-me a l'adreça de correu electrònic anterior."
+    }
+  },
   "settings": {
     "title": "Configuració",
     "subtitle": "Configuració i compte",
