@@ -107,7 +107,7 @@ export default function GroupWelcome() {
         const groupNameForAuth = fallbackGroupName || group?.name || (groupId ? extractGroupNameFromSlug(groupId) : undefined);
         const returnPath = `/groups/${groupId}/welcome?join=${joinToken}`;
         const authUrl = groupNameForAuth 
-          ? `/auth?redirect=${encodeURIComponent(returnPath)}&groupName=${encodeURIComponent(groupNameForAuth)}`
+          ? `/auth?redirect=${encodeURIComponent(returnPath)}&groupName=${encodeURIComponent(groupNameForAuth)}${publicGroupInfo?.logo_url ? `&groupLogo=${encodeURIComponent(publicGroupInfo.logo_url)}` : ''}`
           : `/auth?redirect=${encodeURIComponent(returnPath)}`;
         navigate(authUrl);
         return;

@@ -27,6 +27,7 @@ export default function Auth() {
   const redirectPath = searchParams.get('redirect');
   const groupName = searchParams.get('groupName');
   const groupLogoParam = searchParams.get('groupLogo');
+  const groupIdParam = searchParams.get('group');
 
   // Fetch group logo if we have a group context
   useEffect(() => {
@@ -38,19 +39,24 @@ export default function Auth() {
 
     // Otherwise, fetch from database as fallback
     const fetchGroupLogo = async () => {
-      if (!groupName || !redirectPath) return;
+      // Get groupId from multiple sources
+      let groupId = groupIdParam; // Direct group parameter
       
-      // Extract groupId from redirect path (e.g., /groups/:groupId/welcome)
-      const match = redirectPath.match(/\/groups\/([^/]+)/);
-      if (!match) return;
+      // Fallback: extract from redirectPath
+      if (!groupId && redirectPath) {
+        const match = redirectPath.match(/\/groups\/([^/]+)/);
+        if (match) {
+          groupId = match[1];
+        }
+      }
       
-      const groupId = match[1];
+      if (!groupId) return;
       
       try {
         const { supabase } = await import('@/integrations/supabase/client');
         const { data } = await supabase
           .from('groups')
-          .select('logo_url')
+          .select('logo_url, name')
           .eq('id', groupId)
           .single();
         
@@ -63,7 +69,7 @@ export default function Auth() {
     };
 
     fetchGroupLogo();
-  }, [groupName, redirectPath, groupLogoParam]);
+  }, [groupIdParam, redirectPath, groupLogoParam]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
