@@ -15,8 +15,17 @@ export const PWAInstallPrompt = () => {
   const [isInstalling, setIsInstalling] = useState(false);
 
   useEffect(() => {
+    console.debug('🔧 [PWAInstallPrompt] State check:', { 
+      canInstall, 
+      isIOS, 
+      isInstalled,
+      hasPrompt: !!canInstall,
+      platform: navigator.userAgent 
+    });
+
     // Don't show if already installed
     if (isInstalled) {
+      console.debug('🔧 [PWAInstallPrompt] Not showing: App is already installed');
       setIsVisible(false);
       return;
     }
@@ -27,13 +36,17 @@ export const PWAInstallPrompt = () => {
       const dismissedTime = parseInt(dismissedAt, 10);
       const now = Date.now();
       if (now - dismissedTime < DISMISSAL_DURATION) {
+        const timeLeft = Math.round((DISMISSAL_DURATION - (now - dismissedTime)) / (1000 * 60 * 60));
+        console.debug(`🔧 [PWAInstallPrompt] Not showing: Dismissed ${timeLeft}h ago`);
         setIsVisible(false);
         return;
       }
     }
 
     // Show if can install or is iOS
-    setIsVisible(canInstall || isIOS);
+    const shouldShow = canInstall || isIOS;
+    console.debug(`🔧 [PWAInstallPrompt] Should show: ${shouldShow} (canInstall: ${canInstall}, isIOS: ${isIOS})`);
+    setIsVisible(shouldShow);
   }, [canInstall, isIOS, isInstalled]);
 
   const handleInstall = async () => {
