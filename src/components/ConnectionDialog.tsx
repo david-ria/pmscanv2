@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -32,11 +33,13 @@ export const ConnectionDialog = ({
   onRequestLocationPermission,
   onContinue,
 }: ConnectionDialogProps) => {
+  const { t } = useTranslation();
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Connect to PMScan Device</DialogTitle>
+          <DialogTitle>{t('connection.title')}</DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <PMScanConnectionStatus

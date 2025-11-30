@@ -378,7 +378,85 @@
       "emailTab": "Email",
       "linkTab": "Link",
       "qrTab": "QR Code"
+    },
+    "edit": {
+      "title": "Edit Group Information",
+      "description": "Update the basic information for your group.",
+      "groupName": "Group Name",
+      "enterGroupName": "Enter group name",
+      "optionalDescription": "Optional group description",
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "updatedSuccessfully": "Group information updated successfully"
+    },
+    "subscription": {
+      "title": "Group Access Levels",
+      "selectLevel": "Select an access level to change group functionalities",
+      "current": "Current",
+      "selectLevelButton": "Select Level",
+      "updating": "Updating...",
+      "levelUpdated": "Access level updated",
+      "levelChangedTo": "Group access level changed to {{level}}",
+      "updateFailed": "Failed to update access level",
+      "tryAgainLater": "Please try again later",
+      "levels": {
+        "basic": {
+          "level": "Level 1",
+          "name": "Basic Access",
+          "description": "Standard group monitoring capabilities"
+        },
+        "enhanced": {
+          "level": "Level 2",
+          "name": "Enhanced Access",
+          "description": "Advanced group monitoring features"
+        },
+        "full": {
+          "level": "Level 3",
+          "name": "Full Access",
+          "description": "Complete enterprise functionality"
+        }
+      },
+      "features": {
+        "upTo10Members": "Up to 10 members",
+        "basicMonitoring": "Basic monitoring",
+        "standardLocations": "Standard locations & activities",
+        "basicEventTracking": "Basic event tracking",
+        "upTo50Members": "Up to 50 members",
+        "customThresholds": "Custom pollution thresholds",
+        "advancedAlerts": "Advanced automated alerts",
+        "customEventTypes": "Custom event types",
+        "enhancedAnalytics": "Enhanced analytics",
+        "unlimitedMembers": "Unlimited members",
+        "advancedCustomThresholds": "Advanced custom thresholds",
+        "realtimeAlerts": "Real-time automated alerts",
+        "customEventManagement": "Custom event management",
+        "advancedAnalyticsReporting": "Advanced analytics & reporting",
+        "apiAccess": "API access",
+        "customIntegrations": "Custom integrations"
+      }
     }
+  },
+  "gps": {
+    "title": "GPS Location",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "waitingForSignal": "Waiting for GPS signal...",
+    "liveCoordinates": "Live GPS Coordinates",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "elevation": "Elevation",
+    "accuracy": "GPS Accuracy",
+    "lastUpdate": "Last Update",
+    "enableGPS": "Enable GPS",
+    "locationRequired": "Location access is required to add GPS coordinates to measurements",
+    "continueToRecording": "Continue to Recording Setup",
+    "excellent": "Excellent",
+    "good": "Good",
+    "fair": "Fair",
+    "poor": "Poor"
+  },
+  "connection": {
+    "title": "Connect to PMScan Device"
   },
   "common": {
     "error": "Error",

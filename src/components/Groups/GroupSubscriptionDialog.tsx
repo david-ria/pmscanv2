@@ -1,4 +1,5 @@
 import { Shield, Zap, Crown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -23,17 +24,17 @@ interface GroupSubscriptionDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const accessLevels = [
+const getAccessLevels = (t: (key: string) => string) => [
   {
     id: 'free' as const,
-    level: 'Level 1',
-    name: 'Basic Access',
-    description: 'Standard group monitoring capabilities',
+    level: t('groups.subscription.levels.basic.level'),
+    name: t('groups.subscription.levels.basic.name'),
+    description: t('groups.subscription.levels.basic.description'),
     features: [
-      'Up to 10 members',
-      'Basic monitoring',
-      'Standard locations & activities',
-      'Basic event tracking'
+      t('groups.subscription.features.upTo10Members'),
+      t('groups.subscription.features.basicMonitoring'),
+      t('groups.subscription.features.standardLocations'),
+      t('groups.subscription.features.basicEventTracking')
     ],
     icon: Shield,
     color: 'text-muted-foreground',
@@ -41,15 +42,15 @@ const accessLevels = [
   },
   {
     id: 'premium' as const,
-    level: 'Level 2',
-    name: 'Enhanced Access',
-    description: 'Advanced group monitoring features',
+    level: t('groups.subscription.levels.enhanced.level'),
+    name: t('groups.subscription.levels.enhanced.name'),
+    description: t('groups.subscription.levels.enhanced.description'),
     features: [
-      'Up to 50 members',
-      'Custom pollution thresholds',
-      'Advanced automated alerts',
-      'Custom event types',
-      'Enhanced analytics'
+      t('groups.subscription.features.upTo50Members'),
+      t('groups.subscription.features.customThresholds'),
+      t('groups.subscription.features.advancedAlerts'),
+      t('groups.subscription.features.customEventTypes'),
+      t('groups.subscription.features.enhancedAnalytics')
     ],
     icon: Zap,
     color: 'text-accent-foreground',
@@ -57,17 +58,17 @@ const accessLevels = [
   },
   {
     id: 'enterprise' as const,
-    level: 'Level 3',
-    name: 'Full Access',
-    description: 'Complete enterprise functionality',
+    level: t('groups.subscription.levels.full.level'),
+    name: t('groups.subscription.levels.full.name'),
+    description: t('groups.subscription.levels.full.description'),
     features: [
-      'Unlimited members',
-      'Advanced custom thresholds',
-      'Real-time automated alerts',
-      'Custom event management',
-      'Advanced analytics & reporting',
-      'API access',
-      'Custom integrations'
+      t('groups.subscription.features.unlimitedMembers'),
+      t('groups.subscription.features.advancedCustomThresholds'),
+      t('groups.subscription.features.realtimeAlerts'),
+      t('groups.subscription.features.customEventManagement'),
+      t('groups.subscription.features.advancedAnalyticsReporting'),
+      t('groups.subscription.features.apiAccess'),
+      t('groups.subscription.features.customIntegrations')
     ],
     icon: Crown,
     color: 'text-primary-foreground',
@@ -80,12 +81,14 @@ export function GroupSubscriptionDialog({
   open, 
   onOpenChange 
 }: GroupSubscriptionDialogProps) {
+  const { t } = useTranslation();
   const [currentTier, setCurrentTier] = useState<'free' | 'premium' | 'enterprise'>(
     (group?.subscription_tier as 'free' | 'premium' | 'enterprise') || 'free'
   );
   const { updateGroup } = useGroups();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+  const accessLevels = getAccessLevels(t);
 
   const handleLevelChange = async (newTier: 'free' | 'premium' | 'enterprise') => {
     if (newTier === currentTier || isUpdating) return;
@@ -95,13 +98,15 @@ export function GroupSubscriptionDialog({
       await updateGroup(group.id, { subscription_tier: newTier });
       setCurrentTier(newTier); // Update local state immediately
       toast({
-        title: "Access level updated",
-        description: `Group access level changed to ${accessLevels.find(l => l.id === newTier)?.level}`,
+        title: t('groups.subscription.levelUpdated'),
+        description: t('groups.subscription.levelChangedTo', { 
+          level: accessLevels.find(l => l.id === newTier)?.level 
+        }),
       });
     } catch (error) {
       toast({
-        title: "Failed to update access level",
-        description: "Please try again later",
+        title: t('groups.subscription.updateFailed'),
+        description: t('groups.subscription.tryAgainLater'),
         variant: "destructive",
       });
     } finally {
@@ -114,10 +119,10 @@ export function GroupSubscriptionDialog({
       <ResponsiveDialogContent className="max-w-2xl">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle className="text-xl font-bold text-center">
-            Group Access Levels
+            {t('groups.subscription.title')}
           </ResponsiveDialogTitle>
           <p className="text-center text-muted-foreground text-sm">
-            Select an access level to change group functionalities
+            {t('groups.subscription.selectLevel')}
           </p>
         </ResponsiveDialogHeader>
 
@@ -136,7 +141,7 @@ export function GroupSubscriptionDialog({
               >
                 {isCurrent && (
                   <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
-                    Current
+                    {t('groups.subscription.current')}
                   </Badge>
                 )}
                 
@@ -169,7 +174,7 @@ export function GroupSubscriptionDialog({
                         handleLevelChange(level.id);
                       }}
                     >
-                      {isUpdating ? 'Updating...' : 'Select Level'}
+                      {isUpdating ? t('groups.subscription.updating') : t('groups.subscription.selectLevelButton')}
                     </Button>
                   )}
                 </CardContent>

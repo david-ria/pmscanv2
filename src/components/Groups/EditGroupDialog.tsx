@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Edit3 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   ResponsiveDialog,
@@ -44,6 +45,7 @@ export function EditGroupDialog({
   open,
   onOpenChange,
 }: EditGroupDialogProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -80,8 +82,8 @@ export function EditGroupDialog({
       if (error) throw error;
 
       toast({
-        title: 'Success',
-        description: 'Group information updated successfully',
+        title: t('common.success'),
+        description: t('groups.edit.updatedSuccessfully'),
       });
 
       onOpenChange(false);
@@ -89,8 +91,8 @@ export function EditGroupDialog({
       window.location.reload();
     } catch (error: unknown) {
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to update group information',
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : t('common.error'),
         variant: 'destructive',
       });
     } finally {
@@ -104,10 +106,10 @@ export function EditGroupDialog({
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle className="flex items-center gap-2">
             <Edit3 className="h-5 w-5" />
-            Edit Group Information
+            {t('groups.edit.title')}
           </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            Update the basic information for your group.
+            {t('groups.edit.description')}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
@@ -118,10 +120,10 @@ export function EditGroupDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Group Name *</FormLabel>
+                  <FormLabel>{t('groups.edit.groupName')} *</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter group name"
+                      placeholder={t('groups.edit.enterGroupName')}
                       {...field}
                     />
                   </FormControl>
@@ -135,10 +137,10 @@ export function EditGroupDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t('common.description')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Optional group description"
+                      placeholder={t('groups.edit.optionalDescription')}
                       className="resize-none"
                       rows={3}
                       {...field}
@@ -156,10 +158,10 @@ export function EditGroupDialog({
                 onClick={() => onOpenChange(false)}
                 disabled={loading}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Saving...' : 'Save Changes'}
+                {loading ? t('groups.edit.saving') : t('groups.edit.saveChanges')}
               </Button>
             </DialogFooter>
           </form>
