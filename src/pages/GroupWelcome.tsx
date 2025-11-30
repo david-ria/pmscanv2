@@ -102,13 +102,19 @@ export default function GroupWelcome() {
     const handleJoinFlow = async () => {
       // If no user and we have a join token, redirect to auth with return path
       if (!user && joinToken) {
-        console.debug('🔐 [GroupWelcome] Redirecting to auth with join token');
+        // Wait for public info to load first (unless it failed)
+        if (loadingPublicInfo) {
+          console.debug('🔐 [GroupWelcome] Waiting for group info to load before redirecting...');
+          return;
+        }
+        
+        console.debug('🔐 [GroupWelcome] Redirecting to auth with join token and group info');
         // Extract group name from URL if available, or use fallbackGroupName
-        const groupNameForAuth = fallbackGroupName || group?.name || (groupId ? extractGroupNameFromSlug(groupId) : undefined);
+        const groupNameForAuth = fallbackGroupName || group?.name || publicGroupInfo?.name || (groupId ? extractGroupNameFromSlug(groupId) : undefined);
         const returnPath = `/groups/${groupId}/welcome?join=${joinToken}`;
-        const authUrl = groupNameForAuth 
-          ? `/auth?redirect=${encodeURIComponent(returnPath)}&groupName=${encodeURIComponent(groupNameForAuth)}${publicGroupInfo?.logo_url ? `&groupLogo=${encodeURIComponent(publicGroupInfo.logo_url)}` : ''}`
-          : `/auth?redirect=${encodeURIComponent(returnPath)}`;
+        const authUrl = `/auth?redirect=${encodeURIComponent(returnPath)}&group=${groupId}` +
+          (groupNameForAuth ? `&groupName=${encodeURIComponent(groupNameForAuth)}` : '') +
+          (publicGroupInfo?.logo_url ? `&groupLogo=${encodeURIComponent(publicGroupInfo.logo_url)}` : '');
         navigate(authUrl);
         return;
       }
@@ -188,7 +194,7 @@ export default function GroupWelcome() {
     };
 
     handleJoinFlow();
-  }, [user, joinToken, groupId, navigate, isJoining, groupsLoading, applyGroupById, refetch, groups]);
+  }, [user, joinToken, groupId, navigate, isJoining, groupsLoading, applyGroupById, refetch, groups, loadingPublicInfo, publicGroupInfo, fallbackGroupName, group]);
 
   useEffect(() => {
     // If group is not found and groups have loaded, show error
@@ -274,7 +280,10 @@ export default function GroupWelcome() {
             <Button 
               onClick={() => {
                 const returnPath = `/groups/${groupId}/welcome${joinToken ? `?join=${joinToken}` : ''}`;
-                navigate(`/auth?redirect=${encodeURIComponent(returnPath)}${publicGroupInfo?.name ? `&groupName=${encodeURIComponent(publicGroupInfo.name)}` : ''}${publicGroupInfo?.logo_url ? `&groupLogo=${encodeURIComponent(publicGroupInfo.logo_url)}` : ''}`);
+                const authUrl = `/auth?redirect=${encodeURIComponent(returnPath)}&group=${groupId}` +
+                  (publicGroupInfo?.name ? `&groupName=${encodeURIComponent(publicGroupInfo.name)}` : '') +
+                  (publicGroupInfo?.logo_url ? `&groupLogo=${encodeURIComponent(publicGroupInfo.logo_url)}` : '');
+                navigate(authUrl);
               }} 
               className="w-full"
             >

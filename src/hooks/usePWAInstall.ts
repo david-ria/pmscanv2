@@ -15,14 +15,24 @@ export const usePWAInstall = () => {
     // Check if already installed
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     const isIOSStandalone = (window.navigator as any).standalone === true;
-    setIsInstalled(isStandalone || isIOSStandalone);
+    const installed = isStandalone || isIOSStandalone;
+    setIsInstalled(installed);
 
     // Detect iOS
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(iOS);
 
+    console.debug('🔧 [usePWAInstall] Initial state:', { 
+      isStandalone, 
+      isIOSStandalone, 
+      installed, 
+      iOS,
+      userAgent: navigator.userAgent
+    });
+
     // Handle beforeinstallprompt event (Android/Chrome)
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.debug('🔧 [usePWAInstall] beforeinstallprompt event fired');
       e.preventDefault();
       const promptEvent = e as BeforeInstallPromptEvent;
       setDeferredPrompt(promptEvent);
@@ -31,6 +41,7 @@ export const usePWAInstall = () => {
 
     // Handle app installed event
     const handleAppInstalled = () => {
+      console.debug('🔧 [usePWAInstall] appinstalled event fired');
       setDeferredPrompt(null);
       setCanInstall(false);
       setIsInstalled(true);
