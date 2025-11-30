@@ -37,7 +37,7 @@ export default function Auth() {
       return;
     }
 
-    // Otherwise, fetch from database as fallback
+    // Otherwise, fetch from secure edge function as fallback
     const fetchGroupLogo = async () => {
       // Get groupId from multiple sources
       let groupId = groupIdParam; // Direct group parameter
@@ -53,15 +53,11 @@ export default function Auth() {
       if (!groupId) return;
       
       try {
-        const { supabase } = await import('@/integrations/supabase/client');
-        const { data } = await supabase
-          .from('groups')
-          .select('logo_url, name')
-          .eq('id', groupId)
-          .single();
+        const { getPublicGroupInfo } = await import('@/utils/invitations');
+        const groupInfo = await getPublicGroupInfo(groupId);
         
-        if (data?.logo_url) {
-          setGroupLogo(data.logo_url);
+        if (groupInfo?.logo_url) {
+          setGroupLogo(groupInfo.logo_url);
         }
       } catch (error) {
         console.error('Failed to fetch group logo:', error);
