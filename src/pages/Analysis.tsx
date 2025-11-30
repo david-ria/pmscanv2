@@ -126,12 +126,12 @@ export default function Analysis() {
               selectedDate={selectedDate}
             />
             
-            {/* Group Comparison */}
-            <GroupComparison
+            {/* Group Comparison - Temporarily hidden */}
+            {/* <GroupComparison
               userStats={userStats}
               selectedPeriod={selectedPeriod}
               selectedDate={selectedDate}
-            />
+            /> */}
           </TabsContent>
         </Tabs>
       ) : (
