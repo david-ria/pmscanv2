@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Map, Satellite, Users, MapPin, AlertCircle } from 'lucide-react';
+import { Map, Satellite, Building2, Users, MapPin, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,6 +33,7 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
   
   const [pmType, setPmType] = useState<'pm1' | 'pm25' | 'pm10'>('pm25');
   const [isSatellite, setIsSatellite] = useState(false);
+  const [showBuildings, setShowBuildings] = useState(true);
   // Use group's geohash precision setting, defaulting to 6
   const precision = activeGroup?.settings?.geohash_precision || 6;
   const [loading, setLoading] = useState(true);
@@ -216,26 +217,28 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
           }
         });
 
-        // Add 3D buildings layer
-        const layers = mapInstance.getStyle().layers;
-        const labelLayerId = layers?.find(
-          (layer: any) => layer.type === 'symbol' && layer.layout?.['text-field']
-        )?.id;
+        // Add 3D buildings layer if enabled
+        if (showBuildings) {
+          const layers = mapInstance.getStyle().layers;
+          const labelLayerId = layers?.find(
+            (layer: any) => layer.type === 'symbol' && layer.layout?.['text-field']
+          )?.id;
 
-        mapInstance.addLayer({
-          id: '3d-buildings',
-          source: 'composite',
-          'source-layer': 'building',
-          filter: ['==', 'extrude', 'true'],
-          type: 'fill-extrusion',
-          minzoom: 14,
-          paint: {
-            'fill-extrusion-color': '#aaa',
-            'fill-extrusion-height': ['get', 'height'],
-            'fill-extrusion-base': ['get', 'min_height'],
-            'fill-extrusion-opacity': 0.6
-          }
-        }, labelLayerId);
+          mapInstance.addLayer({
+            id: '3d-buildings',
+            source: 'composite',
+            'source-layer': 'building',
+            filter: ['==', 'extrude', 'true'],
+            type: 'fill-extrusion',
+            minzoom: 14,
+            paint: {
+              'fill-extrusion-color': '#aaa',
+              'fill-extrusion-height': ['get', 'height'],
+              'fill-extrusion-base': ['get', 'min_height'],
+              'fill-extrusion-opacity': 0.6
+            }
+          }, labelLayerId);
+        }
 
         // Create popup for tooltip
         const popup = new mapboxgl.current.Popup({
@@ -391,26 +394,28 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
         }
       });
 
-      // Re-add 3D buildings layer
-      const layers = map.current.getStyle().layers;
-      const labelLayerId = layers?.find(
-        (layer: any) => layer.type === 'symbol' && layer.layout?.['text-field']
-      )?.id;
+      // Re-add 3D buildings layer if enabled
+      if (showBuildings) {
+        const layers = map.current.getStyle().layers;
+        const labelLayerId = layers?.find(
+          (layer: any) => layer.type === 'symbol' && layer.layout?.['text-field']
+        )?.id;
 
-      map.current.addLayer({
-        id: '3d-buildings',
-        source: 'composite',
-        'source-layer': 'building',
-        filter: ['==', 'extrude', 'true'],
-        type: 'fill-extrusion',
-        minzoom: 14,
-        paint: {
-          'fill-extrusion-color': '#aaa',
-          'fill-extrusion-height': ['get', 'height'],
-          'fill-extrusion-base': ['get', 'min_height'],
-          'fill-extrusion-opacity': 0.6
-        }
-      }, labelLayerId);
+        map.current.addLayer({
+          id: '3d-buildings',
+          source: 'composite',
+          'source-layer': 'building',
+          filter: ['==', 'extrude', 'true'],
+          type: 'fill-extrusion',
+          minzoom: 14,
+          paint: {
+            'fill-extrusion-color': '#aaa',
+            'fill-extrusion-height': ['get', 'height'],
+            'fill-extrusion-base': ['get', 'min_height'],
+            'fill-extrusion-opacity': 0.6
+          }
+        }, labelLayerId);
+      }
       
       // Re-add tooltip event listeners
       const popup = new mapboxgl.current.Popup({
@@ -458,6 +463,41 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
     });
     
     setIsSatellite(!isSatellite);
+  };
+
+  // Toggle 3D buildings
+  const toggleBuildings = () => {
+    if (!map.current) return;
+
+    if (showBuildings) {
+      // Remove buildings layer
+      if (map.current.getLayer('3d-buildings')) {
+        map.current.removeLayer('3d-buildings');
+      }
+    } else {
+      // Add buildings layer
+      const layers = map.current.getStyle().layers;
+      const labelLayerId = layers?.find(
+        (layer: any) => layer.type === 'symbol' && layer.layout?.['text-field']
+      )?.id;
+
+      map.current.addLayer({
+        id: '3d-buildings',
+        source: 'composite',
+        'source-layer': 'building',
+        filter: ['==', 'extrude', 'true'],
+        type: 'fill-extrusion',
+        minzoom: 14,
+        paint: {
+          'fill-extrusion-color': '#aaa',
+          'fill-extrusion-height': ['get', 'height'],
+          'fill-extrusion-base': ['get', 'min_height'],
+          'fill-extrusion-opacity': 0.6
+        }
+      }, labelLayerId);
+    }
+
+    setShowBuildings(!showBuildings);
   };
 
   if (!activeGroup) {
@@ -516,7 +556,7 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
               <div ref={mapContainer} className="h-full w-full" />
               
               {/* Satellite/Map Toggle Button */}
-              <div className="absolute top-3 left-3 z-10">
+              <div className="absolute top-3 left-3 z-10 flex gap-2">
                 <Button
                   onClick={toggleSatellite}
                   size="sm"
@@ -534,6 +574,17 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
                       {t('analysis.collaborativeMap.satelliteView')}
                     </>
                   )}
+                </Button>
+                
+                {/* 3D Buildings Toggle Button */}
+                <Button
+                  onClick={toggleBuildings}
+                  size="sm"
+                  variant={showBuildings ? "default" : "secondary"}
+                  className="bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background"
+                >
+                  <Building2 className="h-4 w-4 mr-2" />
+                  {t('analysis.collaborativeMap.buildings')}
                 </Button>
               </div>
             </div>

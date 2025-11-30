@@ -492,7 +492,8 @@
         "lastUpdate": "Dernière mise à jour"
       },
       "mapView": "Carte",
-      "satelliteView": "Satellite"
+      "satelliteView": "Satellite",
+      "buildings": "Bâtiments 3D"
     },
     "analyzing": "Analyse...",
     "analysisInProgress": "Analyse en cours...",
