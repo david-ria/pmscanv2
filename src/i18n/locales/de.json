@@ -483,7 +483,7 @@
       "privacyNote": "Standorte werden zum Schutz der Privatsphäre aggregiert. Mindestens 3 Messungen pro Gebiet.",
       "legend": "Luftqualitätslegende (µg/m³)",
       "tooltip": {
-        "title": "Zellenstatistiken",
+        "title": "Gebiet",
         "measurements": "Messungen",
         "lastUpdate": "Letzte Aktualisierung"
       }

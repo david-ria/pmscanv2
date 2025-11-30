@@ -487,7 +487,7 @@
       "privacyNote": "Les emplacements sont agrégés pour la confidentialité. Minimum 3 mesures par zone.",
       "legend": "Légende de la Qualité de l'Air (µg/m³)",
       "tooltip": {
-        "title": "Statistiques de la cellule",
+        "title": "Zone",
         "measurements": "Mesures",
         "lastUpdate": "Dernière mise à jour"
       }
