@@ -219,17 +219,17 @@ export const usePollutionBreakdownData = (
         .sort((a, b) => b.avgPM - a.avgPM) // Sort by PM concentration
         .slice(0, 5); // Show top 5
 
-      // Calculate total exposure time only for valid entries that will be displayed
-      const totalExposure = validEntries.reduce(
-        (sum, item) => sum + item.exposure,
+      // Calculate total average PM for percentage calculation
+      const totalAvgPM = validEntries.reduce(
+        (sum, item) => sum + item.avgPM,
         0
       );
 
       return validEntries.map((entry) => ({
         ...entry,
         percentage:
-          totalExposure > 0
-            ? (entry.exposure / totalExposure) * 100
+          totalAvgPM > 0
+            ? (entry.avgPM / totalAvgPM) * 100
             : 0,
       }));
     };
