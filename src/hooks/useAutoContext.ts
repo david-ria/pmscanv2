@@ -64,7 +64,7 @@ interface AutoContextSettings {
 }
 
 const DEFAULT_SETTINGS: AutoContextSettings = {
-  enabled: false,
+  enabled: true,
   mlEnabled: false,
   highAccuracy: false,
   overrideContext: false,

@@ -134,7 +134,7 @@ export const useWeatherLogging = () => {
 
 export const useGeohashSettings = () => {
   return useStorageSettings(STORAGE_KEYS.GEOHASH_SETTINGS, {
-    enabled: false,
+    enabled: true,
     precision: 8, // Building level by default
   });
 };
