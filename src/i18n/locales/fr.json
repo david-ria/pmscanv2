@@ -485,7 +485,12 @@
       "contributors": "contributeurs",
       "togglePersonal": "Afficher Mes Données",
       "privacyNote": "Les emplacements sont agrégés pour la confidentialité. Minimum 3 mesures par zone.",
-      "legend": "Légende de la Qualité de l'Air (µg/m³)"
+      "legend": "Légende de la Qualité de l'Air (µg/m³)",
+      "tooltip": {
+        "title": "Statistiques de la cellule",
+        "measurements": "Mesures",
+        "lastUpdate": "Dernière mise à jour"
+      }
     },
     "analyzing": "Analyse...",
     "analysisInProgress": "Analyse en cours...",

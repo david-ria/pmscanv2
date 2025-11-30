@@ -18,6 +18,7 @@ interface GeohashCell {
   avg_pm1: number;
   measurement_count: number;
   contributor_count: number;
+  last_measurement_time: string;
 }
 
 interface CollaborativeMapProps {
@@ -121,8 +122,12 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
         },
         properties: {
           pm: pmValue,
+          pm1: cell.avg_pm1,
+          pm25: cell.avg_pm25,
+          pm10: cell.avg_pm10,
           count: cell.measurement_count,
-          contributors: cell.contributor_count
+          contributors: cell.contributor_count,
+          lastMeasurement: cell.last_measurement_time
         }
       };
     });
@@ -202,6 +207,53 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
             'line-width': 1,
             'line-opacity': 0.5
           }
+        });
+
+        // Create popup for tooltip
+        const popup = new mapboxgl.current.Popup({
+          closeButton: false,
+          closeOnClick: false
+        });
+
+        // Show tooltip on hover
+        mapInstance.on('mouseenter', 'geohash-fill', (e: any) => {
+          mapInstance.getCanvas().style.cursor = 'pointer';
+          
+          if (e.features && e.features[0]) {
+            const props = e.features[0].properties;
+            const coordinates = e.lngLat;
+            
+            // Format the date
+            const lastTime = props.lastMeasurement 
+              ? new Date(props.lastMeasurement).toLocaleString()
+              : 'N/A';
+            
+            const html = `
+              <div class="p-2 text-sm">
+                <div class="font-bold mb-1">${t('analysis.collaborativeMap.tooltip.title')}</div>
+                <div class="grid grid-cols-2 gap-x-3 gap-y-1">
+                  <span class="text-muted-foreground">PM1:</span>
+                  <span class="font-medium">${props.pm1?.toFixed(1)} µg/m³</span>
+                  <span class="text-muted-foreground">PM2.5:</span>
+                  <span class="font-medium">${props.pm25?.toFixed(1)} µg/m³</span>
+                  <span class="text-muted-foreground">PM10:</span>
+                  <span class="font-medium">${props.pm10?.toFixed(1)} µg/m³</span>
+                </div>
+                <div class="border-t mt-2 pt-2 space-y-1">
+                  <div>${t('analysis.collaborativeMap.tooltip.measurements')}: <b>${props.count}</b></div>
+                  <div class="text-xs">${t('analysis.collaborativeMap.tooltip.lastUpdate')}: <b>${lastTime}</b></div>
+                </div>
+              </div>
+            `;
+            
+            popup.setLngLat(coordinates).setHTML(html).addTo(mapInstance);
+          }
+        });
+
+        // Hide tooltip
+        mapInstance.on('mouseleave', 'geohash-fill', () => {
+          mapInstance.getCanvas().style.cursor = '';
+          popup.remove();
         });
 
         setMapLoaded(true);
