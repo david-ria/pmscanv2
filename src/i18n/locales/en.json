@@ -662,7 +662,9 @@
         "title": "Area",
         "measurements": "Measurements",
         "lastUpdate": "Last update"
-      }
+      },
+      "mapView": "Map",
+      "satelliteView": "Satellite"
     },
     "analyzing": "Analyzing...",
     "analysisInProgress": "Analysis in progress...",

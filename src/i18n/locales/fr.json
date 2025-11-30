@@ -490,7 +490,9 @@
         "title": "Zone",
         "measurements": "Mesures",
         "lastUpdate": "Dernière mise à jour"
-      }
+      },
+      "mapView": "Carte",
+      "satelliteView": "Satellite"
     },
     "analyzing": "Analyse...",
     "analysisInProgress": "Analyse en cours...",

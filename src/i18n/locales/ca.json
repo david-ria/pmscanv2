@@ -486,7 +486,9 @@
         "title": "Zona",
         "measurements": "Mesures",
         "lastUpdate": "Última actualització"
-      }
+      },
+      "mapView": "Mapa",
+      "satelliteView": "Satèl·lit"
     },
     "analyzing": "Analitzant...",
     "analysisInProgress": "Anàlisi en curs...",

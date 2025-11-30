@@ -486,7 +486,9 @@
         "title": "Gebiet",
         "measurements": "Messungen",
         "lastUpdate": "Letzte Aktualisierung"
-      }
+      },
+      "mapView": "Karte",
+      "satelliteView": "Satellit"
     },
     "analyzing": "Analysiere...",
     "analysisInProgress": "Analyse läuft...",
