@@ -4,7 +4,7 @@ project_id = "shydpfwuvnlzdzbubmgb"
 verify_jwt = false
 
 [functions.enhance-location-context]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-public-group-info]
 verify_jwt = false
