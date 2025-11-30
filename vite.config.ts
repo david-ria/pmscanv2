@@ -68,6 +68,47 @@ export default defineConfig(({ mode }) => {
         'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       },
     },
+    optimizeDeps: {
+      include: [
+        // Core dependencies
+        'react',
+        'react-dom',
+        'react-router-dom',
+        // Radix UI packages (must be pre-bundled together to avoid chunk issues)
+        '@radix-ui/react-dialog',
+        '@radix-ui/react-select',
+        '@radix-ui/react-tabs',
+        '@radix-ui/react-toast',
+        '@radix-ui/react-tooltip',
+        '@radix-ui/react-popover',
+        '@radix-ui/react-checkbox',
+        '@radix-ui/react-radio-group',
+        '@radix-ui/react-switch',
+        '@radix-ui/react-slider',
+        '@radix-ui/react-label',
+        '@radix-ui/react-accordion',
+        '@radix-ui/react-alert-dialog',
+        '@radix-ui/react-dropdown-menu',
+        '@radix-ui/react-scroll-area',
+        '@radix-ui/react-separator',
+        '@radix-ui/react-collapsible',
+        '@radix-ui/react-toggle',
+        '@radix-ui/react-toggle-group',
+        '@radix-ui/react-navigation-menu',
+        '@radix-ui/react-menubar',
+        '@radix-ui/react-context-menu',
+        '@radix-ui/react-hover-card',
+        // Utility packages
+        'clsx',
+        'tailwind-merge',
+        'class-variance-authority',
+        // i18n
+        'react-i18next',
+        'i18next',
+      ],
+      // Force re-bundling to clear stale cache
+      force: true,
+    },
     build: {
       rollupOptions: {
         output: {
