@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,8 @@ export const GPSStatusCard = ({
   onRequestPermission,
   onContinue,
 }: GPSStatusCardProps) => {
+  const { t } = useTranslation();
+  
   const getAccuracyColor = (accuracy: number) => {
     if (accuracy <= 5) return 'text-success';
     if (accuracy <= 10) return 'text-warning';
@@ -24,10 +27,10 @@ export const GPSStatusCard = ({
   };
 
   const getAccuracyLevel = (accuracy: number) => {
-    if (accuracy <= 5) return 'Excellent';
-    if (accuracy <= 10) return 'Good';
-    if (accuracy <= 20) return 'Fair';
-    return 'Poor';
+    if (accuracy <= 5) return t('gps.excellent');
+    if (accuracy <= 10) return t('gps.good');
+    if (accuracy <= 20) return t('gps.fair');
+    return t('gps.poor');
   };
 
   return (
@@ -35,10 +38,10 @@ export const GPSStatusCard = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-lg">GPS Location</h3>
+          <h3 className="font-semibold text-lg">{t('gps.title')}</h3>
         </div>
         <Badge variant={locationEnabled ? 'default' : 'outline'}>
-          {locationEnabled ? 'Enabled' : 'Disabled'}
+          {locationEnabled ? t('gps.enabled') : t('gps.disabled')}
         </Badge>
       </div>
 
@@ -46,18 +49,18 @@ export const GPSStatusCard = ({
         <div className="text-center py-6">
           <AlertTriangle className="h-8 w-8 text-warning mx-auto mb-3" />
           <p className="text-muted-foreground mb-4">
-            Location access is required to add GPS coordinates to measurements
+            {t('gps.locationRequired')}
           </p>
           <Button onClick={onRequestPermission} className="gap-2">
             <MapPin className="h-4 w-4" />
-            Enable GPS
+            {t('gps.enableGPS')}
           </Button>
         </div>
       ) : !latestLocation ? (
         <div className="text-center py-6">
           <div className="animate-pulse">
             <Satellite className="h-8 w-8 text-primary mx-auto mb-3" />
-            <p className="text-muted-foreground">Waiting for GPS signal...</p>
+            <p className="text-muted-foreground">{t('gps.waitingForSignal')}</p>
           </div>
         </div>
       ) : (
@@ -67,7 +70,7 @@ export const GPSStatusCard = ({
             <div className="flex items-center gap-2 mb-3">
               <Satellite className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">
-                Live GPS Coordinates
+                {t('gps.liveCoordinates')}
               </span>
               <div className="flex-1" />
               <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
@@ -75,14 +78,14 @@ export const GPSStatusCard = ({
 
             <div className="grid grid-cols-1 gap-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Latitude:</span>
+                <span className="text-sm text-muted-foreground">{t('gps.latitude')}:</span>
                 <span className="font-mono text-lg font-semibold text-primary">
                   {latestLocation.latitude.toFixed(6)}°
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
-                  Longitude:
+                  {t('gps.longitude')}:
                 </span>
                 <span className="font-mono text-lg font-semibold text-primary">
                   {latestLocation.longitude.toFixed(6)}°
@@ -91,7 +94,7 @@ export const GPSStatusCard = ({
               {latestLocation.altitude && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Elevation:
+                    {t('gps.elevation')}:
                   </span>
                   <span className="font-mono text-lg font-semibold text-primary">
                     {latestLocation.altitude.toFixed(1)}m
@@ -104,7 +107,7 @@ export const GPSStatusCard = ({
           {/* Accuracy and status */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="space-y-1">
-              <p className="text-muted-foreground">GPS Accuracy</p>
+              <p className="text-muted-foreground">{t('gps.accuracy')}</p>
               <div className="flex items-center gap-2">
                 <p
                   className={`font-mono text-sm ${getAccuracyColor(latestLocation.accuracy)}`}
@@ -117,7 +120,7 @@ export const GPSStatusCard = ({
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-muted-foreground">Last Update</p>
+              <p className="text-muted-foreground">{t('gps.lastUpdate')}</p>
               <p className="font-mono text-sm">
                 {new Date(latestLocation.timestamp).toLocaleTimeString()}
               </p>
@@ -128,7 +131,7 @@ export const GPSStatusCard = ({
           {onContinue && (
             <Button onClick={onContinue} className="w-full gap-2">
               <MapPin className="h-4 w-4" />
-              Continue to Recording Setup
+              {t('gps.continueToRecording')}
             </Button>
           )}
         </div>
