@@ -488,7 +488,8 @@
         "lastUpdate": "Última actualització"
       },
       "mapView": "Mapa",
-      "satelliteView": "Satèl·lit"
+      "satelliteView": "Satèl·lit",
+      "buildings": "Edificis 3D"
     },
     "analyzing": "Analitzant...",
     "analysisInProgress": "Anàlisi en curs...",
