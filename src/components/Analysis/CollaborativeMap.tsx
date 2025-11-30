@@ -229,19 +229,19 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
               : 'N/A';
             
             const html = `
-              <div class="p-2 text-sm">
-                <div class="font-bold mb-1">${t('analysis.collaborativeMap.tooltip.title')}</div>
-                <div class="grid grid-cols-2 gap-x-3 gap-y-1">
-                  <span class="text-muted-foreground">PM1:</span>
-                  <span class="font-medium">${props.pm1?.toFixed(1)} µg/m³</span>
-                  <span class="text-muted-foreground">PM2.5:</span>
-                  <span class="font-medium">${props.pm25?.toFixed(1)} µg/m³</span>
-                  <span class="text-muted-foreground">PM10:</span>
-                  <span class="font-medium">${props.pm10?.toFixed(1)} µg/m³</span>
+              <div style="padding: 8px; font-family: system-ui, -apple-system, sans-serif; min-width: 200px;">
+                <div style="font-weight: 600; margin-bottom: 8px; font-size: 13px; color: #111827;">${t('analysis.collaborativeMap.tooltip.title')}</div>
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px;">
+                  <span style="color: #6b7280;">PM1:</span>
+                  <span style="font-weight: 500; color: #111827;">${props.pm1?.toFixed(1)} µg/m³</span>
+                  <span style="color: #6b7280;">PM2.5:</span>
+                  <span style="font-weight: 500; color: #111827;">${props.pm25?.toFixed(1)} µg/m³</span>
+                  <span style="color: #6b7280;">PM10:</span>
+                  <span style="font-weight: 500; color: #111827;">${props.pm10?.toFixed(1)} µg/m³</span>
                 </div>
-                <div class="border-t mt-2 pt-2 space-y-1">
-                  <div>${t('analysis.collaborativeMap.tooltip.measurements')}: <b>${props.count}</b></div>
-                  <div class="text-xs">${t('analysis.collaborativeMap.tooltip.lastUpdate')}: <b>${lastTime}</b></div>
+                <div style="border-top: 1px solid #e5e7eb; margin-top: 8px; padding-top: 8px; font-size: 12px; color: #374151;">
+                  <div style="margin-bottom: 4px;">${t('analysis.collaborativeMap.tooltip.measurements')}: <strong>${props.count}</strong></div>
+                  <div style="color: #6b7280;">${t('analysis.collaborativeMap.tooltip.lastUpdate')}: <strong>${lastTime}</strong></div>
                 </div>
               </div>
             `;

@@ -659,7 +659,7 @@
       "privacyNote": "Locations are aggregated for privacy. Minimum 3 measurements per area.",
       "legend": "Air Quality Legend (µg/m³)",
       "tooltip": {
-        "title": "Cell Statistics",
+        "title": "Area",
         "measurements": "Measurements",
         "lastUpdate": "Last update"
       }

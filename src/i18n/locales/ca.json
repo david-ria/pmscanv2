@@ -483,7 +483,7 @@
       "privacyNote": "Les ubicacions s'agreguen per privadesa. Mínim 3 mesures per àrea.",
       "legend": "Llegenda de Qualitat de l'Aire (µg/m³)",
       "tooltip": {
-        "title": "Estadístiques de la cel·la",
+        "title": "Zona",
         "measurements": "Mesures",
         "lastUpdate": "Última actualització"
       }
