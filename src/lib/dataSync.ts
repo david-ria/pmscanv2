@@ -143,6 +143,10 @@ export async function syncSingleMission(missionId: string): Promise<boolean> {
     const currentUser = await supabase.auth.getUser();
     if (!currentUser.data.user) return false;
 
+    // Use actual measurements length when available as the source of truth
+    const measurementsArrayCount = mission.measurements?.length ?? 0;
+    const expectedCount = measurementsArrayCount > 0 ? measurementsArrayCount : mission.measurementsCount;
+
     const { error: missionError } = await supabase.from('missions').upsert({
       id: mission.id,
       user_id: currentUser.data.user.id,
@@ -150,7 +154,7 @@ export async function syncSingleMission(missionId: string): Promise<boolean> {
       start_time: toISOString(mission.startTime),
       end_time: toISOString(mission.endTime),
       duration_minutes: mission.durationMinutes,
-      measurements_count: mission.measurementsCount,
+      measurements_count: expectedCount,
       weather_data_id: weatherDataId || null,
       avg_pm25: mission.avgPm25,
       avg_pm10: mission.avgPm10,
@@ -202,11 +206,12 @@ export async function syncSingleMission(missionId: string): Promise<boolean> {
     }
 
     await syncEventsForMission(mission.id);
-    const isValid = await validateMissionSync(mission.id, mission.measurementsCount);
+    const isValid = await validateMissionSync(mission.id, expectedCount);
     if (!isValid) throw new Error('Sync validation failed');
 
     stripMeasurementsFromStorage(mission.id);
     mission.synced = true;
+    mission.measurementsCount = expectedCount;
     saveMissionLocally(mission);
     removeFromPendingSync(mission.id);
     
@@ -240,6 +245,10 @@ export async function syncPendingMissions(): Promise<void> {
     let retryCount = 0;
     const maxRetries = 3;
 
+    // Prefer actual measurements length when available; fallback to stored count
+    const measurementsArrayCount = mission.measurements?.length ?? 0;
+    const expectedCount = measurementsArrayCount > 0 ? measurementsArrayCount : mission.measurementsCount;
+
     while (!syncSuccess && retryCount < maxRetries) {
       try {
         retryCount++;
@@ -263,10 +272,11 @@ export async function syncPendingMissions(): Promise<void> {
 
         // If mission exists, validate sync integrity
         if (existingMission) {
-          const isValidSync = await validateMissionSync(mission.id, mission.measurementsCount);
+          const isValidSync = await validateMissionSync(mission.id, expectedCount);
           if (isValidSync) {
             logger.debug(`✅ Mission ${mission.name} already properly synced`);
             mission.synced = true;
+            mission.measurementsCount = expectedCount;
             saveMissionLocally(mission);
             removeFromPendingSync(mission.id);
             syncSuccess = true;
@@ -276,30 +286,30 @@ export async function syncPendingMissions(): Promise<void> {
           }
         }
 
-    // Save mission to database using upsert to handle edge cases
-    const { data: savedMission, error: missionError } = await supabase
-      .from('missions')
-      .upsert({
-        id: mission.id,
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        name: mission.name,
-        start_time: toISOString(mission.startTime),
-        end_time: toISOString(mission.endTime),
-        duration_minutes: mission.durationMinutes,
-        avg_pm1: mission.avgPm1,
-        avg_pm25: mission.avgPm25,
-        avg_pm10: mission.avgPm10,
-        max_pm25: mission.maxPm25,
-        measurements_count: mission.measurementsCount,
-        recording_frequency: mission.recordingFrequency,
-        shared: mission.shared,
-        group_id: mission.groupId,
-        device_name: mission.deviceName,
-        weather_data_id: weatherDataId,
-        air_quality_data_id: airQualityDataId,
-      })
-      .select()
-      .single();
+        // Save mission to database using upsert to handle edge cases
+        const { data: savedMission, error: missionError } = await supabase
+          .from('missions')
+          .upsert({
+            id: mission.id,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            name: mission.name,
+            start_time: toISOString(mission.startTime),
+            end_time: toISOString(mission.endTime),
+            duration_minutes: mission.durationMinutes,
+            avg_pm1: mission.avgPm1,
+            avg_pm25: mission.avgPm25,
+            avg_pm10: mission.avgPm10,
+            max_pm25: mission.maxPm25,
+            measurements_count: expectedCount,
+            recording_frequency: mission.recordingFrequency,
+            shared: mission.shared,
+            group_id: mission.groupId,
+            device_name: mission.deviceName,
+            weather_data_id: weatherDataId,
+            air_quality_data_id: airQualityDataId,
+          })
+          .select()
+          .single();
 
         if (missionError) throw missionError;
 
@@ -320,7 +330,7 @@ export async function syncPendingMissions(): Promise<void> {
           activity_context: m.activityContext,
           automatic_context: m.automaticContext,
           enriched_location: m.enrichedLocation,
-          geohash: m.geohash, // NEW: Include geohash in sync
+          geohash: m.geohash, // Include geohash in sync
         }));
 
         // Batch measurements into chunks of 500 to avoid payload size limits
@@ -344,7 +354,7 @@ export async function syncPendingMissions(): Promise<void> {
         if (!eventsSuccess) throw new Error('Failed to sync events');
 
         // Validate that all data was synced correctly
-        const isValidSync = await validateMissionSync(mission.id, mission.measurementsCount);
+        const isValidSync = await validateMissionSync(mission.id, expectedCount);
         if (!isValidSync) throw new Error('Sync validation failed');
 
         // Strip measurements from localStorage AFTER successful sync to save space
@@ -354,6 +364,7 @@ export async function syncPendingMissions(): Promise<void> {
 
         // Mark as synced locally only after successful validation
         mission.synced = true;
+        mission.measurementsCount = expectedCount;
         saveMissionLocally(mission);
         removeFromPendingSync(mission.id);
         syncSuccess = true;
