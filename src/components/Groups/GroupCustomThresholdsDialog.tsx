@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Target, Edit, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   ResponsiveDialog,
@@ -28,6 +29,7 @@ export function GroupCustomThresholdsDialog({
   open,
   onOpenChange,
 }: GroupCustomThresholdsDialogProps) {
+  const { t } = useTranslation();
   const { thresholds, loading, deleteThreshold } = useGroupCustomThresholds(
     group.id
   );
@@ -58,19 +60,19 @@ export function GroupCustomThresholdsDialog({
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle className="flex items-center gap-2">
               <Target className="h-5 w-5" />
-              Seuils Personnalisés - {group.name}
+              {t('groups.thresholds.manageTitle', { name: group.name })}
             </ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
-              Gérez les seuils personnalisés pour ce groupe
+              {t('groups.thresholds.manageDescription')}
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Seuils du groupe</h3>
+              <h3 className="text-lg font-semibold">{t('groups.thresholds.groupThresholds')}</h3>
               <Button onClick={handleAdd}>
                 <Plus className="h-4 w-4 mr-2" />
-                Ajouter un seuil
+                {t('groups.thresholds.addNewThreshold')}
               </Button>
             </div>
 
@@ -88,15 +90,14 @@ export function GroupCustomThresholdsDialog({
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Target className="h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
-                    Aucun seuil personnalisé
+                    {t('groups.thresholds.noThresholds')}
                   </h3>
                   <p className="text-muted-foreground text-center mb-4">
-                    Créez des seuils personnalisés pour ce groupe afin de mieux
-                    surveiller la qualité de l'air
+                    {t('groups.thresholds.noThresholdsDescription')}
                   </p>
                   <Button onClick={handleAdd}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Créer le premier seuil
+                    {t('groups.thresholds.createFirst')}
                   </Button>
                 </CardContent>
               </Card>
@@ -134,7 +135,7 @@ export function GroupCustomThresholdsDialog({
                         variant={threshold.enabled ? 'default' : 'secondary'}
                         className="w-fit"
                       >
-                        {threshold.enabled ? 'Actif' : 'Inactif'}
+                        {threshold.enabled ? t('groups.thresholds.active') : t('groups.thresholds.inactive')}
                       </Badge>
                     </CardHeader>
                     <CardContent className="space-y-2">

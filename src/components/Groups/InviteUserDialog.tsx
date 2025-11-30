@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -33,11 +34,11 @@ import { createGroupJoinLink } from '@/utils/invitations';
 import { useToast } from '@/hooks/use-toast';
 import { Copy, Download, Mail, Link2, QrCode, Loader2 } from 'lucide-react';
 
-const formSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+const createFormSchema = (t: (key: string) => string) => z.object({
+  email: z.string().email(t('groups.invite.emailHelper')),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = z.infer<ReturnType<typeof createFormSchema>>;
 
 interface InviteUserDialogProps extends BaseDialogProps {
   groupId: string;
@@ -50,6 +51,7 @@ export function InviteUserDialog({
   open,
   onOpenChange,
 }: InviteUserDialogProps) {
+  const { t } = useTranslation();
   const { sendInvitation } = useGroupInvitations();
   const { groups } = useGroups();
   const { activeGroup } = useGroupSettings();
@@ -92,8 +94,8 @@ export function InviteUserDialog({
         .catch((error) => {
           console.error('Failed to generate join link:', error);
           toast({
-            title: 'Error',
-            description: 'Failed to generate invitation link',
+            title: t('common.error'),
+            description: t('groups.invite.errorGenerating'),
             variant: 'destructive',
           });
         })
@@ -102,7 +104,7 @@ export function InviteUserDialog({
   }, [open, expirationHours, groupId, resolvedGroupName, toast]);
 
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(createFormSchema(t)),
     defaultValues: {
       email: '',
     },
@@ -126,13 +128,13 @@ export function InviteUserDialog({
     try {
       await navigator.clipboard.writeText(joinUrl);
       toast({
-        title: 'Success',
-        description: 'Group URL copied to clipboard',
+        title: t('common.success'),
+        description: t('groups.invite.urlCopied'),
       });
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to copy URL to clipboard',
+        title: t('common.error'),
+        description: t('groups.invite.errorCopying'),
         variant: 'destructive',
       });
     }
@@ -148,8 +150,8 @@ export function InviteUserDialog({
     link.download = filename;
     link.click();
     toast({
-      title: 'Success',
-      description: 'QR code downloaded successfully',
+      title: t('common.success'),
+      description: t('groups.invite.qrDownloaded'),
     });
   };
 
@@ -157,9 +159,9 @@ export function InviteUserDialog({
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="sm:max-w-[500px]">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>Invite Members to Group</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{t('groups.invite.title')}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            Choose how you want to invite people to join your group.
+            {t('groups.invite.description')}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         
@@ -167,21 +169,21 @@ export function InviteUserDialog({
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="email" className="flex items-center gap-2">
               <Mail className="w-4 h-4" />
-              Email
+              {t('groups.invite.emailTab')}
             </TabsTrigger>
             <TabsTrigger value="link" className="flex items-center gap-2">
               <Link2 className="w-4 h-4" />
-              Link
+              {t('groups.invite.linkTab')}
             </TabsTrigger>
             <TabsTrigger value="qr" className="flex items-center gap-2">
               <QrCode className="w-4 h-4" />
-              QR Code
+              {t('groups.invite.qrTab')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="email" className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Send an invitation email with a personalized message.
+              {t('groups.invite.emailDescription')}
             </div>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -190,16 +192,16 @@ export function InviteUserDialog({
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel>{t('groups.invite.emailAddress')}</FormLabel>
                       <FormControl>
                         <Input
                           type="email"
-                          placeholder="user@example.com"
+                          placeholder={t('groups.invite.emailPlaceholder')}
                           {...field}
                         />
                       </FormControl>
                       <FormDescription>
-                        Enter the email address of the person you want to invite
+                        {t('groups.invite.emailHelper')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -212,10 +214,10 @@ export function InviteUserDialog({
                     onClick={() => onOpenChange(false)}
                     disabled={isSubmitting}
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Sending...' : 'Send Invitation'}
+                    {isSubmitting ? t('groups.invite.sending') : t('groups.invite.sendInvitation')}
                   </Button>
                 </DialogFooter>
               </form>
@@ -224,27 +226,27 @@ export function InviteUserDialog({
 
           <TabsContent value="link" className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Share this link to let people join your group and start recording data with group settings.
+              {t('groups.invite.linkDescription')}
             </div>
             
             <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-              <Label className="text-sm font-medium">Link Expiration</Label>
+              <Label className="text-sm font-medium">{t('groups.invite.linkExpiration')}</Label>
               <RadioGroup value={expirationHours} onValueChange={setExpirationHours}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="1" id="exp-1h" />
-                  <Label htmlFor="exp-1h" className="font-normal cursor-pointer">1 hour</Label>
+                  <Label htmlFor="exp-1h" className="font-normal cursor-pointer">{t('groups.invite.oneHour')}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="24" id="exp-24h" />
-                  <Label htmlFor="exp-24h" className="font-normal cursor-pointer">24 hours (Conference/Event)</Label>
+                  <Label htmlFor="exp-24h" className="font-normal cursor-pointer">{t('groups.invite.twentyFourHours')}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="168" id="exp-7d" />
-                  <Label htmlFor="exp-7d" className="font-normal cursor-pointer">7 days</Label>
+                  <Label htmlFor="exp-7d" className="font-normal cursor-pointer">{t('groups.invite.sevenDays')}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="720" id="exp-30d" />
-                  <Label htmlFor="exp-30d" className="font-normal cursor-pointer">30 days</Label>
+                  <Label htmlFor="exp-30d" className="font-normal cursor-pointer">{t('groups.invite.thirtyDays')}</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -254,7 +256,7 @@ export function InviteUserDialog({
                 <Skeleton className="h-10 w-full" />
                 <div className="text-sm text-muted-foreground flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating link...
+                  {t('groups.invite.generatingLink')}
                 </div>
               </div>
             ) : (
@@ -273,7 +275,7 @@ export function InviteUserDialog({
                     className="flex items-center gap-2"
                   >
                     <Copy className="w-4 h-4" />
-                    Copy
+                    {t('groups.invite.copy')}
                   </Button>
                 </div>
               </div>
@@ -284,34 +286,34 @@ export function InviteUserDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Close
+                {t('groups.invite.close')}
               </Button>
             </DialogFooter>
           </TabsContent>
 
           <TabsContent value="qr" className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Let people scan this QR code to join your group and start recording.
+              {t('groups.invite.qrDescription')}
             </div>
             
             <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-              <Label className="text-sm font-medium">QR Code Expiration</Label>
+              <Label className="text-sm font-medium">{t('groups.invite.qrExpiration')}</Label>
               <RadioGroup value={expirationHours} onValueChange={setExpirationHours}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="1" id="qr-exp-1h" />
-                  <Label htmlFor="qr-exp-1h" className="font-normal cursor-pointer">1 hour</Label>
+                  <Label htmlFor="qr-exp-1h" className="font-normal cursor-pointer">{t('groups.invite.oneHour')}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="24" id="qr-exp-24h" />
-                  <Label htmlFor="qr-exp-24h" className="font-normal cursor-pointer">24 hours (Conference/Event)</Label>
+                  <Label htmlFor="qr-exp-24h" className="font-normal cursor-pointer">{t('groups.invite.twentyFourHours')}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="168" id="qr-exp-7d" />
-                  <Label htmlFor="qr-exp-7d" className="font-normal cursor-pointer">7 days</Label>
+                  <Label htmlFor="qr-exp-7d" className="font-normal cursor-pointer">{t('groups.invite.sevenDays')}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="720" id="qr-exp-30d" />
-                  <Label htmlFor="qr-exp-30d" className="font-normal cursor-pointer">30 days</Label>
+                  <Label htmlFor="qr-exp-30d" className="font-normal cursor-pointer">{t('groups.invite.thirtyDays')}</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -321,7 +323,7 @@ export function InviteUserDialog({
                 <Skeleton className="w-48 h-48 rounded-lg" />
                 <div className="text-sm text-muted-foreground flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating QR code...
+                  {t('groups.invite.generatingQR')}
                 </div>
               </div>
             ) : (
@@ -341,7 +343,7 @@ export function InviteUserDialog({
                   disabled={!qrCodeDataUrl}
                 >
                   <Download className="w-4 h-4" />
-                  Download QR Code
+                  {t('groups.invite.downloadQR')}
                 </Button>
               </div>
             )}
@@ -351,7 +353,7 @@ export function InviteUserDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Close
+                {t('groups.invite.close')}
               </Button>
             </DialogFooter>
           </TabsContent>
