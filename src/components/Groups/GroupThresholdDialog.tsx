@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Target } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   ResponsiveDialog,
@@ -28,8 +29,8 @@ import {
 } from '@/hooks/useGroupCustomThresholds';
 import { Group } from '@/hooks/useGroups';
 
-const thresholdSchema = z.object({
-  name: z.string().min(1, 'Le nom est requis'),
+const createThresholdSchema = (t: (key: string) => string) => z.object({
+  name: z.string().min(1, t('groups.thresholds.thresholdNameRequired')),
   pm1_min: z.number().min(0).max(500).optional(),
   pm1_max: z.number().min(0).max(500).optional(),
   pm25_min: z.number().min(0).max(500).optional(),
@@ -40,7 +41,7 @@ const thresholdSchema = z.object({
   enabled: z.boolean(),
 });
 
-type ThresholdFormData = z.infer<typeof thresholdSchema>;
+type ThresholdFormData = z.infer<ReturnType<typeof createThresholdSchema>>;
 
 interface GroupThresholdDialogProps {
   group: Group;
@@ -55,13 +56,14 @@ export function GroupThresholdDialog({
   open,
   onOpenChange,
 }: GroupThresholdDialogProps) {
+  const { t } = useTranslation();
   const { createThreshold, updateThreshold } = useGroupCustomThresholds(
     group.id
   );
   const [loading, setLoading] = useState(false);
 
   const form = useForm<ThresholdFormData>({
-    resolver: zodResolver(thresholdSchema),
+    resolver: zodResolver(createThresholdSchema(t)),
     defaultValues: {
       name: '',
       pm1_min: undefined,
@@ -138,12 +140,12 @@ export function GroupThresholdDialog({
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle className="flex items-center gap-2">
             <Target className="h-5 w-5" />
-            {threshold ? 'Modifier le seuil' : 'Ajouter un seuil'}
+            {threshold ? t('groups.thresholds.editThreshold') : t('groups.thresholds.addThreshold')}
           </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
             {threshold
-              ? 'Modifiez les paramètres du seuil'
-              : 'Créez un nouveau seuil personnalisé pour le groupe'}
+              ? t('groups.thresholds.editSettings')
+              : t('groups.thresholds.createNew')}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
@@ -154,9 +156,9 @@ export function GroupThresholdDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nom du seuil</FormLabel>
+                  <FormLabel>{t('groups.thresholds.thresholdName')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Bon, Modéré, Mauvais..." {...field} />
+                    <Input placeholder={t('groups.thresholds.thresholdNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -169,7 +171,7 @@ export function GroupThresholdDialog({
                 name="color"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Couleur</FormLabel>
+                    <FormLabel>{t('common.color')}</FormLabel>
                     <FormControl>
                       <Input type="color" {...field} />
                     </FormControl>
@@ -180,14 +182,14 @@ export function GroupThresholdDialog({
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-medium">Seuils PM1 (μg/m³)</h4>
+              <h4 className="font-medium">{t('groups.thresholds.pm1Thresholds')}</h4>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="pm1_min"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Min</FormLabel>
+                      <FormLabel>{t('groups.thresholds.min')}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -211,7 +213,7 @@ export function GroupThresholdDialog({
                   name="pm1_max"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Max</FormLabel>
+                      <FormLabel>{t('groups.thresholds.max')}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -234,14 +236,14 @@ export function GroupThresholdDialog({
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-medium">Seuils PM2.5 (μg/m³)</h4>
+              <h4 className="font-medium">{t('groups.thresholds.pm25Thresholds')}</h4>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="pm25_min"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Min</FormLabel>
+                      <FormLabel>{t('groups.thresholds.min')}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -265,7 +267,7 @@ export function GroupThresholdDialog({
                   name="pm25_max"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Max</FormLabel>
+                      <FormLabel>{t('groups.thresholds.max')}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -288,14 +290,14 @@ export function GroupThresholdDialog({
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-medium">Seuils PM10 (μg/m³)</h4>
+              <h4 className="font-medium">{t('groups.thresholds.pm10Thresholds')}</h4>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="pm10_min"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Min</FormLabel>
+                      <FormLabel>{t('groups.thresholds.min')}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -319,7 +321,7 @@ export function GroupThresholdDialog({
                   name="pm10_max"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Max</FormLabel>
+                      <FormLabel>{t('groups.thresholds.max')}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -347,9 +349,9 @@ export function GroupThresholdDialog({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
-                    <FormLabel>Activer le seuil</FormLabel>
+                    <FormLabel>{t('groups.thresholds.enableThreshold')}</FormLabel>
                     <div className="text-sm text-muted-foreground">
-                      Utiliser ce seuil pour l'affichage et les notifications
+                      {t('groups.thresholds.enableDescription')}
                     </div>
                   </div>
                   <FormControl>
@@ -368,14 +370,14 @@ export function GroupThresholdDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Annuler
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading
-                  ? 'Enregistrement...'
+                  ? t('groups.thresholds.saving')
                   : threshold
-                    ? 'Modifier'
-                    : 'Créer'}
+                    ? t('groups.thresholds.edit')
+                    : t('groups.thresholds.create')}
               </Button>
             </DialogFooter>
           </form>
