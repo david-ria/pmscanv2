@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Map, Users, MapPin, AlertCircle } from 'lucide-react';
+import { Map, Satellite, Users, MapPin, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -31,6 +32,7 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
   const { activeGroup } = useGroupSettings();
   
   const [pmType, setPmType] = useState<'pm1' | 'pm25' | 'pm10'>('pm25');
+  const [isSatellite, setIsSatellite] = useState(false);
   // Use group's geohash precision setting, defaulting to 6
   const precision = activeGroup?.settings?.geohash_precision || 6;
   const [loading, setLoading] = useState(true);
@@ -156,9 +158,14 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
       
       const mapInstance = new mapboxgl.current.Map({
         container: mapContainer.current!,
-        style: 'mapbox://styles/mapbox/light-v11',
+        style: isSatellite 
+          ? 'mapbox://styles/mapbox/satellite-streets-v12' 
+          : 'mapbox://styles/mapbox/light-v11',
         center: [0, 20],
-        zoom: 2
+        zoom: 2,
+        pitch: 45,
+        bearing: -17.6,
+        antialias: true
       });
 
       mapInstance.on('load', () => {
@@ -208,6 +215,27 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
             'line-opacity': 0.5
           }
         });
+
+        // Add 3D buildings layer
+        const layers = mapInstance.getStyle().layers;
+        const labelLayerId = layers?.find(
+          (layer: any) => layer.type === 'symbol' && layer.layout?.['text-field']
+        )?.id;
+
+        mapInstance.addLayer({
+          id: '3d-buildings',
+          source: 'composite',
+          'source-layer': 'building',
+          filter: ['==', 'extrude', 'true'],
+          type: 'fill-extrusion',
+          minzoom: 14,
+          paint: {
+            'fill-extrusion-color': '#aaa',
+            'fill-extrusion-height': ['get', 'height'],
+            'fill-extrusion-base': ['get', 'min_height'],
+            'fill-extrusion-opacity': 0.6
+          }
+        }, labelLayerId);
 
         // Create popup for tooltip
         const popup = new mapboxgl.current.Popup({
@@ -304,6 +332,134 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
     }
   }, [geojsonData, mapLoaded, pmType, precision]);
 
+  // Toggle satellite view
+  const toggleSatellite = () => {
+    if (!map.current || !mapboxgl.current) return;
+    
+    const newStyle = isSatellite 
+      ? 'mapbox://styles/mapbox/light-v11'
+      : 'mapbox://styles/mapbox/satellite-streets-v12';
+    
+    map.current.setStyle(newStyle);
+    
+    // Re-add layers after style change
+    map.current.once('style.load', () => {
+      // Re-add geohash-data source
+      map.current.addSource('geohash-data', {
+        type: 'geojson',
+        data: geojsonData as any
+      });
+      
+      // Re-add geohash-fill layer
+      map.current.addLayer({
+        id: 'geohash-fill',
+        type: 'fill',
+        source: 'geohash-data',
+        paint: {
+          'fill-color': [
+            'interpolate',
+            ['linear'],
+            ['get', 'pm'],
+            0, '#22c55e',
+            10, '#84cc16',
+            15, '#fbbf24',
+            25, '#f97316',
+            50, '#ef4444',
+            100, '#991b1b'
+          ],
+          'fill-opacity': [
+            'interpolate',
+            ['linear'],
+            ['get', 'count'],
+            3, 0.3,
+            10, 0.5,
+            50, 0.7,
+            100, 0.9
+          ]
+        }
+      });
+      
+      // Re-add geohash-outline layer
+      map.current.addLayer({
+        id: 'geohash-outline',
+        type: 'line',
+        source: 'geohash-data',
+        paint: {
+          'line-color': '#d1d5db',
+          'line-width': 1,
+          'line-opacity': 0.5
+        }
+      });
+
+      // Re-add 3D buildings layer
+      const layers = map.current.getStyle().layers;
+      const labelLayerId = layers?.find(
+        (layer: any) => layer.type === 'symbol' && layer.layout?.['text-field']
+      )?.id;
+
+      map.current.addLayer({
+        id: '3d-buildings',
+        source: 'composite',
+        'source-layer': 'building',
+        filter: ['==', 'extrude', 'true'],
+        type: 'fill-extrusion',
+        minzoom: 14,
+        paint: {
+          'fill-extrusion-color': '#aaa',
+          'fill-extrusion-height': ['get', 'height'],
+          'fill-extrusion-base': ['get', 'min_height'],
+          'fill-extrusion-opacity': 0.6
+        }
+      }, labelLayerId);
+      
+      // Re-add tooltip event listeners
+      const popup = new mapboxgl.current.Popup({
+        closeButton: false,
+        closeOnClick: false
+      });
+
+      map.current.on('mouseenter', 'geohash-fill', (e: any) => {
+        map.current.getCanvas().style.cursor = 'pointer';
+        
+        if (e.features && e.features[0]) {
+          const props = e.features[0].properties;
+          const coordinates = e.lngLat;
+          
+          const lastTime = props.lastMeasurement 
+            ? new Date(props.lastMeasurement).toLocaleString()
+            : 'N/A';
+          
+          const html = `
+            <div style="padding: 8px; font-family: system-ui, -apple-system, sans-serif; min-width: 200px;">
+              <div style="font-weight: 600; margin-bottom: 8px; font-size: 13px; color: #111827;">${t('analysis.collaborativeMap.tooltip.title')}</div>
+              <div style="display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px;">
+                <span style="color: #6b7280;">PM1:</span>
+                <span style="font-weight: 500; color: #111827;">${props.pm1?.toFixed(1)} µg/m³</span>
+                <span style="color: #6b7280;">PM2.5:</span>
+                <span style="font-weight: 500; color: #111827;">${props.pm25?.toFixed(1)} µg/m³</span>
+                <span style="color: #6b7280;">PM10:</span>
+                <span style="font-weight: 500; color: #111827;">${props.pm10?.toFixed(1)} µg/m³</span>
+              </div>
+              <div style="border-top: 1px solid #e5e7eb; margin-top: 8px; padding-top: 8px; font-size: 12px; color: #374151;">
+                <div style="margin-bottom: 4px;">${t('analysis.collaborativeMap.tooltip.measurements')}: <strong>${props.count}</strong></div>
+                <div style="color: #6b7280;">${t('analysis.collaborativeMap.tooltip.lastUpdate')}: <strong>${lastTime}</strong></div>
+              </div>
+            </div>
+          `;
+          
+          popup.setLngLat(coordinates).setHTML(html).addTo(map.current);
+        }
+      });
+
+      map.current.on('mouseleave', 'geohash-fill', () => {
+        map.current.getCanvas().style.cursor = '';
+        popup.remove();
+      });
+    });
+    
+    setIsSatellite(!isSatellite);
+  };
+
   if (!activeGroup) {
     return null;
   }
@@ -356,7 +512,31 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
               <p className="text-sm text-muted-foreground">{t('analysis.collaborativeMap.noData')}</p>
             </div>
           ) : (
-            <div ref={mapContainer} className="h-full w-full" />
+            <div className="h-full w-full relative">
+              <div ref={mapContainer} className="h-full w-full" />
+              
+              {/* Satellite/Map Toggle Button */}
+              <div className="absolute top-3 left-3 z-10">
+                <Button
+                  onClick={toggleSatellite}
+                  size="sm"
+                  variant="secondary"
+                  className="bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background"
+                >
+                  {isSatellite ? (
+                    <>
+                      <Map className="h-4 w-4 mr-2" />
+                      {t('analysis.collaborativeMap.mapView')}
+                    </>
+                  ) : (
+                    <>
+                      <Satellite className="h-4 w-4 mr-2" />
+                      {t('analysis.collaborativeMap.satelliteView')}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           )}
         </div>
 
