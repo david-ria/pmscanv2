@@ -27,7 +27,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'fr', // Default to French since the app is currently in French
+    fallbackLng: 'en', // Default language
     debug: false,
 
     detection: {
