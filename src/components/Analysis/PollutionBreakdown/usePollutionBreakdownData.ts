@@ -200,21 +200,21 @@ export const usePollutionBreakdownData = (
             cumulativeDose: data.cumulativeDose,
           };
         })
-        .filter((item) => item.avgPM > 0) // Only show categories with PM data
-        .sort((a, b) => b.avgPM - a.avgPM) // Sort by PM concentration
+        .filter((item) => item.cumulativeDose > 0) // Only show categories with cumulative dose data
+        .sort((a, b) => b.cumulativeDose - a.cumulativeDose) // Sort by cumulative dose
         .slice(0, 5); // Show top 5
 
-      // Calculate total average PM for percentage calculation
-      const totalAvgPM = validEntries.reduce(
-        (sum, item) => sum + item.avgPM,
+      // Calculate total cumulative dose for percentage calculation
+      const totalCumulativeDose = validEntries.reduce(
+        (sum, item) => sum + item.cumulativeDose,
         0
       );
 
       return validEntries.map((entry) => ({
         ...entry,
         percentage:
-          totalAvgPM > 0
-            ? (entry.avgPM / totalAvgPM) * 100
+          totalCumulativeDose > 0
+            ? (entry.cumulativeDose / totalCumulativeDose) * 100
             : 0,
       }));
     };
