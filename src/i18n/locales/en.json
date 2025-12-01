@@ -633,7 +633,7 @@
     "myData": "My Data",
     "groupData": "Group Data",
     "groupExposure": {
-      "title": "Average Exposures",
+      "title": "Cumulative Exposure",
       "byLocation": "By Location",
       "byActivity": "By Activity",
       "noData": "No data available for this period",
