@@ -68,9 +68,9 @@ export const PollutionSummaryTable = ({
                 )}
               </div>
               
-              {/* Line 3: Cumulative dose */}
+              {/* Line 3: Cumulative exposure */}
               <div className="text-xs text-muted-foreground">
-                {t('analysis.cumulativeDose')}: {item.cumulativeDose.toFixed(1)} μg
+                {t('analysis.cumulativeDose')}: {item.cumulativeDose.toFixed(1)} µg·h/m³
               </div>
             </div>
             <div className="text-right flex-shrink-0">
