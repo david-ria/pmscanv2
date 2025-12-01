@@ -457,7 +457,7 @@
     "myData": "Meine Daten",
     "groupData": "Gruppendaten",
     "groupExposure": {
-      "title": "Durchschnittliche Expositionen",
+      "title": "Kumulative Exposition",
       "byLocation": "Nach Standort",
       "byActivity": "Nach Aktivität",
       "noData": "Keine Daten für diesen Zeitraum verfügbar",

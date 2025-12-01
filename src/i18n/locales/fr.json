@@ -461,7 +461,7 @@
     "myData": "Mes Données",
     "groupData": "Données du Groupe",
     "groupExposure": {
-      "title": "Expositions Moyennes",
+      "title": "Exposition Cumulée",
       "byLocation": "Par Lieu",
       "byActivity": "Par Activité",
       "noData": "Aucune donnée disponible pour cette période",

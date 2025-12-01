@@ -13,6 +13,10 @@ interface ContextExposure {
   avgPM25: number;
   avgPM10: number;
   measurementCount: number;
+  totalTimeMinutes: number;
+  cumulativePM1: number;
+  cumulativePM25: number;
+  cumulativePM10: number;
 }
 
 interface GroupExposureChartsProps {
@@ -160,22 +164,44 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
           }
         });
 
-        // Convert to array and calculate averages
-        const locationExposures: ContextExposure[] = Array.from(locationMap.entries()).map(([context, data]) => ({
-          context,
-          avgPM1: data.sum1 / data.count,
-          avgPM25: data.sum25 / data.count,
-          avgPM10: data.sum10 / data.count,
-          measurementCount: data.count
-        }));
+        // Convert to array and calculate averages and cumulative exposure
+        const locationExposures: ContextExposure[] = Array.from(locationMap.entries()).map(([context, data]) => {
+          const avgPM1 = data.sum1 / data.count;
+          const avgPM25 = data.sum25 / data.count;
+          const avgPM10 = data.sum10 / data.count;
+          // Assume 5-second intervals between measurements
+          const totalTimeMinutes = data.count * (5 / 60);
+          return {
+            context,
+            avgPM1,
+            avgPM25,
+            avgPM10,
+            measurementCount: data.count,
+            totalTimeMinutes,
+            cumulativePM1: avgPM1 * totalTimeMinutes,
+            cumulativePM25: avgPM25 * totalTimeMinutes,
+            cumulativePM10: avgPM10 * totalTimeMinutes
+          };
+        });
 
-        const activityExposures: ContextExposure[] = Array.from(activityMap.entries()).map(([context, data]) => ({
-          context,
-          avgPM1: data.sum1 / data.count,
-          avgPM25: data.sum25 / data.count,
-          avgPM10: data.sum10 / data.count,
-          measurementCount: data.count
-        }));
+        const activityExposures: ContextExposure[] = Array.from(activityMap.entries()).map(([context, data]) => {
+          const avgPM1 = data.sum1 / data.count;
+          const avgPM25 = data.sum25 / data.count;
+          const avgPM10 = data.sum10 / data.count;
+          // Assume 5-second intervals between measurements
+          const totalTimeMinutes = data.count * (5 / 60);
+          return {
+            context,
+            avgPM1,
+            avgPM25,
+            avgPM10,
+            measurementCount: data.count,
+            totalTimeMinutes,
+            cumulativePM1: avgPM1 * totalTimeMinutes,
+            cumulativePM25: avgPM25 * totalTimeMinutes,
+            cumulativePM10: avgPM10 * totalTimeMinutes
+          };
+        });
 
         setLocationData(locationExposures);
         setActivityData(activityExposures);
@@ -189,12 +215,12 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
     fetchData();
   }, [activeGroupId, dateRange]);
 
-  // Sort data based on selected PM type
+  // Sort data based on selected PM type (using cumulative values)
   const sortedLocationData = useMemo(() => {
     return [...locationData]
       .sort((a, b) => {
-        const aValue = pmType === 'pm1' ? a.avgPM1 : pmType === 'pm25' ? a.avgPM25 : a.avgPM10;
-        const bValue = pmType === 'pm1' ? b.avgPM1 : pmType === 'pm25' ? b.avgPM25 : b.avgPM10;
+        const aValue = pmType === 'pm1' ? a.cumulativePM1 : pmType === 'pm25' ? a.cumulativePM25 : a.cumulativePM10;
+        const bValue = pmType === 'pm1' ? b.cumulativePM1 : pmType === 'pm25' ? b.cumulativePM25 : b.cumulativePM10;
         return bValue - aValue; // Descending
       })
       .slice(0, 10)
@@ -204,8 +230,8 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
   const sortedActivityData = useMemo(() => {
     return [...activityData]
       .sort((a, b) => {
-        const aValue = pmType === 'pm1' ? a.avgPM1 : pmType === 'pm25' ? a.avgPM25 : a.avgPM10;
-        const bValue = pmType === 'pm1' ? b.avgPM1 : pmType === 'pm25' ? b.avgPM25 : b.avgPM10;
+        const aValue = pmType === 'pm1' ? a.cumulativePM1 : pmType === 'pm25' ? a.cumulativePM25 : a.cumulativePM10;
+        const bValue = pmType === 'pm1' ? b.cumulativePM1 : pmType === 'pm25' ? b.cumulativePM25 : b.cumulativePM10;
         return bValue - aValue; // Descending
       })
       .slice(0, 10)
@@ -213,7 +239,7 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
   }, [activityData, pmType]);
 
   const getCurrentPMKey = () => {
-    return pmType === 'pm1' ? 'avgPM1' : pmType === 'pm25' ? 'avgPM25' : 'avgPM10';
+    return pmType === 'pm1' ? 'cumulativePM1' : pmType === 'pm25' ? 'cumulativePM25' : 'cumulativePM10';
   };
 
   // Custom tooltip component
@@ -221,22 +247,28 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       const pmKey = getCurrentPMKey();
-      const value = data[pmKey];
+      const cumulativeValue = data[pmKey];
+      
+      // Get average PM for display
+      const avgPMValue = pmType === 'pm1' ? data.avgPM1 : pmType === 'pm25' ? data.avgPM25 : data.avgPM10;
       
       // Calculate percentage of total
       const isLocationData = data.isLocation;
       const allData = isLocationData ? sortedLocationData : sortedActivityData;
       const total = allData.reduce((sum: number, item: any) => {
-        const itemValue = pmKey === 'avgPM1' ? item.avgPM1 : pmKey === 'avgPM25' ? item.avgPM25 : item.avgPM10;
+        const itemValue = pmKey === 'cumulativePM1' ? item.cumulativePM1 : pmKey === 'cumulativePM25' ? item.cumulativePM25 : item.cumulativePM10;
         return sum + itemValue;
       }, 0);
-      const percentage = ((value / total) * 100).toFixed(1);
+      const percentage = ((cumulativeValue / total) * 100).toFixed(1);
       
       return (
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
           <p className="font-semibold text-foreground mb-1">{data.context}</p>
           <p className="text-sm text-muted-foreground">
-            {value.toFixed(1)} µg/m³
+            {cumulativeValue.toFixed(1)} µg·min/m³
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Avg: {avgPMValue.toFixed(1)} µg/m³ × {data.totalTimeMinutes.toFixed(1)} min
           </p>
           <p className="text-sm font-medium text-primary">
             {percentage}% of total
@@ -292,7 +324,7 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
                   />
                   <YAxis 
                     label={{ 
-                      value: 'PM (µg/m³)', 
+                      value: 'Cumulative Exposure (µg·min/m³)', 
                       angle: -90, 
                       position: 'insideLeft',
                       style: { fill: 'hsl(var(--foreground))' }
@@ -335,7 +367,7 @@ export function GroupExposureCharts({ selectedPeriod, selectedDate }: GroupExpos
                   />
                   <YAxis 
                     label={{ 
-                      value: 'PM (µg/m³)', 
+                      value: 'Cumulative Exposure (µg·min/m³)', 
                       angle: -90, 
                       position: 'insideLeft',
                       style: { fill: 'hsl(var(--foreground))' }
