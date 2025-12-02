@@ -18,7 +18,8 @@ export default function Auth() {
   const [pseudo, setPseudo] = useState('');
   const [loading, setLoading] = useState(false);
   const [groupLogo, setGroupLogo] = useState<string | null>(null);
-  const { signIn, signUp } = useAuth();
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const { signIn, signUp, resetPassword } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -134,6 +135,37 @@ export default function Auth() {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await resetPassword(email);
+      if (error) {
+        toast({
+          title: t('auth.resetPasswordError'),
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: t('auth.resetPasswordSuccess'),
+          description: t('auth.checkEmailReset'),
+        });
+        setShowResetPassword(false);
+        setEmail('');
+      }
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('auth.unexpectedError'),
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main role="main" className="py-12">
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -191,34 +223,73 @@ export default function Auth() {
             </TabsList>
 
             <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">{t('auth.email')}</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder={t('auth.emailPlaceholder')}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">{t('auth.password')}</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder={t('auth.passwordPlaceholder')}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  <LogIn className="h-4 w-4 mr-2" />
-                  {loading ? t('auth.connecting') : t('auth.signIn')}
-                </Button>
-              </form>
+              {showResetPassword ? (
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="resetEmail">{t('auth.email')}</Label>
+                    <Input
+                      id="resetEmail"
+                      type="email"
+                      placeholder={t('auth.emailPlaceholder')}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      {t('auth.enterEmailReset')}
+                    </p>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? t('auth.connecting') : t('auth.sendResetLink')}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowResetPassword(false);
+                      setEmail('');
+                    }}
+                    className="text-sm text-primary hover:underline w-full text-center"
+                  >
+                    {t('auth.backToLogin')}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">{t('auth.email')}</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder={t('auth.emailPlaceholder')}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">{t('auth.password')}</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder={t('auth.passwordPlaceholder')}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassword(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    {t('auth.forgotPassword')}
+                  </button>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    <LogIn className="h-4 w-4 mr-2" />
+                    {loading ? t('auth.connecting') : t('auth.signIn')}
+                  </Button>
+                </form>
+              )}
             </TabsContent>
 
             <TabsContent value="signup">

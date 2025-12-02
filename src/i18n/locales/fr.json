@@ -94,7 +94,15 @@
     "welcome": "Bienvenue",
     "welcomeTo": "Bienvenue dans",
     "continueToApp": "Connectez-vous ou créez un compte pour continuer",
-    "joinGroupDescription": "Connectez-vous ou créez un compte pour rejoindre ce groupe et commencer à enregistrer"
+    "joinGroupDescription": "Connectez-vous ou créez un compte pour rejoindre ce groupe et commencer à enregistrer",
+    "forgotPassword": "Mot de passe oublié ?",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "sendResetLink": "Envoyer le lien",
+    "resetPasswordError": "Erreur de réinitialisation",
+    "resetPasswordSuccess": "Email envoyé",
+    "checkEmailReset": "Vérifiez votre email pour le lien de réinitialisation",
+    "backToLogin": "Retour à la connexion",
+    "enterEmailReset": "Entrez votre email pour réinitialiser votre mot de passe"
   },
   "language": {
     "french": "Français",
