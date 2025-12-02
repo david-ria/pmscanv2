@@ -94,7 +94,15 @@
     "welcome": "Benvingut",
     "welcomeTo": "Benvingut a",
     "continueToApp": "Inicieu sessió o creeu un compte per continuar",
-    "joinGroupDescription": "Inicieu sessió o creeu un compte per unir-vos a aquest grup i començar a gravar"
+    "joinGroupDescription": "Inicieu sessió o creeu un compte per unir-vos a aquest grup i començar a gravar",
+    "forgotPassword": "Has oblidat la contrasenya?",
+    "resetPassword": "Restablir contrasenya",
+    "sendResetLink": "Envia l'enllaç",
+    "resetPasswordError": "Error de restabliment",
+    "resetPasswordSuccess": "Correu enviat",
+    "checkEmailReset": "Comprova el correu per a l'enllaç de restabliment",
+    "backToLogin": "Tornar a l'inici de sessió",
+    "enterEmailReset": "Introdueix el teu correu per restablir la contrasenya"
   },
   "language": {
     "french": "Français",

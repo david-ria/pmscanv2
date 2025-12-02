@@ -94,7 +94,15 @@
     "welcome": "Willkommen",
     "welcomeTo": "Willkommen bei",
     "continueToApp": "Melden Sie sich an oder erstellen Sie ein Konto, um fortzufahren",
-    "joinGroupDescription": "Melden Sie sich an oder erstellen Sie ein Konto, um dieser Gruppe beizutreten und mit der Aufzeichnung zu beginnen"
+    "joinGroupDescription": "Melden Sie sich an oder erstellen Sie ein Konto, um dieser Gruppe beizutreten und mit der Aufzeichnung zu beginnen",
+    "forgotPassword": "Passwort vergessen?",
+    "resetPassword": "Passwort zurücksetzen",
+    "sendResetLink": "Link senden",
+    "resetPasswordError": "Fehler beim Zurücksetzen",
+    "resetPasswordSuccess": "E-Mail gesendet",
+    "checkEmailReset": "Überprüfen Sie Ihre E-Mail für den Zurücksetzungslink",
+    "backToLogin": "Zurück zur Anmeldung",
+    "enterEmailReset": "Geben Sie Ihre E-Mail ein, um Ihr Passwort zurückzusetzen"
   },
   "language": {
     "french": "Français",
