@@ -55,6 +55,12 @@ class WeatherService {
       return null;
     }
 
+    // Check if online before attempting fetch
+    if (!navigator.onLine) {
+      logger.debug('⚠️ Offline - skipping weather fetch');
+      return null;
+    }
+
     // Check cache first
     const cacheKey = this.generateCacheKey(latitude, longitude, timestamp);
     const cached = this.cache.get(cacheKey);
@@ -66,13 +72,20 @@ class WeatherService {
     try {
       logger.debug('🌤️ Fetching weather data for location:', { latitude, longitude });
       
-      const { data, error } = await supabase.functions.invoke('fetch-weather', {
+      // Add 15 second timeout to prevent blocking
+      const weatherPromise = supabase.functions.invoke('fetch-weather', {
         body: {
           latitude,
           longitude,
           timestamp: timestamp ? timestamp.toISOString() : new Date().toISOString(),
         },
       });
+      
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Weather fetch timeout')), 15000)
+      );
+      
+      const { data, error } = await Promise.race([weatherPromise, timeoutPromise]);
 
       if (error) {
         logger.error('❌ Error fetching weather data:', error);
