@@ -35,10 +35,10 @@ async function getSensorAdapter(sensorId: SensorId): Promise<ISensorAdapter> {
 }
 
 export function useActiveSensor() {
-  // Load saved sensor ID or default to pmscan
-  const [activeSensorId, setActiveSensorId] = useState<SensorId>(() => {
+  // Active sensor ID - determined dynamically after connection
+  const [activeSensorId, setActiveSensorId] = useState<SensorId | null>(() => {
     const saved = localStorage.getItem(ACTIVE_SENSOR_KEY);
-    return (saved as SensorId) || 'pmscan';
+    return saved as SensorId | null;
   });
   
   const [isConnected, setIsConnected] = useState(false);
@@ -52,13 +52,10 @@ export function useActiveSensor() {
   const deviceRef = useRef<BluetoothDevice | null>(null);
   const serverRef = useRef<BluetoothRemoteGATTServer | null>(null);
 
-  // Save sensor selection to localStorage
-  const selectSensor = useCallback((sensorId: SensorId) => {
+  // Internal: Update sensor ID after detection (not exposed)
+  const updateSensorId = useCallback((sensorId: SensorId) => {
     localStorage.setItem(ACTIVE_SENSOR_KEY, sensorId);
     setActiveSensorId(sensorId);
-    // Clear current connection state when switching sensors
-    setCurrentData(null);
-    setDeviceInfo(null);
   }, []);
 
   // Handle real-time data from adapter - receives already parsed SensorReadingData
@@ -177,7 +174,7 @@ export function useActiveSensor() {
       logger.debug(`✅ Detected sensor type: ${getSensorDisplayName(detectedSensorId)}`);
       
       // Update active sensor ID and persist selection
-      selectSensor(detectedSensorId);
+      updateSensorId(detectedSensorId);
       
       // Load the appropriate adapter dynamically
       const adapter = await getSensorAdapter(detectedSensorId);
@@ -198,7 +195,7 @@ export function useActiveSensor() {
       serverRef.current = null;
       throw err;
     }
-  }, [selectSensor, onDeviceConnected]);
+  }, [updateSensorId, onDeviceConnected]);
 
   /**
    * Request device using universal scan - shows all compatible sensors
@@ -257,7 +254,7 @@ export function useActiveSensor() {
       deviceRef.current = device;
 
       // Update sensor selection
-      selectSensor(sensorId);
+      updateSensorId(sensorId);
 
       // Set up disconnection handler
       device.addEventListener('gattserverdisconnected', () => {
@@ -282,7 +279,7 @@ export function useActiveSensor() {
       }
       setIsConnecting(false);
     }
-  }, [selectSensor, onDeviceConnected, onDeviceDisconnected]);
+  }, [updateSensorId, onDeviceConnected, onDeviceDisconnected]);
 
   // Disconnect from the current device
   const disconnect = useCallback(async () => {
@@ -337,7 +334,6 @@ export function useActiveSensor() {
     deviceInfo,
     
     // Actions
-    selectSensor,
     requestDevice,           // Universal scan - auto-detects sensor type
     requestSpecificSensor,   // Explicit sensor selection
     disconnect,

@@ -43,7 +43,7 @@ export function ActiveSensorStatus({
           <>
             <BluetoothConnected className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium">
-              {deviceInfo?.name || getSensorDisplayName(activeSensorId)}
+              {deviceInfo?.name || (activeSensorId ? getSensorDisplayName(activeSensorId) : t('connection.sensor'))}
             </span>
             {deviceInfo && (
               <Badge variant="outline" className="text-xs">
@@ -86,7 +86,7 @@ export function ActiveSensorStatus({
               <>
                 <span className="font-medium">{deviceInfo.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  {t('connection.decoderActive')}: {getSensorDisplayName(activeSensorId)}
+                  {t('connection.decoderActive')}: {activeSensorId ? getSensorDisplayName(activeSensorId) : t('connection.unknown')}
                 </span>
               </>
             ) : isConnecting ? (
