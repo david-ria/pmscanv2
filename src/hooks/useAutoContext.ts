@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 // Lazy load TensorFlow to reduce initial bundle size
 import * as logger from '@/utils/logger';
 import { PMScanData } from '@/lib/pmscan/types';
@@ -22,6 +22,10 @@ import {
 import { useSensorData } from '@/hooks/useSensorData';
 import { autoContextSensorManager } from '@/services/autoContextSensorManager';
 import { calculateDataQuality } from '@/lib/autoContext.config';
+
+// Stabilization buffer constants
+const CONFIRMATION_COUNT_REQUIRED = 3; // Number of consecutive evaluations before changing context
+const HIGH_SPEED_THRESHOLD = 30; // km/h - instant switch to Driving above this speed
 
 // Development telemetry logging - suppressed in production
 function logTransition(prev: string, next: string, data: AutoContextEvaluationData) {
@@ -80,6 +84,10 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   const [currentWifiSSID, setCurrentWifiSSID] = useState<string>('');
   const [latestContext, setLatestContext] = useState<string>('');
   const [model, setModel] = useState<any | null>(null);
+  
+  // Stabilization buffer refs (no re-render on change)
+  const candidateContextRef = useRef<string>('');
+  const confirmationCountRef = useRef<number>(0);
   
   // Use singleton motion walking signature service
   
@@ -673,10 +681,45 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
     return () => clearInterval(interval);
   }, [settings.enabled, enableActiveScanning, externalLocation, getCurrentWifiSSID, currentWifiSSID, trackWifiByTime, classifyWifiByTimePattern]);
 
-  // Separate function to update context (called from RealTime component)
-  const updateLatestContext = useCallback((context: string) => {
-    if (context !== latestContext) {
-      setLatestContext(context);
+  // Stabilized context update with debounce buffer
+  // Only changes latestContext if the new context is confirmed 3 times consecutively
+  // Exception: instant change if speed > 30 km/h (emergency driving detection)
+  const updateLatestContext = useCallback((newContext: string, currentSpeed?: number) => {
+    // Emergency driving detection - instant change for high speed
+    if (currentSpeed !== undefined && currentSpeed > HIGH_SPEED_THRESHOLD) {
+      if (latestContext !== 'Driving') {
+        logger.debug(`[AutoContext] Emergency driving detection at ${currentSpeed} km/h`);
+        candidateContextRef.current = 'Driving';
+        confirmationCountRef.current = CONFIRMATION_COUNT_REQUIRED;
+        setLatestContext('Driving');
+      }
+      return;
+    }
+    
+    // If same as current latestContext, reset candidate tracking
+    if (newContext === latestContext) {
+      candidateContextRef.current = '';
+      confirmationCountRef.current = 0;
+      return;
+    }
+    
+    // If same as current candidate, increment confirmation counter
+    if (newContext === candidateContextRef.current) {
+      confirmationCountRef.current += 1;
+      logger.debug(`[AutoContext] Candidate "${newContext}" confirmed ${confirmationCountRef.current}/${CONFIRMATION_COUNT_REQUIRED}`);
+      
+      // If we've reached required confirmations, apply the change
+      if (confirmationCountRef.current >= CONFIRMATION_COUNT_REQUIRED) {
+        logger.debug(`[AutoContext] Context stabilized: "${latestContext}" -> "${newContext}"`);
+        setLatestContext(newContext);
+        candidateContextRef.current = '';
+        confirmationCountRef.current = 0;
+      }
+    } else {
+      // New candidate detected, start tracking it
+      logger.debug(`[AutoContext] New candidate: "${newContext}" (was tracking "${candidateContextRef.current}")`);
+      candidateContextRef.current = newContext;
+      confirmationCountRef.current = 1;
     }
   }, [latestContext]);
 
