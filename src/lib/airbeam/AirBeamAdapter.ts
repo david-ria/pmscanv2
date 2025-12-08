@@ -17,9 +17,9 @@ export class AirBeamAdapter implements ISensorAdapter {
   private battery: number = 0;
   private charging: number = 0;
 
-  // AirBeam GATT UUIDs
-  private static readonly AIRBEAM_SERVICE_UUID = '0000181a-0000-1000-8000-00805f9b34fb';
-  private static readonly AIRBEAM_DATA_CHAR_UUID = 'c8e03290-a359-11e5-9f5e-0002a5d5c51b';
+  // AirBeam GATT UUIDs - uses HM-10/ESP32 serial service
+  private static readonly AIRBEAM_SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
+  private static readonly AIRBEAM_DATA_CHAR_UUID = '0000ffe1-0000-1000-8000-00805f9b34fb';
 
   public async requestDevice(): Promise<BluetoothDevice> {
     if (!navigator.bluetooth) {
@@ -30,7 +30,7 @@ export class AirBeamAdapter implements ISensorAdapter {
       logger.debug('🔍 Requesting AirBeam Bluetooth device...');
       const device = await navigator.bluetooth.requestDevice({
         filters: [
-          { services: [AirBeamAdapter.AIRBEAM_SERVICE_UUID] },
+          { namePrefix: 'AirBeam' },
         ],
         optionalServices: [AirBeamAdapter.AIRBEAM_SERVICE_UUID],
       });

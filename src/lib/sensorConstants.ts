@@ -22,18 +22,21 @@ export const SENSOR_GATT_CONFIG: Record<SensorId, SensorGattConfig> = {
   },
   airbeam: {
     id: 'airbeam',
-    name: 'AirBeam Pro',
-    serviceUuid: '0000181a-0000-1000-8000-00805f9b34fb', // Generic environmental service
+    name: 'AirBeam',
+    // AirBeam uses HM-10/ESP32 serial service - name-based detection is primary
+    serviceUuid: '0000ffe0-0000-1000-8000-00805f9b34fb',
     filters: [
-      { services: ['0000181a-0000-1000-8000-00805f9b34fb'] }
+      { namePrefix: 'AirBeam' }
     ]
   },
   atmotube: {
     id: 'atmotube',
     name: 'Atmotube Pro',
-    serviceUuid: '4b13a770-4ccb-11e5-a151-0002a5d5c51b', // Private Atmotube service
+    // Official Atmotube Pro service UUID from documentation
+    serviceUuid: 'db450001-8e9a-4818-add7-6ed94a328ab4',
     filters: [
-      { services: ['4b13a770-4ccb-11e5-a151-0002a5d5c51b'] }
+      { namePrefix: 'ATMOTUBE' },
+      { services: ['db450001-8e9a-4818-add7-6ed94a328ab4'] }
     ]
   }
 } as const;
@@ -41,20 +44,35 @@ export const SENSOR_GATT_CONFIG: Record<SensorId, SensorGattConfig> = {
 // Unified filter list for universal Bluetooth scan
 export const UNIVERSAL_SCAN_OPTIONS: RequestDeviceOptions = {
   filters: [
-    ...SENSOR_GATT_CONFIG.pmscan.filters,
-    ...SENSOR_GATT_CONFIG.airbeam.filters,
-    ...SENSOR_GATT_CONFIG.atmotube.filters
+    // Name-based filters (most reliable)
+    { namePrefix: 'PMScan' },
+    { namePrefix: 'AirBeam' },
+    { namePrefix: 'ATMOTUBE' },
+    // Service-based filters as fallback
+    { services: ['f3641900-00b0-4240-ba50-05ca45bf8abc'] }, // PMScan
+    { services: ['db450001-8e9a-4818-add7-6ed94a328ab4'] }, // Atmotube
   ],
-  // Optional services for better discovery
   optionalServices: [
-    SENSOR_GATT_CONFIG.pmscan.serviceUuid,
-    SENSOR_GATT_CONFIG.airbeam.serviceUuid,
-    SENSOR_GATT_CONFIG.atmotube.serviceUuid,
-    // Standard sensor services
+    'f3641900-00b0-4240-ba50-05ca45bf8abc', // PMScan
+    'db450001-8e9a-4818-add7-6ed94a328ab4', // Atmotube
+    '0000ffe0-0000-1000-8000-00805f9b34fb', // AirBeam serial
     'battery_service',
     'device_information'
   ]
 };
+
+// Debug mode: accepts ALL Bluetooth devices (useful for testing)
+// Note: Uses type assertion because acceptAllDevices is mutually exclusive with filters
+export const DEBUG_SCAN_OPTIONS = {
+  acceptAllDevices: true,
+  optionalServices: [
+    'f3641900-00b0-4240-ba50-05ca45bf8abc', // PMScan
+    'db450001-8e9a-4818-add7-6ed94a328ab4', // Atmotube
+    '0000ffe0-0000-1000-8000-00805f9b34fb', // AirBeam serial
+    'battery_service',
+    'device_information'
+  ]
+} as RequestDeviceOptions;
 
 /**
  * Detects the sensor type from a connected Bluetooth device
