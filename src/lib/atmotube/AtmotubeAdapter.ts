@@ -354,11 +354,31 @@ export class AtmotubeAdapter implements ISensorAdapter {
   }
 
   /**
-   * Parse PM characteristic (6 bytes)
+   * Decode PM value according to Atmotube official specification
+   * Based on Android SDK: https://github.com/AToM/atmotube-pro2-android
+   * 
+   * Bit 15 = 1: Integer format (value in bits 0-14 is already in µg/m³)
+   * Bit 15 = 0: Decimal format (raw value needs to be divided by 10)
+   */
+  private decodePmValue(raw: number): number {
+    const PM_ENCODING_FLAG = 0x8000;      // Bit 15
+    const PM_ENCODING_VALUE_MASK = 0x7FFF; // Bits 0-14
+    
+    if ((raw & PM_ENCODING_FLAG) !== 0) {
+      // Bit 15 set → integer format, extract bits 0-14
+      return raw & PM_ENCODING_VALUE_MASK;
+    } else {
+      // Bit 15 clear → 0.1-precision format, divide by 10
+      return raw / 10.0;
+    }
+  }
+
+  /**
+   * Parse PM characteristic (6+ bytes)
    * Based on official Android SDK:
-   * - Bytes 0-1: PM1 (Uint16, bit 15 = flag, bits 0-14 = value)
-   * - Bytes 2-3: PM2.5 (Uint16, bit 15 = flag, bits 0-14 = value)
-   * - Bytes 4-5: PM10 (Uint16, bit 15 = flag, bits 0-14 = value)
+   * - Bytes 0-1: PM1 (Uint16, bit 15 = encoding flag)
+   * - Bytes 2-3: PM2.5 (Uint16, bit 15 = encoding flag)
+   * - Bytes 4-5: PM10 (Uint16, bit 15 = encoding flag)
    */
   private parsePMCharacteristic(rawData: DataView): void {
     try {
@@ -370,17 +390,19 @@ export class AtmotubeAdapter implements ISensorAdapter {
         return;
       }
 
-      // PM values use bit 15 as a flag, bits 0-14 for the actual value
       const pm1Raw = rawData.getUint16(0, true);
       const pm25Raw = rawData.getUint16(2, true);
       const pm10Raw = rawData.getUint16(4, true);
 
-      // Mask out bit 15 to get actual PM values
-      this.partialData.pm1 = pm1Raw & 0x7FFF;
-      this.partialData.pm25 = pm25Raw & 0x7FFF;
-      this.partialData.pm10 = pm10Raw & 0x7FFF;
+      // Use correct decoding with bit 15 flag
+      this.partialData.pm1 = this.decodePmValue(pm1Raw);
+      this.partialData.pm25 = this.decodePmValue(pm25Raw);
+      this.partialData.pm10 = this.decodePmValue(pm10Raw);
 
-      console.log('📊 PM parsed:', {
+      console.log('📊 PM parsed (corrected):', {
+        pm1Raw: pm1Raw.toString(16),
+        pm25Raw: pm25Raw.toString(16),
+        pm10Raw: pm10Raw.toString(16),
         pm1: this.partialData.pm1,
         pm25: this.partialData.pm25,
         pm10: this.partialData.pm10
