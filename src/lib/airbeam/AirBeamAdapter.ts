@@ -3,15 +3,16 @@ import { createTimestamp } from '@/utils/timeFormat';
 import * as logger from '@/utils/logger';
 
 /**
- * AirBeam sensor adapter implementing the unified ISensorAdapter interface
+ * AirBeam3 sensor adapter implementing the unified ISensorAdapter interface
  * 
- * NOTE: AirBeam GATT UUIDs are not fully documented.
- * This adapter includes a diagnostic mode to discover the correct UUIDs.
+ * AirBeam3 uses Nordic UART Service (NUS) with text-based serial protocol:
+ * - Service: 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
+ * - RX Characteristic (notifications): 6E400003-B5A3-F393-E0A9-E50E24DCCA9E
+ * - TX Characteristic (write): 6E400002-B5A3-F393-E0A9-E50E24DCCA9E
  * 
- * AirBeam3 uses ESP32 and may use:
- * - Nordic UART Service
- * - Custom proprietary service
- * - Standard Environmental Sensing
+ * Data format: 24 space-separated values per line
+ * Fields: [0-14 unused], [15] Temp°C, [16 unused], [17] Humidity%, 
+ *         [18 unused], [19] PM1, [20 unused], [21] PM2.5, [22 unused], [23] PM10
  */
 export class AirBeamAdapter implements ISensorAdapter {
   public readonly sensorId = 'airbeam' as const;
@@ -20,16 +21,24 @@ export class AirBeamAdapter implements ISensorAdapter {
   private device: BluetoothDevice | null = null;
   private server: BluetoothRemoteGATTServer | null = null;
   private lastReading: SensorReadingData | null = null;
-  private battery: number = 0;
+  private battery: number = 100; // AirBeam3 doesn't report battery via BLE
   private charging: number = 0;
 
-  // Candidate service UUIDs to try (we don't know the exact one yet)
+  // Nordic UART Service UUIDs (primary for AirBeam3)
+  private static readonly NORDIC_UART_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+  private static readonly NORDIC_UART_RX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // Notifications
+  private static readonly NORDIC_UART_TX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // Write
+
+  // Fallback service UUIDs to try
   private static readonly CANDIDATE_SERVICES = [
-    '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART Service
-    '0000ffe0-0000-1000-8000-00805f9b34fb', // HM-10 Module (common on ESP32)
-    '0000181a-0000-1000-8000-00805f9b34fb', // Environmental Sensing (standard)
+    '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART Service (primary)
+    '0000ffe0-0000-1000-8000-00805f9b34fb', // HM-10 Module
+    '0000181a-0000-1000-8000-00805f9b34fb', // Environmental Sensing
     '0000180f-0000-1000-8000-00805f9b34fb', // Battery Service
   ];
+
+  // Text buffer for reassembling multi-packet messages
+  private textBuffer: string = '';
 
   // Currently active service UUID (discovered dynamically)
   private activeServiceUuid: string | null = null;
@@ -86,6 +95,7 @@ export class AirBeamAdapter implements ISensorAdapter {
     this.lastReading = null;
     this.activeServiceUuid = null;
     this.activeCharacteristicUuid = null;
+    this.textBuffer = '';
     
     return true;
   }
@@ -105,12 +115,19 @@ export class AirBeamAdapter implements ISensorAdapter {
     
     try {
       console.log('🔔 Initializing AirBeam notifications...');
-      console.log('⚠️ AirBeam UUIDs are not confirmed - running diagnostic mode');
       
-      // DIAGNOSTIC MODE: Discover all services first
+      // First, try Nordic UART Service directly (most likely for AirBeam3)
+      const nordicSuccess = await this.tryNordicUartService(server, onDataCallback);
+      
+      if (nordicSuccess) {
+        console.log('✅ AirBeam connected via Nordic UART Service');
+        return;
+      }
+      
+      // Fallback: Discovery mode
+      console.log('⚠️ Nordic UART not found, running discovery mode...');
       const discoveredServices = await this.discoverAllServices(server);
       
-      // Try to find a working service/characteristic combo
       const success = await this.tryConnectToAnyService(server, onDataCallback);
       
       if (!success) {
@@ -124,6 +141,204 @@ export class AirBeamAdapter implements ISensorAdapter {
       console.error('AirBeam: initializeNotifications failed:', error);
       throw new Error('AirBeam: Notification initialization failed - ' + (error as Error).message);
     }
+  }
+
+  /**
+   * Try to connect to Nordic UART Service (primary method for AirBeam3)
+   */
+  private async tryNordicUartService(
+    server: BluetoothRemoteGATTServer,
+    onDataCallback: (data: SensorReadingData) => void
+  ): Promise<boolean> {
+    try {
+      console.log('🔍 Trying Nordic UART Service...');
+      const service = await server.getPrimaryService(AirBeamAdapter.NORDIC_UART_SERVICE);
+      
+      // Subscribe to RX characteristic for notifications
+      const rxCharacteristic = await service.getCharacteristic(AirBeamAdapter.NORDIC_UART_RX);
+      
+      console.log('✅ Found Nordic UART RX characteristic');
+      
+      await rxCharacteristic.startNotifications();
+      rxCharacteristic.addEventListener('characteristicvaluechanged', (event: Event) => {
+        const target = event.target as BluetoothRemoteGATTCharacteristic;
+        const value = target.value;
+        if (value) {
+          this.handleNordicUartData(value, onDataCallback);
+        }
+      });
+      
+      this.activeServiceUuid = AirBeamAdapter.NORDIC_UART_SERVICE;
+      this.activeCharacteristicUuid = AirBeamAdapter.NORDIC_UART_RX;
+      
+      return true;
+    } catch (error) {
+      console.log('❌ Nordic UART Service not available:', (error as Error).message);
+      return false;
+    }
+  }
+
+  /**
+   * Handle incoming Nordic UART data (text-based, may be fragmented)
+   */
+  private handleNordicUartData(
+    dataView: DataView,
+    onDataCallback: (data: SensorReadingData) => void
+  ): void {
+    // Decode UTF-8 bytes to string
+    const textDecoder = new TextDecoder('utf-8');
+    const buffer = new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength);
+    const chunk = textDecoder.decode(buffer);
+    
+    console.log('📨 AirBeam UART chunk received:', chunk.replace(/\n/g, '\\n'));
+    
+    // Add to buffer
+    this.textBuffer += chunk;
+    
+    // Process complete lines (separated by newline)
+    const lines = this.textBuffer.split('\n');
+    
+    // Keep the last incomplete line in the buffer
+    this.textBuffer = lines.pop() || '';
+    
+    // Process each complete line
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (trimmedLine.length > 0) {
+        console.log('📝 Processing AirBeam line:', trimmedLine);
+        const data = this.parseTextLine(trimmedLine);
+        if (data) {
+          this.lastReading = data;
+          onDataCallback(data);
+        }
+      }
+    }
+  }
+
+  /**
+   * Parse a complete text line from AirBeam3
+   * Format: 24 space-separated values
+   * Fields: [15]=Temp, [17]=Humidity, [19]=PM1, [21]=PM2.5, [23]=PM10
+   */
+  private parseTextLine(line: string): SensorReadingData | null {
+    try {
+      // Split by whitespace (space or tab)
+      const fields = line.split(/\s+/).filter(f => f.length > 0);
+      
+      console.log(`🔢 AirBeam parsed ${fields.length} fields:`, fields);
+      
+      // Check if we have enough fields (expecting 24)
+      if (fields.length >= 24) {
+        // Parse values from documented positions
+        const temp = parseFloat(fields[15]) || 0;
+        const humidity = parseFloat(fields[17]) || 0;
+        const pm1 = parseFloat(fields[19]) || 0;
+        const pm25 = parseFloat(fields[21]) || 0;
+        const pm10 = parseFloat(fields[23]) || 0;
+        
+        // Validate PM values are in reasonable range
+        if (pm25 >= 0 && pm25 < 2000 && pm10 >= 0 && pm10 < 2000) {
+          console.log('✅ AirBeam parsed:', { pm1, pm25, pm10, temp, humidity });
+          
+          return {
+            pm1,
+            pm25,
+            pm10,
+            temp,
+            humidity,
+            pressure: undefined, // AirBeam3 doesn't report pressure via BLE
+            tvoc: undefined,
+            battery: this.battery,
+            charging: this.charging === 1,
+            timestamp: createTimestamp(),
+            location: 'AirBeam Device',
+          };
+        } else {
+          console.warn('⚠️ AirBeam PM values out of range:', { pm1, pm25, pm10 });
+        }
+      } else if (fields.length >= 6) {
+        // Alternative format: fewer fields, try common positions
+        // Try format: PM1 PM2.5 PM10 Temp Humidity ...
+        return this.tryAlternativeTextFormat(fields);
+      }
+      
+      // If we can't parse 24 fields, try as comma-separated or other formats
+      if (line.includes(',')) {
+        return this.parseCommaSeparated(line);
+      }
+      
+      console.warn('⚠️ AirBeam: Unknown text format, fields:', fields.length);
+      return null;
+    } catch (error) {
+      console.error('AirBeam text parsing error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Try alternative text format (fewer fields)
+   */
+  private tryAlternativeTextFormat(fields: string[]): SensorReadingData | null {
+    try {
+      // Common format: PM1 PM2.5 PM10 Temp Humidity (first 5 values)
+      const pm1 = parseFloat(fields[0]) || 0;
+      const pm25 = parseFloat(fields[1]) || 0;
+      const pm10 = parseFloat(fields[2]) || 0;
+      const temp = parseFloat(fields[3]) || 0;
+      const humidity = parseFloat(fields[4]) || 0;
+      
+      if (pm25 >= 0 && pm25 < 2000) {
+        console.log('✅ AirBeam alt format parsed:', { pm1, pm25, pm10, temp, humidity });
+        return {
+          pm1,
+          pm25,
+          pm10,
+          temp,
+          humidity,
+          battery: this.battery,
+          charging: this.charging === 1,
+          timestamp: createTimestamp(),
+          location: 'AirBeam Device',
+        };
+      }
+    } catch {
+      // Ignore
+    }
+    return null;
+  }
+
+  /**
+   * Try parsing comma-separated format
+   */
+  private parseCommaSeparated(line: string): SensorReadingData | null {
+    try {
+      const fields = line.split(',').map(f => f.trim());
+      if (fields.length >= 5) {
+        const pm1 = parseFloat(fields[0]) || 0;
+        const pm25 = parseFloat(fields[1]) || 0;
+        const pm10 = parseFloat(fields[2]) || 0;
+        const temp = parseFloat(fields[3]) || 0;
+        const humidity = parseFloat(fields[4]) || 0;
+        
+        if (pm25 >= 0 && pm25 < 2000) {
+          console.log('✅ AirBeam CSV parsed:', { pm1, pm25, pm10, temp, humidity });
+          return {
+            pm1,
+            pm25,
+            pm10,
+            temp,
+            humidity,
+            battery: this.battery,
+            charging: this.charging === 1,
+            timestamp: createTimestamp(),
+            location: 'AirBeam Device',
+          };
+        }
+      }
+    } catch {
+      // Ignore
+    }
+    return null;
   }
 
   /**
@@ -160,7 +375,7 @@ export class AirBeamAdapter implements ISensorAdapter {
               }
             }
           }
-        } catch (e) {
+        } catch {
           console.log(`   └── Could not enumerate characteristics`);
         }
       }
@@ -179,7 +394,7 @@ export class AirBeamAdapter implements ISensorAdapter {
     server: BluetoothRemoteGATTServer,
     onDataCallback: (data: SensorReadingData) => void
   ): Promise<boolean> {
-    // First try candidate services
+    // Try candidate services
     for (const serviceUuid of AirBeamAdapter.CANDIDATE_SERVICES) {
       try {
         console.log(`🔍 Trying service: ${serviceUuid}`);
@@ -195,13 +410,8 @@ export class AirBeamAdapter implements ISensorAdapter {
               const target = event.target as BluetoothRemoteGATTCharacteristic;
               const value = target.value;
               if (value) {
-                console.log('📨 AirBeam data received!');
-                this.logRawData('AirBeam', value);
-                const data = this.parseAirBeamData(value);
-                if (data) {
-                  this.lastReading = data;
-                  onDataCallback(data);
-                }
+                // Try text-based parsing first, then binary fallback
+                this.handleNordicUartData(value, onDataCallback);
               }
             });
             
@@ -211,12 +421,11 @@ export class AirBeamAdapter implements ISensorAdapter {
           }
         }
       } catch {
-        // Service not found, try next
         continue;
       }
     }
     
-    // If candidate services fail, try ALL available services
+    // Try ALL available services
     console.log('⚠️ Candidate services failed, trying all available services...');
     try {
       const services = await server.getPrimaryServices();
@@ -232,13 +441,7 @@ export class AirBeamAdapter implements ISensorAdapter {
                 const target = event.target as BluetoothRemoteGATTCharacteristic;
                 const value = target.value;
                 if (value) {
-                  console.log('📨 AirBeam data received!');
-                  this.logRawData('AirBeam', value);
-                  const data = this.parseAirBeamData(value);
-                  if (data) {
-                    this.lastReading = data;
-                    onDataCallback(data);
-                  }
+                  this.handleNordicUartData(value, onDataCallback);
                 }
               });
               
@@ -268,7 +471,7 @@ export class AirBeamAdapter implements ISensorAdapter {
     }
     console.log(`🔢 ${label} raw bytes (${dataView.byteLength}):`, bytes.join(' '));
     
-    // Also try to interpret as ASCII string (in case it's text-based)
+    // Also try to interpret as ASCII string
     try {
       const textDecoder = new TextDecoder('utf-8');
       const buffer = new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength);
@@ -278,108 +481,6 @@ export class AirBeamAdapter implements ISensorAdapter {
       }
     } catch {
       // Ignore text decode errors
-    }
-  }
-
-  /**
-   * Parse AirBeam data - FLEXIBLE implementation that adapts to data format
-   * Will be updated once we know the actual format
-   */
-  private parseAirBeamData(rawData: DataView): SensorReadingData | null {
-    try {
-      console.log('📊 Parsing AirBeam data, length:', rawData.byteLength);
-      
-      // Try to detect format based on data length
-      if (rawData.byteLength >= 20) {
-        // Try float32 format (original assumption)
-        return this.parseFloat32Format(rawData);
-      } else if (rawData.byteLength >= 10) {
-        // Try int16 format (like Atmotube)
-        return this.parseInt16Format(rawData);
-      } else {
-        console.warn('AirBeam: Unknown data format, length:', rawData.byteLength);
-        // Create minimal reading with zeros for analysis
-        return {
-          pm1: 0,
-          pm25: 0,
-          pm10: 0,
-          temp: 0,
-          humidity: 0,
-          battery: this.battery,
-          charging: this.charging === 1,
-          timestamp: createTimestamp(),
-          location: 'AirBeam Device',
-        };
-      }
-    } catch (error) {
-      console.warn('AirBeam: Data parsing failed', error);
-      return null;
-    }
-  }
-
-  /**
-   * Try parsing as float32 values
-   */
-  private parseFloat32Format(rawData: DataView): SensorReadingData | null {
-    try {
-      const pm25 = rawData.getFloat32(0, true);
-      const pm10 = rawData.getFloat32(4, true);
-      const temp = rawData.getFloat32(8, true);
-      const humidity = rawData.getFloat32(12, true);
-      const pressure = rawData.byteLength >= 20 ? rawData.getFloat32(16, true) : undefined;
-
-      // Validate data ranges
-      if (pm25 < 0 || pm25 > 1000 || pm10 < 0 || pm10 > 1000) {
-        console.warn('AirBeam: Float32 PM values out of range, trying int16 format');
-        return this.parseInt16Format(rawData);
-      }
-
-      console.log('📊 Parsed as Float32:', { pm25, pm10, temp, humidity, pressure });
-
-      return {
-        pm1: 0, // AirBeam doesn't report PM1
-        pm25,
-        pm10,
-        temp,
-        humidity,
-        pressure,
-        tvoc: undefined,
-        battery: this.battery,
-        charging: this.charging === 1,
-        timestamp: createTimestamp(),
-        location: 'AirBeam Device',
-      };
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Try parsing as int16 values (scaled)
-   */
-  private parseInt16Format(rawData: DataView): SensorReadingData | null {
-    try {
-      // Try different scaling factors
-      const pm25 = rawData.getUint16(0, true);
-      const pm10 = rawData.byteLength >= 4 ? rawData.getUint16(2, true) : 0;
-      const temp = rawData.byteLength >= 6 ? rawData.getInt16(4, true) / 100.0 : 0;
-      const humidity = rawData.byteLength >= 8 ? rawData.getInt16(6, true) / 100.0 : 0;
-
-      console.log('📊 Parsed as Int16:', { pm25, pm10, temp, humidity });
-
-      return {
-        pm1: 0,
-        pm25,
-        pm10,
-        temp,
-        humidity,
-        battery: this.battery,
-        charging: this.charging === 1,
-        timestamp: createTimestamp(),
-        location: 'AirBeam Device',
-      };
-    } catch {
-      return null;
     }
   }
 
@@ -400,7 +501,7 @@ export class AirBeamAdapter implements ISensorAdapter {
   }
 
   public supportsPressure(): boolean {
-    return true; // AirBeam3 supports pressure
+    return false; // AirBeam3 doesn't report pressure via BLE
   }
 
   public supportsTVOC(): boolean {
