@@ -234,16 +234,7 @@ export function DataLogger({
               {displayData.map((entry) => (
                 <div key={entry.id} className="text-muted-foreground break-all">
                   <div className="text-xs">
-                    [{entry.timestamp.toLocaleTimeString()}] {t('realTime.newReading')}: PM1=
-                    {entry.pmData.pm1.toFixed(1)}ug/m³,
-                  </div>
-                  <div className="text-xs pl-2">
-                    PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, PM10=
-                    {entry.pmData.pm10.toFixed(1)}ug/m³, Temp=
-                    {entry.pmData.temp.toFixed(1)}°C
-                    {entry.pmData.humidity !== undefined && `, RH=${entry.pmData.humidity.toFixed(0)}%`}
-                    {entry.pmData.pressure !== undefined && `, P=${entry.pmData.pressure.toFixed(0)}hPa`}
-                    {entry.pmData.tvoc !== undefined && `, TVOC=${entry.pmData.tvoc}`}
+                    [{entry.timestamp.toLocaleTimeString()}] {t('realTime.newReading')}: PM1={entry.pmData.pm1.toFixed(1)}µg/m³, PM2.5={entry.pmData.pm25.toFixed(1)}µg/m³, PM10={entry.pmData.pm10.toFixed(1)}µg/m³, Temp={entry.pmData.temp.toFixed(1)}°C{entry.pmData.humidity !== undefined && `, RH=${entry.pmData.humidity.toFixed(0)}%`}{entry.pmData.pressure !== undefined && `, P=${entry.pmData.pressure.toFixed(0)}hPa`}{entry.pmData.tvoc !== undefined && `, TVOC=${Math.round(entry.pmData.tvoc)}ppb`}
                   </div>
                   {entry.location && (
                     <div className="text-xs pl-2">
