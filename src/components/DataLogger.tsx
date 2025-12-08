@@ -241,8 +241,9 @@ export function DataLogger({
                     PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, PM10=
                     {entry.pmData.pm10.toFixed(1)}ug/m³, Temp=
                     {entry.pmData.temp.toFixed(1)}°C
+                    {entry.pmData.humidity !== undefined && `, RH=${entry.pmData.humidity.toFixed(0)}%`}
                     {entry.pmData.pressure !== undefined && `, P=${entry.pmData.pressure.toFixed(0)}hPa`}
-                    {entry.pmData.tvoc !== undefined && `, TVOC=${entry.pmData.tvoc.toFixed(0)}`}
+                    {entry.pmData.tvoc !== undefined && `, TVOC=${entry.pmData.tvoc}`}
                   </div>
                   {entry.location && (
                     <div className="text-xs pl-2">
