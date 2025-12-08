@@ -102,7 +102,10 @@
     "resetPasswordSuccess": "Email envoyé",
     "checkEmailReset": "Vérifiez votre email pour le lien de réinitialisation",
     "backToLogin": "Retour à la connexion",
-    "enterEmailReset": "Entrez votre email pour réinitialiser votre mot de passe"
+    "enterEmailReset": "Entrez votre email pour réinitialiser votre mot de passe",
+    "acceptTerms": "J'accepte les conditions d'utilisation et la politique de confidentialité",
+    "termsRequired": "Conditions requises",
+    "pleaseAcceptTerms": "Veuillez accepter les conditions d'utilisation pour vous inscrire."
   },
   "language": {
     "french": "Français",

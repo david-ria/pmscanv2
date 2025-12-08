@@ -102,7 +102,10 @@
     "resetPasswordSuccess": "Email sent",
     "checkEmailReset": "Check your email for the reset link",
     "backToLogin": "Back to login",
-    "enterEmailReset": "Enter your email to reset your password"
+    "enterEmailReset": "Enter your email to reset your password",
+    "acceptTerms": "I accept the terms of use and privacy policy",
+    "termsRequired": "Terms required",
+    "pleaseAcceptTerms": "Please accept the terms of use to sign up."
   },
   "language": {
     "french": "Français",

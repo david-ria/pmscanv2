@@ -102,7 +102,10 @@
     "resetPasswordSuccess": "E-Mail gesendet",
     "checkEmailReset": "Überprüfen Sie Ihre E-Mail für den Zurücksetzungslink",
     "backToLogin": "Zurück zur Anmeldung",
-    "enterEmailReset": "Geben Sie Ihre E-Mail ein, um Ihr Passwort zurückzusetzen"
+    "enterEmailReset": "Geben Sie Ihre E-Mail ein, um Ihr Passwort zurückzusetzen",
+    "acceptTerms": "Ich akzeptiere die Nutzungsbedingungen und Datenschutzrichtlinie",
+    "termsRequired": "Bedingungen erforderlich",
+    "pleaseAcceptTerms": "Bitte akzeptieren Sie die Nutzungsbedingungen, um sich zu registrieren."
   },
   "language": {
     "french": "Français",
