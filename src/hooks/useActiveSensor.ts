@@ -2,6 +2,12 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { SensorReadingData, ISensorAdapter } from '@/types/sensor';
 import { rollingBufferService } from '@/services/rollingBufferService';
 import { recordingService } from '@/services/recordingService';
+import { 
+  UNIVERSAL_SCAN_OPTIONS, 
+  detectSensorType, 
+  detectSensorTypeFromName,
+  getSensorDisplayName 
+} from '@/lib/sensorConstants';
 import * as logger from '@/utils/logger';
 
 export type SensorId = 'pmscan' | 'airbeam' | 'atmotube';
@@ -137,29 +143,121 @@ export function useActiveSensor() {
     setDeviceInfo((prev) => prev ? { ...prev, connected: false } : null);
   }, []);
 
-  // Request and connect to a Bluetooth device using the active adapter's filters
-  const requestDevice = useCallback(async (sensorId?: SensorId) => {
+  /**
+   * Identify sensor type and connect with the appropriate adapter
+   * Called after user selects a device from the browser's Bluetooth dialog
+   */
+  const identifyAndConnect = useCallback(async (device: BluetoothDevice) => {
+    try {
+      logger.debug(`🔍 Identifying sensor type for device: ${device.name || 'Unknown'}`);
+      
+      // First try to identify by device name (quick)
+      let detectedSensorId = detectSensorTypeFromName(device.name);
+      
+      // Connect to GATT server
+      logger.debug('🔗 Connecting to GATT server...');
+      const server = await device.gatt?.connect();
+      
+      if (!server) {
+        throw new Error('Failed to connect to GATT server');
+      }
+      
+      serverRef.current = server;
+      
+      // If name detection failed, try service-based detection
+      if (!detectedSensorId) {
+        logger.debug('🔍 Name detection failed, trying service-based detection...');
+        detectedSensorId = await detectSensorType(server);
+      }
+      
+      if (!detectedSensorId) {
+        throw new Error('Unable to identify sensor type. Device may not be supported.');
+      }
+      
+      logger.debug(`✅ Detected sensor type: ${getSensorDisplayName(detectedSensorId)}`);
+      
+      // Update active sensor ID and persist selection
+      selectSensor(detectedSensorId);
+      
+      // Load the appropriate adapter dynamically
+      const adapter = await getSensorAdapter(detectedSensorId);
+      adapterRef.current = adapter;
+      
+      // Initialize the device with notifications
+      await onDeviceConnected(server, device);
+      
+    } catch (err) {
+      logger.error('❌ Error in identifyAndConnect:', err);
+      setError(err instanceof Error ? err.message : 'Failed to identify and connect to sensor');
+      setIsConnecting(false);
+      
+      // Clean up on error
+      if (serverRef.current?.connected) {
+        serverRef.current.disconnect();
+      }
+      serverRef.current = null;
+      throw err;
+    }
+  }, [selectSensor, onDeviceConnected]);
+
+  /**
+   * Request device using universal scan - shows all compatible sensors
+   * User selects from browser dialog, then sensor type is auto-detected
+   */
+  const requestDevice = useCallback(async () => {
     try {
       setError(null);
       setIsConnecting(true);
 
-      // Use provided sensorId or current activeSensorId
-      const targetSensorId = sensorId || activeSensorId;
-      
-      // Update sensor selection if different
-      if (sensorId && sensorId !== activeSensorId) {
-        selectSensor(sensorId);
-      }
+      logger.debug('🔍 Starting universal Bluetooth scan for all supported sensors...');
 
-      // Dynamically load the adapter for the selected sensor
-      const adapter = await getSensorAdapter(targetSensorId);
+      // Use universal scan options to show all compatible sensors
+      const device = await navigator.bluetooth.requestDevice(UNIVERSAL_SCAN_OPTIONS);
+      deviceRef.current = device;
+
+      logger.debug(`📱 User selected device: ${device.name || 'Unknown'}`);
+
+      // Set up disconnection handler
+      device.addEventListener('gattserverdisconnected', () => {
+        onDeviceDisconnected();
+      });
+
+      // Identify sensor type and connect with appropriate adapter
+      await identifyAndConnect(device);
+
+    } catch (err) {
+      // User cancelled the dialog or other error
+      if (err instanceof Error && err.name === 'NotFoundError') {
+        logger.debug('ℹ️ User cancelled Bluetooth device selection');
+        setError(null);
+      } else {
+        console.error('❌ Error requesting device:', err);
+        setError(err instanceof Error ? err.message : 'Failed to connect to device');
+      }
+      setIsConnecting(false);
+    }
+  }, [identifyAndConnect, onDeviceDisconnected]);
+
+  /**
+   * Request a specific sensor type (legacy/explicit selection)
+   */
+  const requestSpecificSensor = useCallback(async (sensorId: SensorId) => {
+    try {
+      setError(null);
+      setIsConnecting(true);
+
+      // Load the adapter for the specific sensor
+      const adapter = await getSensorAdapter(sensorId);
       adapterRef.current = adapter;
 
-      logger.debug(`🔍 Requesting ${adapter.name} device...`);
+      logger.debug(`🔍 Requesting specific ${adapter.name} device...`);
 
-      // Call adapter's requestDevice which uses the correct Bluetooth filters
+      // Use adapter's requestDevice which has sensor-specific filters
       const device = await adapter.requestDevice();
       deviceRef.current = device;
+
+      // Update sensor selection
+      selectSensor(sensorId);
 
       // Set up disconnection handler
       device.addEventListener('gattserverdisconnected', () => {
@@ -175,11 +273,16 @@ export function useActiveSensor() {
       await onDeviceConnected(server, device);
 
     } catch (err) {
-      console.error('❌ Error requesting device:', err);
-      setError(err instanceof Error ? err.message : 'Failed to connect to device');
+      if (err instanceof Error && err.name === 'NotFoundError') {
+        logger.debug('ℹ️ User cancelled Bluetooth device selection');
+        setError(null);
+      } else {
+        console.error('❌ Error requesting device:', err);
+        setError(err instanceof Error ? err.message : 'Failed to connect to device');
+      }
       setIsConnecting(false);
     }
-  }, [activeSensorId, selectSensor, onDeviceConnected, onDeviceDisconnected]);
+  }, [selectSensor, onDeviceConnected, onDeviceDisconnected]);
 
   // Disconnect from the current device
   const disconnect = useCallback(async () => {
@@ -206,7 +309,6 @@ export function useActiveSensor() {
 
   // Check for existing connection on mount
   useEffect(() => {
-    // On mount, check if we have a stored adapter and it's connected
     const checkExistingConnection = async () => {
       if (adapterRef.current && serverRef.current?.connected) {
         setIsConnected(true);
@@ -236,7 +338,8 @@ export function useActiveSensor() {
     
     // Actions
     selectSensor,
-    requestDevice,
+    requestDevice,           // Universal scan - auto-detects sensor type
+    requestSpecificSensor,   // Explicit sensor selection
     disconnect,
     
     // Adapter info
