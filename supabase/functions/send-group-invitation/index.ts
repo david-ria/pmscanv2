@@ -93,12 +93,41 @@ serve(async (req) => {
       .single();
 
     if (existingInvitation) {
-      throw new Error('An invitation is already pending for this email');
+      return new Response(JSON.stringify({ 
+        error: 'An invitation is already pending for this email' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Check if user with this email is already a member
-    // We'll skip this check for now since we don't have direct access to auth.users
-    // This check can be implemented later with a more complex query
+    // Check if user with this email is already a member of the group
+    // First, look up the user by email in profiles table
+    const { data: inviteeProfile } = await supabaseClient
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (inviteeProfile) {
+      // Check if this user is already a member of the group
+      const { data: existingMembership } = await supabaseClient
+        .from('group_memberships')
+        .select('id')
+        .eq('group_id', groupId)
+        .eq('user_id', inviteeProfile.id)
+        .maybeSingle();
+
+      if (existingMembership) {
+        console.log('User is already a member:', { email, groupId });
+        return new Response(JSON.stringify({ 
+          error: 'User is already a member of this group' 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     // Generate unique token
     const token = crypto.randomUUID();
