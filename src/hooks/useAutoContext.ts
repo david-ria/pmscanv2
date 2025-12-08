@@ -600,11 +600,11 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
 
       let state = evaluateAutoContextRules(rulesToUse, evaluationData);
 
-      console.log(`📋 AutoContext rule result: "${state}"`, {
-        evaluationData,
-        rulesCount: rulesToUse.length,
-        firstFewRules: rulesToUse.slice(0, 3).map(r => ({ id: r.id, priority: r.priority, result: r.result }))
-      });
+      // [SILENCED] console.log(`📋 AutoContext rule result: "${state}"`, {
+      //   evaluationData,
+      //   rulesCount: rulesToUse.length,
+      //   firstFewRules: rulesToUse.slice(0, 3).map(r => ({ id: r.id, priority: r.priority, result: r.result }))
+      // });
 
       // Log transition for development debugging
       logTransition(latestContext, state, evaluationData);
@@ -639,7 +639,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
         }
       }
 
-      console.log(`✅ Final AutoContext result: "${state}"`);
+      // [SILENCED] console.log(`✅ Final AutoContext result: "${state}"`);
       return state;
     },
     [

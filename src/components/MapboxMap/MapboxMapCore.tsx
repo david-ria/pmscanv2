@@ -167,30 +167,30 @@ export const MapboxMapCore = ({
 
   // Update marker when location changes (only if map is loaded)
   useEffect(() => {
-    console.log('🗺️ === MAP LOCATION UPDATE ===', {
-      hasMap: !!map.current,
-      hasCurrentLocation: !!currentLocation,
-      mapboxLoaded,
-      currentLocation: currentLocation ? {
-        lat: currentLocation.latitude,
-        lng: currentLocation.longitude,
-        accuracy: currentLocation.accuracy,
-        timestamp: currentLocation.timestamp
-      } : null
-    });
+    // [SILENCED] console.log('🗺️ === MAP LOCATION UPDATE ===', {
+    //   hasMap: !!map.current,
+    //   hasCurrentLocation: !!currentLocation,
+    //   mapboxLoaded,
+    //   currentLocation: currentLocation ? {
+    //     lat: currentLocation.latitude,
+    //     lng: currentLocation.longitude,
+    //     accuracy: currentLocation.accuracy,
+    //     timestamp: currentLocation.timestamp
+    //   } : null
+    // });
 
     if (!map.current || !currentLocation || !mapboxLoaded) {
-      console.log('🗺️ Skipping marker update - missing requirements');
+      // [SILENCED] console.log('🗺️ Skipping marker update - missing requirements');
       return;
     }
 
     (async () => {
-      console.log('🗺️ Creating location marker for:', {
-        lat: currentLocation.latitude,
-        lng: currentLocation.longitude,
-        pm25: pmData?.pm25,
-        timestamp: currentLocation.timestamp
-      });
+      // [SILENCED] console.log('🗺️ Creating location marker for:', {
+      //   lat: currentLocation.latitude,
+      //   lng: currentLocation.longitude,
+      //   pm25: pmData?.pm25,
+      //   timestamp: currentLocation.timestamp
+      // });
       const { createLocationMarker } = await import('@/lib/mapbox/mapMarker');
       marker.current = createLocationMarker(
         map.current,
@@ -199,7 +199,7 @@ export const MapboxMapCore = ({
         getAirQualityLevel,
         marker.current
       );
-      console.log('🗺️ Location marker created successfully');
+      // [SILENCED] console.log('🗺️ Location marker created successfully');
     })();
   }, [currentLocation?.latitude, currentLocation?.longitude, currentLocation?.timestamp, pmData, getAirQualityLevel, mapboxLoaded]);
 
