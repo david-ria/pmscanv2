@@ -3,7 +3,7 @@ import { Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import { useTranslation } from 'react-i18next';
-import { PMScanDevice } from '@/lib/pmscan/types';
+import { PMScanDevice } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 
 interface MapPlaceholderProps {

@@ -1,6 +1,6 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
 import { useAutoContext } from './useAutoContext';
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 import { formatAutomaticContext } from '@/utils/contextFormatter';
 

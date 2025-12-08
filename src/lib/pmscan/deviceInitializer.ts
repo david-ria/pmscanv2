@@ -12,7 +12,7 @@ import {
   DT_2000,
 } from './constants';
 import { PMScanDeviceState } from './deviceState';
-import { PMScanDevice } from './types';
+import { PMScanDevice } from '@/types/sensor';
 import * as logger from '@/utils/logger';
 
 /**

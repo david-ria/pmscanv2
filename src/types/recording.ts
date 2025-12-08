@@ -1,8 +1,8 @@
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 
 export interface RecordingEntry {
-  pmData: PMScanData;
+  pmData: SensorReadingData;
   location?: LocationData;
   manualContext?: {
     location: string;

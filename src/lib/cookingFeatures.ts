@@ -1,4 +1,4 @@
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData } from '@/types/sensor';
 import { CookingEvent, CookSubtype2 } from '@/utils/eventUtils';
 
 /**

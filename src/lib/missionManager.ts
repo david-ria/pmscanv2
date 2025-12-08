@@ -1,4 +1,4 @@
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 import { MissionData, MeasurementData } from './dataStorage';
 import { supabase } from '@/integrations/supabase/client';

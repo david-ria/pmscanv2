@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 import { exportMissionToCSV } from './csvExport';
 import {
@@ -128,6 +128,10 @@ export interface MeasurementData {
   pm10: number;
   temperature?: number;
   humidity?: number;
+  // Extended sensor fields
+  co2?: number;
+  voc?: number;
+  // Location data
   latitude?: number;
   longitude?: number;
   accuracy?: number;
@@ -135,8 +139,7 @@ export interface MeasurementData {
   activityContext?: string;
   automaticContext?: string;
   enrichedLocation?: string;
-  geohash?: string; // NEW: Geohash for spatial indexing and privacy
-  // weatherDataId removed - now at mission level
+  geohash?: string; // Geohash for spatial indexing and privacy
 }
 
 class DataStorageService {

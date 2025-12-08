@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData } from '@/types/sensor';
 import { useTranslation } from 'react-i18next';
 import { useThresholds } from '@/contexts/ThresholdContext';
 import { memo, useMemo } from 'react';

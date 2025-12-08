@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 import { RecordingEntry, MissionContext } from '@/types/recording';
 import { setGlobalRecording, setBackgroundRecording } from '@/lib/pmscan/globalConnectionManager';
