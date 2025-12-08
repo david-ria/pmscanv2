@@ -3,8 +3,9 @@ import {
   getLocalMissions,
   getPendingSyncIds,
   removeFromPendingSync,
-} from './localStorage';
-import { saveMissionLocally, stripMeasurementsFromStorage } from './missionManager';
+  saveMissionLocally,
+  stripMeasurementsFromStorage,
+} from './missionManager';
 import { MissionData } from './dataStorage';
 import * as logger from '@/utils/logger';
 import { toISOString } from '@/utils/timeFormat';

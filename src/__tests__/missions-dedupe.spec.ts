@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { dataStorage, MissionData, MeasurementData } from '@/lib/dataStorage';
-import { saveMissionLocally } from '@/lib/missionManager';
-import { getLocalMissions, saveLocalMissions } from '@/lib/localStorage';
+import { saveMissionLocally, getLocalMissions, saveLocalMissions } from '@/lib/missionManager';
 
 // Mock localStorage
 const mockLocalStorage = (() => {
