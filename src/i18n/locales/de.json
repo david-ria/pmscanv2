@@ -318,6 +318,21 @@
       "linkGenerationFailed": "Einladungslink konnte nicht generiert werden"
     }
   },
+  "connection": {
+    "title": "Sensor Verbinden",
+    "sensor": "Luftqualitätssensor",
+    "connect": "Gerät Verbinden",
+    "disconnect": "Trennen",
+    "connecting": "Verbinde...",
+    "notConnected": "Nicht verbunden",
+    "scanning": "Suche nach Sensoren...",
+    "noDevice": "Kein Gerät verbunden",
+    "decoderActive": "Aktiver Decoder",
+    "unknown": "Unbekannt",
+    "battery": "Batterie",
+    "version": "Version",
+    "allSensorsSupported": "PMScan, AirBeam und Atmotube werden unterstützt"
+  },
   "common": {
     "error": "Fehler",
     "success": "Erfolg",

@@ -489,7 +489,19 @@
     "poor": "Poor"
   },
   "connection": {
-    "title": "Connect to PMScan Device"
+    "title": "Connect Sensor",
+    "sensor": "Air Quality Sensor",
+    "connect": "Connect Device",
+    "disconnect": "Disconnect",
+    "connecting": "Connecting...",
+    "notConnected": "Not connected",
+    "scanning": "Scanning for sensors...",
+    "noDevice": "No device connected",
+    "decoderActive": "Active decoder",
+    "unknown": "Unknown",
+    "battery": "Battery",
+    "version": "Version",
+    "allSensorsSupported": "PMScan, AirBeam, and Atmotube are supported"
   },
   "common": {
     "error": "Error",

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Bluetooth, BluetoothOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +17,8 @@ export const ConnectionCard = ({
   onConnect,
   onDisconnect,
 }: ConnectionCardProps) => {
+  const { t } = useTranslation();
+
   if (connectionStatus.connected) {
     return (
       <Card className="w-full">
@@ -26,7 +29,7 @@ export const ConnectionCard = ({
               <div>
                 <div className="font-medium text-sm">{deviceInfo.name}</div>
                 <div className="text-xs text-muted-foreground">
-                  Battery: {deviceInfo.battery}% • Version: {deviceInfo.version}
+                  {t('connection.battery')}: {deviceInfo.battery}% • {t('connection.version')}: {deviceInfo.version}
                 </div>
               </div>
             </div>
@@ -36,7 +39,7 @@ export const ConnectionCard = ({
               onClick={onDisconnect}
               className="text-xs"
             >
-              Disconnect
+              {t('connection.disconnect')}
             </Button>
           </div>
         </CardContent>
@@ -51,11 +54,11 @@ export const ConnectionCard = ({
           <div className="flex items-center gap-3">
             <BluetoothOff className="h-5 w-5 text-muted-foreground" />
             <div>
-              <div className="font-medium text-sm">PMScan Device</div>
+              <div className="font-medium text-sm">{t('connection.sensor')}</div>
               <div className="text-xs text-muted-foreground">
                 {connectionStatus.connecting
-                  ? 'Connecting...'
-                  : 'Not connected'}
+                  ? t('connection.connecting')
+                  : t('connection.notConnected')}
               </div>
               {connectionStatus.error && (
                 <div className="text-xs text-destructive">
@@ -70,7 +73,7 @@ export const ConnectionCard = ({
             className="flex-1"
           >
             <Bluetooth className="h-4 w-4" />
-            Connect Device
+            {t('connection.connect')}
           </Button>
         </div>
       </CardContent>
