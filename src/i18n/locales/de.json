@@ -524,6 +524,14 @@
       "satelliteView": "Satellit",
       "buildings": "3D-Gebäude"
     },
+    "environmental": {
+      "title": "Umgebungsbedingungen",
+      "temperature": "Durchschn. Temperatur",
+      "humidity": "Durchschn. Feuchtigkeit",
+      "pressure": "Durchschn. Druck",
+      "tvoc": "Durchschn. TVOC",
+      "maxTvoc": "Max TVOC"
+    },
     "analyzing": "Analysiere...",
     "analysisInProgress": "Analyse läuft...",
     "regenerateAnalysis": "Analyse regenerieren",

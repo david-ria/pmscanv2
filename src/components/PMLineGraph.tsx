@@ -99,6 +99,8 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
         PM10: entry.pmData.pm10,
         temp: entry.pmData.temp,
         humidity: entry.pmData.humidity,
+        pressure: entry.pmData.pressure, // Atmospheric pressure in hPa
+        tvoc: entry.pmData.tvoc, // TVOC in ppb
         context: entry.context,
       }));
   }, [data]); // Re-compute when data changes for real-time updates
@@ -295,6 +297,14 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
     if (name === 'humidity') {
       const numValue = typeof value === 'number' ? value : parseFloat(value as string);
       return [`${numValue.toFixed(1)}%`, 'Humidité'];
+    }
+    if (name === 'pressure') {
+      const numValue = typeof value === 'number' ? value : parseFloat(value as string);
+      return [`${numValue.toFixed(0)} hPa`, 'Pression'];
+    }
+    if (name === 'tvoc') {
+      const numValue = typeof value === 'number' ? value : parseFloat(value as string);
+      return [`${numValue.toFixed(0)} ppb`, 'TVOC'];
     }
     return [value, name];
   };

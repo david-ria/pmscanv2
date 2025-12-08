@@ -180,6 +180,8 @@ export function createMissionFromRecording(
       pm10: m.pmData.pm10,
       temperature: m.pmData.temp,
       humidity: m.pmData.humidity,
+      pressure: m.pmData.pressure, // Atmotube Pro: atmospheric pressure in hPa
+      tvoc: m.pmData.tvoc, // Atmotube Pro: TVOC in ppb
       latitude: m.location?.latitude,
       longitude: m.location?.longitude,
       accuracy: m.location?.accuracy,

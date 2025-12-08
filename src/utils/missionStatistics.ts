@@ -21,6 +21,13 @@ export interface MissionStatistics {
   // WHO Threshold Exceedances (in minutes)
   timeAboveWHO_PM25: number; // PM2.5 > 15 µg/m³
   timeAboveWHO_PM10: number; // PM10 > 45 µg/m³
+  
+  // Environmental data averages (from measurements)
+  avgTemperature: number | null;
+  avgHumidity: number | null;
+  avgPressure: number | null;
+  avgTvoc: number | null;
+  maxTvoc: number | null;
 }
 
 /**
@@ -37,6 +44,56 @@ export function filterValidMissions(missions: MissionData[]): MissionData[] {
       m.avgPm10 != null &&
       !isNaN(m.avgPm10)
   );
+}
+
+/**
+ * Calculate environmental statistics from mission measurements.
+ * Returns null if no valid data available for a given metric.
+ */
+function calculateEnvironmentalStats(missions: MissionData[]): {
+  avgTemperature: number | null;
+  avgHumidity: number | null;
+  avgPressure: number | null;
+  avgTvoc: number | null;
+  maxTvoc: number | null;
+} {
+  let tempSum = 0, tempCount = 0;
+  let humSum = 0, humCount = 0;
+  let pressureSum = 0, pressureCount = 0;
+  let tvocSum = 0, tvocCount = 0;
+  let maxTvoc: number | null = null;
+
+  for (const mission of missions) {
+    for (const m of mission.measurements) {
+      if (m.temperature != null && !isNaN(m.temperature)) {
+        tempSum += m.temperature;
+        tempCount++;
+      }
+      if (m.humidity != null && !isNaN(m.humidity)) {
+        humSum += m.humidity;
+        humCount++;
+      }
+      if (m.pressure != null && !isNaN(m.pressure)) {
+        pressureSum += m.pressure;
+        pressureCount++;
+      }
+      if (m.tvoc != null && !isNaN(m.tvoc)) {
+        tvocSum += m.tvoc;
+        tvocCount++;
+        if (maxTvoc === null || m.tvoc > maxTvoc) {
+          maxTvoc = m.tvoc;
+        }
+      }
+    }
+  }
+
+  return {
+    avgTemperature: tempCount > 0 ? tempSum / tempCount : null,
+    avgHumidity: humCount > 0 ? humSum / humCount : null,
+    avgPressure: pressureCount > 0 ? pressureSum / pressureCount : null,
+    avgTvoc: tvocCount > 0 ? tvocSum / tvocCount : null,
+    maxTvoc,
+  };
 }
 
 /**
@@ -63,6 +120,11 @@ export function calculateMissionStatistics(
       maxPm10: 0,
       timeAboveWHO_PM25: 0,
       timeAboveWHO_PM10: 0,
+      avgTemperature: null,
+      avgHumidity: null,
+      avgPressure: null,
+      avgTvoc: null,
+      maxTvoc: null,
     };
   }
 
@@ -119,6 +181,9 @@ export function calculateMissionStatistics(
     return sum;
   }, 0);
 
+  // Calculate environmental statistics from measurements
+  const envStats = calculateEnvironmentalStats(validMissions);
+
   return {
     totalMissions: missions.length,
     validMissions: validMissions.length,
@@ -131,5 +196,6 @@ export function calculateMissionStatistics(
     maxPm10,
     timeAboveWHO_PM25,
     timeAboveWHO_PM10,
+    ...envStats,
   };
 }

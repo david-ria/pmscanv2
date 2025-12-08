@@ -524,6 +524,14 @@
       "satelliteView": "Satèl·lit",
       "buildings": "Edificis 3D"
     },
+    "environmental": {
+      "title": "Condicions Ambientals",
+      "temperature": "Temp. Mitjana",
+      "humidity": "Humitat Mitjana",
+      "pressure": "Pressió Mitjana",
+      "tvoc": "TVOC Mitjà",
+      "maxTvoc": "TVOC Màx"
+    },
     "analyzing": "Analitzant...",
     "analysisInProgress": "Anàlisi en curs...",
     "regenerateAnalysis": "Regenerar anàlisi",
