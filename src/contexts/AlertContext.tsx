@@ -148,26 +148,6 @@ export function AlertProvider({ children }: AlertProviderProps) {
     return alertSettings;
   }, [isGroupMode, activeGroup, alertSettings, getCurrentAlarms, getCurrentSettings]);
 
-  // Debug: Log when AlertContext updates (rate-limited and deduplicated)
-  const prevSnapshotRef = useRef<string>('');
-  useEffect(() => {
-    if (!DEBUG_GROUP_INHERITANCE) return;
-    
-    // Call getEffectiveAlertSettings inside useEffect to avoid dependency issues
-    const effectiveSettings = getEffectiveAlertSettings;
-    const snapshot = JSON.stringify({
-      groupId: activeGroup?.id,
-      groupName: activeGroup?.name,
-      isGroupMode,
-      effective: effectiveSettings,
-    });
-    
-    if (snapshot !== prevSnapshotRef.current) {
-      prevSnapshotRef.current = snapshot;
-      rateLimitedDebug('alert_ctx', DEBUG_RATE_MS, '🔄 AlertContext updated', JSON.parse(snapshot));
-    }
-  }, [activeGroup, isGroupMode, alertSettings, getCurrentAlarms, getCurrentSettings]);
-
   // Load alert settings from localStorage on mount and request notification permissions
   useEffect(() => {
     const savedSettings = localStorage.getItem('alertSettings');

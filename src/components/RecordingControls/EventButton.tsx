@@ -45,26 +45,6 @@ export function EventButton({}: EventButtonProps) {
     return EVENT_TYPES;
   }, [isGroupMode, groupEvents]);
 
-  // Debug log to verify events inheritance (conditional & rate-limited)
-  const prevEventsRef = React.useRef<string>('');
-  React.useEffect(() => {
-    if (!DEBUG_GROUP_INHERITANCE) return;
-    
-    const snapshot = JSON.stringify({
-      groupId: activeGroup?.id,
-      groupName: activeGroup?.name,
-      isGroupMode,
-      eventsCount: availableEventTypes.length,
-      eventsList: availableEventTypes.map(e => e.label)
-    });
-    
-    if (snapshot !== prevEventsRef.current) {
-      prevEventsRef.current = snapshot;
-      rateLimitedDebug('event_button', DEBUG_RATE_MS, '📍 EventButton available events', JSON.parse(snapshot));
-    }
-  }, [activeGroup, isGroupMode, availableEventTypes]);
-
-
   const handleSaveEvent = async () => {
     if (!eventType) {
       toast({

@@ -12,13 +12,6 @@ export function useLocationEnrichmentIntegration() {
   const { enrichLocation, preEnrichFrequentLocations } = useSmartLocationEnrichment();
   const { latestLocation } = useUnifiedData();
 
-  // Rate limited state logging
-  rateLimitedDebug('enrichment-integration-state', 15000, '🔧 Enrichment integration state:', {
-    isEnabled,
-    hasEnrichFunction: !!enrichLocation,
-    hasLocation: !!latestLocation
-  });
-
   // Auto-enrich current location when enabled and online
   useEffect(() => {
     if (isEnabled && latestLocation && navigator.onLine) {
@@ -27,7 +20,7 @@ export function useLocationEnrichmentIntegration() {
           latestLocation.latitude,
           latestLocation.longitude,
           new Date().toISOString()
-        ).catch(console.error);
+        ).catch((err) => logger.error('Enrichment failed', err));
       }, 2000); // Small delay to avoid too frequent calls
 
       return () => clearTimeout(enrichWithDelay);
@@ -40,18 +33,12 @@ export function useLocationEnrichmentIntegration() {
 
     const interval = setInterval(() => {
       if (navigator.onLine) {
-        preEnrichFrequentLocations().catch(console.error);
+        preEnrichFrequentLocations().catch((err) => logger.error('Pre-enrichment failed', err));
       }
     }, 10 * 60 * 1000); // Every 10 minutes
 
     return () => clearInterval(interval);
   }, [isEnabled, preEnrichFrequentLocations]);
-
-  // Development-only return logging
-  devLogger.debug('🔧 Enrichment integration returning function:', { 
-    isEnabled, 
-    hasFunction: !!enrichLocation 
-  });
 
   return {
     enrichLocation: isEnabled ? enrichLocation : null

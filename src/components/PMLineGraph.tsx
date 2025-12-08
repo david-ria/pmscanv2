@@ -80,25 +80,6 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
   const { t } = useTranslation();
   const { getCurrentThresholds, isGroupMode, activeGroup } = useGroupSettings();
   const chartColors = useChartColors();
-  
-  // Debug log to verify thresholds inheritance (conditional & rate-limited)
-  const prevThresholdsRef = React.useRef<string>('');
-  React.useEffect(() => {
-    if (!DEBUG_GROUP_INHERITANCE) return;
-    
-    const thresholds = getCurrentThresholds();
-    const snapshot = JSON.stringify({
-      groupId: activeGroup?.id,
-      groupName: activeGroup?.name,
-      isGroupMode,
-      thresholds
-    });
-    
-    if (snapshot !== prevThresholdsRef.current) {
-      prevThresholdsRef.current = snapshot;
-      rateLimitedDebug('pm_thresholds', DEBUG_RATE_MS, '📊 PMLineGraph thresholds', JSON.parse(snapshot));
-    }
-  }, [activeGroup, isGroupMode, getCurrentThresholds]);
 
   // Transform data for the chart - ensure proper chronological ordering
   const chartData = React.useMemo(() => {
