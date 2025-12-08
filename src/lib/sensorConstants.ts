@@ -34,13 +34,19 @@ export const SENSOR_GATT_CONFIG = {
 // Derive SensorId type from the config keys
 export type SensorId = keyof typeof SENSOR_GATT_CONFIG;
 
-// Universal scan options combining all sensor filters
+// Universal scan options - SCAN LARGE sans filtres UUID pour compatibilité AirBeam/Atmotube
+// Utilise uniquement namePrefix pour la découverte, les services GATT sont optionnels
 export const UNIVERSAL_SCAN_OPTIONS: RequestDeviceOptions = {
+  // Filtres par nom uniquement - plus fiable que les UUIDs qui varient selon les appareils
   filters: [
-    ...SENSOR_GATT_CONFIG.pmscan.filters,
-    ...SENSOR_GATT_CONFIG.airbeam.filters,
-    ...SENSOR_GATT_CONFIG.atmotube.filters
+    { namePrefix: 'PMScan' },
+    { namePrefix: 'PMSCAN' },
+    { namePrefix: 'AirBeam' },
+    { namePrefix: 'AIRBEAM' },
+    { namePrefix: 'Atmotube' },
+    { namePrefix: 'ATMOTUBE' }
   ] as BluetoothLEScanFilter[],
+  // Services déclarés comme optionnels pour éviter le blocage du scan
   optionalServices: [
     SENSOR_GATT_CONFIG.pmscan.serviceUuid,
     SENSOR_GATT_CONFIG.airbeam.serviceUuid,
@@ -49,6 +55,26 @@ export const UNIVERSAL_SCAN_OPTIONS: RequestDeviceOptions = {
     'device_information'
   ]
 };
+
+// Options de scan pour Capacitor BleClient (mobile natif)
+// Scan large obligatoire sans filtrage UUID
+export const CAPACITOR_SCAN_OPTIONS = {
+  services: [], // Scan large - pas de filtrage par service
+  allowDuplicates: true,
+  scanMode: 2 // SCAN_MODE_LOW_LATENCY = 2
+};
+
+// Noms de capteurs valides pour le filtrage côté callback
+export const VALID_SENSOR_NAMES = ['pmscan', 'airbeam', 'atmotube'] as const;
+
+/**
+ * Vérifie si un nom d'appareil correspond à un capteur supporté
+ */
+export function isValidSensorName(deviceName: string | undefined): boolean {
+  if (!deviceName) return false;
+  const nameLower = deviceName.toLowerCase();
+  return VALID_SENSOR_NAMES.some(sensor => nameLower.includes(sensor));
+}
 
 /**
  * Detects the sensor type from a connected Bluetooth device
