@@ -1,9 +1,11 @@
 import { ISensorAdapter, SensorReadingData } from '@/types/sensor';
+import { createTimestamp } from '@/utils/timeFormat';
 import * as logger from '@/utils/logger';
 
 /**
  * Atmotube Pro sensor adapter implementing the unified ISensorAdapter interface
  * Atmotube Pro supports: PM1, PM2.5, PM10, Temperature, Humidity, Pressure, TVOC
+ * This is the most complete sensor supporting all environmental parameters
  */
 export class AtmotubeAdapter implements ISensorAdapter {
   public readonly sensorId = 'atmotube' as const;
@@ -25,6 +27,7 @@ export class AtmotubeAdapter implements ISensorAdapter {
     }
 
     try {
+      logger.debug('🔍 Requesting Atmotube Bluetooth device...');
       const device = await navigator.bluetooth.requestDevice({
         filters: [
           { services: [AtmotubeAdapter.ATMOTUBE_SERVICE_UUID] },
@@ -33,6 +36,7 @@ export class AtmotubeAdapter implements ISensorAdapter {
       });
       
       this.device = device;
+      logger.debug('📱 Atmotube device found:', device.name);
       return device;
     } catch (error) {
       logger.error('Atmotube device request failed:', error);
@@ -46,9 +50,11 @@ export class AtmotubeAdapter implements ISensorAdapter {
     }
 
     try {
+      logger.debug('🔌 Connecting to Atmotube device...');
       const server = await device.gatt.connect();
       this.server = server;
       this.device = device;
+      logger.debug('✅ Atmotube connected');
       return server;
     } catch (error) {
       logger.error('Atmotube connection failed:', error);
@@ -57,7 +63,7 @@ export class AtmotubeAdapter implements ISensorAdapter {
   }
 
   public async disconnect(force?: boolean): Promise<boolean> {
-    logger.debug('Atmotube disconnect called, force:', force);
+    logger.debug('🔌 Atmotube disconnect called, force:', force);
     
     if (this.device?.gatt?.connected) {
       this.device.gatt.disconnect();
@@ -84,6 +90,7 @@ export class AtmotubeAdapter implements ISensorAdapter {
     this.device = device;
     
     try {
+      logger.debug('🔔 Initializing Atmotube notifications...');
       const service = await server.getPrimaryService(AtmotubeAdapter.ATMOTUBE_SERVICE_UUID);
       const measureChar = await service.getCharacteristic(AtmotubeAdapter.ATMOTUBE_MEASURE_CHAR_UUID);
       
@@ -100,10 +107,10 @@ export class AtmotubeAdapter implements ISensorAdapter {
         }
       });
       
-      logger.debug('Atmotube: Notifications initialized');
+      logger.debug('✅ Atmotube notifications initialized');
     } catch (error) {
-      logger.warn('Atmotube: initializeNotifications failed - sensor not fully supported yet', error);
-      throw new Error('Atmotube: Notification initialization not implemented');
+      logger.error('Atmotube: initializeNotifications failed:', error);
+      throw new Error('Atmotube: Notification initialization failed');
     }
   }
 
@@ -117,12 +124,23 @@ export class AtmotubeAdapter implements ISensorAdapter {
 
   /**
    * Parse Atmotube Pro-specific data format into unified SensorReadingData
-   * Atmotube Pro reports: PM1, PM2.5, PM10, Temperature, Humidity, Pressure, TVOC
+   * Atmotube Pro payload structure (28 bytes expected):
+   * - Bytes 0-3: PM1 (float32, little-endian)
+   * - Bytes 4-7: PM2.5 (float32, little-endian)
+   * - Bytes 8-11: PM10 (float32, little-endian)
+   * - Bytes 12-15: Temperature in Celsius (float32, little-endian)
+   * - Bytes 16-19: Humidity in % (float32, little-endian)
+   * - Bytes 20-23: Pressure in hPa (float32, little-endian)
+   * - Bytes 24-27: TVOC index (float32, little-endian)
    */
   private parseAtmotubeData(rawData: DataView): SensorReadingData | null {
     try {
-      // Atmotube data format (placeholder - needs real protocol documentation)
-      // This is a skeleton implementation based on expected data structure
+      // Validate minimum data length
+      if (rawData.byteLength < 28) {
+        logger.warn('Atmotube: Data packet too short:', rawData.byteLength);
+        return null;
+      }
+
       const pm1 = rawData.getFloat32(0, true);
       const pm25 = rawData.getFloat32(4, true);
       const pm10 = rawData.getFloat32(8, true);
@@ -130,6 +148,12 @@ export class AtmotubeAdapter implements ISensorAdapter {
       const humidity = rawData.getFloat32(16, true);
       const pressure = rawData.getFloat32(20, true);
       const tvoc = rawData.getFloat32(24, true);
+
+      // Validate data ranges
+      if (pm1 < 0 || pm1 > 1000 || pm25 < 0 || pm25 > 1000 || pm10 < 0 || pm10 > 1000) {
+        logger.warn('Atmotube: PM values out of range');
+        return null;
+      }
 
       return {
         pm1,
@@ -141,7 +165,8 @@ export class AtmotubeAdapter implements ISensorAdapter {
         tvoc,
         battery: this.battery,
         charging: this.charging === 1,
-        timestamp: new Date(),
+        timestamp: createTimestamp(),
+        location: 'Atmotube Pro',
       };
     } catch (error) {
       logger.warn('Atmotube: Data parsing failed', error);
@@ -166,7 +191,7 @@ export class AtmotubeAdapter implements ISensorAdapter {
   /**
    * Atmotube Pro supports TVOC
    */
-  public supportsVOC(): boolean {
+  public supportsTVOC(): boolean {
     return true;
   }
 
