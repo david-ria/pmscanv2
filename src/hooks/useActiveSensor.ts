@@ -2,36 +2,19 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { SensorReadingData, ISensorAdapter } from '@/types/sensor';
 import { rollingBufferService } from '@/services/rollingBufferService';
 import { recordingService } from '@/services/recordingService';
+import { UNIVERSAL_SCAN_OPTIONS, SensorId } from '@/lib/sensorConstants';
 import { 
-  UNIVERSAL_SCAN_OPTIONS, 
-  detectSensorType, 
-  detectSensorTypeFromName,
-  getSensorDisplayName,
-  SensorId
-} from '@/lib/sensorConstants';
+  getSensorAdapter, 
+  identifySensorByService, 
+  identifySensorByName,
+  getSensorDisplayName 
+} from '@/lib/sensorAdapterFactory';
 import * as logger from '@/utils/logger';
 
-const ACTIVE_SENSOR_KEY = 'activeSensorId';
+// Re-export SensorId for backward compatibility
+export type { SensorId } from '@/lib/sensorConstants';
 
-// Dynamic adapter loader
-async function getSensorAdapter(sensorId: SensorId): Promise<ISensorAdapter> {
-  switch (sensorId) {
-    case 'pmscan': {
-      const { PMScanAdapter } = await import('@/lib/pmscan/PMScanAdapter');
-      return new PMScanAdapter();
-    }
-    case 'airbeam': {
-      const { AirBeamAdapter } = await import('@/lib/airbeam/AirBeamAdapter');
-      return new AirBeamAdapter();
-    }
-    case 'atmotube': {
-      const { AtmotubeAdapter } = await import('@/lib/atmotube/AtmotubeAdapter');
-      return new AtmotubeAdapter();
-    }
-    default:
-      throw new Error(`Unknown sensor ID: ${sensorId}`);
-  }
-}
+const ACTIVE_SENSOR_KEY = 'activeSensorId';
 
 export function useActiveSensor() {
   // Active sensor ID - determined dynamically after connection
@@ -148,7 +131,7 @@ export function useActiveSensor() {
       logger.debug(`🔍 Identifying sensor type for device: ${device.name || 'Unknown'}`);
       
       // First try to identify by device name (quick)
-      let detectedSensorId = detectSensorTypeFromName(device.name);
+      let detectedSensorId = identifySensorByName(device.name);
       
       // Connect to GATT server
       logger.debug('🔗 Connecting to GATT server...');
@@ -163,7 +146,7 @@ export function useActiveSensor() {
       // If name detection failed, try service-based detection
       if (!detectedSensorId) {
         logger.debug('🔍 Name detection failed, trying service-based detection...');
-        detectedSensorId = await detectSensorType(server);
+        detectedSensorId = await identifySensorByService(server);
       }
       
       if (!detectedSensorId) {
