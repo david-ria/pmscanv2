@@ -106,30 +106,175 @@ export class AtmotubeAdapter implements ISensorAdapter {
       console.log('🔔 Initializing Atmotube notifications...');
       console.log('📡 Looking for service:', AtmotubeAdapter.ATMOTUBE_SERVICE_UUID);
       
-      // Découverte de debug - liste tous les services
-      await this.discoverAllServices(server);
+      // Découverte de debug - liste tous les services disponibles
+      const discoveredServices = await this.discoverAllServices(server);
       
-      const service = await server.getPrimaryService(AtmotubeAdapter.ATMOTUBE_SERVICE_UUID);
-      console.log('✅ Found Atmotube service!');
+      // Essayer de trouver le service Atmotube
+      let service: BluetoothRemoteGATTService | null = null;
       
-      // S'abonner aux deux caractéristiques
-      await this.subscribeToDataCharacteristic(service, onDataCallback, onBatteryCallback);
-      await this.subscribeToPMCharacteristic(service, onDataCallback);
+      try {
+        service = await server.getPrimaryService(AtmotubeAdapter.ATMOTUBE_SERVICE_UUID);
+        console.log('✅ Found Atmotube service via direct UUID!');
+      } catch (directError) {
+        console.warn('⚠️ Direct service lookup failed, trying discovered services...');
+        
+        // Fallback: chercher dans les services découverts
+        for (const svc of discoveredServices) {
+          const uuid = svc.uuid.toLowerCase();
+          console.log('🔍 Checking discovered service:', uuid);
+          
+          // Chercher un match partiel sur le UUID Atmotube
+          if (uuid.includes('bda3c091') || uuid === AtmotubeAdapter.ATMOTUBE_SERVICE_UUID) {
+            service = svc;
+            console.log('✅ Found Atmotube service in discovered list!');
+            break;
+          }
+        }
+      }
       
-      console.log('✅ Atmotube notifications initialized (DATA + PM)');
+      if (!service) {
+        // Si toujours pas trouvé, essayer avec le premier service qui a des caractéristiques notifiables
+        console.log('⚠️ Atmotube service not found, trying fallback with first notifiable service...');
+        for (const svc of discoveredServices) {
+          try {
+            const chars = await svc.getCharacteristics();
+            const notifiableChars = chars.filter(c => c.properties.notify);
+            if (notifiableChars.length >= 2) {
+              console.log(`📡 Found service with ${notifiableChars.length} notifiable characteristics:`, svc.uuid);
+              service = svc;
+              break;
+            }
+          } catch (e) {
+            // Continue
+          }
+        }
+      }
+      
+      if (!service) {
+        throw new Error('Atmotube service not found on device. Available services: ' + 
+          discoveredServices.map(s => s.uuid).join(', '));
+      }
+      
+      // S'abonner aux caractéristiques
+      await this.subscribeToCharacteristics(service, onDataCallback, onBatteryCallback);
+      
+      console.log('✅ Atmotube notifications initialized');
     } catch (error) {
-      console.error('Atmotube: initializeNotifications failed:', error);
+      console.error('❌ Atmotube: initializeNotifications failed:', error);
       throw new Error('Atmotube: Notification initialization failed - ' + (error as Error).message);
     }
   }
 
   /**
-   * Debug: Discover and log all GATT services on the device
+   * Subscribe to available characteristics on the service
    */
-  private async discoverAllServices(server: BluetoothRemoteGATTServer): Promise<void> {
+  private async subscribeToCharacteristics(
+    service: BluetoothRemoteGATTService,
+    onDataCallback: (data: SensorReadingData) => void,
+    onBatteryCallback?: (level: number) => void
+  ): Promise<void> {
+    const chars = await service.getCharacteristics();
+    console.log(`📡 Found ${chars.length} characteristics on service ${service.uuid}`);
+    
+    for (const char of chars) {
+      const props = [];
+      if (char.properties.notify) props.push('NOTIFY');
+      if (char.properties.read) props.push('READ');
+      if (char.properties.write) props.push('WRITE');
+      console.log(`   └── ${char.uuid} [${props.join(', ')}]`);
+    }
+    
+    // Essayer d'abord les UUIDs officiels
+    let dataCharFound = false;
+    let pmCharFound = false;
+    
+    for (const char of chars) {
+      const uuid = char.uuid.toLowerCase();
+      
+      if (uuid.includes('bda3c092') || uuid === AtmotubeAdapter.ATMOTUBE_DATA_CHAR_UUID) {
+        console.log('✅ Found DATA characteristic:', uuid);
+        await this.setupDataNotification(char, onDataCallback, onBatteryCallback);
+        dataCharFound = true;
+      } else if (uuid.includes('bda3c093') || uuid === AtmotubeAdapter.ATMOTUBE_PM_CHAR_UUID) {
+        console.log('✅ Found PM characteristic:', uuid);
+        await this.setupPMNotification(char, onDataCallback);
+        pmCharFound = true;
+      }
+    }
+    
+    // Fallback: s'abonner à tous les caractéristiques notifiables
+    if (!dataCharFound || !pmCharFound) {
+      console.log('⚠️ Official characteristics not found, subscribing to all notifiable chars...');
+      let charIndex = 0;
+      for (const char of chars) {
+        if (char.properties.notify) {
+          console.log(`📡 Subscribing to characteristic ${charIndex}:`, char.uuid);
+          await char.startNotifications();
+          char.addEventListener('characteristicvaluechanged', (event: Event) => {
+            const target = event.target as BluetoothRemoteGATTCharacteristic;
+            const value = target.value;
+            if (value) {
+              console.log(`📦 Data from char ${char.uuid}, length: ${value.byteLength}`);
+              this.logRawData(char.uuid, value);
+              
+              // Essayer de parser selon la taille
+              if (value.byteLength >= 14) {
+                this.parseDataCharacteristic(value, onBatteryCallback);
+              } else if (value.byteLength >= 6) {
+                this.parsePMCharacteristic(value);
+              }
+              this.tryEmitCompleteReading(onDataCallback);
+            }
+          });
+          charIndex++;
+        }
+      }
+    }
+  }
+
+  private async setupDataNotification(
+    char: BluetoothRemoteGATTCharacteristic,
+    onDataCallback: (data: SensorReadingData) => void,
+    onBatteryCallback?: (level: number) => void
+  ): Promise<void> {
+    await char.startNotifications();
+    char.addEventListener('characteristicvaluechanged', (event: Event) => {
+      const target = event.target as BluetoothRemoteGATTCharacteristic;
+      const value = target.value;
+      if (value) {
+        this.parseDataCharacteristic(value, onBatteryCallback);
+        this.tryEmitCompleteReading(onDataCallback);
+      }
+    });
+    console.log('✅ Subscribed to DATA characteristic');
+  }
+
+  private async setupPMNotification(
+    char: BluetoothRemoteGATTCharacteristic,
+    onDataCallback: (data: SensorReadingData) => void
+  ): Promise<void> {
+    await char.startNotifications();
+    char.addEventListener('characteristicvaluechanged', (event: Event) => {
+      const target = event.target as BluetoothRemoteGATTCharacteristic;
+      const value = target.value;
+      if (value) {
+        this.parsePMCharacteristic(value);
+        this.tryEmitCompleteReading(onDataCallback);
+      }
+    });
+    console.log('✅ Subscribed to PM characteristic');
+  }
+
+  /**
+   * Debug: Discover and log all GATT services on the device
+   * Returns the list of discovered services for fallback use
+   */
+  private async discoverAllServices(server: BluetoothRemoteGATTServer): Promise<BluetoothRemoteGATTService[]> {
     try {
       console.log('🔍 DISCOVERING ALL GATT SERVICES...');
       const services = await server.getPrimaryServices();
+      console.log(`📡 Found ${services.length} services total`);
+      
       for (const service of services) {
         console.log(`📡 Service UUID: ${service.uuid}`);
         try {
@@ -145,57 +290,13 @@ export class AtmotubeAdapter implements ISensorAdapter {
           console.log(`   └── Could not enumerate characteristics`);
         }
       }
+      return services;
     } catch (e) {
       console.warn('Could not discover services:', e);
+      return [];
     }
   }
 
-  /**
-   * Subscribe to DATA characteristic (Temp, Humidity, Pressure, VOC, Battery)
-   * Format: 16 bytes
-   */
-  private async subscribeToDataCharacteristic(
-    service: BluetoothRemoteGATTService,
-    onDataCallback: (data: SensorReadingData) => void,
-    onBatteryCallback?: (level: number) => void
-  ): Promise<void> {
-    console.log('📡 Subscribing to DATA characteristic:', AtmotubeAdapter.ATMOTUBE_DATA_CHAR_UUID);
-    const dataChar = await service.getCharacteristic(AtmotubeAdapter.ATMOTUBE_DATA_CHAR_UUID);
-    
-    await dataChar.startNotifications();
-    dataChar.addEventListener('characteristicvaluechanged', (event: Event) => {
-      const target = event.target as BluetoothRemoteGATTCharacteristic;
-      const value = target.value;
-      if (value) {
-        this.parseDataCharacteristic(value, onBatteryCallback);
-        this.tryEmitCompleteReading(onDataCallback);
-      }
-    });
-    console.log('✅ Subscribed to DATA characteristic');
-  }
-
-  /**
-   * Subscribe to PM characteristic (PM1, PM2.5, PM10)
-   * Format: 6 bytes
-   */
-  private async subscribeToPMCharacteristic(
-    service: BluetoothRemoteGATTService,
-    onDataCallback: (data: SensorReadingData) => void
-  ): Promise<void> {
-    console.log('📡 Subscribing to PM characteristic:', AtmotubeAdapter.ATMOTUBE_PM_CHAR_UUID);
-    const pmChar = await service.getCharacteristic(AtmotubeAdapter.ATMOTUBE_PM_CHAR_UUID);
-    
-    await pmChar.startNotifications();
-    pmChar.addEventListener('characteristicvaluechanged', (event: Event) => {
-      const target = event.target as BluetoothRemoteGATTCharacteristic;
-      const value = target.value;
-      if (value) {
-        this.parsePMCharacteristic(value);
-        this.tryEmitCompleteReading(onDataCallback);
-      }
-    });
-    console.log('✅ Subscribed to PM characteristic');
-  }
 
   /**
    * Parse DATA characteristic (16 bytes)
