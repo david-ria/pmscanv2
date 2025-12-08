@@ -33,7 +33,8 @@ interface DataLogEntry {
     activity: string;
   };
   automaticContext?: string;
-  // weatherDataId removed - now at mission level
+  enrichedLocation?: string;
+  geohash?: string;
 }
 
 interface DataLoggerProps {
@@ -99,6 +100,8 @@ export function DataLogger({
       'PM1 (μg/m³)',
       'PM2.5 (μg/m³)',
       'PM10 (μg/m³)',
+      'CO2 (ppm)',
+      'VOC (index)',
       'Temperature (°C)',
       'Humidity (%)',
       'Latitude',
@@ -119,6 +122,8 @@ export function DataLogger({
           entry.pmData.pm1.toFixed(2),
           entry.pmData.pm25.toFixed(2),
           entry.pmData.pm10.toFixed(2),
+          entry.pmData.co2?.toFixed(0) || '',
+          entry.pmData.voc?.toFixed(0) || '',
           entry.pmData.temp.toFixed(2),
           entry.pmData.humidity.toFixed(1),
           entry.location?.latitude?.toFixed(6) || '',
@@ -236,6 +241,8 @@ export function DataLogger({
                     PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, PM10=
                     {entry.pmData.pm10.toFixed(1)}ug/m³, Temp=
                     {entry.pmData.temp.toFixed(1)}°C
+                    {entry.pmData.co2 !== undefined && `, CO₂=${entry.pmData.co2.toFixed(0)}ppm`}
+                    {entry.pmData.voc !== undefined && `, VOC=${entry.pmData.voc.toFixed(0)}`}
                   </div>
                   {entry.location && (
                     <div className="text-xs pl-2">
