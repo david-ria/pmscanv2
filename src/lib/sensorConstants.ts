@@ -14,20 +14,18 @@ export const SENSOR_GATT_CONFIG = {
   airbeam: {
     id: 'airbeam' as const,
     name: 'AirBeam Pro',
-    serviceUuid: '0000181a-0000-1000-8000-00805f9b34fb',
+    serviceUuid: '0000181a-0000-1000-8000-00805f9b34fb', 
     filters: [
-      { namePrefix: 'AIRBEAM' },  // Préfixe de nom en priorité
-      { namePrefix: 'AirBeam' },  // Variante de casse
+      { namePrefix: 'AIRBEAM' },
       { services: ['0000181a-0000-1000-8000-00805f9b34fb'] }
     ]
   },
   atmotube: {
     id: 'atmotube' as const,
     name: 'Atmotube Pro',
-    serviceUuid: '4b13a770-4ccb-11e5-a151-0002a5d5c51b',
+    serviceUuid: '4b13a770-4ccb-11e5-a151-0002a5d5c51b', 
     filters: [
-      { namePrefix: 'ATMOTUBE' },  // Préfixe de nom en priorité
-      { namePrefix: 'Atmotube' },  // Variante de casse
+      { namePrefix: 'ATMOTUBE' },
       { services: ['4b13a770-4ccb-11e5-a151-0002a5d5c51b'] }
     ]
   }
