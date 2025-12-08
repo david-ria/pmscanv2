@@ -1,6 +1,30 @@
 import { PMScan_SERVICE_UUID, PMScan_MODE_UUID } from './constants';
-import { FILTERED_SCAN_OPTIONS, UNIVERSAL_SCAN_OPTIONS } from '@/lib/sensorConstants';
+import { SENSOR_GATT_CONFIG } from '@/lib/sensorConstants';
+import { Capacitor } from '@capacitor/core';
 import * as logger from '@/utils/logger';
+
+// Configuration SPÉCIFIQUE pour le Web - acceptAllDevices obligatoire
+// Note: On cast car les types TypeScript de Web Bluetooth sont incomplets
+const WEB_SCAN_OPTIONS = {
+  // On accepte tout car on ne connait pas les UUIDs exacts à l'avance
+  acceptAllDevices: true,
+  // CRITIQUE : Liste des services optionnels pour pouvoir lire les données après connexion
+  optionalServices: [
+    // Services standards
+    '0000180f-0000-1000-8000-00805f9b34fb', // Battery Service
+    '0000181a-0000-1000-8000-00805f9b34fb', // Environmental Sensing
+    '0000180a-0000-1000-8000-00805f9b34fb', // Device Information
+    // PMScan
+    SENSOR_GATT_CONFIG.pmscan.serviceUuid,
+    'f3641900-00b0-4240-ba50-05ca45bf8abc',
+    // AirBeam (Environmental Sensing + propriétaire)
+    SENSOR_GATT_CONFIG.airbeam.serviceUuid,
+    // Atmotube PRO
+    SENSOR_GATT_CONFIG.atmotube.serviceUuid,
+    'db450001-8e9a-4818-add7-6ed94a328ab4', // Atmotube PRO service alternatif
+    '4b13a770-4ccb-11e5-a151-0002a5d5c51b', // Atmotube PRO main service
+  ]
+} as RequestDeviceOptions;
 
 /**
  * Utility functions for PMScan connection management
@@ -11,26 +35,25 @@ export class PMScanConnectionUtils {
       throw new Error('Bluetooth not available in this browser');
     }
 
-    logger.debug('🔍 Step 1: Trying filtered scan for known sensor names...');
+    // Détection du mode : Web ou Natif
+    const isNative = Capacitor.isNativePlatform();
     
-    try {
-      // Étape 1: Essayer d'abord avec les filtres stricts par nom
-      const device = await navigator.bluetooth.requestDevice(FILTERED_SCAN_OPTIONS);
-      logger.debug(`📱 Device found with filtered scan: ${device.name || 'Unknown'}`);
-      return device;
-    } catch (filteredErr) {
-      // Si l'utilisateur annule ou aucun appareil trouvé, essayer le scan large
-      if (filteredErr instanceof Error && filteredErr.name === 'NotFoundError') {
-        logger.debug('⚠️ Filtered scan cancelled or no devices found, trying wide scan...');
-        
-        // Étape 2: Scan large - affiche TOUS les appareils Bluetooth
-        logger.debug('🔍 Step 2: Wide scan - showing ALL Bluetooth devices...');
-        const device = await navigator.bluetooth.requestDevice(UNIVERSAL_SCAN_OPTIONS);
-        logger.debug(`📱 Device found with wide scan: ${device.name || 'Unknown'}`);
-        return device;
-      }
-      throw filteredErr;
+    if (isNative) {
+      // Mode Natif - utiliser les filtres par nom (géré par Capacitor BleClient séparément)
+      logger.debug('🔍 Native platform detected - using filtered scan');
+      throw new Error('Use Capacitor BleClient for native platforms');
     }
+
+    // Mode WEB - acceptAllDevices obligatoire
+    logger.debug('🌐 Web platform detected - using acceptAllDevices: true');
+    logger.debug('📋 Optional services:', WEB_SCAN_OPTIONS.optionalServices);
+    
+    const device = await navigator.bluetooth.requestDevice(WEB_SCAN_OPTIONS);
+    
+    logger.debug(`📱 User selected device: ${device.name || 'Unknown'}`);
+    logger.debug(`📱 Device ID: ${device.id}`);
+    
+    return device;
   }
 
   public static async connectToDevice(
