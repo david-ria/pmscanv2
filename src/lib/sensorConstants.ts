@@ -34,27 +34,54 @@ export const SENSOR_GATT_CONFIG = {
 // Derive SensorId type from the config keys
 export type SensorId = keyof typeof SENSOR_GATT_CONFIG;
 
-// Universal scan options - SCAN LARGE sans filtres UUID pour compatibilité AirBeam/Atmotube
-// Utilise uniquement namePrefix pour la découverte, les services GATT sont optionnels
-export const UNIVERSAL_SCAN_OPTIONS: RequestDeviceOptions = {
-  // Filtres par nom uniquement - plus fiable que les UUIDs qui varient selon les appareils
+// Option 1: Filtres stricts par nom - utilisé par défaut
+// Certains appareils peuvent utiliser des noms comme "AirBeam3:ABC123" ou "Atmotube-Pro-1234"
+export const FILTERED_SCAN_OPTIONS: RequestDeviceOptions = {
   filters: [
+    // PMScan variations
     { namePrefix: 'PMScan' },
     { namePrefix: 'PMSCAN' },
+    { namePrefix: 'pmscan' },
+    // AirBeam variations - le nom peut inclure un numéro de série
     { namePrefix: 'AirBeam' },
     { namePrefix: 'AIRBEAM' },
+    { namePrefix: 'Airbeam' },
+    { namePrefix: 'AB-' },
+    { namePrefix: 'AB3' },
+    // Atmotube variations
     { namePrefix: 'Atmotube' },
-    { namePrefix: 'ATMOTUBE' }
+    { namePrefix: 'ATMOTUBE' },
+    { namePrefix: 'atmotube' },
+    { namePrefix: 'ATM-' },
   ] as BluetoothLEScanFilter[],
-  // Services déclarés comme optionnels pour éviter le blocage du scan
   optionalServices: [
     SENSOR_GATT_CONFIG.pmscan.serviceUuid,
     SENSOR_GATT_CONFIG.airbeam.serviceUuid,
     SENSOR_GATT_CONFIG.atmotube.serviceUuid,
+    'db450001-8e9a-4818-add7-6ed94a328ab4', // Atmotube PRO service UUID alternatif
     'battery_service',
     'device_information'
   ]
 };
+
+// Option 2: SCAN LARGE - affiche TOUS les appareils Bluetooth
+// Utilisé quand les filtres stricts ne trouvent pas les capteurs
+// Note: On doit cast pour utiliser acceptAllDevices car les types TypeScript sont incomplets
+export const UNIVERSAL_SCAN_OPTIONS = {
+  acceptAllDevices: true,
+  optionalServices: [
+    SENSOR_GATT_CONFIG.pmscan.serviceUuid,
+    SENSOR_GATT_CONFIG.airbeam.serviceUuid,
+    SENSOR_GATT_CONFIG.atmotube.serviceUuid,
+    'db450001-8e9a-4818-add7-6ed94a328ab4', // Atmotube PRO service UUID alternatif
+    'battery_service',
+    'device_information',
+    // Services génériques courants
+    '0000180a-0000-1000-8000-00805f9b34fb', // Device Information
+    '0000180f-0000-1000-8000-00805f9b34fb', // Battery Service
+    '0000181a-0000-1000-8000-00805f9b34fb', // Environmental Sensing
+  ]
+} as RequestDeviceOptions;
 
 // Options de scan pour Capacitor BleClient (mobile natif)
 // Scan large obligatoire sans filtrage UUID
