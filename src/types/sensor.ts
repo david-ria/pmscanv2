@@ -7,9 +7,9 @@ export interface SensorReadingData {
   pm10: number;
   temp: number;
   humidity: number;
-  // Extended fields for COV/CO2 sensors
-  co2?: number;
-  voc?: number;
+  // Extended fields for environmental sensors
+  pressure?: number; // Atmospheric pressure in hPa (AirBeam/Atmotube Pro)
+  tvoc?: number; // TVOC Index or concentration (Atmotube Pro)
   // Battery and device info
   battery: number;
   charging: boolean;
@@ -19,7 +19,7 @@ export interface SensorReadingData {
 
 // Interface d'abstraction pour tous les adaptateurs de capteurs
 export interface ISensorAdapter {
-  sensorId: string; // Ex: 'pmscan', 'airbeam', 'atmotube'
+  sensorId: 'pmscan' | 'airbeam' | 'atmotube';
   name: string;
   
   // Méthodes requises par l'application
@@ -34,7 +34,8 @@ export interface ISensorAdapter {
   initializeNotifications(
     server: BluetoothRemoteGATTServer, 
     device: BluetoothDevice, 
-    onDataCallback: (data: SensorReadingData) => void
+    onDataCallback: (data: SensorReadingData) => void,
+    onBatteryCallback?: (level: number) => void
   ): Promise<void>;
   
   // Met à jour l'état de la batterie/charge (si l'adaptateur le supporte)

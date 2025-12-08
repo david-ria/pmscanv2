@@ -129,8 +129,8 @@ export interface MeasurementData {
   temperature?: number;
   humidity?: number;
   // Extended sensor fields
-  co2?: number;
-  voc?: number;
+  pressure?: number; // Atmospheric pressure in hPa
+  tvoc?: number; // TVOC index or concentration
   // Location data
   latitude?: number;
   longitude?: number;

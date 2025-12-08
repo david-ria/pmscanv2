@@ -100,10 +100,10 @@ export function DataLogger({
       'PM1 (μg/m³)',
       'PM2.5 (μg/m³)',
       'PM10 (μg/m³)',
-      'CO2 (ppm)',
-      'VOC (index)',
       'Temperature (°C)',
       'Humidity (%)',
+      'Pressure (hPa)',
+      'TVOC (index)',
       'Latitude',
       'Longitude',
       'GPS Accuracy (m)',
@@ -122,10 +122,10 @@ export function DataLogger({
           entry.pmData.pm1.toFixed(2),
           entry.pmData.pm25.toFixed(2),
           entry.pmData.pm10.toFixed(2),
-          entry.pmData.co2?.toFixed(0) || '',
-          entry.pmData.voc?.toFixed(0) || '',
           entry.pmData.temp.toFixed(2),
           entry.pmData.humidity.toFixed(1),
+          entry.pmData.pressure?.toFixed(1) || '',
+          entry.pmData.tvoc?.toFixed(0) || '',
           entry.location?.latitude?.toFixed(6) || '',
           entry.location?.longitude?.toFixed(6) || '',
           entry.location?.accuracy?.toFixed(0) || '',
@@ -241,8 +241,8 @@ export function DataLogger({
                     PM2.5={entry.pmData.pm25.toFixed(1)}ug/m³, PM10=
                     {entry.pmData.pm10.toFixed(1)}ug/m³, Temp=
                     {entry.pmData.temp.toFixed(1)}°C
-                    {entry.pmData.co2 !== undefined && `, CO₂=${entry.pmData.co2.toFixed(0)}ppm`}
-                    {entry.pmData.voc !== undefined && `, VOC=${entry.pmData.voc.toFixed(0)}`}
+                    {entry.pmData.pressure !== undefined && `, P=${entry.pmData.pressure.toFixed(0)}hPa`}
+                    {entry.pmData.tvoc !== undefined && `, TVOC=${entry.pmData.tvoc.toFixed(0)}`}
                   </div>
                   {entry.location && (
                     <div className="text-xs pl-2">
