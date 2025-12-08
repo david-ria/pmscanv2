@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { formatTime } from '@/utils/timeFormat';
 import { useTranslation } from 'react-i18next';
 import {
@@ -17,6 +17,33 @@ import { PMScanData } from '@/lib/pmscan/types';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { DEBUG_GROUP_INHERITANCE, DEBUG_RATE_MS } from '@/config/debug';
 import { rateLimitedDebug } from '@/utils/optimizedLogger';
+
+// Helper to get CSS variable value as HSL color string
+const getCSSColor = (varName: string): string => {
+  if (typeof window === 'undefined') return '#888888';
+  const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  return value ? `hsl(${value})` : '#888888';
+};
+
+// Chart color tokens that read from CSS variables
+const useChartColors = () => {
+  return useMemo(() => ({
+    pm1: getCSSColor('--chart-pm1'),
+    pm25: getCSSColor('--chart-pm25'),
+    pm10: getCSSColor('--chart-pm10'),
+    event: getCSSColor('--chart-event'),
+    // Context colors
+    indoor: getCSSColor('--context-indoor'),
+    outdoor: getCSSColor('--context-outdoor'),
+    transport: getCSSColor('--context-transport'),
+    walking: getCSSColor('--context-walking'),
+    cycling: getCSSColor('--context-cycling'),
+    sport: getCSSColor('--context-sport'),
+    rest: getCSSColor('--context-rest'),
+    work: getCSSColor('--context-work'),
+    default: getCSSColor('--context-default'),
+  }), []);
+};
 
 interface EventData {
   id: string;
@@ -53,6 +80,7 @@ interface PMLineGraphProps {
 export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext, variant = 'realtime' }: PMLineGraphProps) {
   const { t } = useTranslation();
   const { getCurrentThresholds, isGroupMode, activeGroup } = useGroupSettings();
+  const chartColors = useChartColors();
   
   // Debug log to verify thresholds inheritance (conditional & rate-limited)
   const prevThresholdsRef = React.useRef<string>('');
@@ -134,47 +162,37 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
       .filter(Boolean);
   }, [events, chartData]);
 
-  // Color mapping for different activities and locations
+  // Color mapping for different activities and locations using design system colors
   const getContextColor = React.useCallback((contextType: string, contextValue: string): string => {
-    if (contextType === 'activity') {
-      const activityColors: Record<string, string> = {
-        'indoor': '#8b5cf6', // purple
-        'outdoor': '#22c55e', // green
-        'transport': '#ef4444', // red
-        'walking': '#3b82f6', // blue
-        'cycling': '#f59e0b', // amber
-        'driving': '#dc2626', // red-600
-        'train': '#7c3aed', // violet
-        'bus': '#ea580c', // orange
-        'metro': '#9333ea', // purple-600
-        'undergroundTransport': '#6366f1', // indigo
-        'sport': '#059669', // emerald
-        'rest': '#64748b', // slate
-        'work': '#0891b2', // cyan
-        'meeting': '#e11d48', // rose
-        'shopping': '#db2777', // pink
-        'cooking': '#84cc16', // lime
-        'cleaning': '#06b6d4', // cyan-500
-        'studying': '#8b5cf6', // purple-500
-        'jogging': '#10b981', // emerald-500
-      };
-      return activityColors[contextValue.toLowerCase()] || '#6b7280'; // gray fallback
-    } else if (contextType === 'location') {
-      const locationColors: Record<string, string> = {
-        'home': '#22c55e', // green
-        'office': '#3b82f6', // blue
-        'school': '#f59e0b', // amber
-        'indoor': '#8b5cf6', // purple
-        'outdoor': '#10b981', // emerald
-        'transport': '#ef4444', // red
-        'underground': '#6366f1', // indigo
-        'park': '#84cc16', // lime
-        'mainstreet': '#64748b', // slate
-      };
-      return locationColors[contextValue.toLowerCase()] || '#6b7280'; // gray fallback
-    }
-    return '#3b82f6'; // blue fallback for autocontext
-  }, []);
+    const colorMap: Record<string, string> = {
+      'indoor': chartColors.indoor,
+      'outdoor': chartColors.outdoor,
+      'transport': chartColors.transport,
+      'walking': chartColors.walking,
+      'cycling': chartColors.cycling,
+      'driving': chartColors.transport,
+      'train': chartColors.indoor,
+      'bus': chartColors.transport,
+      'metro': chartColors.indoor,
+      'undergroundTransport': chartColors.indoor,
+      'sport': chartColors.sport,
+      'rest': chartColors.rest,
+      'work': chartColors.work,
+      'meeting': chartColors.transport,
+      'shopping': chartColors.indoor,
+      'cooking': chartColors.outdoor,
+      'cleaning': chartColors.work,
+      'studying': chartColors.indoor,
+      'jogging': chartColors.sport,
+      'home': chartColors.outdoor,
+      'office': chartColors.walking,
+      'school': chartColors.cycling,
+      'park': chartColors.outdoor,
+      'mainstreet': chartColors.rest,
+      'underground': chartColors.indoor,
+    };
+    return colorMap[contextValue.toLowerCase()] || chartColors.default;
+  }, [chartColors]);
 
     // Generate highlighted areas and labels based on context type selection
     const contextPeriods = React.useMemo(() => {
@@ -383,26 +401,26 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
           <Line
             type="monotone"
             dataKey="PM1"
-            stroke="#22c55e"
+            stroke={chartColors.pm1}
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 5, stroke: '#22c55e' }}
+            activeDot={{ r: 5, stroke: chartColors.pm1 }}
           />
           <Line
             type="monotone"
             dataKey="PM25"
-            stroke="#ef4444"
+            stroke={chartColors.pm25}
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 5, stroke: '#ef4444' }}
+            activeDot={{ r: 5, stroke: chartColors.pm25 }}
           />
           <Line
             type="monotone"
             dataKey="PM10"
-            stroke="#3b82f6"
+            stroke={chartColors.pm10}
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 5, stroke: '#3b82f6' }}
+            activeDot={{ r: 5, stroke: chartColors.pm10 }}
           />
           {/* Context highlighted areas with labels */}
           {contextPeriods.map((period, index) => {
@@ -434,7 +452,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                     value: `${period.pm25Average.toFixed(1)} µg/m³`,
                     position: 'top',
                     fontSize: 12,
-                    fill: '#ef4444',
+                    fill: chartColors.pm25,
                     textAnchor: 'middle',
                     fontWeight: 'bold',
                     offset: PM_AVG_OFFSET,
@@ -477,7 +495,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                 {/* Event line */}
                 <ReferenceLine
                   x={event.chartPosition}
-                  stroke="#f97316"
+                  stroke={chartColors.event}
                   strokeWidth={3}
                   strokeDasharray="3 3"
                 />
@@ -490,7 +508,7 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
                     value: displayLabel,
                     position: 'top',
                     fontSize: 12,
-                    fill: '#f97316',
+                    fill: chartColors.event,
                     textAnchor: 'start',
                     fontWeight: 'bold',
                     offset: 15 + (eventIndex * 20),
