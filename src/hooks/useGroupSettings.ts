@@ -203,6 +203,12 @@ export const useGroupSettings = () => {
     logger.debug('Group ID from URL:', groupId);
 
     if (groupId) {
+      // ✅ Early exit: Skip if toast was already shown for this group
+      if (lastToastGroupIdRef.current === groupId && activeGroup?.id === groupId) {
+        logger.debug('🔇 [useGroupSettings] Skipping - already on this group');
+        return;
+      }
+
       // Try static config first
       let groupConfig = getGroupConfig(groupId);
       
