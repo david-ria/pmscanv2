@@ -599,6 +599,7 @@
     "undergroundTransport": "Underground transport"
   },
   "history": {
+    "title": "Mission History",
     "loadingMissions": "Loading missions...",
     "noMissionsForPeriod": "No missions for this period",
     "selectAnotherDate": "Select another date or period to see your data",
@@ -633,6 +634,7 @@
     }
   },
   "analysis": {
+    "pageTitle": "Data Analysis",
     "title": "Personalized AI Analysis",
     "location": "Location",
     "activity": "Activity",

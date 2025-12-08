@@ -57,10 +57,10 @@ export default function Analysis() {
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
-      {/* Header spacing to match History page layout */}
-      <div className="mb-4 sm:mb-6">
-        {/* Empty space to align with History page sync button area */}
-      </div>
+      {/* Page Title */}
+      <h1 className="text-3xl font-bold text-foreground mb-6">
+        {t('analysis.pageTitle')}
+      </h1>
 
       {/* Date Filter */}
       <DateFilter
