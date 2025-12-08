@@ -76,16 +76,16 @@ export function useSmartLocationEnrichment() {
       try {
         const parsed = JSON.parse(savedCache);
         setCache(cleanExpiredCache(parsed));
-      } catch (error) {
-        console.error('Failed to parse location cache:', error);
+      } catch (err) {
+        logger.error('Failed to parse location cache:', err);
       }
     }
     
     if (savedPatterns) {
       try {
         setPatterns(JSON.parse(savedPatterns));
-      } catch (error) {
-        console.error('Failed to parse movement patterns:', error);
+      } catch (err) {
+        logger.error('Failed to parse movement patterns:', err);
       }
     }
   }, []);
@@ -110,7 +110,6 @@ export function useSmartLocationEnrichment() {
       try {
         const shouldThrottle = await shouldThrottleEnrichment();
         if (shouldThrottle) {
-          rateLimitedDebug('throttling-enrichment', 10000, '🔋 Throttling location enrichment due to device state');
           return;
         }
         
@@ -127,10 +126,8 @@ export function useSmartLocationEnrichment() {
         
         await Promise.all(promises);
         enrichmentQueue.current = prioritized;
-        
-        rateLimitedDebug('queue-processing', 5000, `📋 Processed ${batch.length} locations, ${enrichmentQueue.current.length} remaining`);
-      } catch (error) {
-        console.error('Queue processing error:', error);
+      } catch (err) {
+        logger.error('Queue processing error:', err);
       } finally {
         isProcessingQueue.current = false;
       }
@@ -190,13 +187,10 @@ export function useSmartLocationEnrichment() {
   ): Promise<SmartEnrichmentResult | null> => {
     // Check if online before attempting API call
     if (!navigator.onLine) {
-      devLogger.debug('⚠️ Offline - skipping API enrichment');
       return null;
     }
 
     try {
-      devLogger.debug(`🗺️ API enriching location: ${location.latitude}, ${location.longitude}`);
-      
       // Add 5 second timeout to prevent blocking
       const enrichPromise = supabase.functions.invoke('enhance-location-context', {
         body: {
@@ -229,7 +223,7 @@ export function useSmartLocationEnrichment() {
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to enrich location';
-      console.error('API location enrichment error:', errorMessage);
+      logger.error('API location enrichment error:', err);
       setError(errorMessage);
       return null;
     }
@@ -264,7 +258,6 @@ export function useSmartLocationEnrichment() {
       // Check local cache first
       const cached = findInCache(location);
       if (cached) {
-        rateLimitedDebug('cache-hit', 3000, '🎯 Using local cache for location enrichment');
         cached.hitCount++;
         cached.lastUsed = Date.now();
         
@@ -282,7 +275,6 @@ export function useSmartLocationEnrichment() {
       if (!shouldEnrichNow) {
         // Add to queue for background processing
         enrichmentQueue.current.push(location);
-        devLogger.debug('📋 Added location to enrichment queue');
         
         // Return best guess from nearby cache
         const nearbyCache = cacheRef.current
@@ -316,11 +308,8 @@ export function useSmartLocationEnrichment() {
       setLoading(false);
     }
   }, [findInCache, enrichLocationFromAPI]);
-  // Removed recentLocations and cache from dependencies - using refs instead
 
   const preEnrichFrequentLocations = useCallback(async () => {
-    devLogger.debug('🔮 Starting predictive enrichment for frequent locations');
-    
     // Identify frequent locations from patterns
     const frequentLocations = patterns
       .filter(pattern => pattern.frequency > 3)
@@ -368,13 +357,6 @@ export function useSmartLocationEnrichment() {
       updateMovementPatterns(latest);
     }
   }, [recentLocations, updateMovementPatterns]);
-
-  // Rate limited state logging
-  rateLimitedDebug('smart-enrichment-state', 10000, '🔧 Smart enrichment state:', {
-    cacheSize: cache.length,
-    queueSize: enrichmentQueue.current.length,
-    loading
-  });
 
   return {
     enrichLocation,
