@@ -171,7 +171,12 @@ class DataStorageService {
 
         // Merge with local unsynced missions
         const unsyncedLocal = localMissions.filter((m) => !m.synced);
-        const allMissions = [...unsyncedLocal, ...validDbMissions];
+        
+        // ✅ Deduplicate by mission ID - database version takes precedence
+        const dbMissionIds = new Set(validDbMissions.map(m => m.id));
+        const uniqueUnsyncedLocal = unsyncedLocal.filter(m => !dbMissionIds.has(m.id));
+        
+        const allMissions = [...uniqueUnsyncedLocal, ...validDbMissions];
         
         // ✅ REMOVED: Measurements are now lazy-loaded on demand, not pre-fetched
         // This dramatically improves initial load performance
