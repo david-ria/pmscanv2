@@ -1,6 +1,6 @@
 import { PMScanDevice } from '@/types/sensor';
 import { PMScanDeviceState } from './deviceState';
-import { PMScanDeviceInitializer } from './deviceInitializer';
+import { PMScanInitializer } from './PMScanInitializer';
 import { PMScanEventManager } from './eventManager';
 import { PMScanConnectionUtils } from './connectionUtils';
 import {
@@ -17,12 +17,12 @@ export class PMScanConnectionManager {
   private shouldConnect = false;
 
   private deviceState: PMScanDeviceState;
-  private deviceInitializer: PMScanDeviceInitializer;
+  private deviceInitializer: PMScanInitializer;
   private eventManager: PMScanEventManager;
 
   constructor() {
     this.deviceState = new PMScanDeviceState();
-    this.deviceInitializer = new PMScanDeviceInitializer(this.deviceState);
+    this.deviceInitializer = new PMScanInitializer(this.deviceState);
     this.eventManager = new PMScanEventManager(this.deviceState);
   }
 

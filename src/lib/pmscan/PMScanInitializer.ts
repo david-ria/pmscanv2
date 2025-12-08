@@ -17,8 +17,9 @@ import * as logger from '@/utils/logger';
 
 /**
  * Handles PMScan device initialization and service discovery
+ * Renamed from PMScanDeviceInitializer for consistency
  */
-export class PMScanDeviceInitializer {
+export class PMScanInitializer {
   constructor(private deviceState: PMScanDeviceState) {}
 
   public async initializeDevice(
