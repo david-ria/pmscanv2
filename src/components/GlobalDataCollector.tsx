@@ -125,7 +125,10 @@ export function GlobalDataCollector() {
     }
   }, [isRecording, selectedLocation, selectedActivity, unifiedData.updateMissionContext]);
 
-  // Global data collection effect with controlled frequency using setInterval
+  // Web Worker reference for reliable background timing
+  const workerRef = useRef<Worker | null>(null);
+
+  // Global data collection effect using Web Worker for reliable timing
   useEffect(() => {
     if (!isRecording || !addDataPoint) {
       return;
@@ -265,17 +268,50 @@ export function GlobalDataCollector() {
       );
     };
 
-    // Collect data immediately on recording start
-    collectData();
-    
-    // Then collect at regular intervals
-    logger.info(`⏰ Starting data collection interval: ${frequencyMs}ms (${recordingFrequency})`);
-    const intervalId = setInterval(collectData, frequencyMs);
-    
-    return () => {
-      logger.info('🛑 Stopping data collection interval');
-      clearInterval(intervalId);
-    };
+    // Initialize Web Worker for reliable background timing
+    try {
+      const worker = new Worker(
+        new URL('../workers/interval.worker.ts', import.meta.url),
+        { type: 'module' }
+      );
+      
+      workerRef.current = worker;
+
+      // Handle ticks from worker
+      worker.onmessage = (event: MessageEvent<{ type: 'TICK' }>) => {
+        if (event.data.type === 'TICK') {
+          collectData();
+        }
+      };
+
+      worker.onerror = (error) => {
+        logger.error('⚠️ Interval worker error, falling back to setInterval:', error);
+        // Fallback to setInterval if worker fails
+        const fallbackId = setInterval(collectData, frequencyMs);
+        workerRef.current = null;
+        return () => clearInterval(fallbackId);
+      };
+
+      // Start the worker timer
+      logger.info(`⏰ Starting Web Worker interval: ${frequencyMs}ms (${recordingFrequency})`);
+      worker.postMessage({ type: 'START', interval: frequencyMs });
+
+      return () => {
+        logger.info('🛑 Stopping Web Worker interval');
+        worker.postMessage({ type: 'STOP' });
+        worker.terminate();
+        workerRef.current = null;
+      };
+    } catch (error) {
+      // Fallback to setInterval if Web Worker creation fails
+      logger.warn('⚠️ Web Worker not supported, using setInterval fallback');
+      collectData(); // Initial collection
+      const fallbackId = setInterval(collectData, frequencyMs);
+      
+      return () => {
+        clearInterval(fallbackId);
+      };
+    }
   }, [
     isRecording,
     recordingFrequency,
