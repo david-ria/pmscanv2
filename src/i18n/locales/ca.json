@@ -373,6 +373,11 @@
       "poor": "Dolent",
       "veryPoor": "Molt dolent"
     },
+    "environmental": {
+      "temperature": "Temp",
+      "humidity": "Humitat",
+      "tvoc": "TVOC"
+    },
     "location": "Ubicació",
     "activity": "Activitat",
     "noLocation": "Sense ubicació",
