@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { SensorReadingData as PMScanData } from '@/types/sensor';
+import { SensorReadingData } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 import { RecordingEntry, MissionContext } from '@/types/recording';
 import { setGlobalRecording, setBackgroundRecording } from '@/lib/pmscan/globalConnectionManager';
@@ -19,7 +19,7 @@ export interface RecordingActions {
   startRecording: (frequency?: string) => void;
   stopRecording: () => void;
   addDataPoint: (
-    pmData: PMScanData,
+    pmData: SensorReadingData,
     location?: LocationData,
     manualContext?: MissionContext,
     automaticContext?: string,
@@ -29,7 +29,6 @@ export interface RecordingActions {
   ) => void;
   updateMissionContext: (location: string, activity: string) => void;
   clearRecordingData: () => void;
-  // Removed saveMission - will use existing useMissionSaver instead
 }
 
 class RecordingService {
@@ -211,7 +210,7 @@ class RecordingService {
    * @param weatherDataId - Weather data ID for this measurement
    */
   addDataPoint(
-    pmData: PMScanData,
+    pmData: SensorReadingData,
     location?: LocationData,
     manualContext?: MissionContext,
     automaticContext?: string,
