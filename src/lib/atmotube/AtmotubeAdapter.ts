@@ -17,12 +17,9 @@ export class AtmotubeAdapter implements ISensorAdapter {
   private battery: number = 0;
   private charging: number = 0;
 
-  // Atmotube Pro GATT UUIDs (Official from documentation)
-  private static readonly ATMOTUBE_SERVICE_UUID = 'db450001-8e9a-4818-add7-6ed94a328ab4';
-  private static readonly ATMOTUBE_VOC_CHAR_UUID = 'db450002-8e9a-4818-add7-6ed94a328ab4';
-  private static readonly ATMOTUBE_BME_CHAR_UUID = 'db450003-8e9a-4818-add7-6ed94a328ab4';
-  private static readonly ATMOTUBE_STATUS_CHAR_UUID = 'db450004-8e9a-4818-add7-6ed94a328ab4';
-  private static readonly ATMOTUBE_PM_CHAR_UUID = 'db450005-8e9a-4818-add7-6ed94a328ab4';
+  // Atmotube Pro GATT UUIDs (Private Atmotube service)
+  private static readonly ATMOTUBE_SERVICE_UUID = '4b13a770-4ccb-11e5-a151-0002a5d5c51b';
+  private static readonly ATMOTUBE_MEASURE_CHAR_UUID = '0000a770-4ccb-11e5-a151-0002a5d5c51b';
 
   public async requestDevice(): Promise<BluetoothDevice> {
     if (!navigator.bluetooth) {
@@ -33,7 +30,6 @@ export class AtmotubeAdapter implements ISensorAdapter {
       logger.debug('🔍 Requesting Atmotube Bluetooth device...');
       const device = await navigator.bluetooth.requestDevice({
         filters: [
-          { namePrefix: 'ATMOTUBE' },
           { services: [AtmotubeAdapter.ATMOTUBE_SERVICE_UUID] },
         ],
         optionalServices: [AtmotubeAdapter.ATMOTUBE_SERVICE_UUID],
@@ -96,127 +92,26 @@ export class AtmotubeAdapter implements ISensorAdapter {
     try {
       logger.debug('🔔 Initializing Atmotube notifications...');
       const service = await server.getPrimaryService(AtmotubeAdapter.ATMOTUBE_SERVICE_UUID);
+      const measureChar = await service.getCharacteristic(AtmotubeAdapter.ATMOTUBE_MEASURE_CHAR_UUID);
       
-      // PM characteristic (PM1, PM2.5, PM10)
-      const pmChar = await service.getCharacteristic(AtmotubeAdapter.ATMOTUBE_PM_CHAR_UUID);
-      await pmChar.startNotifications();
-      pmChar.addEventListener('characteristicvaluechanged', (event: Event) => {
+      await measureChar.startNotifications();
+      measureChar.addEventListener('characteristicvaluechanged', (event: Event) => {
         const target = event.target as BluetoothRemoteGATTCharacteristic;
         const value = target.value;
         if (value) {
-          this.parsePMData(value);
-          this.emitReading(onDataCallback);
-        }
-      });
-      
-      // BME280 characteristic (Temperature, Humidity, Pressure)
-      const bmeChar = await service.getCharacteristic(AtmotubeAdapter.ATMOTUBE_BME_CHAR_UUID);
-      await bmeChar.startNotifications();
-      bmeChar.addEventListener('characteristicvaluechanged', (event: Event) => {
-        const target = event.target as BluetoothRemoteGATTCharacteristic;
-        const value = target.value;
-        if (value) {
-          this.parseBMEData(value);
-        }
-      });
-      
-      // VOC characteristic
-      const vocChar = await service.getCharacteristic(AtmotubeAdapter.ATMOTUBE_VOC_CHAR_UUID);
-      await vocChar.startNotifications();
-      vocChar.addEventListener('characteristicvaluechanged', (event: Event) => {
-        const target = event.target as BluetoothRemoteGATTCharacteristic;
-        const value = target.value;
-        if (value) {
-          this.parseVOCData(value);
-        }
-      });
-      
-      // Status characteristic (Battery)
-      try {
-        const statusChar = await service.getCharacteristic(AtmotubeAdapter.ATMOTUBE_STATUS_CHAR_UUID);
-        await statusChar.startNotifications();
-        statusChar.addEventListener('characteristicvaluechanged', (event: Event) => {
-          const target = event.target as BluetoothRemoteGATTCharacteristic;
-          const value = target.value;
-          if (value && value.byteLength >= 1) {
-            this.battery = value.getUint8(0);
-            if (onBatteryCallback) onBatteryCallback(this.battery);
+          const data = this.parseAtmotubeData(value);
+          if (data) {
+            this.lastReading = data;
+            onDataCallback(data);
           }
-        });
-      } catch (e) {
-        logger.warn('Atmotube: Status characteristic not available');
-      }
+        }
+      });
       
       logger.debug('✅ Atmotube notifications initialized');
     } catch (error) {
       logger.error('Atmotube: initializeNotifications failed:', error);
       throw new Error('Atmotube: Notification initialization failed');
     }
-  }
-  
-  // Temporary storage for partial readings
-  private pmValues = { pm1: 0, pm25: 0, pm10: 0 };
-  private bmeValues = { temp: 0, humidity: 0, pressure: 0 };
-  private vocValue = 0;
-  
-  private parsePMData(rawData: DataView): void {
-    try {
-      // Atmotube PM format: 3 bytes each for PM1, PM2.5, PM10 (little-endian, divide by 100)
-      if (rawData.byteLength >= 9) {
-        const pm1Raw = rawData.getUint8(0) | (rawData.getUint8(1) << 8) | (rawData.getUint8(2) << 16);
-        const pm25Raw = rawData.getUint8(3) | (rawData.getUint8(4) << 8) | (rawData.getUint8(5) << 16);
-        const pm10Raw = rawData.getUint8(6) | (rawData.getUint8(7) << 8) | (rawData.getUint8(8) << 16);
-        
-        this.pmValues.pm1 = pm1Raw / 100;
-        this.pmValues.pm25 = pm25Raw / 100;
-        this.pmValues.pm10 = pm10Raw / 100;
-      }
-    } catch (error) {
-      logger.warn('Atmotube: PM parsing failed', error);
-    }
-  }
-  
-  private parseBMEData(rawData: DataView): void {
-    try {
-      // BME280: 1 byte temp (-40 offset), 1 byte humidity, 4 bytes pressure (little-endian, /100)
-      if (rawData.byteLength >= 6) {
-        this.bmeValues.temp = rawData.getUint8(0) - 40;
-        this.bmeValues.humidity = rawData.getUint8(1);
-        this.bmeValues.pressure = rawData.getUint32(2, true) / 100;
-      }
-    } catch (error) {
-      logger.warn('Atmotube: BME parsing failed', error);
-    }
-  }
-  
-  private parseVOCData(rawData: DataView): void {
-    try {
-      // VOC: 2 bytes little-endian (ppb)
-      if (rawData.byteLength >= 2) {
-        this.vocValue = rawData.getUint16(0, true);
-      }
-    } catch (error) {
-      logger.warn('Atmotube: VOC parsing failed', error);
-    }
-  }
-  
-  private emitReading(onDataCallback: (data: SensorReadingData) => void): void {
-    const data: SensorReadingData = {
-      pm1: this.pmValues.pm1,
-      pm25: this.pmValues.pm25,
-      pm10: this.pmValues.pm10,
-      temp: this.bmeValues.temp,
-      humidity: this.bmeValues.humidity,
-      pressure: this.bmeValues.pressure,
-      tvoc: this.vocValue,
-      battery: this.battery,
-      charging: this.charging === 1,
-      timestamp: createTimestamp(),
-      location: 'Atmotube Pro',
-    };
-    
-    this.lastReading = data;
-    onDataCallback(data);
   }
 
   public updateBattery(level: number): void {
@@ -227,11 +122,56 @@ export class AtmotubeAdapter implements ISensorAdapter {
     this.charging = status;
   }
 
-  // Legacy method kept for compatibility - now uses separate characteristic parsing
+  /**
+   * Parse Atmotube Pro-specific data format into unified SensorReadingData
+   * Atmotube Pro payload structure (28 bytes expected):
+   * - Bytes 0-3: PM1 (float32, little-endian)
+   * - Bytes 4-7: PM2.5 (float32, little-endian)
+   * - Bytes 8-11: PM10 (float32, little-endian)
+   * - Bytes 12-15: Temperature in Celsius (float32, little-endian)
+   * - Bytes 16-19: Humidity in % (float32, little-endian)
+   * - Bytes 20-23: Pressure in hPa (float32, little-endian)
+   * - Bytes 24-27: TVOC index (float32, little-endian)
+   */
   private parseAtmotubeData(rawData: DataView): SensorReadingData | null {
-    // This method is no longer used - data comes from separate characteristics
-    logger.warn('Atmotube: Legacy parseAtmotubeData called');
-    return this.lastReading;
+    try {
+      // Validate minimum data length
+      if (rawData.byteLength < 28) {
+        logger.warn('Atmotube: Data packet too short:', rawData.byteLength);
+        return null;
+      }
+
+      const pm1 = rawData.getFloat32(0, true);
+      const pm25 = rawData.getFloat32(4, true);
+      const pm10 = rawData.getFloat32(8, true);
+      const temp = rawData.getFloat32(12, true);
+      const humidity = rawData.getFloat32(16, true);
+      const pressure = rawData.getFloat32(20, true);
+      const tvoc = rawData.getFloat32(24, true);
+
+      // Validate data ranges
+      if (pm1 < 0 || pm1 > 1000 || pm25 < 0 || pm25 > 1000 || pm10 < 0 || pm10 > 1000) {
+        logger.warn('Atmotube: PM values out of range');
+        return null;
+      }
+
+      return {
+        pm1,
+        pm25,
+        pm10,
+        temp,
+        humidity,
+        pressure,
+        tvoc,
+        battery: this.battery,
+        charging: this.charging === 1,
+        timestamp: createTimestamp(),
+        location: 'Atmotube Pro',
+      };
+    } catch (error) {
+      logger.warn('Atmotube: Data parsing failed', error);
+      return null;
+    }
   }
 
   /**

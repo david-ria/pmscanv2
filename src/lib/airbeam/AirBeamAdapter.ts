@@ -17,9 +17,9 @@ export class AirBeamAdapter implements ISensorAdapter {
   private battery: number = 0;
   private charging: number = 0;
 
-  // AirBeam GATT UUIDs - uses HM-10/ESP32 serial service
-  private static readonly AIRBEAM_SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
-  private static readonly AIRBEAM_DATA_CHAR_UUID = '0000ffe1-0000-1000-8000-00805f9b34fb';
+  // AirBeam GATT UUIDs - Generic environmental sensing service
+  private static readonly AIRBEAM_SERVICE_UUID = '0000181a-0000-1000-8000-00805f9b34fb';
+  private static readonly AIRBEAM_DATA_CHAR_UUID = '00002a6e-0000-1000-8000-00805f9b34fb'; // Temperature characteristic
 
   public async requestDevice(): Promise<BluetoothDevice> {
     if (!navigator.bluetooth) {

@@ -6,11 +6,10 @@ import {
   UNIVERSAL_SCAN_OPTIONS, 
   detectSensorType, 
   detectSensorTypeFromName,
-  getSensorDisplayName 
+  getSensorDisplayName,
+  SensorId
 } from '@/lib/sensorConstants';
 import * as logger from '@/utils/logger';
-
-export type SensorId = 'pmscan' | 'airbeam' | 'atmotube';
 
 const ACTIVE_SENSOR_KEY = 'activeSensorId';
 
