@@ -102,7 +102,10 @@
     "resetPasswordSuccess": "Correu enviat",
     "checkEmailReset": "Comprova el correu per a l'enllaç de restabliment",
     "backToLogin": "Tornar a l'inici de sessió",
-    "enterEmailReset": "Introdueix el teu correu per restablir la contrasenya"
+    "enterEmailReset": "Introdueix el teu correu per restablir la contrasenya",
+    "acceptTerms": "Accepto les condicions d'ús i la política de privadesa",
+    "termsRequired": "Condicions requerides",
+    "pleaseAcceptTerms": "Accepteu les condicions d'ús per registrar-vos."
   },
   "language": {
     "french": "Français",

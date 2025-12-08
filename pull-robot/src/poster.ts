@@ -180,7 +180,7 @@ async function makeAPIRequest(
   try {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer xjb0qzdnefgurhkdps4qivp8x6lq2h66',
+      'Authorization': `Bearer ${config.dashboard.bearer}`,
       'User-Agent': 'pull-robot/1.0.0',
     };
     
