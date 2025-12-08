@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { useLocationEnrichmentSettings } from './useLocationEnrichmentSettings';
 import { useSmartLocationEnrichment } from './useSmartLocationEnrichment';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
-import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
+import * as logger from '@/utils/logger';
 
 /**
  * Integration hook that connects location enrichment with GPS and recording state

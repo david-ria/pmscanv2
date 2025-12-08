@@ -62,7 +62,11 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   // Core data sources
   const bluetooth = usePMScanBluetooth();
   const recording = useRecordingService(); // Single source of truth
-  const { latestLocation, locationEnabled, requestLocationPermission, speedKmh, gpsQuality } = useGPS(true, true, recording.recordingFrequency);
+  
+  // Battery optimization: Only use highAccuracy GPS when recording is active
+  const useHighAccuracyGPS = recording.isRecording;
+  const { latestLocation, locationEnabled, requestLocationPermission, speedKmh, gpsQuality } = useGPS(true, useHighAccuracyGPS, recording.recordingFrequency);
+  
   const { saveMission: missionSaverFunction } = useMissionSaver();
   const { saveRecordingProgress, clearRecoveryData } = useCrashRecovery();
 

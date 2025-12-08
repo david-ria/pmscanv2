@@ -16,8 +16,7 @@ import { EVENT_TYPES } from '@/utils/eventTypes';
 import { createTimestamp, formatTime } from '@/utils/timeFormat';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import React from 'react';
-import { DEBUG_GROUP_INHERITANCE, DEBUG_RATE_MS } from '@/config/debug';
-import { rateLimitedDebug } from '@/utils/optimizedLogger';
+import * as logger from '@/utils/logger';
 
 interface EventButtonProps {}
 

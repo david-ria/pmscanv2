@@ -23,12 +23,11 @@ import { useSensorData } from '@/hooks/useSensorData';
 import { autoContextSensorManager } from '@/services/autoContextSensorManager';
 import { calculateDataQuality } from '@/lib/autoContext.config';
 
-// Development telemetry logging
+// Development telemetry logging - suppressed in production
 function logTransition(prev: string, next: string, data: AutoContextEvaluationData) {
-  if (process.env.NODE_ENV !== 'development') return;
+  if (import.meta.env.PROD) return;
   if (prev === next) return;
-  // eslint-disable-next-line no-console
-  console.debug('[AutoContext]', `${prev} -> ${next}`, {
+  logger.debug('[AutoContext] Transition:', `${prev} -> ${next}`, {
     speed: Math.round((data.movement.speed ?? 0) * 10) / 10,
     gpsQuality: data.location.gpsQuality,
     walkingSignature: data.movement.walkingSignature ?? null,
@@ -132,7 +131,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
           });
         }
       } catch (err) {
-        console.error('Failed to load profile SSIDs', err);
+        logger.error('Failed to load profile SSIDs', err);
       }
     };
 
@@ -146,11 +145,11 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
         tf.loadLayersModel('/model/model.json')
           .then(setModel)
           .catch((err) => {
-            console.error('Failed to load ML model', err);
+            logger.error('Failed to load ML model', err);
             setModel(null);
           });
       }).catch(err => {
-        console.error('Failed to load TensorFlow', err);
+        logger.error('Failed to load TensorFlow', err);
       });
     }
   }, [settings.mlEnabled, model]);
@@ -158,7 +157,7 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   // Initialize and manage motion walking signature service
   useEffect(() => {
     if (settings.enabled) {
-      autoContextSensorManager.addReference().catch(console.error);
+      autoContextSensorManager.addReference().catch((err) => logger.error('Sensor manager error', err));
     } else {
       autoContextSensorManager.removeReference();
     }
@@ -172,7 +171,6 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
   const getCurrentWifiSSID = useCallback((): string => {
     // Check if we're online first
     if (!navigator.onLine) {
-      console.log('WiFi detection - offline, no connection');
       return '';
     }
 
@@ -396,10 +394,10 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
           .eq('id', user.id);
 
         if (error) {
-          console.error('Failed to persist SSID', error);
+          logger.error('Failed to persist SSID', error);
         }
       } catch (err) {
-        console.error('Failed to persist SSID', err);
+        logger.error('Failed to persist SSID', err);
       }
     },
     []
@@ -474,11 +472,10 @@ export function useAutoContext(enableActiveScanning: boolean = true, externalLoc
       // Real movement detection
       const isMoving = speed > 1;
 
-      console.log('🧠 AUTO-CONTEXT INPUT DATA:', {
-        latestLocation: location ? `${location.latitude}, ${location.longitude}` : 'none',
+      logger.rateLimitedDebug('auto-context-input', 30000, '🧠 AUTO-CONTEXT INPUT DATA:', {
+        latestLocation: location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'none',
         speed: speedKmh,
         isMoving: speedKmh > 2,
-        newWifiSSID,
         isConnectedToWifi,
         currentHour,
         isWeekend,
