@@ -42,15 +42,25 @@ export const SENSOR_GATT_CONFIG: Record<SensorId, SensorGattConfig> = {
 } as const;
 
 // Unified filter list for universal Bluetooth scan
+// Note: namePrefix is CASE-SENSITIVE, so we include multiple variants
 export const UNIVERSAL_SCAN_OPTIONS: RequestDeviceOptions = {
   filters: [
-    // Name-based filters (most reliable)
+    // PMScan variants
     { namePrefix: 'PMScan' },
+    { namePrefix: 'PMSCAN' },
+    { namePrefix: 'pmscan' },
+    // AirBeam variants (common: AirBeam3, AirBeam-xxxx)
     { namePrefix: 'AirBeam' },
+    { namePrefix: 'AIRBEAM' },
+    { namePrefix: 'airbeam' },
+    // Atmotube variants (common: Atmotube PRO, ATMOTUBE)
+    { namePrefix: 'Atmotube' },
     { namePrefix: 'ATMOTUBE' },
+    { namePrefix: 'atmotube' },
     // Service-based filters as fallback
     { services: ['f3641900-00b0-4240-ba50-05ca45bf8abc'] }, // PMScan
     { services: ['db450001-8e9a-4818-add7-6ed94a328ab4'] }, // Atmotube
+    { services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] }, // AirBeam HM-10
   ],
   optionalServices: [
     'f3641900-00b0-4240-ba50-05ca45bf8abc', // PMScan
