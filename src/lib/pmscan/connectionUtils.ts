@@ -10,9 +10,12 @@ export class PMScanConnectionUtils {
       throw new Error('Bluetooth not available in this browser');
     }
 
-    logger.debug('🔍 Requesting any Bluetooth device...');
+    logger.debug('🔍 Requesting PMScan Bluetooth device...');
     const device = await navigator.bluetooth.requestDevice({
-      filters: [{ namePrefix: 'PMScan' }],
+      filters: [
+        { namePrefix: 'PMScan' },
+        { services: [PMScan_SERVICE_UUID] },
+      ],
       optionalServices: [PMScan_SERVICE_UUID],
     });
 

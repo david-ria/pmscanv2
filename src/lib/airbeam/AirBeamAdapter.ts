@@ -1,9 +1,11 @@
 import { ISensorAdapter, SensorReadingData } from '@/types/sensor';
+import { createTimestamp } from '@/utils/timeFormat';
 import * as logger from '@/utils/logger';
 
 /**
  * AirBeam sensor adapter implementing the unified ISensorAdapter interface
  * AirBeam supports: PM2.5, PM10, Temperature, Humidity, Pressure
+ * Note: AirBeam does NOT report PM1 or TVOC
  */
 export class AirBeamAdapter implements ISensorAdapter {
   public readonly sensorId = 'airbeam' as const;
@@ -25,6 +27,7 @@ export class AirBeamAdapter implements ISensorAdapter {
     }
 
     try {
+      logger.debug('🔍 Requesting AirBeam Bluetooth device...');
       const device = await navigator.bluetooth.requestDevice({
         filters: [
           { services: [AirBeamAdapter.AIRBEAM_SERVICE_UUID] },
@@ -33,6 +36,7 @@ export class AirBeamAdapter implements ISensorAdapter {
       });
       
       this.device = device;
+      logger.debug('📱 AirBeam device found:', device.name);
       return device;
     } catch (error) {
       logger.error('AirBeam device request failed:', error);
@@ -46,9 +50,11 @@ export class AirBeamAdapter implements ISensorAdapter {
     }
 
     try {
+      logger.debug('🔌 Connecting to AirBeam device...');
       const server = await device.gatt.connect();
       this.server = server;
       this.device = device;
+      logger.debug('✅ AirBeam connected');
       return server;
     } catch (error) {
       logger.error('AirBeam connection failed:', error);
@@ -57,7 +63,7 @@ export class AirBeamAdapter implements ISensorAdapter {
   }
 
   public async disconnect(force?: boolean): Promise<boolean> {
-    logger.debug('AirBeam disconnect called, force:', force);
+    logger.debug('🔌 AirBeam disconnect called, force:', force);
     
     if (this.device?.gatt?.connected) {
       this.device.gatt.disconnect();
@@ -84,6 +90,7 @@ export class AirBeamAdapter implements ISensorAdapter {
     this.device = device;
     
     try {
+      logger.debug('🔔 Initializing AirBeam notifications...');
       const service = await server.getPrimaryService(AirBeamAdapter.AIRBEAM_SERVICE_UUID);
       const dataChar = await service.getCharacteristic(AirBeamAdapter.AIRBEAM_DATA_CHAR_UUID);
       
@@ -100,10 +107,10 @@ export class AirBeamAdapter implements ISensorAdapter {
         }
       });
       
-      logger.debug('AirBeam: Notifications initialized');
+      logger.debug('✅ AirBeam notifications initialized');
     } catch (error) {
-      logger.warn('AirBeam: initializeNotifications failed - sensor not fully supported yet', error);
-      throw new Error('AirBeam: Notification initialization not implemented');
+      logger.error('AirBeam: initializeNotifications failed:', error);
+      throw new Error('AirBeam: Notification initialization failed');
     }
   }
 
@@ -117,18 +124,35 @@ export class AirBeamAdapter implements ISensorAdapter {
 
   /**
    * Parse AirBeam-specific data format into unified SensorReadingData
-   * AirBeam reports: PM2.5, PM10, Temperature, Humidity, Pressure
-   * Note: PM1 is not available on AirBeam, set to 0
+   * AirBeam payload structure (20 bytes expected):
+   * - Bytes 0-3: PM2.5 (float32, little-endian)
+   * - Bytes 4-7: PM10 (float32, little-endian)
+   * - Bytes 8-11: Temperature in Celsius (float32, little-endian)
+   * - Bytes 12-15: Humidity in % (float32, little-endian)
+   * - Bytes 16-19: Pressure in hPa (float32, little-endian)
+   * 
+   * Note: PM1 is NOT available on AirBeam, set to 0
+   * Note: TVOC is NOT available on AirBeam, set to undefined
    */
   private parseAirBeamData(rawData: DataView): SensorReadingData | null {
     try {
-      // AirBeam data format (placeholder - needs real protocol documentation)
-      // This is a skeleton implementation
+      // Validate minimum data length
+      if (rawData.byteLength < 20) {
+        logger.warn('AirBeam: Data packet too short:', rawData.byteLength);
+        return null;
+      }
+
       const pm25 = rawData.getFloat32(0, true);
       const pm10 = rawData.getFloat32(4, true);
       const temp = rawData.getFloat32(8, true);
       const humidity = rawData.getFloat32(12, true);
       const pressure = rawData.getFloat32(16, true);
+
+      // Validate data ranges
+      if (pm25 < 0 || pm25 > 1000 || pm10 < 0 || pm10 > 1000) {
+        logger.warn('AirBeam: PM values out of range');
+        return null;
+      }
 
       return {
         pm1: 0, // AirBeam doesn't report PM1
@@ -140,7 +164,8 @@ export class AirBeamAdapter implements ISensorAdapter {
         tvoc: undefined, // AirBeam doesn't support TVOC
         battery: this.battery,
         charging: this.charging === 1,
-        timestamp: new Date(),
+        timestamp: createTimestamp(),
+        location: 'AirBeam Device',
       };
     } catch (error) {
       logger.warn('AirBeam: Data parsing failed', error);
@@ -160,6 +185,20 @@ export class AirBeamAdapter implements ISensorAdapter {
    */
   public isCharging(): boolean {
     return this.charging === 1;
+  }
+
+  /**
+   * AirBeam supports Pressure
+   */
+  public supportsPressure(): boolean {
+    return true;
+  }
+
+  /**
+   * AirBeam does NOT support TVOC
+   */
+  public supportsTVOC(): boolean {
+    return false;
   }
 }
 
