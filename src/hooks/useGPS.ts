@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { LocationData } from '@/types/PMScan';
-import { parseFrequencyToMs } from '@/lib/recordingUtils';
 import { GeoSpeedEstimator } from '@/utils/geoSpeed';
 import * as logger from '@/utils/logger';
+
+// Throttle configuration for battery optimization
+const LOCATION_UPDATE_THROTTLE_MS = 2000; // 2 seconds minimum between UI updates
 
 export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, recordingFrequency?: string) {
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -14,6 +16,9 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
   const [error, setError] = useState<string | null>(null);
   const lastErrorTimeRef = useRef(0);
   
+  // Throttle ref to prevent excessive UI updates
+  const lastUpdateTimeRef = useRef<number>(0);
+  
   // Speed estimator instance
   const speedEstimatorRef = useRef(new GeoSpeedEstimator());
   const [speedKmh, setSpeedKmh] = useState(0);
@@ -24,6 +29,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
       setWatchId(null);
+      logger.debug('🧭 GPS: Stopped watching position');
     }
   }, []);
 
@@ -40,28 +46,43 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
     }
 
     if (!navigator.geolocation) {
-      console.error('🧭 GPS: Geolocation is not supported by this browser');
+      logger.error('🧭 GPS: Geolocation is not supported by this browser');
       setError('Geolocation is not supported by this browser');
       return;
     }
 
+    // Battery optimization: Use maximumAge based on highAccuracy mode
+    // - highAccuracy (recording): Fresh GPS, no caching
+    // - low power (not recording): Allow cached positions up to 5 seconds
+    const maximumAge = highAccuracy ? 0 : 5000;
+
     const options: PositionOptions = {
       enableHighAccuracy: highAccuracy,
       timeout: 60000, // 60 seconds - very long timeout
-      maximumAge: 0, // Always get fresh GPS position - no caching
+      maximumAge: maximumAge,
     };
 
+    logger.debug('🧭 GPS: Starting watcher', { highAccuracy, maximumAge });
+
     const handleSuccess = (position: GeolocationPosition) => {
+      const now = Date.now();
+      
+      // Throttle UI updates to prevent excessive re-renders (battery optimization)
+      if (now - lastUpdateTimeRef.current < LOCATION_UPDATE_THROTTLE_MS) {
+        return;
+      }
+      lastUpdateTimeRef.current = now;
+
       const locationData: LocationData = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
         accuracy: position.coords.accuracy,
         altitude: position.coords.altitude || undefined,
-        timestamp: new Date(position.timestamp), // Use GPS fix timestamp
+        timestamp: new Date(position.timestamp),
       };
 
-      // Temporary diagnostic logging
-      console.log('🧭 GPS STATE UPDATE:', {
+      // Rate-limited diagnostic logging
+      logger.rateLimitedInfo('gps-state-update', 10000, '🧭 GPS STATE UPDATE:', {
         lat: locationData.latitude.toFixed(6),
         lng: locationData.longitude.toFixed(6),
         timestamp: locationData.timestamp.toISOString(),
@@ -171,7 +192,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
                 resolve(true);
               },
               (error) => {
-                console.error('Permission denied:', error);
+                logger.warn('🧭 GPS: Permission denied:', error.message);
                 setLocationEnabled(false);
                 setError('Location permission denied');
                 resolve(false);
@@ -192,7 +213,7 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
               resolve(true);
             },
             (error) => {
-              console.error('Permission denied:', error);
+              logger.warn('🧭 GPS: Permission denied (fallback):', error.message);
               setLocationEnabled(false);
               setError('Location permission denied');
               resolve(false);
@@ -200,8 +221,8 @@ export function useGPS(enabled: boolean = true, highAccuracy: boolean = false, r
           );
         });
       }
-    } catch (error) {
-      console.error('Error requesting location permission:', error);
+    } catch (err) {
+      logger.error('🧭 GPS: Error requesting location permission:', err);
       setError('Failed to request location permission');
       return false;
     }

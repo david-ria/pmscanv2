@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Bottleneck from 'bottleneck';
 import { supabase } from '@/integrations/supabase/client';
-import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
+import * as logger from '@/utils/logger';
 import { 
   LocationPoint, 
   EnrichmentCache, 

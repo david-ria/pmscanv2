@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { useUnifiedData } from '@/components/UnifiedDataProvider';
 import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useStorageSettings } from '@/hooks/useStorage';
@@ -8,12 +8,9 @@ import { useGeohashSettings } from '@/hooks/useStorage';
 import { encodeGeohash } from '@/utils/geohash';
 import { rollingBufferService } from '@/services/rollingBufferService';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
-
 import { useWeatherService } from '@/hooks/useWeatherService';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import * as logger from '@/utils/logger';
-import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
-import { createTimestamp } from '@/utils/timeFormat';
 import { useScopedRecordingContext } from '@/hooks/useScopedRecordingContext';
 
 /**
@@ -35,13 +32,13 @@ export function GlobalDataCollector() {
     isConnected,
   } = unifiedData;
 
-  // Enhanced debugging for recording state (rate limited)
-  rateLimitedDebug('global-data-collector-state', 5000, '🔍 GlobalDataCollector state:', {
+  // Rate limited state logging
+  logger.rateLimitedDebug('global-data-collector-state', 10000, '🔍 GlobalDataCollector state:', {
     isRecording,
     hasCurrentData: !!currentData,
-    isConnected,
-    willProceed: isRecording && !!currentData && !!addDataPoint
+    isConnected
   });
+  
   const { getWeatherIdForMeasurement } = useWeatherService();
   const { isEnabled: weatherLoggingEnabled } = useWeatherLogging();
   
@@ -64,12 +61,6 @@ export function GlobalDataCollector() {
   
   // Get group settings for geohash privacy
   const { activeGroup, isGroupMode } = useGroupSettings();
-
-  // Development-only debugging (rate limited)
-  devLogger.debug('🔧 Location enrichment state:', {
-    hasEnrichLocation: !!enrichLocation,
-    geohashEnabled: geohashSettings.enabled
-  });
 
   // Prevent duplicate data points and track frequency
   const lastDataRef = useRef<{ pm25: number; timestamp: number } | null>(null);
@@ -129,36 +120,14 @@ export function GlobalDataCollector() {
   useEffect(() => {
     if (isRecording && unifiedData.updateMissionContext) {
       if (selectedLocation || selectedActivity) {
-        console.log('🔁 [GlobalDataCollector] Syncing mission context:', {
-          location: selectedLocation || 'EMPTY',
-          activity: selectedActivity || 'EMPTY'
-        });
         unifiedData.updateMissionContext(selectedLocation, selectedActivity);
       }
     }
   }, [isRecording, selectedLocation, selectedActivity, unifiedData.updateMissionContext]);
 
-  // Track recording state changes (development only)
-  useEffect(() => {
-    devLogger.info('🚨 Recording state changed:', { isRecording });
-  }, [isRecording]);
-
-  // Track currentData changes (development only)  
-  useEffect(() => {
-    if (currentData) {
-      devLogger.debug('📊 Current data available:', { pm25: currentData.pm25 });
-    }
-  }, [currentData]);
-
-  // Track addDataPoint availability (development only)
-  useEffect(() => {
-    devLogger.debug('🔧 Add data point availability:', { hasAddDataPoint: !!addDataPoint });
-  }, [addDataPoint]);
-
   // Global data collection effect with controlled frequency using setInterval
   useEffect(() => {
     if (!isRecording || !addDataPoint) {
-      rateLimitedDebug('recording-service-not-ready', 5000, '🔄 Recording not active or service not ready');
       return;
     }
 
@@ -188,15 +157,7 @@ export function GlobalDataCollector() {
       const location = latestLocationRef.current;
       const speed = speedRef.current;
 
-      rateLimitedDebug('data-collection-interval', 3000, '🔍 Interval data collection:', {
-        hasData: !!data,
-        hasLocation: !!location,
-        lat: location?.latitude.toFixed(6),
-        lng: location?.longitude.toFixed(6)
-      });
-
       if (!data) {
-        logger.debug('⏭️ No current data available, skipping');
         return;
       }
 
@@ -208,7 +169,6 @@ export function GlobalDataCollector() {
         Math.abs(currentTimestamp - lastDataRef.current.timestamp) < 500; // Less than 500ms apart
 
       if (isDuplicate) {
-        logger.debug('⏭️ Duplicate data point, skipping');
         return;
       }
 
@@ -216,14 +176,8 @@ export function GlobalDataCollector() {
       const averagedData = rollingBufferService.getAverage(windowSeconds);
       
       if (!averagedData) {
-        logger.warn('⚠️ No averaged data available from buffer, skipping data point');
         return;
       }
-
-      devLogger.info('🔍 Adding averaged data point:', { 
-        pm25: averagedData.pm25.toFixed(1),
-        window: `${windowSeconds}s`
-      });
 
       // Handle context and data point recording
       const isMoving = speed > 2; // Simple threshold for movement detection
@@ -232,14 +186,7 @@ export function GlobalDataCollector() {
       const isOnline = navigator.onLine;
       
       // Location enrichment with smart caching and rate limiting
-      // Await enrichment to get the result before recording
       let enrichedLocationName = '';
-      
-      rateLimitedDebug('enrichment-check', 8000, '🔍 Location enrichment check:', {
-        hasEnrichFunction: !!enrichLocation,
-        hasLocation: !!(location?.latitude && location?.longitude),
-        isOnline
-      });
       
       if (isOnline && enrichLocationRef.current && location?.latitude && location?.longitude) {
         try {
@@ -254,14 +201,9 @@ export function GlobalDataCollector() {
           
           if (enrichmentResult?.display_name) {
             enrichedLocationName = enrichmentResult.display_name;
-            devLogger.info('✅ Location enriched:', {
-              name: enrichmentResult.display_name,
-              source: enrichmentResult.source,
-              confidence: enrichmentResult.confidence
-            });
           }
-        } catch (error) {
-          logger.debug('⚠️ Location enrichment skipped:', error instanceof Error ? error.message : 'Unknown error');
+        } catch {
+          // Enrichment timeout or error - continue without enrichment
         }
       }
 
@@ -289,23 +231,10 @@ export function GlobalDataCollector() {
             new Promise<null>((_, reject) => setTimeout(() => reject(new Error('Weather fetch timeout')), 5000))
           ]);
           
-          if (weatherDataId) {
-            devLogger.debug('✅ Weather data fetched:', weatherDataId);
-          }
-        } catch (error) {
-          logger.debug('⚠️ Weather fetch failed:', error instanceof Error ? error.message : 'Unknown error');
+        } catch {
+          // Weather fetch timeout or error - continue without weather
         }
-      } else if (!isOnline) {
-        logger.debug('⚠️ Offline - skipping weather fetch');
       }
-
-      // 🔍 DEBUG: Log context being passed to addDataPoint
-      console.log('📊 [GlobalDataCollector] Adding data point with context:', {
-        location: selectedLocationRef.current || 'EMPTY',
-        activity: selectedActivityRef.current || 'EMPTY',
-        pm25: averagedData.pm25.toFixed(1),
-        timestamp: new Date().toISOString()
-      });
 
       // Generate geohash based on group settings or personal settings
       // When in group mode with geohash privacy enabled, use group's precision
@@ -361,12 +290,10 @@ export function GlobalDataCollector() {
     if (isRecording) {
       import('@/utils/speedCalculator').then(({ clearLocationHistory }) => {
         clearLocationHistory();
-        devLogger.debug('🏃 Cleared location history for new recording session');
       });
       
       // Clear rolling buffer for fresh averaging window
       rollingBufferService.clear();
-      devLogger.debug('🧹 Cleared rolling buffer for new recording session');
     }
   }, [isRecording]);
 

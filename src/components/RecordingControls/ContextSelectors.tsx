@@ -1,5 +1,4 @@
 import { MapPin, Activity } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -9,10 +8,7 @@ import {
 } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
-import { useEffect, useMemo, useRef } from 'react';
-import { DEBUG_GROUP_INHERITANCE, DEBUG_RATE_MS } from '@/config/debug';
-import { rateLimitedDebug } from '@/utils/optimizedLogger';
-// No need to import helpers anymore - using hierarchical structure directly
+import { useEffect, useMemo } from 'react';
 
 interface ContextSelectorsProps {
   selectedLocation: string;
@@ -63,22 +59,11 @@ export function ContextSelectors({
   const selectedLocationName = useMemo(() => {
     if (!selectedLocation) return '';
     
-    console.log('🔍 Looking up location:', {
-      selectedLocation,
-      locationsCount: locations.length,
-      locations: locations.map(loc => ({
-        id: 'id' in loc ? loc.id : 'NO_ID',
-        name: loc.name
-      }))
-    });
-    
     // Search by name first (since we now store names), then by ID (backwards compatibility)
     const location = locations.find(loc => 
       loc.name === selectedLocation ||
       ('id' in loc && loc.id === selectedLocation)
     );
-    
-    console.log('🔍 Found location:', location);
     
     return location?.name || selectedLocation;
   }, [selectedLocation, locations]);
@@ -94,24 +79,6 @@ export function ContextSelectors({
     return activity?.name || selectedActivity;
   }, [selectedActivity, activities]);
 
-  // Debug log to verify group settings inheritance (conditional & rate-limited)
-  const prevContextRef = useRef<string>('');
-  useEffect(() => {
-    if (!DEBUG_GROUP_INHERITANCE) return;
-    
-    const snapshot = JSON.stringify({
-      groupId: activeGroup?.id,
-      groupName: activeGroup?.name,
-      isGroupMode,
-      locationsCount: locations.length,
-      activitiesCount: activities.length,
-    });
-    
-    if (snapshot !== prevContextRef.current) {
-      prevContextRef.current = snapshot;
-      rateLimitedDebug('context_selectors', DEBUG_RATE_MS, '🔄 ContextSelectors updated', JSON.parse(snapshot));
-    }
-  }, [activeGroup, locations, activities, isGroupMode]);
 
   // Guard: Reset location if it doesn't exist in current locations list
   useEffect(() => {
@@ -143,12 +110,11 @@ export function ContextSelectors({
   // Clear activity selection when location changes and current activity is not available for that location
   useEffect(() => {
     if (selectedLocation && selectedActivity) {
-      const availableActivityIds = activities.map(a => a.id);
       const availableActivityNames = activities.map(a => a.name);
+      const availableActivityIds = activities.map(a => a.id);
       
       // Check if the selected activity is valid for the current location (by name first, then ID)
       if (!availableActivityNames.includes(selectedActivity) && !availableActivityIds.includes(selectedActivity)) {
-        console.log(`🔄 Activity "${selectedActivity}" not available for location "${selectedLocation}". Resetting...`);
         onActivityChange('');
       }
     }

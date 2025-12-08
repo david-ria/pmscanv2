@@ -121,11 +121,6 @@ export function FloatingRecordButton({
   };
 
   const handleStopRecording = () => {
-    console.log('🚨🛑 === STOP RECORDING BUTTON CLICKED ===');
-    console.log('🛑 Stop recording requested, current data:', recordingData.length, 'points');
-    console.log('🛑 Recording data sample:', recordingData.slice(0, 2).map(d => ({ pm25: d.pmData.pm25, timestamp: d.timestamp })));
-    console.log('🛑 Recording start time:', recordingStartTime);
-    console.log('🛑 Is currently recording:', isRecording);
     // Stop recording but keep data for saving
     stopRecording();
     openDialog('mission');
@@ -140,10 +135,6 @@ export function FloatingRecordButton({
     }
 
     try {
-      console.log('🚨💾 === CONFIRM STOP RECORDING CALLED ===');
-      console.log('🔄 Saving mission:', finalMissionName, 'with current recording data:', recordingData.length, 'points');
-      console.log('🔄 Recording start time available:', !!recordingStartTime);
-      console.log('🔄 Data sample before save:', recordingData.slice(0, 1).map(d => ({ pm25: d.pmData.pm25, timestamp: d.timestamp })));
       
       // Save the mission - data will be captured from current state before clearing
       const savedMission = await saveMission(
@@ -157,8 +148,6 @@ export function FloatingRecordButton({
       ) as { id?: string } | undefined;
       
       const missionId = savedMission?.id;
-      console.log('✅ Mission saved successfully:', missionId);
-      
       closeDialog('mission');
 
       toast({
@@ -173,10 +162,9 @@ export function FloatingRecordButton({
       navigate('/history', { 
         state: { highlightMissionId: missionId } 
       });
-    } catch (error) {
-      console.error('❌ Error saving mission:', error);
+    } catch (err) {
       const errorMessage =
-        error instanceof Error ? error.message : t('analysis.error');
+        err instanceof Error ? err.message : t('analysis.error');
       toast({
         title: t('analysis.error'),
         description: errorMessage,
@@ -186,7 +174,6 @@ export function FloatingRecordButton({
   };
 
   const handleDiscardMission = () => {
-    console.log('🗑️ Mission discarded by user');
     closeDialog('mission');
 
     setMissionName('');

@@ -15,8 +15,7 @@ import {
 } from 'recharts';
 import { PMScanData } from '@/lib/pmscan/types';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
-import { DEBUG_GROUP_INHERITANCE, DEBUG_RATE_MS } from '@/config/debug';
-import { rateLimitedDebug } from '@/utils/optimizedLogger';
+import { rateLimitedDebug } from '@/utils/logger';
 
 // Helper to get CSS variable value as HSL color string
 const getCSSColor = (varName: string): string => {

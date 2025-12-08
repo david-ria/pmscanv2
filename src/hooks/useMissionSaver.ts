@@ -17,28 +17,13 @@ export function useMissionSaver() {
     deviceName?: string,
     groupId?: string
   ) => {
-    console.log('🚨💾 === MISSION SAVER CALLED ===');
-    console.log('💾 useMissionSaver.saveMission called with:', {
+    logger.debug('💾 useMissionSaver.saveMission called with:', {
       recordingDataLength: recordingData?.length || 0,
-      recordingStartTime,
+      recordingStartTime: recordingStartTime?.toISOString(),
       missionName,
       recordingFrequency,
       shared,
-      deviceName: deviceName,
-      groupId: groupId,
-      hasRecordingData: !!recordingData,
-      sampleDataPoints: recordingData?.slice(0, 2).map(entry => ({
-        pm25: entry.pmData.pm25,
-        timestamp: entry.timestamp,
-        manualContext: entry.manualContext
-      }))
-    });
-    logger.debug('💾 useMissionSaver.saveMission called with:', {
-      recordingDataLength: recordingData?.length || 0,
-      recordingStartTime,
-      missionName,
-      recordingFrequency,
-      shared
+      groupId
     });
 
     if (!recordingStartTime) {
@@ -79,19 +64,6 @@ export function useMissionSaver() {
       });
     }
     
-    // Debug logging for context flow (context is at measurement level)
-    console.log('🔍 Mission saving - context analysis:', {
-      totalEntries: recordingData.length,
-      contextDistribution: recordingData.reduce((acc, entry) => {
-        const key = `${entry.manualContext?.location || 'unknown'}-${entry.manualContext?.activity || 'unknown'}`;
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>),
-      sampleEntries: recordingData.slice(0, 3).map(entry => ({
-        manualContext: entry.manualContext,
-        automaticContext: entry.automaticContext
-      }))
-    });
     
     logger.debug('💾 About to create mission from recording data');
       const mission = dataStorage.createMissionFromRecording(
@@ -147,39 +119,25 @@ export function useMissionSaver() {
 
     // Export to CSV immediately
     logger.debug('💾 Exporting mission to CSV...');
-    console.log('🚨💾 === ABOUT TO EXPORT CSV ===');
-    console.log('💾 Mission data for CSV export:', {
-      missionId: mission.id,
-      measurementsCount: mission.measurementsCount,
-      missionName: mission.name
-    });
     
     try {
       await dataStorage.exportMissionToCSV(mission);
-      console.log('🚨💾 === CSV EXPORT SUCCESS ===');
-      
-      // NOTE: Measurements are NOT stripped here anymore
-      // They will be stripped after successful database sync in dataSync.ts
-      // This ensures full data is available for sync to database
-      
+      logger.debug('💾 CSV export success');
     } catch (csvError) {
-      console.error('🚨💾 === CSV EXPORT FAILED ===', csvError);
+      logger.error('💾 CSV export failed:', csvError);
       throw csvError;
     }
 
-    logger.debug(
-      '📁 Mission saved locally and exported to CSV.'
-    );
-    console.log('🚨💾 === MISSION SAVE COMPLETE ===');
+    logger.debug('📁 Mission saved locally and exported to CSV.');
 
     // Trigger silent auto-sync if online
     if (navigator.onLine) {
-      console.log('🔄 Triggering auto-sync for newly saved mission...');
+      logger.debug('🔄 Triggering auto-sync for newly saved mission...');
       // Don't await - let it happen in background
       dataStorage.syncPendingMissions().then(() => {
-        console.log('✅ Auto-sync completed for new mission');
-      }).catch((error) => {
-        console.error('⚠️ Auto-sync failed (will retry on reconnect):', error);
+        logger.debug('✅ Auto-sync completed for new mission');
+      }).catch((err) => {
+        logger.warn('⚠️ Auto-sync failed (will retry on reconnect):', err);
       });
     }
 
