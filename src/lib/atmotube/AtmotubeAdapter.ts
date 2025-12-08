@@ -217,16 +217,24 @@ export class AtmotubeAdapter implements ISensorAdapter {
               console.log(`📦 Data from char ${char.uuid}, length: ${value.byteLength}`);
               this.logRawData(char.uuid, value);
               
-              // Parse based on characteristic UUID and size
+              // Parse based on characteristic UUID according to Atmotube PRO spec
               const uuid = char.uuid.toLowerCase();
               
-              if (uuid.includes('db450005') && value.byteLength >= 6) {
-                // db450005 = PM data (12 bytes: 6 bytes PM + 6 bytes particle counts)
-                this.parsePMCharacteristic(value);
+              if (uuid.includes('db450002') && value.byteLength >= 2) {
+                // db450002 = VOC data (4 bytes: TVOC ppb + reserved)
+                this.parseVOCCharacteristic(value);
                 this.tryEmitCompleteReading(onDataCallback);
               } else if (uuid.includes('db450003') && value.byteLength >= 8) {
-                // db450003 = Environmental data (temp, humidity, etc.)
-                this.parseEnvironmentalCharacteristic(value, onBatteryCallback);
+                // db450003 = Environmental data (8 bytes: humidity, temp, pressure, fine temp)
+                this.parseEnvironmentalCharacteristic(value);
+                this.tryEmitCompleteReading(onDataCallback);
+              } else if (uuid.includes('db450004') && value.byteLength >= 2) {
+                // db450004 = Status/Battery (2 bytes: info byte + battery %)
+                this.parseStatusCharacteristic(value, onBatteryCallback);
+                this.tryEmitCompleteReading(onDataCallback);
+              } else if (uuid.includes('db450005') && value.byteLength >= 9) {
+                // db450005 = PM data (12 bytes: 3x Uint24 for PM1, PM2.5, PM10 + PM4)
+                this.parsePMCharacteristic(value);
                 this.tryEmitCompleteReading(onDataCallback);
               } else if (value.byteLength >= 12) {
                 // Fallback: 12+ bytes likely PM data
@@ -234,7 +242,7 @@ export class AtmotubeAdapter implements ISensorAdapter {
                 this.tryEmitCompleteReading(onDataCallback);
               } else if (value.byteLength >= 8) {
                 // Fallback: 8 bytes likely environmental
-                this.parseEnvironmentalCharacteristic(value, onBatteryCallback);
+                this.parseEnvironmentalCharacteristic(value);
                 this.tryEmitCompleteReading(onDataCallback);
               }
             }
@@ -367,14 +375,40 @@ export class AtmotubeAdapter implements ISensorAdapter {
   }
 
   /**
-   * Parse Environmental characteristic (8 bytes) from db450003
-   * Atmotube PRO format (different from PRO 2):
-   * - Bytes 0-1: Temperature (Int16, scaled)
-   * - Bytes 2-3: Humidity (Int16, scaled)
-   * - Bytes 4-5: VOC or other
-   * - Bytes 6-7: Status/flags
+   * Parse VOC characteristic (4 bytes) from db450002
+   * Atmotube PRO format:
+   * - Bytes 0-1: TVOC (ppb) - Uint16 little-endian
+   * - Bytes 2-3: Reserved
    */
-  private parseEnvironmentalCharacteristic(rawData: DataView, onBatteryCallback?: (level: number) => void): void {
+  private parseVOCCharacteristic(rawData: DataView): void {
+    try {
+      console.log('📊 Parsing VOC characteristic, length:', rawData.byteLength);
+      this.logRawData('VOC', rawData);
+      
+      if (rawData.byteLength < 2) {
+        return;
+      }
+
+      // TVOC in ppb (Uint16 little-endian)
+      this.partialData.voc = rawData.getUint16(0, true);
+
+      console.log('📊 VOC parsed:', {
+        tvoc_ppb: this.partialData.voc
+      });
+    } catch (error) {
+      console.warn('Atmotube: VOC parsing failed', error);
+    }
+  }
+
+  /**
+   * Parse Environmental characteristic (8 bytes) from db450003
+   * Atmotube PRO format according to official documentation:
+   * - Byte 0: Humidity (%) - Uint8
+   * - Byte 1: Temperature coarse (°C) - Int8
+   * - Bytes 2-5: Pressure (Uint32 LE / 100 → mbar)
+   * - Bytes 6-7: Temperature fine (Int16 LE / 100 → °C)
+   */
+  private parseEnvironmentalCharacteristic(rawData: DataView): void {
     try {
       console.log('📊 Parsing ENVIRONMENTAL characteristic, length:', rawData.byteLength);
       this.logRawData('ENV', rawData);
@@ -383,24 +417,62 @@ export class AtmotubeAdapter implements ISensorAdapter {
         return;
       }
 
-      // Try to parse temperature/humidity - exact format unknown, using heuristics
-      const val0 = rawData.getInt16(0, true);
-      const val1 = rawData.getInt16(2, true);
-      
-      // If values look like temperature (range -40 to 85°C * 100)
-      if (val0 > -4000 && val0 < 8500) {
-        this.partialData.temp = val0 / 100.0;
-      }
-      if (val1 > 0 && val1 < 10000) {
-        this.partialData.humidity = val1 / 100.0;
-      }
+      // Byte 0: Humidity (%) - Uint8
+      this.partialData.humidity = rawData.getUint8(0);
+
+      // Byte 1: Temperature coarse (°C, signed integer) - Int8
+      const tempCoarse = rawData.getInt8(1);
+
+      // Bytes 2-5: Pressure (Uint32 little-endian / 100 → mbar/hPa)
+      const pressureRaw = rawData.getUint32(2, true);
+      this.partialData.pressure = pressureRaw / 100.0;
+
+      // Bytes 6-7: Temperature fine (Int16 little-endian / 100 → °C)
+      const tempFineRaw = rawData.getInt16(6, true);
+      this.partialData.temp = tempFineRaw / 100.0;
 
       console.log('📊 ENV parsed:', {
-        temp: this.partialData.temp,
-        humidity: this.partialData.humidity
+        humidity_percent: this.partialData.humidity,
+        temp_coarse_C: tempCoarse,
+        pressure_hPa: this.partialData.pressure,
+        temp_fine_C: this.partialData.temp
       });
     } catch (error) {
       console.warn('Atmotube: ENV parsing failed', error);
+    }
+  }
+
+  /**
+   * Parse Status characteristic (2 bytes) from db450004
+   * Atmotube PRO format:
+   * - Byte 0: Info byte (flags - charging, error, etc.)
+   * - Byte 1: Battery (%)
+   */
+  private parseStatusCharacteristic(rawData: DataView, onBatteryCallback?: (level: number) => void): void {
+    try {
+      console.log('📊 Parsing STATUS characteristic, length:', rawData.byteLength);
+      this.logRawData('STATUS', rawData);
+      
+      if (rawData.byteLength < 2) {
+        return;
+      }
+
+      // Byte 0: Info byte (flags)
+      const infoFlags = rawData.getUint8(0);
+      // Bit 4: Charging status (1 = charging)
+      this.charging = (infoFlags & 0x10) !== 0 ? 1 : 0;
+
+      // Byte 1: Battery (%)
+      this.battery = rawData.getUint8(1);
+      onBatteryCallback?.(this.battery);
+
+      console.log('📊 STATUS parsed:', {
+        infoFlags: infoFlags.toString(2).padStart(8, '0'),
+        charging: this.charging === 1,
+        battery_percent: this.battery
+      });
+    } catch (error) {
+      console.warn('Atmotube: STATUS parsing failed', error);
     }
   }
 
