@@ -9,7 +9,7 @@ import { encodeGeohash } from '@/utils/geohash';
 import { rollingBufferService } from '@/services/rollingBufferService';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 
-import { useWeatherData } from '@/hooks/useWeatherData';
+import { useWeatherService } from '@/hooks/useWeatherService';
 import { useWeatherLogging } from '@/hooks/useWeatherLogging';
 import * as logger from '@/utils/logger';
 import { devLogger, rateLimitedDebug } from '@/utils/optimizedLogger';
@@ -42,7 +42,7 @@ export function GlobalDataCollector() {
     isConnected,
     willProceed: isRecording && !!currentData && !!addDataPoint
   });
-  const { getWeatherForMeasurement } = useWeatherData();
+  const { getWeatherIdForMeasurement } = useWeatherService();
   const { isEnabled: weatherLoggingEnabled } = useWeatherLogging();
   
   // Auto context sampling
@@ -78,7 +78,7 @@ export function GlobalDataCollector() {
   // Refs pour stabiliser les fonctions dans le useEffect
   const enrichLocationRef = useRef(enrichLocation);
   const updateContextRef = useRef(updateContextIfNeeded);
-  const getWeatherRef = useRef(getWeatherForMeasurement);
+  const getWeatherRef = useRef(getWeatherIdForMeasurement);
 
   // Refs to avoid stale closure in setInterval (fix for GPS not updating)
   const currentDataRef = useRef(currentData);
@@ -95,8 +95,8 @@ export function GlobalDataCollector() {
   }, [updateContextIfNeeded]);
 
   useEffect(() => {
-    getWeatherRef.current = getWeatherForMeasurement;
-  }, [getWeatherForMeasurement]);
+    getWeatherRef.current = getWeatherIdForMeasurement;
+  }, [getWeatherIdForMeasurement]);
 
   // Keep GPS refs in sync with latest values (prevents stale closure)
   useEffect(() => {

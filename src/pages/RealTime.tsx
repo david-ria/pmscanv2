@@ -10,7 +10,7 @@ import { useAutoContext } from '@/hooks/useAutoContext';
 import { useAutoContextSampling } from '@/hooks/useAutoContextSampling';
 import { useStorageSettings } from '@/hooks/useStorage';
 import { STORAGE_KEYS } from '@/services/storageService';
-import { useWeatherData } from '@/hooks/useWeatherData';
+import { useWeatherService } from '@/hooks/useWeatherService';
 import { useGPS } from '@/hooks/useGPS';
 
 import { useToast } from '@/hooks/use-toast';
@@ -85,7 +85,7 @@ export default function RealTime() {
     { enabled: false }
   );
   const autoContextResult = useAutoContext(isRecording && initialized && autoContextSettings.enabled, latestLocation);
-  const { weatherData, fetchWeatherData } = useWeatherData();
+  const { weatherData, fetchWeatherForLocation } = useWeatherService();
   const { getEventsByMission } = useEvents();
   
   const { updateContextIfNeeded, forceContextUpdate, autoContextEnabled } = useAutoContextSampling({
@@ -141,9 +141,9 @@ export default function RealTime() {
   // Fetch weather data when location changes
   useEffect(() => {
     if (latestLocation && initialized) {
-      fetchWeatherData(latestLocation);
+      fetchWeatherForLocation(latestLocation);
     }
-  }, [latestLocation, fetchWeatherData, initialized]);
+  }, [latestLocation, fetchWeatherForLocation, initialized]);
 
   // Note: localStorage persistence is now handled by useScopedRecordingContext hook
 
