@@ -571,6 +571,7 @@ export type Database = {
           accuracy: number | null
           activity_context: string | null
           automatic_context: string | null
+          co2: number | null
           created_at: string
           date_utc: string | null
           enriched_location: string | null
@@ -594,11 +595,13 @@ export type Database = {
           temperature: number | null
           timestamp: string
           timestamp_epoch_ms: number | null
+          voc: number | null
         }
         Insert: {
           accuracy?: number | null
           activity_context?: string | null
           automatic_context?: string | null
+          co2?: number | null
           created_at?: string
           date_utc?: string | null
           enriched_location?: string | null
@@ -622,11 +625,13 @@ export type Database = {
           temperature?: number | null
           timestamp: string
           timestamp_epoch_ms?: number | null
+          voc?: number | null
         }
         Update: {
           accuracy?: number | null
           activity_context?: string | null
           automatic_context?: string | null
+          co2?: number | null
           created_at?: string
           date_utc?: string | null
           enriched_location?: string | null
@@ -650,6 +655,7 @@ export type Database = {
           temperature?: number | null
           timestamp?: string
           timestamp_epoch_ms?: number | null
+          voc?: number | null
         }
         Relationships: [
           {
