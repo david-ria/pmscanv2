@@ -180,8 +180,8 @@ export async function syncSingleMission(missionId: string): Promise<boolean> {
         temperature: m.temperature,
         humidity: m.humidity,
         // Extended sensor fields
-        co2: m.co2 ?? null,
-        voc: m.voc ?? null,
+        pressure: m.pressure ?? null,
+        tvoc: m.tvoc ?? null,
         // Location data
         latitude: m.latitude,
         longitude: m.longitude,
@@ -329,8 +329,8 @@ export async function syncPendingMissions(): Promise<void> {
           temperature: m.temperature,
           humidity: m.humidity,
           // Extended sensor fields
-          co2: m.co2 ?? null,
-          voc: m.voc ?? null,
+          pressure: m.pressure ?? null,
+          tvoc: m.tvoc ?? null,
           // Location data
           latitude: m.latitude,
           longitude: m.longitude,

@@ -3,10 +3,10 @@ import * as logger from '@/utils/logger';
 
 /**
  * AirBeam sensor adapter implementing the unified ISensorAdapter interface
- * Skeleton implementation - methods throw errors until real parsing is implemented
+ * AirBeam supports: PM2.5, PM10, Temperature, Humidity, Pressure
  */
 export class AirBeamAdapter implements ISensorAdapter {
-  public readonly sensorId = 'airbeam';
+  public readonly sensorId = 'airbeam' as const;
   public readonly name = 'AirBeam';
 
   private device: BluetoothDevice | null = null;
@@ -15,8 +15,9 @@ export class AirBeamAdapter implements ISensorAdapter {
   private battery: number = 0;
   private charging: number = 0;
 
-  // AirBeam-specific UUIDs (to be defined when implementing real parsing)
-  private static readonly AIRBEAM_SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
+  // AirBeam GATT UUIDs
+  private static readonly AIRBEAM_SERVICE_UUID = '0000181a-0000-1000-8000-00805f9b34fb';
+  private static readonly AIRBEAM_DATA_CHAR_UUID = 'c8e03290-a359-11e5-9f5e-0002a5d5c51b';
 
   public async requestDevice(): Promise<BluetoothDevice> {
     if (!navigator.bluetooth) {
@@ -26,7 +27,7 @@ export class AirBeamAdapter implements ISensorAdapter {
     try {
       const device = await navigator.bluetooth.requestDevice({
         filters: [
-          { namePrefix: 'AirBeam' },
+          { services: [AirBeamAdapter.AIRBEAM_SERVICE_UUID] },
         ],
         optionalServices: [AirBeamAdapter.AIRBEAM_SERVICE_UUID],
       });
@@ -35,7 +36,7 @@ export class AirBeamAdapter implements ISensorAdapter {
       return device;
     } catch (error) {
       logger.error('AirBeam device request failed:', error);
-      throw new Error('AirBeam: Device request not implemented');
+      throw new Error('AirBeam: Device request failed');
     }
   }
 
@@ -51,7 +52,7 @@ export class AirBeamAdapter implements ISensorAdapter {
       return server;
     } catch (error) {
       logger.error('AirBeam connection failed:', error);
-      throw new Error('AirBeam: Connection not implemented');
+      throw new Error('AirBeam: Connection failed');
     }
   }
 
@@ -76,19 +77,34 @@ export class AirBeamAdapter implements ISensorAdapter {
   public async initializeNotifications(
     server: BluetoothRemoteGATTServer,
     device: BluetoothDevice,
-    onDataCallback: (data: SensorReadingData) => void
+    onDataCallback: (data: SensorReadingData) => void,
+    onBatteryCallback?: (level: number) => void
   ): Promise<void> {
     this.server = server;
     this.device = device;
     
-    // TODO: Implement AirBeam-specific GATT characteristic subscriptions
-    // This is a skeleton - real implementation requires:
-    // 1. Discovering AirBeam-specific services
-    // 2. Subscribing to PM data characteristics
-    // 3. Parsing AirBeam data format into SensorReadingData
-    
-    logger.warn('AirBeam: initializeNotifications not fully implemented');
-    throw new Error('AirBeam: Notification initialization not implemented');
+    try {
+      const service = await server.getPrimaryService(AirBeamAdapter.AIRBEAM_SERVICE_UUID);
+      const dataChar = await service.getCharacteristic(AirBeamAdapter.AIRBEAM_DATA_CHAR_UUID);
+      
+      await dataChar.startNotifications();
+      dataChar.addEventListener('characteristicvaluechanged', (event: Event) => {
+        const target = event.target as BluetoothRemoteGATTCharacteristic;
+        const value = target.value;
+        if (value) {
+          const data = this.parseAirBeamData(value);
+          if (data) {
+            this.lastReading = data;
+            onDataCallback(data);
+          }
+        }
+      });
+      
+      logger.debug('AirBeam: Notifications initialized');
+    } catch (error) {
+      logger.warn('AirBeam: initializeNotifications failed - sensor not fully supported yet', error);
+      throw new Error('AirBeam: Notification initialization not implemented');
+    }
   }
 
   public updateBattery(level: number): void {
@@ -101,12 +117,35 @@ export class AirBeamAdapter implements ISensorAdapter {
 
   /**
    * Parse AirBeam-specific data format into unified SensorReadingData
-   * TODO: Implement actual AirBeam protocol parsing
+   * AirBeam reports: PM2.5, PM10, Temperature, Humidity, Pressure
+   * Note: PM1 is not available on AirBeam, set to 0
    */
-  private parseAirBeamData(_rawData: DataView): SensorReadingData | null {
-    // Skeleton - return null until real parsing is implemented
-    logger.warn('AirBeam: Data parsing not implemented');
-    return null;
+  private parseAirBeamData(rawData: DataView): SensorReadingData | null {
+    try {
+      // AirBeam data format (placeholder - needs real protocol documentation)
+      // This is a skeleton implementation
+      const pm25 = rawData.getFloat32(0, true);
+      const pm10 = rawData.getFloat32(4, true);
+      const temp = rawData.getFloat32(8, true);
+      const humidity = rawData.getFloat32(12, true);
+      const pressure = rawData.getFloat32(16, true);
+
+      return {
+        pm1: 0, // AirBeam doesn't report PM1
+        pm25,
+        pm10,
+        temp,
+        humidity,
+        pressure,
+        tvoc: undefined, // AirBeam doesn't support TVOC
+        battery: this.battery,
+        charging: this.charging === 1,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      logger.warn('AirBeam: Data parsing failed', error);
+      return null;
+    }
   }
 
   /**

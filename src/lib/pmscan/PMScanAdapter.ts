@@ -13,9 +13,11 @@ import * as logger from '@/utils/logger';
 /**
  * PMScan adapter implementing the unified ISensorAdapter interface
  * Encapsulates all PMScan-specific Bluetooth logic
+ * PMScan supports: PM1, PM2.5, PM10, Temperature, Humidity
+ * Note: PMScan does NOT support pressure or TVOC
  */
 export class PMScanAdapter implements ISensorAdapter {
-  public readonly sensorId = 'pmscan';
+  public readonly sensorId = 'pmscan' as const;
   public readonly name = 'PMScan';
 
   private device: BluetoothDevice | null = null;
@@ -105,7 +107,8 @@ export class PMScanAdapter implements ISensorAdapter {
   public async initializeNotifications(
     server: BluetoothRemoteGATTServer,
     device: BluetoothDevice,
-    onDataCallback: (data: SensorReadingData) => void
+    onDataCallback: (data: SensorReadingData) => void,
+    onBatteryCallback?: (level: number) => void
   ): Promise<void> {
     this.server = server;
     this.device = device;

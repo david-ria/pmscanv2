@@ -35,8 +35,8 @@ export const PMDataSchema = z.object({
   pm25: PositiveNumberSchema,
   pm10: PositiveNumberSchema,
   // Extended sensor fields
-  co2: z.number().optional(),
-  voc: z.number().optional(),
+  pressure: z.number().optional(),
+  tvoc: z.number().optional(),
 });
 
 export const MeasurementSchema = z.object({
@@ -49,8 +49,8 @@ export const MeasurementSchema = z.object({
   temperature: z.number().optional(),
   humidity: z.number().min(0).max(100).optional(),
   // Extended sensor fields
-  co2: z.number().optional(),
-  voc: z.number().optional(),
+  pressure: z.number().optional(),
+  tvoc: z.number().optional(),
   // Location fields
   latitude: z.number().optional(),
   longitude: z.number().optional(),
