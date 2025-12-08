@@ -528,6 +528,14 @@
       "satelliteView": "Satellite",
       "buildings": "Bâtiments 3D"
     },
+    "environmental": {
+      "title": "Conditions Environnementales",
+      "temperature": "Temp. Moyenne",
+      "humidity": "Humidité Moy.",
+      "pressure": "Pression Moy.",
+      "tvoc": "TVOC Moyen",
+      "maxTvoc": "TVOC Max"
+    },
     "analyzing": "Analyse...",
     "analysisInProgress": "Analyse en cours...",
     "askQuestion": "Poser une question",

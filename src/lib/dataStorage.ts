@@ -41,6 +41,8 @@ export function formatDatabaseMission(dbMission: {
     pm10: number;
     temperature?: number;
     humidity?: number;
+    pressure?: number;
+    tvoc?: number;
     latitude?: number;
     longitude?: number;
     accuracy?: number;
@@ -78,6 +80,8 @@ export function formatDatabaseMission(dbMission: {
         pm10: m.pm10,
         temperature: m.temperature,
         humidity: m.humidity,
+        pressure: m.pressure,
+        tvoc: m.tvoc,
         latitude: m.latitude,
         longitude: m.longitude,
         accuracy: m.accuracy,
@@ -200,7 +204,7 @@ class DataStorageService {
     try {
       const { data, error } = await supabase
         .from('measurements')
-        .select('id, mission_id, timestamp, pm1, pm25, pm10, location_context, activity_context, automatic_context, latitude, longitude, accuracy, temperature, humidity, enriched_location, geohash')
+        .select('id, mission_id, timestamp, pm1, pm25, pm10, location_context, activity_context, automatic_context, latitude, longitude, accuracy, temperature, humidity, pressure, tvoc, enriched_location, geohash')
         .in('mission_id', missionIds)
         .order('timestamp', { ascending: true });
 
@@ -223,6 +227,8 @@ class DataStorageService {
           pm10: row.pm10 ?? 0,
           temperature: row.temperature ?? undefined,
           humidity: row.humidity ?? undefined,
+          pressure: row.pressure ?? undefined,
+          tvoc: row.tvoc ?? undefined,
           latitude: row.latitude ?? undefined,
           longitude: row.longitude ?? undefined,
           accuracy: row.accuracy ?? undefined,
@@ -287,6 +293,8 @@ class DataStorageService {
         pm10: m.pm10,
         temperature: m.temperature,
         humidity: m.humidity,
+        pressure: m.pressure,
+        tvoc: m.tvoc,
         latitude: m.latitude,
         longitude: m.longitude,
         accuracy: m.accuracy,

@@ -55,6 +55,15 @@ export default function Analysis() {
     timeAboveWHO: stats.timeAboveWHO_PM25,
   };
 
+  // Environmental statistics for display
+  const environmentalStats = {
+    avgTemperature: stats.avgTemperature,
+    avgHumidity: stats.avgHumidity,
+    avgPressure: stats.avgPressure,
+    avgTvoc: stats.avgTvoc,
+    maxTvoc: stats.maxTvoc,
+  };
+
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
       {/* Page Title */}
