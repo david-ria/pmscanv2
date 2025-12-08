@@ -17,12 +17,14 @@ const WEB_SCAN_OPTIONS = {
     // PMScan
     SENSOR_GATT_CONFIG.pmscan.serviceUuid,
     'f3641900-00b0-4240-ba50-05ca45bf8abc',
-    // AirBeam (Environmental Sensing + propriétaire)
+    // AirBeam - candidates (UUIDs not confirmed)
+    '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART
+    '0000ffe0-0000-1000-8000-00805f9b34fb', // HM-10 Module
     SENSOR_GATT_CONFIG.airbeam.serviceUuid,
-    // Atmotube PRO
+    // Atmotube PRO 2 - OFFICIAL UUID
+    'bda3c091-e5e0-4dac-8170-7fcef187a1d0', // Official Atmotube PRO 2 service
+    '4b13a770-4ccb-11e5-a151-0002a5d5c51b', // Legacy Atmotube service
     SENSOR_GATT_CONFIG.atmotube.serviceUuid,
-    'db450001-8e9a-4818-add7-6ed94a328ab4', // Atmotube PRO service alternatif
-    '4b13a770-4ccb-11e5-a151-0002a5d5c51b', // Atmotube PRO main service
   ]
 } as RequestDeviceOptions;
 

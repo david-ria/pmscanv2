@@ -13,20 +13,20 @@ export const SENSOR_GATT_CONFIG = {
   },
   airbeam: {
     id: 'airbeam' as const,
-    name: 'AirBeam Pro',
-    serviceUuid: '0000181a-0000-1000-8000-00805f9b34fb', 
+    name: 'AirBeam',
+    // AirBeam UUIDs not confirmed - using candidates for discovery
+    serviceUuid: '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART (candidate)
     filters: [
-      { namePrefix: 'AIRBEAM' },
-      { services: ['0000181a-0000-1000-8000-00805f9b34fb'] }
+      { namePrefix: 'AirBeam' },
     ]
   },
   atmotube: {
     id: 'atmotube' as const,
     name: 'Atmotube Pro',
-    serviceUuid: '4b13a770-4ccb-11e5-a151-0002a5d5c51b', 
+    // OFFICIAL UUID from atmotube-pro2-android GitHub
+    serviceUuid: 'bda3c091-e5e0-4dac-8170-7fcef187a1d0',
     filters: [
-      { namePrefix: 'ATMOTUBE' },
-      { services: ['4b13a770-4ccb-11e5-a151-0002a5d5c51b'] }
+      { namePrefix: 'Atmotube' },
     ]
   }
 } as const;
