@@ -5,7 +5,7 @@ import { useDialog } from '@/hooks/useDialog';
 
 export function MobileNavigationFooter() {
   const { t } = useTranslation();
-  const appVersion = "V3.2";
+  const appVersion = "V 2.0";
   const { open, openDialog, closeDialog } = useDialog();
 
   return (
