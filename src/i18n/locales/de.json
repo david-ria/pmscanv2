@@ -422,6 +422,7 @@
     "undergroundTransport": "Unterirdischer Transport"
   },
   "history": {
+    "title": "Missionsverlauf",
     "loadingMissions": "Missionen werden geladen...",
     "noMissionsForPeriod": "Keine Missionen für diesen Zeitraum",
     "selectAnotherDate": "Wählen Sie ein anderes Datum oder einen anderen Zeitraum, um Ihre Daten zu sehen",
@@ -456,6 +457,7 @@
     }
   },
   "analysis": {
+    "pageTitle": "Datenanalyse",
     "title": "Personalisierte KI-Analyse",
     "location": "Standort",
     "activity": "Aktivität",

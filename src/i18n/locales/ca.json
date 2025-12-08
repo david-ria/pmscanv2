@@ -422,6 +422,7 @@
     "undergroundTransport": "Transport subterrani"
   },
   "history": {
+    "title": "Historial de Missions",
     "loadingMissions": "Carregant missions...",
     "noMissionsForPeriod": "No hi ha missions per aquest període",
     "selectAnotherDate": "Seleccioneu una altra data o període per veure les vostres dades",
@@ -456,6 +457,7 @@
     }
   },
   "analysis": {
+    "pageTitle": "Anàlisi de Dades",
     "title": "Anàlisi IA personalitzada",
     "location": "Ubicació",
     "activity": "Activitat",

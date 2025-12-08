@@ -97,7 +97,7 @@ export default function History() {
   return (
     <main role="main" className="min-h-screen bg-background px-4 py-6">
       <h1 className="text-3xl font-bold text-foreground mb-6">
-        {t('history.title', 'Mission History')}
+        {t('history.title')}
       </h1>
 
       {/* Date Filter */}

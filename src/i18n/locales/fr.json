@@ -426,6 +426,7 @@
     "undergroundTransport": "Transport souterrain"
   },
   "history": {
+    "title": "Historique des Missions",
     "loadingMissions": "Chargement des missions...",
     "noMissionsForPeriod": "Aucune mission pour cette période",
     "selectAnotherDate": "Sélectionnez une autre date ou période pour voir vos données",
@@ -460,6 +461,7 @@
     }
   },
   "analysis": {
+    "pageTitle": "Analyse des Données",
     "title": "Analyse IA personnalisée",
     "location": "Lieu",
     "activity": "Activité",
