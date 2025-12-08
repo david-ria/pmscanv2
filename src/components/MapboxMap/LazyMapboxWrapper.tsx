@@ -1,10 +1,11 @@
 /**
  * Lazy Mapbox wrapper component
- * Loads Mapbox GL and its dependencies only when map is actually needed
+ * Loads Mapbox GL only when map is actually needed
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { loadMapAndData } from '@/lib/dynamicImports';
+import { loadMapboxGL } from '@/lib/dynamicImports';
+import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface LazyMapboxWrapperProps {
@@ -23,7 +24,6 @@ export function LazyMapboxWrapper({
   onError,
 }: LazyMapboxWrapperProps) {
   const [mapbox, setMapbox] = useState<any>(null);
-  const [supabase, setSupabase] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const loadingRef = useRef(false);
@@ -36,18 +36,17 @@ export function LazyMapboxWrapper({
     onLoadStart?.();
 
     try {
-      console.debug('[PERF] Starting Map & Data lazy load...');
-      const { mapbox: mapboxInstance, supabase: supabaseInstance } = await loadMapAndData();
+      console.debug('[PERF] Starting Mapbox lazy load...');
+      const mapboxInstance = await loadMapboxGL();
       
       setMapbox(mapboxInstance);
-      setSupabase(supabaseInstance);
       setError(null);
       
-      console.debug('[PERF] Map & Data lazy load complete');
+      console.debug('[PERF] Mapbox lazy load complete');
       onLoadComplete?.();
     } catch (err) {
       const error = err as Error;
-      console.error('[PERF] Map & Data lazy load failed:', error);
+      console.error('[PERF] Mapbox lazy load failed:', error);
       setError(error);
       onError?.(error);
     } finally {
@@ -77,7 +76,7 @@ export function LazyMapboxWrapper({
     );
   }
 
-  if (loading || !mapbox || !supabase) {
+  if (loading || !mapbox) {
     return fallback || (
       <div className="space-y-3">
         <Skeleton className="h-64 w-full" />
@@ -97,10 +96,9 @@ export function LazyMapboxWrapper({
  */
 export function useMapboxLazyLoad() {
   const [state, setState] = useState({
-    mapbox: null,
-    supabase: null,
+    mapbox: null as any,
     loading: false,
-    error: null,
+    error: null as Error | null,
   });
 
   const loadMap = useCallback(async () => {
@@ -109,10 +107,9 @@ export function useMapboxLazyLoad() {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      const { mapbox, supabase } = await loadMapAndData();
+      const mapbox = await loadMapboxGL();
       setState({
         mapbox,
-        supabase,
         loading: false,
         error: null,
       });
@@ -127,6 +124,7 @@ export function useMapboxLazyLoad() {
 
   return {
     ...state,
+    supabase,
     loadMap,
   };
 }

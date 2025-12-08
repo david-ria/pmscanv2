@@ -1,4 +1,5 @@
-import { loadMapboxGL, loadSupabaseClient } from '@/lib/dynamicImports';
+import { loadMapboxGL } from '@/lib/dynamicImports';
+import { supabase } from '@/integrations/supabase/client';
 import { LocationData } from '@/types/PMScan';
 import { addTrackDataSources, addTrackLayers } from './mapLayers';
 import { addTrackPointEventListeners } from './mapEventHandlers';
@@ -18,13 +19,8 @@ export const initializeMap = async (
     logger.debug('🗺️ Container element:', container);
     logger.debug('🗺️ Current location:', currentLocation);
 
-    logger.debug('🗺️ Step 1: Loading Mapbox GL and Supabase dynamically...');
-    const [mapboxgl, supabaseModule] = await Promise.all([
-      loadMapboxGL(),
-      loadSupabaseClient()
-    ]);
-
-    const { supabase } = supabaseModule;
+    logger.debug('🗺️ Step 1: Loading Mapbox GL dynamically...');
+    const mapboxgl = await loadMapboxGL();
 
     logger.debug('🗺️ Step 2: Requesting Mapbox token from edge function...');
     const { data, error: tokenError } =
