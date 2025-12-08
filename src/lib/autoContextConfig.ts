@@ -183,11 +183,11 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
   {
     id: 'outdoor-walking',
     name: 'Walking',
-    description: 'Slow outdoor movement (2-7 km/h) with walking signature',
+    description: 'Slow outdoor movement (1-7 km/h) with walking signature',
     priority: 80,
     conditions: {
       location: { gpsQuality: 'good' },
-      movement: { speed: { min: 2, max: 7 } },
+      movement: { speed: { min: 1, max: 7 } },
     },
     result: 'Outdoor walking',
   },
@@ -204,7 +204,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
         hourRange: { start: 9, end: 18 },
         isWeekend: false
       },
-      movement: { speed: { max: 2 } }, // Must be stationary
+      movement: { speed: { max: 4 } }, // Increased tolerance for GPS drift
     },
     result: 'Indoor at work',
   },
@@ -216,7 +216,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     conditions: {
       wifi: { known: true },
       time: { hourRange: { start: 18, end: 23 } },
-      movement: { speed: { max: 2 } }, // Must be stationary
+      movement: { speed: { max: 4 } }, // Increased tolerance for GPS drift
     },
     result: 'Indoor at home',
   },
@@ -228,7 +228,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     conditions: {
       wifi: { known: true },
       time: { hourRange: { start: 6, end: 9 } },
-      movement: { speed: { max: 2 } }, // Must be stationary
+      movement: { speed: { max: 4 } }, // Increased tolerance for GPS drift
     },
     result: 'Indoor at home',
   },
@@ -240,7 +240,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     conditions: {
       wifi: { known: true },
       time: { isWeekend: true },
-      movement: { speed: { max: 2 } }, // Must be stationary
+      movement: { speed: { max: 4 } }, // Increased tolerance for GPS drift
     },
     result: 'Indoor at home',
   },
@@ -253,7 +253,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 55,
     conditions: {
       location: { gpsQuality: 'good' },
-      movement: { speed: { max: 2 } },
+      movement: { speed: { max: 4 } }, // Increased tolerance for GPS drift
       wifi: { known: false }, // No WiFi connection
     },
     result: 'Outdoor',
@@ -267,7 +267,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 45,
     conditions: {
       time: { hourRange: { start: 9, end: 18 }, isWeekend: false },
-      movement: { speed: { max: 2 } },
+      movement: { speed: { max: 4 } }, // Increased tolerance for GPS drift
     },
     result: 'At work',
   },
@@ -278,7 +278,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 40,
     conditions: {
       time: { hourRange: { start: 18, end: 23 } },
-      movement: { speed: { max: 2 } },
+      movement: { speed: { max: 4 } }, // Increased tolerance for GPS drift
     },
     result: 'At home',
   },
@@ -289,7 +289,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 40,
     conditions: {
       time: { hourRange: { start: 6, end: 9 } },
-      movement: { speed: { max: 2 } },
+      movement: { speed: { max: 4 } }, // Increased tolerance for GPS drift
     },
     result: 'At home',
   },
@@ -302,7 +302,7 @@ export const DEFAULT_AUTO_CONTEXT_RULES: AutoContextRule[] = [
     priority: 30,
     conditions: {
       wifi: { known: true },
-      movement: { speed: { max: 2 } },
+      movement: { speed: { max: 4 } }, // Increased tolerance for GPS drift
     },
     result: 'Indoor',
   },
