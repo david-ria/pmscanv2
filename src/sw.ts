@@ -193,7 +193,7 @@ async function storeData(data: any): Promise<void> {
       request.onerror = () => reject(request.error);
       
       transaction.oncomplete = () => {
-        console.log('[SW] ✅ Data stored successfully:', entry.type || 'unknown');
+        // [SILENCED] console.log('[SW] ✅ Data stored successfully:', entry.type || 'unknown');
         resolve(undefined);
       };
       
@@ -286,7 +286,7 @@ async function sendHeartbeat(): Promise<void> {
       await cleanupOldData();
     }
     
-    console.log('[SW] Heartbeat sent to', clients.length, 'client(s)');
+    // [SILENCED] console.log('[SW] Heartbeat sent to', clients.length, 'client(s)');
   } catch (error) {
     console.error('[SW] Heartbeat error:', error);
   }
@@ -316,7 +316,7 @@ function stopHeartbeat(): void {
 
 // Message handler
 self.addEventListener('message', (event) => {
-  console.log('[SW] Received message:', event.data.type);
+  // [SILENCED] console.log('[SW] Received message:', event.data.type);
   
   switch (event.data.type) {
     case 'START_BACKGROUND_RECORDING':

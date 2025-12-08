@@ -51,19 +51,19 @@ export function useAutoContextSampling({
     // Use ONLY rule-based context from sensors/heuristics - no location mixing
     const formattedContext = ruleBasedContext || '';
     
-    console.log('🤖 === PURE AUTOCONTEXT (sensors + heuristics) ===', {
-      ruleBasedContext,
-      finalContext: formattedContext,
-      source: 'sensors and movement heuristics only'
-    });
+    // [SILENCED] console.log('🤖 === PURE AUTOCONTEXT (sensors + heuristics) ===', {
+    //   ruleBasedContext,
+    //   finalContext: formattedContext,
+    //   source: 'sensors and movement heuristics only'
+    // });
     
     if (formattedContext) {
-      console.log('🏷️ Autocontext determined:', formattedContext);
+      // [SILENCED] console.log('🏷️ Autocontext determined:', formattedContext);
       updateLatestContext(formattedContext);
       setCurrentAutoContext(formattedContext);
       return formattedContext;
     } else {
-      console.log('🔄 No autocontext determined');
+      // [SILENCED] console.log('🔄 No autocontext determined');
       return currentAutoContext;
     }
   }, [autoContextEnabled, determineContext, updateLatestContext, currentAutoContext]);
