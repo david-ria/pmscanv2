@@ -311,7 +311,8 @@
       "noThresholdsDescription": "Create custom thresholds for this group to better monitor air quality",
       "createFirst": "Create First Threshold",
       "active": "Active",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "minMustBeLessThanMax": "Min must be less than Max"
     },
     "privacy": {
       "title": "Data Privacy Settings",

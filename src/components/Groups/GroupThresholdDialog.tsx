@@ -39,6 +39,31 @@ const createThresholdSchema = (t: (key: string) => string) => z.object({
   pm10_max: z.number().min(0).max(500).optional(),
   color: z.string(),
   enabled: z.boolean(),
+}).superRefine((data, ctx) => {
+  // Validate PM1: min must be strictly less than max
+  if (data.pm1_min !== undefined && data.pm1_max !== undefined && data.pm1_min >= data.pm1_max) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: t('groups.thresholds.minMustBeLessThanMax'),
+      path: ['pm1_min'],
+    });
+  }
+  // Validate PM2.5: min must be strictly less than max
+  if (data.pm25_min !== undefined && data.pm25_max !== undefined && data.pm25_min >= data.pm25_max) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: t('groups.thresholds.minMustBeLessThanMax'),
+      path: ['pm25_min'],
+    });
+  }
+  // Validate PM10: min must be strictly less than max
+  if (data.pm10_min !== undefined && data.pm10_max !== undefined && data.pm10_min >= data.pm10_max) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: t('groups.thresholds.minMustBeLessThanMax'),
+      path: ['pm10_min'],
+    });
+  }
 });
 
 type ThresholdFormData = z.infer<ReturnType<typeof createThresholdSchema>>;
