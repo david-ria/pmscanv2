@@ -1,6 +1,7 @@
 import { Play, Square, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { frequencyOptionKeys } from '@/lib/recordingConstants';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +41,7 @@ export function FloatingRecordButton({
 }: FloatingRecordButtonProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const unifiedData = useUnifiedData();
   const { selectedLocation, setSelectedLocation, selectedActivity, setSelectedActivity } = useScopedRecordingContext();
   const { isGroupMode, activeGroup } = useGroupSettings();
@@ -152,9 +154,10 @@ export function FloatingRecordButton({
         shareData,
         recordingData, // explicitRecordingData
         isGroupMode && shareData ? activeGroup?.id : undefined // groupId
-      );
+      ) as { id?: string } | undefined;
       
-      console.log('✅ Mission saved successfully');
+      const missionId = savedMission?.id;
+      console.log('✅ Mission saved successfully:', missionId);
       
       closeDialog('mission');
 
@@ -165,6 +168,11 @@ export function FloatingRecordButton({
 
       setMissionName('');
       setShareData(isGroupMode);
+
+      // Navigate to history page with the new mission ID
+      navigate('/history', { 
+        state: { highlightMissionId: missionId } 
+      });
     } catch (error) {
       console.error('❌ Error saving mission:', error);
       const errorMessage =
