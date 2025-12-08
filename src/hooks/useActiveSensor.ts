@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { SensorReadingData, ISensorAdapter } from '@/types/sensor';
 import { rollingBufferService } from '@/services/rollingBufferService';
 import { recordingService } from '@/services/recordingService';
-import { UNIVERSAL_SCAN_OPTIONS, SensorId } from '@/lib/sensorConstants';
+import { UNIVERSAL_SCAN_OPTIONS, FILTERED_SCAN_OPTIONS, SensorId } from '@/lib/sensorConstants';
 import { 
   getSensorAdapter, 
   identifySensorByService, 
@@ -221,6 +221,7 @@ export function useActiveSensor() {
   /**
    * Request device using universal scan - shows all compatible sensors
    * User selects from browser dialog, then sensor type is auto-detected
+   * Stratégie: D'abord essayer avec filtres stricts, sinon scan large
    */
   const requestDevice = useCallback(async () => {
     // Si nous avons déjà un adaptateur actif connecté, ne pas relancer le scan
@@ -233,14 +234,28 @@ export function useActiveSensor() {
       setError(null);
       setIsConnecting(true);
 
-      logger.debug('🔍 Starting universal Bluetooth scan for all supported sensors...');
+      let device: BluetoothDevice;
 
-      // Utilise les options de scan universel pour afficher tous les capteurs compatibles
-      const device = await navigator.bluetooth.requestDevice(UNIVERSAL_SCAN_OPTIONS);
+      // Étape 1: Essayer d'abord avec les filtres stricts par nom
+      logger.debug('🔍 Step 1: Trying filtered scan for known sensor names...');
+      try {
+        device = await navigator.bluetooth.requestDevice(FILTERED_SCAN_OPTIONS);
+        logger.debug(`📱 Device found with filtered scan: ${device.name || 'Unknown'}`);
+      } catch (filteredErr) {
+        // Si l'utilisateur annule ou aucun appareil trouvé, essayer le scan large
+        if (filteredErr instanceof Error && filteredErr.name === 'NotFoundError') {
+          logger.debug('⚠️ Filtered scan cancelled or no devices found, trying wide scan...');
+          
+          // Étape 2: Scan large - affiche TOUS les appareils Bluetooth
+          logger.debug('🔍 Step 2: Wide scan - showing ALL Bluetooth devices...');
+          device = await navigator.bluetooth.requestDevice(UNIVERSAL_SCAN_OPTIONS);
+          logger.debug(`📱 Device found with wide scan: ${device.name || 'Unknown'}`);
+        } else {
+          throw filteredErr;
+        }
+      }
 
-      logger.debug(`📱 User selected device: ${device.name || 'Unknown'}`);
-
-      // Après sélection par l'utilisateur, identifier le décodeur et charger l'adaptateur
+      // Après sélection par l'utilisateur, identifier le capteur et charger l'adaptateur
       await identifyAndConnect(device);
 
     } catch (err) {
