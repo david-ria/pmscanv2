@@ -130,15 +130,15 @@ export function useActiveSensor() {
     try {
       logger.debug(`🔍 Identifying sensor type for device: ${device.name || 'Unknown'}`);
       
-      // 1. Détermination du SensorId basé sur le nom (le plus rapide)
+      // 1. Identification par Préfixe de Nom (Méthode la plus fiable et rapide)
       let detectedSensorId: SensorId | undefined;
-      const deviceName = device.name?.toLowerCase() || '';
+      const deviceName = device.name?.toUpperCase() || '';
 
-      if (deviceName.startsWith('pmscan')) {
+      if (deviceName.startsWith('PMSCAN')) {
         detectedSensorId = 'pmscan';
-      } else if (deviceName.includes('airbeam')) {
+      } else if (deviceName.includes('AIRBEAM')) {
         detectedSensorId = 'airbeam';
-      } else if (deviceName.includes('atmotube')) {
+      } else if (deviceName.includes('ATMOTUBE')) {
         detectedSensorId = 'atmotube';
       }
       
