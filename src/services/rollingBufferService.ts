@@ -85,6 +85,10 @@ class RollingBufferService {
   private calculateAverage(readings: BufferedReading[]): PMScanData {
     const count = readings.length;
     
+    // Count readings that have optional environmental data
+    const pressureReadings = readings.filter(r => r.data.pressure !== undefined);
+    const tvocReadings = readings.filter(r => r.data.tvoc !== undefined);
+    
     const sums = readings.reduce(
       (acc, { data }) => ({
         pm1: acc.pm1 + data.pm1,
@@ -92,8 +96,10 @@ class RollingBufferService {
         pm10: acc.pm10 + data.pm10,
         temp: acc.temp + data.temp,
         humidity: acc.humidity + data.humidity,
+        pressure: acc.pressure + (data.pressure ?? 0),
+        tvoc: acc.tvoc + (data.tvoc ?? 0),
       }),
-      { pm1: 0, pm25: 0, pm10: 0, temp: 0, humidity: 0 }
+      { pm1: 0, pm25: 0, pm10: 0, temp: 0, humidity: 0, pressure: 0, tvoc: 0 }
     );
 
     // Get latest reading for battery/charging status (not averaged)
@@ -105,6 +111,8 @@ class RollingBufferService {
       pm10: sums.pm10 / count,
       temp: sums.temp / count,
       humidity: sums.humidity / count,
+      pressure: pressureReadings.length > 0 ? sums.pressure / pressureReadings.length : undefined,
+      tvoc: tvocReadings.length > 0 ? sums.tvoc / tvocReadings.length : undefined,
       battery: latestReading.battery,
       charging: latestReading.charging,
       timestamp: new Date(), // Use current time (end of averaging window)
