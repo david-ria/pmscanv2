@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { dataStorage } from '@/lib/dataStorage';
+import * as logger from '@/utils/logger';
 
 /**
  * Component that detects online/offline status and displays appropriate toasts
@@ -11,10 +12,10 @@ export const OfflineDetector = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    console.log('[OfflineDetector] Component mounted, navigator.onLine:', navigator.onLine);
+    logger.debug('[OfflineDetector] Component mounted, navigator.onLine:', navigator.onLine);
     
     const handleOffline = () => {
-      console.log('[OfflineDetector] Offline event triggered');
+      logger.debug('[OfflineDetector] Offline event triggered');
       toast({
         title: t('offline.title'),
         description: t('offline.description'),
@@ -24,7 +25,7 @@ export const OfflineDetector = () => {
     };
 
     const handleOnline = () => {
-      console.log('[OfflineDetector] Online event triggered');
+      logger.debug('[OfflineDetector] Online event triggered');
       toast({
         title: t('online.title'),
         description: t('online.description'),
@@ -36,9 +37,9 @@ export const OfflineDetector = () => {
         if (navigator.onLine) {
           try {
             await dataStorage.syncPendingMissions();
-            console.log('✅ Auto-sync completed successfully');
+            logger.debug('Auto-sync completed successfully');
           } catch (error) {
-            console.error('❌ Auto-sync failed:', error);
+            logger.error('Auto-sync failed:', error);
           }
         }
       }, 2000);
@@ -46,10 +47,10 @@ export const OfflineDetector = () => {
 
     // Check initial state
     if (!navigator.onLine) {
-      console.log('[OfflineDetector] Initial state: offline, showing toast');
+      logger.debug('[OfflineDetector] Initial state: offline, showing toast');
       handleOffline();
     } else {
-      console.log('[OfflineDetector] Initial state: online');
+      logger.debug('[OfflineDetector] Initial state: online');
     }
 
     // Listen for status changes
@@ -57,7 +58,7 @@ export const OfflineDetector = () => {
     window.addEventListener('online', handleOnline);
 
     return () => {
-      console.log('[OfflineDetector] Component unmounting');
+      logger.debug('[OfflineDetector] Component unmounting');
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online', handleOnline);
     };

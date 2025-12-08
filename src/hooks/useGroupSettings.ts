@@ -167,7 +167,7 @@ export const useGroupSettings = () => {
     if (cachedSettings) {
       try {
         const parsed = JSON.parse(cachedSettings);
-        console.log('💾 [useGroupSettings] Hydrated from cache:', parsed.id);
+        logger.debug('💾 [useGroupSettings] Hydrated from cache:', parsed.id);
         return parsed;
       } catch {
         return null;
@@ -220,8 +220,8 @@ export const useGroupSettings = () => {
         const cachedId = localStorage.getItem('activeGroupId');
         if (cachedSettings && cachedId === groupId) {
           try {
-            groupConfig = JSON.parse(cachedSettings);
-            console.log('🌐 [useGroupSettings] Using cached config (offline):', groupConfig?.name);
+          groupConfig = JSON.parse(cachedSettings);
+            logger.debug('🌐 [useGroupSettings] Using cached config (offline):', groupConfig?.name);
           } catch {
             // Cache corrupted, ignore
           }
@@ -240,7 +240,7 @@ export const useGroupSettings = () => {
         if (DEBUG_GROUP_SHAPE && process.env.NODE_ENV === 'development') {
           const dbGroup = groups.find(g => g.id === groupId);
           if (dbGroup) {
-            console.log('🔍 Group locations processed:', {
+            logger.debug('🔍 Group locations processed:', {
               groupId: dbGroup.id,
               rawType: Array.isArray(dbGroup.custom_locations) ? 'Array' : 'Record',
               normalizedLocations: groupConfig.locations.length,
@@ -269,7 +269,7 @@ export const useGroupSettings = () => {
         if (cachedSettings && cachedId === groupId && navigator.onLine) {
           try {
             const cachedConfig = JSON.parse(cachedSettings);
-            console.log('💾 [useGroupSettings] Using cache fallback for URL group:', cachedConfig.name);
+            logger.debug('💾 [useGroupSettings] Using cache fallback for URL group:', cachedConfig.name);
             setActiveGroup(cachedConfig);
             setIsGroupMode(true);
             return; // Skip error toast
@@ -280,13 +280,13 @@ export const useGroupSettings = () => {
 
         // 🆕 Suppress toast if activeGroup already matches this groupId (prevents flicker)
         if (activeGroup?.id === groupId) {
-          console.log('🔇 [useGroupSettings] Suppressing duplicate "Group Not Found" toast for active group');
+          logger.debug('🔇 [useGroupSettings] Suppressing duplicate "Group Not Found" toast for active group');
           return;
         }
 
         // Only warn about missing group after groups are loaded and if not already warned
         if (!loading && !warnedGroupIds.has(groupId)) {
-          console.warn('Group not found:', groupId);
+          logger.warn('Group not found:', groupId);
           warnedGroupIds.add(groupId);
           toast({
             title: 'Group Not Found',
@@ -318,7 +318,7 @@ export const useGroupSettings = () => {
           if (cachedSettings) {
             try {
               groupConfig = JSON.parse(cachedSettings);
-              console.log('🌐 [useGroupSettings] Using cached config (no URL):', groupConfig?.name);
+              logger.debug('🌐 [useGroupSettings] Using cached config (no URL):', groupConfig?.name);
             } catch {
               // Cache corrupted, ignore
             }
@@ -372,7 +372,7 @@ export const useGroupSettings = () => {
 
     // 🆕 Fallback: If still not found, try direct fetch from database
     if (!groupConfig && user) {
-      console.log('🔍 [useGroupSettings] Group not in cache, fetching directly from DB...');
+      logger.debug('🔍 [useGroupSettings] Group not in cache, fetching directly from DB...');
       try {
         const { data: groupData, error: groupError } = await supabase
           .from('groups')
@@ -398,9 +398,9 @@ export const useGroupSettings = () => {
         } as Group;
 
         groupConfig = createGroupConfigFromDB(fullGroup);
-        console.log('✅ [useGroupSettings] Group fetched and normalized:', groupConfig.name);
+        logger.debug('✅ [useGroupSettings] Group fetched and normalized:', groupConfig.name);
       } catch (error) {
-        console.error('❌ [useGroupSettings] Failed to fetch group from DB:', error);
+        logger.error('❌ [useGroupSettings] Failed to fetch group from DB:', error);
         toast({
           title: 'Group Not Found',
           description: `Unable to load group "${groupId}"`,
