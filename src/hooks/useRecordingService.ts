@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { recordingService, RecordingState, RecordingActions } from '@/services/recordingService';
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 import { MissionContext } from '@/types/recording';
 import * as logger from '@/utils/logger';

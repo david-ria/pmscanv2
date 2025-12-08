@@ -1,4 +1,4 @@
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData } from '@/types/sensor';
 import * as logger from '@/utils/logger';
 import { createEpochMs, type EpochMs } from '@/utils/timestamp';
 

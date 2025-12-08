@@ -13,7 +13,7 @@ import {
   ReferenceLine,
   ReferenceArea,
 } from 'recharts';
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData } from '@/types/sensor';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
 import { rateLimitedDebug } from '@/utils/logger';
 

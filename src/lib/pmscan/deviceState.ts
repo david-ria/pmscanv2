@@ -1,4 +1,4 @@
-import { PMScanInternalState } from './types';
+import { PMScanInternalState } from '@/types/sensor';
 
 /**
  * Manages the internal state of a PMScan device

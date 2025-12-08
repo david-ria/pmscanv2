@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { PMScanData, PMScanDevice } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData, PMScanDevice } from '@/types/sensor';
 import { parsePMScanDataPayload } from '@/lib/pmscan/dataParser';
 import { exponentialBackoff } from '@/lib/pmscan/utils';
 import { globalConnectionManager } from '@/lib/pmscan/globalConnectionManager';

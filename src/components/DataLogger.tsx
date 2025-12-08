@@ -15,7 +15,7 @@ import {
   Download,
   Brain,
 } from 'lucide-react';
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 import { useTranslation } from 'react-i18next';
 import { useAutoContext } from '@/hooks/useAutoContext';

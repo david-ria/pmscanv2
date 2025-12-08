@@ -1,4 +1,4 @@
-import { PMScanData, PMScanInternalState } from './types';
+import { SensorReadingData as PMScanData, PMScanInternalState } from '@/types/sensor';
 import { DT_2000 } from './constants';
 import { createTimestamp } from '@/utils/timeFormat';
 

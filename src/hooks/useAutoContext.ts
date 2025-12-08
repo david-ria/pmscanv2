@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 // Lazy load TensorFlow to reduce initial bundle size
 import * as logger from '@/utils/logger';
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
 import { useWeatherService } from '@/hooks/useWeatherService';

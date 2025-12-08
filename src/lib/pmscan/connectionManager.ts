@@ -1,4 +1,4 @@
-import { PMScanDevice } from './types';
+import { PMScanDevice } from '@/types/sensor';
 import { PMScanDeviceState } from './deviceState';
 import { PMScanDeviceInitializer } from './deviceInitializer';
 import { PMScanEventManager } from './eventManager';

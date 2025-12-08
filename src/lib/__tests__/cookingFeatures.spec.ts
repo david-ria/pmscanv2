@@ -7,7 +7,7 @@ import {
   CookingFeatures,
   CookingParams
 } from '../cookingFeatures';
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData } from '@/types/sensor';
 import { CookingEvent } from '@/utils/eventUtils';
 
 // Mock cooking episode data

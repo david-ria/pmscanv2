@@ -3,7 +3,7 @@ import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
 import { useRecordingService } from '@/hooks/useRecordingService';
 import { useMissionSaver } from '@/hooks/useMissionSaver';
 import { useCrashRecovery } from '@/hooks/useCrashRecovery';
-import { PMScanData, PMScanDevice } from '@/lib/pmscan/types';
+import { SensorReadingData as PMScanData, PMScanDevice } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 import { useGPS } from '@/hooks/useGPS';
 import { RecordingEntry, MissionContext } from '@/types/recording';

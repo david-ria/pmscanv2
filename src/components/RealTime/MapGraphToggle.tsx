@@ -3,13 +3,12 @@ import { WifiOff, Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MapboxMap } from '@/components/MapboxMap';
 import { PMLineGraph } from '@/components/PMLineGraph';
-import { PMScanData } from '@/lib/pmscan/types';
+import { SensorReadingData, PMScanDevice } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
-import { PMScanDevice } from '@/lib/pmscan/types';
 import { useTranslation } from 'react-i18next';
 
 interface RecordingEntry {
-  pmData: PMScanData;
+  pmData: SensorReadingData;
   location?: LocationData;
 }
 
@@ -25,7 +24,7 @@ interface MapGraphToggleProps {
   onToggleView: (showGraph: boolean) => void;
   isOnline: boolean;
   latestLocation: LocationData | null;
-  currentData: PMScanData | null;
+  currentData: SensorReadingData | null;
   recordingData: RecordingEntry[];
   events?: EventData[];
   isRecording: boolean;
