@@ -405,55 +405,46 @@ export class AtmotubeAdapter implements ISensorAdapter {
   }
 
   /**
-   * Decode PM value according to Atmotube specification
-   * 
-   * For Atmotube PRO (db45xxxx UUIDs):
-   * Bit 15 = 1: High precision format (value / 100 for µg/m³)
-   * Bit 15 = 0: Low precision format (value / 10 for µg/m³)
+   * Read 3 bytes as Uint24 in little-endian format
+   * Matches Atmotube PRO format: bytes are reversed then interpreted
    */
-  private decodePmValue(raw: number): number {
-    const PM_ENCODING_FLAG = 0x8000;      // Bit 15
-    const PM_ENCODING_VALUE_MASK = 0x7FFF; // Bits 0-14
-    
-    if ((raw & PM_ENCODING_FLAG) !== 0) {
-      // Bit 15 set → high precision, divide by 100
-      return (raw & PM_ENCODING_VALUE_MASK) / 100.0;
-    } else {
-      // Bit 15 clear → low precision, divide by 10
-      return raw / 10.0;
-    }
+  private readUint24LE(view: DataView, offset: number): number {
+    const b0 = view.getUint8(offset);
+    const b1 = view.getUint8(offset + 1);
+    const b2 = view.getUint8(offset + 2);
+    // Little-endian: b0 is LSB, b2 is MSB
+    return b0 | (b1 << 8) | (b2 << 16);
   }
 
   /**
-   * Parse PM characteristic (6+ bytes)
-   * Based on official Android SDK:
-   * - Bytes 0-1: PM1 (Uint16, bit 15 = encoding flag)
-   * - Bytes 2-3: PM2.5 (Uint16, bit 15 = encoding flag)
-   * - Bytes 4-5: PM10 (Uint16, bit 15 = encoding flag)
+   * Parse PM characteristic (9-12 bytes) for Atmotube PRO
+   * Format: 3x Uint24 (3 bytes each) for PM1, PM2.5, PM10
+   * All values are divided by 100 to get µg/m³
    */
   private parsePMCharacteristic(rawData: DataView): void {
     try {
       console.log('📊 Parsing PM characteristic, length:', rawData.byteLength);
       this.logRawData('PM', rawData);
       
-      if (rawData.byteLength < 6) {
-        console.warn('Atmotube: PM packet too short:', rawData.byteLength);
+      if (rawData.byteLength < 9) {
+        console.warn('Atmotube: PM packet too short for Uint24 format:', rawData.byteLength);
         return;
       }
 
-      const pm1Raw = rawData.getUint16(0, true);
-      const pm25Raw = rawData.getUint16(2, true);
-      const pm10Raw = rawData.getUint16(4, true);
+      // Read 3 bytes per PM value (Uint24), little-endian
+      const pm1Raw = this.readUint24LE(rawData, 0);
+      const pm25Raw = this.readUint24LE(rawData, 3);
+      const pm10Raw = this.readUint24LE(rawData, 6);
 
-      // Use correct decoding with bit 15 flag
-      this.partialData.pm1 = this.decodePmValue(pm1Raw);
-      this.partialData.pm25 = this.decodePmValue(pm25Raw);
-      this.partialData.pm10 = this.decodePmValue(pm10Raw);
+      // All values divided by 100 for µg/m³
+      this.partialData.pm1 = pm1Raw / 100.0;
+      this.partialData.pm25 = pm25Raw / 100.0;
+      this.partialData.pm10 = pm10Raw / 100.0;
 
-      console.log('📊 PM parsed (corrected):', {
-        pm1Raw: pm1Raw.toString(16),
-        pm25Raw: pm25Raw.toString(16),
-        pm10Raw: pm10Raw.toString(16),
+      console.log('📊 PM parsed (Uint24 /100):', {
+        pm1Raw,
+        pm25Raw,
+        pm10Raw,
         pm1: this.partialData.pm1,
         pm25: this.partialData.pm25,
         pm10: this.partialData.pm10
