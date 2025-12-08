@@ -318,6 +318,21 @@
       "linkGenerationFailed": "No s'ha pogut generar l'enllaç d'invitació"
     }
   },
+  "connection": {
+    "title": "Connectar Sensor",
+    "sensor": "Sensor de Qualitat de l'Aire",
+    "connect": "Connectar Dispositiu",
+    "disconnect": "Desconnectar",
+    "connecting": "Connectant...",
+    "notConnected": "No connectat",
+    "scanning": "Cercant sensors...",
+    "noDevice": "Cap dispositiu connectat",
+    "decoderActive": "Descodificador actiu",
+    "unknown": "Desconegut",
+    "battery": "Bateria",
+    "version": "Versió",
+    "allSensorsSupported": "PMScan, AirBeam i Atmotube són compatibles"
+  },
   "common": {
     "error": "Error",
     "success": "Èxit",

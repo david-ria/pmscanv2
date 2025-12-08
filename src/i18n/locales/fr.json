@@ -318,6 +318,21 @@
       "linkGenerationFailed": "Échec de la génération du lien d'invitation"
     }
   },
+  "connection": {
+    "title": "Connecter un Capteur",
+    "sensor": "Capteur de Qualité de l'Air",
+    "connect": "Connecter l'Appareil",
+    "disconnect": "Déconnecter",
+    "connecting": "Connexion...",
+    "notConnected": "Non connecté",
+    "scanning": "Recherche de capteurs...",
+    "noDevice": "Aucun appareil connecté",
+    "decoderActive": "Décodeur actif",
+    "unknown": "Inconnu",
+    "battery": "Batterie",
+    "version": "Version",
+    "allSensorsSupported": "PMScan, AirBeam et Atmotube sont pris en charge"
+  },
   "common": {
     "error": "Erreur",
     "success": "Succès",
