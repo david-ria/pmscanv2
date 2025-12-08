@@ -44,11 +44,6 @@ export default function History() {
     loadMissions();
   }, [loadMissions]);
 
-  // Load missions on component mount
-  useEffect(() => {
-    loadMissions();
-  }, [loadMissions]);
-
   // Filter missions based on selected date and period
   const filteredMissions = useMemo(() => {
     let startDate: Date;
@@ -147,11 +142,11 @@ export default function History() {
             <MissionCard
               key={mission.id}
               mission={mission}
-                  onExport={handleExport}
-                  onDelete={handleDelete}
-                  onShare={handleShare}
-                  onSync={handleSingleSync}
-                  syncing={syncing}
+              onExport={handleExport}
+              onDelete={handleDelete}
+              onShare={handleShare}
+              onSync={handleSingleSync}
+              syncing={syncing}
             />
           ))
         )}
