@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import { usePMScanBluetooth } from '@/hooks/usePMScanBluetooth';
+import { useActiveSensor } from '@/hooks/useActiveSensor';
 import { useRecordingService } from '@/hooks/useRecordingService';
 import { useMissionSaver } from '@/hooks/useMissionSaver';
 import { useCrashRecovery } from '@/hooks/useCrashRecovery';
@@ -59,8 +59,8 @@ interface UnifiedDataProviderProps {
 export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
   const [dataFlowEnabled, setDataFlowEnabled] = useState(true);
   
-  // Core data sources
-  const bluetooth = usePMScanBluetooth();
+  // Core data sources - using useActiveSensor for multi-sensor support
+  const sensor = useActiveSensor();
   const recording = useRecordingService(); // Single source of truth
   
   // Battery optimization: Only use highAccuracy GPS when recording is active
@@ -95,14 +95,23 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     recording.updateMissionContext(location, activity);
   }, [recording.updateMissionContext]);
 
-  // Unified state object
+  // Unified state object - mapping useActiveSensor to UnifiedDataState
   const unifiedState: UnifiedDataState = {
-    // PMScan data
-    currentData: bluetooth.currentData,
-    isConnected: bluetooth.isConnected,
-    isConnecting: bluetooth.isConnecting,
-    device: bluetooth.device,
-    error: bluetooth.error,
+    // Sensor data (multi-sensor support via useActiveSensor)
+    currentData: sensor.currentData,
+    isConnected: sensor.isConnected,
+    isConnecting: sensor.isConnecting,
+    device: sensor.deviceInfo ? {
+      name: sensor.deviceInfo.name,
+      battery: sensor.deviceInfo.battery,
+      charging: sensor.deviceInfo.charging,
+      // Legacy PMScan fields - provide defaults for compatibility
+      version: 0,
+      mode: 0,
+      interval: 0,
+      connected: sensor.isConnected
+    } as PMScanDevice : null,
+    error: sensor.error,
     
     // Recording state
     isRecording: recording.isRecording,
@@ -118,8 +127,8 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
     locationEnabled,
     
     // Actions - using stabilized versions
-    requestDevice: bluetooth.requestDevice,
-    disconnect: bluetooth.disconnect,
+    requestDevice: sensor.requestDevice,
+    disconnect: sensor.disconnect,
     requestLocationPermission,
     startRecording: stableStartRecording,
     stopRecording: stableStopRecording,
@@ -135,7 +144,7 @@ export function UnifiedDataProvider({ children }: UnifiedDataProviderProps) {
         recordingFrequency,
         shared,
         undefined, // missionId
-        bluetooth.device?.name, // deviceName
+        sensor.deviceInfo?.name, // deviceName - now from useActiveSensor
         groupId // groupId
       );
       
