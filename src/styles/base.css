@@ -41,6 +41,23 @@
     --air-very-poor: 262 52% 47%;
     --air-very-poor-foreground: 0 0% 98%;
     
+    /* Chart Colors - PM Lines */
+    --chart-pm1: 142 71% 45%;
+    --chart-pm25: 0 84% 60%;
+    --chart-pm10: 217 91% 60%;
+    --chart-event: 25 95% 53%;
+    
+    /* Context Colors - Activities */
+    --context-indoor: 271 81% 56%;
+    --context-outdoor: 142 71% 45%;
+    --context-transport: 0 84% 60%;
+    --context-walking: 217 91% 60%;
+    --context-cycling: 38 92% 50%;
+    --context-sport: 158 64% 32%;
+    --context-rest: 215 16% 47%;
+    --context-work: 189 94% 37%;
+    --context-default: 215 14% 45%;
+    
     /* System overlays */
     --overlay: 0 0% 0%;
     --overlay-foreground: 0 0% 98%;
