@@ -571,7 +571,6 @@ export type Database = {
           accuracy: number | null
           activity_context: string | null
           automatic_context: string | null
-          co2: number | null
           created_at: string
           date_utc: string | null
           enriched_location: string | null
@@ -592,16 +591,16 @@ export type Database = {
           pm1: number
           pm10: number
           pm25: number
+          pressure: number | null
           temperature: number | null
           timestamp: string
           timestamp_epoch_ms: number | null
-          voc: number | null
+          tvoc: number | null
         }
         Insert: {
           accuracy?: number | null
           activity_context?: string | null
           automatic_context?: string | null
-          co2?: number | null
           created_at?: string
           date_utc?: string | null
           enriched_location?: string | null
@@ -622,16 +621,16 @@ export type Database = {
           pm1: number
           pm10: number
           pm25: number
+          pressure?: number | null
           temperature?: number | null
           timestamp: string
           timestamp_epoch_ms?: number | null
-          voc?: number | null
+          tvoc?: number | null
         }
         Update: {
           accuracy?: number | null
           activity_context?: string | null
           automatic_context?: string | null
-          co2?: number | null
           created_at?: string
           date_utc?: string | null
           enriched_location?: string | null
@@ -652,10 +651,11 @@ export type Database = {
           pm1?: number
           pm10?: number
           pm25?: number
+          pressure?: number | null
           temperature?: number | null
           timestamp?: string
           timestamp_epoch_ms?: number | null
-          voc?: number | null
+          tvoc?: number | null
         }
         Relationships: [
           {
