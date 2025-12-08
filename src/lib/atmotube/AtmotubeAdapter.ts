@@ -508,12 +508,12 @@ export class AtmotubeAdapter implements ISensorAdapter {
       const pm25Raw = this.readUint24LE(rawData, 3);
       const pm10Raw = this.readUint24LE(rawData, 6);
 
-      // All values divided by 1000 for µg/m³ (Atmotube uses 3-decimal precision)
-      this.partialData.pm1 = pm1Raw / 1000.0;
-      this.partialData.pm25 = pm25Raw / 1000.0;
-      this.partialData.pm10 = pm10Raw / 1000.0;
+      // All values divided by 100 for µg/m³
+      this.partialData.pm1 = pm1Raw / 100.0;
+      this.partialData.pm25 = pm25Raw / 100.0;
+      this.partialData.pm10 = pm10Raw / 100.0;
 
-      console.log('📊 PM parsed (Uint24 /1000):', {
+      console.log('📊 PM parsed (Uint24 /100):', {
         pm1Raw,
         pm25Raw,
         pm10Raw,
