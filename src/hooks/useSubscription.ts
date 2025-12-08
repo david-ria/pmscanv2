@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineAwareSupabase } from '@/lib/supabaseSafeWrapper';
 import { useGroups } from '@/hooks/useGroups';
 import { useUserRole } from '@/hooks/useUserRole';
 
@@ -81,43 +82,66 @@ export function useSubscription(): SubscriptionData {
       return;
     }
 
+    // Check offline status - fallback to free tier silently
+    if (offlineAwareSupabase.isOffline()) {
+      console.log('Offline: using default subscription tier');
+      setUserTier('free');
+      setLoading(false);
+      return;
+    }
+
     try {
       setError(null);
       
       // Get user's direct subscription tier
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('subscription_tier')
-        .eq('id', user.id)
-        .single();
+      const profileResult = await offlineAwareSupabase.query(
+        supabase
+          .from('profiles')
+          .select('subscription_tier')
+          .eq('id', user.id)
+          .single()
+      );
 
-      if (profileError) {
-        // If profile doesn't exist, continue with free tier
-        if (profileError.code === 'PGRST116') {
+      if (profileResult.isOffline) {
+        console.log('Offline: using default subscription tier');
+        setUserTier('free');
+        setLoading(false);
+        return;
+      }
+
+      if (profileResult.error) {
+        // If profile doesn't exist (PGRST116), continue with free tier
+        const errorStr = typeof profileResult.error === 'string' 
+          ? profileResult.error 
+          : JSON.stringify(profileResult.error);
+        
+        if (errorStr.includes('PGRST116')) {
           setUserTier('free');
           setLoading(false);
           return;
         }
         
-        console.error('Error fetching user subscription:', profileError);
+        console.error('Error fetching user subscription:', profileResult.error);
         setError('Failed to fetch subscription data');
         setUserTier('free');
         setLoading(false);
         return;
       }
 
-      let highestTier = (profile?.subscription_tier as SubscriptionTier) || 'free';
+      let highestTier = (profileResult.data?.subscription_tier as SubscriptionTier) || 'free';
 
       // Check group subscriptions only if groups loaded successfully and exist
       if (groupIds.length > 0 && !groupsError) {
-        const { data: groups, error: groupSubscriptionError } = await supabase
-          .from('groups')
-          .select('subscription_tier')
-          .in('id', groupIds);
+        const groupsResult = await offlineAwareSupabase.query(
+          supabase
+            .from('groups')
+            .select('subscription_tier')
+            .in('id', groupIds)
+        );
 
-        if (!groupSubscriptionError && groups) {
+        if (!groupsResult.isOffline && !groupsResult.error && groupsResult.data) {
           const tierPriority = { enterprise: 3, premium: 2, free: 1 };
-          const groupTiers = groups.map(g => g.subscription_tier as SubscriptionTier);
+          const groupTiers = groupsResult.data.map(g => g.subscription_tier as SubscriptionTier);
           
           for (const tier of groupTiers) {
             if (tierPriority[tier] > tierPriority[highestTier]) {

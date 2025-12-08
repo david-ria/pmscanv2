@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineAwareSupabase } from '@/lib/supabaseSafeWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,14 +26,23 @@ export function useGroupAlarms(groupId?: string) {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('group_settings')
-        .select('custom_alarms')
-        .eq('group_id', groupId)
-        .single();
+      const result = await offlineAwareSupabase.query(
+        supabase
+          .from('group_settings')
+          .select('custom_alarms')
+          .eq('group_id', groupId)
+          .single()
+      );
 
-      if (error) throw error;
-      setAlarms((data?.custom_alarms as unknown as GroupAlarm[]) || []);
+      // Skip error toast if offline
+      if (result.isOffline) {
+        console.log('Offline: cannot fetch group alarms');
+        setLoading(false);
+        return;
+      }
+
+      if (result.error) throw result.error;
+      setAlarms((result.data?.custom_alarms as unknown as GroupAlarm[]) || []);
     } catch (error) {
       console.error('Error fetching group alarms:', error);
       toast({
@@ -48,13 +58,34 @@ export function useGroupAlarms(groupId?: string) {
   const saveAlarms = useCallback(async (newAlarms: GroupAlarm[]) => {
     if (!groupId || !user) return;
 
-    try {
-      const { error } = await supabase
-        .from('group_settings')
-        .update({ custom_alarms: newAlarms as any })
-        .eq('group_id', groupId);
+    // Check offline before attempting save
+    if (offlineAwareSupabase.isOffline()) {
+      toast({
+        title: "Offline",
+        description: "Cannot save alarms while offline",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      if (error) throw error;
+    try {
+      const result = await offlineAwareSupabase.query(
+        supabase
+          .from('group_settings')
+          .update({ custom_alarms: newAlarms as any })
+          .eq('group_id', groupId)
+      );
+
+      if (result.isOffline) {
+        toast({
+          title: "Offline",
+          description: "Cannot save alarms while offline",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (result.error) throw result.error;
 
       setAlarms(newAlarms);
       toast({

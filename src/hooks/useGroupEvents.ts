@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineAwareSupabase } from '@/lib/supabaseSafeWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,14 +27,23 @@ export function useGroupEvents(groupId?: string) {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('group_events')
-        .select('*')
-        .eq('group_id', groupId)
-        .order('name');
+      const result = await offlineAwareSupabase.query(
+        supabase
+          .from('group_events')
+          .select('*')
+          .eq('group_id', groupId)
+          .order('name')
+      );
 
-      if (error) throw error;
-      setEvents(data || []);
+      // Skip error toast if offline
+      if (result.isOffline) {
+        console.log('Offline: cannot fetch group events');
+        setLoading(false);
+        return;
+      }
+
+      if (result.error) throw result.error;
+      setEvents(result.data || []);
     } catch (error) {
       console.error('Error fetching group events:', error);
       toast({
@@ -49,24 +59,45 @@ export function useGroupEvents(groupId?: string) {
   const createEvent = useCallback(async (eventData: Omit<GroupEvent, 'id' | 'created_at' | 'updated_at' | 'group_id'>) => {
     if (!groupId || !user) return;
 
+    // Check offline before attempting create
+    if (offlineAwareSupabase.isOffline()) {
+      toast({
+        title: "Offline",
+        description: "Cannot create event while offline",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const { data, error } = await supabase
-        .from('group_events')
-        .insert({
-          group_id: groupId,
-          ...eventData,
-        })
-        .select()
-        .single();
+      const result = await offlineAwareSupabase.query(
+        supabase
+          .from('group_events')
+          .insert({
+            group_id: groupId,
+            ...eventData,
+          })
+          .select()
+          .single()
+      );
 
-      if (error) throw error;
+      if (result.isOffline) {
+        toast({
+          title: "Offline",
+          description: "Cannot create event while offline",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      setEvents(prev => [...prev, data]);
+      if (result.error) throw result.error;
+
+      setEvents(prev => [...prev, result.data]);
       toast({
         title: "Success",
         description: "Event type created successfully",
       });
-      return data;
+      return result.data;
     } catch (error) {
       console.error('Error creating event:', error);
       toast({
@@ -80,22 +111,43 @@ export function useGroupEvents(groupId?: string) {
   const updateEvent = useCallback(async (eventId: string, updates: Partial<Omit<GroupEvent, 'id' | 'group_id' | 'created_at' | 'updated_at'>>) => {
     if (!user) return;
 
+    // Check offline before attempting update
+    if (offlineAwareSupabase.isOffline()) {
+      toast({
+        title: "Offline",
+        description: "Cannot update event while offline",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const { data, error } = await supabase
-        .from('group_events')
-        .update(updates)
-        .eq('id', eventId)
-        .select()
-        .single();
+      const result = await offlineAwareSupabase.query(
+        supabase
+          .from('group_events')
+          .update(updates)
+          .eq('id', eventId)
+          .select()
+          .single()
+      );
 
-      if (error) throw error;
+      if (result.isOffline) {
+        toast({
+          title: "Offline",
+          description: "Cannot update event while offline",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      setEvents(prev => prev.map(event => event.id === eventId ? data : event));
+      if (result.error) throw result.error;
+
+      setEvents(prev => prev.map(event => event.id === eventId ? result.data : event));
       toast({
         title: "Success",
         description: "Event type updated successfully",
       });
-      return data;
+      return result.data;
     } catch (error) {
       console.error('Error updating event:', error);
       toast({
@@ -109,13 +161,34 @@ export function useGroupEvents(groupId?: string) {
   const deleteEvent = useCallback(async (eventId: string) => {
     if (!user) return;
 
-    try {
-      const { error } = await supabase
-        .from('group_events')
-        .delete()
-        .eq('id', eventId);
+    // Check offline before attempting delete
+    if (offlineAwareSupabase.isOffline()) {
+      toast({
+        title: "Offline",
+        description: "Cannot delete event while offline",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      if (error) throw error;
+    try {
+      const result = await offlineAwareSupabase.query(
+        supabase
+          .from('group_events')
+          .delete()
+          .eq('id', eventId)
+      );
+
+      if (result.isOffline) {
+        toast({
+          title: "Offline",
+          description: "Cannot delete event while offline",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (result.error) throw result.error;
 
       setEvents(prev => prev.filter(event => event.id !== eventId));
       toast({
