@@ -217,13 +217,26 @@ export class AtmotubeAdapter implements ISensorAdapter {
               console.log(`📦 Data from char ${char.uuid}, length: ${value.byteLength}`);
               this.logRawData(char.uuid, value);
               
-              // Essayer de parser selon la taille
-              if (value.byteLength >= 14) {
-                this.parseDataCharacteristic(value, onBatteryCallback);
-              } else if (value.byteLength >= 6) {
+              // Parse based on characteristic UUID and size
+              const uuid = char.uuid.toLowerCase();
+              
+              if (uuid.includes('db450005') && value.byteLength >= 6) {
+                // db450005 = PM data (12 bytes: 6 bytes PM + 6 bytes particle counts)
                 this.parsePMCharacteristic(value);
+                this.tryEmitCompleteReading(onDataCallback);
+              } else if (uuid.includes('db450003') && value.byteLength >= 8) {
+                // db450003 = Environmental data (temp, humidity, etc.)
+                this.parseEnvironmentalCharacteristic(value, onBatteryCallback);
+                this.tryEmitCompleteReading(onDataCallback);
+              } else if (value.byteLength >= 12) {
+                // Fallback: 12+ bytes likely PM data
+                this.parsePMCharacteristic(value);
+                this.tryEmitCompleteReading(onDataCallback);
+              } else if (value.byteLength >= 8) {
+                // Fallback: 8 bytes likely environmental
+                this.parseEnvironmentalCharacteristic(value, onBatteryCallback);
+                this.tryEmitCompleteReading(onDataCallback);
               }
-              this.tryEmitCompleteReading(onDataCallback);
             }
           });
           charIndex++;
@@ -354,21 +367,59 @@ export class AtmotubeAdapter implements ISensorAdapter {
   }
 
   /**
-   * Decode PM value according to Atmotube official specification
-   * Based on Android SDK: https://github.com/AToM/atmotube-pro2-android
+   * Parse Environmental characteristic (8 bytes) from db450003
+   * Atmotube PRO format (different from PRO 2):
+   * - Bytes 0-1: Temperature (Int16, scaled)
+   * - Bytes 2-3: Humidity (Int16, scaled)
+   * - Bytes 4-5: VOC or other
+   * - Bytes 6-7: Status/flags
+   */
+  private parseEnvironmentalCharacteristic(rawData: DataView, onBatteryCallback?: (level: number) => void): void {
+    try {
+      console.log('📊 Parsing ENVIRONMENTAL characteristic, length:', rawData.byteLength);
+      this.logRawData('ENV', rawData);
+      
+      if (rawData.byteLength < 8) {
+        return;
+      }
+
+      // Try to parse temperature/humidity - exact format unknown, using heuristics
+      const val0 = rawData.getInt16(0, true);
+      const val1 = rawData.getInt16(2, true);
+      
+      // If values look like temperature (range -40 to 85°C * 100)
+      if (val0 > -4000 && val0 < 8500) {
+        this.partialData.temp = val0 / 100.0;
+      }
+      if (val1 > 0 && val1 < 10000) {
+        this.partialData.humidity = val1 / 100.0;
+      }
+
+      console.log('📊 ENV parsed:', {
+        temp: this.partialData.temp,
+        humidity: this.partialData.humidity
+      });
+    } catch (error) {
+      console.warn('Atmotube: ENV parsing failed', error);
+    }
+  }
+
+  /**
+   * Decode PM value according to Atmotube specification
    * 
-   * Bit 15 = 1: Integer format (value in bits 0-14 is already in µg/m³)
-   * Bit 15 = 0: Decimal format (raw value needs to be divided by 10)
+   * For Atmotube PRO (db45xxxx UUIDs):
+   * Bit 15 = 1: High precision format (value / 100 for µg/m³)
+   * Bit 15 = 0: Low precision format (value / 10 for µg/m³)
    */
   private decodePmValue(raw: number): number {
     const PM_ENCODING_FLAG = 0x8000;      // Bit 15
     const PM_ENCODING_VALUE_MASK = 0x7FFF; // Bits 0-14
     
     if ((raw & PM_ENCODING_FLAG) !== 0) {
-      // Bit 15 set → integer format, extract bits 0-14
-      return raw & PM_ENCODING_VALUE_MASK;
+      // Bit 15 set → high precision, divide by 100
+      return (raw & PM_ENCODING_VALUE_MASK) / 100.0;
     } else {
-      // Bit 15 clear → 0.1-precision format, divide by 10
+      // Bit 15 clear → low precision, divide by 10
       return raw / 10.0;
     }
   }
