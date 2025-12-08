@@ -19,6 +19,7 @@ const CustomThresholds = lazy(() => import('./pages/CustomThresholds'));
 const CustomAlerts = lazy(() => import('./pages/CustomAlerts'));
 
 const Auth = lazy(() => import('./pages/Auth'));
+const UpdatePassword = lazy(() => import('./pages/UpdatePassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Lazy load heavy components (except Header, which is critical and imported synchronously)
@@ -148,6 +149,15 @@ const AppRoutes = () => {
         element={
           <Suspense fallback={<MinimalSkeleton />}>
             {!user ? <Auth /> : <Navigate to="/" replace />}
+          </Suspense>
+        }
+      />
+      {/* Password update route (accessible via email link) */}
+      <Route
+        path="/update-password"
+        element={
+          <Suspense fallback={<MinimalSkeleton />}>
+            <UpdatePassword />
           </Suspense>
         }
       />
