@@ -130,40 +130,78 @@ export function useActiveSensor() {
     try {
       logger.debug(`🔍 Identifying sensor type for device: ${device.name || 'Unknown'}`);
       
-      // First try to identify by device name (quick)
-      let detectedSensorId = identifySensorByName(device.name);
+      // 1. Détermination du SensorId basé sur le nom (le plus rapide)
+      let detectedSensorId: SensorId | undefined;
+      const deviceName = device.name?.toLowerCase() || '';
+
+      if (deviceName.startsWith('pmscan')) {
+        detectedSensorId = 'pmscan';
+      } else if (deviceName.includes('airbeam')) {
+        detectedSensorId = 'airbeam';
+      } else if (deviceName.includes('atmotube')) {
+        detectedSensorId = 'atmotube';
+      }
       
-      // Connect to GATT server
+      // 2. Connect to GATT server first (required for service-based detection)
       logger.debug('🔗 Connecting to GATT server...');
-      const server = await device.gatt?.connect();
-      
-      if (!server) {
-        throw new Error('Failed to connect to GATT server');
+      if (!device.gatt) {
+        throw new Error('GATT server not available on device');
       }
-      
+      const server = await device.gatt.connect();
       serverRef.current = server;
+      deviceRef.current = device;
       
-      // If name detection failed, try service-based detection
+      // 3. Fallback: Si le nom est inconnu, vérifier les services GATT
       if (!detectedSensorId) {
-        logger.debug('🔍 Name detection failed, trying service-based detection...');
-        detectedSensorId = await identifySensorByService(server);
+        logger.debug('🔍 Name detection failed, checking GATT services...');
+        try {
+          const services = await server.getPrimaryServices();
+          for (const service of services) {
+            const uuid = service.uuid.toLowerCase();
+            logger.debug(`📡 Found service: ${uuid}`);
+            
+            if (uuid.includes('f3641900')) {
+              detectedSensorId = 'pmscan';
+              break;
+            }
+            if (uuid.includes('0000181a')) {
+              detectedSensorId = 'airbeam';
+              break;
+            }
+            if (uuid.includes('4b13a770')) {
+              detectedSensorId = 'atmotube';
+              break;
+            }
+          }
+        } catch (serviceErr) {
+          logger.warn('Could not enumerate services, trying direct service detection...');
+          // Fallback to identifySensorByService which tries each service individually
+          detectedSensorId = await identifySensorByService(server);
+        }
       }
-      
+
       if (!detectedSensorId) {
-        throw new Error('Unable to identify sensor type. Device may not be supported.');
+        throw new Error('Appareil non reconnu. Veuillez choisir un capteur compatible.');
       }
       
       logger.debug(`✅ Detected sensor type: ${getSensorDisplayName(detectedSensorId)}`);
       
-      // Update active sensor ID and persist selection
-      updateSensorId(detectedSensorId);
-      
-      // Load the appropriate adapter dynamically
+      // 4. Charger dynamiquement le bon adaptateur
       const adapter = await getSensorAdapter(detectedSensorId);
       adapterRef.current = adapter;
       
-      // Initialize the device with notifications
+      // 5. Mettre à jour l'état avec l'ID du capteur actif
+      updateSensorId(detectedSensorId);
+      
+      // 6. Set up disconnection handler
+      device.addEventListener('gattserverdisconnected', () => {
+        onDeviceDisconnected();
+      });
+      
+      // 7. Initialize notifications via the adapter
       await onDeviceConnected(server, device);
+      
+      logger.debug(`🎉 ${adapter.name} connected and ready`);
       
     } catch (err) {
       logger.error('❌ Error in identifyAndConnect:', err);
@@ -175,33 +213,34 @@ export function useActiveSensor() {
         serverRef.current.disconnect();
       }
       serverRef.current = null;
+      deviceRef.current = null;
       throw err;
     }
-  }, [updateSensorId, onDeviceConnected]);
+  }, [updateSensorId, onDeviceConnected, onDeviceDisconnected]);
 
   /**
    * Request device using universal scan - shows all compatible sensors
    * User selects from browser dialog, then sensor type is auto-detected
    */
   const requestDevice = useCallback(async () => {
+    // Si nous avons déjà un adaptateur actif connecté, ne pas relancer le scan
+    if (adapterRef.current && serverRef.current?.connected) {
+      logger.debug('ℹ️ Already connected to a sensor');
+      return;
+    }
+
     try {
       setError(null);
       setIsConnecting(true);
 
       logger.debug('🔍 Starting universal Bluetooth scan for all supported sensors...');
 
-      // Use universal scan options to show all compatible sensors
+      // Utilise les options de scan universel pour afficher tous les capteurs compatibles
       const device = await navigator.bluetooth.requestDevice(UNIVERSAL_SCAN_OPTIONS);
-      deviceRef.current = device;
 
       logger.debug(`📱 User selected device: ${device.name || 'Unknown'}`);
 
-      // Set up disconnection handler
-      device.addEventListener('gattserverdisconnected', () => {
-        onDeviceDisconnected();
-      });
-
-      // Identify sensor type and connect with appropriate adapter
+      // Après sélection par l'utilisateur, identifier le décodeur et charger l'adaptateur
       await identifyAndConnect(device);
 
     } catch (err) {
@@ -210,12 +249,12 @@ export function useActiveSensor() {
         logger.debug('ℹ️ User cancelled Bluetooth device selection');
         setError(null);
       } else {
-        console.error('❌ Error requesting device:', err);
+        logger.error('❌ Error requesting device:', err);
         setError(err instanceof Error ? err.message : 'Failed to connect to device');
       }
       setIsConnecting(false);
     }
-  }, [identifyAndConnect, onDeviceDisconnected]);
+  }, [identifyAndConnect]);
 
   /**
    * Request a specific sensor type (legacy/explicit selection)
