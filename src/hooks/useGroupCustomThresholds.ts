@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineAwareSupabase } from '@/lib/supabaseSafeWrapper';
 import { useToast } from '@/hooks/use-toast';
 
 export interface GroupCustomThreshold {
@@ -27,14 +28,23 @@ export const useGroupCustomThresholds = (groupId: string) => {
     if (!groupId) return;
 
     try {
-      const { data, error } = await supabase
-        .from('group_custom_thresholds')
-        .select('*')
-        .eq('group_id', groupId)
-        .order('name');
+      const result = await offlineAwareSupabase.query(
+        supabase
+          .from('group_custom_thresholds')
+          .select('*')
+          .eq('group_id', groupId)
+          .order('name')
+      );
 
-      if (error) throw error;
-      setThresholds(data || []);
+      // Skip error toast if offline
+      if (result.isOffline) {
+        console.log('Offline: cannot fetch group thresholds');
+        setLoading(false);
+        return;
+      }
+
+      if (result.error) throw result.error;
+      setThresholds(result.data || []);
     } catch (error: unknown) {
       toast({
         title: 'Error',
@@ -49,12 +59,33 @@ export const useGroupCustomThresholds = (groupId: string) => {
   const createThreshold = async (
     threshold: Omit<GroupCustomThreshold, 'id' | 'created_at' | 'updated_at'>
   ) => {
-    try {
-      const { error } = await supabase
-        .from('group_custom_thresholds')
-        .insert(threshold);
+    // Check offline before attempting create
+    if (offlineAwareSupabase.isOffline()) {
+      toast({
+        title: 'Offline',
+        description: 'Cannot create threshold while offline',
+        variant: 'destructive',
+      });
+      throw new Error('Offline');
+    }
 
-      if (error) throw error;
+    try {
+      const result = await offlineAwareSupabase.query(
+        supabase
+          .from('group_custom_thresholds')
+          .insert(threshold)
+      );
+
+      if (result.isOffline) {
+        toast({
+          title: 'Offline',
+          description: 'Cannot create threshold while offline',
+          variant: 'destructive',
+        });
+        throw new Error('Offline');
+      }
+
+      if (result.error) throw result.error;
 
       toast({
         title: 'Success',
@@ -63,11 +94,13 @@ export const useGroupCustomThresholds = (groupId: string) => {
 
       await fetchThresholds();
     } catch (error: unknown) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create group threshold',
-        variant: 'destructive',
-      });
+      if ((error as Error).message !== 'Offline') {
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Failed to create group threshold',
+          variant: 'destructive',
+        });
+      }
       throw error;
     }
   };
@@ -76,13 +109,34 @@ export const useGroupCustomThresholds = (groupId: string) => {
     id: string,
     updates: Partial<GroupCustomThreshold>
   ) => {
-    try {
-      const { error } = await supabase
-        .from('group_custom_thresholds')
-        .update(updates)
-        .eq('id', id);
+    // Check offline before attempting update
+    if (offlineAwareSupabase.isOffline()) {
+      toast({
+        title: 'Offline',
+        description: 'Cannot update threshold while offline',
+        variant: 'destructive',
+      });
+      throw new Error('Offline');
+    }
 
-      if (error) throw error;
+    try {
+      const result = await offlineAwareSupabase.query(
+        supabase
+          .from('group_custom_thresholds')
+          .update(updates)
+          .eq('id', id)
+      );
+
+      if (result.isOffline) {
+        toast({
+          title: 'Offline',
+          description: 'Cannot update threshold while offline',
+          variant: 'destructive',
+        });
+        throw new Error('Offline');
+      }
+
+      if (result.error) throw result.error;
 
       toast({
         title: 'Success',
@@ -91,23 +145,46 @@ export const useGroupCustomThresholds = (groupId: string) => {
 
       await fetchThresholds();
     } catch (error: unknown) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to update group threshold',
-        variant: 'destructive',
-      });
+      if ((error as Error).message !== 'Offline') {
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Failed to update group threshold',
+          variant: 'destructive',
+        });
+      }
       throw error;
     }
   };
 
   const deleteThreshold = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('group_custom_thresholds')
-        .delete()
-        .eq('id', id);
+    // Check offline before attempting delete
+    if (offlineAwareSupabase.isOffline()) {
+      toast({
+        title: 'Offline',
+        description: 'Cannot delete threshold while offline',
+        variant: 'destructive',
+      });
+      throw new Error('Offline');
+    }
 
-      if (error) throw error;
+    try {
+      const result = await offlineAwareSupabase.query(
+        supabase
+          .from('group_custom_thresholds')
+          .delete()
+          .eq('id', id)
+      );
+
+      if (result.isOffline) {
+        toast({
+          title: 'Offline',
+          description: 'Cannot delete threshold while offline',
+          variant: 'destructive',
+        });
+        throw new Error('Offline');
+      }
+
+      if (result.error) throw result.error;
 
       toast({
         title: 'Success',
@@ -116,11 +193,13 @@ export const useGroupCustomThresholds = (groupId: string) => {
 
       await fetchThresholds();
     } catch (error: unknown) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to delete group threshold',
-        variant: 'destructive',
-      });
+      if ((error as Error).message !== 'Offline') {
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Failed to delete group threshold',
+          variant: 'destructive',
+        });
+      }
       throw error;
     }
   };
