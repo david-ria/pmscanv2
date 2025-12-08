@@ -39,41 +39,6 @@ export const loadMapboxGL = async () => {
 };
 
 /**
- * Supabase client dynamic import - uses shared singleton
- */
-export const loadSupabaseClient = async () => {
-  if (moduleCache.has('supabase-client')) {
-    return moduleCache.get('supabase-client');
-  }
-
-  console.debug('[PERF] Loading Supabase client dynamically...');
-  trackImport('supabase');
-  
-  // Use the existing shared client instead of creating a new one
-  const { supabase } = await import('@/integrations/supabase/client');
-
-  const client = { supabase };
-  moduleCache.set('supabase-client', client);
-  console.debug('[PERF] Supabase client loaded');
-  
-  return client;
-};
-
-/**
- * Load Map and Data together when both are needed
- */
-export const loadMapAndData = async () => {
-  console.debug('[PERF] Loading Map & Data layers...');
-  const [mapbox, { supabase }] = await Promise.all([
-    loadMapboxGL(),
-    loadSupabaseClient()
-  ]);
-  
-  console.debug('[PERF] Map & Data layers loaded');
-  return { mapbox, supabase };
-};
-
-/**
  * Chart library dynamic import (Recharts) - Individual components to reduce bundle
  */
 export const loadChartLibrary = async () => {

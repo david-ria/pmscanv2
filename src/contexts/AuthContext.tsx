@@ -1,11 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { getSupabase } from '@/lib/supabaseWrapper';
+import { supabase } from '@/integrations/supabase/client';
 import { attachAuthRefreshGuard } from '@/utils/authRefreshGuard';
 
 interface AuthError {
   message: string;
-  [key: string]: unknown;
 }
 
 interface AuthContextType {
@@ -29,53 +28,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [supabaseClient, setSupabaseClient] = useState<Awaited<ReturnType<typeof getSupabase>> | null>(null);
 
   useEffect(() => {
-    let subscription: ReturnType<Awaited<ReturnType<typeof getSupabase>>['auth']['onAuthStateChange']> | null = null;
+    // Attach auth refresh guard
+    attachAuthRefreshGuard(supabase);
 
-    const initializeAuth = async () => {
-      try {
-        const supabase = await getSupabase();
-        attachAuthRefreshGuard(supabase);
-        setSupabaseClient(supabase);
+    // Set up auth state listener FIRST
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-        // Set up auth state listener
-        const {
-          data: { subscription: authSubscription },
-        } = supabase.auth.onAuthStateChange((event, session) => {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        });
-
-        subscription = authSubscription;
-
-        // Check for existing session
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      } catch (error) {
-        console.error('Failed to initialize Supabase:', error);
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
     return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
+      subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    if (!supabaseClient) {
-      return { error: new Error('Supabase client not initialized') };
-    }
-    const { error } = await supabaseClient.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -83,12 +63,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, metadata?: Record<string, unknown>) => {
-    if (!supabaseClient) {
-      return { error: new Error('Supabase client not initialized') };
-    }
     const redirectUrl = `${window.location.origin}/`;
 
-    const { error } = await supabaseClient.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -100,33 +77,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    if (!supabaseClient) {
-      console.error('Supabase client not initialized');
-      return;
-    }
-    const { error } = await supabaseClient.auth.signOut();
+    const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error signing out:', error);
     }
   };
 
   const updatePassword = async (newPassword: string) => {
-    if (!supabaseClient) {
-      return { error: new Error('Supabase client not initialized') };
-    }
-    const { error } = await supabaseClient.auth.updateUser({
+    const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
     return { error };
   };
 
   const resetPassword = async (email: string) => {
-    if (!supabaseClient) {
-      return { error: new Error('Supabase client not initialized') };
-    }
     const redirectUrl = `${window.location.origin}/auth`;
     
-    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
     });
     return { error };
