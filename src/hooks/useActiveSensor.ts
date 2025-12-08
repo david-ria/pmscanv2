@@ -128,7 +128,9 @@ export function useActiveSensor() {
    */
   const identifyAndConnect = useCallback(async (device: BluetoothDevice) => {
     try {
-      logger.debug(`🔍 Identifying sensor type for device: ${device.name || 'Unknown'}`);
+      // EXPLICIT DEBUG LOGS - always visible in console
+      console.log('🎯 [SENSOR] Device selected:', device.name || 'Unknown');
+      console.log('🎯 [SENSOR] Device ID:', device.id);
       
       // 1. Identification par Préfixe de Nom (Méthode la plus fiable et rapide)
       let detectedSensorId: SensorId | undefined;
@@ -136,14 +138,19 @@ export function useActiveSensor() {
 
       if (deviceName.startsWith('PMSCAN')) {
         detectedSensorId = 'pmscan';
+        console.log('🎯 [SENSOR] Detected by name: PMScan');
       } else if (deviceName.includes('AIRBEAM')) {
         detectedSensorId = 'airbeam';
+        console.log('🎯 [SENSOR] Detected by name: AirBeam');
       } else if (deviceName.includes('ATMOTUBE')) {
         detectedSensorId = 'atmotube';
+        console.log('🎯 [SENSOR] Detected by name: Atmotube');
+      } else {
+        console.log('⚠️ [SENSOR] Name not recognized, will try GATT services...');
       }
       
       // 2. Connect to GATT server first (required for service-based detection)
-      logger.debug('🔗 Connecting to GATT server...');
+      console.log('🔗 [SENSOR] Connecting to GATT server...');
       if (!device.gatt) {
         throw new Error('GATT server not available on device');
       }
@@ -181,27 +188,32 @@ export function useActiveSensor() {
       }
 
       if (!detectedSensorId) {
+        console.error('❌ [SENSOR] Device not recognized as a supported sensor');
         throw new Error('Appareil non reconnu. Veuillez choisir un capteur compatible.');
       }
       
-      logger.debug(`✅ Detected sensor type: ${getSensorDisplayName(detectedSensorId)}`);
+      console.log(`✅ [SENSOR] Final detection: ${getSensorDisplayName(detectedSensorId)}`);
       
       // 4. Charger dynamiquement le bon adaptateur
+      console.log('📦 [SENSOR] Loading adapter for:', detectedSensorId);
       const adapter = await getSensorAdapter(detectedSensorId);
       adapterRef.current = adapter;
+      console.log('📦 [SENSOR] Adapter loaded:', adapter.name);
       
       // 5. Mettre à jour l'état avec l'ID du capteur actif
       updateSensorId(detectedSensorId);
       
       // 6. Set up disconnection handler
       device.addEventListener('gattserverdisconnected', () => {
+        console.log('🔌 [SENSOR] Device disconnected event');
         onDeviceDisconnected();
       });
       
       // 7. Initialize notifications via the adapter
+      console.log('📡 [SENSOR] Initializing notifications...');
       await onDeviceConnected(server, device);
       
-      logger.debug(`🎉 ${adapter.name} connected and ready`);
+      console.log(`🎉 [SENSOR] ${adapter.name} connected and ready!`);
       
     } catch (err) {
       logger.error('❌ Error in identifyAndConnect:', err);
