@@ -545,6 +545,11 @@
       "poor": "Poor",
       "veryPoor": "Very Poor"
     },
+    "environmental": {
+      "temperature": "Temp",
+      "humidity": "Humidity",
+      "tvoc": "TVOC"
+    },
     "location": "Location",
     "activity": "Activity",
     "noLocation": "No location",
