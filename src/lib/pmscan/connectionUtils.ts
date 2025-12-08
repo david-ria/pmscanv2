@@ -1,4 +1,5 @@
 import { PMScan_SERVICE_UUID, PMScan_MODE_UUID } from './constants';
+import { FILTERED_SCAN_OPTIONS, UNIVERSAL_SCAN_OPTIONS } from '@/lib/sensorConstants';
 import * as logger from '@/utils/logger';
 
 /**
@@ -10,17 +11,26 @@ export class PMScanConnectionUtils {
       throw new Error('Bluetooth not available in this browser');
     }
 
-    logger.debug('🔍 Requesting PMScan Bluetooth device...');
-    const device = await navigator.bluetooth.requestDevice({
-      filters: [
-        { namePrefix: 'PMScan' },
-        { services: [PMScan_SERVICE_UUID] },
-      ],
-      optionalServices: [PMScan_SERVICE_UUID],
-    });
-
-    logger.debug('📱 Requested ' + device.name);
-    return device;
+    logger.debug('🔍 Step 1: Trying filtered scan for known sensor names...');
+    
+    try {
+      // Étape 1: Essayer d'abord avec les filtres stricts par nom
+      const device = await navigator.bluetooth.requestDevice(FILTERED_SCAN_OPTIONS);
+      logger.debug(`📱 Device found with filtered scan: ${device.name || 'Unknown'}`);
+      return device;
+    } catch (filteredErr) {
+      // Si l'utilisateur annule ou aucun appareil trouvé, essayer le scan large
+      if (filteredErr instanceof Error && filteredErr.name === 'NotFoundError') {
+        logger.debug('⚠️ Filtered scan cancelled or no devices found, trying wide scan...');
+        
+        // Étape 2: Scan large - affiche TOUS les appareils Bluetooth
+        logger.debug('🔍 Step 2: Wide scan - showing ALL Bluetooth devices...');
+        const device = await navigator.bluetooth.requestDevice(UNIVERSAL_SCAN_OPTIONS);
+        logger.debug(`📱 Device found with wide scan: ${device.name || 'Unknown'}`);
+        return device;
+      }
+      throw filteredErr;
+    }
   }
 
   public static async connectToDevice(
