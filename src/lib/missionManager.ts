@@ -1,15 +1,150 @@
 import { PMScanData } from '@/lib/pmscan/types';
 import { LocationData } from '@/types/PMScan';
 import { MissionData, MeasurementData } from './dataStorage';
-import {
-  getLocalMissions,
-  saveLocalMissions,
-  addToPendingSync,
-  removeFromPendingSync,
-} from './localStorage';
 import { supabase } from '@/integrations/supabase/client';
 import * as logger from '@/utils/logger';
 import { parseFrequencyToMs } from './recordingUtils';
+import { STORAGE_KEYS } from '@/services/storageService';
+
+// Storage keys for missions
+const MISSIONS_KEY = STORAGE_KEYS.MISSIONS;
+const PENDING_SYNC_KEY = STORAGE_KEYS.PENDING_SYNC;
+
+// ==========================================
+// LOCAL STORAGE FUNCTIONS (migrated from localStorage.ts)
+// ==========================================
+
+export function getLocalMissions(): MissionData[] {
+  try {
+    const stored = localStorage.getItem(MISSIONS_KEY);
+    if (!stored) return [];
+
+    const missions = JSON.parse(stored);
+    const validMissions: MissionData[] = [];
+    const orphanedCount = missions.filter((m: Partial<MissionData> & { measurements: unknown[] }) => {
+      const hasOrphanedData = m.measurementsCount && m.measurementsCount > 0 && (!m.measurements || m.measurements.length === 0);
+      return hasOrphanedData;
+    }).length;
+    
+    if (orphanedCount > 0) {
+      logger.warn(`🗑️ Found ${orphanedCount} orphaned mission(s) in localStorage, removing...`);
+    }
+    
+    for (const m of missions) {
+      const mission = m as Partial<MissionData> & { startTime: string; endTime: string; measurements: Array<{ timestamp: string }> };
+      // Skip orphaned missions (have metadata but no measurements)
+      const hasOrphanedData = mission.measurementsCount && mission.measurementsCount > 0 && (!mission.measurements || mission.measurements.length === 0);
+      if (hasOrphanedData) {
+        logger.debug(`🗑️ Removing orphaned mission: ${mission.name}`);
+        continue;
+      }
+      
+      validMissions.push({
+        ...mission,
+        startTime: new Date(mission.startTime),
+        endTime: new Date(mission.endTime),
+        measurements: (mission.measurements || []).map((measurement: any) => ({
+          ...measurement,
+          timestamp: new Date(measurement.timestamp),
+        })),
+      } as MissionData);
+    }
+    
+    // Save cleaned missions back to localStorage if any were removed
+    if (orphanedCount > 0) {
+      localStorage.setItem(MISSIONS_KEY, JSON.stringify(validMissions));
+      logger.debug(`✅ Cleaned up ${orphanedCount} orphaned mission(s) from localStorage`);
+    }
+    
+    return validMissions;
+  } catch (error) {
+    console.error('Error reading local missions:', error);
+    return [];
+  }
+}
+
+export function saveLocalMissions(missions: MissionData[]): void {
+  logger.debug('💾 === SAVING LOCAL MISSIONS ===');
+  logger.debug('💾 Number of missions to save:', missions.length);
+  logger.debug('💾 Mission names:', missions.map(m => m.name));
+  try {
+    localStorage.setItem(MISSIONS_KEY, JSON.stringify(missions));
+    logger.debug('✅ Missions saved to localStorage successfully');
+  } catch (quotaError) {
+    if (
+      quotaError instanceof DOMException &&
+      quotaError.name === 'QuotaExceededError'
+    ) {
+      console.warn('LocalStorage quota exceeded, cleaning up old missions...');
+      cleanupOldMissions(missions);
+      // Try again after cleanup
+      localStorage.setItem(MISSIONS_KEY, JSON.stringify(missions));
+    } else {
+      throw quotaError;
+    }
+  }
+}
+
+export function getPendingSyncIds(): string[] {
+  try {
+    const stored = localStorage.getItem(PENDING_SYNC_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addToPendingSync(missionId: string): void {
+  const pending = getPendingSyncIds();
+  if (!pending.includes(missionId)) {
+    pending.push(missionId);
+    localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pending));
+  }
+}
+
+export function removeFromPendingSync(missionId: string): void {
+  const pending = getPendingSyncIds().filter((id) => id !== missionId);
+  localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pending));
+}
+
+export function clearMissionStorage(): void {
+  localStorage.removeItem(MISSIONS_KEY);
+  localStorage.removeItem(PENDING_SYNC_KEY);
+  logger.debug('Mission storage cleared');
+}
+
+export function cleanupOldMissions(missions: MissionData[]): void {
+  // Keep only the most recent 5 missions to free up space
+  const sortedMissions = missions.sort(
+    (a, b) => b.endTime.getTime() - a.endTime.getTime()
+  );
+  const recentMissions = sortedMissions.slice(0, 5);
+
+  logger.debug(
+    `Cleaning up old missions, keeping ${recentMissions.length} most recent ones`
+  );
+  
+  // Strip measurements from missions being kept to save even more space
+  const strippedMissions = recentMissions.map(mission => ({
+    ...mission,
+    measurements: mission.measurements.length > 2 
+      ? [mission.measurements[0], mission.measurements[mission.measurements.length - 1]]
+      : mission.measurements
+  }));
+  
+  localStorage.setItem(MISSIONS_KEY, JSON.stringify(strippedMissions));
+
+  // Update pending sync list to only include kept missions
+  const keptMissionIds = recentMissions.map((m) => m.id);
+  const updatedPending = getPendingSyncIds().filter((id) =>
+    keptMissionIds.includes(id)
+  );
+  localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(updatedPending));
+}
+
+// ==========================================
+// MISSION CREATION AND MANAGEMENT
+// ==========================================
 
 export function createMissionFromRecording(
   measurements: Array<{
