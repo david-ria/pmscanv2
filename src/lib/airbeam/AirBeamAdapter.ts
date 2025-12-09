@@ -156,9 +156,9 @@ export class AirBeamAdapter implements ISensorAdapter {
             const match = uuid.match(/^0000([0-9a-f]{4})-0000-1000-8000-00805f9b34fb$/i);
             return match ? `0x${match[1].toUpperCase()}` : uuid.substring(0, 8) + '...';
           }).join(', ')
-        : 'aucun service trouvé';
+        : 'aucun - Essayez: chrome://bluetooth-internals → Devices → Forget device, puis redémarrez Chrome';
       
-      throw new Error(`AirBeam: Service FFF0 introuvable. Services visibles: [${servicesListShort}]`);
+      throw new Error(`AirBeam: Service FFF0 introuvable. Services: [${servicesListShort}]`);
     }
   }
 
