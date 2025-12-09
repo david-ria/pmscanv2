@@ -99,6 +99,16 @@ export class AirBeamAdapter implements ISensorAdapter {
     this.server = server;
     this.device = device;
     
+    // CRITICAL: ESP32 stabilization delay - AirBeam needs time after GATT connect
+    logger.info('💤 [AirBeam] Stabilization pause (1s) for ESP32...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Verify connection is still active after delay
+    if (!server.connected) {
+      throw new Error('AirBeam: Disconnected during stabilization. Please retry.');
+    }
+    logger.info('✅ [AirBeam] Connection stable after delay');
+    
     // DIAGNOSTIC: Enumerate ALL GATT services first
     let discoveredServices: string[] = [];
     try {
