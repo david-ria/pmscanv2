@@ -14,10 +14,11 @@ export const SENSOR_GATT_CONFIG = {
   airbeam: {
     id: 'airbeam' as const,
     name: 'AirBeam',
-    // AirBeam3 uses Nordic UART Service for text-based serial data
-    serviceUuid: '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART Service
-    rxCharacteristicUuid: '6e400003-b5a3-f393-e0a9-e50e24dcca9e', // RX for notifications
-    txCharacteristicUuid: '6e400002-b5a3-f393-e0a9-e50e24dcca9e', // TX for write
+    // OFFICIAL AirBeam2/3 BLE UUIDs (standard 16-bit format)
+    serviceUuid: '0000fff0-0000-1000-8000-00805f9b34fb', // Main FFF0 service
+    pmCharacteristicUuid: '0000fff3-0000-1000-8000-00805f9b34fb', // PM1, PM2.5, PM10 (6 bytes)
+    envCharacteristicUuid: '0000fff4-0000-1000-8000-00805f9b34fb', // Temp, Humidity (4 bytes)
+    batteryCharacteristicUuid: '0000fff6-0000-1000-8000-00805f9b34fb', // Battery level (1 byte)
     filters: [
       { namePrefix: 'AirBeam' },
       { namePrefix: 'AB-' },

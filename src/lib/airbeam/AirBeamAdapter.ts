@@ -3,16 +3,13 @@ import { createTimestamp } from '@/utils/timeFormat';
 import * as logger from '@/utils/logger';
 
 /**
- * AirBeam3 sensor adapter implementing the unified ISensorAdapter interface
+ * AirBeam2/3 sensor adapter implementing the unified ISensorAdapter interface
  * 
- * AirBeam3 uses Nordic UART Service (NUS) with text-based serial protocol:
- * - Service: 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
- * - RX Characteristic (notifications): 6E400003-B5A3-F393-E0A9-E50E24DCCA9E
- * - TX Characteristic (write): 6E400002-B5A3-F393-E0A9-E50E24DCCA9E
- * 
- * Data format: 24 space-separated values per line
- * Fields: [0-14 unused], [15] Temp°C, [16 unused], [17] Humidity%, 
- *         [18 unused], [19] PM1, [20 unused], [21] PM2.5, [22 unused], [23] PM10
+ * OFFICIAL BLE Protocol (Standard 16-bit UUIDs):
+ * - Service: 0000FFF0-0000-1000-8000-00805f9b34fb
+ * - PM Characteristic (FFF3): 6 bytes - PM1, PM2.5, PM10 (Uint16 LE each)
+ * - Env Characteristic (FFF4): 4 bytes - Temp (Int16 LE /100), Humidity (Uint16 LE /100)
+ * - Battery Characteristic (FFF6): 1 byte - Battery level %
  */
 export class AirBeamAdapter implements ISensorAdapter {
   public readonly sensorId = 'airbeam' as const;
@@ -21,28 +18,18 @@ export class AirBeamAdapter implements ISensorAdapter {
   private device: BluetoothDevice | null = null;
   private server: BluetoothRemoteGATTServer | null = null;
   private lastReading: SensorReadingData | null = null;
-  private battery: number = 100; // AirBeam3 doesn't report battery via BLE
+  private battery: number = 100;
   private charging: number = 0;
 
-  // Nordic UART Service UUIDs (primary for AirBeam3)
-  private static readonly NORDIC_UART_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-  private static readonly NORDIC_UART_RX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // Notifications
-  private static readonly NORDIC_UART_TX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // Write
+  // OFFICIAL AirBeam BLE UUIDs (standard 16-bit format)
+  private static readonly SERVICE_UUID = '0000fff0-0000-1000-8000-00805f9b34fb';
+  private static readonly PM_CHAR_UUID = '0000fff3-0000-1000-8000-00805f9b34fb';
+  private static readonly ENV_CHAR_UUID = '0000fff4-0000-1000-8000-00805f9b34fb';
+  private static readonly BATTERY_CHAR_UUID = '0000fff6-0000-1000-8000-00805f9b34fb';
 
-  // Fallback service UUIDs to try
-  private static readonly CANDIDATE_SERVICES = [
-    '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART Service (primary)
-    '0000ffe0-0000-1000-8000-00805f9b34fb', // HM-10 Module
-    '0000181a-0000-1000-8000-00805f9b34fb', // Environmental Sensing
-    '0000180f-0000-1000-8000-00805f9b34fb', // Battery Service
-  ];
-
-  // Text buffer for reassembling multi-packet messages
-  private textBuffer: string = '';
-
-  // Currently active service UUID (discovered dynamically)
-  private activeServiceUuid: string | null = null;
-  private activeCharacteristicUuid: string | null = null;
+  // Internal state for merging notifications from different characteristics
+  private currentPM: { pm1: number; pm25: number; pm10: number } = { pm1: 0, pm25: 0, pm10: 0 };
+  private currentEnv: { temp: number; humidity: number } = { temp: 0, humidity: 0 };
 
   public async requestDevice(): Promise<BluetoothDevice> {
     if (!navigator.bluetooth) {
@@ -50,17 +37,17 @@ export class AirBeamAdapter implements ISensorAdapter {
     }
 
     try {
-      console.log('🔍 Requesting AirBeam Bluetooth device...');
+      logger.info('🔍 Requesting AirBeam Bluetooth device...');
       const device = await navigator.bluetooth.requestDevice({
         filters: [{ namePrefix: 'AirBeam' }],
-        optionalServices: AirBeamAdapter.CANDIDATE_SERVICES,
+        optionalServices: [AirBeamAdapter.SERVICE_UUID],
       });
       
       this.device = device;
-      console.log('📱 AirBeam device found:', device.name);
+      logger.info('📱 AirBeam device found:', device.name);
       return device;
     } catch (error) {
-      console.error('AirBeam device request failed:', error);
+      logger.error('AirBeam device request failed:', error);
       throw new Error('AirBeam: Device request failed');
     }
   }
@@ -71,20 +58,20 @@ export class AirBeamAdapter implements ISensorAdapter {
     }
 
     try {
-      console.log('🔌 Connecting to AirBeam device...');
+      logger.info('🔌 Connecting to AirBeam device...');
       const server = await device.gatt.connect();
       this.server = server;
       this.device = device;
-      console.log('✅ AirBeam connected');
+      logger.info('✅ AirBeam connected');
       return server;
     } catch (error) {
-      console.error('AirBeam connection failed:', error);
+      logger.error('AirBeam connection failed:', error);
       throw new Error('AirBeam: Connection failed');
     }
   }
 
   public async disconnect(force?: boolean): Promise<boolean> {
-    console.log('🔌 AirBeam disconnect called, force:', force);
+    logger.info('🔌 AirBeam disconnect called, force:', force);
     
     if (this.device?.gatt?.connected) {
       this.device.gatt.disconnect();
@@ -93,9 +80,8 @@ export class AirBeamAdapter implements ISensorAdapter {
     this.device = null;
     this.server = null;
     this.lastReading = null;
-    this.activeServiceUuid = null;
-    this.activeCharacteristicUuid = null;
-    this.textBuffer = '';
+    this.currentPM = { pm1: 0, pm25: 0, pm10: 0 };
+    this.currentEnv = { temp: 0, humidity: 0 };
     
     return true;
   }
@@ -114,374 +100,229 @@ export class AirBeamAdapter implements ISensorAdapter {
     this.device = device;
     
     try {
-      console.log('🔔 Initializing AirBeam notifications...');
+      logger.info('🔔 Initializing AirBeam notifications (FFF0 service)...');
       
-      // First, try Nordic UART Service directly (most likely for AirBeam3)
-      const nordicSuccess = await this.tryNordicUartService(server, onDataCallback);
+      // Get the main FFF0 service
+      const service = await server.getPrimaryService(AirBeamAdapter.SERVICE_UUID);
+      logger.info('✅ Found AirBeam FFF0 service');
       
-      if (nordicSuccess) {
-        console.log('✅ AirBeam connected via Nordic UART Service');
-        return;
-      }
+      // Subscribe to PM characteristic (FFF3) - 6 bytes
+      await this.subscribeToPMCharacteristic(service, onDataCallback);
       
-      // Fallback: Discovery mode
-      console.log('⚠️ Nordic UART not found, running discovery mode...');
-      const discoveredServices = await this.discoverAllServices(server);
+      // Subscribe to Environment characteristic (FFF4) - 4 bytes
+      await this.subscribeToEnvCharacteristic(service, onDataCallback);
       
-      const success = await this.tryConnectToAnyService(server, onDataCallback);
+      // Read/Subscribe to Battery characteristic (FFF6) - 1 byte
+      await this.subscribeToBatteryCharacteristic(service, onBatteryCallback);
       
-      if (!success) {
-        console.error('❌ Could not find working AirBeam service');
-        console.log('📋 Available services:', discoveredServices);
-        throw new Error('AirBeam: No compatible GATT service found. Check console for available services.');
-      }
-      
-      console.log('✅ AirBeam notifications initialized');
+      logger.info('✅ AirBeam notifications initialized successfully');
     } catch (error) {
-      console.error('AirBeam: initializeNotifications failed:', error);
-      throw new Error('AirBeam: Notification initialization failed - ' + (error as Error).message);
+      logger.error('AirBeam: initializeNotifications failed:', error);
+      throw new Error('AirBeam: Could not find FFF0 service. Make sure AirBeam is powered on and in range.');
     }
   }
 
   /**
-   * Try to connect to Nordic UART Service (primary method for AirBeam3)
+   * Subscribe to PM characteristic (FFF3)
+   * Format: 6 bytes, Little Endian
+   * - Bytes 0-1: PM1 (Uint16)
+   * - Bytes 2-3: PM2.5 (Uint16)
+   * - Bytes 4-5: PM10 (Uint16)
    */
-  private async tryNordicUartService(
-    server: BluetoothRemoteGATTServer,
+  private async subscribeToPMCharacteristic(
+    service: BluetoothRemoteGATTService,
     onDataCallback: (data: SensorReadingData) => void
-  ): Promise<boolean> {
+  ): Promise<void> {
     try {
-      console.log('🔍 Trying Nordic UART Service...');
-      const service = await server.getPrimaryService(AirBeamAdapter.NORDIC_UART_SERVICE);
+      const pmChar = await service.getCharacteristic(AirBeamAdapter.PM_CHAR_UUID);
+      logger.info('✅ Found PM characteristic (FFF3)');
       
-      // Subscribe to RX characteristic for notifications
-      const rxCharacteristic = await service.getCharacteristic(AirBeamAdapter.NORDIC_UART_RX);
-      
-      console.log('✅ Found Nordic UART RX characteristic');
-      
-      await rxCharacteristic.startNotifications();
-      rxCharacteristic.addEventListener('characteristicvaluechanged', (event: Event) => {
+      await pmChar.startNotifications();
+      pmChar.addEventListener('characteristicvaluechanged', (event: Event) => {
         const target = event.target as BluetoothRemoteGATTCharacteristic;
         const value = target.value;
-        if (value) {
-          this.handleNordicUartData(value, onDataCallback);
+        if (value && value.byteLength >= 6) {
+          this.parsePMData(value, onDataCallback);
         }
       });
       
-      this.activeServiceUuid = AirBeamAdapter.NORDIC_UART_SERVICE;
-      this.activeCharacteristicUuid = AirBeamAdapter.NORDIC_UART_RX;
-      
-      return true;
-    } catch (error) {
-      console.log('❌ Nordic UART Service not available:', (error as Error).message);
-      return false;
-    }
-  }
-
-  /**
-   * Handle incoming Nordic UART data (text-based, may be fragmented)
-   */
-  private handleNordicUartData(
-    dataView: DataView,
-    onDataCallback: (data: SensorReadingData) => void
-  ): void {
-    // Decode UTF-8 bytes to string
-    const textDecoder = new TextDecoder('utf-8');
-    const buffer = new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength);
-    const chunk = textDecoder.decode(buffer);
-    
-    console.log('📨 AirBeam UART chunk received:', chunk.replace(/\n/g, '\\n'));
-    
-    // Add to buffer
-    this.textBuffer += chunk;
-    
-    // Process complete lines (separated by newline)
-    const lines = this.textBuffer.split('\n');
-    
-    // Keep the last incomplete line in the buffer
-    this.textBuffer = lines.pop() || '';
-    
-    // Process each complete line
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (trimmedLine.length > 0) {
-        console.log('📝 Processing AirBeam line:', trimmedLine);
-        const data = this.parseTextLine(trimmedLine);
-        if (data) {
-          this.lastReading = data;
-          onDataCallback(data);
-        }
-      }
-    }
-  }
-
-  /**
-   * Parse a complete text line from AirBeam3
-   * Format: 24 space-separated values
-   * Fields: [15]=Temp, [17]=Humidity, [19]=PM1, [21]=PM2.5, [23]=PM10
-   */
-  private parseTextLine(line: string): SensorReadingData | null {
-    try {
-      // Split by whitespace (space or tab)
-      const fields = line.split(/\s+/).filter(f => f.length > 0);
-      
-      console.log(`🔢 AirBeam parsed ${fields.length} fields:`, fields);
-      
-      // Check if we have enough fields (expecting 24)
-      if (fields.length >= 24) {
-        // Parse values from documented positions
-        const temp = parseFloat(fields[15]) || 0;
-        const humidity = parseFloat(fields[17]) || 0;
-        const pm1 = parseFloat(fields[19]) || 0;
-        const pm25 = parseFloat(fields[21]) || 0;
-        const pm10 = parseFloat(fields[23]) || 0;
-        
-        // Validate PM values are in reasonable range
-        if (pm25 >= 0 && pm25 < 2000 && pm10 >= 0 && pm10 < 2000) {
-          console.log('✅ AirBeam parsed:', { pm1, pm25, pm10, temp, humidity });
-          
-          return {
-            pm1,
-            pm25,
-            pm10,
-            temp,
-            humidity,
-            pressure: undefined, // AirBeam3 doesn't report pressure via BLE
-            tvoc: undefined,
-            battery: this.battery,
-            charging: this.charging === 1,
-            timestamp: createTimestamp(),
-            location: 'AirBeam Device',
-          };
-        } else {
-          console.warn('⚠️ AirBeam PM values out of range:', { pm1, pm25, pm10 });
-        }
-      } else if (fields.length >= 6) {
-        // Alternative format: fewer fields, try common positions
-        // Try format: PM1 PM2.5 PM10 Temp Humidity ...
-        return this.tryAlternativeTextFormat(fields);
-      }
-      
-      // If we can't parse 24 fields, try as comma-separated or other formats
-      if (line.includes(',')) {
-        return this.parseCommaSeparated(line);
-      }
-      
-      console.warn('⚠️ AirBeam: Unknown text format, fields:', fields.length);
-      return null;
-    } catch (error) {
-      console.error('AirBeam text parsing error:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Try alternative text format (fewer fields)
-   */
-  private tryAlternativeTextFormat(fields: string[]): SensorReadingData | null {
-    try {
-      // Common format: PM1 PM2.5 PM10 Temp Humidity (first 5 values)
-      const pm1 = parseFloat(fields[0]) || 0;
-      const pm25 = parseFloat(fields[1]) || 0;
-      const pm10 = parseFloat(fields[2]) || 0;
-      const temp = parseFloat(fields[3]) || 0;
-      const humidity = parseFloat(fields[4]) || 0;
-      
-      if (pm25 >= 0 && pm25 < 2000) {
-        console.log('✅ AirBeam alt format parsed:', { pm1, pm25, pm10, temp, humidity });
-        return {
-          pm1,
-          pm25,
-          pm10,
-          temp,
-          humidity,
-          battery: this.battery,
-          charging: this.charging === 1,
-          timestamp: createTimestamp(),
-          location: 'AirBeam Device',
-        };
-      }
-    } catch {
-      // Ignore
-    }
-    return null;
-  }
-
-  /**
-   * Try parsing comma-separated format
-   */
-  private parseCommaSeparated(line: string): SensorReadingData | null {
-    try {
-      const fields = line.split(',').map(f => f.trim());
-      if (fields.length >= 5) {
-        const pm1 = parseFloat(fields[0]) || 0;
-        const pm25 = parseFloat(fields[1]) || 0;
-        const pm10 = parseFloat(fields[2]) || 0;
-        const temp = parseFloat(fields[3]) || 0;
-        const humidity = parseFloat(fields[4]) || 0;
-        
-        if (pm25 >= 0 && pm25 < 2000) {
-          console.log('✅ AirBeam CSV parsed:', { pm1, pm25, pm10, temp, humidity });
-          return {
-            pm1,
-            pm25,
-            pm10,
-            temp,
-            humidity,
-            battery: this.battery,
-            charging: this.charging === 1,
-            timestamp: createTimestamp(),
-            location: 'AirBeam Device',
-          };
-        }
-      }
-    } catch {
-      // Ignore
-    }
-    return null;
-  }
-
-  /**
-   * DIAGNOSTIC: Discover and log all GATT services on the device
-   */
-  private async discoverAllServices(server: BluetoothRemoteGATTServer): Promise<string[]> {
-    const discoveredUuids: string[] = [];
-    
-    try {
-      console.log('🔍 ===== AIRBEAM GATT DISCOVERY =====');
-      const services = await server.getPrimaryServices();
-      
-      for (const service of services) {
-        discoveredUuids.push(service.uuid);
-        console.log(`📡 Service UUID: ${service.uuid}`);
-        
-        try {
-          const chars = await service.getCharacteristics();
-          for (const char of chars) {
-            const props = [];
-            if (char.properties.notify) props.push('NOTIFY');
-            if (char.properties.read) props.push('READ');
-            if (char.properties.write) props.push('WRITE');
-            if (char.properties.indicate) props.push('INDICATE');
-            console.log(`   └── Characteristic: ${char.uuid} [${props.join(', ')}]`);
-            
-            // Try to read current value if readable
-            if (char.properties.read) {
-              try {
-                const value = await char.readValue();
-                this.logRawData(`      Value`, value);
-              } catch {
-                console.log(`      (Could not read value)`);
-              }
-            }
-          }
-        } catch {
-          console.log(`   └── Could not enumerate characteristics`);
-        }
-      }
-      console.log('🔍 ===== END DISCOVERY =====');
-    } catch (e) {
-      console.warn('Could not discover services:', e);
-    }
-    
-    return discoveredUuids;
-  }
-
-  /**
-   * Try to connect to any available service with notifiable characteristics
-   */
-  private async tryConnectToAnyService(
-    server: BluetoothRemoteGATTServer,
-    onDataCallback: (data: SensorReadingData) => void
-  ): Promise<boolean> {
-    // Try candidate services
-    for (const serviceUuid of AirBeamAdapter.CANDIDATE_SERVICES) {
+      // Try initial read
       try {
-        console.log(`🔍 Trying service: ${serviceUuid}`);
-        const service = await server.getPrimaryService(serviceUuid);
-        const chars = await service.getCharacteristics();
-        
-        for (const char of chars) {
-          if (char.properties.notify || char.properties.indicate) {
-            console.log(`✅ Found notifiable characteristic: ${char.uuid}`);
-            
-            await char.startNotifications();
-            char.addEventListener('characteristicvaluechanged', (event: Event) => {
-              const target = event.target as BluetoothRemoteGATTCharacteristic;
-              const value = target.value;
-              if (value) {
-                // Try text-based parsing first, then binary fallback
-                this.handleNordicUartData(value, onDataCallback);
-              }
-            });
-            
-            this.activeServiceUuid = serviceUuid;
-            this.activeCharacteristicUuid = char.uuid;
-            return true;
-          }
+        const initialValue = await pmChar.readValue();
+        if (initialValue.byteLength >= 6) {
+          this.parsePMData(initialValue, onDataCallback);
         }
       } catch {
-        continue;
+        logger.debug('Could not read initial PM value');
       }
+    } catch (error) {
+      logger.warn('⚠️ Could not subscribe to PM characteristic:', error);
     }
-    
-    // Try ALL available services
-    console.log('⚠️ Candidate services failed, trying all available services...');
-    try {
-      const services = await server.getPrimaryServices();
-      for (const service of services) {
-        try {
-          const chars = await service.getCharacteristics();
-          for (const char of chars) {
-            if (char.properties.notify || char.properties.indicate) {
-              console.log(`✅ Found notifiable characteristic on ${service.uuid}: ${char.uuid}`);
-              
-              await char.startNotifications();
-              char.addEventListener('characteristicvaluechanged', (event: Event) => {
-                const target = event.target as BluetoothRemoteGATTCharacteristic;
-                const value = target.value;
-                if (value) {
-                  this.handleNordicUartData(value, onDataCallback);
-                }
-              });
-              
-              this.activeServiceUuid = service.uuid;
-              this.activeCharacteristicUuid = char.uuid;
-              return true;
-            }
-          }
-        } catch {
-          continue;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to enumerate services:', e);
-    }
-    
-    return false;
   }
 
   /**
-   * Log raw data in hex for debugging
+   * Subscribe to Environment characteristic (FFF4)
+   * Format: 4 bytes, Little Endian
+   * - Bytes 0-1: Temperature (Int16, signed for negative temps) / 100.0
+   * - Bytes 2-3: Humidity (Uint16) / 100.0
    */
-  private logRawData(label: string, dataView: DataView): void {
+  private async subscribeToEnvCharacteristic(
+    service: BluetoothRemoteGATTService,
+    onDataCallback: (data: SensorReadingData) => void
+  ): Promise<void> {
+    try {
+      const envChar = await service.getCharacteristic(AirBeamAdapter.ENV_CHAR_UUID);
+      logger.info('✅ Found Environment characteristic (FFF4)');
+      
+      await envChar.startNotifications();
+      envChar.addEventListener('characteristicvaluechanged', (event: Event) => {
+        const target = event.target as BluetoothRemoteGATTCharacteristic;
+        const value = target.value;
+        if (value && value.byteLength >= 4) {
+          this.parseEnvData(value, onDataCallback);
+        }
+      });
+      
+      // Try initial read
+      try {
+        const initialValue = await envChar.readValue();
+        if (initialValue.byteLength >= 4) {
+          this.parseEnvData(initialValue, onDataCallback);
+        }
+      } catch {
+        logger.debug('Could not read initial Env value');
+      }
+    } catch (error) {
+      logger.warn('⚠️ Could not subscribe to Environment characteristic:', error);
+    }
+  }
+
+  /**
+   * Subscribe to Battery characteristic (FFF6)
+   * Format: 1 byte - Battery level %
+   */
+  private async subscribeToBatteryCharacteristic(
+    service: BluetoothRemoteGATTService,
+    onBatteryCallback?: (level: number) => void
+  ): Promise<void> {
+    try {
+      const batteryChar = await service.getCharacteristic(AirBeamAdapter.BATTERY_CHAR_UUID);
+      logger.info('✅ Found Battery characteristic (FFF6)');
+      
+      // Read initial value
+      try {
+        const value = await batteryChar.readValue();
+        if (value.byteLength >= 1) {
+          this.battery = value.getUint8(0);
+          logger.info(`🔋 AirBeam battery: ${this.battery}%`);
+          onBatteryCallback?.(this.battery);
+        }
+      } catch {
+        logger.debug('Could not read battery value');
+      }
+      
+      // Try to subscribe to notifications (may not be supported)
+      try {
+        await batteryChar.startNotifications();
+        batteryChar.addEventListener('characteristicvaluechanged', (event: Event) => {
+          const target = event.target as BluetoothRemoteGATTCharacteristic;
+          const value = target.value;
+          if (value && value.byteLength >= 1) {
+            this.battery = value.getUint8(0);
+            logger.info(`🔋 AirBeam battery update: ${this.battery}%`);
+            onBatteryCallback?.(this.battery);
+          }
+        });
+      } catch {
+        logger.debug('Battery characteristic does not support notifications');
+      }
+    } catch (error) {
+      logger.warn('⚠️ Could not access Battery characteristic:', error);
+    }
+  }
+
+  /**
+   * Parse PM data from FFF3 characteristic
+   */
+  private parsePMData(dataView: DataView, onDataCallback: (data: SensorReadingData) => void): void {
+    // Log raw bytes for debugging
     const bytes = [];
     for (let i = 0; i < dataView.byteLength; i++) {
       bytes.push(dataView.getUint8(i).toString(16).padStart(2, '0'));
     }
-    console.log(`🔢 ${label} raw bytes (${dataView.byteLength}):`, bytes.join(' '));
+    logger.info(`📦 AirBeam PM raw bytes: ${bytes.join(' ')}`);
     
-    // Also try to interpret as ASCII string
-    try {
-      const textDecoder = new TextDecoder('utf-8');
-      const buffer = new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength);
-      const text = textDecoder.decode(buffer);
-      if (/^[\x20-\x7E\r\n]+$/.test(text)) {
-        console.log(`📝 ${label} as text:`, text);
-      }
-    } catch {
-      // Ignore text decode errors
+    // Parse PM values (Uint16 Little Endian, direct µg/m³)
+    const pm1 = dataView.getUint16(0, true);
+    const pm25 = dataView.getUint16(2, true);
+    const pm10 = dataView.getUint16(4, true);
+    
+    logger.info(`📊 AirBeam PM parsed: PM1=${pm1}, PM2.5=${pm25}, PM10=${pm10} µg/m³`);
+    
+    // Update internal state
+    this.currentPM = { pm1, pm25, pm10 };
+    
+    // Emit merged reading
+    this.emitReading(onDataCallback);
+  }
+
+  /**
+   * Parse Environment data from FFF4 characteristic
+   */
+  private parseEnvData(dataView: DataView, onDataCallback: (data: SensorReadingData) => void): void {
+    // Log raw bytes for debugging
+    const bytes = [];
+    for (let i = 0; i < dataView.byteLength; i++) {
+      bytes.push(dataView.getUint8(i).toString(16).padStart(2, '0'));
     }
+    logger.info(`📦 AirBeam Env raw bytes: ${bytes.join(' ')}`);
+    
+    // Parse Temp (Int16 signed for negative temps) / 100.0
+    const tempRaw = dataView.getInt16(0, true);
+    const temp = tempRaw / 100.0;
+    
+    // Parse Humidity (Uint16) / 100.0
+    const humidityRaw = dataView.getUint16(2, true);
+    const humidity = humidityRaw / 100.0;
+    
+    logger.info(`📊 AirBeam Env parsed: Temp=${temp.toFixed(1)}°C, Humidity=${humidity.toFixed(1)}%`);
+    
+    // Update internal state
+    this.currentEnv = { temp, humidity };
+    
+    // Emit merged reading
+    this.emitReading(onDataCallback);
+  }
+
+  /**
+   * Emit a complete SensorReadingData by merging PM and Env data
+   */
+  private emitReading(onDataCallback: (data: SensorReadingData) => void): void {
+    const reading: SensorReadingData = {
+      pm1: this.currentPM.pm1,
+      pm25: this.currentPM.pm25,
+      pm10: this.currentPM.pm10,
+      temp: this.currentEnv.temp,
+      humidity: this.currentEnv.humidity,
+      pressure: undefined, // AirBeam doesn't report pressure
+      tvoc: undefined, // AirBeam doesn't report TVOC
+      battery: this.battery,
+      charging: this.charging === 1,
+      timestamp: createTimestamp(),
+      location: 'AirBeam Device',
+    };
+    
+    this.lastReading = reading;
+    onDataCallback(reading);
+    
+    logger.info('📤 AirBeam complete reading emitted:', {
+      pm1: reading.pm1,
+      pm25: reading.pm25,
+      pm10: reading.pm10,
+      temp: reading.temp,
+      humidity: reading.humidity,
+      battery: reading.battery
+    });
   }
 
   public updateBattery(level: number): void {
@@ -500,12 +341,18 @@ export class AirBeamAdapter implements ISensorAdapter {
     return this.charging === 1;
   }
 
+  /**
+   * AirBeam doesn't support pressure sensor
+   */
   public supportsPressure(): boolean {
-    return false; // AirBeam3 doesn't report pressure via BLE
+    return false;
   }
 
+  /**
+   * AirBeam doesn't support TVOC sensor
+   */
   public supportsTVOC(): boolean {
-    return false; // AirBeam does NOT support TVOC
+    return false;
   }
 }
 

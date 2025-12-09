@@ -17,9 +17,8 @@ const WEB_SCAN_OPTIONS = {
     // PMScan
     SENSOR_GATT_CONFIG.pmscan.serviceUuid,
     'f3641900-00b0-4240-ba50-05ca45bf8abc',
-    // AirBeam - candidates (UUIDs not confirmed)
-    '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART
-    '0000ffe0-0000-1000-8000-00805f9b34fb', // HM-10 Module
+    // AirBeam OFFICIAL FFF0 Service
+    '0000fff0-0000-1000-8000-00805f9b34fb', // OFFICIAL AirBeam FFF0 service
     SENSOR_GATT_CONFIG.airbeam.serviceUuid,
     // Atmotube PRO 2 - OFFICIAL UUID
     'bda3c091-e5e0-4dac-8170-7fcef187a1d0', // Official Atmotube PRO 2 service
