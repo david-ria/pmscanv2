@@ -99,6 +99,36 @@ export class AirBeamAdapter implements ISensorAdapter {
     this.server = server;
     this.device = device;
     
+    // DIAGNOSTIC: Enumerate ALL GATT services first
+    let discoveredServices: string[] = [];
+    try {
+      logger.info('🔍 [AirBeam] Enumerating ALL GATT services...');
+      const allServices = await server.getPrimaryServices();
+      logger.info(`📋 [AirBeam] Found ${allServices.length} services:`);
+      
+      for (const service of allServices) {
+        discoveredServices.push(service.uuid);
+        logger.info(`  → Service UUID: ${service.uuid}`);
+        
+        // Try to enumerate characteristics for each service
+        try {
+          const chars = await service.getCharacteristics();
+          for (const char of chars) {
+            const props = [];
+            if (char.properties.notify) props.push('notify');
+            if (char.properties.read) props.push('read');
+            if (char.properties.write) props.push('write');
+            if (char.properties.writeWithoutResponse) props.push('writeNoResp');
+            logger.info(`    → Characteristic: ${char.uuid} [${props.join(', ')}]`);
+          }
+        } catch (charErr) {
+          logger.debug(`    → Could not enumerate characteristics for ${service.uuid}`);
+        }
+      }
+    } catch (enumErr) {
+      logger.warn('⚠️ [AirBeam] Could not enumerate services:', enumErr);
+    }
+    
     try {
       logger.info('🔔 Initializing AirBeam notifications (FFF0 service)...');
       
@@ -118,7 +148,17 @@ export class AirBeamAdapter implements ISensorAdapter {
       logger.info('✅ AirBeam notifications initialized successfully');
     } catch (error) {
       logger.error('AirBeam: initializeNotifications failed:', error);
-      throw new Error('AirBeam: Could not find FFF0 service. Make sure AirBeam is powered on and in range.');
+      
+      // Format discovered services for error message
+      const servicesListShort = discoveredServices.length > 0
+        ? discoveredServices.map(uuid => {
+            // Shorten standard 128-bit UUIDs to 16-bit format if possible
+            const match = uuid.match(/^0000([0-9a-f]{4})-0000-1000-8000-00805f9b34fb$/i);
+            return match ? `0x${match[1].toUpperCase()}` : uuid.substring(0, 8) + '...';
+          }).join(', ')
+        : 'aucun service trouvé';
+      
+      throw new Error(`AirBeam: Service FFF0 introuvable. Services visibles: [${servicesListShort}]`);
     }
   }
 

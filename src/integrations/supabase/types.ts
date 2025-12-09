@@ -1051,7 +1051,6 @@ export type Database = {
       elevate_user_role:
         | {
             Args: {
-              change_reason?: string
               new_role: Database["public"]["Enums"]["app_role"]
               target_user_id: string
             }
@@ -1059,6 +1058,7 @@ export type Database = {
           }
         | {
             Args: {
+              change_reason?: string
               new_role: Database["public"]["Enums"]["app_role"]
               target_user_id: string
             }
