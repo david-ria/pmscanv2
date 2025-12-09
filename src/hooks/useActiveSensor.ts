@@ -247,9 +247,9 @@ export function useActiveSensor() {
       setIsConnecting(true);
 
       // ============================================================
-      // HARDCODED OPTIONS - Ne fait pas confiance aux imports !
+      // LISTE COMPLÈTE DES SERVICES - CRITIQUE POUR CHROME
       // ============================================================
-      const HARDCODED_OPTIONAL_SERVICES = [
+      const ALL_OPTIONAL_SERVICES = [
         '0000fff0-0000-1000-8000-00805f9b34fb', // AirBeam FFF0 - CRITIQUE
         '0000181a-0000-1000-8000-00805f9b34fb', // Environmental Sensing
         '0000180f-0000-1000-8000-00805f9b34fb', // Battery
@@ -261,18 +261,44 @@ export function useActiveSensor() {
         '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART
       ];
 
-      console.log('🚀 [SENSOR] Lancement du scan avec options HARDCODED...');
-      console.log('🔑 [SENSOR] optionalServices:', HARDCODED_OPTIONAL_SERVICES);
+      let device: BluetoothDevice;
 
-      // Scan avec acceptAllDevices + optionalServices explicite
-      // Cast nécessaire car TypeScript a une définition stricte de RequestDeviceOptions
-      const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: HARDCODED_OPTIONAL_SERVICES,
-      } as RequestDeviceOptions);
+      // ============================================================
+      // STRATÉGIE HYBRIDE : filters d'abord, puis fallback
+      // ============================================================
+      console.log('🚀 [SENSOR] Étape 1: Scan avec FILTERS (prioritaire)...');
+      
+      try {
+        // ESSAI 1: Scan avec filters incluant les services dans le filtre AirBeam
+        device = await navigator.bluetooth.requestDevice({
+          filters: [
+            { namePrefix: 'AirBeam', services: ['0000fff0-0000-1000-8000-00805f9b34fb'] },
+            { namePrefix: 'PMScan' },
+            { namePrefix: 'Atmotube' },
+            { namePrefix: 'PMSCAN' },
+            { namePrefix: 'ATMOTUBE' },
+          ],
+          optionalServices: ALL_OPTIONAL_SERVICES,
+        });
+        console.log('✅ [SENSOR] Appareil trouvé via FILTERS:', device.name || 'Unknown');
+        
+      } catch (filteredErr) {
+        // Si utilisateur annule ou aucun appareil, essayer le scan large
+        if (filteredErr instanceof Error && filteredErr.name === 'NotFoundError') {
+          console.log('⚠️ [SENSOR] Étape 2: Fallback vers acceptAllDevices...');
+          
+          device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: ALL_OPTIONAL_SERVICES,
+          } as RequestDeviceOptions);
+          
+          console.log('✅ [SENSOR] Appareil trouvé via acceptAllDevices:', device.name || 'Unknown');
+        } else {
+          throw filteredErr;
+        }
+      }
 
-      console.log('✅ [SENSOR] Appareil sélectionné:', device.name || 'Unknown');
-      console.log('🔑 [SENSOR] Services autorisés par Chrome: fff0, 181a, 180f, ffe0, f3641900, bda3c091, db450001, 6e400001');
+      console.log('🔑 [SENSOR] Services autorisés: fff0, 181a, 180f, ffe0, f3641900, bda3, db45, 6e40');
 
       // Après sélection par l'utilisateur, identifier le capteur et charger l'adaptateur
       await identifyAndConnect(device);

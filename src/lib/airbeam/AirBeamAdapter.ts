@@ -109,36 +109,71 @@ export class AirBeamAdapter implements ISensorAdapter {
     }
     logger.info('✅ [AirBeam] Connection stable after delay');
     
-    // DIAGNOSTIC: Enumerate ALL GATT services first
-    let discoveredServices: string[] = [];
-    try {
-      logger.info('🔍 [AirBeam] Enumerating ALL GATT services...');
-      const allServices = await server.getPrimaryServices();
-      logger.info(`📋 [AirBeam] Found ${allServices.length} services:`);
-      
-      for (const service of allServices) {
-        discoveredServices.push(service.uuid);
-        logger.info(`  → Service UUID: ${service.uuid}`);
+    // ============================================================
+    // RETRY LOOP: Enumerate services with retries
+    // ============================================================
+    let discoveredServices: BluetoothRemoteGATTService[] = [];
+    let retries = 3;
+    
+    while (retries > 0) {
+      try {
+        logger.info(`🔍 [AirBeam] Enumerating GATT services... (tentative ${4 - retries}/3)`);
+        discoveredServices = await server.getPrimaryServices();
         
-        // Try to enumerate characteristics for each service
-        try {
-          const chars = await service.getCharacteristics();
-          for (const char of chars) {
-            const props = [];
-            if (char.properties.notify) props.push('notify');
-            if (char.properties.read) props.push('read');
-            if (char.properties.write) props.push('write');
-            if (char.properties.writeWithoutResponse) props.push('writeNoResp');
-            logger.info(`    → Characteristic: ${char.uuid} [${props.join(', ')}]`);
-          }
-        } catch (charErr) {
-          logger.debug(`    → Could not enumerate characteristics for ${service.uuid}`);
+        if (discoveredServices.length > 0) {
+          logger.info(`📋 [AirBeam] Found ${discoveredServices.length} services!`);
+          break; // Success!
         }
+        
+        // Empty list - wait and retry
+        logger.warn(`⏳ [AirBeam] No services found, retrying in 500ms... (${retries - 1} left)`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        retries--;
+        
+      } catch (enumErr) {
+        logger.warn('⚠️ [AirBeam] Error enumerating services:', enumErr);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        retries--;
       }
-    } catch (enumErr) {
-      logger.warn('⚠️ [AirBeam] Could not enumerate services:', enumErr);
     }
     
+    // Log discovered services for debugging
+    const discoveredUuids: string[] = [];
+    for (const service of discoveredServices) {
+      discoveredUuids.push(service.uuid);
+      logger.info(`  → Service UUID: ${service.uuid}`);
+      
+      // Try to enumerate characteristics for each service
+      try {
+        const chars = await service.getCharacteristics();
+        for (const char of chars) {
+          const props = [];
+          if (char.properties.notify) props.push('notify');
+          if (char.properties.read) props.push('read');
+          if (char.properties.write) props.push('write');
+          if (char.properties.writeWithoutResponse) props.push('writeNoResp');
+          logger.info(`    → Characteristic: ${char.uuid} [${props.join(', ')}]`);
+        }
+      } catch (charErr) {
+        logger.debug(`    → Could not enumerate characteristics for ${service.uuid}`);
+      }
+    }
+    
+    // ============================================================
+    // FAIL-FAST: If still no services, give clear instructions
+    // ============================================================
+    if (discoveredServices.length === 0) {
+      throw new Error(
+        'AirBeam: Aucun service GATT découvert après 3 tentatives. ' +
+        'Solutions: 1) Allez dans chrome://bluetooth-internals → Devices → "Forget" l\'AirBeam ' +
+        '2) Désactivez/réactivez le Bluetooth sur l\'AirBeam ' +
+        '3) Redémarrez Chrome complètement'
+      );
+    }
+    
+    // ============================================================
+    // Subscribe to characteristics
+    // ============================================================
     try {
       logger.info('🔔 Initializing AirBeam notifications (FFF0 service)...');
       
@@ -160,15 +195,15 @@ export class AirBeamAdapter implements ISensorAdapter {
       logger.error('AirBeam: initializeNotifications failed:', error);
       
       // Format discovered services for error message
-      const servicesListShort = discoveredServices.length > 0
-        ? discoveredServices.map(uuid => {
+      const servicesListShort = discoveredUuids.length > 0
+        ? discoveredUuids.map(uuid => {
             // Shorten standard 128-bit UUIDs to 16-bit format if possible
             const match = uuid.match(/^0000([0-9a-f]{4})-0000-1000-8000-00805f9b34fb$/i);
             return match ? `0x${match[1].toUpperCase()}` : uuid.substring(0, 8) + '...';
           }).join(', ')
-        : 'aucun - Essayez: chrome://bluetooth-internals → Devices → Forget device, puis redémarrez Chrome';
+        : 'aucun';
       
-      throw new Error(`AirBeam: Service FFF0 introuvable. Services: [${servicesListShort}]`);
+      throw new Error(`AirBeam: Service FFF0 introuvable. Services trouvés: [${servicesListShort}]`);
     }
   }
 
