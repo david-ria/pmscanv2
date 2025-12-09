@@ -269,16 +269,17 @@ export function useActiveSensor() {
       console.log('🚀 [SENSOR] Étape 1: Scan avec FILTERS (prioritaire)...');
       
       try {
-        // ESSAI 1: Scan avec filters incluant les services dans le filtre AirBeam
+        // ESSAI 1: Scan avec filters par nom uniquement (pas de services dans filters!)
+        // Note: Les services ne doivent PAS être dans filters car AirBeam ne les annonce pas
         device = await navigator.bluetooth.requestDevice({
           filters: [
-            { namePrefix: 'AirBeam', services: ['0000fff0-0000-1000-8000-00805f9b34fb'] },
+            { namePrefix: 'AirBeam' },  // Juste le nom, PAS de services
             { namePrefix: 'PMScan' },
             { namePrefix: 'Atmotube' },
             { namePrefix: 'PMSCAN' },
             { namePrefix: 'ATMOTUBE' },
           ],
-          optionalServices: ALL_OPTIONAL_SERVICES,
+          optionalServices: ALL_OPTIONAL_SERVICES,  // Services déclarés ICI pour accès post-connexion
         });
         console.log('✅ [SENSOR] Appareil trouvé via FILTERS:', device.name || 'Unknown');
         
