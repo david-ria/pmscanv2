@@ -9,20 +9,23 @@ const WEB_SCAN_OPTIONS = {
   // On accepte tout car on ne connait pas les UUIDs exacts à l'avance
   acceptAllDevices: true,
   // CRITIQUE : Liste des services optionnels pour pouvoir lire les données après connexion
+  // Ces services DOIVENT être listés ici pour que Chrome autorise l'accès après connexion
   optionalServices: [
-    // Services standards
-    '0000180f-0000-1000-8000-00805f9b34fb', // Battery Service
-    '0000181a-0000-1000-8000-00805f9b34fb', // Environmental Sensing
-    '0000180a-0000-1000-8000-00805f9b34fb', // Device Information
+    // Services standards BLE
+    '0000180f-0000-1000-8000-00805f9b34fb', // Battery Service (0x180F)
+    '0000181a-0000-1000-8000-00805f9b34fb', // Environmental Sensing (0x181A)
+    '0000180a-0000-1000-8000-00805f9b34fb', // Device Information (0x180A)
+    
     // PMScan
     SENSOR_GATT_CONFIG.pmscan.serviceUuid,
-    'f3641900-00b0-4240-ba50-05ca45bf8abc',
-    // AirBeam OFFICIAL FFF0 Service
-    '0000fff0-0000-1000-8000-00805f9b34fb', // OFFICIAL AirBeam FFF0 service
-    SENSOR_GATT_CONFIG.airbeam.serviceUuid,
-    // Atmotube PRO 2 - OFFICIAL UUID
-    'bda3c091-e5e0-4dac-8170-7fcef187a1d0', // Official Atmotube PRO 2 service
-    '4b13a770-4ccb-11e5-a151-0002a5d5c51b', // Legacy Atmotube service
+    
+    // AirBeam 2/3 - CONFIRMÉ via nRF Connect
+    '0000fff0-0000-1000-8000-00805f9b34fb', // FFF0 Service Principal (PM + Env)
+    SENSOR_GATT_CONFIG.airbeam.serviceUuid, // Alias
+    
+    // Atmotube PRO / PRO 2
+    'bda3c091-e5e0-4dac-8170-7fcef187a1d0', // Atmotube PRO 2 service
+    'db450001-8e9a-4818-add7-6ed94a328ab4', // Atmotube PRO service
     SENSOR_GATT_CONFIG.atmotube.serviceUuid,
   ]
 } as RequestDeviceOptions;
