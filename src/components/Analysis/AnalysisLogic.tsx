@@ -731,12 +731,13 @@ ${eventAnalysisData.some(e => e.eventImpact > 50)
 
   // Generate analysis when missions or date filter changes
   useEffect(() => {
-    if (missions.length > 0 && !loading) {
+    if (missions.length > 0) {
       generateAnalysis();
       loadActivityData();
       loadEventAnalysis();
     }
-  }, [missions, selectedDate, selectedPeriod, loading, generateAnalysis, loadActivityData, loadEventAnalysis]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [missions.length, selectedDate, selectedPeriod]);
 
   const regenerateAnalysis = () => {
     setAnalysisGenerated(false);
