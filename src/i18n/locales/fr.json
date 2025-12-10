@@ -526,7 +526,27 @@
       },
       "mapView": "Carte",
       "satelliteView": "Satellite",
-      "buildings": "Bâtiments 3D"
+      "buildings": "Bâtiments 3D",
+      "tvocNote": "Données TVOC non disponibles pour les agrégats de groupe. Affichage des PM2.5 à la place."
+    },
+    "pollutantSelector": {
+      "pm1": "PM1",
+      "pm25": "PM2.5",
+      "pm10": "PM10",
+      "tvoc": "TVOC"
+    },
+    "personalMap": {
+      "title": "Carte de Mes Mesures",
+      "description": "Vue détaillée de vos mesures GPS",
+      "loading": "Chargement de vos données...",
+      "noData": "Aucune mesure avec données GPS pour cette période",
+      "legendPm": "Légende Qualité de l'Air (µg/m³)",
+      "legendTvoc": "Légende TVOC (ppb)",
+      "totalPoints": "Points de Mesure",
+      "missions": "Missions",
+      "tooltip": {
+        "title": "Mesure"
+      }
     },
     "environmental": {
       "title": "Conditions Environnementales",

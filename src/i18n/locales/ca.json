@@ -522,7 +522,27 @@
       },
       "mapView": "Mapa",
       "satelliteView": "Satèl·lit",
-      "buildings": "Edificis 3D"
+      "buildings": "Edificis 3D",
+      "tvocNote": "Dades de TVOC no disponibles per als agregats de grup. Es mostren les PM2.5."
+    },
+    "pollutantSelector": {
+      "pm1": "PM1",
+      "pm25": "PM2.5",
+      "pm10": "PM10",
+      "tvoc": "TVOC"
+    },
+    "personalMap": {
+      "title": "Mapa de les Meves Mesures",
+      "description": "Vista detallada de les teves mesures GPS",
+      "loading": "Carregant les teves dades...",
+      "noData": "Cap mesura amb dades GPS per a aquest període",
+      "legendPm": "Llegenda de Qualitat de l'Aire (µg/m³)",
+      "legendTvoc": "Llegenda TVOC (ppb)",
+      "totalPoints": "Punts de Mesura",
+      "missions": "Missions",
+      "tooltip": {
+        "title": "Mesura"
+      }
     },
     "environmental": {
       "title": "Condicions Ambientals",
