@@ -22,16 +22,20 @@ interface GeohashCell {
   last_measurement_time: string;
 }
 
+type PollutantType = 'pm1' | 'pm25' | 'pm10' | 'tvoc';
+
 interface CollaborativeMapProps {
   selectedDate: Date;
   selectedPeriod: 'day' | 'week' | 'month' | 'year';
+  pollutantType: PollutantType;
 }
 
-export function CollaborativeMap({ selectedDate, selectedPeriod }: CollaborativeMapProps) {
+export function CollaborativeMap({ selectedDate, selectedPeriod, pollutantType }: CollaborativeMapProps) {
   const { t } = useTranslation();
   const { activeGroup } = useGroupSettings();
   
-  const [pmType, setPmType] = useState<'pm1' | 'pm25' | 'pm10'>('pm25');
+  // Map pollutantType to pm field (TVOC not available in group aggregates, fallback to pm25)
+  const pmType = pollutantType === 'tvoc' ? 'pm25' : pollutantType;
   const [isSatellite, setIsSatellite] = useState(false);
   const [showBuildings, setShowBuildings] = useState(true);
   // Use group's geohash precision setting, defaulting to 6
@@ -516,20 +520,15 @@ export function CollaborativeMap({ selectedDate, selectedPeriod }: Collaborative
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Controls */}
-        <div className="space-y-2">
-          <Label htmlFor="pm-type-select">{t('analysis.collaborativeMap.pmType')}</Label>
-          <Select value={pmType} onValueChange={(v) => setPmType(v as typeof pmType)}>
-            <SelectTrigger id="pm-type-select">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pm1">PM1.0</SelectItem>
-              <SelectItem value="pm25">PM2.5</SelectItem>
-              <SelectItem value="pm10">PM10</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Note about TVOC */}
+        {pollutantType === 'tvoc' && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              {t('analysis.collaborativeMap.tvocNote')}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Map */}
         <div className="h-[50vh] sm:h-[60vh] lg:h-[calc(100vh-16rem)] lg:max-h-[900px] w-full rounded-lg overflow-hidden border border-border">

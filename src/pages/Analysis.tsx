@@ -1,18 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DateFilter } from '@/components/DateFilter';
-import { StatisticalAnalysis } from '@/components/Analysis/StatisticalAnalysis';
-import { DataSummary } from '@/components/Analysis/DataSummary';
-import { GroupComparison } from '@/components/Analysis/GroupComparison';
 import { CollaborativeMap } from '@/components/Analysis/CollaborativeMap';
-import { PollutionBreakdownChart } from '@/components/Analysis/PollutionBreakdown';
+import { PersonalDataMap } from '@/components/Analysis/PersonalDataMap';
+import { PollutantSelector, type PollutantType } from '@/components/Analysis/PollutantSelector';
 import { useAnalysisLogic } from '@/components/Analysis/AnalysisLogic';
-import { usePollutionBreakdownData } from '@/components/Analysis/PollutionBreakdown/usePollutionBreakdownData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
-import { calculateMissionStatistics } from '@/utils/missionStatistics';
-import { GroupExposureCharts } from '@/components/Analysis/GroupExposureCharts';
 
 export default function Analysis() {
   const { t } = useTranslation();
@@ -22,47 +16,13 @@ export default function Analysis() {
     'day' | 'week' | 'month' | 'year'
   >('day');
   const [activeTab, setActiveTab] = useState<'personal' | 'group'>('personal');
-  
-  // State for breakdown controls
-  const [pmType, setPmType] = useState<'pm1' | 'pm25' | 'pm10'>('pm25');
-  const [breakdownType, setBreakdownType] = useState<'location' | 'activity' | 'autocontext'>('activity');
+  const [pollutantType, setPollutantType] = useState<PollutantType>('pm25');
 
   const {
     filteredMissions,
-    statisticalAnalysis,
-    dataPoints,
     loading,
     loadingMeasurements,
-    regenerateAnalysis,
   } = useAnalysisLogic(selectedDate, selectedPeriod, activeTab === 'personal');
-
-  // Compute breakdown data in parent
-  const breakdownData = usePollutionBreakdownData(
-    filteredMissions,
-    selectedPeriod,
-    selectedDate,
-    breakdownType,
-    pmType
-  );
-
-  // Calculate user stats using unified statistics utility
-  const stats = calculateMissionStatistics(filteredMissions);
-  
-  const userStats = {
-    totalExposureMinutes: stats.totalExposureMinutes,
-    averagePM25: stats.avgPm25,
-    maxPM25: stats.maxPm25,
-    timeAboveWHO: stats.timeAboveWHO_PM25,
-  };
-
-  // Environmental statistics for display
-  const environmentalStats = {
-    avgTemperature: stats.avgTemperature,
-    avgHumidity: stats.avgHumidity,
-    avgPressure: stats.avgPressure,
-    avgTvoc: stats.avgTvoc,
-    maxTvoc: stats.maxTvoc,
-  };
 
   return (
     <div className="min-h-screen bg-background px-2 sm:px-4 py-4 sm:py-6">
@@ -77,106 +37,49 @@ export default function Analysis() {
         onDateChange={setSelectedDate}
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
-        className="mb-4 sm:mb-6"
+        className="mb-4"
+      />
+
+      {/* Pollutant Selector */}
+      <PollutantSelector
+        value={pollutantType}
+        onChange={setPollutantType}
       />
 
       {/* Tabs: Personal / Group */}
       {isGroupMode ? (
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'personal' | 'group')} className="mb-4 sm:mb-6">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'personal' | 'group')} className="mt-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="personal">{t('analysis.myData')}</TabsTrigger>
             <TabsTrigger value="group">{t('analysis.groupData')}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="personal" className="space-y-4 sm:space-y-6">
-            {/* Pollution Breakdown Chart */}
-            {loadingMeasurements ? (
-              <div className="space-y-4">
-                <Skeleton className="h-8 w-64" />
-                <Skeleton className="h-[400px] w-full" />
-              </div>
-            ) : (
-              <>
-                <PollutionBreakdownChart
-                  missions={filteredMissions}
-                  selectedPeriod={selectedPeriod}
-                  selectedDate={selectedDate}
-                  pmType={pmType}
-                  breakdownType={breakdownType}
-                  onPmTypeChange={setPmType}
-                  onBreakdownTypeChange={setBreakdownType}
-                />
-
-                {/* Statistical Analysis Report - Temporarily hidden */}
-                {/* <StatisticalAnalysis
-                  statisticalAnalysis={statisticalAnalysis}
-                  loading={loading}
-                  onRegenerate={regenerateAnalysis}
-                  selectedPeriod={selectedPeriod}
-                  selectedDate={selectedDate}
-                  breakdownData={breakdownData}
-                  pmType={pmType}
-                  breakdownType={breakdownType}
-                /> */}
-              </>
-            )}
+          <TabsContent value="personal" className="mt-4">
+            <PersonalDataMap
+              selectedDate={selectedDate}
+              selectedPeriod={selectedPeriod}
+              pollutantType={pollutantType}
+              filteredMissions={filteredMissions}
+            />
           </TabsContent>
 
-          <TabsContent value="group" className="space-y-4 sm:space-y-6">
-            {/* Group Exposure Statistics */}
-            <GroupExposureCharts
-              selectedPeriod={selectedPeriod}
-              selectedDate={selectedDate}
-            />
-            
-            {/* Collaborative Map */}
+          <TabsContent value="group" className="mt-4">
             <CollaborativeMap
               selectedPeriod={selectedPeriod}
               selectedDate={selectedDate}
+              pollutantType={pollutantType}
             />
-            
-            {/* Group Comparison - Temporarily hidden */}
-            {/* <GroupComparison
-              userStats={userStats}
-              selectedPeriod={selectedPeriod}
-              selectedDate={selectedDate}
-            /> */}
           </TabsContent>
         </Tabs>
       ) : (
-        <>
-          {/* Pollution Breakdown Chart */}
-          {loadingMeasurements ? (
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-[400px] w-full" />
-            </div>
-          ) : (
-            <>
-              <PollutionBreakdownChart
-                missions={filteredMissions}
-                selectedPeriod={selectedPeriod}
-                selectedDate={selectedDate}
-                pmType={pmType}
-                breakdownType={breakdownType}
-                onPmTypeChange={setPmType}
-                onBreakdownTypeChange={setBreakdownType}
-              />
-
-              {/* Statistical Analysis Report - Temporarily hidden */}
-              {/* <StatisticalAnalysis
-                statisticalAnalysis={statisticalAnalysis}
-                loading={loading}
-                onRegenerate={regenerateAnalysis}
-                selectedPeriod={selectedPeriod}
-                selectedDate={selectedDate}
-                breakdownData={breakdownData}
-                pmType={pmType}
-                breakdownType={breakdownType}
-              /> */}
-            </>
-          )}
-        </>
+        <div className="mt-4">
+          <PersonalDataMap
+            selectedDate={selectedDate}
+            selectedPeriod={selectedPeriod}
+            pollutantType={pollutantType}
+            filteredMissions={filteredMissions}
+          />
+        </div>
       )}
     </div>
   );
