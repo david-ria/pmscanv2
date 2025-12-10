@@ -165,7 +165,8 @@ export function MissionDetailsDialog({
     .map((m) => ({
       longitude: m.longitude!,
       latitude: m.latitude!,
-      pm25: m.pm25,
+      pollutantValue: m.pm25,
+      pollutantType: 'pm25' as const,
       timestamp: m.timestamp,
     }));
 

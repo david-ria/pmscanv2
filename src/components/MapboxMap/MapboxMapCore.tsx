@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, Map as MapIcon } from 'lucide-react';
 import { LocationData } from '@/types/PMScan';
 import { useThresholds } from '@/contexts/ThresholdContext';
+import type { PollutantType } from '@/lib/mapbox/mapStyles';
 
 // Dynamic imports - no static imports for mapbox or related modules
 // These will be loaded only when the map is actually requested
@@ -20,12 +21,14 @@ interface MapboxMapCoreProps {
   trackPoints?: Array<{
     longitude: number;
     latitude: number;
-    pm25: number;
+    pollutantValue: number;
+    pollutantType: PollutantType;
     timestamp: Date;
   }>;
   isRecording?: boolean;
   className?: string;
   autoLoadOnRecording?: boolean;
+  pollutantType?: PollutantType;
 }
 
 export const MapboxMapCore = ({
@@ -35,6 +38,7 @@ export const MapboxMapCore = ({
   isRecording = false,
   className,
   autoLoadOnRecording = false,
+  pollutantType = 'pm25',
 }: MapboxMapCoreProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
@@ -213,15 +217,15 @@ export const MapboxMapCore = ({
     })();
   }, [trackPoints, isRecording, mapboxLoaded]);
 
-  // Update map styling when thresholds change (only if map is loaded)
+  // Update map styling when thresholds or pollutant type change (only if map is loaded)
   useEffect(() => {
     if (!map.current || !mapboxLoaded) return;
     
     (async () => {
       const { updateLayerStyles } = await import('@/lib/mapbox/mapLayers');
-      updateLayerStyles(map.current, thresholds);
+      updateLayerStyles(map.current, thresholds, pollutantType);
     })();
-  }, [thresholds, mapboxLoaded]);
+  }, [thresholds, pollutantType, mapboxLoaded]);
 
   // Toggle between satellite and map view
   const handleToggleMapStyle = async () => {
@@ -233,7 +237,8 @@ export const MapboxMapCore = ({
       isSatellite,
       trackPoints,
       thresholds,
-      setIsSatellite
+      setIsSatellite,
+      pollutantType
     );
   };
 

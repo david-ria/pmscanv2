@@ -1,4 +1,4 @@
-import { createMapStyleExpression } from './mapStyles';
+import { createMapStyleExpression, PollutantType } from './mapStyles';
 
 // Dynamic import types for better tree shaking
 type MapboxMap = any;
@@ -32,7 +32,7 @@ export const addTrackDataSources = (map: MapboxMap) => {
   }
 };
 
-export const addTrackLayers = (map: MapboxMap, thresholds: any) => {
+export const addTrackLayers = (map: MapboxMap, thresholds: any, pollutantType: PollutantType = 'pm25') => {
   if (!map) return;
   
   // Add track line layer only if it doesn't exist
@@ -66,7 +66,7 @@ export const addTrackLayers = (map: MapboxMap, thresholds: any) => {
           8,
           6,
         ],
-        'circle-color': createMapStyleExpression(thresholds),
+        'circle-color': createMapStyleExpression(thresholds, pollutantType),
         'circle-stroke-width': 0,
         'circle-stroke-color': 'transparent',
         'circle-opacity': 1,
@@ -80,7 +80,8 @@ export const updateTrackData = (
   trackPoints: Array<{
     longitude: number;
     latitude: number;
-    pm25: number;
+    pollutantValue: number;
+    pollutantType: PollutantType;
     timestamp: Date;
   }>,
   isRecording: boolean
@@ -96,7 +97,8 @@ export const updateTrackData = (
       coordinates: [point.longitude, point.latitude],
     },
     properties: {
-      pm25: point.pm25,
+      pollutantValue: point.pollutantValue,
+      pollutantType: point.pollutantType,
       timestamp: point.timestamp.toISOString(),
     },
   }));
@@ -152,14 +154,14 @@ export const updateTrackData = (
   }
 };
 
-export const updateLayerStyles = (map: MapboxMap, thresholds: any) => {
+export const updateLayerStyles = (map: MapboxMap, thresholds: any, pollutantType: PollutantType = 'pm25') => {
   if (!map || !map.getLayer('track-points')) return;
 
-  // Update the circle color expression with new thresholds
+  // Update the circle color expression with new thresholds and pollutant type
   map.setPaintProperty(
     'track-points',
     'circle-color',
-    createMapStyleExpression(thresholds)
+    createMapStyleExpression(thresholds, pollutantType)
   );
   
   // Ensure stroke properties remain disabled

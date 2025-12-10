@@ -51,6 +51,8 @@ interface EventData {
   comment?: string;
 }
 
+type PollutantType = 'pm1' | 'pm25' | 'pm10' | 'tvoc';
+
 interface PMLineGraphProps {
   data: Array<{
     pmData: PMScanData;
@@ -74,9 +76,19 @@ interface PMLineGraphProps {
     activityContext?: string;
   };
   variant?: 'realtime' | 'history';
+  visiblePollutants?: PollutantType[];
 }
 
-export function PMLineGraph({ data, events = [], className, hideTitle = false, highlightContextType, missionContext, variant = 'realtime' }: PMLineGraphProps) {
+export function PMLineGraph({ 
+  data, 
+  events = [], 
+  className, 
+  hideTitle = false, 
+  highlightContextType, 
+  missionContext, 
+  variant = 'realtime',
+  visiblePollutants = ['pm1', 'pm25', 'pm10']
+}: PMLineGraphProps) {
   const { t } = useTranslation();
   const { getCurrentThresholds, isGroupMode, activeGroup } = useGroupSettings();
   const chartColors = useChartColors();
@@ -388,30 +400,47 @@ export function PMLineGraph({ data, events = [], className, hideTitle = false, h
             }
             height={variant === 'history' ? 36 : undefined}
           />
-          <Line
-            type="monotone"
-            dataKey="PM1"
-            stroke={chartColors.pm1}
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 5, stroke: chartColors.pm1 }}
-          />
-          <Line
-            type="monotone"
-            dataKey="PM25"
-            stroke={chartColors.pm25}
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 5, stroke: chartColors.pm25 }}
-          />
-          <Line
-            type="monotone"
-            dataKey="PM10"
-            stroke={chartColors.pm10}
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 5, stroke: chartColors.pm10 }}
-          />
+          {visiblePollutants.includes('pm1') && (
+            <Line
+              type="monotone"
+              dataKey="PM1"
+              stroke={chartColors.pm1}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 5, stroke: chartColors.pm1 }}
+            />
+          )}
+          {visiblePollutants.includes('pm25') && (
+            <Line
+              type="monotone"
+              dataKey="PM25"
+              stroke={chartColors.pm25}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 5, stroke: chartColors.pm25 }}
+            />
+          )}
+          {visiblePollutants.includes('pm10') && (
+            <Line
+              type="monotone"
+              dataKey="PM10"
+              stroke={chartColors.pm10}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 5, stroke: chartColors.pm10 }}
+            />
+          )}
+          {visiblePollutants.includes('tvoc') && (
+            <Line
+              type="monotone"
+              dataKey="tvoc"
+              stroke={getCSSColor('--chart-tvoc')}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 5, stroke: getCSSColor('--chart-tvoc') }}
+              yAxisId="right"
+            />
+          )}
           {/* Context highlighted areas with labels */}
           {contextPeriods.map((period, index) => {
             const periodWidth = period.end - period.start;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WifiOff, Map, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MapboxMap } from '@/components/MapboxMap';
@@ -6,6 +6,7 @@ import { PMLineGraph } from '@/components/PMLineGraph';
 import { SensorReadingData, PMScanDevice } from '@/types/sensor';
 import { LocationData } from '@/types/PMScan';
 import { useTranslation } from 'react-i18next';
+import { PollutantViewSelector, PollutantType } from './PollutantViewSelector';
 
 interface RecordingEntry {
   pmData: SensorReadingData;
@@ -53,15 +54,26 @@ export function MapGraphToggle({
   locationEnabled,
 }: MapGraphToggleProps) {
   const { t } = useTranslation();
+  
+  // Pollutant selection state
+  const [mapPollutant, setMapPollutant] = useState<PollutantType>('pm25');
+  const [graphPollutants, setGraphPollutants] = useState<PollutantType[]>(['pm1', 'pm25', 'pm10']);
 
-  // Calculate track points for the map
+  // Calculate track points for the map with selected pollutant
   const trackPoints = recordingData
-    .map((entry) => ({
-      longitude: entry.location?.longitude || 0,
-      latitude: entry.location?.latitude || 0,
-      pm25: entry.pmData.pm25,
-      timestamp: entry.pmData.timestamp,
-    }))
+    .map((entry) => {
+      const pollutantValue = mapPollutant === 'tvoc' 
+        ? (entry.pmData.tvoc ?? 0)
+        : entry.pmData[mapPollutant] ?? entry.pmData.pm25;
+      
+      return {
+        longitude: entry.location?.longitude || 0,
+        latitude: entry.location?.latitude || 0,
+        pollutantValue,
+        pollutantType: mapPollutant,
+        timestamp: entry.pmData.timestamp,
+      };
+    })
     .filter((point) => point.longitude !== 0 && point.latitude !== 0);
 
   return (
@@ -98,6 +110,7 @@ export function MapGraphToggle({
             events={events} 
             className="h-full"
             highlightContextType="location"
+            visiblePollutants={graphPollutants}
           />
         ) : (
           <>
@@ -125,11 +138,26 @@ export function MapGraphToggle({
                 isRecording={isRecording}
                 className="h-full w-full"
                 autoLoadOnRecording={true}
+                pollutantType={mapPollutant}
               />
             )}
           </>
         )}
       </div>
+
+      {/* Pollutant Selector */}
+      <PollutantViewSelector
+        mode={showGraph ? 'multi' : 'single'}
+        selectedPollutants={showGraph ? graphPollutants : [mapPollutant]}
+        onChange={(selected) => {
+          if (showGraph) {
+            setGraphPollutants(selected);
+          } else {
+            setMapPollutant(selected[0]);
+          }
+        }}
+        className="mt-3"
+      />
     </div>
   );
 }

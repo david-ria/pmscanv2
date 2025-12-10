@@ -1,4 +1,4 @@
-import { MAP_STYLES, createMapStyleExpression } from './mapStyles';
+import { MAP_STYLES, createMapStyleExpression, PollutantType } from './mapStyles';
 import { reAddEventListeners } from './mapEventHandlers';
 
 // Dynamic import types for better tree shaking
@@ -10,11 +10,13 @@ export const toggleMapStyle = (
   trackPoints: Array<{
     longitude: number;
     latitude: number;
-    pm25: number;
+    pollutantValue: number;
+    pollutantType: PollutantType;
     timestamp: Date;
   }>,
   thresholds: any,
-  onStyleChange: (newIsSatellite: boolean) => void
+  onStyleChange: (newIsSatellite: boolean) => void,
+  pollutantType: PollutantType = 'pm25'
 ) => {
   const newStyle = isSatellite ? MAP_STYLES.LIGHT : MAP_STYLES.SATELLITE;
 
@@ -51,7 +53,8 @@ export const toggleMapStyle = (
             coordinates: [point.longitude, point.latitude],
           },
           properties: {
-            pm25: point.pm25,
+            pollutantValue: point.pollutantValue,
+            pollutantType: point.pollutantType,
             timestamp: point.timestamp.toISOString(),
           },
         })),
@@ -85,7 +88,7 @@ export const toggleMapStyle = (
           8,
           6,
         ],
-        'circle-color': createMapStyleExpression(thresholds),
+        'circle-color': createMapStyleExpression(thresholds, pollutantType),
         'circle-stroke-width': 2,
         'circle-stroke-color': '#ffffff',
         'circle-opacity': 0.8,

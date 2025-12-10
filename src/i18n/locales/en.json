@@ -539,6 +539,10 @@
     "mapWillLoadWhenRecording": "Map will load when recording starts",
     "connectSensor": "Connect your PMScan sensor to see real-time data",
     "lastMeasurement": "Last measurement",
+    "pollutantSelector": {
+      "mapInfo": "Points colored by selected pollutant",
+      "graphInfo": "Select pollutants to display"
+    },
     "airQuality": {
       "good": "Good",
       "moderate": "Moderate",
