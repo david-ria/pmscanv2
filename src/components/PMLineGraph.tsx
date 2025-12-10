@@ -482,6 +482,7 @@ export function PMLineGraph({
                   x={centerX}
                   stroke="transparent"
                   strokeWidth={0}
+                  yAxisId="left"
                   label={{
                     value: `${period.pm25Average.toFixed(1)} µg/m³`,
                     position: 'top',
@@ -501,6 +502,7 @@ export function PMLineGraph({
                   x={centerX}
                   stroke="transparent"
                   strokeWidth={0}
+                  yAxisId="left"
                   label={{
                     value: period.label,
                     position: 'top',
@@ -532,12 +534,14 @@ export function PMLineGraph({
                   stroke={chartColors.event}
                   strokeWidth={3}
                   strokeDasharray="3 3"
+                  yAxisId="left"
                 />
                 {/* Event label positioned above the line */}
                 <ReferenceLine
                   x={event.chartPosition}
                   stroke="transparent"
                   strokeWidth={0}
+                  yAxisId="left"
                   label={{
                     value: displayLabel,
                     position: 'top',
