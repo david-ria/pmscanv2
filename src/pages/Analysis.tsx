@@ -4,6 +4,7 @@ import { DateFilter } from '@/components/DateFilter';
 import { CollaborativeMap } from '@/components/Analysis/CollaborativeMap';
 import { PersonalDataMap } from '@/components/Analysis/PersonalDataMap';
 import { PollutantSelector, type PollutantType } from '@/components/Analysis/PollutantSelector';
+import { ExposureAnalysisSection } from '@/components/Analysis/ExposureAnalysisSection';
 import { useAnalysisLogic } from '@/components/Analysis/AnalysisLogic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
@@ -61,6 +62,12 @@ export default function Analysis() {
               pollutantType={pollutantType}
               filteredMissions={filteredMissions}
             />
+            <ExposureAnalysisSection
+              missions={filteredMissions}
+              selectedPeriod={selectedPeriod}
+              selectedDate={selectedDate}
+              pollutantType={pollutantType}
+            />
           </TabsContent>
 
           <TabsContent value="group" className="mt-4">
@@ -78,6 +85,12 @@ export default function Analysis() {
             selectedPeriod={selectedPeriod}
             pollutantType={pollutantType}
             filteredMissions={filteredMissions}
+          />
+          <ExposureAnalysisSection
+            missions={filteredMissions}
+            selectedPeriod={selectedPeriod}
+            selectedDate={selectedDate}
+            pollutantType={pollutantType}
           />
         </div>
       )}

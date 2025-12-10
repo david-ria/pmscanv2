@@ -531,6 +531,21 @@
       "pm10": "PM10",
       "tvoc": "TVOC"
     },
+    "exposureAnalysis": {
+      "title": "Anàlisi d'exposició",
+      "byLocation": "Localització",
+      "byActivity": "Activitat",
+      "byAutocontext": "Auto-Context",
+      "chartTitle": "Exposició acumulada",
+      "detailsTitle": "Detalls",
+      "timeSpent": "Temps",
+      "average": "Mitjana",
+      "exposure": "Dosi",
+      "percentage": "Part",
+      "noData": "Sense dades per aquest període",
+      "aboveWHO": "Per sobre del llindar OMS ({{threshold}} {{unit}})",
+      "belowWHO": "Per sota del llindar OMS"
+    },
     "personalMap": {
       "title": "Mapa de les Meves Mesures",
       "description": "Vista detallada de les teves mesures GPS",
