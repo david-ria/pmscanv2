@@ -5,6 +5,7 @@ import { CollaborativeMap } from '@/components/Analysis/CollaborativeMap';
 import { PersonalDataMap } from '@/components/Analysis/PersonalDataMap';
 import { PollutantSelector, type PollutantType } from '@/components/Analysis/PollutantSelector';
 import { ExposureAnalysisSection } from '@/components/Analysis/ExposureAnalysisSection';
+import { GroupExposureAnalysisSection } from '@/components/Analysis/GroupExposureAnalysisSection';
 import { useAnalysisLogic } from '@/components/Analysis/AnalysisLogic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGroupSettings } from '@/hooks/useGroupSettings';
@@ -72,6 +73,11 @@ export default function Analysis() {
 
           <TabsContent value="group" className="mt-4">
             <CollaborativeMap
+              selectedPeriod={selectedPeriod}
+              selectedDate={selectedDate}
+              pollutantType={pollutantType}
+            />
+            <GroupExposureAnalysisSection
               selectedPeriod={selectedPeriod}
               selectedDate={selectedDate}
               pollutantType={pollutantType}
