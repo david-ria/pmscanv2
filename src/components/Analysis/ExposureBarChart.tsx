@@ -21,11 +21,11 @@ interface ExposureBarChartProps {
 export const ExposureBarChart = ({ data, pollutantType }: ExposureBarChartProps) => {
   const { t } = useTranslation();
 
-  const unit = pollutantType === 'tvoc' ? 'ppb·h' : 'µg·h/m³';
+  const doseUnit = pollutantType === 'tvoc' ? 'ppb·h' : 'µg·h/m³';
 
   const chartData = useMemo(() => {
     return data
-      .sort((a, b) => b.cumulativeDose - a.cumulativeDose)
+      .sort((a, b) => b.percentage - a.percentage)
       .map((item) => ({
         ...item,
         shortName: item.name.length > 12 ? item.name.slice(0, 10) + '...' : item.name,
@@ -49,10 +49,10 @@ export const ExposureBarChart = ({ data, pollutantType }: ExposureBarChartProps)
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
           <p className="font-semibold text-foreground">{item.name}</p>
           <div className="text-sm text-muted-foreground space-y-1 mt-1">
-            <p>{t('analysis.exposureAnalysis.cumulativeExposure')}: {item.cumulativeDose.toFixed(1)} {unit}</p>
+            <p>{t('analysis.exposureAnalysis.percentage')}: {item.percentage.toFixed(1)}%</p>
             <p>{t('analysis.exposureAnalysis.average')}: {item.avgPM.toFixed(1)} {pollutantType === 'tvoc' ? 'ppb' : 'µg/m³'}</p>
             <p>{t('analysis.exposureAnalysis.timeSpent')}: {Math.round(item.exposure)} min</p>
-            <p>{t('analysis.exposureAnalysis.percentage')}: {item.percentage.toFixed(1)}%</p>
+            <p>{t('analysis.exposureAnalysis.cumulativeExposure')}: {item.cumulativeDose.toFixed(1)} {doseUnit}</p>
           </div>
         </div>
       );
@@ -81,16 +81,11 @@ export const ExposureBarChart = ({ data, pollutantType }: ExposureBarChartProps)
               />
               <YAxis 
                 tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                tickFormatter={(value) => value.toFixed(0)}
-                label={{ 
-                  value: unit, 
-                  angle: -90, 
-                  position: 'insideLeft',
-                  style: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' }
-                }}
+                tickFormatter={(value) => `${value.toFixed(0)}%`}
+                domain={[0, 100]}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="cumulativeDose" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="percentage" radius={[4, 4, 0, 0]}>
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
