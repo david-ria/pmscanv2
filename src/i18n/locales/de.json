@@ -531,6 +531,21 @@
       "pm10": "PM10",
       "tvoc": "TVOC"
     },
+    "exposureAnalysis": {
+      "title": "Expositionsanalyse",
+      "byLocation": "Standort",
+      "byActivity": "Aktivität",
+      "byAutocontext": "Auto-Kontext",
+      "chartTitle": "Kumulative Exposition",
+      "detailsTitle": "Details",
+      "timeSpent": "Zeit",
+      "average": "Durchschnitt",
+      "exposure": "Dosis",
+      "percentage": "Anteil",
+      "noData": "Keine Daten für diesen Zeitraum",
+      "aboveWHO": "Über WHO-Grenzwert ({{threshold}} {{unit}})",
+      "belowWHO": "Unter WHO-Grenzwert"
+    },
     "personalMap": {
       "title": "Meine Messkarte",
       "description": "Detaillierte Ansicht Ihrer GPS-Messungen",
