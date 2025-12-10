@@ -373,6 +373,10 @@
       "poor": "Dolent",
       "veryPoor": "Molt dolent"
     },
+    "pollutantSelector": {
+      "mapInfo": "Punts acolorits pel contaminant seleccionat",
+      "graphInfo": "Seleccioneu els contaminants a mostrar"
+    },
     "environmental": {
       "temperature": "Temp",
       "humidity": "Humitat",

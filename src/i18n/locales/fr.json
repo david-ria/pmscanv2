@@ -374,6 +374,10 @@
       "poor": "Mauvais",
       "veryPoor": "Très mauvais"
     },
+    "pollutantSelector": {
+      "mapInfo": "Points colorés par polluant sélectionné",
+      "graphInfo": "Sélectionnez les polluants à afficher"
+    },
     "environmental": {
       "temperature": "Temp",
       "humidity": "Humidité",

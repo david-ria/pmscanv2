@@ -373,6 +373,10 @@
       "poor": "Schlecht",
       "veryPoor": "Sehr schlecht"
     },
+    "pollutantSelector": {
+      "mapInfo": "Punkte nach ausgewähltem Schadstoff gefärbt",
+      "graphInfo": "Schadstoffe zum Anzeigen auswählen"
+    },
     "environmental": {
       "temperature": "Temp",
       "humidity": "Feucht.",
