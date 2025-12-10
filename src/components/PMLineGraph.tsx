@@ -374,11 +374,23 @@ export function PMLineGraph({
             }}
           />
           <YAxis
+            yAxisId="left"
             tick={{ fontSize: 12 }}
             width={30}
             domain={[0, 'dataMax + 5']}
             allowDataOverflow={false}
           />
+          {visiblePollutants.includes('tvoc') && (
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tick={{ fontSize: 12 }}
+              width={40}
+              domain={[0, 'dataMax + 50']}
+              allowDataOverflow={false}
+              label={{ value: 'ppb', angle: 90, position: 'insideRight', fontSize: 10 }}
+            />
+          )}
           <Tooltip
             formatter={formatTooltip}
             labelFormatter={(label) => {
@@ -408,6 +420,7 @@ export function PMLineGraph({
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 5, stroke: chartColors.pm1 }}
+              yAxisId="left"
             />
           )}
           {visiblePollutants.includes('pm25') && (
@@ -418,6 +431,7 @@ export function PMLineGraph({
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 5, stroke: chartColors.pm25 }}
+              yAxisId="left"
             />
           )}
           {visiblePollutants.includes('pm10') && (
@@ -428,6 +442,7 @@ export function PMLineGraph({
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 5, stroke: chartColors.pm10 }}
+              yAxisId="left"
             />
           )}
           {visiblePollutants.includes('tvoc') && (
