@@ -248,26 +248,42 @@ export const MapboxMapCore = ({
     handleLoadMap();
   };
 
+  // Check if it's a module loading error (stale cache after deployment)
+  const isModuleLoadError = error?.includes('dynamically imported module') || error?.includes('Failed to fetch');
+
   if (error) {
     return (
       <Card className={`p-6 ${className || ''}`}>
         <div className="flex flex-col items-center justify-center h-full text-center">
           <AlertTriangle className="h-8 w-8 text-destructive mb-3" />
-          <p className="text-sm text-muted-foreground mb-4">{error}</p>
-          <Button 
-            variant="outline" 
-            onClick={handleLoadMap}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Retrying...
-              </>
+          <p className="text-sm text-destructive/80 mb-2 max-w-md break-words">
+            {isModuleLoadError ? 'Map module failed to load (cache may be outdated)' : error}
+          </p>
+          <div className="flex gap-2 flex-wrap justify-center">
+            {isModuleLoadError ? (
+              <Button 
+                variant="default" 
+                onClick={() => window.location.reload()}
+              >
+                Refresh Page
+              </Button>
             ) : (
-              'Retry Map Load'
+              <Button 
+                variant="outline" 
+                onClick={handleLoadMap}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Retrying...
+                  </>
+                ) : (
+                  'Retry Map Load'
+                )}
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
       </Card>
     );
