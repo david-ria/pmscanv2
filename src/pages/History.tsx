@@ -18,6 +18,7 @@ import { useMissionManagement } from '@/hooks/useMissionManagement';
 import { useHistoryStats } from '@/hooks/useHistoryStats';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 export default function History() {
   const { t } = useTranslation();
@@ -25,7 +26,8 @@ export default function History() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedPeriod, setSelectedPeriod] = useState<
     'day' | 'week' | 'month' | 'year'
-  >('day');
+  >('week');
+  const [showAllMissions, setShowAllMissions] = useState(false);
 
   const {
     missions,
@@ -46,6 +48,11 @@ export default function History() {
 
   // Filter missions based on selected date and period
   const filteredMissions = useMemo(() => {
+    // If showing all missions, skip filtering
+    if (showAllMissions) {
+      return missions;
+    }
+
     let startDate: Date;
     let endDate: Date;
 
@@ -71,10 +78,25 @@ export default function History() {
     }
 
     return missions.filter((mission) => {
-      const missionDate = new Date(mission.startTime);
+      // Ensure startTime is a Date object (it might be a string from JSON)
+      const missionDate = mission.startTime instanceof Date 
+        ? mission.startTime 
+        : new Date(mission.startTime);
+      
+      // Check if valid date
+      if (isNaN(missionDate.getTime())) {
+        console.warn('Invalid mission date:', mission.startTime);
+        return false;
+      }
+      
       return isWithinInterval(missionDate, { start: startDate, end: endDate });
     });
-  }, [missions, selectedDate, selectedPeriod]);
+  }, [missions, selectedDate, selectedPeriod, showAllMissions]);
+
+  // Reset showAllMissions when date filter changes
+  useEffect(() => {
+    setShowAllMissions(false);
+  }, [selectedDate, selectedPeriod]);
 
   const periodStats = useHistoryStats(filteredMissions);
   const unsyncedCount = missions.filter((m) => !m.synced).length;
@@ -111,7 +133,7 @@ export default function History() {
 
       {/* Period Stats */}
       <StatsCard
-        title={`${t('history.summary')} - ${getPeriodLabel()}`}
+        title={`${t('history.summary')} - ${showAllMissions ? t('history.allMissions') : getPeriodLabel()}`}
         stats={periodStats}
         className="mb-6"
       />
@@ -133,9 +155,25 @@ export default function History() {
             <p className="text-muted-foreground">
               {t('history.noMissionsForPeriod')}
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              {t('history.selectAnotherDate')}
-            </p>
+            {missions.length > 0 && (
+              <>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {t('history.totalMissionsAvailable', { count: missions.length })}
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setShowAllMissions(true)}
+                >
+                  {t('history.showAllMissions')}
+                </Button>
+              </>
+            )}
+            {missions.length === 0 && (
+              <p className="text-sm text-muted-foreground mt-2">
+                {t('history.selectAnotherDate')}
+              </p>
+            )}
           </div>
         ) : (
           filteredMissions.map((mission) => (
