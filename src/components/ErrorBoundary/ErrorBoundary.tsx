@@ -61,6 +61,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         return this.props.fallback;
       }
 
+      // Check if it's a chunk/module loading error
+      const errorMessage = this.state.error?.message || '';
+      const isChunkLoadError = 
+        errorMessage.includes('dynamically imported module') || 
+        errorMessage.includes('Failed to fetch') ||
+        errorMessage.includes('Loading chunk') ||
+        errorMessage.includes('ChunkLoadError');
+
       // Default error UI with production-safe styling
       return (
         <div style={{ 
@@ -77,7 +85,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             textAlign: 'center'
           }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-              <AlertTriangle style={{ height: '4rem', width: '4rem', color: '#ef4444' }} />
+              <AlertTriangle style={{ height: '4rem', width: '4rem', color: isChunkLoadError ? '#f59e0b' : '#ef4444' }} />
             </div>
             
             <div style={{ marginBottom: '1.5rem' }}>
@@ -87,14 +95,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 color: '#fafafa',
                 marginBottom: '0.5rem'
               }}>
-                Something went wrong
+                {isChunkLoadError ? 'Page failed to load' : 'Something went wrong'}
               </h1>
               <p style={{ color: '#a1a1aa' }}>
-                We're sorry, but something unexpected happened. Please try refreshing the page.
+                {isChunkLoadError 
+                  ? 'The app was updated. Please refresh the page to get the latest version.'
+                  : 'We\'re sorry, but something unexpected happened. Please try refreshing the page.'
+                }
               </p>
             </div>
 
-            {this.state.error && (
+            {!isChunkLoadError && this.state.error && (
               <details style={{ 
                 textAlign: 'left', 
                 backgroundColor: '#27272a', 
@@ -118,20 +129,22 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             )}
 
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-              <button 
-                onClick={this.handleReset}
-                style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #3f3f46',
-                  backgroundColor: 'transparent',
-                  color: '#fafafa',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem'
-                }}
-              >
-                Try Again
-              </button>
+              {!isChunkLoadError && (
+                <button 
+                  onClick={this.handleReset}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.375rem',
+                    border: '1px solid #3f3f46',
+                    backgroundColor: 'transparent',
+                    color: '#fafafa',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Try Again
+                </button>
+              )}
               
               {this.props.showReload !== false && (
                 <button 
@@ -150,7 +163,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   }}
                 >
                   <RefreshCw style={{ height: '1rem', width: '1rem' }} />
-                  Reload Page
+                  Refresh Page
                 </button>
               )}
             </div>
