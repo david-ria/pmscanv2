@@ -377,7 +377,7 @@ export function PMLineGraph({
             yAxisId="left"
             tick={{ fontSize: 12 }}
             width={30}
-            domain={[0, 'dataMax + 5']}
+            domain={[0, (dataMax: number) => Math.ceil((dataMax + 5) / 10) * 10]}
             allowDataOverflow={false}
           />
           {visiblePollutants.includes('tvoc') && (
@@ -386,7 +386,7 @@ export function PMLineGraph({
               orientation="right"
               tick={{ fontSize: 12 }}
               width={40}
-              domain={[0, 'dataMax + 50']}
+              domain={[0, (dataMax: number) => Math.ceil((dataMax + 50) / 100) * 100]}
               allowDataOverflow={false}
               label={{ value: 'ppb', angle: 90, position: 'insideRight', fontSize: 10 }}
             />
